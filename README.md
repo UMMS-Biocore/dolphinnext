@@ -1,12 +1,11 @@
 # dolphinNext Documentation
+(For readthedocs documentation https://dolphinnext.readthedocs.io)
 
 ## Release 1.
 
 ## Alper Kucukural, Onur Yukselen
 
 **Aug 29, 2018**
-
-
 
 ## Contents
 
@@ -45,8 +44,7 @@ This guide will walk you through how to start using dolphinNext pipelines and cr
 
 **1.1.1 Getting Started**
 
-First off, you need to enter dolphinNext web page: https://dolphinnext.umassmed.edu/ and clickSign in with Google
-button on the top left. You will be asked to choose your google account to enter your profile.
+First off, if you haven't installed your own mirror. You need to enter dolphinNext web page: https://dolphinnext.umassmed.edu/ and clickSign in with Google button on the top left. You will be asked to choose your google account to enter your profile.
 
 **1.1.2 Creating Profile**
 
@@ -56,8 +54,6 @@ at the top right of the screen, then you’ll notice several tabs as shown below
 Follow through the steps in profile page to create SSH Key (optionally, Amazon Key) and then specify the hosts you
 want to use inrun environmentssection. Once you complete these steps, you’re now able to submit jobs to specifed
 hosts.
-
-#### 3
 
 
 Note: Before creating run environment,SSH Keysneeded to be created in SSH Keys tab. If you want to create
