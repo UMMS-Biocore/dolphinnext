@@ -1,0 +1,670 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Process Guide &mdash; DolphinNext 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext 1.0 documentation" href="../index.html"/>
+        <link rel="up" title="DolphinNext" href="DolphinNext.html"/>
+        <link rel="next" title="Pipeline Guide" href="pipeline.html"/>
+        <link rel="prev" title="Quick Start Guide" href="quick.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="DolphinNext.html">DolphinNext</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Process Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#process-window">Process Window</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basics">Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parameters">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Scripts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">Operators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Regular Expressions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#header-script">Header Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#process-options">Process Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#styles-for-process-options">Styles for Process Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#autofill-feature-for-process">Autofill Feature for Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#permissions-groups-and-publish">Permissions, Groups and Publish</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#copying-and-revisions">Copying and Revisions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="DolphinNext.html">DolphinNext</a> &raquo;</li>
+        
+      <li>Process Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/process.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="process-guide">
+<h1>Process Guide<a class="headerlink" href="#process-guide" title="Permalink to this headline">¶</a></h1>
+<p>This guide will walk you through the creation of DolphinNext process.</p>
+<div class="section" id="process-window">
+<h2>Process Window<a class="headerlink" href="#process-window" title="Permalink to this headline">¶</a></h2>
+<p>Once logged in, click on the pipeline tab in the top left of the screen. You’ll notice several button at the left sidebar menu. New processes are created by clicking green “New process” button.</p>
+<a class="reference internal image-reference" href="../_images/process_buttons.png"><img alt="../_images/process_buttons.png" class="align-center" src="../_images/process_buttons.png" style="width: 35%;" /></a>
+</div>
+<div class="section" id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<p>Once you clicked green “New process” button, new window will appear to define process components.</p>
+<ul class="simple">
+<li><strong>Name:</strong> Process name is entered in this block. After creation of process, this name will appear in the left sidebar menu under the selected <em>menu group</em>.</li>
+<li><strong>Description:</strong> An explanation of how process works is described in this region.</li>
+<li><strong>Menu group:</strong> Selection of menu group which categorizes the processes in the left sidebar menu. If it is required, you may add new menu groups by clicking “add menu group” button. Afterwards, you may edit or delete these new groups by “edit menu group” or “delete menu group” buttons.</li>
+</ul>
+</div>
+<div class="section" id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
+<p>This section is used to create parameters which will be used while defining <em>inputs</em> or <em>outputs</em>. New parameters are created by clicking “add parameter” button.</p>
+<img alt="../_images/process_addparameter.png" class="align-center" src="../_images/process_addparameter.png" />
+<ul class="simple">
+<li><strong>Identifier:</strong> Identifier is simply parameter name and allows you to call same parameters in other processes.</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">When qualifier set to <code class="docutils literal notranslate"><span class="pre">val</span></code>, <code class="docutils literal notranslate"><span class="pre">identifier</span></code> is used to filter available nodes while connecting each nodes. However, when <code class="docutils literal notranslate"><span class="pre">file</span></code> or <code class="docutils literal notranslate"><span class="pre">set</span></code> is selected as qualifier, <code class="docutils literal notranslate"><span class="pre">file</span> <span class="pre">type</span></code> is used for filtering available nodes.</p>
+</div>
+<ul>
+<li><dl class="first docutils">
+<dt><strong>Qualifier:</strong> Three main type of qualifiers (<code class="docutils literal notranslate"><span class="pre">file</span></code>, <code class="docutils literal notranslate"><span class="pre">set</span></code> and <code class="docutils literal notranslate"><span class="pre">val</span></code>) are exist in DolphinNext:</dt>
+<dd><ol class="first last arabic">
+<li><p class="first"><strong>File:</strong> Uses the received value as a file. Example usage in nextflow file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">file</span> <span class="n">genome</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Set:</strong> Allows to handle a group of input values having other qualifiers. Example usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span> <span class="n">val</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">file</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Val:</strong> Allows to access the received input value by its name in the process script. Example usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">val</span> <span class="n">script_path</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>File type:</strong> If qualifier is set to <code class="docutils literal notranslate"><span class="pre">file</span></code> or <code class="docutils literal notranslate"><span class="pre">set</span></code>, file type option will appear. This option will be used to filter available nodes while generating pipelines.</p>
+</li>
+</ul>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">For instance, you may create <code class="docutils literal notranslate"><span class="pre">genome</span></code> parameter by entering identifier as:<code class="docutils literal notranslate"><span class="pre">genome</span></code>, qualifier: <code class="docutils literal notranslate"><span class="pre">file</span></code> and file type: <code class="docutils literal notranslate"><span class="pre">fasta</span></code>. Similarly for creating <code class="docutils literal notranslate"><span class="pre">script_path</span></code> parameter you can define identifier as:<code class="docutils literal notranslate"><span class="pre">script_path</span></code> and qualifier: <code class="docutils literal notranslate"><span class="pre">val</span></code>.</p>
+</div>
+</div>
+<div class="section" id="inputs">
+<h2>Inputs<a class="headerlink" href="#inputs" title="Permalink to this headline">¶</a></h2>
+<p>This section where you enter all of your input nodes of the process. You can start adding by clicking “Add input…” dropdown. After adding selected parameter as a input node, “input name” box and “add operator” button will appear.</p>
+<img alt="../_images/process_inputs.png" class="align-center" src="../_images/process_inputs.png" />
+<p>Input name box used to define nextflow variables which will be used in the <a class="reference external" href="process.html#id4">scripts</a> section. For instance, if you enter input name as <code class="docutils literal notranslate"><span class="pre">genome</span></code>, in the scripts section you can recall this variable as <code class="docutils literal notranslate"><span class="pre">${genome}</span></code>. Other examples are listed in the following table:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="19%" />
+<col width="46%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Qualifier</th>
+<th class="head">Input name</th>
+<th class="head">Recall in the Script</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>val</td>
+<td>script_path</td>
+<td>${script_path}</td>
+</tr>
+<tr class="row-odd"><td>file</td>
+<td>genome</td>
+<td>${genome}</td>
+</tr>
+<tr class="row-even"><td>set</td>
+<td>val(name), file(genome)</td>
+<td>${genome}</td>
+</tr>
+<tr class="row-odd"><td>set</td>
+<td>val(name), file(genome)</td>
+<td>${name}</td>
+</tr>
+</tbody>
+</table>
+<p>Additionally, if you need to transform values emitted by a channel, you can click “operators” button and select operators from dropdown. For detailed information, you can continue to read <a class="reference external" href="process.html#id5">operators</a> section.</p>
+</div>
+<div class="section" id="outputs">
+<h2>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h2>
+<p>The output nodes are defined in this section. Similar to adding inputs, by clicking “Add output…” dropdown and selecting output parameter will show <cite>output name</cite> box, <cite>add operator</cite> and <cite>add regular expression</cite> buttons.</p>
+<img alt="../_images/process_outputs.png" class="align-center" src="../_images/process_outputs.png" />
+<p>Output files, created by the process, are grabbed by “output name” box. By entering the pattern of the output files eg. <code class="docutils literal notranslate"><span class="pre">genome.index*</span></code> would grab the files that are starts with <code class="docutils literal notranslate"><span class="pre">genome.index</span></code>. Besides you can use nextflow variables which are defined in <a class="reference external" href="process.html#inputs">inputs</a> or <a class="reference external" href="process.html#id4">scripts</a> section. As an example, if you enter input name as <code class="docutils literal notranslate"><span class="pre">genome</span></code>, in the outputs section you can recall this variable as <code class="docutils literal notranslate"><span class="pre">'${genome}_out.txt'</span></code>. Other examples are listed in the following table:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="28%" />
+<col width="17%" />
+<col width="39%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Input Qualifier</th>
+<th class="head">Input name</th>
+<th class="head">Output Qualifier</th>
+<th class="head">Output name</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>file</td>
+<td>genome</td>
+<td>file</td>
+<td>“${genome}_out.txt”</td>
+</tr>
+<tr class="row-odd"><td>set</td>
+<td>val(name), file(reads)</td>
+<td>set</td>
+<td>val(name), file(“${name}.unmap*.fq”)</td>
+</tr>
+<tr class="row-even"><td>set</td>
+<td>val(name), file(reads)</td>
+<td>file</td>
+<td>“${name}.bam”</td>
+</tr>
+<tr class="row-odd"><td>set</td>
+<td>val(name), file(genome)</td>
+<td>file</td>
+<td>“genome.index*”</td>
+</tr>
+</tbody>
+</table>
+<p>Additionally, if you need to transform values emitted by a channel, you can click “operators” button and select operators from dropdown. For detailed information, you can continue to read <a class="reference external" href="process.html#id5">operators</a> section. In addition to operators, regular expressions can be activated by clicking “regular expressions” button. You can learn more about this section by clicking <a class="reference external" href="process.html#id6">regular expressions</a> section.</p>
+</div>
+<div class="section" id="id4">
+<h2>Scripts<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>Main process scripts are defined in this region. Three type of mode are available in Nextflow: A. Script B. Shell C. Exec. These statements defines how the command going to be executed by the process.</p>
+<p><strong>A. Script:</strong></p>
+<p>For simplicity, DolphinNext uses script format by default, and accepts each line as a command. It is same as using three double quotes <code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code> at the start and the end of the command block. If you use three double quotes, DolphinNext will take that particular area as command block. Therefore, following two strings will be executed as same:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&quot;&quot;&quot; tophat2 -o . ${indexPath} $reads &quot;&quot;&quot;
+
+tophat2 -o . ${indexPath} $reads
+</pre></div>
+</div>
+<p>Each line is executed as a BASH script in the host. It can be any command or script that is typically used in terminal shell or BASH script.</p>
+<img alt="../_images/process_script.png" class="align-center" src="../_images/process_script.png" />
+<ul class="simple">
+<li><strong>Conditional Scripts:</strong></li>
+</ul>
+<p>Conditional scripts can be used with control statements such as if, switch etc. In order to use these feature, you must start the code block by using <code class="docutils literal notranslate"><span class="pre">script:</span></code> keyword. In this way, the interpreter will evaluate all the following statements as a code block and find the script string to be executed. Please check the following example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">script</span><span class="p">:</span>
+<span class="n">name</span> <span class="o">=</span>  <span class="n">reads</span><span class="o">.</span><span class="n">toString</span><span class="p">()</span> <span class="o">-</span> <span class="s1">&#39;.fastq&#39;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">mate</span> <span class="o">==</span> <span class="s2">&quot;pair&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    bowtie2 -x genome.index -1 ${reads.join(&#39; -2 &#39;)} -S ${name}_alignment.sam --un-conc ${name}_unalignedreads</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">mate</span> <span class="o">==</span> <span class="s2">&quot;single&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    bowtie2 -x genome.index -U $reads -S ${name}_alignment.sam --un ${name}_unalignedreads</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">As shown in the example above, it is possible to run Bowtie based on mate status of the reads. In order to activate this property, you must add <code class="docutils literal notranslate"><span class="pre">mate</span></code> parameter as an input. While you are running the pipeline, you may select <code class="docutils literal notranslate"><span class="pre">single</span></code> or <code class="docutils literal notranslate"><span class="pre">pair</span></code> option according to your needs.</p>
+</div>
+<p><strong>B. Shell:</strong></p>
+<p>Alternatively, you can use <code class="docutils literal notranslate"><span class="pre">shell</span></code> block where Nextflow variables are declared by exclamation mark <code class="docutils literal notranslate"><span class="pre">!</span></code>. This feature allows you to use both Nextflow and BASH variables in the same code without using escape character. In order to use shell mode, you start code by adding <code class="docutils literal notranslate"><span class="pre">shell:</span></code> and add three single quotes (<code class="docutils literal notranslate"><span class="pre">'''</span></code>) at the start and the end of the command block:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">shell</span><span class="p">:</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">echo $PATH and !{new_path}</span>
+<span class="sd">&#39;&#39;&#39;</span>
+</pre></div>
+</div>
+<p><strong>C. Exec:</strong></p>
+<p>Nextflow processes allows you to execute native code other than system commands. This way you may easily follow local Nextflow variables. To start exec mode, you can add <code class="docutils literal notranslate"><span class="pre">exec:</span></code> block at the beggining of the script:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">exec</span><span class="p">:</span>
+<span class="n">println</span> <span class="s2">&quot;$</span><span class="si">{genome}</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>Operators<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<p>If you need to transform values emitted by a channel, you can click “operators” button and select operators from dropdown. Optionally, operator content could be specified to adjust their act. Besides, multiple operators can be added by starting paranthesis <code class="docutils literal notranslate"><span class="pre">(</span></code>. Examples are listed in the following table:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="17%" />
+<col width="72%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operator</th>
+<th class="head">Operator Content</th>
+<th class="head">Usage</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>flatMap</td>
+<td>().buffer(size:3)</td>
+<td>Groups 3 emitted item into one new channel.</td>
+</tr>
+<tr class="row-odd"><td>mode flatten</td>
+<td>&#160;</td>
+<td>To emit each output file as a sole item</td>
+</tr>
+<tr class="row-even"><td>groupTuple</td>
+<td>&#160;</td>
+<td>Collects tuples (or lists) of values emitted and groups them based on their key value.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">To get more information about operators, you can use <a class="reference external" href="https://www.nextflow.io/docs/latest/operator.html">this link</a> to reach Nextflow documentation.</p>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>Regular Expressions<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>This is optional regular expresion feature to filter output files. By default DolphinNext uses <strong>output name</strong> box pattern to decide which files are going to be transferred to output directory. If this feature is not sufficient or additional filtration is required, then regular expression feaure might be activated by clicking “Regular Expressions” button at the outputs section. Example usage:</p>
+<a class="reference internal image-reference" href="../_images/process_regex.png"><img alt="../_images/process_regex.png" class="align-center" src="../_images/process_regex.png" style="width: 35%;" /></a>
+</div>
+<div class="section" id="header-script">
+<h2>Header Script<a class="headerlink" href="#header-script" title="Permalink to this headline">¶</a></h2>
+<p>This section allows you to add additional scripts or comments before process block starts. This way you may recall same function several times in the script section.</p>
+<img alt="../_images/process_headerscript.png" class="align-center" src="../_images/process_headerscript.png" />
+</div>
+<div class="section" id="process-options">
+<h2>Process Options<a class="headerlink" href="#process-options" title="Permalink to this headline">¶</a></h2>
+<p>You may separate your main process inputs and optional parameters by using <strong>Process Options</strong> feature. On the run page, these parameters will be asked separately in the Process Options section as in the image shown at below:</p>
+<img alt="../_images/process_processopt.png" class="align-center" src="../_images/process_processopt.png" />
+<p>In order to create these form, you need to use following syntax in the <strong>process header</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">variableName</span> <span class="o">=</span> <span class="n">defaultValue</span> <span class="o">//*</span> <span class="nd">@formType</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;...&quot;</span> <span class="nd">@tooltip</span><span class="p">:</span><span class="s2">&quot;...&quot;</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;...&quot;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You can define defaultValue with single/double quotes (for strings) or without any quotes (for numbers).</p>
+</div>
+<ul>
+<li><p class="first"><strong>&#64;formType:</strong> Four type of form fields are available in DolphinNext (<code class="docutils literal notranslate"><span class="pre">&#64;input</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;textbox</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;checkbox</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;dropdown</span></code>):</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first"><strong>&#64;input:</strong> It creates single-line text field. Example usage and created form field in run page:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">readsPerFile</span> <span class="o">=</span> <span class="mi">5000000</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;The number of reads per file&quot;</span>
+<span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span> <span class="nd">@tooltip</span><span class="p">:</span><span class="s2">&quot;parameters for Tophat2 version 2.6&quot;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<img alt="../_images/process_input.png" class="align-center" src="../_images/process_input.png" />
+</div></blockquote>
+</li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ol class="arabic" start="2">
+<li><p class="first"><strong>&#64;textbox:</strong> It creates multi-line text field. Example usage and created form field in run page:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Adapter_Sequence</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@textbox</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;You can enter a single sequence or multiple sequences in different lines.&quot;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<img alt="../_images/process_textbox.png" class="align-center" src="../_images/process_textbox.png" />
+</div></blockquote>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ol class="arabic" start="3">
+<li><p class="first"><strong>&#64;checkbox:</strong> It creates checkbox for the user and their available options are defined as <code class="docutils literal notranslate"><span class="pre">true</span></code> or <code class="docutils literal notranslate"><span class="pre">false</span></code> by default. Example usage and created form field in run page:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">run_rRNA_Mapping</span> <span class="o">=</span> <span class="s2">&quot;false&quot;</span> <span class="o">//*</span> <span class="nd">@checkbox</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Check the box to activate rRNA mapping.&quot;</span>
+<span class="n">rRNA_filtering</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span> <span class="o">//*</span> <span class="nd">@checkbox</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Check the box to filter rRNA reads.&quot;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<img alt="../_images/process_checkbox.png" class="align-center" src="../_images/process_checkbox.png" />
+</div></blockquote>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<blockquote>
+<div><ol class="arabic" start="4">
+<li><p class="first"><strong>&#64;dropdown:</strong> It create dropdown menu and their options can be specified by entering <code class="docutils literal notranslate"><span class="pre">&#64;options</span></code> feature. Example usage and created form field in run page:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">genomeType</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Genome type for pipeline&quot;</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;hg19&quot;</span><span class="p">,</span><span class="s2">&quot;mm10&quot;</span><span class="p">,</span> <span class="s2">&quot;custom&quot;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<img alt="../_images/process_dropdown.png" class="align-center" src="../_images/process_dropdown.png" />
+</div></blockquote>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<ul>
+<li><p class="first"><strong>&#64;description:</strong> You can describe inputs by using <code class="docutils literal notranslate"><span class="pre">&#64;description</span></code> tag. Please check the examples at above.</p>
+</li>
+<li><p class="first"><strong>&#64;tooltip:</strong> You can also create tooltip to add detailed explanation by using <code class="docutils literal notranslate"><span class="pre">&#64;tooltip</span></code> tag. See the example at below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@tooltip</span><span class="p">:</span><span class="s2">&quot;parameters for Tophat2 version 2.6&quot;</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>&#64;title:</strong> You can also create header on top of the variable by using <code class="docutils literal notranslate"><span class="pre">&#64;title</span></code> tag. This way you can easily organize the complicated form structures. See the example at below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Alignment Section&quot;</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>&#64;options:</strong> When you define &#64;dropdown as a formType, you should define available options by using <code class="docutils literal notranslate"><span class="pre">&#64;options</span></code> tag. Please check the example dropdown at above.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="styles-for-process-options">
+<h2>Styles for Process Options<a class="headerlink" href="#styles-for-process-options" title="Permalink to this headline">¶</a></h2>
+<p>You might use additional tags to give specific shapes to form fields: A. <code class="docutils literal notranslate"><span class="pre">&#64;multicolumn</span></code> B. <code class="docutils literal notranslate"><span class="pre">&#64;array</span></code> C. <code class="docutils literal notranslate"><span class="pre">condition</span></code>.</p>
+<p><strong>A. &#64;multicolumn:</strong></p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var1&quot;</span>
+<span class="n">var2</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var2&quot;</span>
+<span class="n">var3</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var3&quot;</span>
+<span class="n">var4</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var4&quot;</span>
+<span class="n">var5</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var5&quot;</span>
+<span class="n">var6</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var6&quot;</span>
+<span class="o">//*</span> <span class="nd">@style</span> <span class="nd">@multicolumn</span><span class="p">:{</span><span class="n">var1</span><span class="p">,</span> <span class="n">var2</span><span class="p">,</span> <span class="n">var3</span><span class="p">},</span> <span class="p">{</span><span class="n">var5</span><span class="p">,</span> <span class="n">var6</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>In this example, var1, var2 and var3 will be located in the same row, by default var4 will fill single row and, var5 and var6 will share same row as shown at below.</p>
+<a class="reference internal image-reference" href="../_images/process_multicolumn.png"><img alt="../_images/process_multicolumn.png" class="align-center" src="../_images/process_multicolumn.png" style="width: 85%;" /></a>
+<p><strong>B. &#64;array:</strong></p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var1&quot;</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Step 1&quot;</span>
+<span class="n">var2</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var2&quot;</span>
+<span class="n">var3</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var3&quot;</span>
+<span class="n">var4</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var4&quot;</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Step 2&quot;</span>
+<span class="o">//*</span> <span class="nd">@style</span> <span class="nd">@array</span><span class="p">:{</span><span class="n">var1</span><span class="p">,</span> <span class="n">var2</span><span class="p">},</span> <span class="p">{</span><span class="n">var4</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>In this example, var1, var2 are grouped together and linked to add/remove buttons. When add button is clicked new var1, var2 fields will be created just below var1 and var2. Similarly remove button will remove generated copies of form fields. Similar features exist for just var4 variable. Please see the image at below.</p>
+<a class="reference internal image-reference" href="../_images/process_array.png"><img alt="../_images/process_array.png" class="align-center" src="../_images/process_array.png" style="width: 85%;" /></a>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">You can combine multiple style options on same variables. For example <code class="docutils literal notranslate"><span class="pre">//*</span> <span class="pre">&#64;style</span> <span class="pre">&#64;array:{var1,</span> <span class="pre">var2},</span> <span class="pre">{var4}</span> <span class="pre">&#64;multicolumn:{var1,</span> <span class="pre">var2}</span></code> will combine both multicolumn and array features for <code class="docutils literal notranslate"><span class="pre">var1</span></code> and <code class="docutils literal notranslate"><span class="pre">var2</span></code> as shown below.</p>
+</div>
+<a class="reference internal image-reference" href="../_images/process_array_multi.png"><img alt="../_images/process_array_multi.png" class="align-center" src="../_images/process_array_multi.png" style="width: 85%;" /></a>
+<p><strong>C. &#64;condition:</strong></p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var1&quot;</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Step 1&quot;</span>
+<span class="n">var2</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var2&quot;</span>
+<span class="n">var3</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var3&quot;</span>
+<span class="n">var4</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var4&quot;</span>
+<span class="n">var5</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var5&quot;</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Step 2&quot;</span>
+<span class="o">//*</span> <span class="nd">@style</span> <span class="nd">@condition</span><span class="p">:{</span><span class="n">var1</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="n">var2</span><span class="p">},</span> <span class="p">{</span><span class="n">var1</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="n">var3</span><span class="p">,</span> <span class="n">var4</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>In this example, var1 value is binded to other form fields. When var1 is selected as “yes”, field of var2 will be shown. Whereas when var1 is changed to “no”, then var2 field will disappear and var3 and var4 fields will appear. Since var5 is not defined in &#64;condition tag, it will be always seen while changes happening in other fields. Please see the example at below:</p>
+<a class="reference internal image-reference" href="../_images/process_condi.png"><img alt="../_images/process_condi.png" class="align-center" src="../_images/process_condi.png" style="width: 75%;" /></a>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">Similar to previous tip, you can combine all style options on same variable. For example <code class="docutils literal notranslate"><span class="pre">//*</span> <span class="pre">&#64;style</span> <span class="pre">&#64;condition:{var1=&quot;yes&quot;,</span> <span class="pre">var2},</span> <span class="pre">{var1=&quot;no&quot;,</span> <span class="pre">var3,</span> <span class="pre">var4}</span> <span class="pre">&#64;array:{var1,</span> <span class="pre">var2,</span> <span class="pre">var3,</span> <span class="pre">var4}</span> <span class="pre">&#64;multicolumn:{var1,</span> <span class="pre">var2,</span> <span class="pre">var3,</span> <span class="pre">var4}</span></code> will combine features as shown below:</p>
+</div>
+<a class="reference internal image-reference" href="../_images/process_array_multi_condi.png"><img alt="../_images/process_array_multi_condi.png" class="align-center" src="../_images/process_array_multi_condi.png" style="width: 85%;" /></a>
+</div>
+<div class="section" id="autofill-feature-for-process">
+<h2>Autofill Feature for Process<a class="headerlink" href="#autofill-feature-for-process" title="Permalink to this headline">¶</a></h2>
+<p>You might define hostname specific executor properties and create autofill feature by using following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+&lt;executor properties&gt;
+}
+//*
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code> is DolphinNext specific variable that recalls the hostname which is going to be run. Therefore, in this example, all <code class="docutils literal notranslate"><span class="pre">&lt;executor</span> <span class="pre">properties&gt;</span></code> will be active in case of pipeline is going to run on <strong>ghpcc06.umassrc.org</strong>.</p>
+<p><strong>Executor Properties:</strong></p>
+<p>Five type of executor properties are available to autofill <strong>Executor Settings for Each Process</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue and Other Options. See the example below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    $TIME = 3000
+    $CPU  = 4
+    $MEMORY = 100
+    $QUEUE = &quot;long&quot;
+    $EXEC_OPTIONS = &#39;-E &quot;file /home/garberlab&quot;&#39;
+}
+//*
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/process_autofill.png"><img alt="../_images/process_autofill.png" class="align-center" src="../_images/process_autofill.png" style="width: 99%;" /></a>
+</div>
+<div class="section" id="permissions-groups-and-publish">
+<h2>Permissions, Groups and Publish<a class="headerlink" href="#permissions-groups-and-publish" title="Permalink to this headline">¶</a></h2>
+<p>By default, all new processes are only seen by the user that created them. You can share your process with your group by selecting permissions to “Only my groups”. If you want to make it public, you can change Publish option to ‘Yes’. After verification of the process, process will be publish to everyone.</p>
+<img alt="../_images/process_permpublishgroup.png" class="align-center" src="../_images/process_permpublishgroup.png" />
+</div>
+<div class="section" id="copying-and-revisions">
+<h2>Copying and Revisions<a class="headerlink" href="#copying-and-revisions" title="Permalink to this headline">¶</a></h2>
+<p>It is always allowed to create a copy of your process by clicking “Settings” button <em>at the right top of the process window</em> and selecting “Copy Process”. When your process is become public or it has been used by other group members, it is not allow to make changes on same revision. Instead, new revision of the process is created and changes could be done on this revision.</p>
+<a class="reference internal image-reference" href="../_images/process_settings.png"><img alt="../_images/process_settings.png" class="align-center" src="../_images/process_settings.png" style="width: 25%;" /></a>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="pipeline.html" class="btn btn-neutral float-right" title="Pipeline Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="quick.html" class="btn btn-neutral" title="Quick Start Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

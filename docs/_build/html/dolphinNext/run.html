@@ -1,0 +1,433 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Run Guide &mdash; DolphinNext 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext 1.0 documentation" href="../index.html"/>
+        <link rel="up" title="DolphinNext" href="DolphinNext.html"/>
+        <link rel="next" title="Profile Guide" href="profile.html"/>
+        <link rel="prev" title="Project Guide" href="project.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="DolphinNext.html">DolphinNext</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Run Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basics">Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-status">Run Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-settings">Run Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-options">Advanced Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-files">Pipeline Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#workflow">Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-logs">Run Logs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="DolphinNext.html">DolphinNext</a> &raquo;</li>
+        
+      <li>Run Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/run.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="run-guide">
+<h1>Run Guide<a class="headerlink" href="#run-guide" title="Permalink to this headline">¶</a></h1>
+<p>In the previous section (<a class="reference external" href="project.html">project guide</a>), we saw the creation of project and adding pipelines to it. In this section, we will investigate the run settings to initiate our new run.</p>
+<div class="section" id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<p>In the header of the run page, you will notice the rocket icon and the title of the run where you can also edit your run name. Tracking of your run is facilitated by project and pipeline links which are located just next to run name as shown at below:</p>
+<img alt="../_images/run_header.png" class="align-center" src="../_images/run_header.png" />
+<p>Similar to <a class="reference external" href="pipeline.html">pipeline</a> section, <strong>Save</strong>, <strong>Download Pipeline</strong>, <strong>Copy Run</strong> and <strong>Delete Run</strong> icons are found in the header section to manage your run. Besides, optional <strong>Run Description</strong> section is exist just below the header section.</p>
+</div>
+<div class="section" id="run-status">
+<h2>Run Status<a class="headerlink" href="#run-status" title="Permalink to this headline">¶</a></h2>
+<p>Run status is monitored at the right part of the header. Initially, orange <code class="docutils literal notranslate"><span class="pre">Waiting</span></code> button is shown. In order to initiate run, following data need to be entered:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><strong>Work Directory:</strong>  Full path of the directory, where nextflow runs will be executed.</li>
+<li><strong>Run Environment:</strong> Profile that is created in the <a class="reference external" href="profile.html">profile</a>  page. If <a class="reference external" href="profile.html#b-defining-amazon-profile">Amazon profile</a>  is selected, then status of the profile should to be at the stage of <strong>running</strong>.</li>
+<li><strong>Inputs:</strong> Value and path of the files need to be entered.</li>
+</ol>
+</div></blockquote>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">If amazon s3 path is entered as a input or publish directory path, amazon keys (which will appear in the <strong>Run Setting</strong> section) need to be also selected.</p>
+</div>
+<p>All available status messages are listed at table below:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="8%" />
+<col width="92%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status</th>
+<th class="head">Meaning</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Waiting</td>
+<td>Waiting for inputs, output directory and selection of active environment (*amazon keys, if s3 path is used)</td>
+</tr>
+<tr class="row-odd"><td>Ready</td>
+<td>Ready to initiate run</td>
+</tr>
+<tr class="row-even"><td>Connecting</td>
+<td>Sending SSH queries to selected host system</td>
+</tr>
+<tr class="row-odd"><td>Waits</td>
+<td>Job is submitted, waits for the execution</td>
+</tr>
+<tr class="row-even"><td>Running</td>
+<td>Nextflow is executed and running the jobs.</td>
+</tr>
+<tr class="row-odd"><td>Completed</td>
+<td>Nextflow job is completed.</td>
+</tr>
+<tr class="row-even"><td>Run Error</td>
+<td>Error occured before submiting the jobs or while executing the jobs.</td>
+</tr>
+<tr class="row-odd"><td>Terminated</td>
+<td>User terminated the run by using “terminate run” button.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="run-settings">
+<h2>Run Settings<a class="headerlink" href="#run-settings" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first"><strong>Work Directory:</strong> Full path of the directory, where all nextflow runs will be executed. Example paths:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">~/</span><span class="n">workdir</span>
+<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">newuser</span><span class="o">/</span><span class="n">workdir</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Run Environment:</strong> Profile that is created in the <a class="reference external" href="profile.html">profile</a>  page. If <a class="reference external" href="profile.html#b-defining-amazon-profile">Amazon profile</a>  is selected, then status of the profile should to be at the stage of <strong>running</strong>.</p>
+</li>
+<li><p class="first"><strong>Use Docker Image:</strong> Nextflow supports the Docker containers which allows you to create fully reproducible pipelines. Docker image can contain any kind of software that you might need to execute your pipeline. It works transparently and output files are created in the host system without requiring any addition step. The only requirement is the <a class="reference external" href="https://docs.docker.com/install/">installation of the Docker</a> on the execution platform.  To activate this feature in DolphinNext just click the “Use Docker Image” checkbox and enter following information:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first"><strong>Image:</strong> Docker image name. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nephantes</span><span class="o">/</span><span class="n">dolphinnext</span><span class="o">-</span><span class="n">docker</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>RunOptions (optional):</strong> You can enter any command line options supported by the docker run command. Please click <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/cli/">this link</a> for details.</p>
+</li>
+</ol>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>Use Singularity Image:</strong> Alternative to Docker, you can activate singularity image by clicking “Use Singularity Image” checkbox and entering relevant fields. The only requirement is the <a class="reference external" href="http://singularity.lbl.gov/docs-installation/">installation of the Singularity</a> on the execution platform.</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first"><strong>Image:</strong> Path to sigularity image. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">/</span><span class="n">umw_biocore</span><span class="o">/</span><span class="n">singularity</span><span class="o">/</span><span class="n">UMMS</span><span class="o">-</span><span class="n">Biocore</span><span class="o">-</span><span class="n">singularity</span><span class="o">-</span><span class="n">master</span><span class="o">.</span><span class="n">simg</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>RunOptions (optional):</strong> You can enter any command line options supported by the <code class="docutils literal notranslate"><span class="pre">singularity</span> <span class="pre">exec</span></code>. Please click <a class="reference external" href="http://singularity.lbl.gov/docs-usage/">link for details</a>. For instance, you can mount the directories by using <code class="docutils literal notranslate"><span class="pre">--bind</span> <span class="pre">command</span></code>.  Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">--</span><span class="n">bind</span> <span class="o">/</span><span class="n">project</span><span class="p">:</span><span class="o">/</span><span class="n">project</span> <span class="o">--</span><span class="n">bind</span> <span class="o">/</span><span class="n">nl</span><span class="p">:</span><span class="o">/</span><span class="n">nl</span> <span class="o">--</span><span class="n">bind</span> <span class="o">/</span><span class="n">share</span><span class="p">:</span><span class="o">/</span><span class="n">share</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">Mounting directories in singularity requires you to create the directories in the image beforehand.</p>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="advanced-options">
+<h2>Advanced Options<a class="headerlink" href="#advanced-options" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first"><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">bashrc</span> <span class="o">&amp;&amp;</span> <span class="n">module</span> <span class="n">load</span> <span class="n">java</span><span class="o">/</span><span class="mf">1.8</span><span class="o">.</span><span class="mi">0</span><span class="n">_31</span> <span class="o">&amp;&amp;</span> <span class="n">module</span> <span class="n">load</span> <span class="n">bowtie2</span><span class="o">/</span><span class="mf">2.3</span><span class="o">.</span><span class="mi">2</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Publish Directory:</strong> Work directory is default publish directory for DolphinNext. If you want to enter new publish directory, just click this item and enter the full path of publish directory. Both local paths (eg. <code class="docutils literal notranslate"><span class="pre">/home/user/test</span></code>) or amazon s3 paths (eg. <code class="docutils literal notranslate"><span class="pre">s3://yourbucket/test</span></code>) are accepted.</p>
+</li>
+<li><p class="first"><strong>Executor Settings for All Processes:</strong> If any option other than local and ignite is selected as <strong>nextflow executor</strong> in the profile, it is allowed to override and adjust these settings by clicking this item. Following settings will be prompted: <code class="docutils literal notranslate"><span class="pre">Queue</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>.</p>
+<blockquote>
+<div><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In case of non-standart resources or settings is required for executor, then you can specify these parameters by using <strong>Other options</strong> box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">orte</span> <span class="pre">3</span></code> (to use MPI for distributed-memory machines) or <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">smp</span> <span class="pre">3</span></code> (to use OpenMP for shared-memory machines) in the <strong>Other options</strong> box and <strong>just leave the CPU box empty!</strong></p>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>Executor Settings for Each Process:</strong> You may change executor settings for each process and override to <strong>executor settings for all processes</strong> by clicking this item and clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest. Similarly, following settings will be prompted for checked process: <code class="docutils literal notranslate"><span class="pre">Queue</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>.</p>
+</li>
+<li><p class="first"><strong>Delete intermadiate files after run:</strong> This is default settings for DolphinNext to keep only selected output files in the work/publish directory and removing the rest of the files. Here the main goal is to minimize the required space for each project.</p>
+</li>
+<li><p class="first"><strong>Permissions and Groups:</strong> By default, all new runs are only seen by the owner. However, you can share your run with your group by changing permissions to “Only my groups” and choose the group you want to share from <strong>group selection</strong> dropdown.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="pipeline-files">
+<h2>Pipeline Files<a class="headerlink" href="#pipeline-files" title="Permalink to this headline">¶</a></h2>
+<p>This section is separated into two groups: <strong>inputs</strong> and <strong>outputs</strong>.</p>
+<ul class="simple">
+<li><strong>Inputs:</strong> The input file paths or values are entered by clicking <strong>Select File</strong> or <strong>Enter Value</strong> button. In order to select <strong>multiple files</strong>, wildcard characters <code class="docutils literal notranslate"><span class="pre">*</span></code>, <code class="docutils literal notranslate"><span class="pre">?</span></code>, <code class="docutils literal notranslate"><span class="pre">[]</span></code> and <code class="docutils literal notranslate"><span class="pre">{}</span></code> should be used. These arguments are interpreted as a <a class="reference external" href="https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob">glob</a> path matcher by Nextflow and returns a list of paths that are matching the specified pattern. Several examples to define inputs are listed below:</li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="74%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Input Type</th>
+<th class="head">Example</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>File/Set</td>
+<td>/share/data/mm10.fa</td>
+</tr>
+<tr class="row-odd"><td>File/Set</td>
+<td>/share/validfastq/*_{1,2}.fastq</td>
+</tr>
+<tr class="row-even"><td>Val</td>
+<td>pair</td>
+</tr>
+<tr class="row-odd"><td>Val</td>
+<td>~/scripts/filter.py</td>
+</tr>
+</tbody>
+</table>
+<ul class="simple">
+<li><strong>Outputs:</strong> When the run successfully completes, the path of the output files will be appeared in this region.</li>
+</ul>
+</div>
+<div class="section" id="workflow">
+<h2>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
+<p>To give you an overview, overall pipeline and its description are showed in this region. You may hide it by clicking minus/plus icon just next to <strong>Workflow</strong> title.</p>
+</div>
+<div class="section" id="run-logs">
+<h2>Run Logs<a class="headerlink" href="#run-logs" title="Permalink to this headline">¶</a></h2>
+<p>Log section will appear below of the <strong>run description</strong> as soon as you click the “Ready to Run” button. You can monitor each step of the run both before and after nextflow execution as shown at figure below.</p>
+<img alt="../_images/run_log.png" class="align-center" src="../_images/run_log.png" />
+<p>If any error occured on any of these steps, detailed explanation about the error will be displayed in this section and run error sign will appear in the right side of the header as show in the example below:</p>
+<img alt="../_images/run_error.png" class="align-center" src="../_images/run_error.png" />
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="profile.html" class="btn btn-neutral float-right" title="Profile Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="project.html" class="btn btn-neutral" title="Project Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

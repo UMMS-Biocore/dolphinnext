@@ -1,0 +1,362 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Profile Guide &mdash; DolphinNext 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext 1.0 documentation" href="../index.html"/>
+        <link rel="up" title="DolphinNext" href="DolphinNext.html"/>
+        <link rel="next" title="Amazon Cloud Guide" href="amazon.html"/>
+        <link rel="prev" title="Run Guide" href="run.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="DolphinNext.html">DolphinNext</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Profile Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#profile-page">Profile Page</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ssh-keys">SSH Keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#amazon-keys">Amazon Keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#groups">Groups</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-environments">Run Environments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#a-defining-host-profile">A. Defining Host Profile:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#b-defining-amazon-profile">B. Defining Amazon Profile:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="DolphinNext.html">DolphinNext</a> &raquo;</li>
+        
+      <li>Profile Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/profile.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="profile-guide">
+<h1>Profile Guide<a class="headerlink" href="#profile-guide" title="Permalink to this headline">¶</a></h1>
+<p>This guide will walk you through all of your options within the Profile page.</p>
+<div class="section" id="profile-page">
+<h2>Profile Page<a class="headerlink" href="#profile-page" title="Permalink to this headline">¶</a></h2>
+<p>Once logged in, click on the profile tab in the top right of the screen. You’ll notice several tabs to explore in profile page.</p>
+<img alt="../_images/profile_tabs2.png" class="align-center" src="../_images/profile_tabs2.png" />
+<p>First tab is the <strong>run environments</strong>. This is your main segment for creating connection profiles. Second tab is <strong>groups</strong> where you can create group and add members to it. Next section is the <strong>SSH Keys</strong>, where you can create new or enter existing SSH key pairs to establish connection to any kind of host. Fourth tab is called <strong>Amazon Keys</strong> where you enter your Amazon Web Services (AWS) security credentials to start/stop <a class="reference external" href="https://aws.amazon.com/ec2">Amazon EC2 instances</a>.</p>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">Before creating run environment, <strong>SSH Keys</strong> needed to be created in SSH Keys tab. If you want to create Amazon EC2 instances and submit your jobs to Amazon Cloud, then both SSH and Amazon Key are required before specifying run environment.</p>
+</div>
+</div>
+<div class="section" id="ssh-keys">
+<h2>SSH Keys<a class="headerlink" href="#ssh-keys" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/ssh_keys.png" class="align-center" src="../_images/ssh_keys.png" />
+<p>In the SSH keys tab, you can create new or enter existing SSH key pairs by clicking on “Add SSH Key” button. By using Add SSH Keys window, enter the name of your keys and select the method you want to proceed: <code class="docutils literal notranslate"><span class="pre">A.</span> <span class="pre">Use</span> <span class="pre">your</span> <span class="pre">own</span> <span class="pre">keys</span></code> or <code class="docutils literal notranslate"><span class="pre">B.</span> <span class="pre">Create</span> <span class="pre">new</span> <span class="pre">keys</span></code>.</p>
+<ul>
+<li><p class="first"><strong>A. Use your own keys:</strong> If you choose “use your own keys”, your private and public key pairs will be asked. You can reach your key pairs in your computer at default location: <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa</span></code> for private and <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa.pub</span></code> for public key. If these files are not exist or you want to create new ones, then on the command line, enter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span><span class="o">-</span><span class="n">keygen</span> <span class="o">-</span><span class="n">t</span> <span class="n">rsa</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>You will be prompted to supply a filename and a password. In order to accept the default filename (and location) for your key pair, press Enter without entering a filename. Your SSH keys will be generated using the default filename (<code class="docutils literal notranslate"><span class="pre">id_rsa</span></code> and <code class="docutils literal notranslate"><span class="pre">id_rsa.pub</span></code>).</p>
+<ul>
+<li><p class="first"><strong>B. Create new keys:</strong> You will proceed by clicking generate keys button where new pair of ssh keys will be specifically produced for you. You should keep these keys in your default .ssh directory (<code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa</span></code> for private and <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa.pub</span></code> for public key). It is required to be adjust your public key permissions to 644 (-rw-r–r–) and private key permissions to 600 (-rw——-) by entering following commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chmod</span> <span class="o">-</span><span class="n">R</span> <span class="mi">644</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa</span>
+<span class="n">chmod</span> <span class="o">-</span><span class="n">R</span> <span class="mi">600</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa_pub</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">In both of the cases, private key will be used for submiting jobs in the host. Therefore, public key required to be added into <code class="docutils literal notranslate"><span class="pre">~/.ssh/authorized_keys</span></code> in the host by user.</p>
+</div>
+<p>In order to add you private key to the host, you might use the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cat</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa</span><span class="o">.</span><span class="n">pub</span> <span class="o">|</span> <span class="n">ssh</span> <span class="n">USERNAME</span><span class="nd">@HOSTNAME</span> <span class="s2">&quot;mkdir -p ~/.ssh &amp;&amp; cat &gt;&gt; ~/.ssh/authorized_keys&quot;</span>
+</pre></div>
+</div>
+<p>After inserting public key, connect to the host and make sure file permissions of <code class="docutils literal notranslate"><span class="pre">authorized_keys</span></code> and <code class="docutils literal notranslate"><span class="pre">ssh</span></code> folder is correct by following commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chmod</span> <span class="mi">700</span> <span class="o">~/.</span><span class="n">ssh</span>
+<span class="n">chmod</span> <span class="mi">600</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">authorized_keys</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="amazon-keys">
+<h2>Amazon Keys<a class="headerlink" href="#amazon-keys" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/profile_amazonkeys.png" class="align-center" src="../_images/profile_amazonkeys.png" />
+<p>In the Amazon keys tab, you can enter your AWS security credentials (access key, secret key and default region) by clicking on “Add Amazon Key” button. Your information will be encrypted and kept secure. You will only have full access to editing and viewing the key information.</p>
+</div>
+<div class="section" id="groups">
+<h2>Groups<a class="headerlink" href="#groups" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/profile_groups.png" class="align-center" src="../_images/profile_groups.png" />
+<p>Groups tab is used to create groups by clicking on “Create a Group” button. After creating group, you can add members by clicking <code class="docutils literal notranslate"><span class="pre">Options</span> <span class="pre">&gt;</span> <span class="pre">Add</span> <span class="pre">User</span></code> button. By using this group information, you can share your process, pipeline or projects with group members. In order to see current members of the group, you can click <code class="docutils literal notranslate"><span class="pre">Options</span> <span class="pre">&gt;</span> <span class="pre">View</span> <span class="pre">Group</span> <span class="pre">Members</span></code> button. You can also delete your group by clicking <code class="docutils literal notranslate"><span class="pre">Options</span> <span class="pre">&gt;</span> <span class="pre">Delete</span> <span class="pre">Group</span></code> button.</p>
+</div>
+<div class="section" id="run-environments">
+<h2>Run Environments<a class="headerlink" href="#run-environments" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/profile_runenv.png" class="align-center" src="../_images/profile_runenv.png" />
+<p>This section is used for defining connection profiles by clicking on “Add Environment” button. Type options (A. Host or B. Amazon) will be prompted to user. You may choose “Host” option, if you are planing to submit jobs to specified hosts by using SSH Keys, or you may proceed with “Amazon” option to create Amazon EC2 instances and submit your jobs to Amazon Cloud.</p>
+</div>
+<div class="section" id="a-defining-host-profile">
+<h2>A. Defining Host Profile:<a class="headerlink" href="#a-defining-host-profile" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect.  For instance, in order to connect <code class="docutils literal notranslate"><span class="pre">us2r&#64;ghpcc06.umassrc.org</span></code>, you would enter <code class="docutils literal notranslate"><span class="pre">us2r</span></code> as username and <code class="docutils literal notranslate"><span class="pre">ghpcc06.umassrc.org</span></code> as hostname.</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You don’t need to add <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> sign while entering this information.</p>
+</div>
+<ul class="simple">
+<li><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</li>
+<li><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></li>
+<li><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg.``/project/umw_biocore/bin``</li>
+<li><strong>Executor of Nextflow/Executor of Nextflow Jobs:</strong> You can determine the system where nextflow itself is initiated. Currently local, sge and lsf executors are supported by DolphinNext to initiate nextflow. Apart from the executor of nextflow, you may change the executor of each job by using “Executor of Nextflow Jobs” option. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>. Adjustment of these parameters are allowed for both options.</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For instance you may initiate nextflow in <code class="docutils literal notranslate"><span class="pre">local</span></code> and allow nextflow to run its jobs <code class="docutils literal notranslate"><span class="pre">local</span></code>, <code class="docutils literal notranslate"><span class="pre">sge</span></code>, <code class="docutils literal notranslate"><span class="pre">lsf</span></code>, <code class="docutils literal notranslate"><span class="pre">slurm</span></code> or <code class="docutils literal notranslate"><span class="pre">ignite</span></code>. Alternatively, selection both options to <code class="docutils literal notranslate"><span class="pre">lsf</span></code> or <code class="docutils literal notranslate"><span class="pre">sge</span></code> would allow both executions to be maintained by <code class="docutils literal notranslate"><span class="pre">lsf</span></code> or <code class="docutils literal notranslate"><span class="pre">sge</span></code> executor.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In case of non-standart resources or settings is required for executor, then you can specify these parameters by using <strong>Other options</strong> box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">orte</span> <span class="pre">3</span></code> (to use MPI for distributed-memory machines) or <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">smp</span> <span class="pre">3</span></code> (to use OpenMP for shared-memory machines) in the <strong>Other options</strong> box and <strong>just leave the CPU box empty!</strong></p>
+</div>
+</div>
+<div class="section" id="b-defining-amazon-profile">
+<h2>B. Defining Amazon Profile:<a class="headerlink" href="#b-defining-amazon-profile" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</li>
+<li><strong>Amazon Keys:</strong> AWS credentials that are saved in Amazon keys tab and will allow to start/stop Amazon EC2 instances.</li>
+<li><strong>Instance Type:</strong> <a class="reference external" href="https://aws.amazon.com/ec2/instance-types">Amazon EC2 instance types</a> that comprise varying combinations of CPU, memory, storage, and networking capacity (eg. <code class="docutils literal notranslate"><span class="pre">m3.xlarge</span></code>).</li>
+<li><strong>Image Id:</strong> Virtual machine ID (eg. <code class="docutils literal notranslate"><span class="pre">ami-35626d4f</span></code>). If you want to create your own image, it should support <a class="reference external" href="http://singularity.lbl.gov">singularity</a>, <a class="reference external" href="https://www.docker.com/">docker engine</a> (version 1.11 or higher), Apache Ignite, Cloud-init package, and Java runtime (version 8).</li>
+<li><dl class="first docutils">
+<dt><strong>Subnet Id/Shared Storage Id/Shared Storage Mount:</strong> The filesystem needs to be created at <a class="reference external" href="https://console.aws.amazon.com/efs/">https://console.aws.amazon.com/efs/</a> and these three information will be obtained upon creation of shared file system. Make sure following criterias are satisfied:</dt>
+<dd><ol class="first last arabic">
+<li>Image has the directory to mount this storage.</li>
+<li>The output directory needs to be under this mount location.</li>
+<li>The storage system needs to be created in selected region and necessary rights need to be given in the console.</li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></li>
+<li><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg. <code class="docutils literal notranslate"><span class="pre">/project/umw_biocore/bin</span></code></li>
+<li><strong>Executor of Nextflow/Executor of Nextflow Jobs:</strong> Amazon instances are automatically configured to use the Ignite executors. Therefore, while defining amazon profile, you should select <code class="docutils literal notranslate"><span class="pre">local</span></code> for <strong>Executor of Nextflow</strong> and <code class="docutils literal notranslate"><span class="pre">ignite</span></code> for <strong>Executor of Nextflow Jobs.</strong></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="amazon.html" class="btn btn-neutral float-right" title="Amazon Cloud Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="run.html" class="btn btn-neutral" title="Run Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

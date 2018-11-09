@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Amazon Cloud Guide &mdash; DolphinNext 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext 1.0 documentation" href="../index.html"/>
+        <link rel="up" title="DolphinNext" href="DolphinNext.html"/>
+        <link rel="next" title="Pipeline Examples" href="example.html"/>
+        <link rel="prev" title="Profile Guide" href="profile.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="DolphinNext.html">DolphinNext</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Amazon Cloud Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#amazon-management-console">Amazon Management Console</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#starting-cluster">Starting Cluster</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#submit-a-job">Submit a Job</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stoping-cluster">Stoping Cluster</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="DolphinNext.html">DolphinNext</a> &raquo;</li>
+        
+      <li>Amazon Cloud Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/amazon.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="amazon-cloud-guide">
+<h1>Amazon Cloud Guide<a class="headerlink" href="#amazon-cloud-guide" title="Permalink to this headline">¶</a></h1>
+<p>DolphinNext supports submitting jobs to the Amazon AWS cloud by using Nextflow. It allows you to practically setup, start/stop a computing cluster and run your pipeline in the AWS infrastructure.</p>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>Once logged in, click on the profile tab in the top right of the screen. Both <a class="reference external" href="profile.html#ssh-keys">SSH</a> and <a class="reference external" href="profile.html#amazon-keys">Amazon Keys</a> need to be entered in each tab. Then you can proceed with creating <a class="reference external" href="profile.html#b-defining-amazon-profile">amazon connection profile</a> in the run environments tab. After creating profile “start/stop” button will appear in actions column of your amazon profile as shown in the figure below:</p>
+<img alt="../_images/amazon_start.png" class="align-center" src="../_images/amazon_start.png" />
+<p>Clicking on the start/stop button will open new window called <strong>Amazon Management Console</strong>.</p>
+</div>
+<div class="section" id="amazon-management-console">
+<h2>Amazon Management Console<a class="headerlink" href="#amazon-management-console" title="Permalink to this headline">¶</a></h2>
+<p>Starting and stoping AWS cloud is conducted in Amazon management console. There are two ways to open console. First option is clicking following buttons: <code class="docutils literal notranslate"><span class="pre">profile</span> <span class="pre">&gt;</span> <span class="pre">run</span> <span class="pre">environments</span> <span class="pre">&gt;</span> <span class="pre">Start/Stop</span></code>. Altervatively, you can quickly reach Amazon console by clicking “Amazon” button at the top of the screen. The number of active profile is displayed with green tag at the top of the amazon button.</p>
+<a class="reference internal image-reference" href="../_images/amazon_quick.png"><img alt="../_images/amazon_quick.png" class="align-center" src="../_images/amazon_quick.png" style="width: 25%;" /></a>
+<p>When first created, state of your profile will be inactive as shown at below:</p>
+<img alt="../_images/amazon_inactive.png" class="align-center" src="../_images/amazon_inactive.png" />
+</div>
+<div class="section" id="starting-cluster">
+<h2>Starting Cluster<a class="headerlink" href="#starting-cluster" title="Permalink to this headline">¶</a></h2>
+<p>In order to active AWS cluster, click on “start” button of the profile you wanted to initiate. Following options will be prompted.</p>
+<ul class="simple">
+<li><strong>Nodes:</strong> Enter the number of instances, you want to initiate. First node is created as <code class="docutils literal notranslate"><span class="pre">master</span></code>, and the remaining as <code class="docutils literal notranslate"><span class="pre">workers</span></code>.</li>
+<li><strong>Use autoscale:</strong>  This is Nextflow’s critical feature which allows the cluster to adapt dynamically to the workload by changing computing recources. After clicking this option and entering number of <strong>Maximum Instances</strong>, new instances will be automatically added to the cluster when tasks remain too long in wait status. The upper limit should be entered by <strong>Maximum Instances</strong> to control the size of cluster. By default unused instances are removed when they are not utilised.</li>
+</ul>
+<p>Profile status will be updated as <code class="docutils literal notranslate"><span class="pre">Waiting</span> <span class="pre">for</span> <span class="pre">reply</span></code> as soon as you click the “Activate Cluster” button. If your credentials and profile are correct, profile status will change to <code class="docutils literal notranslate"><span class="pre">Initializing</span></code> and <code class="docutils literal notranslate"><span class="pre">Running</span></code>, respectively. However, in case of missing or wrong profile information, status will turn into <code class="docutils literal notranslate"><span class="pre">Terminated</span></code> and reason of the error will appear next to the status. All available states of the profile are listed in table below:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="74%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status</th>
+<th class="head">Meaning</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Inactive</td>
+<td>AWS cloud has not initiated yet.</td>
+</tr>
+<tr class="row-odd"><td>Waiting for reply</td>
+<td>Cluster request is sent.</td>
+</tr>
+<tr class="row-even"><td>Initializing</td>
+<td>Cluster request is accepted and nodes are initializing.</td>
+</tr>
+<tr class="row-odd"><td>Running</td>
+<td>AWS cloud ready to submit jobs.</td>
+</tr>
+<tr class="row-even"><td>Waiting for termination</td>
+<td>Cluster termination request is sent and waiting for termination.</td>
+</tr>
+<tr class="row-odd"><td>Terminated</td>
+<td>AWS cloud has terminated.</td>
+</tr>
+</tbody>
+</table>
+<p>Once the cluster initialization is complete, <code class="docutils literal notranslate"><span class="pre">user&#64;hostname</span></code> will appear next to the <code class="docutils literal notranslate"><span class="pre">running</span></code> status as shown in figure below.</p>
+<img alt="../_images/amazon_running.png" class="align-center" src="../_images/amazon_running.png" />
+<p>You may connect to the master node by using the following SSH command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span> <span class="n">user</span><span class="nd">@hostname</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="submit-a-job">
+<h2>Submit a Job<a class="headerlink" href="#submit-a-job" title="Permalink to this headline">¶</a></h2>
+<p>Similar to regular job submission, follow these steps:</p>
+<ol class="arabic simple">
+<li><a class="reference external" href="project.html">Select your pipeline and add into a project</a></li>
+<li><a class="reference external" href="run.html">Initiate run</a></li>
+</ol>
+<p>On the run page, you should select your active amazon profile as a <a class="reference external" href="run.html#run-settings">Run Environment</a> and click “Ready to Run” button.</p>
+</div>
+<div class="section" id="stoping-cluster">
+<h2>Stoping Cluster<a class="headerlink" href="#stoping-cluster" title="Permalink to this headline">¶</a></h2>
+<p>When runs are complete, you can stop cluster by clicking “stop” button on Amazon Management Console. Profile status will be updated as <code class="docutils literal notranslate"><span class="pre">Waiting</span> <span class="pre">for</span> <span class="pre">termination</span></code>, and in few seconds it will be changed to <code class="docutils literal notranslate"><span class="pre">Terminated</span></code> as soon as confirmation is received.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="example.html" class="btn btn-neutral float-right" title="Pipeline Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="profile.html" class="btn btn-neutral" title="Profile Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

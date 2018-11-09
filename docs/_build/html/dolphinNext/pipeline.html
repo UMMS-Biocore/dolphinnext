@@ -1,0 +1,486 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Pipeline Guide &mdash; DolphinNext 1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext 1.0 documentation" href="../index.html"/>
+        <link rel="up" title="DolphinNext" href="DolphinNext.html"/>
+        <link rel="next" title="Project Guide" href="project.html"/>
+        <link rel="prev" title="Process Guide" href="process.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="DolphinNext.html">DolphinNext</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Pipeline Guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#basics">Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#processes">Processes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#input-parameters">Input Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#output-parameters">Output Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#edges">Edges</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-header-script">Pipeline Header Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#adding-pipeline-inputs-by-pipeline-header-script">Adding Pipeline Inputs by Pipeline Header Script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#autofill-feature-for-pipeline-inputs">Autofill Feature for Pipeline Inputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#autofill-feature-for-pipeline-properties">Autofill Feature for Pipeline Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pipeline-details">Pipeline Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#permissions-groups-and-publish">Permissions, Groups and Publish</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#copying-and-revisions">Copying and Revisions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="DolphinNext.html">DolphinNext</a> &raquo;</li>
+        
+      <li>Pipeline Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/pipeline.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="pipeline-guide">
+<h1>Pipeline Guide<a class="headerlink" href="#pipeline-guide" title="Permalink to this headline">¶</a></h1>
+<p>This guide will show how to create, edit, delete and share pipelines.</p>
+<div class="section" id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h2>
+<p>Once logged in, click on the pipeline button in the top left of the screen. You’ll notice <em>Enter Pipeline Name</em> box, just below the Pipelines button.</p>
+<img alt="../_images/pipeline_name.png" class="align-center" src="../_images/pipeline_name.png" />
+<p>After entering pipeline name, you will see <em>Saving..</em> and <em>All changes saved</em> notifications just to the right of the pipeline name box and buttons. In DolphinNext, autosaving mode is active while creating pipelines for ease of use. You may also use “Save Pipeline” button to save your pipelines.</p>
+<p>Another way to create new pipeline is clicking orange “New pipeline” button which is located at left sidebar menu.</p>
+<a class="reference internal image-reference" href="../_images/process_buttons.png"><img alt="../_images/process_buttons.png" class="align-center" src="../_images/process_buttons.png" style="width: 35%;" /></a>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You can create a copy of your pipeline by clicking “Copy Pipeline” button and delete your pipeline by clicking “Delete Pipeline” button. While creating your pipeline, you can always check the created nextflow script by clicking “Download Pipeline” button.</p>
+</div>
+</div>
+<div class="section" id="processes">
+<h2>Processes<a class="headerlink" href="#processes" title="Permalink to this headline">¶</a></h2>
+<p>Processes can be reached by “Processes” section at the left sidebar menu. Under each menu group, assigned processes are located. You can drag and drop the process name on the workplace area. Process circle will appear as shown in the figure below:</p>
+<a class="reference internal image-reference" href="../_images/pipeline_process.png"><img alt="../_images/pipeline_process.png" class="align-center" src="../_images/pipeline_process.png" style="width: 20%;" /></a>
+<dl class="docutils">
+<dt>You will notice several icons on the process circle:</dt>
+<dd><ul class="first last simple">
+<li><strong>Settings icon</strong>, located at the top, opens “Select Process Revision” window where you may examine the current state of process or you may jump to the other revisions and replace the selected revisions on the workplace.</li>
+<li><strong>Pencil icon</strong> which is at the center of the circle, allow you to edit process name which will be placed in the nextflow file as a process name. Therefore process names should be unique in overall pipeline.</li>
+<li>At the bottom of the process circle, <strong>bin icon</strong> is located to delete current process from the pipeline.</li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="input-parameters">
+<h2>Input Parameters<a class="headerlink" href="#input-parameters" title="Permalink to this headline">¶</a></h2>
+<p>Input files or values which will be used in the process, need to be added by <strong>Input parameters</strong> circle. <strong>Input parameters</strong> are located on the top of the <a class="reference external" href="pipeline.html#processes">Processes</a> section at the left sidebar menu. Similar to adding processes, drag and drop feature is available for <strong>Input parameters</strong>. When dragging is completed, orange and smaller circle will appear in the workplace as shown in the figure below:</p>
+<img alt="../_images/pipeline_buildindex.png" class="align-center" src="../_images/pipeline_buildindex.png" />
+<p>By using the <strong>Pencil icon</strong> which is located at the left side of the circle, you can edit name of the input parameters. These names will be used while creating variables in the nextflow file, therefore these names should be unique in overall pipeline.</p>
+</div>
+<div class="section" id="output-parameters">
+<h2>Output Parameters<a class="headerlink" href="#output-parameters" title="Permalink to this headline">¶</a></h2>
+<p>Newly created files that are defined in the <a class="reference external" href="process.html#outputs">Outputs</a> section are selected by <strong>Output parameters</strong> circle. <strong>Output parameters</strong> are located just below of the <strong>Input parameters</strong> at the left sidebar menu and placed into workspace by dragging. The name of the circle determines the name of the published directory which can be edited by clicking <strong>pencil icon</strong>. In the example below, both aligned and unaligned reads are selected by two separate green circles. Both of outputs will be transferred to separate directories called aligned and unaligned.</p>
+<img alt="../_images/pipeline_tophat.png" class="align-center" src="../_images/pipeline_tophat.png" />
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<ul class="last simple">
+<li>If you don’t want to keep some of your output files, you may leave output nodes unconnected. Then only files that are selected will be transferred in the published directory.</li>
+<li>In order to transfer two or more outputs into same directory, you can use the same name for <strong>Output parameters</strong>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="edges">
+<h2>Edges<a class="headerlink" href="#edges" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>There are three main reasons for creating edges.</dt>
+<dd><ol class="first last arabic simple">
+<li>To establish a connection between inputs and outputs of the multiple processes</li>
+<li>To define input files or values which will be used in the processes</li>
+<li>To select outputs that will be published in the output directory.</li>
+</ol>
+</dd>
+</dl>
+<p>This procedure is facilitated by showing available nodes which are ready for connection. The figure below shows an example about this feature: Since mouse is over the output node: <code class="docutils literal notranslate"><span class="pre">genome_index</span></code> of the <strong>Build_index</strong> and DolphinNext shows the available node on the <strong>Map_tophat2</strong> process by marking.</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">This filtering is executed by checking <code class="docutils literal notranslate"><span class="pre">file</span> <span class="pre">types</span></code> of the set and file parameters and <code class="docutils literal notranslate"><span class="pre">name</span></code> of the val parameters. In this example, file type of the selected output node and the marked input node both <code class="docutils literal notranslate"><span class="pre">index</span></code>.</p>
+</div>
+<p>This feature is also available while connecting input parameters to multiple processes.</p>
+<img alt="../_images/pipeline_hover.png" class="align-center" src="../_images/pipeline_hover.png" />
+</div>
+<div class="section" id="pipeline-header-script">
+<h2>Pipeline Header Script<a class="headerlink" href="#pipeline-header-script" title="Permalink to this headline">¶</a></h2>
+<p>This section allows you to add additional inputs, scripts or comments before pipeline starts. This way you may recall same function several times in the other processes.</p>
+<img alt="../_images/pipeline_headerscript.png" class="align-center" src="../_images/pipeline_headerscript.png" />
+</div>
+<div class="section" id="adding-pipeline-inputs-by-pipeline-header-script">
+<h2>Adding Pipeline Inputs by Pipeline Header Script<a class="headerlink" href="#adding-pipeline-inputs-by-pipeline-header-script" title="Permalink to this headline">¶</a></h2>
+<p>You can use <strong>pipeline header script</strong> to add pipeline inputs which is very much similar to adding dropdown for process options. In order to create inputs, you need to use following syntax in the <strong>pipeline header script</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">variableName</span> <span class="o">=</span> <span class="n">defaultValue</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;...&quot;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Please note that you need to use <code class="docutils literal notranslate"><span class="pre">params.</span></code> at the beginning of <code class="docutils literal notranslate"><span class="pre">variableName</span></code>. You can define defaultValue with single/double quotes (for strings) or without any quotes (for numbers).</p>
+</div>
+<p>On the run page, these input parameters will be asked separately in the <strong>Inputs</strong> section as in the image shown at below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">genome_build</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;human_hg19, mouse_mm10, custom&quot;</span>
+<span class="n">params</span><span class="o">.</span><span class="n">run_Tophat</span> <span class="o">=</span> <span class="s2">&quot;no&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span><span class="s2">&quot;no&quot;</span>
+</pre></div>
+</div>
+<img alt="../_images/pipeline_alt_input.png" class="align-center" src="../_images/pipeline_alt_input.png" />
+</div>
+<div class="section" id="autofill-feature-for-pipeline-inputs">
+<h2>Autofill Feature for Pipeline Inputs<a class="headerlink" href="#autofill-feature-for-pipeline-inputs" title="Permalink to this headline">¶</a></h2>
+<p><strong>A.Based on Hostname:</strong></p>
+<p>DolphinNext allows you to enter hostname specific input parameters by using following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+&lt;input parameters&gt;
+}
+//*
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code> is DolphinNext specific variable that recalls the hostname which is going to be run. Therefore, in this example, <code class="docutils literal notranslate"><span class="pre">&lt;input</span> <span class="pre">parameters&gt;</span></code> will be filled in case of pipeline is going to run on <strong>ghpcc06.umassrc.org</strong>. Please check following example in which TrimPath parameter is filled automatically:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;garberwiki.umassmed.edu&quot;){
+    params.TrimPath =&quot;/project/Trimmomatic/trimmomatic-0.32.jar&quot;
+    }
+//*
+</pre></div>
+</div>
+<img alt="../_images/pipeline_autofill_input_host.png" class="align-center" src="../_images/pipeline_autofill_input_host.png" />
+<p><strong>B.Based on Selected Input:</strong></p>
+<p>It is possible autofill based on the selected parameters on the running page. In the following example, path of the program will be changed according to selected pipeline parameter:<code class="docutils literal notranslate"><span class="pre">method</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;trimmomatic, fastqx&quot;</span>
+<span class="o">//*</span> <span class="n">autofill</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;trimmomatic&quot;</span><span class="p">){</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">TrimPath</span> <span class="o">=</span><span class="s2">&quot;/project/Trimmomatic/trimmomatic-0.32.jar&quot;</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;fastqx&quot;</span><span class="p">){</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">TrimPath</span> <span class="o">=</span><span class="s2">&quot;/project/fastqx/fastqx&quot;</span>
+<span class="p">}</span>
+<span class="o">//*</span>
+</pre></div>
+</div>
+<img alt="../_images/pipeline_autofill_input_param.png" class="align-center" src="../_images/pipeline_autofill_input_param.png" />
+<p><strong>C.Dynamic Autofill:</strong></p>
+<p>In order to autofill parameters that have kind of pattern, you can use dynamic autofill feature. To do so, you need to define variable parts of the pattern by using underscore such as <code class="docutils literal notranslate"><span class="pre">_species</span></code> or <code class="docutils literal notranslate"><span class="pre">_build</span></code>. Afterwards, you can define these variable based on if conditions. Finally, you can activate the autofill feature by checking the existance by following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>if (params.variableName &amp;&amp; $HOSTNAME){
+    &lt;input parameters&gt;
+}
+
+or
+
+if ($HOSTNAME){
+    &lt;input parameters&gt;
+}
+</pre></div>
+</div>
+<p>Please check the example below where <code class="docutils literal notranslate"><span class="pre">params.genome</span></code> and <code class="docutils literal notranslate"><span class="pre">params.genomeIndexPath</span></code> filled according to selected parameters of <code class="docutils literal notranslate"><span class="pre">params.genome_build</span></code> and <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>params.genome_build = &quot;&quot; //* @dropdown @options:&quot;human_hg19, mouse_mm10&quot;
+def _species;
+def _build;
+def _share;
+//* autofill
+if (params.genome_build == &quot;human_hg19&quot;){
+    _species = &quot;human&quot;
+    _build = &quot;hg19&quot;
+} else if (params.genome_build == &quot;mouse_mm10&quot;){
+    _species = &quot;mouse&quot;
+    _build = &quot;mm10&quot;
+}
+
+if ($HOSTNAME == &quot;garberwiki.umassmed.edu&quot;){
+    _share = &quot;/share/dolphin_data/genome_data&quot;
+} else if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    _share = &quot;/project/data/genome_data&quot;
+}
+if (params.genome_build &amp;&amp; $HOSTNAME){
+    params.genome =&quot;${_share}/${_species}/${_build}/${_build}.fa&quot;
+    params.genomeIndexPath =&quot;${_share}/${_species}/${_build}/${_build}&quot;
+}
+if ($HOSTNAME){
+    params.TrimPath =&quot;${_share}/Trimmomatic/trimmomatic-0.32.jar&quot;
+}
+//*
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/pipeline_autofill_input_dynamic.png"><img alt="../_images/pipeline_autofill_input_dynamic.png" class="align-center" src="../_images/pipeline_autofill_input_dynamic.png" style="width: 99%;" /></a>
+</div>
+<div class="section" id="autofill-feature-for-pipeline-properties">
+<h2>Autofill Feature for Pipeline Properties<a class="headerlink" href="#autofill-feature-for-pipeline-properties" title="Permalink to this headline">¶</a></h2>
+<p>You might define hostname specific executor properties and create autofill feature by using following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+&lt;executor properties&gt;
+}
+//*
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code> is DolphinNext specific variable that recalls the hostname which is going to be run. Therefore, in this example, all <code class="docutils literal notranslate"><span class="pre">&lt;executor</span> <span class="pre">properties&gt;</span></code> will be active in case of pipeline is going to run on <strong>ghpcc06.umassrc.org</strong>.</p>
+<p><strong>Executor Properties:</strong></p>
+<p>Five type of executor properties are available to autofill <strong>Executor Settings for All Processes</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue and Other Options. See the example below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    $TIME = 3000
+    $CPU  = 4
+    $MEMORY = 100
+    $QUEUE = &quot;long&quot;
+    $EXEC_OPTIONS = &#39;-E &quot;file /home/garberlab&quot;&#39;
+}
+//*
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/pipeline_autofill.png"><img alt="../_images/pipeline_autofill.png" class="align-center" src="../_images/pipeline_autofill.png" style="width: 99%;" /></a>
+<p><strong>Singilarity/Docker Images:</strong></p>
+<p>Four type of image properties are available to autofill : <code class="docutils literal notranslate"><span class="pre">$DOCKER_IMAGE</span></code>, <code class="docutils literal notranslate"><span class="pre">$DOCKER_OPTIONS</span></code>, <code class="docutils literal notranslate"><span class="pre">$SINGULARITY_IMAGE</span></code>, <code class="docutils literal notranslate"><span class="pre">$SINGULARITY_OPTIONS</span></code> which automatically fills the <code class="docutils literal notranslate"><span class="pre">image</span> <span class="pre">path</span></code> and <code class="docutils literal notranslate"><span class="pre">RunOptions</span></code> fields of docker and singularity. See the example below for docker:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    $DOCKER_IMAGE = &quot;docker://UMMS-Biocore/docker&quot;
+    $DOCKER_OPTIONS = &quot;-v /export:/export&quot;
+}
+//*
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/pipeline_autofill_docker.png"><img alt="../_images/pipeline_autofill_docker.png" class="align-center" src="../_images/pipeline_autofill_docker.png" style="width: 99%;" /></a>
+<p>Singularity image example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    $SINGULARITY_IMAGE = &quot;shub://UMMS-Biocore/singularity&quot;
+        $SINGULARITY_OPTIONS = &quot;--bind /project&quot;
+}
+//*
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/pipeline_autofill_singu.png"><img alt="../_images/pipeline_autofill_singu.png" class="align-center" src="../_images/pipeline_autofill_singu.png" style="width: 99%;" /></a>
+</div>
+<div class="section" id="pipeline-details">
+<h2>Pipeline Details<a class="headerlink" href="#pipeline-details" title="Permalink to this headline">¶</a></h2>
+<p>This section summarizes all used processes and input/output parameters to give you an overall view about pipeline.</p>
+<img alt="../_images/pipeline_details.png" class="align-center" src="../_images/pipeline_details.png" />
+</div>
+<div class="section" id="permissions-groups-and-publish">
+<h2>Permissions, Groups and Publish<a class="headerlink" href="#permissions-groups-and-publish" title="Permalink to this headline">¶</a></h2>
+<p>By default, all new pipelines are only seen by the owner. You can share your pipeline with your group by selecting permissions to “Only my groups”. If you want to make it public, you can change Publish option to ‘Yes’. After verification of the pipeline, it will be publish to everyone.</p>
+<img alt="../_images/pipeline_perms.png" class="align-center" src="../_images/pipeline_perms.png" />
+</div>
+<div class="section" id="copying-and-revisions">
+<h2>Copying and Revisions<a class="headerlink" href="#copying-and-revisions" title="Permalink to this headline">¶</a></h2>
+<p>It is always allowed to create a copy of your pipele by clicking “Copy Pipeline” button just to the right of the pipeline name box and buttons. When your pipeline is set to public or it has been used by other group members, it is not allow to make changes on same revision. Instead, new revision of the pipeline can be created and changes could be done on this revision.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="project.html" class="btn btn-neutral float-right" title="Project Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="process.html" class="btn btn-neutral" title="Process Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

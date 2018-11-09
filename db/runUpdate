@@ -1,0 +1,10 @@
+db=$1
+mysql -u root $db < updateVersion0.1.10.sql
+mysql -u root $db < updateVersion0.1.14.sql
+mysql -u root $db < updateVersion0.1.15.sql
+mysql -u root $db < updateVersion0.1.16.sql
+mysql -u root $db < updateVersion0.1.34.sql
+mysql -u root $db < updateVersion0.1.36.sql
+mysql -u root $db < updateVersion0.2.06.sql
+mysql -u root $db < updateVersion0.2.10.sql
+mysql -u root $db < updateVersion0.2.12.sql

@@ -1,0 +1,933 @@
+06.11.2018 Version 0.2.35
+Nextflow and process memory and cpu limits are added for local in the profile and run page.
+
+05.11.2018 Version 0.2.34
+Process form fields upgraded to create conditional dropdowns.
+
+05.11.2018 Version 0.2.33
+Minor bug regarding to log renaming is fixed. 
+
+03.11.2018 Version 0.2.32
+Autoform feature upgraded to support two nucleic acid types in sequential mapping.
+
+02.11.2018 Version 0.2.31
+Minor bug fixed regarding to deactivation of process feature
+
+30.10.2018 Version 0.2.30
+Bug fixed regarding to preCmd.
+
+28.10.2018 Version 0.2.29
+Bug fixed to support multiple edges from single output node.
+Revision dropdown in pipeline module settings modal is fixed.
+Operator loading issue is fixed.
+Pipeline module info modal improved.
+Bug fixed regarding to info modal of pipeline module section.
+
+27.10.2018 Version 0.2.28
+Permission is allowed for admin to save on existing processes/pipelines in spite of they have beed used in public.
+Amazon folder and commands are updated as username_profileid to eliminate conflict. 
+Amazon loading status feature is updated to keep sshtext available while reloading.
+Amazon folder and commands removed from dot and replaced with two underscores.
+
+26.10.2018 Version 0.2.27
+Minor bug fixed while creating empty channels for deactivation of process feature .
+
+26.10.2018 Version 0.2.26
+Deactivation of process feature is updated.
+
+26.10.2018 Version 0.2.25
+Deactivation of process feature by using "when" syntax is updated.
+
+25.10.2018 Version 0.2.24
+"&&" Fix in nextflow command prep
+
+25.10.2018 Version 0.2.23
+Default command is defined for amazon before running nextflow: "source /etc/profile && source ~/.bash_profile"
+
+24.10.2018 Version 0.2.22
+Starting clusterDeamon feature is removed to activate autoscale function.
+
+24.10.2018 Version 0.2.21
+Default command is defined before running nextflow: "source /etc/profile && source ~/.bash_profile"
+
+22.10.2018 Version 0.2.20
+Pipeline modules added to public pipeline page for visualization.
+
+22.10.2018 Version 0.2.19
+MinInstance and MaxInstance feature updated.
+
+22.10.2018 Version 0.2.18
+Bug fixed regarding to deleting project_pipeline_inputs.
+
+21.10.2018 Version 0.2.17
+Bug fixed regarding to deactivation of process feature.
+
+21.10.2018 Version 0.2.16
+Deactivation of process feature is added by using "when" syntax.
+
+17.10.2018 Version 0.2.15
+Bug fixed for dynamic autofill feature in form fields of nested pipelines.
+
+17.10.2018 Version 0.2.14
+Bug fixed for dynamic autofill feature in the form fields 
+
+17.10.2018 Version 0.2.13
+Nested pipeline executor settings fixed.
+Autofill feature for process executor settings added to nested pipelines.
+Bug fixed in main page where process name called as undefined.
+Checkboxes of executor settings fixed to support dynamic change.
+Checkboxes of each executor settings dynamicaly checked when user change one parameter.
+
+16.10.2018 Version 0.2.12
+Amazon modal multiple node feature updated and commands added for deamon log removal. 
+
+14.10.2018 Version 0.2.11
+Dynamic autofill feature added to form fields in the run page.
+Amazon autoscale modal updated. 
+
+13.10.2018 Version 0.2.10
+Basic autofill feature added to form fields in the run page.
+MinInstance feature added to amazon autoscale. 
+
+10.10.2018 Version 0.2.09
+Saving pipelineDetails trigger permission change of pipeline parameters/processes.
+
+10.10.2018 Version 0.2.08
+Sharing permissions fixed for pipeline menu.
+
+09.10.2018 Version 0.2.07
+Sharing permissions fixed for pipelines.
+
+09.10.2018 Version 0.2.06
+Dolphinnext public key comment is changed as "@dolphinnext".
+Process_list and pipeline_list columns added to db of pipeline page.
+Faster reload feature added while reloading run page.
+
+29.09.2018 Version 0.2.05
+Bug fixed regarding to deleting input parameters
+
+28.09.2018 Version 0.2.04
+Bug fixed regarding to clean feature for duplicate form variables.
+
+28.09.2018 Version 0.2.03
+Clean feature for duplicate form variables is removed.
+
+27.09.2018 Version 0.2.02
+Duplicate form variables or pipeline inputs cleaned from run page.
+when pipeline is saved, pipeline module group/permission updated.
+
+26.09.2018 Version 0.2.01
+Clear:both style added to multicolumn fields.
+
+25.09.2018 Version 0.2.00
+Bug fixed related to run page system inputs.
+
+24.09.2018 Version 0.1.99
+Bug fixed related to parsing form data.
+
+19.09.2018 Version 0.1.98
+Two bugs fixed related to pipeline modules.
+
+19.09.2018 Version 0.1.97
+Array.ForEach loop is replaced with for loop.
+
+19.09.2018 Version 0.1.96
+Minor bug fixed related to pipeline modules.
+
+19.09.2018 Version 0.1.95
+Minor bug fixed related to nested pipeline nodes 
+Loading performance of pipeline modules is improved.
+
+18.09.2018 Version 0.1.94
+Select revision of pipeline module modal added to pipeline page.
+
+17.09.2018 Version 0.1.93
+Merge input nodes of pipeline modules in case they have connected to same "input parameter"
+
+17.09.2018 Version 0.1.92
+New revision or copy of public pipeline creates private pipeline(perms=3)
+Ajax requests in run page are decreased to improve performance.
+
+16.09.2018 Version 0.1.91
+Nested pipeline feature added to run page.
+jquery-ui removed from libraries.
+jquery-ui-bootsrap added to libraries for dialog type modal.
+
+14.09.2018 Version 0.1.90
+browser lock fixed by using session_write_close in php pages.
+while copying run, user allowed to use new pipeline revision 
+
+14.09.2018 Version 0.1.89
+Appearance of sign in button is fixed.
+save nextflow log file to server and read from there to improve performance.
+
+13.09.2018 Version 0.1.88
+hide/show feature for system inputs is added.
+
+13.09.2018 Version 0.1.87
+terminate run feature for local runs added.
+
+12.09.2018 Version 0.1.86
+default ignite executor parameters are added in profile modal.
+
+12.09.2018 Version 0.1.85
+automatic s3 key selection is added based on run env. in running page
+automatic click on "use default" button in run page openning.
+cluster deamon for amazon worker nodes is executed while initiating nodes.
+downloaded singularity path is changed as mount dir. for amazon instances.
+amazon ignite executor parameters are added.
+
+12.09.2018 Version 0.1.84
+amazon_running status updates run env. dropdown in running page
+
+11.09.2018 Version 0.1.83
+Run attempt counter and renaming log file added for amazon environment.
+
+10.09.2018 Version 0.1.82
+amazon status check algorithm is updated.
+
+10.09.2018 Version 0.1.81
+amazon status check algorithm is updated.
+Readme updated.
+
+08.09.2018 Version 0.1.80
+Database files cleaned from drop table commands.
+Nested pipeline feature added to pipeline page.
+Adjustment of width of d3 workspace according to page size is added.
+
+25.08.2018 Version 0.1.79
+Renamed log file of run is checked in case command not executed.
+Fixed minor bugs of checking run status.
+
+22.08.2018 Version 0.1.78
+Quick start guide is added to documentation.
+
+16.08.2018 Version 0.1.77
+Cleaning Project_pipeline_inputs removed from pipelineD3.js and moved to runpipeline.js to improve performance.
+
+13.08.2018 Version 0.1.76
+Cleaning Project_pipeline_inputs improved.
+
+12.08.2018 Version 0.1.75
+Array forms cloned from original hidden form to keep default values
+Array tooltip activated when created by add button.
+Conditional form support for checkbox is added.
+Project_pipeline_inputs cleaned from db when defined in pipeline input and deleted/changed from pipeline_header_script.
+
+12.08.2018 Version 0.1.74
+"Create revision" icon in pipeline page removed and description form is disabled in case user not owns it.
+Unused libraries removed from bower_components folder.
+
+12.08.2018 Version 0.1.73
+Documentation updated for form builder and autofill feature of pipeline.
+
+09.08.2018 Version 0.1.72
+Publish regex is fixed with escape character if pattern contains "/".
+
+05.08.2018 Version 0.1.71
+Publish regex is fixed for outputs contains "*".
+Publish regex is fixed by adding "$" sign at the end pattern.
+
+24.07.2018 Version 0.1.70
+Rare error of cleanup intermediate files fixed by adding "cleanup = true" command in the config file. 
+
+23.07.2018 Version 0.1.69
+Fixed minor bugs of checking run status.
+
+21.07.2018 Version 0.1.68
+Keep run status in case log files are deleted.
+Fixed minor bugs of checking run status.
+Input parameter creation for file depends on the existence of regex character in the inputs. If it has these characters "Channel.fromPath(param)" otherwise "file(param)" are used.
+
+17.07.2018 Version 0.1.67
+Default input parameter creation for file return back to "file(param)" from "Channel.fromPath(param)" since it created problem when multiple channels used in same process.
+Added CSS changes in form fields.
+
+12.07.2018 Version 0.1.66
+Default input parameter creation for file is changed from "file(param)" to "Channel.fromPath(param)"
+
+11.07.2018 Version 0.1.65
+Condition dependent type of forms added by using header script
+
+09.07.2018 Version 0.1.64
+Multicolumn and array type of forms added by using header script
+
+02.07.2018 Version 0.1.63
+Documentation is upgraded for process options and autofill feature of process.
+
+25.06.2018 Version 0.1.62
+Error messages are suppressed from cat command of the log file when job submitted but run not started.
+New line character of textarea is replaced with \n while filling nextflow file.
+
+24.06.2018 Version 0.1.61
+Minor bug fixed regarding to autofill of process.
+
+23.06.2018 Version 0.1.60
+Minor bug fixed regarding to number of inputs in run pipeline.
+
+22.06.2018 Version 0.1.59
+System and user inputs are separated in run pipeline.
+
+21.06.2018 Version 0.1.58
+Autofill feature  is added for ghpcc06 cluster to mount all directories before run executed.
+
+21.06.2018 Version 0.1.57
+Autofill feature for run command is added for both pipeline and process.
+
+20.06.2018 Version 0.1.56
+Autofill feature for docker, singularity, pipeline and process executor settings are added. 
+
+18.06.2018 Version 0.1.55
+Show warning modal when user tries to delete pipeline which has used by other users.
+Resume button added when process terminated
+
+14.06.2018 Version 0.1.54
+"Loading" sign added to autofill feature and File/Val modal. 
+
+11.06.2018 Version 0.1.53
+Download workflow as pdf feature is added.
+
+8.06.2018 Version 0.1.52
+Warning about parameter is defined multiple times is fixed in the nextflowtext.
+
+7.06.2018 Version 0.1.51
+Minor bug fixed while creating NextflowText.
+Autofill feature is upgraded for generic definitions.
+
+4.06.2018 Version 0.1.50
+Pipeline process sorting algorithm improved by recursive approach.
+
+3.06.2018 Version 0.1.49
+Flat feature of fromFilePairs supported by "mateFlat" keyword in inputs section of process. 
+
+30.05.2018 Version 0.1.48
+Minor bug fixed regarding to Autofill feature.
+
+30.05.2018 Version 0.1.47
+Terminating nextflow job by PID is added for LSF platform.
+
+29.05.2018 Version 0.1.46
+Update of script style is fixed while opening process and pipeline.
+Nextflow test is filled based on pipeline options.
+Variables which start with "params." prefix (defined in the pipeline header section) transfered into inputs section.
+Autofill feature is added which allows to fill inputs based on hostname.
+Remove run from run table while deleting project_pipeline. 
+
+25.05.2018 Version 0.1.45
+Minor bug while parsing Pipeline options is fixed.
+
+25.05.2018 Version 0.1.44
+Minor bug fixed to activate "executor Settings for Each Process".
+Template user image is changed.
+
+25.05.2018 Version 0.1.43
+Pipeline options is added as form in the run page.
+
+24.05.2018 Version 0.1.42
+Use dropdown feature to enter options for input parameters is added.
+
+23.05.2018 Version 0.1.41
+Intermediate files will be kept in case nextflow error occurs.   
+tooltip and description for process options is added.
+
+23.05.2018 Version 0.1.40
+Submitting nextflow job into SGE is updated.
+Terminating nextflow job by PID is added to SGE platform.
+Related documentation updated in run and profile page.
+
+22.05.2018 Version 0.1.39
+Resume run feature is added.
+
+21.05.2018 Version 0.1.38
+Fixed error of fixCurlyBrackets function of nextflowtext.
+
+21.05.2018 Version 0.1.37
+Executor settings are fixed to save and load quotes from db 
+NextflowText is fixed for curly brackets: {bam,bai} turned into (bam|bai) format to publish files with regular expression
+
+21.05.2018 Version 0.1.36
+Pipeline groups integrated into left sidebar menu. Related unit testing functions added.
+
+17.05.2018 Version 0.1.35
+New defined parameters in the process options (on the run page) updated on the nextflow text.
+
+17.05.2018 Version 0.1.34
+Documentation section about ssh keys is updated.
+Save/load process options on run page is finalized.
+
+16.05.2018 Version 0.1.33
+Process options added as forms to run page. Feature is not finalized.
+
+13.05.2018 Version 0.1.32
+10 unit testing function is added.
+
+13.05.2018 Version 0.1.31
+Project_pipeline_input is updated, when given name of the inputparam is changed in pipeline page.
+
+13.05.2018 Version 0.1.30
+Run page is updated for preserved edges. 
+
+13.05.2018 Version 0.1.29
+Edges preserved within the process after process parameters are updated.
+
+12.05.2018 Version 0.1.28
+Edges preserved after process parameters are updated.
+
+04.05.2018 Version 0.1.27
+Creating revision feature is added in case process is used in public runs. 
+
+03.05.2018 Version 0.1.26
+14 unittesting functions added.
+
+02.05.2018 Version 0.1.25
+process owner data added to process modal.
+
+01.05.2018 Version 0.1.24
+PiPipes documentation added to pipeline examples section.
+Impersonation feature added for admin in profile page. 
+
+25.04.2018 Version 0.1.23
+Typo while checking the run status is fixed.
+
+25.04.2018 Version 0.1.22
+Typo is fixed while running docker image.
+
+25.04.2018 Version 0.1.21
+Bug fixed while adding inputs to run.
+
+24.04.2018 Version 0.1.20
+Warning about unique process names updated and output parameters are removed from the list.
+Error warning before starting run is fixed. 
+
+21.04.2018 Version 0.1.19
+Bug fixed while adding comma or backslash into description sections (process, pipeline, project, run)
+pipeline/run name (for sidebar) is trunctated when duplicated/renamed.
+
+17.04.2018 Version 0.1.18
+Define default value feature for input parameters is added.
+Use default value button in run pipeline page is added.
+Bug while adding same input in the run is fixed.
+
+11.04.2018 Version 0.1.17
+Amazon management console is improved in case of log is not received.
+
+06.04.2018 Version 0.1.16
+Footer process script section added to process modal.
+Header and Footer pipeline script section added to pipeline page.
+
+04.04.2018 Version 0.1.15
+Pipeline process sorting algorithm improved.
+Project based file selection modal in run pipeline page is improved.
+Tooltips added to add process modal.
+Process parameter (sname,closure,reg_ex) column types are assigned as text.
+Reporting options (withReport, withTrace, withDag, withTimeline ) are added in run pipeline page.
+Cluster options added to jobs settings section in profile and run pipeline page
+
+02.04.2018 Version 0.1.14
+Save over image option is added for shub external url support.
+Text wrap problem is fixed for long texts. (eg. Summary of public pipeline page and file paths of run pipeline page)
+Channel.fromPath syntax error fixed.
+"toSortedList" operator is added to Channel.fromPath in order to receive files in sorted format.
+Removal of backslash while saving process script is fixed.
+
+30.03.2018 Version 0.1.13
+While adding public files/values, shared storage id will be used for amazon profiles.
+shub external url support added for singularity.
+
+29.03.2018 Version 0.1.12
+Adding files/values button is removed in process details page.
+Adding public files/values table is added in process page for admin.
+Selection public files and project files are added in file/val selection modal.
+
+28.03.2018 Version 0.1.11
+Adding files/values modal is finalized in process details page.
+
+27.03.2018 Version 0.1.10
+Adding files/values modal is updated in process details page (not completed).
+
+27.03.2018 Version 0.1.09
+Missing images for read the docs are added.
+Adding inputs section is updated, repetition in db is prevented.
+
+26.03.2018 Version 0.1.08
+Examples page is added to Readthedocs.
+
+25.03.2018 Version 0.1.07
+Amazon cloud page is added to Readthedocs.
+TerminateWhenIdle attribute added to autoscale feature of amazon cloud.
+
+22.03.2018 Version 0.1.06
+Waiting icon is added for amazon modal for latencies.
+Run page for Readthedocs is added.
+
+22.03.2018 Version 0.1.05
+Projects page for Readthedocs is added.
+Apache ignite error is fixed.
+
+21.03.2018 Version 0.1.04
+Pipeline page for Readthedocs is added.
+
+20.03.2018 Version 0.1.03
+Sidebar menu on entrance is updated.
+Process page for Readthedocs is added.
+Tooltips added into add process modal.
+Default language mode for process script is assigned as shell.
+
+19.03.2018 Version 0.1.02
+Profile page for Readthedocs is added.
+
+17.03.2018 Version 0.1.01
+Js controling improved by checking success of ajax operations in runpipeline and jsfunc.
+Debugging improved by adding controls for each step, before run is initiated.
+Unnecessary php files are removed.
+For simplicity, dbfunc class removed from Sidebarmenu and sidebarmenuproject php files.
+
+17.03.2018 Version 0.1.00
+30 new test functions are added for travis.
+DB functions are upgraded for travis tests.
+
+16.03.2018 Version 0.0.99
+New test functions are added for travis.
+Error fixed in run pipeline page.
+
+16.03.2018 Version 0.0.98
+Debugging is upgraded by run logs.
+Adding NA as project file is fixed.
+
+16.03.2018 Version 0.0.97
+getProjectPipelineInputs function error fixed.
+
+15.03.2018 Version 0.0.96
+42 test functions for travis are added.
+check server log error fixed.
+
+13.03.2018 Version 0.0.95
+pipelineModal.js update for empty process columns.
+
+12.03.2018 Version 0.0.94
+Commented out local run option in php.
+
+12.03.2018 Version 0.0.93
+header process script added to nextflow text.
+
+11.03.2018 Version 0.0.92
+input/output parameter name automaticaly cleaned from special characters and spaces
+Save on existing process/pipeline now available if nobody else is using than owner
+Save editor style to db in process modal.
+In advanced settings of process, new editor is added to insert code or comment before process
+Publish dir regular expression feature is added to process modal.
+
+10.03.2018 Version 0.0.91
+runUpdate location changed
+DB added to runUpdate
+
+09.03.2018 Version 0.0.90
+sql errors fixed.
+added update folder
+
+09.03.2018 Version 0.0.89
+sql error fixed. (insertUser)
+config.ini deleted.
+
+09.03.2018 Version 0.0.89
+config.php and .sec file updated.
+
+08.03.2018 Version 0.0.88
+fix docker and singularity (checkbox collapse) error in run pipeline page.
+publish directory feature added to run pipeline page.
+checkrunready feature is added on publish directory if checkbox is on.
+
+07.03.2018 Version 0.0.87
+BASE_PATH and API_PATH removed from config.php and config.ini.
+checkrunready when keyup is added on output directory on run pipeline page
+check s3 pattern feature is added in runpipeline page for input files and output directory.
+If it is defined, it allows for selection aws credentials and then inserts into nextflow.config file
+
+07.03.2018 Version 0.0.86
+GROUP BY queries updated by removing unnecessary fields.
+isset function added to fix php errors in dbfunc.php.
+session_start moved to top of the page in index.php to fix error.
+unnecessary variables REMOTE_HOST and DOLPHINPATH removed from config.php.
+
+07.03.2018 Version 0.0.85
+GROUP BY fields fixed
+
+06.03.2018 Version 0.0.84
+profile tab button is hidden in public page
+process name automaticaly cleaned from special characters and spaces
+Warning feature for unique process/parameter name in pipeline is added.
+
+06.03.2018 Version 0.0.83
+Confirm modal is added while removing profile.
+Sql error fixed on sidebar menu.
+Job configuration feature for each process is added.
+
+06.03.2018 Version 0.0.82
+DB consolidated and config fixed
+
+05.03.2018 Version 0.0.81
+Profile page updated and finalized (Ssh keys tab and Amazon keys tab are functional)
+
+04.03.2018 Version 0.0.80
+Ssh keys tab finalized (not functional)
+Amazon keys tab finalized (not functional)
+
+02.03.2018 Version 0.0.79
+Description fields are defined as blob for both in process, pipelines, and runs
+“mate” matching problem in nextflow channel creation is fixed
+
+28.02.2018 Version 0.0.78
+Fixed error in single Cell pipeline in dolphinnext.
+Ssh keys tab added (not functional)
+readthedocs link added to top of the page
+readthedocs format errors are cleared.
+
+28.02.2018 Version 0.0.77
+Fixed Error when selecting process revisions in pipeline
+
+28.02.2018 Version 0.0.76
+Editing on public processes/pipelines blocked (even user is the owner of the process), instead create revision button is added.
+Pipeline publish feature is added.
+Permission checker added for Pipeline if user wants to return back to private mode.
+Admin need to approve everyone permission for pipelines.
+All pipelines retrieved to admin role which allows to edit permissions.
+
+28.02.2018 Version 0.0.75
+Process publish feature is added.
+Permission checker added for process if user wants to return back to private mode.
+Admin need to approve everyone permission for processes.
+Search filter shows process that are waiting approval.
+All processes retrieved to admin role which allows to edit permissions.
+
+27.02.2018 Version 0.0.74
+Nextflow file update (checks three single quotes)
+Nextflow sorting algorithm error fixed.
+Permissions, group and publish option added to process modal.
+
+27.02.2018 Version 0.0.73
+Number of attempts column added to run table.
+Log files are renamed before run is initiated to eliminate the chance of documentation error.
+Rerun button upgraded.
+
+27.02.2018 Version 0.0.72
+ssh text is fixed for cluster runs.
+Amazon status checker updated for eliminate lags.
+
+26.02.2018 Version 0.0.71
+Slurm ignite Nextflow job submission is defined in local executor.
+Profile page upgraded.
+All executor memories are defined as GB.
+Jobname is defined as pipeline name for lsf and sge executors.
+Outputs paths are fixed for file and set format when multiple directories are defined in file section(in run pipeline page)
+
+26.02.2018 Version 0.0.70
+pipeline filtering feature added for admin (waiting approval vs public)
+
+26.02.2018 Version 0.0.69
+Bug fixed while saving dragging pipeline elements.
+Bug while showing pin to mainpage element is fixed.
+Description for single cell pipeline is added.
+
+26.02.2018 Version 0.0.68
+Terminate amazon waiting status by monitoring log file with error keywords.
+Selection and order box for pipelines which are going to be in main page is added for admin
+pipeline details are saved by separate ajax (no need for revision when changes on details)
+Public pipelines should be approved by admins(by selecting pin to main page)
+Pagination feature in Main page is added.
+
+25.02.2018 Version 0.0.67
+ssh and amz path is changed for security reasons.
+
+24.02.2018 Version 0.0.66
+Error fixed when status stays 'ready to run' when pipeline input parameters are deleted (using save existing pipeline)
+main page pipeline box width and height fixed
+
+23.02.2018 Version 0.0.65
+outparameter name added to publishdir path.
+input param resets after disconnection.
+ssh path and error log added to amazon management console.
+
+22.02.2018 Version 0.0.64
+Ignite job submission is added for amazon.
+start/stop button added for amazon profile section.
+Bug fixed while deleting project.
+
+21.02.2018 Version 0.0.63
+Copy pipeline icon is added in run pipeline page.
+" is replaced with \" in run command.
+
+21.02.2018 Version 0.0.62
+Single Cell pipeline (2 more steps: Map_Tophat2_SCell, MergeSortIndex added to local server)
+Automatic permission change problem of Pipeline and project is fixed.
+"'"'" is replaced with \" in run command.
+
+21.02.2018 Version 0.0.61
+Terminate button added to run pipeline page.(kill pid feature is missing)
+
+21.02.2018 Version 0.0.60
+url of the page is added in feedback modal.
+remove project pipeline inputs after input parameters get deleted when save on exist is selected.
+
+20.02.2018 Version 0.0.59
+File paths are trimmed while adding on run pipeline page.
+Readthedocs template files are added.
+
+20.02.2018 Version 0.0.58
+username is defined in the amazon cloud.
+if mate is used in the process, first input channel is defined by using fromFilePairs, otherwise fromPath method is used.
+Using a channel in two process feature is added.
+
+19.02.2018 Version 0.0.57
+Fixed error in pipeline page while selection of project.
+
+17.02.2018 Version 0.0.56
+first output/input connection is now unidirectional.
+output param resets after disconnection.
+Blocking/warning added when parameter filetype/name start with digits.
+fixed bug when save on current revision for process
+Save on existing process feature added.
+truncate menu name for sidebarmenu process/pipeline/project
+
+16.02.2018 Version 0.0.55
+Single Cell pipeline (4 steps: rsync_basespace, bxltofastq, extractValidReads, split added to local server)
+Duplicate process feature added.
+Go to existing runs button added in pipeline page.
+Bug fixed while saving operators in process revision.
+Bug fixed while deleting process revision.
+Process circle shift when process revision change by info modal resolved.
+
+15.02.2018 Version 0.0.54
+Duplicate project run added.
+Projects, project details section updated(options loaded based on ownership)
+If pipeline/run is copied from other owner, keep properties from original owner. if user change process/pipeline, then new pipeline will be assigned as a new owner and defined as first revision of new owner.
+
+14.02.2018 Version 0.0.53
+Database check feature added when edit/delete parameter.(will not allow to change if its used in process)
+Database check feature added when delete process menu group.(will not allow to delete if their process's are in use)
+Only owner able to delete/edit parameter, process, pipeline, menu group, run.
+Process info modal upgraded for operators.
+Projects Run section updated(options loaded based on ownership)
+
+13.02.2018 Version 0.0.52
+Permission and group data options added in pipeline and run pipeline pages.
+Filter (permission and group) feature added to sidebar menu.
+Process menu group edit/delete modal added.
+
+12.02.2018 Version 0.0.51
+Add run data to run_logs table(duration, status, start and end date)
+add output files to input and project_input table after run starts
+
+11.02.2018 Version 0.0.50
+Minor bug fixed when page reloads.
+Groups section added to profile page.
+Nextflow log based job control completed.
+
+09.02.2018 Version 0.0.49
+Amazon run submission completed.
+update page accordingly when page reloads completed. (minor bug remains)
+
+08.02.2018 Version 0.0.48
+Amazon cloud start and stop features are completed.
+
+07.02.2018 Version 0.0.47
+Amazon profile is completed.
+Amazon tab added in topbar.
+Amazon cloud start feature is added.
+
+05.02.2018 Version 0.0.46
+Singularity and docker run options added in run pipeline page.
+
+05.02.2018 Version 0.0.45
+sidebar for projects is integrated with pages(add/remove/edit features added).
+.salt replaced with .sec file and config.ini parse feature added.
+operator feature for each process_parameter is added in add process modal.
+bug in nextflow.config file is fixed for local runs.
+
+03.02.2018 Version 0.0.44
+run pipeline bug fixed.
+sidebar for projects is added.
+
+03.02.2018 Version 0.0.43
+val parameter bug fixed and visualixation is fixed in pipeline and run page.
+input output parameter allows quotations in process add modal.
+executor settings for nextflow jobs are added to profile page.
+executor settings for integrated in run pipeline page.
+
+01.02.2018 Version 0.0.42
+nextflow executor options added to profile page
+
+01.02.2018 Version 0.0.41
+run command feature added into run pipeline page
+results folder updated.
+
+31.01.2018 Version 0.0.40
+run command feature added into profiles
+
+31.01.2018 Version 0.0.39
+feedback modal added.
+amazon profile is upgraded.
+docker image updates:pip install simple-crypt
+output folder option in run pipeline page upgraded.
+
+29.01.2018 Version 0.0.38
+pipeline sorting algorithm added.
+while adding new parameter, if type is selected val: then file type will assigned as identifier.
+entering file_type is mandatory for set and file
+
+29.01.2018 Version 0.0.37
+database errors fixed by adding quote.
+
+28.01.2018 Version 0.0.36
+docker and singularity image options are added and functional.
+nextflow logs are now loaded to run logs area.
+output directory in the run page added to nextflow file as a publish directory.
+nextflow and all process job parameters are functional in run pipeline page.
+Delete intermediate runs feature is added.
+
+26.01.2018 Version 0.0.35
+Cluster run option upgraded.
+
+25.01.2018 Version 0.0.34
+Cluster run option upgraded.
+
+24.01.2018 Version 0.0.33
+Sql constraint to remove project runs are removed.(fixed the remove button)
+Project runs table updated(modified date, description and name of the run)
+"Delete run" dropdown in run pipeline page is updated.
+Run pipeline page updated(run settings)
+Save on existing run feature is added.
+
+22.01.2018 Version 0.0.32
+Debugging of run upgraded.
+
+21.01.2018 Version 0.0.31
+Dynamic add feature of public pipelines in homepage is added.
+Showing public pipelines by click of 'learn more' button is added.
+D3 zoom option is disabled until first click to make smooth webpage scrool.
+User profile page added.
+Database integration of local, cluster profiles is completed.
+cluster runs are ready to run by private key.
+
+
+16.01.2018 Version 0.0.30
+Cluster/Local run options added.
+
+15.01.2018 Version 0.0.29
+Basic File/Set/Val selection/edit/delete feature in the run pipeline page completed.
+Database integration input, project_input, project_pipeline_input and run tables are completed.
+Run pipeline command creates run directory in RUNPATH and copy the the nextflow file.
+
+12.01.2018 Version 0.0.28
+Run Pipeline page upgraded.
+
+11.01.2018 Version 0.0.27
+Run Pipeline page added.
+Run button in pipelines page activated.
+Public pipelines page updated.
+Project Files part added.
+Project Files added to database.
+
+09.01.2018 Version 0.0.26
+Assigned downloaded nextflow file name as pipeline name.
+autosave feature on change of workflow is added.
+pipeline revisions feature completed.
+
+07.01.2018 Version 0.0.25
+Project pipelines part added.
+Project pipelines added to database.
+
+05.01.2018 Version 0.0.24
+Project Details page added.
+
+04.01.2018 Version 0.0.23
+projects page added.
+projects table added in database.
+
+03.01.2018 Version 0.0.22
+allow selection of other revisions after dropping process by clicking process settings
+
+02.01.2018 Version 0.0.21
+Nextflow publishdir definition is updated.
+Permissions are defined for users and everyone.
+Database is updated to change permissions.
+
+02.01.2018 Version 0.0.20
+User login logout feature is added.
+
+
+31.12.2017 Version 0.0.19
+Minor bug in process modal is fixed.
+Prevention to delete revision if it is used in pipelines is added.
+
+
+30.12.2017 Version 0.0.18
+Revisions section in edit process modal is finalized.
+Delete revision is added in edit process modal.
+
+28.12.2017 Version 0.0.17
+Pipeline details section is upgraded.
+Revisions section in edit process modal is added.
+
+20.12.2017 Version 0.0.16
+Pipeline details section is added.
+Error in modal drag is fixed.
+
+19.12.2017 Version 0.0.15
+Process modal errors related to closing are fixed.
+Google Authentication feature is added.
+
+
+17.12.2017 Version 0.0.14
+owner_id,group_id,perms,date_created,date_modified,last_modified_user is added to all database tables.
+languade modes and template scripts are added to script editor for python, groovy and perl.
+error (using \n) in scripts section is fixed
+pipeline description section added.
+pipeline details section added.
+Draggable modal feature is added.
+
+15.12.2017 Version 0.0.13
+Sql injections prevented in scripts section
+SVG width is allowed to fit into screen.
+SVG tooltip is updated to show identifier, qualifier, file type and name
+One outputparam is able to connect with only one process
+
+
+13.12.2017 Version 0.0.12
+Delete Process Option added.
+Available parameters combobox in process modal moved into parameters modal.
+Inputs and outputs are shown with its filetype and qualifier in combobox (in process modal)
+
+
+12.12.2017 Version 0.0.11
+svg parameters are updated when new parameter/process added.
+SideBar Menu separators are added.
+Search Bar is updated to show nodes without children.
+Process Description option added to add/edit process modal.
+
+11.12.2017 Version 0.0.10
+"process modal error" is fixed.
+
+10.12.2017 Version 0.0.9
+"Add/Edit/Duplicate/Delete pipeline" features are upgraded.
+
+07.12.2017 Version 0.0.8
+"Edit process" feature is added.
+
+05.12.2017 Version 0.0.7
+Searching in combobox (by using Selectize.js) is added in "Add process" modal.
+Parameter add/edit/delete modal added in "Add process" modal.
+
+04.12.2017 Version 0.0.6
+Database integration of "Add process" modal is completed.
+
+01.12.2017 Version 0.0.5
+Add process modal added. Ace editor is included into modal.
+
+28.11.2017 Version 0.0.4
+Single/Pair option added to nextflow. Database updated: Build_index and Map_Tophat2 processes updated. Obsolete tables are removed.
+
+20.11.2017 Version 0.0.3
+Output parameters module added to nextflow. Database updated process scripts
+
+18.11.2017 Version 0.0.2
+Output parameters module added. Database updated for NF_pipelines
