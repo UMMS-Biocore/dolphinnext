@@ -417,7 +417,6 @@ function checkProjectPipelinePublic(proid) {
 //Check if pipeline is ever used in projects 
 function checkProject(pipeline_id) {
     var checkProj = getValues({ p: "checkProject", "pipeline_id": pipeline_id });
-    console.log(checkProj)
     var checkProjPipeModule = getValues({ p: "checkProjectPipeModule", "pipeline_id": pipeline_id });
 
     return checkProj
@@ -552,7 +551,7 @@ function addProParatoDB(data, startPoint, process_id) {
                 type: "POST",
                 url: "ajax/ajaxquery.php",
                 data: dataToProcessParam,
-                async: true,
+                async: false,
                 success: function (s) {},
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -643,7 +642,7 @@ function addProParatoDBbyRev(data, startPoint, process_id) {
                 type: "POST",
                 url: "ajax/ajaxquery.php",
                 data: dataToProcessParam,
-                async: true,
+                async: false,
                 success: function (s) {},
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -666,7 +665,7 @@ function updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputLis
                     id: inputsBefore[i].id,
                     p: "removeProcessParameter"
                 },
-                async: true,
+                async: false,
                 success: function () {},
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -684,7 +683,7 @@ function updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputLis
                     id: outputsBefore[i].id,
                     p: "removeProcessParameter"
                 },
-                async: true,
+                async: false,
                 success: function () {},
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -1382,13 +1381,11 @@ function downloadPdf() {
 }
 
 
-//xxxxxxx
 function loadSelectedPipeline(pipeline_id) {
     var pData = getValues({ p: "loadPipeline", id: pipeline_id })
     var pDataTable = [];
     if (pData) {
         if (Object.keys(pData).length > 0) {
-            console.log(pData)
             $('#selectPipeline').attr("pName", pData[0].name);
             var nodes = pData[0].nodes
             nodes = JSON.parse(nodes.replace(/'/gi, "\""))
@@ -1397,7 +1394,6 @@ function loadSelectedPipeline(pipeline_id) {
                     pDataTable.push({ process_name: nodes[el][3], process_id: nodes[el][2] })
                 }
             });
-            console.log(pDataTable)
             if (pDataTable.length > 0) {
                 for (var i = 0; i < pDataTable.length; i++) {
                     if (pDataTable[i].process_id.match(/p/)) {
@@ -1544,7 +1540,6 @@ $(document).ready(function () {
     }());
 
 
-    //xxxx
     $("#addProcessModal").on('click', '#selectProcess', function (event) {
         event.preventDefault();
         var gNumInfo = $('#selectProcess').attr("gNum");
@@ -1755,7 +1750,6 @@ $(document).ready(function () {
             var processOwn = "";
             var proPerms = "";
             [proPerms, processOwn] = loadSelectedProcess(selProcessId);
-            console.log(pipeMode)
             if (pipeMode){
                 $('#permsPro').attr('disabled', "disabled");
                 $('#publishPro').attr('disabled', "disabled");
