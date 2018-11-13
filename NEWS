@@ -1,4 +1,4 @@
-12.11.2018 Version 0.2.36
+13.11.2018 Version 0.2.36
 Amazon loading status feature is updated to keep sshtext available while reloading.
 log scroll is disabled after click on log area.
 First log of the run is loaded before loading pipeline.
