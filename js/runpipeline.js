@@ -2806,8 +2806,8 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         //--ProcessPanel (where process options defined)
         createProcessPanelAutoFill(id, pObj, name, process_id);
         //create process circle
-        pObj.inputs = getValues({ p: "getInputsPP", "process_id": id })
-        pObj.outputs = getValues({ p: "getOutputsPP", "process_id": id })
+        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_"+id]);
+        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_"+id]);
 
         //gnum uniqe, id same id (Written in class) in same type process
         pObj.g = d3.select("#mainG" + MainGNum).append("g")

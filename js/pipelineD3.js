@@ -411,6 +411,7 @@ function openPipeline(id) {
         p: "loadPipeline",
         id: id
     }) //all data from biocorepipe_save table
+    console.log(sData)
     if (sData) {
         if (Object.keys(sData).length > 0) {
             nodes = sData[0].nodes
@@ -2376,8 +2377,8 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     } else {
         addProPipeTab(id)
         //--Pipeline details table ends---
-        pObj.inputs = getValues({ p: "getInputsPP", "process_id": id })
-        pObj.outputs = getValues({ p: "getOutputsPP", "process_id": id })
+        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_"+id]);
+        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_"+id]);
         //gnum uniqe, id same id (Written in class) in same type process
         pObj.g = d3.select("#mainG" + MainGNum).append("g")
             .attr("id", "g" + MainGNum + "-" + pObj.gNum)

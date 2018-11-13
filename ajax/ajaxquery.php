@@ -876,7 +876,23 @@ else if ($p=="loadPipeline")
 {
 	$id = $_REQUEST['id'];
     $data = $db->loadPipeline($id,$ownerID);
+     //load process parameters 
+    $new_obj = json_decode($data,true);
+    if (!empty($new_obj[0]["nodes"])){
+        $nodes = json_decode($new_obj[0]["nodes"]);
+        foreach ($nodes as $item):
+            if ($item[2] !== "inPro" && $item[2] !== "outPro"){
+                $process_id = $item[2];
+                $pro_para_in = $db->getInputsPP($process_id);
+                $pro_para_out = $db->getOutputsPP($process_id);
+                $new_obj[0]["pro_para_inputs_$process_id"]=$pro_para_in;
+                $new_obj[0]["pro_para_outputs_$process_id"]=$pro_para_out;
+            }
+        endforeach;
+        $data= json_encode($new_obj);
+    }
 }
+
 if (!headers_sent()) {
 header('Cache-Control: no-cache, must-revalidate');
 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
