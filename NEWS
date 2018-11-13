@@ -1,3 +1,6 @@
+13.11.2018 Version 0.2.37
+Process parameters are downloaded in one query to speed up loading pipeline.
+
 13.11.2018 Version 0.2.36
 Amazon loading status feature is updated to keep sshtext available while reloading.
 log scroll is disabled after click on log area.
