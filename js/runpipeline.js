@@ -3913,6 +3913,18 @@ function readNextflowLogTimer(proType, proId, type) {
     }, 10000);
 }
 
+autoScrollLog = true;
+$('#runLogArea').on('click', function (e) {
+    autoScrollLog = false;
+    console.log(autoScrollLog)
+});
+
+function autoScrollLogArea() {
+    if (autoScrollLog) {
+        document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
+    }
+}
+
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
     runStatus = getRunStatus(project_pipeline_id);
@@ -3922,7 +3934,7 @@ function readNextLog(proType, proId, type) {
     serverLog = getServerLog(project_pipeline_id);
     if (serverLog && serverLog !== null && serverLog !== false) {
         $('#runLogArea').val(serverLog);
-        document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
+        autoScrollLogArea()
         var runPid = parseRunPid(serverLog);
     } else {
         serverLog = "";
@@ -3934,7 +3946,7 @@ function readNextLog(proType, proId, type) {
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
         if (nextflowLog !== null && nextflowLog !== undefined) {
             $('#runLogArea').val(serverLog + nextflowLog);
-            document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
+            autoScrollLogArea()
 
         }
         if (type !== "reload") {
@@ -3951,7 +3963,7 @@ function readNextLog(proType, proId, type) {
         // otherwise parse nextflow file to get status
     } else if (nextflowLog !== null) {
         $('#runLogArea').val(serverLog + nextflowLog);
-        document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
+        autoScrollLogArea()
 
         if (nextflowLog.match(/N E X T F L O W/)) {
             if (nextflowLog.match(/##Success: failed/)) {
@@ -4504,17 +4516,9 @@ $(document).ready(function () {
         $('#saveRunIcon').remove();
         $('#pipeRunDiv').remove();
     }
-    pipeline_id = pipeData[0].pipeline_id;
-    project_id = pipeData[0].project_id;
-    $('#pipeline-title').attr('pipeline_id', pipeline_id);
-    if (project_pipeline_id !== '' && pipeline_id !== '') {
-        projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
-        loadPipelineDetails(pipeline_id);
-        loadProjectPipeline(pipeData);
-        runStatus = "";
-        if (projectpipelineOwn === "1") {
-            runStatus = getRunStatus(project_pipeline_id);
-        }
+    runStatus = "";
+    if (projectpipelineOwn === "1") {
+        runStatus = getRunStatus(project_pipeline_id);
     }
     if (runStatus !== "") {
         $('#runLogs').css('display', 'inline');
@@ -4525,8 +4529,18 @@ $(document).ready(function () {
         var profileId = profileTypeId.replace(patt, '$2');
         proTypeWindow = profileType;
         proIdWindow = profileId;
-        setTimeout(function () { readNextLog(profileType, profileId, "reload"); }, 100);
+        readNextLog(profileType, profileId, "reload");
     }
+    
+    pipeline_id = pipeData[0].pipeline_id;
+    project_id = pipeData[0].project_id;
+    $('#pipeline-title').attr('pipeline_id', pipeline_id);
+    if (project_pipeline_id !== '' && pipeline_id !== '') {
+        projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
+        loadPipelineDetails(pipeline_id);
+        loadProjectPipeline(pipeData);
+    }
+    
     //not allow to check both docker and singularity
     $('#docker_imgDiv').on('show.bs.collapse', function () {
         if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {

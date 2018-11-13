@@ -1,3 +1,9 @@
+13.11.2018 Version 0.2.36
+Amazon loading status feature is updated to keep sshtext available while reloading.
+log scroll is disabled after click on log area.
+First log of the run is loaded before loading pipeline.
+Sequence of nodes are fixed while copying process as a revision.
+
 06.11.2018 Version 0.2.35
 Nextflow and process memory and cpu limits are added for local in the profile and run page.
 
