@@ -335,6 +335,9 @@ session_write_close();
                             <p id="userName">
                                 <?php
                         if ($login == 1){
+                            if (strlen($name) >17){
+                                $name = substr($name,0,16); 
+                            }
                             echo $name;
                         }
                         ?>

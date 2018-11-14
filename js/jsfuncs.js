@@ -529,9 +529,6 @@ if (loginSuccess === true && userProfile !== '') {
             error: function () {}
         });
     }
-    if (userName) {
-        $('#userName').text(userName);
-    }
 }
 // google sign-in
 function Google_signIn(googleUser) {
@@ -676,6 +673,24 @@ function truncateName(name, type) {
     else
         return name;
 }
+
+function cleanProcessName(proName) {
+    proName = proName.replace(/ /g, "_");
+    proName = proName.replace(/-/g, "_");
+    proName = proName.replace(/:/g, "_");
+    proName = proName.replace(/,/g, "_");
+    proName = proName.replace(/\$/g, "_");
+    proName = proName.replace(/\!/g, "_");
+    proName = proName.replace(/\</g, "_");
+    proName = proName.replace(/\>/g, "_");
+    proName = proName.replace(/\?/g, "_");
+    proName = proName.replace(/\(/g, "_");
+    proName = proName.replace(/\"/g, "_");
+    proName = proName.replace(/\'/g, "_");
+    proName = proName.replace(/\./g, "_");
+    return proName;
+}
+
 $('.collapseIcon').on('click', function (e) {
     var textClass = $(this).attr('class');
     if (textClass.includes('fa-plus-square-o')) {
