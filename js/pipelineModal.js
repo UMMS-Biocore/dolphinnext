@@ -52,25 +52,6 @@ $('#advOpt').on('show.bs.collapse', function () {
     editorPipeFooter.clearSelection();
 });
 
-function cleanProcessName(proName) {
-    proName = proName.replace(/ /g, "_");
-    proName = proName.replace(/-/g, "_");
-    proName = proName.replace(/:/g, "_");
-    proName = proName.replace(/,/g, "_");
-    proName = proName.replace(/\$/g, "_");
-    proName = proName.replace(/\!/g, "_");
-    proName = proName.replace(/\</g, "_");
-    proName = proName.replace(/\>/g, "_");
-    proName = proName.replace(/\?/g, "_");
-    proName = proName.replace(/\(/g, "_");
-    proName = proName.replace(/\"/g, "_");
-    proName = proName.replace(/\'/g, "_");
-    proName = proName.replace(/\./g, "_");
-    return proName;
-}
-
-
-
 // cleanProcessModal when modal is closed     
 function cleanProcessModal() {
     $('#mParameters').remove();
@@ -1459,13 +1440,12 @@ $('#selectPipelineModal').on('show.bs.modal', function (ev) {
     loadSelectedPipeline(selPipelineId);
 });
 
-//xxxxxxxxx
 $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
     event.preventDefault();
     var gNumInfo = $('#selectPipeline').attr("gNum");
     var firstPipeID = $('#selectPipeline').attr("fPipeID");
     var lastPipeID = $('#selectPipeline').attr("lastPipeID");
-    var pName = $('#selectPipeline').attr("pName");
+    var pName = cleanProcessName($('#selectPipeline').attr("pName"));
     if (lastPipeID && lastPipeID !== firstPipeID) {
         remove('del-' + gNumInfo);
         var d3main = d3.transform(d3.select('#' + "mainG").attr("transform"));
@@ -1482,7 +1462,6 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         window[newMainGnum].lastGnum = gNum;
         window[newMainGnum].sData = getValues({ p: "loadPipeline", id: piID })
         window[newMainGnum].lastPipeName = pName;
-        //            var proName = window[newMainGnum].sData[0].name;
         // create new SVG workplace inside panel, if not added before
         openSubPipeline(piID, window[newMainGnum]);
         // add pipeline circle to main workplace

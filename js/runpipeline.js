@@ -228,7 +228,7 @@ function openSubPipeline(piID, pObj) {
     if (dispTitle == "none") {
         $('#subPipelinePanelTitle').css("display", "inline");
     }
-    var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + MainGNum + '"><h4 class="panel-title">' + pipeName + ' Module <i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
+    var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + MainGNum + '"><h4 class="panel-title">' + pipeName + '<i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
     var processBodyInt = '<div  id="collapse-' + MainGNum + '" class="panel-collapse collapse"><div style="height:500px; padding:0px;" id="container' + MainGNum + '" class="panel-body">'
     //create Pipeline Module Panel
     $('#subPipelinePanelTitle').append('<div id="proPanelDiv-' + MainGNum + '" pipeid="' + piID + '" ' + hideModuleText + '><div id="proPanel-' + MainGNum + '" class="panel panel-default" style="margin-bottom:3px;">' + processHeader + processBodyInt + '</div></div></div></div>')
@@ -318,7 +318,7 @@ function openPipeline(id) {
             x = nodes[key][0]
             y = nodes[key][1]
             pId = nodes[key][2]
-            name = nodes[key][3]
+            name = cleanProcessName(nodes[key][3])
             var processModules = nodes[key][4];
             gNum = parseInt(key.split("-")[1])
             //for pipeline circles

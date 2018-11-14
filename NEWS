@@ -1,3 +1,8 @@
+14.11.2018 Version 0.2.38
+Spaces of pipeline modules are fixed with underscore.
+Extra "module" suffix removed from run and pipeline pages.
+Truncate name of the user if it is not fitting into sign-in section.
+
 13.11.2018 Version 0.2.37
 Process parameters are downloaded in one query to speed up loading pipeline.
 
