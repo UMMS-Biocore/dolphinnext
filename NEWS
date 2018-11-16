@@ -1,3 +1,7 @@
+15.11.2018 Version 0.2.39
+Process UUID feature is added.
+Pipeline export feature initiated.
+
 14.11.2018 Version 0.2.38
 Spaces of pipeline modules are fixed with underscore.
 Extra "module" suffix removed from run and pipeline pages.

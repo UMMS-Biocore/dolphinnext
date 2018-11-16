@@ -537,6 +537,8 @@ session_write_close();
             <!-- d3 pdf export -->
             <script src="dist/css_to_pdf/xepOnline.jqPlugin.js"></script>
             <script src="dist/ace/ace.js"></script>
+            <!-- crypto-js -->
+            <script src="bower_components/crypto-js/aes.js"></script>
             <script type="text/javascript" src="dist/js/dataTables.checkboxes.js"></script>
             <?php print getJS($np, $login, $id); ?>
 
