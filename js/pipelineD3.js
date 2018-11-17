@@ -2163,6 +2163,7 @@ function save() {
             savedList.push({ "pipeline_gid": newPipeline_gid });
             savedList.push({ "rev_id": 0 });
             savedList.push({ "rev_comment": "" });
+            savedList.push({ "pipeline_uuid": "" });
             sl = JSON.stringify(savedList);
             var ret = getValues({ p: "saveAllPipeline", dat: sl });
             $("#pipeline-title").attr('pipelineid', ret.id);
@@ -2258,11 +2259,13 @@ function save() {
                         var pipeline_gid = getValues({ p: "getPipeline_gid", "pipeline_id": id })[0].pipeline_gid;
                         var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid })[0].rev_id;
                         var newPipRev_id = parseInt(maxPipRev_id) + 1;
+                        var pipeline_uuid = getValues({ p: "getPipeline_uuid", "pipeline_id": id })[0].pipeline_uuid;
                         savedList[1].id = ''
                         savedList[7].perms = '3';
                         savedList.push({ "pipeline_gid": pipeline_gid });
                         savedList.push({ "rev_comment": revComment });
                         savedList.push({ "rev_id": newPipRev_id });
+                        savedList.push({ "pipeline_uuid": pipeline_uuid });
                         sl = JSON.stringify(savedList);
                         var ret = getValues({ p: "saveAllPipeline", dat: sl });
                         $('#confirmRevision').modal('hide');

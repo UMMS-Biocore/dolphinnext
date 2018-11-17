@@ -445,8 +445,6 @@ function checkProParameters(inputProParams, outputProParams, proID) {
 //-----Add input output parameters to process_parameters
 // startpoint: first object in data array where inputparameters starts.
 function addProParatoDB(data, startPoint, process_id,perms, group) {
-    console.log(data)
-    console.log(process_id)
     var ppIDinputList = [];
     var ppIDoutputList = [];
     for (var i = startPoint; i < data.length; i++) {
@@ -526,16 +524,12 @@ function addProParatoDB(data, startPoint, process_id,perms, group) {
             }
         }
         if (dataToProcessParam.length > 0) {
-        console.log(dataToProcessParam)
-        console.log(perms)
-        console.log(group)
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",
                 data: dataToProcessParam,
                 async: false,
                 success: function (s) {
-                    console.log(s)
                 },
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -1917,9 +1911,6 @@ $(document).ready(function () {
         if (!group) {
             group = "";
         }
-        console.log(group)
-        console.log(perms)
-
         // A) Add New Process Starts
         if (!savetype.length) {
             var formValues = $('#addProcessModal').find('input, select, textarea');
@@ -2018,7 +2009,6 @@ $(document).ready(function () {
                 dataToProcess.push({ name: "script_footer", value: scripteditorProFooter });
                 dataToProcess.push({ name: "script", value: scripteditor });
                 dataToProcess.push({ name: "p", value: "saveProcess" });
-                        console.log(dataToProcess)
                 if (proName === '' || proGroId === '') {
                     dataToProcess = [];
                 }
@@ -2137,7 +2127,6 @@ $(document).ready(function () {
                         var scripteditorProFooter = getScriptEditor('editorProFooter');
                         var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
                         var process_uuid = getValues({ p: "getProcess_uuid", "process_id": proID })[0].process_uuid;
-                        console.log(process_uuid)
                         var maxRev_id = getValues({ p: "getMaxRev_id", "process_gid": process_gid })[0].rev_id;
                         var newRev_id = parseInt(maxRev_id) + 1;
                         var script_mode = $('#script_mode').val();
@@ -2155,7 +2144,6 @@ $(document).ready(function () {
                         dataToProcess.push({ name: "script_footer", value: scripteditorProFooter });
                         dataToProcess.push({ name: "script", value: scripteditor });
                         dataToProcess.push({ name: "p", value: "saveProcess" });
-                        console.log(dataToProcess)
                         if (proName === '' || proGroId === '') {
                             dataToProcess = [];
                         }
