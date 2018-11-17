@@ -17,7 +17,7 @@ UPDATE biocorepipe_save t, (SELECT DISTINCT id, pipeline_gid, pipeline_uuid
                         FROM biocorepipe_save
                        WHERE pipeline_uuid IS NOT NULL AND pipeline_uuid != '') t1
    SET t.pipeline_uuid = t1.pipeline_uuid
- WHERE t.pipeline_gid = t1.pipeline_gid
+ WHERE t.pipeline_gid = t1.pipeline_gid;
 
 
 -- Insert uuid for each process_gid 
@@ -39,4 +39,4 @@ UPDATE process t, (SELECT DISTINCT id, process_gid, process_uuid
                         FROM process
                        WHERE process_uuid IS NOT NULL AND process_uuid != '') t1
    SET t.process_uuid = t1.process_uuid
- WHERE t.process_gid = t1.process_gid
+ WHERE t.process_gid = t1.process_gid;
