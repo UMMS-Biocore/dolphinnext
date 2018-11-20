@@ -1253,6 +1253,11 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     
+    public function updateAllProcessNameByGid($process_gid, $name, $ownerID) {
+        $sql = "UPDATE process SET name='$name', last_modified_user ='$ownerID', date_modified=now()  WHERE process_gid = '$process_gid' AND owner_id = '$ownerID'";
+        return self::runSQL($sql);
+    }
+    
 	public function updateAllPipelineGroupByGid($pipeline_gid, $pipeline_group_id,$ownerID) {
         $sql = "UPDATE biocorepipe_save SET pipeline_group_id='$pipeline_group_id', last_modified_user ='$ownerID', date_modified=now() WHERE pipeline_gid = '$pipeline_gid' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
@@ -1288,13 +1293,19 @@ class dbfuncs {
         WHERE pg.owner_id = '$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15)";
         return self::queryTable($sql);
     }
+    public function getProcessGroupById($id) {
+        $sql = "SELECT DISTINCT pg.group_name
+        FROM process_group pg
+        WHERE pg.id = '$id'";
+        return self::queryTable($sql);
+    }
     public function getEditDelProcessGroups($ownerID) {
         $sql = "SELECT id, group_name FROM process_group WHERE owner_id = '$ownerID'";
         return self::queryTable($sql);
     }
 	
-    public function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $publish, $script_mode, $script_mode_header, $ownerID) {
-        $sql = "INSERT INTO process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, publish, script_mode, script_mode_header) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group', '$publish','$script_mode', '$script_mode_header')";
+    public function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $ownerID) {
+        $sql = "INSERT INTO process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, publish, script_mode, script_mode_header, process_uuid) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group', '$publish','$script_mode', '$script_mode_header', $process_uuid)";
         return self::insTable($sql);
     }
 
@@ -1762,15 +1773,15 @@ class dbfuncs {
         return self::insTable($sql);
     }
     public function duplicateProcess($new_process_gid, $new_name, $old_id, $ownerID) {
-        $sql = "INSERT INTO process(process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid)
-                SELECT process_group_id, '$new_name', summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '0', '$new_process_gid'
+        $sql = "INSERT INTO process(process_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid)
+                SELECT uuid(), process_group_id, '$new_name', summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '0', '$new_process_gid'
                 FROM process
                 WHERE id='$old_id'";
         return self::insTable($sql);
     }
     public function createProcessRev($new_process_gid, $rev_comment, $rev_id, $old_id, $ownerID) {
-        $sql = "INSERT INTO process(process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid, rev_comment)
-                SELECT process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '$rev_id', '$new_process_gid', '$rev_comment'
+        $sql = "INSERT INTO process(process_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid, rev_comment)
+                SELECT process_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '$rev_id', '$new_process_gid', '$rev_comment'
                 FROM process
                 WHERE id='$old_id'";
         return self::insTable($sql);
@@ -1966,14 +1977,7 @@ class dbfuncs {
 		return self::queryTable($sql);
 	}
 
-    public function getProcessGID($id) {
-		$sql = "SELECT  process_gid FROM process WHERE id = '$id'";
-		return self::queryTable($sql);
-	}
-    public function getPipelineGID($id) {
-		$sql = "SELECT pipeline_gid FROM biocorepipe_save WHERE id = '$id'";
-		return self::queryTable($sql);
-	}
+
 	public function getInputsPP($id) {
 		$sql = "SELECT parameter_id, sname, id, operator, closure, reg_ex FROM process_parameter where process_id = '$id' and type = 'input'";
 		return self::queryTable($sql);
@@ -2058,6 +2062,10 @@ class dbfuncs {
 	}
     public function getProcess_gid($process_id) {
 		$sql = "SELECT process_gid FROM process WHERE id = '$process_id'";
+		return self::queryTable($sql);
+	}
+    public function getProcess_uuid($process_id) {
+		$sql = "SELECT process_uuid FROM process WHERE id = '$process_id'";
 		return self::queryTable($sql);
 	}
     public function getPipeline_gid($pipeline_id) {
@@ -2222,9 +2230,6 @@ class dbfuncs {
             $this->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
         }
 	    if ($id > 0){
-			//update all pipeline group_id
-//    		$pipeline_gid = json_decode($this->getPipelineGID($id))[0]->{'pipeline_gid'};
-//			$this->updateAllPipelineGroupByGid($pipeline_gid,$pipeline_group_id,$ownerID);
 			$sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', pin = '$pin', publish = '$publish', script_pipe_header = '$script_pipe_header', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', pin_order = '$pin_order', last_modified_user = '$ownerID' where id = '$id'";
 		}else{
             $sql = "INSERT INTO biocorepipe_save(owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, pin, pin_order, publish, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list) VALUES ('$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms', '$pin', '$pin_order', $publish, '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list' )";

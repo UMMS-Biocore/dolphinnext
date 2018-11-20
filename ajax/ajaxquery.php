@@ -537,6 +537,12 @@ else if ($p=="saveProcessGroup"){
 else if ($p=="saveProcess"){
     $name = $_REQUEST['name'];
     $process_gid = $_REQUEST['process_gid'];
+    $process_uuid = $_REQUEST['process_uuid'];
+    if (empty($process_uuid)) {
+        $process_uuid = "uuid()";
+    } else {
+        $process_uuid = "'$process_uuid'";
+    }
     $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
     $process_group_id = $_REQUEST['process_group_id'];
     $script = addslashes(htmlspecialchars(urldecode($_REQUEST['script']), ENT_QUOTES));
@@ -554,12 +560,13 @@ else if ($p=="saveProcess"){
     settype($process_gid, "integer");
     if (!empty($id)) {
 		$db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
+		$db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
         $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $publish, $script_mode, $script_mode_header, $ownerID);
         if ($perms !== "3"){
             $db->updateProcessGroupGroupPerm($id, $group_id, $perms, $ownerID);
         }
     } else {
-        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $publish, $script_mode, $script_mode_header, $ownerID);
+        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $ownerID);
         if ($perms !== "3"){
             $obj = json_decode($data,true);
             $id = $obj["id"];
@@ -682,6 +689,7 @@ else if ($p=="saveProcessParameter"){
     $perms = $_REQUEST['perms'];
     $group_id= $_REQUEST['group'];
     settype($group_id, 'integer');
+    settype($perms, 'integer');
     if (!empty($id)) {
         $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $perms, $group_id, $ownerID);
         if ($perms !== "3"){
@@ -706,7 +714,7 @@ else if ($p=="getProcessData")
 else if ($p=="getProcessRevision")
 {
 	$id = $_REQUEST['process_id'];
-    $process_gidAr =$db->getProcessGID($id);
+    $process_gidAr =$db->getProcess_gid($id);
     $checkarray = json_decode($process_gidAr,true); 
     $process_gid = $checkarray[0]["process_gid"];
     $data = $db->getProcessRevision($process_gid,$ownerID);
@@ -714,7 +722,7 @@ else if ($p=="getProcessRevision")
 else if ($p=="getPipelineRevision")
 {
 	$pipeline_id = $_REQUEST['pipeline_id'];
-    $pipeline_gid = json_decode($db->getPipelineGID($pipeline_id))[0]->{'pipeline_gid'};
+    $pipeline_gid = json_decode($db->getPipeline_gid($pipeline_id))[0]->{'pipeline_gid'};
     $data = $db->getPipelineRevision($pipeline_gid,$ownerID);
 }
 else if ($p=="getPublicPipelines")
@@ -802,6 +810,11 @@ else if ($p=="getProcess_gid")
     $process_id = $_REQUEST['process_id'];
     $data = $db->getProcess_gid($process_id);
 }
+else if ($p=="getProcess_uuid")
+{
+    $process_id = $_REQUEST['process_id'];
+    $data = $db->getProcess_uuid($process_id);
+}
 else if ($p=="getPipeline_gid")
 {
     $pipeline_id = $_REQUEST['pipeline_id'];
@@ -871,6 +884,30 @@ else if ($p=="savePipelineName"){
 else if ($p=="getSavedPipelines")
 {
     $data = $db->getSavedPipelines($ownerID);
+}
+else if ($p=="exportPipeline"){
+    $data = $db->loadPipeline($id,$ownerID);
+    //load process parameters 
+    $new_obj = json_decode($data,true);
+    $final_obj = [];
+    $final_obj["pipeline"]=$new_obj[0];
+    if (!empty($new_obj[0]["nodes"])){
+        $nodes = json_decode($new_obj[0]["nodes"]);
+        foreach ($nodes as $item):
+            if ($item[2] !== "inPro" && $item[2] !== "outPro"){
+                $process_id = $item[2];
+                $pro_para_in = $db->getInputsPP($process_id);
+                $pro_para_out = $db->getOutputsPP($process_id);
+                $process_data = $db->getProcessDataById($process_id, $ownerID);
+                $process_group = $db->getProcessGroupById($process_id);
+                $final_obj["process_parameter"]["pro_para_inputs_$process_id"]=$pro_para_in;
+                $final_obj["process_parameter"]["pro_para_outputs_$process_id"]=$pro_para_out;
+                $final_obj["process"]["process_data_$process_id"]=$process_data;
+                $final_obj["process_group"]["process_group_$process_id"]=$process_group;
+            }
+        endforeach;
+        $data= json_encode($final_obj);
+    }
 }
 else if ($p=="loadPipeline")
 {

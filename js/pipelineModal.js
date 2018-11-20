@@ -444,7 +444,9 @@ function checkProParameters(inputProParams, outputProParams, proID) {
 
 //-----Add input output parameters to process_parameters
 // startpoint: first object in data array where inputparameters starts.
-function addProParatoDB(data, startPoint, process_id) {
+function addProParatoDB(data, startPoint, process_id,perms, group) {
+    console.log(data)
+    console.log(process_id)
     var ppIDinputList = [];
     var ppIDoutputList = [];
     for (var i = startPoint; i < data.length; i++) {
@@ -456,10 +458,6 @@ function addProParatoDB(data, startPoint, process_id) {
         var matchFPart = data[i].name.replace(PattPar, '$1')
         var matchSPart = data[i].name.replace(PattPar, '$2')
         var matchVal = data[i].value
-        var perms = $('#permsPro').val();
-        var group = $('#groupSelPro').val();
-
-
         if (matchFPart === 'mInputs' && matchVal !== '') {
             //first check if closures are visible
             if ($("#mInClosure-" + matchSPart).css('visibility') === 'visible') {
@@ -528,12 +526,17 @@ function addProParatoDB(data, startPoint, process_id) {
             }
         }
         if (dataToProcessParam.length > 0) {
+        console.log(dataToProcessParam)
+        console.log(perms)
+        console.log(group)
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",
                 data: dataToProcessParam,
                 async: false,
-                success: function (s) {},
+                success: function (s) {
+                    console.log(s)
+                },
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
                 }
@@ -545,7 +548,7 @@ function addProParatoDB(data, startPoint, process_id) {
 
 //-----Add input output parameters to process_parameters at revision
 // startpoint: first object in data array where inputparameters starts.
-function addProParatoDBbyRev(data, startPoint, process_id) {
+function addProParatoDBbyRev(data, startPoint, process_id,perms, group) {
     for (var i = startPoint; i < data.length; i++) {
         var dataToProcessParam = []; //dataToProcessPram to save in process_parameters table
         var PattPar = /(.*)-(.*)/;
@@ -555,8 +558,6 @@ function addProParatoDBbyRev(data, startPoint, process_id) {
         var matchFPart = data[i].name.replace(PattPar, '$1');
         var matchSPart = data[i].name.replace(PattPar, '$2');
         var matchVal = data[i].value;
-        var perms = $('#permsPro').val();
-        var group = $('#groupSelPro').val();
         if (matchFPart === 'mInputs' && matchVal !== '') {
             //first check if closures are visible
             if ($("#mInClosure-" + matchSPart).css('visibility') === 'visible') {
@@ -1361,6 +1362,26 @@ function downloadPdf() {
     return xepOnline.Formatter.Format('container', { filename: filename, pageWidth: svgWidth, pageHeight: svgHeight });
 }
 
+//export pipeline as .dn format
+function exportPipeline() {
+    var pipeline_id = $('#pipeline-title').attr('pipelineid');
+    var text = getValues({ p: "exportPipeline", id: pipeline_id });
+    console.log(text)
+    if (text){
+        text = JSON.stringify(text)
+        text = CryptoJS.AES.encrypt(text, "");
+    }
+    return text
+}
+//import pipeline as .dn format
+function importPipeline() {
+    if (text){
+        decrypted = CryptoJS.AES.encrypt(text, "");
+        decrypted = JSON.stringify(decrypted.toString(CryptoJS.enc.Utf8))
+    }
+    return decrypted
+}
+
 
 function loadSelectedPipeline(pipeline_id) {
     var pData = getValues({ p: "loadPipeline", id: pipeline_id })
@@ -1393,16 +1414,16 @@ function loadSelectedPipeline(pipeline_id) {
             $('#selectPipeTable').DataTable({
                 destroy: true,
                 "data": pDataTable,
-                "hover":true,
+                "hover": true,
                 "columns": [{
-                "data": "process_name",
-                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    if (oData.process_id.match("p")){
-                        $(nTd).text(oData.process_name);
-                    } else {
-                        $(nTd).html("<a data-toggle='modal' data-target='#addProcessModal' data-backdrop='false' href='' pipeMode='true' id='"+oData.process_name+ "@" + oData.process_id + "'>" +'<span class="txtlink">'+oData.process_name+"</span>"  + "</a>");
+                    "data": "process_name",
+                    "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                        if (oData.process_id.match("p")) {
+                            $(nTd).text(oData.process_name);
+                        } else {
+                            $(nTd).html("<a data-toggle='modal' data-target='#addProcessModal' data-backdrop='false' href='' pipeMode='true' id='" + oData.process_name + "@" + oData.process_id + "'>" + '<span class="txtlink">' + oData.process_name + "</span>" + "</a>");
+                        }
                     }
-                }
             }, {
                     "data": "rev_id"
             }, {
@@ -1418,7 +1439,7 @@ function loadSelectedPipeline(pipeline_id) {
 $('#selectPipelineModal').on('hidden.bs.modal', function (ev) {
     $('#selectPipeTable').dataTable().fnDestroy();
     $('#mPipeRev')[0].selectize.destroy();
-    $('#selectPipeline').css("display","inline")
+    $('#selectPipeline').css("display", "inline")
 });
 
 $('#selectPipelineModal').on('show.bs.modal', function (ev) {
@@ -1427,7 +1448,7 @@ $('#selectPipelineModal').on('show.bs.modal', function (ev) {
     $('#selectPipeline').attr("gNum", gNumInfo);
     if (gNumInfo.match(/-/)) { //for pipeline module windows
         var coorProRaw = d3.select("#g" + gNumInfo)[0][0].attributes.transform.value;
-        $('#selectPipeline').css("display","none")
+        $('#selectPipeline').css("display", "none")
     } else {
         var coorProRaw = d3.select("#g-" + gNumInfo)[0][0].attributes.transform.value;
     }
@@ -1729,7 +1750,7 @@ $(document).ready(function () {
             var processOwn = "";
             var proPerms = "";
             [proPerms, processOwn] = loadSelectedProcess(selProcessId);
-            if (pipeMode){
+            if (pipeMode) {
                 $('#permsPro').attr('disabled', "disabled");
                 $('#publishPro').attr('disabled', "disabled");
                 disableProModalPublic(selProcessId);
@@ -1896,6 +1917,8 @@ $(document).ready(function () {
         if (!group) {
             group = "";
         }
+        console.log(group)
+        console.log(perms)
 
         // A) Add New Process Starts
         if (!savetype.length) {
@@ -1939,7 +1962,7 @@ $(document).ready(function () {
                         //add process link into sidebar menu
                         $('#side-' + proGroId).append('<li> <a data-toggle="modal" data-target="#addProcessModal" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="' + proName + '@' + process_id + '"> <i class="fa fa-angle-double-right"></i>' + truncateName(proName, 'sidebarMenu') + '</a></li>');
                         var startPoint = 5; //first object in data array where inputparameters starts.
-                        addProParatoDB(data, startPoint, process_id);
+                        addProParatoDB(data, startPoint, process_id, perms, group);
                         refreshDataset();
                         $('#addProcessModal').modal('hide');
                     },
@@ -1980,6 +2003,8 @@ $(document).ready(function () {
                 var scripteditorProHeader = getScriptEditor('editorProHeader');
                 var scripteditorProFooter = getScriptEditor('editorProFooter');
                 var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
+                var process_uuid = getValues({ p: "getProcess_uuid", "process_id": proID })[0].process_uuid;
+                
                 var script_mode = $('#script_mode').val();
                 var script_mode_header = $('#script_mode_header').val();
                 dataToProcess.push({ name: "script_mode", value: script_mode });
@@ -1988,10 +2013,12 @@ $(document).ready(function () {
                 dataToProcess.push({ name: "group", value: group });
                 dataToProcess.push({ name: "publish", value: publish });
                 dataToProcess.push({ name: "process_gid", value: process_gid });
+                dataToProcess.push({ name: "process_uuid", value: process_uuid });
                 dataToProcess.push({ name: "script_header", value: scripteditorProHeader });
                 dataToProcess.push({ name: "script_footer", value: scripteditorProFooter });
                 dataToProcess.push({ name: "script", value: scripteditor });
                 dataToProcess.push({ name: "p", value: "saveProcess" });
+                        console.log(dataToProcess)
                 if (proName === '' || proGroId === '') {
                     dataToProcess = [];
                 }
@@ -2009,7 +2036,7 @@ $(document).ready(function () {
                             var ppIDoutputList;
                             var inputsBefore = getValues({ p: "getInputsPP", "process_id": proID });
                             var outputsBefore = getValues({ p: "getOutputsPP", "process_id": proID });
-                            [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID);
+                            [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID, perms, group);
                             updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList, proID);
                             refreshDataset();
                             $('#addProcessModal').modal('hide');
@@ -2061,6 +2088,7 @@ $(document).ready(function () {
                     dataToProcess.push({ name: "script_footer", value: scripteditorProFooter });
                     dataToProcess.push({ name: "script", value: scripteditor });
                     dataToProcess.push({ name: "p", value: "saveProcess" });
+
                     if (proName === '' || proGroId === '') {
                         dataToProcess = [];
                     }
@@ -2078,7 +2106,7 @@ $(document).ready(function () {
                                 var ppIDoutputList;
                                 var inputsBefore = getValues({ p: "getInputsPP", "process_id": proID });
                                 var outputsBefore = getValues({ p: "getOutputsPP", "process_id": proID });
-                            [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID);
+                            [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID,perms, group);
                                 updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList, proID);
                                 refreshDataset();
                                 $('#confirmRevision').modal('hide');
@@ -2108,6 +2136,8 @@ $(document).ready(function () {
                         var scripteditorProHeader = getScriptEditor('editorProHeader');
                         var scripteditorProFooter = getScriptEditor('editorProFooter');
                         var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
+                        var process_uuid = getValues({ p: "getProcess_uuid", "process_id": proID })[0].process_uuid;
+                        console.log(process_uuid)
                         var maxRev_id = getValues({ p: "getMaxRev_id", "process_gid": process_gid })[0].rev_id;
                         var newRev_id = parseInt(maxRev_id) + 1;
                         var script_mode = $('#script_mode').val();
@@ -2120,11 +2150,12 @@ $(document).ready(function () {
                         dataToProcess.push({ name: "rev_comment", value: revComment });
                         dataToProcess.push({ name: "rev_id", value: newRev_id });
                         dataToProcess.push({ name: "process_gid", value: process_gid });
+                        dataToProcess.push({ name: "process_uuid", value: process_uuid });
                         dataToProcess.push({ name: "script_header", value: scripteditorProHeader });
                         dataToProcess.push({ name: "script_footer", value: scripteditorProFooter });
                         dataToProcess.push({ name: "script", value: scripteditor });
                         dataToProcess.push({ name: "p", value: "saveProcess" });
-
+                        console.log(dataToProcess)
                         if (proName === '' || proGroId === '') {
                             dataToProcess = [];
                         }
@@ -2140,7 +2171,7 @@ $(document).ready(function () {
                                     sMenuProIdFinal = proName + '@' + newProcess_id;
                                     updateSideBar(sMenuProIdFirst, sMenuProIdFinal, sMenuProGroupIdFirst, sMenuProGroupIdFinal);
                                     var startPoint = 6; //first object in data array where inputparameters starts.
-                                    addProParatoDBbyRev(data, startPoint, newProcess_id);
+                                    addProParatoDBbyRev(data, startPoint, newProcess_id, "3", group);
                                     refreshDataset();
                                     $('#addProcessModal').modal('hide');
                                 },

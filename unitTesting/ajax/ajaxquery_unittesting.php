@@ -249,6 +249,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['id'] = '';
 		$_REQUEST['name'] = 'test_process';
 		$_REQUEST['process_gid'] = 'NaN';
+		$_REQUEST['process_uuid'] = '';
 		$_REQUEST['summary'] = 'test_summary';
 		$_REQUEST['process_group_id'] = '1';
 		$_REQUEST['script'] = 'test_script';

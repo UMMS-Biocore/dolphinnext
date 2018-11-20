@@ -411,7 +411,6 @@ function openPipeline(id) {
         p: "loadPipeline",
         id: id
     }) //all data from biocorepipe_save table
-    console.log(sData)
     if (sData) {
         if (Object.keys(sData).length > 0) {
             nodes = sData[0].nodes
@@ -1863,7 +1862,6 @@ function getInfo() {
     }else { //for pipeline module windows
         gNumInfo = this.id.replace("info", "");
     }
-    console.log(gNumInfo)
     $('#addProcessModal').modal("show");
 }
 
@@ -1895,17 +1893,20 @@ function removeElement(delID) {
 }
 
 
-function download(text) {
-    var filename = $('#pipeline-title').val() + '.nf';
+function download(text, type) {
+    var type = type || "";
+    var filename = $('#pipeline-title').val();
+    if (type == "exportPipe" || type == "exportPro"){
+        filename += '.dn';
+    } else {
+        filename += '.nf';
+    }
     var element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
     element.setAttribute('download', filename);
-
     element.style.display = 'none';
     document.body.appendChild(element);
-
     element.click();
-
     document.body.removeChild(element);
 }
 
@@ -2543,3 +2544,8 @@ function addCandidates2DictForLoad(fir, pObj) {
         }
     }
 }
+
+
+
+
+
