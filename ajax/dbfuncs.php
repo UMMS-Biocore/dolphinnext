@@ -2072,6 +2072,10 @@ class dbfuncs {
 		$sql = "SELECT pipeline_gid FROM biocorepipe_save WHERE id = '$pipeline_id'";
 		return self::queryTable($sql);
 	}
+    public function getPipeline_uuid($pipeline_id) {
+		$sql = "SELECT pipeline_uuid FROM biocorepipe_save WHERE id = '$pipeline_id'";
+		return self::queryTable($sql);
+	}
     public function getMaxRev_id($process_gid) {
 		$sql = "SELECT MAX(rev_id) rev_id FROM process WHERE process_gid = '$process_gid'";
 		return self::queryTable($sql);
@@ -2221,6 +2225,12 @@ class dbfuncs {
         $pipeline_gid = $obj[18]->{"pipeline_gid"};
         $rev_comment = $obj[19]->{"rev_comment"};
         $rev_id = $obj[20]->{"rev_id"};
+        $pipeline_uuid = $obj[21]->{"pipeline_uuid"};
+        if (empty($pipeline_uuid)) {
+            $pipeline_uuid = "uuid()";
+        } else {
+            $pipeline_uuid = "'$pipeline_uuid'";
+        }
         settype($rev_id, "integer");
         settype($pipeline_gid, "integer");
         settype($group_id, "integer");
@@ -2232,7 +2242,7 @@ class dbfuncs {
 	    if ($id > 0){
 			$sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', pin = '$pin', publish = '$publish', script_pipe_header = '$script_pipe_header', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', pin_order = '$pin_order', last_modified_user = '$ownerID' where id = '$id'";
 		}else{
-            $sql = "INSERT INTO biocorepipe_save(owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, pin, pin_order, publish, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list) VALUES ('$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms', '$pin', '$pin_order', $publish, '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list' )";
+            $sql = "INSERT INTO biocorepipe_save(owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, pin, pin_order, publish, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid) VALUES ('$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms', '$pin', '$pin_order', $publish, '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', $pipeline_uuid)";
 		}
   		return self::insTable($sql);
   		

@@ -1,3 +1,7 @@
+17.11.2018 Version 0.2.40
+Pipeline UUID feature is added.
+Sql command is added to fill previous process/pipeline uuid's.
+
 15.11.2018 Version 0.2.39
 Process UUID feature is added.
 Pipeline export feature initiated.

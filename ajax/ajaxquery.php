@@ -820,6 +820,11 @@ else if ($p=="getPipeline_gid")
     $pipeline_id = $_REQUEST['pipeline_id'];
     $data = $db->getPipeline_gid($pipeline_id);
 }
+else if ($p=="getPipeline_uuid")
+{
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $data = $db->getPipeline_uuid($pipeline_id);
+}
 else if ($p=="getMaxRev_id")
 {
     $process_gid = $_REQUEST['process_gid'];
