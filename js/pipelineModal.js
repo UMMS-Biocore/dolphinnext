@@ -444,7 +444,7 @@ function checkProParameters(inputProParams, outputProParams, proID) {
 
 //-----Add input output parameters to process_parameters
 // startpoint: first object in data array where inputparameters starts.
-function addProParatoDB(data, startPoint, process_id,perms, group) {
+function addProParatoDB(data, startPoint, process_id, perms, group) {
     var ppIDinputList = [];
     var ppIDoutputList = [];
     for (var i = startPoint; i < data.length; i++) {
@@ -529,8 +529,7 @@ function addProParatoDB(data, startPoint, process_id,perms, group) {
                 url: "ajax/ajaxquery.php",
                 data: dataToProcessParam,
                 async: false,
-                success: function (s) {
-                },
+                success: function (s) {},
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
                 }
@@ -542,7 +541,7 @@ function addProParatoDB(data, startPoint, process_id,perms, group) {
 
 //-----Add input output parameters to process_parameters at revision
 // startpoint: first object in data array where inputparameters starts.
-function addProParatoDBbyRev(data, startPoint, process_id,perms, group) {
+function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
     for (var i = startPoint; i < data.length; i++) {
         var dataToProcessParam = []; //dataToProcessPram to save in process_parameters table
         var PattPar = /(.*)-(.*)/;
@@ -1361,20 +1360,13 @@ function exportPipeline() {
     var pipeline_id = $('#pipeline-title').attr('pipelineid');
     var text = getValues({ p: "exportPipeline", id: pipeline_id });
     console.log(text)
-    if (text){
+    if (text) {
         text = JSON.stringify(text)
         text = CryptoJS.AES.encrypt(text, "");
     }
     return text
 }
-//import pipeline as .dn format
-function importPipeline() {
-    if (text){
-        decrypted = CryptoJS.AES.encrypt(text, "");
-        decrypted = JSON.stringify(decrypted.toString(CryptoJS.enc.Utf8))
-    }
-    return decrypted
-}
+
 
 
 function loadSelectedPipeline(pipeline_id) {
@@ -1484,6 +1476,113 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
     }
     $('#selectPipelineModal').modal('hide');
 });
+
+
+// Configuriation of dropzone of id:importArea in importModal
+window.importObj = {};
+window.importObj.filename = [];
+Dropzone.options.importArea = {
+    paramName: "file", // The name that will be used to transfer the file
+    maxFilesize: 2, // MB
+    acceptedFiles: ".dn",
+    dictDefaultMessage: 'Drop files here or <button type="button" class="btn btn-default" >Select File </button>',
+    accept: function (file, done) {
+        window.importObj.filename.push(file.name)
+        done();
+        $('#nextButton').prop("disabled", false);
+    }
+};
+
+function getRowImportTable(rowType, fileId, blockID, givenName, pipeline_group_name, pipeline_uuid) {
+        return '<tr id=' + rowType + fileId + '_' + blockID + '><td id="' + rowType + blockID + '" scope="row">' + givenName + '</td><td>' + pipeline_group_name + '</td><td>' + pipeline_uuid + '</td></tr>'
+}
+
+
+function getFileBlock(fileId, fileName, importJSON){
+    var showPipeBlock = "none";
+    var showPipeModuleBlock = "none";
+    var showProcessBlock = "none";
+    var pipeBlock = "";
+    var pipeModuleBlock = "";
+    var processBlock = "";
+    var checkMainPipe= filterObjKeys(importJSON, /main_pipeline.*/);
+    var checkPipeModule= filterObjKeys(importJSON, /pipeline_module.*/);
+    var checkProcess= filterObjKeys(importJSON, /process.*/);
+    if (checkMainPipe.length >0){
+        showPipeBlock = "inline";
+        for (var i = 0; i < checkMainPipe.length; i++) {
+            pipeBlock += getRowImportTable("pipeline", fileId, i, importJSON[checkMainPipe[i]].name, importJSON[checkMainPipe[i]].pipeline_group_name, importJSON[checkMainPipe[i]].pipeline_uuid);
+        }
+    }
+    if (checkPipeModule.length >0){
+        showPipeModuleBlock = "inline";
+        for (var i = 0; i < checkPipeModule.length; i++) {
+            pipeModuleBlock += getRowImportTable("pipeModule", fileId, i, importJSON[checkPipeModule[i]].name, importJSON[checkPipeModule[i]].pipeline_group_name, importJSON[checkPipeModule[i]].pipeline_uuid);
+        }
+    }
+    if (checkProcess.length >0){
+        showProcessBlock = "inline";
+        for (var i = 0; i < checkProcess.length; i++) {
+            importJSON[checkProcess[i]]=JSON.parse(importJSON[checkProcess[i]])[0]
+            console.log(checkProcess[i])
+            console.log(importJSON[checkProcess[i]])
+            console.log(importJSON[checkProcess[i]].name)
+            processBlock += getRowImportTable("process", fileId, i, importJSON[checkProcess[i]].name, importJSON[checkProcess[i]].process_group_name, importJSON[checkProcess[i]].process_uuid);
+        }
+    }
+    var panelDiv = '<div><h6>File Name: '+fileName+'</h6></div><div class="panel panel-default"><div id="fileTab'+fileId+'"> </br><table id="Table'+fileId+' class="table"><thead><tr><th style="width:50%;" scope="col">Name</th><th style="width:30%;" scope="col">Menu Group</th><th style="width:20%;" scope="col">Revision</th></tr></thead><tbody style="word-break: break-all;"><tr id="imPipeline" style="display:'+showPipeBlock+'; background-color:#F5F5F5; font-weight:bold; font-style: italic; height:40px;"><td colspan="6">~ Pipeline ~</td></tr>'+pipeBlock+'<tr id="imPipeModule" style="display:'+showPipeModuleBlock+'; background-color:#F5F5F5; font-weight:bold; font-style: italic; height:40px;"><td colspan="6">~ Pipeline Module ~</td></tr>'+pipeModuleBlock+'<tr id="imProcess" style="display:'+showProcessBlock+'; background-color:#F5F5F5; font-weight:bold; font-style: italic; height:40px;"><td colspan="6">~ Process ~</td></tr>'+processBlock+'</tbody></table></div></div>';
+    return panelDiv;
+}
+
+$('#nextButton').on('click', function (e) {
+    $('#importModalPart1').css("display", "none");
+    $('#importModalPart2').css("display", "inline");
+    $('#compButton').css("display", "inline");
+    $('#nextButton').css("display", "none");
+    var fileList = window.importObj.filename;
+    for (var i = 0; i < fileList.length; i++) {
+        var text = getValues({ p: "getUpload", "name": fileList[i] });
+        if (text) {
+            var decrypted = CryptoJS.AES.decrypt(text, "");
+            if (decrypted) {
+                var decryptedText = decrypted.toString(CryptoJS.enc.Utf8)
+                if (IsJsonString(decryptedText)) {
+                    var importJSON = JSON.parse(decryptedText)
+                    console.log(importJSON)
+                    var panelDiv = getFileBlock(i,fileList[i], importJSON);
+                    $("#importModalPart2").append(panelDiv);
+
+                }
+            }
+        }
+    }
+
+});
+
+$('#importModal').on('show.bs.modal', function (e) {
+    $('#importModalPart1').css("display", "inline");
+    $('#importModalPart2').css("display", "none");
+    $('#nextButton').prop("disabled", true);
+    $('#nextButton').css("display", "inline");
+    $('#compButton').css("display", "none");
+    $('#importModalPart2').css("display", "none");
+    $('#importModalPart2').empty();
+    window.importObj = {};
+    window.importObj.filename = [];
+});
+
+
+$('#importModal').on('hide.bs.modal', function (e) {
+    //reset import area
+    var myDropzone = Dropzone.forElement("#importArea");
+    myDropzone.removeAllFiles();
+    var fileList = window.importObj.filename;
+    for (var i = 0; i < fileList.length; i++) {
+        var text = getValues({ p: "removeUpload", "name": fileList[i] });
+    }
+});
+
+
 
 
 $(document).ready(function () {
@@ -1995,7 +2094,7 @@ $(document).ready(function () {
                 var scripteditorProFooter = getScriptEditor('editorProFooter');
                 var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
                 var process_uuid = getValues({ p: "getProcess_uuid", "process_id": proID })[0].process_uuid;
-                
+
                 var script_mode = $('#script_mode').val();
                 var script_mode_header = $('#script_mode_header').val();
                 dataToProcess.push({ name: "script_mode", value: script_mode });
@@ -2096,7 +2195,7 @@ $(document).ready(function () {
                                 var ppIDoutputList;
                                 var inputsBefore = getValues({ p: "getInputsPP", "process_id": proID });
                                 var outputsBefore = getValues({ p: "getOutputsPP", "process_id": proID });
-                            [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID,perms, group);
+                            [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID, perms, group);
                                 updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList, proID);
                                 refreshDataset();
                                 $('#confirmRevision').modal('hide');

@@ -3028,14 +3028,7 @@ function refreshCreatorData(project_pipeline_id) {
     }
 }
 
-function IsJsonString(str) {
-    try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
+
 
 function showHideColumnRunSett(colList, type) {
     for (var k = 0; k < colList.length; k++) {
@@ -3898,6 +3891,8 @@ function runProPipeCall(checkType) {
         runType: checkType
     });
     console.log(serverLogGet)
+    console.log(proType)
+    console.log(proId)
     readNextflowLogTimer(proType, proId, "default");
     $('#runLogs').css('display', 'inline');
 }
@@ -3927,6 +3922,8 @@ function autoScrollLogArea() {
 
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
+    console.log(proType)
+    console.log(proId)
     runStatus = getRunStatus(project_pipeline_id);
     var pidStatus = "";
     serverLog = '';
@@ -3941,6 +3938,7 @@ function readNextLog(proType, proId, type) {
     }
     //get nextflow log
     nextflowLog = getNextflowLog(project_pipeline_id, proType, proId);
+    
     // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated
     // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
@@ -4061,8 +4059,12 @@ function readNextLog(proType, proId, type) {
 
         }
     }
+    console.log(proType)
+    console.log(proId)
     // save nextflow log file
-    setTimeout(function () { getValues({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId }, true), 100 });
+    setTimeout(function () {  saveLog = getValues({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId }, true)
+    console.log(saveLog)
+        , 100 } );
 }
 
 function showOutputPath() {
@@ -4523,7 +4525,7 @@ $(document).ready(function () {
     if (runStatus !== "") {
         $('#runLogs').css('display', 'inline');
         //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
-        var profileTypeId = $('#chooseEnv').find(":selected").val(); //local-32
+        var profileTypeId = pipeData[0].profile //local-32
         var patt = /(.*)-(.*)/;
         var profileType = profileTypeId.replace(patt, '$1');
         var profileId = profileTypeId.replace(patt, '$2');

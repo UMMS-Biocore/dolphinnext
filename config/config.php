@@ -12,5 +12,5 @@ define('AMZPATH', $sec['AMZPATH']);
 $secConf = $secRaw['CONFIG'];
 date_default_timezone_set($secConf['TIMEZONE']);
 define('RUNPATH', $secConf['RUNPATH']);
-
+define('API_PATH', $secConf['API_PATH']);
 ?>

@@ -1,3 +1,9 @@
+20.11.2018 Version 0.2.41
+API_PATH variable added to .sec file. (API_PATH=http://www.dolphinnext.com)
+Process and Pipeline UUID are delivered by API
+Revision specific UUID column added to db for pipeline and process.
+Log reading is fixed in run page.
+
 17.11.2018 Version 0.2.40
 Pipeline UUID feature is added.
 Sql command is added to fill previous process/pipeline uuid's.
