@@ -798,10 +798,8 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
             var dynamicOpt = null;
             if (opt) {
                 if (opt.length) {
-                    console.log(opt)
                     //check if conditional options are defined.
                     var condOptCheck = $.isArray(opt[0])
-                    console.log(condOptCheck)
                     if (condOptCheck) {
                         //conditional options
                         var optArr = [];
@@ -815,7 +813,6 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                             opt = findDefaultArr(optArr)
                         }
                     }
-                    console.log(opt)
                     if (opt) {
                         for (var k = 0; k < opt.length; k++) {
                             if (defaultVal === opt[k]) {
@@ -3916,7 +3913,6 @@ function readNextflowLogTimer(proType, proId, type) {
 autoScrollLog = true;
 $('#runLogArea').on('click', function (e) {
     autoScrollLog = false;
-    console.log(autoScrollLog)
 });
 
 function autoScrollLogArea() {
@@ -3925,9 +3921,9 @@ function autoScrollLogArea() {
     }
 }
 window.saveNextLog = true;
+
 function callAsyncSaveNextLog(data) {
     getValuesAsync(data, function (d) {
-        console.log(d)
         if (d == "nextflow log not found") {
             window.saveNextLog = "logNotFound"
         } else {
@@ -3938,8 +3934,6 @@ function callAsyncSaveNextLog(data) {
 
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
-    console.log("enterReadStats")
-    console.log(window.saveNextLog)
     runStatus = getRunStatus(project_pipeline_id);
     var pidStatus = "";
     serverLog = '';
@@ -3954,6 +3948,7 @@ function readNextLog(proType, proId, type) {
     }
     //get nextflow log
     nextflowLog = getNextflowLog(project_pipeline_id, proType, proId);
+
     // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated
     // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
@@ -3972,11 +3967,21 @@ function readNextLog(proType, proId, type) {
         } else if (runStatus === "Terminated") {
             displayButton('terminatedProPipe');
         }
-        // if amazon instance shutted down
-    } else if (window.saveNextLog == "logNotFound") {
+    } 
+    // when run hasn't finished yet and page reloads then show connecting button
+    else if (type == "reload") {
+        if (nextflowLog !== null && nextflowLog !== undefined) {
+            $('#runLogArea').val(serverLog + nextflowLog);
+            autoScrollLogArea()
+        }
+        displayButton('connectingProPipe');
+        readNextflowLogTimer(proType, proId, type);
+    } 
+    // when run hasn't finished yet and connection is down
+    else if (window.saveNextLog == "logNotFound") {
         displayButton('abortedProPipe');
         if (nextflowLog !== null && nextflowLog !== undefined) {
-            $('#runLogArea').val(serverLog + nextflowLog +"\nConnection is lost.");
+            $('#runLogArea').val(serverLog + nextflowLog + "\nConnection is lost.");
             autoScrollLogArea()
         }
     }
@@ -4554,6 +4559,8 @@ $(document).ready(function () {
         proTypeWindow = profileType;
         proIdWindow = profileId;
         readNextLog(profileType, profileId, "reload");
+    } else {
+        $('#statusProPipe').css('display', 'inline');
     }
 
     pipeline_id = pipeData[0].pipeline_id;
