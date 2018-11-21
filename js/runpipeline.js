@@ -4523,7 +4523,7 @@ $(document).ready(function () {
     if (runStatus !== "") {
         $('#runLogs').css('display', 'inline');
         //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
-        var profileTypeId = $('#chooseEnv').find(":selected").val(); //local-32
+        var profileTypeId = pipeData[0].profile //local-32
         var patt = /(.*)-(.*)/;
         var profileType = profileTypeId.replace(patt, '$1');
         var profileId = profileTypeId.replace(patt, '$2');
