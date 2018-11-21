@@ -3920,7 +3920,7 @@ function autoScrollLogArea() {
         document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
     }
 }
-window.saveNextLog = true;
+window.saveNextLog = false;
 
 function callAsyncSaveNextLog(data) {
     getValuesAsync(data, function (d) {
@@ -3969,13 +3969,15 @@ function readNextLog(proType, proId, type) {
         }
     } 
     // when run hasn't finished yet and page reloads then show connecting button
-    else if (type == "reload") {
+    else if (type == "reload" || window.saveNextLog == false) {
         if (nextflowLog !== null && nextflowLog !== undefined) {
             $('#runLogArea').val(serverLog + nextflowLog);
             autoScrollLogArea()
         }
         displayButton('connectingProPipe');
-        readNextflowLogTimer(proType, proId, type);
+        if (type === "reload") {
+            readNextflowLogTimer(proType, proId, type);
+        }
     } 
     // when run hasn't finished yet and connection is down
     else if (window.saveNextLog == "logNotFound") {
