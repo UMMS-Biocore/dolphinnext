@@ -654,6 +654,29 @@ function getValues(data, async) {
 }
 
 
+
+
+
+
+function getValuesAsync(data,callback) {
+    var result= null;
+    $.ajax({
+        url: "ajax/ajaxquery.php",
+        data: data,
+        async: true,
+        cache: false,
+        type: "POST",
+        success: function (data) {
+            result = data;
+            callback(result);
+        }
+    });
+}
+
+
+
+
+
 function truncateName(name, type) {
     if (type === 'inOut') {
         var letterLimit = 8;
