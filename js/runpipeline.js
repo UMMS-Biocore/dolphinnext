@@ -2806,8 +2806,8 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         //--ProcessPanel (where process options defined)
         createProcessPanelAutoFill(id, pObj, name, process_id);
         //create process circle
-        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_"+id]);
-        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_"+id]);
+        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_" + id]);
+        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_" + id]);
 
         //gnum uniqe, id same id (Written in class) in same type process
         pObj.g = d3.select("#mainG" + MainGNum).append("g")
@@ -3610,7 +3610,7 @@ function configTextAllProcess(exec_all_settings, type, proName, executor_job) {
 }
 
 function displayButton(idButton) {
-    var buttonList = ['runProPipe', 'errorProPipe', 'completeProPipe', 'runningProPipe', 'waitingProPipe', 'statusProPipe', 'connectingProPipe', 'terminatedProPipe'];
+    var buttonList = ['runProPipe', 'errorProPipe', 'completeProPipe', 'runningProPipe', 'waitingProPipe', 'statusProPipe', 'connectingProPipe', 'terminatedProPipe', "abortedProPipe"];
     for (var i = 0; i < buttonList.length; i++) {
         document.getElementById(buttonList[i]).style.display = "none";
     }
@@ -3906,7 +3906,7 @@ function runProPipeCall(checkType) {
 function readNextflowLogTimer(proType, proId, type) {
     //to trigger fast loading for new page reload
     if (type === "reload") {
-        setTimeout(function () { readNextLog(proType, proId, "no_reload") }, 3000);
+        setTimeout(function () { readNextLog(proType, proId, "no_reload") }, 3500);
     }
     interval_readNextlog = setInterval(function () {
         readNextLog(proType, proId, "no_reload")
@@ -3924,9 +3924,22 @@ function autoScrollLogArea() {
         document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
     }
 }
+window.saveNextLog = true;
+function callAsyncSaveNextLog(data) {
+    getValuesAsync(data, function (d) {
+        console.log(d)
+        if (d == "nextflow log not found") {
+            window.saveNextLog = "logNotFound"
+        } else {
+            window.saveNextLog = true
+        }
+    });
+}
 
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
+    console.log("enterReadStats")
+    console.log(window.saveNextLog)
     runStatus = getRunStatus(project_pipeline_id);
     var pidStatus = "";
     serverLog = '';
@@ -3947,7 +3960,6 @@ function readNextLog(proType, proId, type) {
         if (nextflowLog !== null && nextflowLog !== undefined) {
             $('#runLogArea').val(serverLog + nextflowLog);
             autoScrollLogArea()
-
         }
         if (type !== "reload") {
             clearInterval(interval_readNextlog);
@@ -3960,8 +3972,16 @@ function readNextLog(proType, proId, type) {
         } else if (runStatus === "Terminated") {
             displayButton('terminatedProPipe');
         }
-        // otherwise parse nextflow file to get status
-    } else if (nextflowLog !== null) {
+        // if amazon instance shutted down
+    } else if (window.saveNextLog == "logNotFound") {
+        displayButton('abortedProPipe');
+        if (nextflowLog !== null && nextflowLog !== undefined) {
+            $('#runLogArea').val(serverLog + nextflowLog +"\nConnection is lost.");
+            autoScrollLogArea()
+        }
+    }
+    // otherwise parse nextflow file to get status
+    else if (nextflowLog !== null) {
         $('#runLogArea').val(serverLog + nextflowLog);
         autoScrollLogArea()
 
@@ -4062,8 +4082,12 @@ function readNextLog(proType, proId, type) {
         }
     }
     // save nextflow log file
-    setTimeout(function () { getValues({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId }, true), 100 });
+    setTimeout(function () {
+        window.saveNextLog = callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
+    }, 100);
 }
+
+
 
 function showOutputPath() {
     var outTableRow = $('#outputsTable > tbody > >:last-child').find('span');
@@ -4531,7 +4555,7 @@ $(document).ready(function () {
         proIdWindow = profileId;
         readNextLog(profileType, profileId, "reload");
     }
-    
+
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
     $('#pipeline-title').attr('pipeline_id', pipeline_id);
@@ -4540,7 +4564,7 @@ $(document).ready(function () {
         loadPipelineDetails(pipeline_id);
         loadProjectPipeline(pipeData);
     }
-    
+
     //not allow to check both docker and singularity
     $('#docker_imgDiv').on('show.bs.collapse', function () {
         if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {

@@ -1619,8 +1619,10 @@ class dbfuncs {
             // save $nextflow_log to a file 
             if ($nextflow_log != "" && !empty($nextflow_log)){
                 $this->writeLog($project_pipeline_id,$nextflow_log,'w','nextflow.log');
+                return json_encode("nextflow log saved");
+            } else {
+                return json_encode("nextflow log not found");
             }
-            return json_encode("nextflow log saved");
     }
 //    ----------- Inputs, Project Inputs   ---------
     public function getInputs($id,$ownerID) {
