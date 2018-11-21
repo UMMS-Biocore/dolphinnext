@@ -95,7 +95,7 @@ else if ($p=="updateRunPid"){
 else if ($p=="updateRunStatus"){
 	$project_pipeline_id = $_REQUEST['project_pipeline_id'];
 	$run_status = $_REQUEST['run_status'];
-	$duration = $_REQUEST['duration'];
+    $duration = isset($_SESSION['duration']) ? $_SESSION['duration'] : "";
     $db -> updateRunLog($project_pipeline_id, $run_status, $duration, $ownerID);
     $data = $db -> updateRunStatus($project_pipeline_id, $run_status, $ownerID);
 }
@@ -168,7 +168,7 @@ else if ($p=="getExistProjectPipelines"){
     $data = $db -> getExistProjectPipelines($pipeline_id,$ownerID);
 }
 else if ($p=="getProjectPipelines"){
-    $project_id = $_REQUEST['project_id'];
+    $project_id = isset($_SESSION['project_id']) ? $_SESSION['project_id'] : "";
     $data = $db -> getProjectPipelines($id,$project_id,$ownerID);
 }
 else if ($p=="getProjectInputs"){
@@ -537,7 +537,8 @@ else if ($p=="saveProcessGroup"){
 else if ($p=="saveProcess"){
     $name = $_REQUEST['name'];
     $process_gid = $_REQUEST['process_gid'];
-    $process_uuid = $_REQUEST['process_uuid'];
+    $process_uuid = isset($_REQUEST['process_uuid']) ? $_REQUEST['process_uuid'] : "";
+    
     if (empty($process_uuid)) {
         $process_uuid = "uuid()";
     } else {
@@ -550,8 +551,8 @@ else if ($p=="saveProcess"){
     $script_footer = addslashes(htmlspecialchars(urldecode($_REQUEST['script_footer']), ENT_QUOTES));
     $script_mode = $_REQUEST['script_mode'];
     $script_mode_header = $_REQUEST['script_mode_header'];
-    $rev_id = $_REQUEST['rev_id']; 
-    $rev_comment = $_REQUEST['rev_comment']; 
+    $rev_id = isset($_REQUEST['rev_id']) ? $_REQUEST['rev_id'] : "";
+    $rev_comment = isset($_REQUEST['rev_comment']) ? $_REQUEST['rev_comment'] : "";
     $group_id = $_REQUEST['group']; 
     $perms = $_REQUEST['perms']; 
     $publish = $_REQUEST['publish']; 
@@ -648,7 +649,7 @@ else if ($p=="saveProjectPipeline"){
     $exec_all_settings = addslashes(htmlspecialchars(urldecode($_REQUEST['exec_all_settings']), ENT_QUOTES));
 //    $exec_each_settings = $_REQUEST['exec_each_settings'];
     $exec_each_settings = addslashes(htmlspecialchars(urldecode($_REQUEST['exec_each_settings']), ENT_QUOTES));
-    $exec_next_settings = $_REQUEST['exec_next_settings'];
+    $exec_next_settings = isset($_REQUEST['exec_next_settings']) ? $_REQUEST['exec_next_settings'] : "";
     $docker_check = $_REQUEST['docker_check'];
     $docker_img = $_REQUEST['docker_img'];
     $docker_opt = $_REQUEST['docker_opt'];
@@ -679,10 +680,10 @@ else if ($p=="saveProjectPipeline"){
     }
 }
 else if ($p=="saveProcessParameter"){
+    $closure = isset($_REQUEST['closure']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['closure']), ENT_QUOTES)) : "";
+    $reg_ex = isset($_REQUEST['reg_ex']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['reg_ex']), ENT_QUOTES)) : "";
+    $operator = isset($_REQUEST['operator']) ? $_REQUEST['operator'] : "";
     $sname = addslashes(htmlspecialchars(urldecode($_REQUEST['sname']), ENT_QUOTES));
-    $closure = addslashes(htmlspecialchars(urldecode($_REQUEST['closure']), ENT_QUOTES));
-    $reg_ex = addslashes(htmlspecialchars(urldecode($_REQUEST['reg_ex']), ENT_QUOTES));
-    $operator = $_REQUEST['operator'];
     $process_id = $_REQUEST['process_id'];
     $parameter_id = $_REQUEST['parameter_id'];
     $type = $_REQUEST['type'];

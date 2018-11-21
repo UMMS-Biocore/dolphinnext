@@ -398,7 +398,7 @@ function checkProjectPipelinePublic(proid) {
 //Check if pipeline is ever used in projects 
 function checkProject(pipeline_id) {
     var checkProj = getValues({ p: "checkProject", "pipeline_id": pipeline_id });
-    var checkProjPipeModule = getValues({ p: "checkProjectPipeModule", "pipeline_id": pipeline_id });
+//    var checkProjPipeModule = getValues({ p: "checkProjectPipeModule", "pipeline_id": pipeline_id });
 
     return checkProj
 }

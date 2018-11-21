@@ -98,7 +98,7 @@ class dbfuncs {
                     $singuPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
                   }
                   $imageName = str_replace("/","-",$matches[1]);
-                  $image = $singuPath +'/.dolphinnext/singularity/' + $imageName;
+                  $image = $singuPath +'/.dolphinnext/singularity/'.$imageName;
                   if ($singu_save == "true"){
                     $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && [ -e ".$imageName.".simg ] && rm ".$imageName.".simg && singularity pull --name ".$imageName.".simg ".$img;
                   } else {
@@ -414,7 +414,9 @@ class dbfuncs {
             $configText.= "}\n";
         }
         //create folders
-        mkdir("../{$this->run_path}/run{$project_pipeline_id}", 0755, true);
+        if (!file_exists("../{$this->run_path}/run{$project_pipeline_id}")) {
+            mkdir("../{$this->run_path}/run{$project_pipeline_id}", 0755, true);
+        }
         $file = fopen("../{$this->run_path}/run{$project_pipeline_id}/nextflow.log", 'w');//creates new file
         fclose($file);
         chmod("../{$this->run_path}/run{$project_pipeline_id}/nextflow.log", 0755);
@@ -2224,15 +2226,31 @@ class dbfuncs {
         $pipeline_group_id = $obj[15]->{"pipeline_group_id"};
         $process_list = $obj[16]->{"process_list"};
         $pipeline_list = $obj[17]->{"pipeline_list"};
-        $pipeline_gid = $obj[18]->{"pipeline_gid"};
-        $rev_comment = $obj[19]->{"rev_comment"};
-        $rev_id = $obj[20]->{"rev_id"};
-        $pipeline_uuid = $obj[21]->{"pipeline_uuid"};
-        if (empty($pipeline_uuid)) {
-            $pipeline_uuid = "uuid()";
-        } else {
-            $pipeline_uuid = "'$pipeline_uuid'";
-        }
+        $pipeline_gid = isset($obj[18]->{"pipeline_gid"}) ? $obj[18]->{"pipeline_gid"} : "";
+        $rev_comment = isset($obj[19]->{"rev_comment"}) ? $obj[19]->{"rev_comment"} : "";
+        $rev_id = isset($obj[20]->{"rev_id"}) ? $obj[20]->{"rev_id"} : "";
+        $pipeline_uuid = isset($obj[21]->{"pipeline_uuid"}) ? $obj[21]->{"pipeline_uuid"} : "";
+        if (empty($id) && empty($pipeline_uuid)) {
+            $all_uuid = $this->getUUIDAPI("pipeline");
+            if (isset($all_uuid->uuid)){
+                $pipeline_uuid = $all_uuid->uuid;
+            } else {
+                $pipeline_uuid = "";
+            }
+            if (isset($all_uuid->rev_uuid)){
+                $pipeline_rev_uuid = $all_uuid->rev_uuid;
+            } else {
+                $pipeline_rev_uuid = "";
+            }
+        } else if (empty($id)){
+            $all_uuid = $this->getUUIDAPI("pipeline_rev");
+            $pipeline_uuid = "$pipeline_uuid";
+            if (isset($all_uuid->rev_uuid)){
+                $pipeline_rev_uuid = $all_uuid->rev_uuid;
+            } else {
+                $pipeline_rev_uuid = "";
+            }
+        } 
         settype($rev_id, "integer");
         settype($pipeline_gid, "integer");
         settype($group_id, "integer");
