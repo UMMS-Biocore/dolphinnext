@@ -10,6 +10,16 @@ env:
 
 services:
   - mysql
+  
+addons:
+  ssh_known_hosts:
+  - localhost
+  - localhost/dolphinnext
+  - localhost:80/dolphinnext
+  - localhost:8080/dolphinnext
+  - 127.0.0.1
+  - 127.0.0.1:80/dolphinnext
+  - 127.0.0.1:8080/dolphinnext
 
 before_install:
   - sudo apt-get update
