@@ -3980,7 +3980,7 @@ function readNextLog(proType, proId, type) {
         }
     } 
     // when run hasn't finished yet and connection is down
-    else if (window.saveNextLog == "logNotFound") {
+    else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" || runStatus !== "init")) {
         displayButton('abortedProPipe');
         if (nextflowLog !== null && nextflowLog !== undefined) {
             $('#runLogArea').val(serverLog + nextflowLog + "\nConnection is lost.");
