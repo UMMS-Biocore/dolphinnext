@@ -20,6 +20,8 @@ before_install:
   - git clone https://github.com/UMMS-Biocore/dolphinnext.git /home/travis/build/dolphinnext
   - sudo chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} /var/www
   - sudo cat /etc/apache2/envvars
+  - sudo cat /etc/apache2/ports.conf
+  
 
 before_script:
   - sudo service apache2 restart
@@ -28,7 +30,6 @@ before_script:
   - sudo mysql -u root biocorepipe < db_structure.sql
   - sudo ./runUpdate biocorepipe
   - cd ..
-  - cat /etc/apache2/ports.conf
 
 #  - sudo mysql -e "use biocore; INSERT INTO amazon_credentials ( aws_access_key_id, aws_secret_access_key, bucket ) VALUES ( 'test_access', 'test_secret', 'test_bucket' );" -uroot
 #  - sudo mkdir -p /home/travis/build/pub /home/travis/build/logs tmp/files tmp/logs tmp/logs/run4 tmp/logs/run5 tmp/logs/run6 tmp/logs/run7 tmp/logs/run8
