@@ -3926,6 +3926,8 @@ function callAsyncSaveNextLog(data) {
 
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
+    console.log(proType)
+    console.log(proId)
     runStatus = getRunStatus(project_pipeline_id);
     var pidStatus = "";
     serverLog = '';
@@ -3940,6 +3942,7 @@ function readNextLog(proType, proId, type) {
     }
     //get nextflow log
     nextflowLog = getNextflowLog(project_pipeline_id, proType, proId);
+    
     // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated
     // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
@@ -4079,6 +4082,8 @@ function readNextLog(proType, proId, type) {
 
         }
     }
+    console.log(proType)
+    console.log(proId)
     // save nextflow log file
     setTimeout(function () {
         window.saveNextLog = callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
