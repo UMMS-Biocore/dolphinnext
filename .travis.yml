@@ -43,7 +43,7 @@ script:
   - phpunit unitTesting/ajax/ajaxquery_unittesting.php
 
 after_script:
-  - cat /var/log/apache2/error.log 
+  - sudo cat /var/log/apache2/error.log 
   - mysql -e "show databases;" -uroot
   - mysql -e "use biocorepipe; show tables;" -uroot
   - mysql -e "use biocorepipe; SELECT * FROM biocorepipe_save;" -uroot
