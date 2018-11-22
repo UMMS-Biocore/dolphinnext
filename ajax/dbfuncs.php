@@ -2242,9 +2242,26 @@ class dbfuncs {
     }
     
     
+    function curl_get( $url ) {
+    if ( !isset($url) ) {
+      return false;
+    }
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1200);
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
+  }
+
+    
+    
     public function getUUIDAPI($type){
 		$request = API_PATH."/api/service.php?func=getUUID&type=$type";
-        $res = json_decode('['.file_get_contents($request).']');
+        $res = json_decode('['.$this->curl_get($request).']');
 		if(isset($uuid[0]->ERROR)){
 			return $uuid[0]->ERROR;
 		} else if (!isset($uuid[0]->rev_uuid)){
