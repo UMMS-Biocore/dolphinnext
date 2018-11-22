@@ -48,6 +48,8 @@ session_write_close();
         <link href="dist/jquery_loading/jquery.loading.min.css" rel="stylesheet" />
         <!--    jquery-ui-bootstrap-->
         <link href="bower_components/jquery-ui-bootstrap/css/custom-theme/jquery-ui-1.10.0.custom.css" rel="stylesheet" />
+        <!-- dropzone -->
+        <link type="text/css" rel="stylesheet" href="bower_components/dropzone/dropzone.min.css"/>
         <style>
             /* Ace Editor scroll problem fix */
             .ace_text-input {
@@ -245,7 +247,6 @@ session_write_close();
             .txtlink {
                 color: #397FA7;
             }
-            
 
         </style>
 
@@ -539,6 +540,8 @@ session_write_close();
             <script src="dist/ace/ace.js"></script>
             <!-- crypto-js -->
             <script src="bower_components/crypto-js/aes.js"></script>
+            <!-- dropzone -->
+            <script src="bower_components/dropzone/dropzone.js"></script>
             <script type="text/javascript" src="dist/js/dataTables.checkboxes.js"></script>
             <?php print getJS($np, $login, $id); ?>
 
