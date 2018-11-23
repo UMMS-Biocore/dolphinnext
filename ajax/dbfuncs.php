@@ -2261,6 +2261,8 @@ class dbfuncs {
     
     public function getUUIDAPI($type){
 		$request = API_PATH."/api/service.php?func=getUUID&type=$type";
+        $a = file_get_contents("http://localhost/");
+        $a = file_get_contents("http://localhost:8080/");
         $res = json_decode('['.file_get_contents($request).']');
         if (!isset($uuid[0]->rev_uuid)){
             //call local functions to get uuid
