@@ -43,11 +43,11 @@ before_script:
   - ls /home/travis/build/dolphinnext
   - ls /home/travis/build/onuryukselen/dolphinnext
   - sudo wget -d -O a.txt "http://localhost"
-  - sudo wget -d -O b.txt "http://localhost/dolphinnext"
-  - sudo wget -d -O c.txt "http://localhost/dolphinnext/api/service.php"  
+#  - sudo wget -d -O b.txt "http://localhost/dolphinnext"
+#  - sudo wget -d -O c.txt "http://localhost/dolphinnext/api/service.php"  
   - sudo cat a.txt
-  - sudo cat b.txt
-  - sudo cat c.txt
+#  - sudo cat b.txt
+#  - sudo cat c.txt
 
 #  - sudo mysql -e "use biocore; INSERT INTO amazon_credentials ( aws_access_key_id, aws_secret_access_key, bucket ) VALUES ( 'test_access', 'test_secret', 'test_bucket' );" -uroot
 #  - sudo mkdir -p /home/travis/build/pub /home/travis/build/logs tmp/files tmp/logs tmp/logs/run4 tmp/logs/run5 tmp/logs/run6 tmp/logs/run7 tmp/logs/run8
