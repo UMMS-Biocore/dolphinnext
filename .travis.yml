@@ -29,7 +29,7 @@ before_install:
   - sudo apt-get update
   - git clone https://github.com/UMMS-Biocore/dolphinnext.git /home/travis/build/dolphinnext
   - sudo chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} /var/www
-  - sudo ln -s /home/travis/build/dolphinnext /var/www/html/
+  - sudo ln -s /home/travis/build/onuryukselen/dolphinnext /var/www/html/
   - sudo cat /etc/apache2/envvars
   - sudo cat /etc/apache2/ports.conf
   
