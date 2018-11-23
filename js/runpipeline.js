@@ -3961,7 +3961,7 @@ function readNextLog(proType, proId, type) {
         }
     } 
     // when run hasn't finished yet and page reloads then show connecting button
-    else if (type == "reload" || window.saveNextLog == false) {
+    else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
         if (nextflowLog !== null && nextflowLog !== undefined) {
             $('#runLogArea').val(serverLog + nextflowLog);
             autoScrollLogArea()

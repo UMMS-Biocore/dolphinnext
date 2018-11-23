@@ -1,6 +1,6 @@
 <?php
-//require_once(__DIR__."/../api/funcs.php");
-//$myClass = new funcs();
+require_once(__DIR__."/../api/funcs.php");
+
 
 require_once(__DIR__."/../config/config.php");
 class dbfuncs {
@@ -2262,19 +2262,18 @@ class dbfuncs {
     public function getUUIDAPI($type){
 		$request = API_PATH."/api/service.php?func=getUUID&type=$type";
         $res = json_decode('['.file_get_contents($request).']');
-		if(isset($uuid[0]->ERROR)){
-			return $uuid[0]->ERROR;
-		} else if (!isset($uuid[0]->rev_uuid)){
-            //call local function to get uuid
-//            $params=[];
-//            $params["type"]=$type;
-//            $res= $myClass->getUUID($params);
-//            if (isset($res[0]->rev_uuid)){
-//                return $res[0];
-//            }
+        if (!isset($uuid[0]->rev_uuid)){
+            //call local functions to get uuid
+            $params=[];
+            $params["type"]=$type;
+            $myClass = new funcs();
+            $res= (object)$myClass->getUUID($params);
+            if (isset($res->rev_uuid)){
+                return $res;
+            }
+        } else {
+		  return $res[0];
         }
-		return $res[0];
-        
 	}
     
     
