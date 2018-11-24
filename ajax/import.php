@@ -8,7 +8,9 @@ $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
 session_write_close();
 
 $targetDir = "../tmp/uploads/{$email}";
-mkdir($targetDir, 0755, true);
+if (!file_exists($targetDir)) {
+   mkdir($targetDir, 0755, true);
+}
 if (!empty($_FILES)) {
     $tempFile = $_FILES['file']['tmp_name'];                     
     $targetFile =  "$targetDir/". $_FILES['file']['name'];  
