@@ -96,7 +96,7 @@ else if ($p=="updateRunPid"){
 else if ($p=="updateRunStatus"){
 	$project_pipeline_id = $_REQUEST['project_pipeline_id'];
 	$run_status = $_REQUEST['run_status'];
-    $duration = isset($_SESSION['duration']) ? $_SESSION['duration'] : "";
+    $duration = isset($_REQUEST['duration']) ? $_REQUEST['duration'] : "";
     $db -> updateRunLog($project_pipeline_id, $run_status, $duration, $ownerID);
     $data = $db -> updateRunStatus($project_pipeline_id, $run_status, $ownerID);
 }
@@ -176,7 +176,7 @@ else if ($p=="getExistProjectPipelines"){
     $data = $db -> getExistProjectPipelines($pipeline_id,$ownerID);
 }
 else if ($p=="getProjectPipelines"){
-    $project_id = isset($_SESSION['project_id']) ? $_SESSION['project_id'] : "";
+    $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
     $data = $db -> getProjectPipelines($id,$project_id,$ownerID);
 }
 else if ($p=="getProjectInputs"){
