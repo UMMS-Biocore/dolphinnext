@@ -10,6 +10,7 @@ env:
 
 services:
   - mysql
+  
 
 before_install:
   - sudo apt-get update
@@ -18,8 +19,10 @@ before_install:
   - sudo apt-get -y install python-software-properties
   - sudo apt-get update
   - git clone https://github.com/UMMS-Biocore/dolphinnext.git /home/travis/build/dolphinnext
+  - sudo sudo cp -r /home/travis/build/${TRAVIS_REPO_SLUG} /var/www/html/
   - sudo chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} /var/www
-  - sudo cat /etc/apache2/envvars
+  - sudo chmod -R g+w /var/www/html
+  
 
 before_script:
   - sudo service apache2 restart
@@ -31,7 +34,8 @@ before_script:
 
 #  - sudo mysql -e "use biocore; INSERT INTO amazon_credentials ( aws_access_key_id, aws_secret_access_key, bucket ) VALUES ( 'test_access', 'test_secret', 'test_bucket' );" -uroot
 #  - sudo mkdir -p /home/travis/build/pub /home/travis/build/logs tmp/files tmp/logs tmp/logs/run4 tmp/logs/run5 tmp/logs/run6 tmp/logs/run7 tmp/logs/run8
-  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=tmp/logs" > config/.sec
+#127.0.0.1
+  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=tmp/logs\nAPI_PATH=http://localhost/dolphinnext" > config/.sec
 
 script:
   #	ajax

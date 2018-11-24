@@ -1,4 +1,7 @@
 <?php
+require_once(__DIR__."/../api/funcs.php");
+
+
 require_once(__DIR__."/../config/config.php");
 class dbfuncs {
 
@@ -12,6 +15,7 @@ class dbfuncs {
     private $ssh_settings = "-oStrictHostKeyChecking=no -q -oChallengeResponseAuthentication=no -oBatchMode=yes -oPasswordAuthentication=no -oConnectTimeout=3";
     private $amz_path = AMZPATH;
     private $amazon = AMAZON;
+//    private $api_path = API_PATH;
     private static $link;
 
     function __construct() {
@@ -98,7 +102,7 @@ class dbfuncs {
                     $singuPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
                   }
                   $imageName = str_replace("/","-",$matches[1]);
-                  $image = $singuPath +'/.dolphinnext/singularity/' + $imageName;
+                  $image = $singuPath +'/.dolphinnext/singularity/'.$imageName;
                   if ($singu_save == "true"){
                     $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && [ -e ".$imageName.".simg ] && rm ".$imageName.".simg && singularity pull --name ".$imageName.".simg ".$img;
                   } else {
@@ -414,7 +418,9 @@ class dbfuncs {
             $configText.= "}\n";
         }
         //create folders
-        mkdir("../{$this->run_path}/run{$project_pipeline_id}", 0755, true);
+        if (!file_exists("../{$this->run_path}/run{$project_pipeline_id}")) {
+            mkdir("../{$this->run_path}/run{$project_pipeline_id}", 0755, true);
+        }
         $file = fopen("../{$this->run_path}/run{$project_pipeline_id}/nextflow.log", 'w');//creates new file
         fclose($file);
         chmod("../{$this->run_path}/run{$project_pipeline_id}/nextflow.log", 0755);
@@ -1304,8 +1310,8 @@ class dbfuncs {
         return self::queryTable($sql);
     }
 	
-    public function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $ownerID) {
-        $sql = "INSERT INTO process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, publish, script_mode, script_mode_header, process_uuid) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group', '$publish','$script_mode', '$script_mode_header', $process_uuid)";
+    public function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID) {
+        $sql = "INSERT INTO process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, publish, script_mode, script_mode_header, process_uuid, process_rev_uuid) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group', '$publish','$script_mode', '$script_mode_header', '$process_uuid', '$process_rev_uuid')";
         return self::insTable($sql);
     }
 
@@ -1513,6 +1519,18 @@ class dbfuncs {
         $content = fread($handle, filesize($filename));
         fclose($handle);
         return json_encode($content);
+    }
+    public function getUpload($name,$email) {
+        $filename= "../tmp/uploads/$email/$name";
+        // get contents of a file into a string
+        $handle = fopen($filename, "r");
+        $content = fread($handle, filesize($filename));
+        fclose($handle);
+        return json_encode($content);
+    }
+    public function removeUpload($name,$email) {
+        $filename= "../tmp/uploads/$email/$name";
+        unlink($filename);
     }
     public function getRun($project_pipeline_id,$ownerID) {
         $sql = "SELECT * FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
@@ -1775,15 +1793,32 @@ class dbfuncs {
         return self::insTable($sql);
     }
     public function duplicateProcess($new_process_gid, $new_name, $old_id, $ownerID) {
-        $sql = "INSERT INTO process(process_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid)
-                SELECT uuid(), process_group_id, '$new_name', summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '0', '$new_process_gid'
+        $all_uuid = $this->getUUIDAPI("process");
+        if (isset($all_uuid->uuid)){
+            $process_uuid = $all_uuid->uuid;
+        } else {
+            $process_uuid = "";
+        }
+        if (isset($all_uuid->rev_uuid)){
+            $process_rev_uuid = $all_uuid->rev_uuid;
+        } else {
+            $process_rev_uuid = "";
+        }
+        $sql = "INSERT INTO process(process_uuid, process_rev_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid)
+                SELECT '$process_uuid', '$process_rev_uuid', process_group_id, '$new_name', summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '0', '$new_process_gid'
                 FROM process
                 WHERE id='$old_id'";
         return self::insTable($sql);
     }
     public function createProcessRev($new_process_gid, $rev_comment, $rev_id, $old_id, $ownerID) {
-        $sql = "INSERT INTO process(process_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid, rev_comment)
-                SELECT process_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '$rev_id', '$new_process_gid', '$rev_comment'
+        $all_uuid = $this->getUUIDAPI("process_rev");
+        if (isset($all_uuid->rev_uuid)){
+            $process_rev_uuid = $all_uuid->rev_uuid;
+        } else {
+            $process_rev_uuid = "";
+        }
+        $sql = "INSERT INTO process(process_uuid, process_rev_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid, rev_comment)
+                SELECT process_uuid, '$process_rev_uuid', process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '$rev_id', '$new_process_gid', '$rev_comment'
                 FROM process
                 WHERE id='$old_id'";
         return self::insTable($sql);
@@ -1927,18 +1962,20 @@ class dbfuncs {
             if (isset(json_decode($userRoleCheck)[0])){
                 $userRole = json_decode($userRoleCheck)[0]->{'role'};
                 if ($userRole == "admin"){
-                    $sql = "SELECT DISTINCT p.*, u.username, IF(p.owner_id='$ownerID',1,0) as own 
+                    $sql = "SELECT DISTINCT p.*, u.username, pg.group_name as process_group_name, IF(p.owner_id='$ownerID',1,0) as own 
 					FROM process p 
 					INNER JOIN users u ON p.owner_id = u.id
+                    INNER JOIN process_group pg ON p.process_group_id = pg.id
 					where p.id = '$id'";
                     return self::queryTable($sql);
                 }
             }
 		}
-		$sql = "SELECT DISTINCT p.*, u.username, IF(p.owner_id='$ownerID',1,0) as own
+		$sql = "SELECT DISTINCT p.*, u.username, pg.group_name as process_group_name, IF(p.owner_id='$ownerID',1,0) as own
         FROM process p
         LEFT JOIN user_group ug ON p.group_id=ug.g_id
 		INNER JOIN users u ON p.owner_id = u.id
+        INNER JOIN process_group pg ON p.process_group_id = pg.id
         where p.id = '$id' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
 		return self::queryTable($sql);
 	}
@@ -2204,7 +2241,45 @@ class dbfuncs {
         endforeach;
     }
     
-	public function saveAllPipeline($dat,$ownerID) {
+    
+//    public function curl_get( $url ) {
+//    if ( !isset($url) ) {
+//      return false;
+//    }
+//    $ch = curl_init();
+//    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
+//    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1200);
+//    curl_setopt($ch, CURLOPT_URL, $url);
+//    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+//    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+//    $result = curl_exec($ch);
+//    curl_close($ch);
+//    return $result;
+//  }
+
+    
+    
+    public function getUUIDAPI($type){
+		$request = API_PATH."/api/service.php?func=getUUID&type=$type";
+        $a = file_get_contents("http://localhost/");
+        $a = file_get_contents("http://localhost/dolphinnext");
+        $res = json_decode('['.file_get_contents($request).']');
+        if (!isset($uuid[0]->rev_uuid)){
+            //call local functions to get uuid
+            $params=[];
+            $params["type"]=$type;
+            $myClass = new funcs();
+            $res= (object)$myClass->getUUID($params);
+            if (isset($res->rev_uuid)){
+                return $res;
+            }
+        } else {
+		  return $res[0];
+        }
+	}
+    
+    
+	public function saveAllPipeline($dat,$ownerID, $email) {
 		$obj = json_decode($dat);
 		$name =  $obj[0]->{"name"};
         $id = $obj[1]->{"id"};
@@ -2224,15 +2299,31 @@ class dbfuncs {
         $pipeline_group_id = $obj[15]->{"pipeline_group_id"};
         $process_list = $obj[16]->{"process_list"};
         $pipeline_list = $obj[17]->{"pipeline_list"};
-        $pipeline_gid = $obj[18]->{"pipeline_gid"};
-        $rev_comment = $obj[19]->{"rev_comment"};
-        $rev_id = $obj[20]->{"rev_id"};
-        $pipeline_uuid = $obj[21]->{"pipeline_uuid"};
-        if (empty($pipeline_uuid)) {
-            $pipeline_uuid = "uuid()";
-        } else {
-            $pipeline_uuid = "'$pipeline_uuid'";
-        }
+        $pipeline_gid = isset($obj[18]->{"pipeline_gid"}) ? $obj[18]->{"pipeline_gid"} : "";
+        $rev_comment = isset($obj[19]->{"rev_comment"}) ? $obj[19]->{"rev_comment"} : "";
+        $rev_id = isset($obj[20]->{"rev_id"}) ? $obj[20]->{"rev_id"} : "";
+        $pipeline_uuid = isset($obj[21]->{"pipeline_uuid"}) ? $obj[21]->{"pipeline_uuid"} : "";
+        if (empty($id) && empty($pipeline_uuid)) {
+            $all_uuid = $this->getUUIDAPI("pipeline");
+            if (isset($all_uuid->uuid)){
+                $pipeline_uuid = $all_uuid->uuid;
+            } else {
+                $pipeline_uuid = "";
+            }
+            if (isset($all_uuid->rev_uuid)){
+                $pipeline_rev_uuid = $all_uuid->rev_uuid;
+            } else {
+                $pipeline_rev_uuid = "";
+            }
+        } else if (empty($id)){
+            $all_uuid = $this->getUUIDAPI("pipeline_rev");
+            $pipeline_uuid = "$pipeline_uuid";
+            if (isset($all_uuid->rev_uuid)){
+                $pipeline_rev_uuid = $all_uuid->rev_uuid;
+            } else {
+                $pipeline_rev_uuid = "";
+            }
+        } 
         settype($rev_id, "integer");
         settype($pipeline_gid, "integer");
         settype($group_id, "integer");
@@ -2244,7 +2335,7 @@ class dbfuncs {
 	    if ($id > 0){
 			$sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', pin = '$pin', publish = '$publish', script_pipe_header = '$script_pipe_header', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', pin_order = '$pin_order', last_modified_user = '$ownerID' where id = '$id'";
 		}else{
-            $sql = "INSERT INTO biocorepipe_save(owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, pin, pin_order, publish, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid) VALUES ('$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms', '$pin', '$pin_order', $publish, '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', $pipeline_uuid)";
+            $sql = "INSERT INTO biocorepipe_save(owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, pin, pin_order, publish, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid) VALUES ('$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms', '$pin', '$pin_order', $publish, '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid')";
 		}
   		return self::insTable($sql);
   		
@@ -2278,17 +2369,19 @@ class dbfuncs {
                 if (isset(json_decode($userRoleCheck)[0])){
                     $userRole = json_decode($userRoleCheck)[0]->{'role'};
                     if ($userRole == "admin"){
-                        $sql = "select pip.*, u.username, IF(pip.owner_id='$ownerID',1,0) as own
+                        $sql = "select pip.*, u.username, pg.group_name as pipeline_group_name, IF(pip.owner_id='$ownerID',1,0) as own
                         FROM biocorepipe_save pip
                         INNER JOIN users u ON pip.owner_id = u.id
+                        INNER JOIN pipeline_group pg ON pip.pipeline_group_id = pg.id
                         where pip.id = '$id'";
                         return self::queryTable($sql);
                     }
                 }
             }
-		$sql = "select pip.*, u.username, IF(pip.owner_id='$ownerID',1,0) as own
+		$sql = "select pip.*, u.username, pg.group_name as pipeline_group_name, IF(pip.owner_id='$ownerID',1,0) as own
                 FROM biocorepipe_save pip
                 INNER JOIN users u ON pip.owner_id = u.id
+                INNER JOIN pipeline_group pg ON pip.pipeline_group_id = pg.id
                 LEFT JOIN user_group ug ON pip.group_id=ug.g_id
                 where pip.id = '$id' AND (pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15))";
 	   return self::queryTable($sql);
@@ -2310,4 +2403,43 @@ class dbfuncs {
 			('$ownerID','$name', '0', now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
+    public function exportPipeline($id, $ownerID, $type) {
+        $data = $this->loadPipeline($id,$ownerID);
+        $new_obj = json_decode($data,true);
+        $final_obj = [];
+        if ($type == "main"){
+            $final_obj["main_pipeline_{$id}"]=$new_obj[0];
+        } else {
+            $final_obj["pipeline_module_{$id}"]=$new_obj[0];
+        }
+        if (!empty($new_obj[0]["nodes"])){
+            $nodes = json_decode($new_obj[0]["nodes"]);
+            foreach ($nodes as $item):
+                if ($item[2] !== "inPro" && $item[2] !== "outPro"){
+                    //pipeline modules
+                    if (preg_match("/p(.*)/", $item[2], $matches)){
+                        $pipeModId = $matches[1];
+                        if (!empty($pipeModId)){
+                            $pipeModule = [];
+                            settype($pipeModId, "integer");
+                            $pipeModule = $this->exportPipeline($pipeModId, $ownerID, "pipeModule");
+                            $pipeModuleDec = json_decode($pipeModule,true);
+                            $final_obj = array_merge($pipeModuleDec, $final_obj);
+                        } 
+                    //processes    
+                    } else {
+                        $process_id = $item[2];
+                        $pro_para_in = $this->getInputsPP($process_id);
+                        $pro_para_out = $this->getOutputsPP($process_id);
+                        $process_data = $this->getProcessDataById($process_id, $ownerID);
+                        $final_obj["pro_param_in_{$process_id}"]=$pro_para_in;
+                        $final_obj["pro_param_out_{$process_id}"]=$pro_para_out;
+                        $final_obj["process_{$process_id}"]=$process_data;
+                    }
+                }
+            endforeach;
+        }
+        return json_encode($final_obj);
+    }
+    
 }

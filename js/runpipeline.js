@@ -3025,14 +3025,7 @@ function refreshCreatorData(project_pipeline_id) {
     }
 }
 
-function IsJsonString(str) {
-    try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
+
 
 function showHideColumnRunSett(colList, type) {
     for (var k = 0; k < colList.length; k++) {
@@ -3894,7 +3887,6 @@ function runProPipeCall(checkType) {
         project_pipeline_id: project_pipeline_id,
         runType: checkType
     });
-    console.log(serverLogGet)
     readNextflowLogTimer(proType, proId, "default");
     $('#runLogs').css('display', 'inline');
 }
@@ -3948,7 +3940,7 @@ function readNextLog(proType, proId, type) {
     }
     //get nextflow log
     nextflowLog = getNextflowLog(project_pipeline_id, proType, proId);
-
+    
     // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated
     // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
@@ -3969,7 +3961,7 @@ function readNextLog(proType, proId, type) {
         }
     } 
     // when run hasn't finished yet and page reloads then show connecting button
-    else if (type == "reload" || window.saveNextLog == false) {
+    else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
         if (nextflowLog !== null && nextflowLog !== undefined) {
             $('#runLogArea').val(serverLog + nextflowLog);
             autoScrollLogArea()

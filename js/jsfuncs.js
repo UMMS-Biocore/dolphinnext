@@ -24,6 +24,27 @@ $(function () {
     $('[data-toggle="tooltip"]').tooltip();
 });
 
+function IsJsonString(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+// example:
+//var filteredNames = filterObjKeys(names, /Peter/); // second parameter is a javascript regex object, so for exemple for case insensitive you would do /Peter/i  
+function filterObjKeys(obj, filter) {
+  var key, keys = [];
+  for (key in obj) {
+    if (obj.hasOwnProperty(key) && filter.test(key)) {
+      keys.push(key);
+    }
+  }
+  return keys;
+}
+
 
 // check the amazon profiles activity each 40 sec.
 checkAmzProfiles("timer");
