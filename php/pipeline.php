@@ -25,9 +25,9 @@
                 <button type="button" id="downPipeline" class="btn" name="button" onclick="download(createNextflowFile(&quot;pipeline&quot;))" data-backdrop="false" style=" margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Download Pipeline">
                         <i class="glyphicon glyphicon-save"></i></a></button>
-                <button type="button" id="importPipeline" class="btn" name="button" data-toggle="modal" data-target="#importModal" data-backdrop="false" style=" margin:0px; padding:0px;">
+                <button type="button" id="importPipeline" class="btn" name="button" data-toggle="modal" data-target="#importModal" data-backdrop="false" style=" display:none; margin:0px; padding:0px;">
                 <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Import Pipeline"><i class="glyphicon glyphicon-import"></i></a></button>
-                <button type="button" id="exportPipeline" class="btn" name="button" onclick="download(exportPipeline(),&quot;exportPipe&quot;)" data-backdrop="false" style=" margin:0px; padding:0px;">
+                <button type="button" id="exportPipeline" class="btn" name="button" onclick="download(exportPipeline(),&quot;exportPipe&quot;)" data-backdrop="false" style=" margin:0px; padding:0px; display:none;">
                 <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Export Pipeline"><i class="glyphicon glyphicon-export"></i></a></button>
                 <button type="button" id="savePDF" class="btn" name="button" data-backdrop="false" style=" margin:0px; padding:0px; padding-bottom:2px;">
                     <a href="#" download data-toggle="tooltip" data-placement="bottom" data-original-title="Download Workflow as PDF" onclick="return downloadPdf()">
@@ -992,6 +992,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal" id="cancelButton">Cancel</button>
                 <button type="button" class="btn btn-primary" id="nextButton">Next</button>
+                <button type="button" class="btn btn-primary" id="importButton">Import</button>
                 <button type="button" class="btn btn-success" data-dismiss="modal" id="compButton">Complete</button>
             </div>
         </div>
@@ -1079,6 +1080,25 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="warnUser" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Information</h4>
+            </div>
+            <div class="modal-body">
+                <span id="warnUserText">Text</span>
+                </br>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" id="saveOnExistImport">Save on Existing</button>
             </div>
         </div>
     </div>

@@ -45,6 +45,17 @@ function filterObjKeys(obj, filter) {
   return keys;
 }
 
+//after importing script text, remove extra quote if exist
+function removeDoubleQuote(script) {
+    if (script === null){
+        return null
+    }
+    var lastLetter = script.length - 1;
+    if (script[0] === '"' && script[lastLetter] === '"' && script[1] !== '"') {
+        script = script.substring(1, script.length - 1); //remove first and last duble quote
+    }
+    return script
+}
 
 // check the amazon profiles activity each 40 sec.
 checkAmzProfiles("timer");
@@ -203,6 +214,8 @@ function checkAmazonStatus(proId) {
     }
 
 }
+
+
 
 $(document).ready(function () {
     function addAmzRow(id, name, executor, instance_type, image_id, subnet_id) {
@@ -840,6 +853,14 @@ $(function () {
     });
 });
 
+//$("#example").multiline('this\n has\n newlines');
+$.fn.multiline = function(text){
+    this.text(text);
+    this.html(this.html().replace(/\n/g,'<br/>'));
+    return this;
+}
+
+
 function escapeHtml(str) {
     var map = {
         '&': '&amp;',
@@ -848,6 +869,9 @@ function escapeHtml(str) {
         '"': '&quot;',
         "'": '&#039;'
     };
+    if (str === null){
+        return null
+    }
     return str.replace(/[&<>"']/g, function (m) { return map[m]; });
 }
 
@@ -859,5 +883,8 @@ function decodeHtml(str) {
         '&quot;': '"',
         '&#039;': "'"
     };
+    if (str === null){
+        return null
+    }
     return str.replace(/&amp;|&lt;|&gt;|&quot;|&#039;/g, function (m) { return map[m]; });
 }

@@ -36,7 +36,7 @@ function getJS($np, $login, $id)
     
   if ($np==1 && $login==1){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
   <script src=\"js/pipelineModal.js\"></script>
-  <script src=\"js/pipelineD3.js\"></script><script src=\"js/nextflowText.js\"></script>";}
+  <script src=\"js/pipelineD3.js\"></script><script src=\"js/import.js\"></script><script src=\"js/nextflowText.js\"></script>";}
   else if ($np==1 && $login!=1 && !empty($id)){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
   <script src=\"js/publicpipeline.js\"></script>";}
   else if ($np==2 && $login==1 && empty($id)){$js .= "<script src=\"js/projects.js\"></script>"; }

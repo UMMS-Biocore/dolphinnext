@@ -1954,6 +1954,65 @@ class dbfuncs {
         WHERE p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)";
 		return self::queryTable($sql);
 	}
+    public function getLastProcessByUUID($id, $ownerID) {
+        if ($ownerID != ''){
+            $userRoleArr = json_decode($this->getUserRole($ownerID));
+            $userRole = $userRoleArr[0]->{'role'};
+            if ($userRole == "admin"){
+                $sql="SELECT DISTINCT p.*, pg.group_name as process_group_name
+                FROM process p
+                INNER JOIN process_group pg ON p.process_group_id = pg.id
+                INNER JOIN (
+                SELECT pr.process_gid, MAX(pr.rev_id) rev_id
+                FROM process pr
+                GROUP BY pr.process_gid
+                ) b ON p.rev_id = b.rev_id AND p.process_gid=b.process_gid AND p.process_uuid = '$id'";
+            return self::queryTable($sql);
+            }
+            $where_pg = "(pg.owner_id='$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15))";
+            $where_pr = "(pr.owner_id='$ownerID' OR pr.perms = 63 OR (ug.u_id ='$ownerID' and pr.perms = 15))";
+            } 
+       $sql="SELECT DISTINCT p.*, pg.group_name as process_group_name
+             FROM process p
+             LEFT JOIN user_group ug ON  p.group_id=ug.g_id
+             INNER JOIN process_group pg
+             ON p.process_group_id = pg.id and p.process_uuid = '$id' AND $where_pg
+             INNER JOIN (
+                SELECT pr.process_gid, MAX(pr.rev_id) rev_id
+                FROM process pr
+                LEFT JOIN user_group ug ON pr.group_id=ug.g_id where $where_pr
+                GROUP BY pr.process_gid
+                ) b ON p.rev_id = b.rev_id AND p.process_gid=b.process_gid";
+
+      return self::queryTable($sql);
+    }
+    public function getProcessDataByUUID($process_uuid, $process_rev_uuid, $ownerID) {
+        if ($ownerID == ""){
+            $ownerID ="''";
+        }else {
+            $userRoleCheck = $this->getUserRole($ownerID);
+            if (isset(json_decode($userRoleCheck)[0])){
+                $userRole = json_decode($userRoleCheck)[0]->{'role'};
+                if ($userRole == "admin"){
+                    $sql = "SELECT DISTINCT p.*, u.username, pg.group_name as process_group_name, IF(p.owner_id='$ownerID',1,0) as own 
+					FROM process p 
+					INNER JOIN users u ON p.owner_id = u.id
+                    INNER JOIN process_group pg ON p.process_group_id = pg.id
+					where p.process_rev_uuid = '$process_rev_uuid' AND p.process_uuid = '$process_uuid' ";
+                    return self::queryTable($sql);
+                }
+            }
+		}
+		$sql = "SELECT DISTINCT p.*, u.username, pg.group_name as process_group_name, IF(p.owner_id='$ownerID',1,0) as own
+        FROM process p
+        LEFT JOIN user_group ug ON p.group_id=ug.g_id
+		INNER JOIN users u ON p.owner_id = u.id
+        INNER JOIN process_group pg ON p.process_group_id = pg.id
+        where p.process_rev_uuid = '$process_rev_uuid' AND p.process_uuid = '$process_uuid' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
+		return self::queryTable($sql);
+	}
+    
+    
     public function getProcessDataById($id, $ownerID) {
         if ($ownerID == ""){
             $ownerID ="''";
@@ -2016,9 +2075,11 @@ class dbfuncs {
 		return self::queryTable($sql);
 	}
 
-
 	public function getInputsPP($id) {
-		$sql = "SELECT parameter_id, sname, id, operator, closure, reg_ex FROM process_parameter where process_id = '$id' and type = 'input'";
+		$sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, p.name, p.file_type, p.qualifier 
+        FROM process_parameter pp
+        INNER JOIN parameter p ON pp.parameter_id = p.id
+        WHERE pp.process_id = '$id' and pp.type = 'input'";
 		return self::queryTable($sql);
 	}
 	public function checkPipeline($process_id, $ownerID) {
@@ -2123,8 +2184,11 @@ class dbfuncs {
 		$sql = "SELECT MAX(rev_id) rev_id FROM biocorepipe_save WHERE pipeline_gid = '$pipeline_gid'";
 		return self::queryTable($sql);
 	}
-	public function getOutputsPP($id) {
-		$sql = "SELECT parameter_id, sname, id, operator, closure, reg_ex FROM process_parameter where process_id = '$id' and type = 'output'";
+    public function getOutputsPP($id) {
+		$sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, p.name, p.file_type, p.qualifier 
+        FROM process_parameter pp
+        INNER JOIN parameter p ON pp.parameter_id = p.id
+        WHERE pp.process_id = '$id' and pp.type = 'output'";
 		return self::queryTable($sql);
 	}
 	//update if user owns the project
@@ -2432,8 +2496,8 @@ class dbfuncs {
                         $pro_para_in = $this->getInputsPP($process_id);
                         $pro_para_out = $this->getOutputsPP($process_id);
                         $process_data = $this->getProcessDataById($process_id, $ownerID);
-                        $final_obj["pro_param_in_{$process_id}"]=$pro_para_in;
-                        $final_obj["pro_param_out_{$process_id}"]=$pro_para_out;
+                        $final_obj["pro_para_inputs_$process_id"]=$pro_para_in;
+                        $final_obj["pro_para_outputs_$process_id"]=$pro_para_out;
                         $final_obj["process_{$process_id}"]=$process_data;
                     }
                 }
