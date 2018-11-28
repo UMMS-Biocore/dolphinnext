@@ -3927,6 +3927,7 @@ function callAsyncSaveNextLog(data) {
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
     runStatus = getRunStatus(project_pipeline_id);
+    console.log(runStatus)
     var pidStatus = "";
     serverLog = '';
     //get server log
@@ -3972,7 +3973,7 @@ function readNextLog(proType, proId, type) {
         }
     } 
     // when run hasn't finished yet and connection is down
-    else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" || runStatus !== "init")) {
+    else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
         displayButton('abortedProPipe');
         if (nextflowLog !== null && nextflowLog !== undefined) {
             $('#runLogArea').val(serverLog + nextflowLog + "\nConnection is lost.");

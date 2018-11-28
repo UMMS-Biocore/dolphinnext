@@ -545,13 +545,21 @@ else if ($p=="saveProcessGroup"){
 else if ($p=="saveProcess"){
     $name = $_REQUEST['name'];
     $process_gid = $_REQUEST['process_gid'];
+    if (empty($process_gid)) {
+        $max_gid = json_decode($db->getMaxProcess_gid(),true)[0]["process_gid"];
+        settype($max_gid, "integer");
+        if (!empty($max_gid)) {
+            $process_gid = $max_gid +1;
+        }
+    }
     $process_uuid = isset($_REQUEST['process_uuid']) ? $_REQUEST['process_uuid'] : "";
+    $process_rev_uuid = isset($_REQUEST['process_rev_uuid']) ? $_REQUEST['process_rev_uuid'] : "";
     
     if (empty($process_uuid)) {
         $all_uuid = $db->getUUIDAPI("process");
         $process_uuid = $all_uuid->uuid;
         $process_rev_uuid = $all_uuid->rev_uuid;
-    } else if (empty($id)){
+    } else if (empty($process_rev_uuid)){
         $all_uuid = $db->getUUIDAPI("process_rev");
         $process_rev_uuid = $all_uuid->rev_uuid;
         $process_uuid = "$process_uuid";
@@ -571,6 +579,9 @@ else if ($p=="saveProcess"){
     settype($rev_id, 'integer');
     settype($group_id, 'integer');
     settype($process_gid, "integer");
+    settype($perms, "integer");
+    settype($publish, "integer");
+    settype($process_group_id, "integer");
     if (!empty($id)) {
 		$db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
 		$db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
@@ -703,6 +714,8 @@ else if ($p=="saveProcessParameter"){
     $group_id= $_REQUEST['group'];
     settype($group_id, 'integer');
     settype($perms, 'integer');
+    settype($parameter_id, 'integer');
+    settype($process_id, 'integer');
     if (!empty($id)) {
         $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $perms, $group_id, $ownerID);
         if ($perms !== "3"){
@@ -827,6 +840,29 @@ else if ($p=="getProcess_uuid")
 {
     $process_id = $_REQUEST['process_id'];
     $data = $db->getProcess_uuid($process_id);
+}
+else if ($p=="check_uuid")
+{
+    $type = $_REQUEST['type'];
+    if ($type){
+        $process_uuid = $_REQUEST['process_uuid'];
+        $process_rev_uuid= $_REQUEST['process_rev_uuid'];
+        $data_process_uuid = $db->getLastProcessByUUID($process_uuid, $ownerID);
+        $data_process_rev_uuid = $db->getProcessDataByUUID($process_uuid, $process_rev_uuid, $ownerID);
+        $obj1 = json_decode($data_process_uuid,true);
+        $obj2 = json_decode($data_process_rev_uuid,true);
+        $data["process_uuid"] = isset($obj1[0]) ? $obj1[0] : null;
+        $data["process_rev_uuid"] = isset($obj2[0]) ? $obj2[0] : null;
+        if (isset($obj2[0])){
+            $process_id = $obj2[0]["id"];
+            $pro_para_in = $db->getInputsPP($process_id);
+            $pro_para_out = $db->getOutputsPP($process_id);
+            $data["pro_para_inputs_$process_id"]=$pro_para_in;
+            $data["pro_para_outputs_$process_id"]=$pro_para_out;
+        }
+        $data= json_encode($data);
+    }
+    
 }
 else if ($p=="getPipeline_gid")
 {
