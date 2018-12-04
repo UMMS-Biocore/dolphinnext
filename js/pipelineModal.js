@@ -353,25 +353,7 @@ function loadSelectedProcess(selProcessId) {
 
 
 
-function sortByKey(array, key) {
-    return array.sort(function (a, b) {
-        var x = a[key];
-        var y = b[key];
-        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
-    });
-}
 
-function arraysEqual(a, b) {
-    if (a === b) return true;
-    if (a == null || b == null) return false;
-    if (a.length != b.length) return false;
-    a = sortByKey(a, 'parameter_id')
-    b = sortByKey(b, 'parameter_id')
-    for (var i = 0; i < a.length; i++) {
-        if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) return false;
-    }
-    return true;
-}
 
 //Check if process is ever used in pipelines 
 function checkPipeline(proid) {
@@ -415,6 +397,18 @@ function checkMenuGr(menu_id) {
 function checkPipeMenuGr(menu_id) {
     var checkMeGr = getValues({ p: "checkPipeMenuGr", "id": menu_id });
     return checkMeGr
+}
+
+function arraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+    a = sortByKey(a, 'parameter_id')
+    b = sortByKey(b, 'parameter_id')
+    for (var i = 0; i < a.length; i++) {
+        if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) return false;
+    }
+    return true;
 }
 
 //Check if process parameters are the same
@@ -1491,6 +1485,10 @@ $(document).ready(function () {
 
     } else { // fresh page
         $('#pipeMenuGroupTop').css('display', 'inline')
+        if (usRole == "admin") {
+            $('#importPipeline').css('display', 'inline');
+            $('#exportPipeline').css('display', 'inline');
+        }
 
         //load user groups
         var allUserGrp = getValues({ p: "getUserGroups" });
@@ -1915,8 +1913,8 @@ $(document).ready(function () {
             var scripteditor = getScriptEditor('editor');
             var scripteditorProHeader = getScriptEditor('editorProHeader');
             var scripteditorProFooter = getScriptEditor('editorProFooter');
-//            var maxProcess_gid = getValues({ p: "getMaxProcess_gid" })[0].process_gid;
-//            var newProcess_gid = parseInt(maxProcess_gid) + 1;
+            //            var maxProcess_gid = getValues({ p: "getMaxProcess_gid" })[0].process_gid;
+            //            var newProcess_gid = parseInt(maxProcess_gid) + 1;
             var script_mode = $('#script_mode').val();
             var script_mode_header = $('#script_mode_header').val();
             dataToProcess.push({ name: "perms", value: perms });

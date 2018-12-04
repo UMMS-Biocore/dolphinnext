@@ -799,6 +799,9 @@ function showHideColumnProfile(id, colList, type) {
     $('#sshKeyModal').on('hide.bs.modal', function (event) {
         $('#ourKeyCheck').prop('disabled', false);
         $('#userKeyCheck').prop('disabled', false);
+        $('#createKeysDiv').css('display', 'inline');
+        $('#mOurPriKeyDiv').css('display', 'none');
+        $('#mOurPubKeyDiv').css('display', 'none');
         if ($('#userKeyCheck').is(":checked")) {
             $('#userKeyCheck').trigger("click");
         }

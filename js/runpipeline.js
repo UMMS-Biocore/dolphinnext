@@ -3434,6 +3434,7 @@ function checkReadytoRun(type) {
         if (((runStatus !== "NextRun" && runStatus !== "Waiting" && runStatus !== "init") && (checkType === "rerun" || checkType === "newrun" || checkType === "resumerun")) || runStatus === "") {
             if (amzStatus) {
                 if (amzStatus === "running") {
+                    console.log(checkType)
                     if (checkType === "rerun" || checkType === "resumerun") {
                         runProjectPipe(runProPipeCall, checkType);
                     } else if (checkType === "newrun") {
