@@ -65,7 +65,6 @@ function activateSelectizeMenuGroup(allMenuGroup, dropdownID, menu_group_name) {
 
 //xxxx
 function getRowImportTable(rowType, allMenuGroup, fileId, blockID, givenName, menu_group_name, pipeline_uuid) {
-    //xxx pipeline_uuid
     var rowID = rowType + fileId + '_' + blockID;
     var dropdownID = "menuGroup_" + rowID;
     var pipeRevDrop = '<select id="' + dropdownID + '" class="fbtn btn-default form-control" defVal="' + menu_group_name + '" name="pipe_group_id"></select>';
@@ -94,22 +93,109 @@ function keyChecker(keyList, obj1, obj2) {
     return checkObj
 }
 
-function checkIfEqual(type, importJSON, dbJSON) {
+function checkIfEqual(type, importJSON, dbJSON, fileID) {
     var checkObj = {};
     if (type == "process") {
         checkObj = keyChecker(["script", "script_footer", "script_header"], importJSON, dbJSON)
     } else if (type == "process_parameter_in" || type == "process_parameter_out") {
         for (var i = 0; i < importJSON.length; i++) {
-            if (importJSON[i] && dbJSON[i]) {
-                importJSON[i] = decodeElement("process_parameter", importJSON[i])
-                dbJSON[i] = decodeElement("process_parameter", dbJSON[i])
-                checkObj[type + i] = keyChecker(["sname", "operator", "closure", "reg_ex", "file_type", "qualifier"], importJSON[i], dbJSON[i])
-            } else {
-                checkObj[type + i] = null;
+            importJSON[i] = decodeElement("process_parameter", importJSON[i]) || {};
+            if (importJSON[i].id) {
+                window.importObj[fileID].dict.propara[importJSON[i].id] = "insert"; //default value/ Will be replaced by dbJSONfilt[i].id;
+            }
+        }
+        for (var i = 0; i < dbJSON.length; i++) {
+            dbJSON[i] = decodeElement("process_parameter", dbJSON[i]) || {}
+        }
+        for (var i = 0; i < importJSON.length; i++) {
+            var dbParamId = window.importObj[fileID].dict.parameter[importJSON[i].parameter_id];
+            if (dbParamId) {
+                var dbJSONfilt = dbJSON.filter(function (el) { return el.parameter_id == dbParamId; });
+                if (dbJSONfilt.length > 1) {
+                    dbJSONfilt = dbJSONfilt.filter(function (el) { return el.sname == importJSON[i].sname; });
+                }
+                if (dbJSONfilt.length === 0) {
+                    dbJSONfilt[0] = {}
+                }
+                if (dbJSONfilt.length >= 1) {
+                    //pro para match found = update this item
+                    if (dbJSONfilt[0].id) {
+                        window.importObj[fileID].dict.propara[importJSON[i].id] = dbJSONfilt[0].id; //insert default value now being replaced 
+                    }
+                    checkObj[type + i] = keyChecker(["sname", "operator", "closure", "reg_ex", "file_type", "qualifier"], importJSON[i], dbJSONfilt[0])
+                }
+            }
+
+        }
+        //find redundant propara
+        for (var k = 0; k < dbJSON.length; k++) {
+            i++;
+            if (dbJSON[k].id) {
+                var checkExistObj = filterObjVal(window.importObj[fileID].dict.propara, dbJSON[k].id)
+                if ($.isEmptyObject(checkExistObj)) {
+                    window.importObj[fileID].redundant_propara[dbJSON[k].id] = { p: "removeProcessParameter", id: dbJSON[k].id}; //default value/ Will be replaced by importJSON[i].id;
+                    checkObj[type + i] = {};
+                    checkObj[type + i]["redundant_process_parameter"] = "<<<<<< Redundant process parameter(" + dbJSON[k].name + ") will be removed. >>>>>>\n";
+                }
+            }
+        }
+
+    } else if (type == "pipeline") {
+        var checkObj2 = {};
+        // remove process/parameter specific regions
+        var importJSONcp = $.extend(true, {}, importJSON);
+        var dbJSONcp = $.extend(true, {}, dbJSON);
+        importJSONcp = removeSpecific(importJSONcp)
+        dbJSONcp = removeSpecific(dbJSONcp)
+        checkObj2 = keyChecker(["nodes", "edges", "mainG"], importJSONcp, dbJSONcp)
+        checkObj = keyChecker(["summary", "script_pipe_footer", "script_pipe_header", "name"], importJSON, dbJSON)
+        jQuery.extend(checkObj, checkObj2);
+        console.log(checkObj)
+    }
+    return checkObj;
+}
+
+function removeSpecific(obj) {
+    //nodes
+    obj.nodes = JSON.parse(obj.nodes.replace(/'/gi, "\""))
+    $.each(obj.nodes, function (el) {
+        if (obj.nodes[el]) {
+            var proPipeID = obj.nodes[el][2];
+            if (proPipeID != "outPro" && proPipeID != "inPro") {
+                if (proPipeID.match(/p/)) {
+                    obj.nodes[el][2] = "p"
+                } else {
+                    obj.nodes[el][2] = ""
+                }
+            }
+        }
+    });
+    obj.nodes = JSON.stringify(obj.nodes)
+    //edges
+    var final = []
+    obj.edges = JSON.parse(obj.edges.replace(/'/gi, "\""))["edges"]
+    for (var i = 0; i < obj.edges.length; i++) {
+        if (obj.edges[i]) {
+            var eds = obj.edges[i].split("_")
+            if (eds) {
+                if (eds.length == 2) {
+                    var eds0 = eds[0].split("-")
+                    var eds1 = eds[1].split("-")
+                    if (eds0[1] != "outPro" && eds0[1] != "inPro") {
+                        eds0[1] = ""
+                    }
+                    if (eds1[1] != "outPro" && eds1[1] != "inPro") {
+                        eds1[1] = ""
+                    }
+                    eds0[3] = ""
+                    eds1[3] = ""
+                    final.push(eds0.join("-") + "_" + eds1.join("-"))
+                }
             }
         }
     }
-    return checkObj;
+    obj.edges = final.join(", ")
+    return obj
 }
 
 function sumObj(obj) {
@@ -126,52 +212,80 @@ function sumObj(obj) {
     return [status, txt]
 }
 
-function createImportReport(type, report) {
-    var status = null;
-    var txt = null;
-    if (type == "process") {
-        [status, txt] = sumObj(report)
-    }
+function createImportReport(obj) {
+    var status;
+    var txt;
+    [status, txt] = sumObj(obj)
     return [status, txt]
 }
 
 $('#importButton').on('click', function (e) {
-    //    $('#importButton').css("display", "none");
+    e.preventDefault();
+    $('#importButton').css("display", "none");
     $('#compButton').css("display", "inline");
     var processRowList = $("#importModalPart2").find("tr[type='process']")
-    var indexCache;
+    var pipeRowList = $("#importModalPart2").find("tr[type='pipeModule'], tr[type='pipeline']")
     //first insert missing_parameters
     var fileList = window.importObj.filename;
     for (var fileID = 0; fileID < fileList.length; fileID++) {
         var missing_parameters = window.importObj[fileID].missing_parameters
-        if (missing_parameters){
+        if (missing_parameters) {
             $.each(missing_parameters, function (el) {
                 var commandLog = getValues(missing_parameters[el]);
                 if ((commandLog && commandLog.id)) {
                     var newParameterID = commandLog.id;
-                    window.importObj[fileID].dict.parameter[el]=newParameterID;
+                    window.importObj[fileID].dict.parameter[el] = newParameterID;
                 } else {
-                    window.importObj["importStatus"] ="stopped";
-                    alert("parameter insert (id:"+el+") was not successful:"+JSON.stringify(missing_parameters[el]))
-                    break;
+                    window.importObj["importStatus"] = "stopped";
+                    alert("parameter insert (id:" + el + ") was not successful:" + JSON.stringify(missing_parameters[el]))
+                    return;
                 }
             });
         }
     }
+
+    function removeRedundantProPara() {
+        for (var fileid = 0; fileid < fileList.length; fileid++) {
+            var redundant_propara = window.importObj[fileid].redundant_propara
+            if (redundant_propara) {
+                $.each(redundant_propara, function (el) {
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: redundant_propara[el],
+                        async: false,
+                        success: function (s) {
+                            console.log("Removal of process parameter is successfully completed")
+                        },
+                        error: function (errorThrown) {
+                            window.importObj["importStatus"] = "stopped";
+                            alert("Error: " + errorThrown + "Removal of process parameter (id:" + el + ") was not successful:" + JSON.stringify(redundant_propara[el]))
+                        }
+                    });
+                });
+            }
+        }
+    }
+
+    var indexCache;
     //loop through each row for process/pipeline module/pipeline
-    function loop() {
+    function loop(type, list) {
         if (window.importObj["importStatus"]) {
             if (window.importObj["importStatus"] == "stopped") {
                 return;
             }
         }
         var index = indexCache || 0;
-        for (var i = index; i < processRowList.length; i++) {
-            var parBoxId = processRowList[i].getAttribute('id');
-            var fileID = processRowList[i].getAttribute('fileID');
+        for (var i = index; i < list.length; i++) {
+            var parBoxId = list[i].getAttribute('id');
             console.log(parBoxId)
+            var fileID = list[i].getAttribute('fileID');
             var command = window.importObj[parBoxId].command;
-            var oldProcessID = window.importObj[parBoxId]["oldProcessId"];
+            if (type == "process") {
+                var oldID = window.importObj[parBoxId]["oldProcessId"];
+            } else if (type == "pipeline") {
+                var oldID = window.importObj[parBoxId]["oldPipelineId"];
+            }
             var warnUser = window.importObj[parBoxId]["warnUser"];
             window.importObj[parBoxId]["pass"] = true;
             if (warnUser && !window.importObj[parBoxId]["skipWarnUserCheck"]) {
@@ -191,60 +305,79 @@ $('#importButton').on('click', function (e) {
                         $('#compButton').css("display", "none");
                     }
                 });
-                $('#warnUser').modal('show').one('hidden.bs.modal', loop)
+                $('#warnUser').modal('show').one('hidden.bs.modal', function () {
+                    loop(type, list)
+                })
                 return;
             }
             if (command && window.importObj[parBoxId]["pass"]) {
                 var commandID = command.id
-                command.process_group_id = $("#menuGroup_" + parBoxId)[0].selectize.getValue()
-                command = encodeElement("process", command)
+                command[type + "_group_id"] = $("#menuGroup_" + parBoxId)[0].selectize.getValue()
+                command = encodeElement(type, command, fileID)
+                //xxxxx
+                if (window.importObj["importStatus"]) {
+                    if (window.importObj["importStatus"] == "stopped") {
+                        rowUpdateStatus(parBoxId, "Error Occured ", "error");
+                        throw new Error("Something went wrong!");
+                    }
+                }
                 var commandLog = null
-                //insert process 
+                //insert process/pipeline
                 var commandLog = getValues(command);
                 if ((commandLog && commandLog.id) || commandID) {
-                    var newProcessID = commandLog.id;
-                    if (oldProcessID && newProcessID) {
-                        window.importObj[fileID].dict.process[oldProcessID] = newProcessID
+                    var newID = commandLog.id;
+                    if (oldID && newID) {
+                        window.importObj[fileID].dict[type][oldID] = newID
+                    } else if (window.importObj[fileID].dict[type][oldID]) {
+                        newID = window.importObj[fileID].dict[type][oldID];
                     }
-                    //insert process parameters
-                    var commandProPara = window.importObj[parBoxId].commandProPara;
-                    var commandProParaID = commandProPara.id
-                    if (commandProPara) {
-                        for (var k = 0; k < commandProPara.length; k++) {
-                            commandProPara[k].process_id = newProcessID;
-                            commandProPara[k].perms = command.perms; //taken from process perms
-                            commandProPara[k].parameter_id = window.importObj[fileID].dict.parameter[commandProPara[k].parameter_id]
-                            var commandProParaLog = null
-                            console.log(commandProPara[k])
-                            var commandProParaLog = getValues(commandProPara[k]);
-                            console.log(commandProParaLog)
-                            
-                            if ((commandProParaLog && commandProParaLog.id) || commandProParaID) {
-                                var newProParaID = commandProParaLog.id;
-                            } else {
-                                rowUpdateStatus(parBoxId, "Error Occured ", "error");
-                                break;
+                    if (type == "process") {
+                        //insert process parameters
+                        var commandProPara = window.importObj[parBoxId].commandProPara;
+                        if (commandProPara) {
+                            for (var k = 0; k < commandProPara.length; k++) {
+                                var commandProParaID = commandProPara[k].id
+                                commandProPara[k].process_id = newID;
+                                commandProPara[k].perms = command.perms; //taken from process perms
+                                commandProPara[k].parameter_id = window.importObj[fileID].dict.parameter[commandProPara[k].parameter_id]
+                                var commandProParaLog = null
+                                var commandProParaLog = getValues(commandProPara[k]);
+                                if ((commandProParaLog && commandProParaLog.id) || commandProParaID) {
+                                    var newProParaID = commandProParaLog.id;
+                                } else {
+                                    rowUpdateStatus(parBoxId, "Error Occured ", "error");
+                                    window.importObj["importStatus"] == "stopped"
+                                    throw new Error("Something went wrong!");
+                                }
                             }
                         }
                     }
                     rowUpdateStatus(parBoxId, "Imported ", "ok");
                 } else {
                     rowUpdateStatus(parBoxId, "Error Occured ", "error");
+                    window.importObj["importStatus"] == "stopped"
+                    throw new Error("Something went wrong!");
                 }
             } else {
-                if (window.importObj[fileID].dict.process[oldProcessID]) {
+                if (window.importObj[fileID].dict[type][oldID]) {
                     rowUpdateStatus(parBoxId, "Done ", "ok");
                 } else {
                     rowUpdateStatus(parBoxId, "Error Occured ", "error");
+                    window.importObj["importStatus"] == "stopped"
+                    throw new Error("Something went wrong!");
                 }
+            }
+            if (type == "process" && i == list.length - 1) {
+                removeRedundantProPara();
+                indexCache = 0;
+                loop("pipeline", pipeRowList);
             }
         }
     }
-    loop();
-    //xxx
+    loop("process", processRowList);
 });
 
-function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID) {
+function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowID) {
     if (type == "process") {
         sendJSON.p = "saveProcess"
         sendJSON.process_uuid = importJSON.process_uuid;
@@ -257,6 +390,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID) {
         sendJSON.summary = importJSON.summary
         sendJSON.script_mode = importJSON.script_mode
         sendJSON.script_mode_header = importJSON.script_mode_header
+        sendJSON.rev_comment = "imported";
         sendJSON.group = ""
         sendJSON.publish = ""
         if (importJSON.perms == 15) {
@@ -266,16 +400,18 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID) {
         }
     } else if (type == "process_parameter_input" || type == "process_parameter_output") {
         for (var i = 0; i < importJSON.length; i++) {
-            console.log(importJSON[i])
-            var oldParameterId= importJSON[i].parameter_id;
-            var parameterCheck = allParameters.filter(function (el) { 
-                    return (el.file_type == importJSON[i].file_type && el.qualifier == importJSON[i].qualifier && el.name == importJSON[i].name)
-                });
-            if (parameterCheck && parameterCheck.length >0){
-                var newParameterId= parameterCheck[0].id;
-                window.importObj[fileID].dict.parameter[oldParameterId]=newParameterId;
+            var oldParameterId = importJSON[i].parameter_id;
+            var parameterCheck = allParameters.filter(function (el) {
+                return (el.file_type == importJSON[i].file_type && el.qualifier == importJSON[i].qualifier && el.name == importJSON[i].name)
+            });
+            var newParameterId = "";
+            if (parameterCheck && parameterCheck.length > 0) {
+                newParameterId = parameterCheck[0].id;
+                window.importObj[fileID].dict.parameter[oldParameterId] = newParameterId;
             } else {
-                window.importObj[fileID].missing_parameters[oldParameterId]={p:"saveParameter", name:importJSON[i].name, file_type:importJSON[i].file_type, qualifier:importJSON[i].qualifier}
+                window.importObj[fileID].missing_parameters[oldParameterId] = { p: "saveParameter", name: importJSON[i].name, file_type: importJSON[i].file_type, qualifier: importJSON[i].qualifier }
+                window.importObj[rowID].missing_parameters.push(importJSON[i].name);
+
             }
             sendJSON[i] = {};
             sendJSON[i].p = "saveProcessParameter"
@@ -284,6 +420,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID) {
             } else if (type == "process_parameter_output") {
                 sendJSON[i].type = "output";
             }
+            sendJSON[i].id = importJSON[i].id; //modify later
             sendJSON[i].sname = encodeURIComponent(importJSON[i].sname);
             sendJSON[i].closure = encodeURIComponent(importJSON[i].closure);
             sendJSON[i].reg_ex = encodeURIComponent(importJSON[i].reg_ex);
@@ -293,37 +430,75 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID) {
             sendJSON[i].group = ""
             sendJSON[i].perms = "" //modify later: take from process perms
         }
+    } else if (type == "pipeline") {
+        //pipeline_gid
+        sendJSON.id = ""; //modify later
+        sendJSON.nodes = importJSON.nodes;
+        sendJSON.mainG = importJSON.mainG;
+        sendJSON.edges = importJSON.edges;
+        sendJSON.pipeline_uuid = importJSON.pipeline_uuid;
+        sendJSON.pipeline_rev_uuid = importJSON.pipeline_rev_uuid;
+        sendJSON.pipeline_group_id = "" //modify later
+        sendJSON.process_list = importJSON.process_list //modify later
+        sendJSON.pipeline_list = importJSON.pipeline_list //modify later
+        sendJSON.name = importJSON.name
+        sendJSON.script_pipe_footer = importJSON.script_pipe_footer
+        sendJSON.script_pipe_header = importJSON.script_pipe_header
+        sendJSON.summary = importJSON.summary
+        sendJSON.script_mode_footer = importJSON.script_mode_footer
+        sendJSON.script_mode_header = importJSON.script_mode_header
+        sendJSON.rev_comment = "imported";
+        sendJSON.group_id = ""
+        sendJSON.publish = ""
+        sendJSON.pin = importJSON.pin
+        sendJSON.pin_order = importJSON.pin_order
+        if (importJSON.perms == 15) {
+            sendJSON.perms = 3;
+        } else {
+            sendJSON.perms = importJSON.perms;
+        }
+
     }
     return sendJSON
 }
 
-function checkImport(rowType, fileId, blockID, importJSON, proInJSON, proOutJSON, allParameters) {
+function checkImport(optObj) {
+    //extract optional parameters
+    var rowType = optObj.rowType
+    var fileId = optObj.fileId
+    var blockID = optObj.blockID
+    var importJSON = optObj.importJSON
+    var proInJSON = optObj.proInJSON
+    var proOutJSON = optObj.proOutJSON
+    var allParameters = optObj.allParameters
+    //--optional parameters ends--
     var sendJSONprocess = {};
+    var sendJSONpipeline = {};
     var sendJSONproPara = [];
     var sendJSONproParaIn = [];
     var sendJSONproParaOut = [];
+    var mergedReport = {};
+    var mergedReportPipe = {};
+    var status = null;
+    var report = null;
     var rowID = rowType + fileId + '_' + blockID;
     //command: to save/update db. 
-    window.importObj[rowID] = { "command": null }
+    window.importObj[rowID] = { "command": null, "missing_parameters": [] }
     if (rowType == "process") {
         //prepare command to save/update db
-        sendJSONprocess = prepareSendJSON("process", sendJSONprocess, importJSON, allParameters,fileId)
-        sendJSONproParaIn = prepareSendJSON("process_parameter_input", sendJSONproParaIn, proInJSON, allParameters,fileId)
-        sendJSONproParaOut = prepareSendJSON("process_parameter_output", sendJSONproParaOut, proOutJSON, allParameters,fileId)
+        sendJSONprocess = prepareSendJSON("process", sendJSONprocess, importJSON, allParameters, fileId, rowID)
+        sendJSONproParaIn = prepareSendJSON("process_parameter_input", sendJSONproParaIn, proInJSON, allParameters, fileId, rowID)
+        sendJSONproParaOut = prepareSendJSON("process_parameter_output", sendJSONproParaOut, proOutJSON, allParameters, fileId, rowID)
         sendJSONproPara = sendJSONproParaIn.concat(sendJSONproParaOut);
-        console.log("#stat_" + rowID)
-        console.log(importJSON)
-        console.log(sendJSONproPara)
         //check database for uuid
         var process_uuid = importJSON.process_uuid;
         var process_rev_uuid = importJSON.process_rev_uuid;
         var checkUUID = getValues({
             p: "check_uuid",
             type: rowType,
-            process_uuid: process_uuid,
-            process_rev_uuid: process_rev_uuid
+            uuid: process_uuid,
+            rev_uuid: process_rev_uuid
         });
-        console.log(checkUUID)
         if (checkUUID) {
             //if process_rev_uuid is found then check if process and pro_para are the same
             if (checkUUID.process_rev_uuid) {
@@ -332,54 +507,60 @@ function checkImport(rowType, fileId, blockID, importJSON, proInJSON, proOutJSON
                 var checkObjPro = {};
                 var checkObjProParaIn = {};
                 var checkObjProParaOut = {};
-                var checkUUIDpro_para_in = checkUUID["pro_para_inputs_" + checkUUID_process_id];
-                var checkUUIDpro_para_out = checkUUID["pro_para_outputs_" + checkUUID_process_id];
-                checkObjPro = checkIfEqual("process", importJSON, checkUUID.process_rev_uuid)
+                var checkUUIDpro_para_in = [];
+                var checkUUIDpro_para_out = [];
+                if (checkUUID["pro_para_inputs_" + checkUUID_process_id]) {
+                    checkUUIDpro_para_in = JSON.parse(checkUUID["pro_para_inputs_" + checkUUID_process_id]);
+                }
+                if (checkUUID["pro_para_outputs_" + checkUUID_process_id]) {
+                    checkUUIDpro_para_out = JSON.parse(checkUUID["pro_para_outputs_" + checkUUID_process_id]);
+                }
+                checkObjPro = checkIfEqual("process", importJSON, checkUUID.process_rev_uuid, fileId)
                 //check if process parameters are the same
-                console.log(proInJSON)
-                console.log(JSON.parse(checkUUIDpro_para_in))
                 if (checkUUIDpro_para_in && proInJSON) {
-                    checkObjProParaIn = checkIfEqual("process_parameter_in", proInJSON, JSON.parse(checkUUIDpro_para_in))
-                } else {
-                    checkObjProParaIn = null;
+                    checkObjProParaIn = checkIfEqual("process_parameter_in", proInJSON, checkUUIDpro_para_in, fileId)
                 }
                 if (checkUUIDpro_para_out && proOutJSON) {
-                    checkObjProParaOut = checkIfEqual("process_parameter_out", proOutJSON, JSON.parse(checkUUIDpro_para_out))
-                } else {
-                    checkObjProParaOut = null;
+                    checkObjProParaOut = checkIfEqual("process_parameter_out", proOutJSON, checkUUIDpro_para_out, fileId)
                 }
-                var status = null;
-                var report = null;
-                var mergedReport = { "process": checkObjPro }
+                mergedReport.process = checkObjPro
                 $.extend(mergedReport, checkObjProParaIn);
                 $.extend(mergedReport, checkObjProParaOut);
-                [status, report] = createImportReport("process", mergedReport)
+                [status, report] = createImportReport(mergedReport)
                 if (status === true) {
                     $("#stat_" + rowID).html('Process is exist <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Process will not be imported, instead existing revision will be used"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    //process
                     window.importObj[rowID]["command"] = null;
-                    window.importObj[rowID]["oldProcessId"] = parseInt(importJSON.id);
+                    window.importObj[rowID]["oldProcessId"] = importJSON.id;
                     window.importObj[fileId].dict.process[importJSON.id] = checkUUID_process_id;
+                    //process parameter
+                    window.importObj[rowID]["commandProPara"] = null;
 
                 } else if (status === "warnUser") {
-                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported processes. Choose one of the following options from dropdown box to solve this issue"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported processes. Please proceed to view conflict and save on existing revision"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    //process
+                    sendJSONprocess.rev_id = checkUUID.process_rev_uuid.rev_id;
                     sendJSONprocess.process_gid = checkUUID.process_rev_uuid.process_gid;
-                    sendJSONprocess.id = parseInt(checkUUID.process_rev_uuid.id);
+                    sendJSONprocess.id = checkUUID.process_rev_uuid.id;
                     window.importObj[rowID]["command"] = sendJSONprocess;
-                    window.importObj[rowID]["oldProcessId"] = parseInt(importJSON.id);
+                    window.importObj[rowID]["oldProcessId"] = importJSON.id;
                     window.importObj[rowID]["warnUser"] = report;
-                    window.importObj[fileId].dict.process[importJSON.id] = parseInt(checkUUID.process_rev_uuid.id);
+                    window.importObj[fileId].dict.process[importJSON.id] = checkUUID.process_rev_uuid.id;
+                    //process parameter
+                    sendJSONproPara = insertIDColumn(sendJSONproPara, checkUUIDpro_para_in, checkUUIDpro_para_out, fileId)
+                    window.importObj[rowID]["commandProPara"] = sendJSONproPara;
                 }
                 //if !process_rev_uuid but process_uuid is found then add as new revision into existing process_gid
             } else if (checkUUID.process_uuid) {
                 checkUUID.process_uuid = decodeElement("process", checkUUID.process_uuid)
-                var checkUUID_process_name = checkUUID.process_uuid.name;
-                $("#stat_" + rowID).html('Process group has found <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Process will be added as a new revision of the process: ' + checkUUID_process_name + '"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                $("#stat_" + rowID).html('Process group has found <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Process will be added as a new revision of the process: ' + checkUUID.process_uuid.name + '"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
                 //process
+                sendJSONprocess.rev_id = parseInt(checkUUID.process_uuid.rev_id) + 1;
                 sendJSONprocess.process_gid = checkUUID.process_uuid.process_gid;
                 window.importObj[rowID]["command"] = sendJSONprocess;
                 window.importObj[rowID]["oldProcessId"] = importJSON.id;
                 //process parameter
-                //xxxx
+                window.importObj[rowID]["commandProPara"] = sendJSONproPara;
                 //if process_rev_uuid and process_uuid not found then add as new revision and process
             } else {
                 $("#stat_" + rowID).html('Save as new process <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="It will be added as a new process"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
@@ -390,9 +571,85 @@ function checkImport(rowType, fileId, blockID, importJSON, proInJSON, proOutJSON
                 //process parameter
                 window.importObj[rowID]["commandProPara"] = sendJSONproPara;
             }
+            // add missing parameters log 
+            if (window.importObj[rowID]["missing_parameters"].length > 0) {
+                var existingHTML = $("#stat_" + rowID).html()
+                $("#stat_" + rowID).html(existingHTML + ' Missing Parameters <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Missing parameters (' + window.importObj[rowID]["missing_parameters"].join() + ') will be added"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+            }
+        }
+    } else if (rowType == "pipeline" || rowType == "pipeModule") {
+        sendJSONpipeline = prepareSendJSON("pipeline", sendJSONpipeline, importJSON, null, fileId, rowID)
+        console.log("#stat_" + rowID)
+        console.log(sendJSONpipeline)
+        //check database for uuid
+        var pipeline_uuid = importJSON.pipeline_uuid;
+        var pipeline_rev_uuid = importJSON.pipeline_rev_uuid;
+        var pipeUUID = getValues({
+            p: "check_uuid",
+            type: 'pipeline',
+            uuid: pipeline_uuid,
+            rev_uuid: pipeline_rev_uuid
+        });
+        console.log(pipeUUID)
+        if (pipeUUID) {
+            //if pipeline_rev_uuid is found then check if contents of pipeline are the same
+            if (pipeUUID.pipeline_rev_uuid) {
+                pipeUUID.pipeline_rev_uuid = decodeElement("pipeline", pipeUUID.pipeline_rev_uuid)
+                var checkObjPipe = {};
+                checkObjPipe = checkIfEqual("pipeline", importJSON, pipeUUID.pipeline_rev_uuid, fileId)
+                mergedReportPipe.pipeline = checkObjPipe
+                mergedReportPipe = $.extend(true, {}, mergedReportPipe);
+                [status, report] = createImportReport(mergedReportPipe)
+
+                if (status === true) {
+                    $("#stat_" + rowID).html('Pipeline is exist <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Pipeline will not be imported, instead existing revision will be used"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    window.importObj[rowID]["command"] = null;
+                    window.importObj[rowID]["oldPipelineId"] = importJSON.id;
+                    window.importObj[fileId].dict.pipeline[importJSON.id] = pipeUUID.pipeline_rev_uuid.id;
+
+                } else if (status === "warnUser") {
+                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported pipelines. Please proceed to view conflict and save on existing revision"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    sendJSONpipeline.rev_id = pipeUUID.pipeline_rev_uuid.rev_id;
+                    sendJSONpipeline.pipeline_gid = pipeUUID.pipeline_rev_uuid.pipeline_gid;
+                    sendJSONpipeline.id = pipeUUID.pipeline_rev_uuid.id;
+                    window.importObj[rowID]["command"] = sendJSONpipeline;
+                    window.importObj[rowID]["oldPipelineId"] = importJSON.id;
+                    window.importObj[rowID]["warnUser"] = report;
+                    window.importObj[fileId].dict.pipeline[importJSON.id] = pipeUUID.pipeline_rev_uuid.id;
+                }
+                //if !pipeline_rev_uuid but pipeline_uuid is found then add as new revision into existing pipeline_gid
+            } else if (pipeUUID.pipeline_uuid) {
+                pipeUUID.pipeline_uuid = decodeElement("pipeline", pipeUUID.pipeline_uuid)
+                $("#stat_" + rowID).html('Process group has found <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Pipeline will be added as a new revision of the pipeline: ' + pipeUUID.pipeline_uuid.name + '"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                sendJSONpipeline.rev_id = parseInt(pipeUUID.pipeline_uuid.rev_id) + 1;
+                sendJSONpipeline.pipeline_gid = pipeUUID.pipeline_uuid.pipeline_gid;
+                window.importObj[rowID]["command"] = sendJSONpipeline;
+                window.importObj[rowID]["oldPipelineId"] = importJSON.id;
+                //if pipeline_rev_uuid and pipeline_uuid not found then add as new revision and process
+            } else {
+                $("#stat_" + rowID).html('Save as new pipeline <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="It will be added as a new pipeline"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                sendJSONpipeline.pipeline_gid = ""
+                window.importObj[rowID]["command"] = sendJSONpipeline;
+                window.importObj[rowID]["oldPipelineId"] = importJSON.id;
+            }
         }
     }
 
+}
+
+
+function insertIDColumn(sendJSONproPara, checkUUIDpro_para_in, checkUUIDpro_para_out, fileID) {
+    var checkUUIDpro_para = [];
+    checkUUIDpro_para = checkUUIDpro_para_in.concat(checkUUIDpro_para_out);
+    for (var i = 0; i < sendJSONproPara.length; i++) {
+        var proparaID = window.importObj[fileID].dict.propara[sendJSONproPara[i].id]
+        if (proparaID && proparaID != "insert") {
+            sendJSONproPara[i].id = proparaID;
+        } else if (proparaID == "insert") {
+            sendJSONproPara[i].id = "";
+        }
+    }
+    return sendJSONproPara
 }
 
 function getFileBlock(fileId, fileName, importJSON, allPipeGroup, allProcessGroup, allParameters) {
@@ -402,19 +659,30 @@ function getFileBlock(fileId, fileName, importJSON, allPipeGroup, allProcessGrou
     var pipeBlock = "";
     var pipeModuleBlock = "";
     var processBlock = "";
-    var checkMainPipe = filterObjKeys(importJSON, /main_pipeline.*/);
-    var checkPipeModule = filterObjKeys(importJSON, /pipeline_module.*/);
+    var checkMainPipe = filterObjKeys(importJSON, /main_pipeline.*/, "obj");
+    var checkPipeModule = filterObjKeys(importJSON, /pipeline_module.*/, "obj");
+    checkPipeModule = sortByKey(checkPipeModule, 'layer')
     var checkProcess = filterObjKeys(importJSON, /process.*/);
+    var optObj = {};
+
     if (checkMainPipe.length > 0) {
         showPipeBlock = "table-row";
         for (var i = 0; i < checkMainPipe.length; i++) {
-            pipeBlock += getRowImportTable("pipeline", allPipeGroup, fileId, i, importJSON[checkMainPipe[i]].name, importJSON[checkMainPipe[i]].pipeline_group_name, importJSON[checkMainPipe[i]].pipeline_uuid);
+            pipeBlock += getRowImportTable("pipeline", allPipeGroup, fileId, i, checkMainPipe[i].name, checkMainPipe[i].pipeline_group_name, checkMainPipe[i].pipeline_uuid);
+            checkMainPipe[i] = decodeElement("pipeline", checkMainPipe[i])
+            optObj = { rowType: "pipeline", fileId: fileId, blockID: i, importJSON: checkMainPipe[i] };
+            var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
+            doCall(optObj);
         }
     }
     if (checkPipeModule.length > 0) {
         showPipeModuleBlock = "table-row";
-        for (var i = 0; i < checkPipeModule.length; i++) {
-            pipeModuleBlock += getRowImportTable("pipeModule", allPipeGroup, fileId, i, importJSON[checkPipeModule[i]].name, importJSON[checkPipeModule[i]].pipeline_group_name, importJSON[checkPipeModule[i]].pipeline_uuid);
+        for (var i = checkPipeModule.length - 1; i >= 0; i--) {
+            pipeModuleBlock += getRowImportTable("pipeModule", allPipeGroup, fileId, i, checkPipeModule[i].name, checkPipeModule[i].pipeline_group_name, checkPipeModule[i].pipeline_uuid);
+            checkPipeModule[i] = decodeElement("pipeline", checkPipeModule[i])
+            optObj = { rowType: "pipeModule", fileId: fileId, blockID: i, importJSON: checkPipeModule[i] };
+            var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
+            doCall(optObj);
         }
     }
     if (checkProcess.length > 0) {
@@ -430,10 +698,9 @@ function getFileBlock(fileId, fileName, importJSON, allPipeGroup, allProcessGrou
             proOutJSON = JSON.parse(importJSON["pro_para_outputs_" + process_id]);
             importJSON[checkProcess[i]] = proJSON;
             processBlock += getRowImportTable("process", allProcessGroup, fileId, i, proJSON.name, proJSON.process_group_name, proJSON.process_uuid);
-            var doCall = function (fileId, i, proJSON, proInJSON, proOutJSON,allParameters) {
-                setTimeout(function () { checkImport("process", fileId, i, proJSON, proInJSON, proOutJSON,allParameters); }, 10);
-            }
-            doCall(fileId, i, proJSON, proInJSON, proOutJSON, allParameters);
+            optObj = { rowType: "process", fileId: fileId, blockID: i, importJSON: proJSON, proInJSON: proInJSON, proOutJSON: proOutJSON, allParameters: allParameters };
+            var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
+            doCall(optObj);
 
         }
     }
@@ -442,6 +709,9 @@ function getFileBlock(fileId, fileName, importJSON, allPipeGroup, allProcessGrou
 }
 
 function decodeElement(type, importJSON) {
+    if (!importJSON) {
+        return importJSON
+    }
     if (type == "process") {
         importJSON.script = removeDoubleQuote(decodeHtml(importJSON.script))
         importJSON.script_footer = removeDoubleQuote(decodeHtml(importJSON.script_footer))
@@ -450,15 +720,131 @@ function decodeElement(type, importJSON) {
     } else if (type == "process_parameter") {
         importJSON.closure = decodeHtml(importJSON.closure)
         importJSON.reg_ex = decodeHtml(importJSON.reg_ex)
+    } else if (type == "pipeline") {
+        importJSON.script_pipe_footer = removeDoubleQuote(decodeHtml(importJSON.script_pipe_footer));
+        importJSON.script_pipe_header = removeDoubleQuote(decodeHtml(importJSON.script_pipe_header));
+        importJSON.summary = decodeHtml(importJSON.summary)
     }
     return importJSON
 }
 
-function encodeElement(type, importJSON) {
+// I/O id naming:[0]i = input,o = output -[1]process database ID -[2]The number of I/O of the selected process -[3]Parameter database ID- [4]uniqe number
+function convertEdgeIm(id, fileID) {
+    var idlist = id.split("-")
+    if (idlist[1] != "outPro" && idlist[1] != "inPro") {
+        if (window.importObj[fileID].dict.process[idlist[1]]) {
+            idlist[1] = String(window.importObj[fileID].dict.process[idlist[1]])
+        } else {
+            window.importObj["importStatus"] = "stopped";
+            alert("process (id:" + idlist[1] + ") not found in pipeline dictionary and pipeline edge conversion was not successful.")
+        }
+    }
+    if (window.importObj[fileID].dict.parameter[idlist[3]]) {
+        idlist[3] = String(window.importObj[fileID].dict.parameter[idlist[3]])
+    } else {
+        window.importObj["importStatus"] = "stopped";
+        alert("parameter (id:" + idlist[1] + ") not found in pipeline dictionary and pipeline edge conversion was not successful.")
+    }
+    return idlist.join("-")
+}
+
+function encodeEdges(edges, fileID) {
+    var final = [];
+    edges = JSON.parse(edges.replace(/'/gi, "\""))["edges"]
+    for (var i = 0; i < edges.length; i++) {
+        if (edges[i]) {
+            var eds = edges[i].split("_")
+            if (eds) {
+                if (eds.length == 2) {
+                    var eds0 = convertEdgeIm(eds[0], fileID);
+                    var eds1 = convertEdgeIm(eds[1], fileID);
+                    final.push(eds0 + "_" + eds1)
+                }
+            }
+        }
+    }
+    return final
+}
+
+function encodeNodes(nodes, fileID) {
+    nodes = JSON.parse(nodes.replace(/'/gi, "\""))
+    $.each(nodes, function (el) {
+        if (nodes[el]) {
+            var proPipeID = nodes[el][2];
+            if (proPipeID != "outPro" && proPipeID != "inPro") {
+                if (proPipeID.match(/p/)) {
+                    var piID = proPipeID.match(/p(.*)/)[1];
+                    var replace = window.importObj[fileID].dict.pipeline[piID];
+                    if (replace) {
+                        nodes[el][2] = "p" + String(replace)
+                    } else {
+                        window.importObj["importStatus"] = "stopped";
+                        alert("pipeline module (id:" + piID + ") not found in pipeline dictionary and pipeline node conversion was not successful.")
+                    }
+                } else {
+                    var replace = window.importObj[fileID].dict.process[proPipeID];
+                    if (proPipeID && replace) {
+                        nodes[el][2] = String(replace)
+                    } else {
+                        window.importObj["importStatus"] = "stopped";
+                        alert("process (id:" + proPipeID + ") not found in pipeline dictionary and pipeline node conversion was not successful.")
+                    }
+                }
+            }
+        }
+    });
+    return nodes
+}
+
+function encodeProPipeList(list, fileID, type) {
+    var items = [];
+    if (!list || list == "") {
+        return list
+    }
+    var items = list.split(",")
+    for (var i = 0; i < items.length; i++) {
+        if (items[i]) {
+            var replace = window.importObj[fileID].dict[type][items[i]];
+            if (replace) {
+                items[i] = String(replace);
+            }
+        }
+    }
+    return items.join(",")
+}
+
+function encodeElement(type, importJSON, fileID) {
+    if (!importJSON) {
+        return importJSON
+    }
     if (type == "process") {
         importJSON.script = encodeURIComponent(importJSON.script)
         importJSON.script_footer = encodeURIComponent(importJSON.script_footer)
         importJSON.script_header = encodeURIComponent(importJSON.script_header)
+    } else if (type == "pipeline") {
+        importJSON.summary = encodeURIComponent(importJSON.summary)
+        importJSON.script_pipe_footer = encodeURIComponent(importJSON.script_pipe_footer)
+        importJSON.script_pipe_header = encodeURIComponent(importJSON.script_pipe_header)
+        importJSON.edges = encodeEdges(importJSON.edges, fileID)
+        importJSON.nodes = encodeNodes(importJSON.nodes, fileID)
+        importJSON.mainG = JSON.parse(importJSON.mainG.replace(/'/gi, "\""))["mainG"];
+        importJSON.pipeline_list = encodeProPipeList(importJSON.pipeline_list, fileID, "pipeline")
+        importJSON.process_list = encodeProPipeList(importJSON.process_list, fileID, "process")
+        var savedList = [];
+        var itemOrder = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publish", "script_pipe_header", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
+        for (var i = 0; i < itemOrder.length; i++) {
+            var key = itemOrder[i];
+            var tObj = {};
+            if (importJSON[key] !== undefined) {
+                tObj[key] = importJSON[key]
+            } else {
+                tObj[key] = ""
+            }
+            savedList.push(tObj)
+
+        }
+        var sl = JSON.stringify(savedList);
+        importJSON = { p: "saveAllPipeline", dat: sl };
     }
     return importJSON
 }
@@ -473,9 +859,9 @@ $('#nextButton').on('click', function (e) {
     var allParameters = getValues({ p: "getAllParameters" });
     var fileList = window.importObj.filename;
     for (var i = 0; i < fileList.length; i++) {
-        window.importObj[i] = {dict:{}, missing_parameters:{}};
+        window.importObj[i] = { dict: {}, missing_parameters: {}, redundant_propara: {} };
         //dict:keep log of created process, parameter and process_paramater id's.
-        window.importObj[i].dict = { process: {}, pipeline: {}, parameter: {} };
+        window.importObj[i].dict = { process: {}, pipeline: {}, parameter: {}, propara: {} };
         var text = getValues({ p: "getUpload", "name": fileList[i] });
         if (text) {
             var decrypted = CryptoJS.AES.decrypt(text, "");
@@ -484,7 +870,7 @@ $('#nextButton').on('click', function (e) {
                 if (IsJsonString(decryptedText)) {
                     var importJSON = JSON.parse(decryptedText)
                     console.log(importJSON)
-                    var panelDiv = getFileBlock(i, fileList[i], importJSON, allPipeGroup, allProcessGroup,allParameters);
+                    var panelDiv = getFileBlock(i, fileList[i], importJSON, allPipeGroup, allProcessGroup, allParameters);
                     $("#importModalPart2").append(panelDiv);
                 }
             }

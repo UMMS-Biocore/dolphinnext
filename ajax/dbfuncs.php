@@ -1954,39 +1954,49 @@ class dbfuncs {
         WHERE p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)";
 		return self::queryTable($sql);
 	}
-    public function getLastProcessByUUID($id, $ownerID) {
+    public function getLastProPipeByUUID($id, $type, $ownerID) {
+        if ($type == "process"){
+            $table = "process";
+        } else if ($type == "pipeline"){
+            $table = "biocorepipe_save";
+        }
         if ($ownerID != ''){
             $userRoleArr = json_decode($this->getUserRole($ownerID));
             $userRole = $userRoleArr[0]->{'role'};
             if ($userRole == "admin"){
                 $sql="SELECT DISTINCT p.*, pg.group_name as process_group_name
-                FROM process p
-                INNER JOIN process_group pg ON p.process_group_id = pg.id
+                FROM $table p
+                INNER JOIN {$type}_group pg ON p.{$type}_group_id = pg.id
                 INNER JOIN (
-                SELECT pr.process_gid, MAX(pr.rev_id) rev_id
-                FROM process pr
-                GROUP BY pr.process_gid
-                ) b ON p.rev_id = b.rev_id AND p.process_gid=b.process_gid AND p.process_uuid = '$id'";
+                SELECT pr.{$type}_gid, MAX(pr.rev_id) rev_id
+                FROM $table pr
+                GROUP BY pr.{$type}_gid
+                ) b ON p.rev_id = b.rev_id AND p.{$type}_gid=b.{$type}_gid AND p.{$type}_uuid = '$id'";
             return self::queryTable($sql);
             }
             $where_pg = "(pg.owner_id='$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15))";
             $where_pr = "(pr.owner_id='$ownerID' OR pr.perms = 63 OR (ug.u_id ='$ownerID' and pr.perms = 15))";
             } 
-       $sql="SELECT DISTINCT p.*, pg.group_name as process_group_name
-             FROM process p
+       $sql="SELECT DISTINCT p.*, pg.group_name as {$type}_group_name
+             FROM $table p
              LEFT JOIN user_group ug ON  p.group_id=ug.g_id
-             INNER JOIN process_group pg
-             ON p.process_group_id = pg.id and p.process_uuid = '$id' AND $where_pg
+             INNER JOIN {$type}_group pg
+             ON p.{$type}_group_id = pg.id and p.{$type}_uuid = '$id' AND $where_pg
              INNER JOIN (
-                SELECT pr.process_gid, MAX(pr.rev_id) rev_id
-                FROM process pr
+                SELECT pr.{$type}_gid, MAX(pr.rev_id) rev_id
+                FROM $table pr
                 LEFT JOIN user_group ug ON pr.group_id=ug.g_id where $where_pr
-                GROUP BY pr.process_gid
-                ) b ON p.rev_id = b.rev_id AND p.process_gid=b.process_gid";
+                GROUP BY pr.{$type}_gid
+                ) b ON p.rev_id = b.rev_id AND p.{$type}_gid=b.{$type}_gid";
 
       return self::queryTable($sql);
     }
-    public function getProcessDataByUUID($process_uuid, $process_rev_uuid, $ownerID) {
+    public function getProPipeDataByUUID($uuid, $rev_uuid, $type, $ownerID) {
+        if ($type == "process"){
+            $table = "process";
+        } else if ($type == "pipeline"){
+            $table = "biocorepipe_save";
+        }
         if ($ownerID == ""){
             $ownerID ="''";
         }else {
@@ -1994,21 +2004,21 @@ class dbfuncs {
             if (isset(json_decode($userRoleCheck)[0])){
                 $userRole = json_decode($userRoleCheck)[0]->{'role'};
                 if ($userRole == "admin"){
-                    $sql = "SELECT DISTINCT p.*, u.username, pg.group_name as process_group_name, IF(p.owner_id='$ownerID',1,0) as own 
-					FROM process p 
+                    $sql = "SELECT DISTINCT p.*, u.username, pg.group_name as {$type}_group_name, IF(p.owner_id='$ownerID',1,0) as own 
+					FROM $table p 
 					INNER JOIN users u ON p.owner_id = u.id
-                    INNER JOIN process_group pg ON p.process_group_id = pg.id
-					where p.process_rev_uuid = '$process_rev_uuid' AND p.process_uuid = '$process_uuid' ";
+                    INNER JOIN {$type}_group pg ON p.{$type}_group_id = pg.id
+					where p.{$type}_rev_uuid = '$rev_uuid' AND p.{$type}_uuid = '$uuid' ";
                     return self::queryTable($sql);
                 }
             }
 		}
-		$sql = "SELECT DISTINCT p.*, u.username, pg.group_name as process_group_name, IF(p.owner_id='$ownerID',1,0) as own
-        FROM process p
+		$sql = "SELECT DISTINCT p.*, u.username, pg.group_name as {$type}_group_name, IF(p.owner_id='$ownerID',1,0) as own
+        FROM $table p
         LEFT JOIN user_group ug ON p.group_id=ug.g_id
 		INNER JOIN users u ON p.owner_id = u.id
-        INNER JOIN process_group pg ON p.process_group_id = pg.id
-        where p.process_rev_uuid = '$process_rev_uuid' AND p.process_uuid = '$process_uuid' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
+        INNER JOIN {$type}_group pg ON p.{$type}_group_id = pg.id
+        where p.{$type}_rev_uuid = '$rev_uuid' AND p.{$type}_uuid = '$uuid' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
 		return self::queryTable($sql);
 	}
     
@@ -2343,7 +2353,7 @@ class dbfuncs {
 	}
     
     
-	public function saveAllPipeline($dat,$ownerID, $email) {
+	public function saveAllPipeline($dat,$ownerID) {
 		$obj = json_decode($dat);
 		$name =  $obj[0]->{"name"};
         $id = $obj[1]->{"id"};
@@ -2364,9 +2374,17 @@ class dbfuncs {
         $process_list = $obj[16]->{"process_list"};
         $pipeline_list = $obj[17]->{"pipeline_list"};
         $pipeline_gid = isset($obj[18]->{"pipeline_gid"}) ? $obj[18]->{"pipeline_gid"} : "";
+        if (empty($pipeline_gid)) {
+            $max_gid = json_decode($this->getMaxPipeline_gid(),true)[0]["pipeline_gid"];
+            settype($max_gid, "integer");
+            if (!empty($max_gid)) {
+                $pipeline_gid = $max_gid +1;
+            }
+        }
         $rev_comment = isset($obj[19]->{"rev_comment"}) ? $obj[19]->{"rev_comment"} : "";
         $rev_id = isset($obj[20]->{"rev_id"}) ? $obj[20]->{"rev_id"} : "";
         $pipeline_uuid = isset($obj[21]->{"pipeline_uuid"}) ? $obj[21]->{"pipeline_uuid"} : "";
+        $pipeline_rev_uuid = isset($obj[22]->{"pipeline_rev_uuid"}) ? $obj[22]->{"pipeline_rev_uuid"} : "";
         if (empty($id) && empty($pipeline_uuid)) {
             $all_uuid = $this->getUUIDAPI("pipeline");
             if (isset($all_uuid->uuid)){
@@ -2376,22 +2394,22 @@ class dbfuncs {
             }
             if (isset($all_uuid->rev_uuid)){
                 $pipeline_rev_uuid = $all_uuid->rev_uuid;
-            } else {
-                $pipeline_rev_uuid = "";
-            }
-        } else if (empty($id)){
+            } 
+        } else if (empty($id) && empty($pipeline_rev_uuid)){
             $all_uuid = $this->getUUIDAPI("pipeline_rev");
             $pipeline_uuid = "$pipeline_uuid";
             if (isset($all_uuid->rev_uuid)){
                 $pipeline_rev_uuid = $all_uuid->rev_uuid;
-            } else {
-                $pipeline_rev_uuid = "";
-            }
+            } 
         } 
+        settype($pipeline_group_id, "integer");
         settype($rev_id, "integer");
         settype($pipeline_gid, "integer");
+        settype($perms, "integer");
         settype($group_id, "integer");
+        settype($publish, "integer");
         settype($pin_order, "integer");
+        settype($id, 'integer');
         $nodesRaw = $obj[2]->{"nodes"};
         if (!empty($nodesRaw)){
             $this->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
@@ -2467,9 +2485,11 @@ class dbfuncs {
 			('$ownerID','$name', '0', now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function exportPipeline($id, $ownerID, $type) {
+    public function exportPipeline($id, $ownerID, $type, $layer) {
+        $layer += 1;
         $data = $this->loadPipeline($id,$ownerID);
         $new_obj = json_decode($data,true);
+        $new_obj[0]["layer"] = $layer;
         $final_obj = [];
         if ($type == "main"){
             $final_obj["main_pipeline_{$id}"]=$new_obj[0];
@@ -2486,7 +2506,7 @@ class dbfuncs {
                         if (!empty($pipeModId)){
                             $pipeModule = [];
                             settype($pipeModId, "integer");
-                            $pipeModule = $this->exportPipeline($pipeModId, $ownerID, "pipeModule");
+                            $pipeModule = $this->exportPipeline($pipeModId, $ownerID, "pipeModule",$layer);
                             $pipeModuleDec = json_decode($pipeModule,true);
                             $final_obj = array_merge($pipeModuleDec, $final_obj);
                         } 

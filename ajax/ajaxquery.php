@@ -303,6 +303,7 @@ else if ($p=="saveParameter"){
     $name = $_REQUEST['name'];
     $qualifier = $_REQUEST['qualifier'];
     $file_type = $_REQUEST['file_type'];
+    settype($id, 'integer');
     if (!empty($id)) {
        $data = $db->updateParameter($id, $name, $qualifier, $file_type, $ownerID);
     } else {
@@ -576,6 +577,7 @@ else if ($p=="saveProcess"){
     $group_id = $_REQUEST['group']; 
     $perms = $_REQUEST['perms']; 
     $publish = $_REQUEST['publish']; 
+    settype($id, 'integer');
     settype($rev_id, 'integer');
     settype($group_id, 'integer');
     settype($process_gid, "integer");
@@ -668,9 +670,7 @@ else if ($p=="saveProjectPipeline"){
     $group_id = $_REQUEST['group_id'];
     $exec_each = $_REQUEST['exec_each'];
     $exec_all = $_REQUEST['exec_all'];
-//    $exec_all_settings = $_REQUEST['exec_all_settings'];
     $exec_all_settings = addslashes(htmlspecialchars(urldecode($_REQUEST['exec_all_settings']), ENT_QUOTES));
-//    $exec_each_settings = $_REQUEST['exec_each_settings'];
     $exec_each_settings = addslashes(htmlspecialchars(urldecode($_REQUEST['exec_each_settings']), ENT_QUOTES));
     $exec_next_settings = isset($_REQUEST['exec_next_settings']) ? $_REQUEST['exec_next_settings'] : "";
     $docker_check = $_REQUEST['docker_check'];
@@ -712,6 +712,7 @@ else if ($p=="saveProcessParameter"){
     $type = $_REQUEST['type'];
     $perms = $_REQUEST['perms'];
     $group_id= $_REQUEST['group'];
+    settype($id, 'integer');
     settype($group_id, 'integer');
     settype($perms, 'integer');
     settype($parameter_id, 'integer');
@@ -844,13 +845,13 @@ else if ($p=="getProcess_uuid")
 else if ($p=="check_uuid")
 {
     $type = $_REQUEST['type'];
-    if ($type){
-        $process_uuid = $_REQUEST['process_uuid'];
-        $process_rev_uuid= $_REQUEST['process_rev_uuid'];
-        $data_process_uuid = $db->getLastProcessByUUID($process_uuid, $ownerID);
-        $data_process_rev_uuid = $db->getProcessDataByUUID($process_uuid, $process_rev_uuid, $ownerID);
-        $obj1 = json_decode($data_process_uuid,true);
-        $obj2 = json_decode($data_process_rev_uuid,true);
+    $uuid = $_REQUEST['uuid'];
+    $rev_uuid= $_REQUEST['rev_uuid'];
+    $data_uuid = $db->getLastProPipeByUUID($uuid, $type, $ownerID);
+    $data_rev_uuid = $db->getProPipeDataByUUID($uuid, $rev_uuid, $type, $ownerID);
+    $obj1 = json_decode($data_uuid,true);
+    $obj2 = json_decode($data_rev_uuid,true);
+    if ($type == "process"){
         $data["process_uuid"] = isset($obj1[0]) ? $obj1[0] : null;
         $data["process_rev_uuid"] = isset($obj2[0]) ? $obj2[0] : null;
         if (isset($obj2[0])){
@@ -860,6 +861,10 @@ else if ($p=="check_uuid")
             $data["pro_para_inputs_$process_id"]=$pro_para_in;
             $data["pro_para_outputs_$process_id"]=$pro_para_out;
         }
+        $data= json_encode($data);
+    } else if ($type == "pipeline"){
+        $data["pipeline_uuid"] = isset($obj1[0]) ? $obj1[0] : null;
+        $data["pipeline_rev_uuid"] = isset($obj2[0]) ? $obj2[0] : null;
         $data= json_encode($data);
     }
     
@@ -897,7 +902,7 @@ else if ($p=="getOutputsPP")
 else if ($p=="saveAllPipeline")
 {
 	$dat = $_REQUEST['dat'];
-    $data = $db->saveAllPipeline($dat,$ownerID, $email);
+    $data = $db->saveAllPipeline($dat,$ownerID);
     //update permissions
     $new_obj = json_decode($data,true);
     if (!empty($new_obj["id"])){
@@ -940,7 +945,7 @@ else if ($p=="getSavedPipelines")
     $data = $db->getSavedPipelines($ownerID);
 }
 else if ($p=="exportPipeline"){
-    $data = $db->exportPipeline($id,$ownerID, "main");
+    $data = $db->exportPipeline($id,$ownerID, "main", 0);
 }
 else if ($p=="loadPipeline")
 {

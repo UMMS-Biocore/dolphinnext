@@ -2164,6 +2164,7 @@ function save() {
             savedList.push({ "rev_id": 0 });
             savedList.push({ "rev_comment": "" });
             savedList.push({ "pipeline_uuid": "" });
+            savedList.push({ "pipeline_rev_uuid": "" });
             sl = JSON.stringify(savedList);
             var ret = getValues({ p: "saveAllPipeline", dat: sl });
             $("#pipeline-title").attr('pipelineid', ret.id);

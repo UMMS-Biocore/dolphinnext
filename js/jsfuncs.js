@@ -35,19 +35,47 @@ function IsJsonString(str) {
 
 // example:
 //var filteredNames = filterObjKeys(names, /Peter/); // second parameter is a javascript regex object, so for exemple for case insensitive you would do /Peter/i  
-function filterObjKeys(obj, filter) {
-  var key, keys = [];
-  for (key in obj) {
-    if (obj.hasOwnProperty(key) && filter.test(key)) {
-      keys.push(key);
+//third parameter is optional: return(array if keys/array of obj)=(keys/obj)
+function filterObjKeys(obj, filter, type) {
+    var type = type || "keys"
+    var key, keys = [];
+    for (key in obj) {
+        if (obj.hasOwnProperty(key) && filter.test(key)) {
+            if (type == "keys") {
+                keys.push(key);
+            } else if (type == "obj") {
+                keys.push(obj[key]);
+            }
+        }
     }
-  }
-  return keys;
+    return keys;
 }
+
+//var filteredObj = filterObjVal(obj, "34")
+function filterObjVal(obj, filter) {
+    var result = {};
+    for (var k in obj) {
+        if (obj[k] == filter) {
+            result[k] = obj[k];
+        }
+    }
+    return result
+}
+
+
+//sort array of object by key
+function sortByKey(array, key) {
+    return array.sort(function (a, b) {
+        var x = a[key];
+        var y = b[key];
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+}
+
 
 //after importing script text, remove extra quote if exist
 function removeDoubleQuote(script) {
-    if (script === null){
+    if (script === null) {
         return null
     }
     var lastLetter = script.length - 1;
@@ -692,8 +720,8 @@ function getValues(data, async) {
 
 
 
-function getValuesAsync(data,callback) {
-    var result= null;
+function getValuesAsync(data, callback) {
+    var result = null;
     $.ajax({
         url: "ajax/ajaxquery.php",
         data: data,
@@ -854,9 +882,9 @@ $(function () {
 });
 
 //$("#example").multiline('this\n has\n newlines');
-$.fn.multiline = function(text){
+$.fn.multiline = function (text) {
     this.text(text);
-    this.html(this.html().replace(/\n/g,'<br/>'));
+    this.html(this.html().replace(/\n/g, '<br/>'));
     return this;
 }
 
@@ -869,7 +897,7 @@ function escapeHtml(str) {
         '"': '&quot;',
         "'": '&#039;'
     };
-    if (str === null){
+    if (str === null) {
         return null
     }
     return str.replace(/[&<>"']/g, function (m) { return map[m]; });
@@ -883,7 +911,7 @@ function decodeHtml(str) {
         '&quot;': '"',
         '&#039;': "'"
     };
-    if (str === null){
+    if (str === null) {
         return null
     }
     return str.replace(/&amp;|&lt;|&gt;|&quot;|&#039;/g, function (m) { return map[m]; });

@@ -247,6 +247,11 @@ session_write_close();
             .txtlink {
                 color: #397FA7;
             }
+            
+            /*        multi-Modal overflow fix */
+            .modal {
+                overflow: auto; 
+            }
 
         </style>
 
