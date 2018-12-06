@@ -116,7 +116,7 @@ DolphinNext allows you to enter hostname specific input parameters by using foll
     if ($HOSTNAME == "ghpcc06.umassrc.org"){
     <input parameters>
     }
-    //*
+    //* autofill
 
 Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname which is going to be run. Therefore, in this example, ``<input parameters>`` will be filled in case of pipeline is going to run on **ghpcc06.umassrc.org**. Please check following example in which TrimPath parameter is filled automatically::
 
@@ -124,7 +124,7 @@ Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname w
     if ($HOSTNAME == "garberwiki.umassmed.edu"){
         params.TrimPath ="/project/Trimmomatic/trimmomatic-0.32.jar"
         } 
-    //*
+    //* autofill
 
 .. image:: dolphinnext_images/pipeline_autofill_input_host.png
 	:align: center
@@ -141,7 +141,7 @@ It is possible autofill based on the selected parameters on the running page. In
     else if (params.method == "fastqx"){
         params.TrimPath ="/project/fastqx/fastqx"
     }
-    //*
+    //* autofill
 
 .. image:: dolphinnext_images/pipeline_autofill_input_param.png
 	:align: center
@@ -187,7 +187,7 @@ Please check the example below where ``params.genome`` and ``params.genomeIndexP
     if ($HOSTNAME){
         params.TrimPath ="${_share}/Trimmomatic/trimmomatic-0.32.jar"
     }
-    //*
+    //* autofill
     
 .. image:: dolphinnext_images/pipeline_autofill_input_dynamic.png
 	:align: center
@@ -195,21 +195,34 @@ Please check the example below where ``params.genome`` and ``params.genomeIndexP
 
 Autofill Feature for Pipeline Properties
 ========================================
-You might define hostname specific executor properties and create autofill feature by using following syntax::
+**Hostname Independent Autofill :**
+
+If you want to define executor properties that are going to be automatically filled by default, you can use following syntax::
 
     //* autofill
-    if ($HOSTNAME == "ghpcc06.umassrc.org"){
     <executor properties>
-    }
-    //*
+    //* autofill
 
-Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname which is going to be run. Therefore, in this example, all ``<executor properties>`` will be active in case of pipeline is going to run on **ghpcc06.umassrc.org**.
+**Hostname Dependent Autofill :**
+
+Additionally, you might overwrite default executor properties by using **hostname dependent executor properties**. Please check the following syntax::
+
+    //* autofill
+    <executor properties>
+    if ($HOSTNAME == "ghpcc06.umassrc.org"){
+    <hostname dependent executor properties>
+    }
+    //* autofill
+
+Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname which is selected in the run as **Run Environment**. Therefore, in this example, all ``<executor properties>`` will be automatically filled in case of pipeline is going to run on **ghpcc06.umassrc.org**.
 
 **Executor Properties:**
 
 Five type of executor properties are available to autofill **Executor Settings for All Processes**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue and Other Options. See the example below::
     
     //* autofill
+    $MEMORY = 32
+    $CPU  = 1
     if ($HOSTNAME == "ghpcc06.umassrc.org"){
         $TIME = 3000
         $CPU  = 4
@@ -217,7 +230,7 @@ Five type of executor properties are available to autofill **Executor Settings f
         $QUEUE = "long"
         $EXEC_OPTIONS = '-E "file /home/garberlab"'
     }
-    //*
+    //* autofill
 
 .. image:: dolphinnext_images/pipeline_autofill.png
 	:align: center
@@ -232,7 +245,7 @@ Four type of image properties are available to autofill : ``$DOCKER_IMAGE``, ``$
         $DOCKER_IMAGE = "docker://UMMS-Biocore/docker"
         $DOCKER_OPTIONS = "-v /export:/export"
     }
-    //*
+    //* autofill
 
 .. image:: dolphinnext_images/pipeline_autofill_docker.png
 	:align: center
@@ -245,14 +258,31 @@ Singularity image example::
         $SINGULARITY_IMAGE = "shub://UMMS-Biocore/singularity"
 	    $SINGULARITY_OPTIONS = "--bind /project"
     }
-    //*
+    //* autofill
 
 .. image:: dolphinnext_images/pipeline_autofill_singu.png
 	:align: center
 	:width: 99%
 
+**Platform Tag :**
 
+Optionally, you can isolate platform dependent paramaters by using **platform** tag. This way, exported pipeline won't have the platform dependent parameters and similarly when pipeline is imported, exisiting platform dependent parameters won't be overwritten. Please check the the example usage at below::
 
+    //* autofill
+    $MEMORY = 32
+    $CPU  = 1
+        //* platform
+        if ($HOSTNAME == "ghpcc06.umassrc.org"){
+            $TIME = 3000
+            $CPU  = 4
+            $MEMORY = 100
+            $QUEUE = "long"
+            $EXEC_OPTIONS = '-E "file /home/garberlab"'
+        }
+        //* platform
+    //* autofill
+
+In the example, since run environment is selected as ghpcc06.umassrc.org, autofill feature overwrited the default ``$TIME`` value (1000) and filled with 3000.
 
 Pipeline Details
 ================

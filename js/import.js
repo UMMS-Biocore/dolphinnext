@@ -63,7 +63,6 @@ function activateSelectizeMenuGroup(allMenuGroup, dropdownID, menu_group_name) {
     }
 }
 
-//xxxx
 function getRowImportTable(rowType, allMenuGroup, fileId, blockID, givenName, menu_group_name, pipeline_uuid) {
     var rowID = rowType + fileId + '_' + blockID;
     var dropdownID = "menuGroup_" + rowID;
@@ -101,7 +100,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
         for (var i = 0; i < importJSON.length; i++) {
             importJSON[i] = decodeElement("process_parameter", importJSON[i]) || {};
             if (importJSON[i].id) {
-                window.importObj[fileID].dict.propara[importJSON[i].id] = "insert"; //default value/ Will be replaced by dbJSONfilt[i].id;
+                window.importObj[fileID].dict.propara[importJSON[i].id] = "insert"; //default value/ Will be replaced by dbJSONfilt[i].id; If it won't replaced that means it will stay as insert
             }
         }
         for (var i = 0; i < dbJSON.length; i++) {
@@ -133,7 +132,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
             if (dbJSON[k].id) {
                 var checkExistObj = filterObjVal(window.importObj[fileID].dict.propara, dbJSON[k].id)
                 if ($.isEmptyObject(checkExistObj)) {
-                    window.importObj[fileID].redundant_propara[dbJSON[k].id] = { p: "removeProcessParameter", id: dbJSON[k].id}; //default value/ Will be replaced by importJSON[i].id;
+                    window.importObj[fileID].redundant_propara[dbJSON[k].id] = { p: "removeProcessParameter", id: dbJSON[k].id };
                     checkObj[type + i] = {};
                     checkObj[type + i]["redundant_process_parameter"] = "<<<<<< Redundant process parameter(" + dbJSON[k].name + ") will be removed. >>>>>>\n";
                 }
@@ -150,7 +149,6 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
         checkObj2 = keyChecker(["nodes", "edges", "mainG"], importJSONcp, dbJSONcp)
         checkObj = keyChecker(["summary", "script_pipe_footer", "script_pipe_header", "name"], importJSON, dbJSON)
         jQuery.extend(checkObj, checkObj2);
-        console.log(checkObj)
     }
     return checkObj;
 }
@@ -314,7 +312,6 @@ $('#importButton').on('click', function (e) {
                 var commandID = command.id
                 command[type + "_group_id"] = $("#menuGroup_" + parBoxId)[0].selectize.getValue()
                 command = encodeElement(type, command, fileID)
-                //xxxxx
                 if (window.importObj["importStatus"]) {
                     if (window.importObj["importStatus"] == "stopped") {
                         rowUpdateStatus(parBoxId, "Error Occured ", "error");
@@ -377,8 +374,19 @@ $('#importButton').on('click', function (e) {
     loop("process", processRowList);
 });
 
-function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowID) {
+function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowID, dbJSON) {
     if (type == "process") {
+        if (dbJSON) {
+            importJSON.summary = switchHostSpecific(importJSON.summary, dbJSON.summary)
+            importJSON.script = switchHostSpecific(importJSON.script, dbJSON.script)
+            importJSON.script_footer = switchHostSpecific(importJSON.script_footer, dbJSON.script_footer)
+            importJSON.script_header = switchHostSpecific(importJSON.script_header, dbJSON.script_header)
+        } else {
+            importJSON.summary = removePlatform(importJSON.summary)
+            importJSON.script = removePlatform(importJSON.script)
+            importJSON.script_footer = removePlatform(importJSON.script_footer)
+            importJSON.script_header = removePlatform(importJSON.script_header)
+        }
         sendJSON.p = "saveProcess"
         sendJSON.process_uuid = importJSON.process_uuid;
         sendJSON.process_rev_uuid = importJSON.process_rev_uuid;
@@ -431,7 +439,15 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
             sendJSON[i].perms = "" //modify later: take from process perms
         }
     } else if (type == "pipeline") {
-        //pipeline_gid
+        if (dbJSON) {
+            importJSON.summary = switchHostSpecific(importJSON.summary, dbJSON.summary)
+            importJSON.script_pipe_footer = switchHostSpecific(importJSON.script_pipe_footer, dbJSON.script_pipe_footer)
+            importJSON.script_pipe_header = switchHostSpecific(importJSON.script_pipe_header, dbJSON.script_pipe_header)
+        } else {
+            importJSON.summary = removePlatform(importJSON.summary)
+            importJSON.script_pipe_footer = removePlatform(importJSON.script_pipe_footer)
+            importJSON.script_pipe_header = removePlatform(importJSON.script_pipe_header)
+        }
         sendJSON.id = ""; //modify later
         sendJSON.nodes = importJSON.nodes;
         sendJSON.mainG = importJSON.mainG;
@@ -461,6 +477,55 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
     }
     return sendJSON
 }
+function removePlatform (importItem){
+    var importList = [];
+    if (importItem) {
+        var importList = importItem.split("//* platform")
+        if (importList.length > 2) {
+            for (var i = 0; i < importList.length; i++) {
+                if (Math.abs(i % 2) == 1) {
+                    importList[i] = "\n";
+                }
+            }
+            importItem = importList.join("//* platform")
+        } 
+    }
+    return importItem
+}
+
+function switchHostSpecific(importItem, dbItem) {
+    var importList = [];
+    var dbList = [];
+    if (importItem && dbItem) {
+        var importList = importItem.split("//* platform")
+        var dbList = dbItem.split("//* platform")
+        if (importList.length > 2 && dbList.length > 2 && dbList.length == importList.length) {
+            for (var i = 0; i < dbList.length; i++) {
+                if (Math.abs(i % 2) == 1) {
+                    importList[i] = dbList[i]
+                }
+            }
+            importItem = importList.join("//* platform")
+            //in case imported file have no platform tag, add to last part of the text
+        } else if (importList.length === 1 && dbList.length > 2) {
+            for (var i = 0; i < dbList.length; i++) {
+                if (Math.abs(i % 2) == 1) {
+                    importList.push(dbList[i]+"//* platform")
+                }
+            }
+            importItem = importList.join("//* platform")
+        // in case imported file have platform tag, but db hasn't.
+        } else if (importList.length > 2 && dbList.length === 1) {
+            for (var i = 0; i < importList.length; i++) {
+                if (Math.abs(i % 2) == 1) {
+                    importList[i]= "\n";
+                }
+            }
+            importItem = importList.join("//* platform")
+        }
+    }
+    return importItem
+}
 
 function checkImport(optObj) {
     //extract optional parameters
@@ -485,11 +550,6 @@ function checkImport(optObj) {
     //command: to save/update db. 
     window.importObj[rowID] = { "command": null, "missing_parameters": [] }
     if (rowType == "process") {
-        //prepare command to save/update db
-        sendJSONprocess = prepareSendJSON("process", sendJSONprocess, importJSON, allParameters, fileId, rowID)
-        sendJSONproParaIn = prepareSendJSON("process_parameter_input", sendJSONproParaIn, proInJSON, allParameters, fileId, rowID)
-        sendJSONproParaOut = prepareSendJSON("process_parameter_output", sendJSONproParaOut, proOutJSON, allParameters, fileId, rowID)
-        sendJSONproPara = sendJSONproParaIn.concat(sendJSONproParaOut);
         //check database for uuid
         var process_uuid = importJSON.process_uuid;
         var process_rev_uuid = importJSON.process_rev_uuid;
@@ -499,6 +559,11 @@ function checkImport(optObj) {
             uuid: process_uuid,
             rev_uuid: process_rev_uuid
         });
+        //prepare command to save/update db
+        sendJSONprocess = prepareSendJSON("process", sendJSONprocess, importJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
+        sendJSONproParaIn = prepareSendJSON("process_parameter_input", sendJSONproParaIn, proInJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
+        sendJSONproParaOut = prepareSendJSON("process_parameter_output", sendJSONproParaOut, proOutJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
+        sendJSONproPara = sendJSONproParaIn.concat(sendJSONproParaOut);
         if (checkUUID) {
             //if process_rev_uuid is found then check if process and pro_para are the same
             if (checkUUID.process_rev_uuid) {
@@ -578,9 +643,6 @@ function checkImport(optObj) {
             }
         }
     } else if (rowType == "pipeline" || rowType == "pipeModule") {
-        sendJSONpipeline = prepareSendJSON("pipeline", sendJSONpipeline, importJSON, null, fileId, rowID)
-        console.log("#stat_" + rowID)
-        console.log(sendJSONpipeline)
         //check database for uuid
         var pipeline_uuid = importJSON.pipeline_uuid;
         var pipeline_rev_uuid = importJSON.pipeline_rev_uuid;
@@ -590,7 +652,7 @@ function checkImport(optObj) {
             uuid: pipeline_uuid,
             rev_uuid: pipeline_rev_uuid
         });
-        console.log(pipeUUID)
+        sendJSONpipeline = prepareSendJSON("pipeline", sendJSONpipeline, importJSON, null, fileId, rowID, decodeElement("pipeline", pipeUUID.pipeline_rev_uuid))
         if (pipeUUID) {
             //if pipeline_rev_uuid is found then check if contents of pipeline are the same
             if (pipeUUID.pipeline_rev_uuid) {
