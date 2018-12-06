@@ -559,18 +559,28 @@ tophat2 -o . ${indexPath} $reads
 </div>
 <div class="section" id="autofill-feature-for-process">
 <h2>Autofill Feature for Process<a class="headerlink" href="#autofill-feature-for-process" title="Permalink to this headline">¶</a></h2>
-<p>You might define hostname specific executor properties and create autofill feature by using following syntax:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
-if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
-&lt;executor properties&gt;
-}
-//*
+<p><strong>Hostname Independent Autofill :</strong></p>
+<p>If you want to define executor properties that are going to be automatically filled by default, you can use following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//*</span> <span class="n">autofill</span>
+<span class="o">&lt;</span><span class="n">executor</span> <span class="n">properties</span><span class="o">&gt;</span>
+<span class="o">//*</span> <span class="n">autofill</span>
 </pre></div>
 </div>
-<p>Here, <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code> is DolphinNext specific variable that recalls the hostname which is going to be run. Therefore, in this example, all <code class="docutils literal notranslate"><span class="pre">&lt;executor</span> <span class="pre">properties&gt;</span></code> will be active in case of pipeline is going to run on <strong>ghpcc06.umassrc.org</strong>.</p>
+<p><strong>Hostname Dependent Autofill :</strong></p>
+<p>Additionally, you might overwrite default executor properties by using <strong>hostname dependent executor properties</strong>. Please check the following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+&lt;executor properties&gt;
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+&lt;hostname dependent executor properties&gt;
+}
+//* autofill
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code> is DolphinNext specific variable that recalls the hostname which is selected in the run as <strong>Run Environment</strong>. Therefore, in this example, all <code class="docutils literal notranslate"><span class="pre">&lt;executor</span> <span class="pre">properties&gt;</span></code> will be automatically filled in case of pipeline is going to run on <strong>ghpcc06.umassrc.org</strong>.</p>
 <p><strong>Executor Properties:</strong></p>
 <p>Five type of executor properties are available to autofill <strong>Executor Settings for Each Process</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue and Other Options. See the example below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+$TIME = 1000
 if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
     $TIME = 3000
     $CPU  = 4
@@ -578,10 +588,28 @@ if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
     $QUEUE = &quot;long&quot;
     $EXEC_OPTIONS = &#39;-E &quot;file /home/garberlab&quot;&#39;
 }
-//*
+//* autofill
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/process_autofill.png"><img alt="../_images/process_autofill.png" class="align-center" src="../_images/process_autofill.png" style="width: 99%;" /></a>
+<p>In the example, since run environment is selected as ghpcc06.umassrc.org, autofill feature overwrited the default <code class="docutils literal notranslate"><span class="pre">$TIME</span></code> value (1000) and filled with 3000.</p>
+<p><strong>Platform Tag :</strong></p>
+<p>Optionally, you can isolate platform dependent paramaters by using <strong>platform</strong> tag. This way, exported process won’t have the platform dependent parameters and similarly when process is imported, exisiting platform dependent parameters won’t be overwritten. Please check the the example usage at below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+$MEMORY = 32
+$CPU  = 1
+    //* platform
+    if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+        $TIME = 3000
+        $CPU  = 4
+        $MEMORY = 100
+        $QUEUE = &quot;long&quot;
+        $EXEC_OPTIONS = &#39;-E &quot;file /home/garberlab&quot;&#39;
+    }
+    //* platform
+//* autofill
+</pre></div>
+</div>
 </div>
 <div class="section" id="permissions-groups-and-publish">
 <h2>Permissions, Groups and Publish<a class="headerlink" href="#permissions-groups-and-publish" title="Permalink to this headline">¶</a></h2>

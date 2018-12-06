@@ -1304,7 +1304,7 @@ function parseAutofill(script) {
                 var defaultVal = null;
                 var cond = null; // each condition
                 //first find the line of autofill
-                if (lines[i].match(/\/\/\* autofill/i)) {
+                if (lines[i].match(/^\s*\/\/\* autofill\s*$/i)) {
                     var blockStart = i;
                 }
                 // parse statements after first line of autofill
@@ -1313,16 +1313,22 @@ function parseAutofill(script) {
                     if (!ifBlockStart && !lines[i].match(/.*if *\((.*)\).*/i)) {
                         [varName, defaultVal] = parseVarPart(lines[i]);
                         if (varName && defaultVal) {
+                            console.log(varName)
+                            console.log(defaultVal)
                             if (varName.match(/^_.*$/)) {
                                 library[varName] = defaultVal
                             }
-                            autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
                         }
                     }
                     //find if condition
                     if (lines[i].match(/.*if *\((.*)\).*/i)) {
                         if (ifBlockStart) {
                             if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
+                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                            }
+                        //push global variables    
+                        } else if (!ifBlockStart){
+                            if (conds && states && library && genConds && ($.isEmptyObject(conds) && $.isEmptyObject(genConds) && (!$.isEmptyObject(states) || !$.isEmptyObject(library)))) {
                                 autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
                             }
                         }
@@ -1344,7 +1350,7 @@ function parseAutofill(script) {
                             });
                         }
                         //end of the autofill block: //*or 
-                    } else if (lines[i].match(/\/\/\*/i)) {
+                    } else if (lines[i].match(/^\s*\/\/\*\s*$/i) || lines[i].match(/^\s*\/\/\* autofill\s*$/i)) {
                         blockStart = null;
                         ifBlockStart = null;
                         if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
@@ -1457,6 +1463,7 @@ function findDefVal(genConditions, autoFillJSON) {
             // find conditions and library that satisfy varName
             if (autoFillJSON[elem].condition && autoFillJSON[elem].condition != "" && !$.isEmptyObject(autoFillJSON[elem].condition) && autoFillJSON[elem].library && autoFillJSON[elem].library != "" && !$.isEmptyObject(autoFillJSON[elem].library)) {
                 var cond = autoFillJSON[elem].condition;
+                console.log(cond)
                 if (cond[varName]) {
                     var defaultVal = cond[varName];
                     var obj = {};
@@ -1482,8 +1489,11 @@ function decodeGenericCond(autoFillJSON) {
                 var newCondStatements = {};
                 //find each generic condition in other cond&state pairs and get their default values.
                 var genCondDefaultVal = findDefVal(genConditions, autoFillJSON);
+                console.log(genCondDefaultVal)
                 // get combinations array of each conditions
                 var combiConditions = cartesianProduct(genCondDefaultVal);
+                console.log(combiConditions)
+                
                 // get new statements for each combination of conditions
                 $.each(combiConditions, function (cond) {
                     newCondStatements = getNewStatements(combiConditions[cond], autoFillJSON, genStatements);
