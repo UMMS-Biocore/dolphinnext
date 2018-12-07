@@ -24,27 +24,64 @@ renderMenuGroup = {
     }
 };
 
-function activateSelectizeMenuGroup(allMenuGroup, dropdownID, menu_group_name) {
+function createSelectize(rowClass, dropdownID) {
+    if (rowClass == "Process") {
+        var allMenuGroup = window.ajaxData.processMenuGroup;
+    } else if (rowClass == "Pipeline") {
+        var allMenuGroup = window.ajaxData.pipelineMenuGroup;
+    }
     $('#' + dropdownID).selectize({
         valueField: 'id',
         searchField: ['group_name'],
         options: allMenuGroup,
-        render: renderMenuGroup
-        //        create: function (input, callback){
-        //                $.ajax({
-        //                    url: '/remote-url/',
-        //                    type: 'GET',
-        //                    success: function (result) {
-        //                        if (result) {
-        //                            callback({ value: result.id, text: input });
-        //                        }
-        //                    }
-        //                });
-        //            }
+        render: renderMenuGroup,
+        create: function (input, callback) {
+            $.ajax({
+                url: "ajax/ajaxquery.php",
+                data: { p: "save" + rowClass + "Group", group_name: input },
+                type: 'POST',
+                success: function (result) {
+                    if (result) {
+                        callback({ id: result.id, group_name: input });
+                        refreshSelectize(rowClass, null)
+                    }
+                }
+            });
+        }
     });
-    var valueList = $('#' + dropdownID)[0].selectize.search(menu_group_name).items;
 
-    if (valueList) {
+}
+
+
+function refreshSelectize(rowClass, newId) {
+    var dropdownlist = $("#importModalPart2").find("select[name='" + rowClass + "_menu_group']")
+    if (rowClass == "Process") {
+        window.ajaxData.processMenuGroup = getValues({ p: "getAllProcessGroups" });
+    } else if (rowClass == "Pipeline") {
+        window.ajaxData.pipelineMenuGroup = getValues({ p: "getPipelineGroup" });
+    }
+    for (var i = 0; i < dropdownlist.length; i++) {
+        var dropId = dropdownlist[i].getAttribute('id');
+        var selectizecheck = $('#' + dropId)[0].selectize;
+        if (selectizecheck) {
+            var valueID = $('#' + dropId)[0].selectize.getValue();
+            if (!valueID && newId) {
+                valueID = newId
+            }
+            $('#' + dropId).selectize()[0].selectize.destroy();
+            createSelectize(rowClass, dropId)
+            $('#' + dropId)[0].selectize.setValue(valueID, false);
+        }
+    }
+}
+
+//rowClass:Process/Pipeline
+function activateSelectizeMenuGroup(rowClass, dropdownID, menu_group_name, fileId) {
+    refreshSelectize(rowClass, null)
+    createSelectize(rowClass, dropdownID);
+    var valueList = $('#' + dropdownID)[0].selectize.search(menu_group_name).items;
+    //select menu group if exist
+    if (valueList.length > 0) {
         if (valueList.length == 1) {
             var valueID = valueList[0].id;
             $('#' + dropdownID)[0].selectize.setValue(valueID, false);
@@ -60,14 +97,26 @@ function activateSelectizeMenuGroup(allMenuGroup, dropdownID, menu_group_name) {
                 }
             }
         }
+    } else {
+        $.ajax({
+            url: "ajax/ajaxquery.php",
+            data: { p: "save" + rowClass + "Group", group_name: menu_group_name },
+            type: 'POST',
+            success: function (result) {
+                if (result) {
+                    refreshSelectize(rowClass, result.id)
+                }
+            }
+        });
     }
 }
 
-function getRowImportTable(rowType, allMenuGroup, fileId, blockID, givenName, menu_group_name, pipeline_uuid) {
+//rowClass:Process/Pipeline rowType:process/pipeModule/pipeline
+function getRowImportTable(rowType, rowClass, fileId, blockID, givenName, menu_group_name, pipeline_uuid) {
     var rowID = rowType + fileId + '_' + blockID;
     var dropdownID = "menuGroup_" + rowID;
-    var pipeRevDrop = '<select id="' + dropdownID + '" class="fbtn btn-default form-control" defVal="' + menu_group_name + '" name="pipe_group_id"></select>';
-    setTimeout(function () { activateSelectizeMenuGroup(allMenuGroup, dropdownID, menu_group_name); }, 100);
+    var pipeRevDrop = '<select id="' + dropdownID + '" class="fbtn btn-default form-control" defVal="' + menu_group_name + '" name="' + rowClass + '_menu_group"></select>';
+    setTimeout(function () { activateSelectizeMenuGroup(rowClass, dropdownID, menu_group_name, fileId); }, 100);
     return '<tr id="' + rowID + '" type="' + rowType + '" fileID="' + fileId + '"><td scope="row">' + givenName + '</td><td>' + pipeRevDrop + '</td><td id="stat_' + rowID + '"><i class="fa fa-spinner fa-spin"></i>  Processing..</td></tr>'
 }
 
@@ -222,7 +271,9 @@ $('#importButton').on('click', function (e) {
     $('#importButton').css("display", "none");
     $('#compButton').css("display", "inline");
     var processRowList = $("#importModalPart2").find("tr[type='process']")
-    var pipeRowList = $("#importModalPart2").find("tr[type='pipeModule'], tr[type='pipeline']")
+    var pipeModList = $("#importModalPart2").find("tr[type='pipeModule']")
+    var pipeList = $("#importModalPart2").find("tr[type='pipeline']")
+    var pipeRowList = $.merge(pipeModList, pipeList)
     //first insert missing_parameters
     var fileList = window.importObj.filename;
     for (var fileID = 0; fileID < fileList.length; fileID++) {
@@ -276,7 +327,6 @@ $('#importButton').on('click', function (e) {
         var index = indexCache || 0;
         for (var i = index; i < list.length; i++) {
             var parBoxId = list[i].getAttribute('id');
-            console.log(parBoxId)
             var fileID = list[i].getAttribute('fileID');
             var command = window.importObj[parBoxId].command;
             if (type == "process") {
@@ -477,7 +527,8 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
     }
     return sendJSON
 }
-function removePlatform (importItem){
+
+function removePlatform(importItem) {
     var importList = [];
     if (importItem) {
         var importList = importItem.split("//* platform")
@@ -488,7 +539,7 @@ function removePlatform (importItem){
                 }
             }
             importItem = importList.join("//* platform")
-        } 
+        }
     }
     return importItem
 }
@@ -510,15 +561,15 @@ function switchHostSpecific(importItem, dbItem) {
         } else if (importList.length === 1 && dbList.length > 2) {
             for (var i = 0; i < dbList.length; i++) {
                 if (Math.abs(i % 2) == 1) {
-                    importList.push(dbList[i]+"//* platform")
+                    importList.push(dbList[i] + "//* platform")
                 }
             }
             importItem = importList.join("//* platform")
-        // in case imported file have platform tag, but db hasn't.
+            // in case imported file have platform tag, but db hasn't.
         } else if (importList.length > 2 && dbList.length === 1) {
             for (var i = 0; i < importList.length; i++) {
                 if (Math.abs(i % 2) == 1) {
-                    importList[i]= "\n";
+                    importList[i] = "\n";
                 }
             }
             importItem = importList.join("//* platform")
@@ -625,7 +676,7 @@ function checkImport(optObj) {
                 window.importObj[rowID]["command"] = sendJSONprocess;
                 window.importObj[rowID]["oldProcessId"] = importJSON.id;
                 //process parameter
-                window.importObj[rowID]["commandProPara"] = sendJSONproPara;
+                window.importObj[rowID]["commandProPara"] = cleanIDColumn(sendJSONproPara);
                 //if process_rev_uuid and process_uuid not found then add as new revision and process
             } else {
                 $("#stat_" + rowID).html('Save as new process <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="It will be added as a new process"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
@@ -634,12 +685,12 @@ function checkImport(optObj) {
                 window.importObj[rowID]["command"] = sendJSONprocess;
                 window.importObj[rowID]["oldProcessId"] = importJSON.id;
                 //process parameter
-                window.importObj[rowID]["commandProPara"] = sendJSONproPara;
+                window.importObj[rowID]["commandProPara"] = cleanIDColumn(sendJSONproPara);
             }
-            // add missing parameters log 
+            // add log of missing parameters 
             if (window.importObj[rowID]["missing_parameters"].length > 0) {
                 var existingHTML = $("#stat_" + rowID).html()
-                $("#stat_" + rowID).html(existingHTML + ' Missing Parameters <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Missing parameters (' + window.importObj[rowID]["missing_parameters"].join() + ') will be added"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                $("#stat_" + rowID).html(existingHTML + ' Missing Parameters <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Missing parameters (' + window.importObj[rowID]["missing_parameters"].join(", ") + ') will be added"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
             }
         }
     } else if (rowType == "pipeline" || rowType == "pipeModule") {
@@ -714,7 +765,19 @@ function insertIDColumn(sendJSONproPara, checkUUIDpro_para_in, checkUUIDpro_para
     return sendJSONproPara
 }
 
-function getFileBlock(fileId, fileName, importJSON, allPipeGroup, allProcessGroup, allParameters) {
+function cleanIDColumn(sendJSONproPara) {
+    if (sendJSONproPara) {
+        for (var i = 0; i < sendJSONproPara.length; i++) {
+            sendJSONproPara[i].id = "";
+        }
+    }
+    return sendJSONproPara
+}
+
+
+
+
+function getFileBlock(fileId, fileName, importJSON, allParameters) {
     var showPipeBlock = "none";
     var showPipeModuleBlock = "none";
     var showProcessBlock = "none";
@@ -730,7 +793,7 @@ function getFileBlock(fileId, fileName, importJSON, allPipeGroup, allProcessGrou
     if (checkMainPipe.length > 0) {
         showPipeBlock = "table-row";
         for (var i = 0; i < checkMainPipe.length; i++) {
-            pipeBlock += getRowImportTable("pipeline", allPipeGroup, fileId, i, checkMainPipe[i].name, checkMainPipe[i].pipeline_group_name, checkMainPipe[i].pipeline_uuid);
+            pipeBlock += getRowImportTable("pipeline", "Pipeline", fileId, i, checkMainPipe[i].name, checkMainPipe[i].pipeline_group_name, checkMainPipe[i].pipeline_uuid);
             checkMainPipe[i] = decodeElement("pipeline", checkMainPipe[i])
             optObj = { rowType: "pipeline", fileId: fileId, blockID: i, importJSON: checkMainPipe[i] };
             var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
@@ -740,7 +803,7 @@ function getFileBlock(fileId, fileName, importJSON, allPipeGroup, allProcessGrou
     if (checkPipeModule.length > 0) {
         showPipeModuleBlock = "table-row";
         for (var i = checkPipeModule.length - 1; i >= 0; i--) {
-            pipeModuleBlock += getRowImportTable("pipeModule", allPipeGroup, fileId, i, checkPipeModule[i].name, checkPipeModule[i].pipeline_group_name, checkPipeModule[i].pipeline_uuid);
+            pipeModuleBlock += getRowImportTable("pipeModule", "Pipeline", fileId, i, checkPipeModule[i].name, checkPipeModule[i].pipeline_group_name, checkPipeModule[i].pipeline_uuid);
             checkPipeModule[i] = decodeElement("pipeline", checkPipeModule[i])
             optObj = { rowType: "pipeModule", fileId: fileId, blockID: i, importJSON: checkPipeModule[i] };
             var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
@@ -759,7 +822,7 @@ function getFileBlock(fileId, fileName, importJSON, allPipeGroup, allProcessGrou
             proInJSON = JSON.parse(importJSON["pro_para_inputs_" + process_id]);
             proOutJSON = JSON.parse(importJSON["pro_para_outputs_" + process_id]);
             importJSON[checkProcess[i]] = proJSON;
-            processBlock += getRowImportTable("process", allProcessGroup, fileId, i, proJSON.name, proJSON.process_group_name, proJSON.process_uuid);
+            processBlock += getRowImportTable("process", "Process", fileId, i, proJSON.name, proJSON.process_group_name, proJSON.process_uuid);
             optObj = { rowType: "process", fileId: fileId, blockID: i, importJSON: proJSON, proInJSON: proInJSON, proOutJSON: proOutJSON, allParameters: allParameters };
             var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
             doCall(optObj);
@@ -916,12 +979,12 @@ $('#nextButton').on('click', function (e) {
     $('#importModalPart2').css("display", "inline");
     $('#importButton').css("display", "inline");
     $('#nextButton').css("display", "none");
-    var allPipeGroup = getValues({ p: "getPipelineGroup" });
-    var allProcessGroup = getValues({ p: "getAllProcessGroups" });
+    window.ajaxData.pipelineMenuGroup = getValues({ p: "getPipelineGroup" });
+    window.ajaxData.processMenuGroup = getValues({ p: "getAllProcessGroups" });
     var allParameters = getValues({ p: "getAllParameters" });
     var fileList = window.importObj.filename;
     for (var i = 0; i < fileList.length; i++) {
-        window.importObj[i] = { dict: {}, missing_parameters: {}, redundant_propara: {} };
+        window.importObj[i] = { dict: {}, missing_parameters: {}, redundant_propara: {}, missing_process_menu: {}, missing_pipeline_menu: {} };
         //dict:keep log of created process, parameter and process_paramater id's.
         window.importObj[i].dict = { process: {}, pipeline: {}, parameter: {}, propara: {} };
         var text = getValues({ p: "getUpload", "name": fileList[i] });
@@ -932,7 +995,7 @@ $('#nextButton').on('click', function (e) {
                 if (IsJsonString(decryptedText)) {
                     var importJSON = JSON.parse(decryptedText)
                     console.log(importJSON)
-                    var panelDiv = getFileBlock(i, fileList[i], importJSON, allPipeGroup, allProcessGroup, allParameters);
+                    var panelDiv = getFileBlock(i, fileList[i], importJSON, allParameters);
                     $("#importModalPart2").append(panelDiv);
                 }
             }
