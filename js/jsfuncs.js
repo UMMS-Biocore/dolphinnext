@@ -1,3 +1,6 @@
+//global data libraries
+window.ajaxData = {};
+
 //user role
 function callusRole() {
     var userRole = getValues({ p: "getUserRole" });
