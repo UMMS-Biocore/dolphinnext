@@ -612,16 +612,8 @@ else if ($p=="saveProcess"){
 		$db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
 		$db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
         $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $publish, $script_mode, $script_mode_header, $ownerID);
-        if ($perms !== "3"){
-            $db->updateProcessGroupGroupPerm($id, $group_id, $perms, $ownerID);
-        }
     } else {
         $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID);
-        if ($perms !== "3"){
-            $obj = json_decode($data,true);
-            $id = $obj["id"];
-            $db->updateProcessGroupGroupPerm($id, $group_id, $perms, $ownerID);
-        }
     }
 }
 else if ($p=="saveProject"){
@@ -718,7 +710,6 @@ else if ($p=="saveProjectPipeline"){
             $db->updateProjectGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updateProjectInputGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
-            $db->updateInputGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updatePipelineGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updatePipelineProcessGroupPerm($id, $group_id, $perms, $ownerID);
             }
@@ -743,14 +734,8 @@ else if ($p=="saveProcessParameter"){
     settype($process_id, 'integer');
     if (!empty($id)) {
         $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $perms, $group_id, $ownerID);
-        if ($perms !== "3"){
-            $db->updateParameterGroupPermById($parameter_id, $group_id, $perms, $ownerID);
-        }
     } else {
         $data = $db->insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $perms, $group_id, $ownerID);
-        if ($perms !== "3"){
-            $db->updateParameterGroupPermById($parameter_id, $group_id, $perms, $ownerID);
-        }
     }
 }
 else if ($p=="getProcessData")
@@ -927,15 +912,6 @@ else if ($p=="saveAllPipeline")
 {
 	$dat = $_REQUEST['dat'];
     $data = $db->saveAllPipeline($dat,$ownerID);
-    //update permissions
-    $new_obj = json_decode($data,true);
-    if (!empty($new_obj["id"])){
-        $id = $new_obj["id"];
-        $obj = json_decode($dat);
-        $group_id = $obj[6]->{"group_id"};
-        $perms = $obj[7]->{"perms"};
-        $db->updatePipelineGroupGroupPerm($id, $group_id, $perms, $ownerID);
-    }
 }
 else if ($p=="savePipelineDetails")
 {
@@ -951,7 +927,6 @@ else if ($p=="savePipelineDetails")
     settype($pin_order, "integer");
     $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publish,$pipeline_group_id,$ownerID);
     //update permissions
-    $db->updatePipelineGroupGroupPerm($id, $group_id, $perms, $ownerID);
     if (!empty($nodesRaw)){
         $db->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
     }

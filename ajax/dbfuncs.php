@@ -2212,12 +2212,6 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline_input SET group_id='$group_id', perms='$perms', date_modified=now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$id' AND perms <= '$perms'";
         return self::runSQL($sql);
     }
-    public function updateInputGroupPerm($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE input i
-        INNER JOIN project_pipeline_input ppi ON ppi.input_id=i.id
-        SET i.group_id='$group_id', i.perms='$perms', i.date_modified=now(), i.last_modified_user ='$ownerID'  WHERE ppi.project_pipeline_id = '$id' and  i.perms <= '$perms'";
-        return self::runSQL($sql);
-    }
     public function updatePipelineGroupPerm($id, $group_id, $perms, $ownerID) {
         $sql = "UPDATE biocorepipe_save pi
         INNER JOIN project_pipeline_input ppi ON pi.id=ppi.pipeline_id
@@ -2240,10 +2234,8 @@ class dbfuncs {
         foreach ($nodes as $item):
             if ($item[2] !== "inPro" && $item[2] !== "outPro"){
                 $proId = $item[2];
-                $this->updateParameterGroupPerm($proId, $group_id, $perms, $ownerID);
                 $this->updateProcessGroupPerm($proId, $group_id, $perms, $ownerID);
                 $this->updateProcessParameterGroupPerm($proId, $group_id, $perms, $ownerID);
-                $this->updateProcessGroupGroupPerm($proId, $group_id, $perms, $ownerID);
             }
         endforeach;
         }
@@ -2260,32 +2252,6 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     
-    public function updateParameterGroupPerm($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE parameter p
-                INNER JOIN process_parameter pp ON p.id=pp.parameter_id
-                SET p.group_id='$group_id', p.perms='$perms', p.date_modified=now(), p.last_modified_user ='$ownerID'  WHERE pp.process_id = '$id' and  p.perms <= '$perms'";
-        return self::runSQL($sql);
-    }
-    
-    public function updateParameterGroupPermById($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE parameter
-                SET group_id='$group_id', perms='$perms', date_modified=now(), last_modified_user ='$ownerID'  WHERE id = '$id' and perms <= '$perms'";
-        return self::runSQL($sql);
-    }
-    
-    public function updateProcessGroupGroupPerm($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE process_group pg
-                INNER JOIN process p ON pg.id=p.process_group_id
-                SET pg.group_id='$group_id', pg.perms='$perms', pg.date_modified=now(), pg.last_modified_user ='$ownerID'  WHERE p.id = '$id' AND pg.perms <= '$perms'";
-        return self::runSQL($sql);
-    }
-    
-	public function updatePipelineGroupGroupPerm($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE pipeline_group pg
-                INNER JOIN biocorepipe_save p ON pg.id=p.pipeline_group_id
-                SET pg.group_id='$group_id', pg.perms='$perms', pg.date_modified=now(), pg.last_modified_user ='$ownerID'  WHERE p.id = '$id' AND pg.perms <= '$perms'";
-        return self::runSQL($sql);
-    }
     public function updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID) {
         foreach ($nodesRaw as $item):
             if ($item[2] !== "inPro" && $item[2] !== "outPro" ){
@@ -2295,36 +2261,16 @@ class dbfuncs {
                     if (!empty($pipeModId)){
                         settype($pipeModId, "integer");
                         $this->updatePipelineGroupPermByPipeId($pipeModId, $group_id, $perms, $ownerID);
-                        $this->updatePipelineGroupGroupPerm($pipeModId, $group_id, $perms, $ownerID);
                     } 
                 //processes    
                 } else {
                     $proId = $item[2];
-                    $this->updateParameterGroupPerm($proId, $group_id, $perms, $ownerID);
                     $this->updateProcessGroupPerm($proId, $group_id, $perms, $ownerID);
                     $this->updateProcessParameterGroupPerm($proId, $group_id, $perms, $ownerID);
-                    $this->updateProcessGroupGroupPerm($proId, $group_id, $perms, $ownerID);
                 }
             }  
         endforeach;
     }
-    
-    
-//    public function curl_get( $url ) {
-//    if ( !isset($url) ) {
-//      return false;
-//    }
-//    $ch = curl_init();
-//    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-//    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1200);
-//    curl_setopt($ch, CURLOPT_URL, $url);
-//    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-//    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-//    $result = curl_exec($ch);
-//    curl_close($ch);
-//    return $result;
-//  }
-
     
     
     public function getUUIDAPI($type){
