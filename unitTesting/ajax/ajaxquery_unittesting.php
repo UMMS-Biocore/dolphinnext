@@ -1704,8 +1704,8 @@ class ajaxQueryTest extends TestCase
 		ob_start();
 		$_REQUEST['p'] = 'getEditDelPipelineGroups';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[1]->id, '2');
-		$this->assertEquals(json_decode($data)[1]->group_name, 'test_menu_pipe');
+		$this->assertEquals(json_decode($data)[0]->id, '2');
+		$this->assertEquals(json_decode($data)[0]->group_name, 'test_menu_pipe');
 		ob_end_clean();
 	}
 	/**
