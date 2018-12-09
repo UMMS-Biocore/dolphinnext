@@ -530,9 +530,9 @@ else if ($p=="checkLogin"){
 else if ($p=="savePipelineGroup"){
     $group_name = $_REQUEST['group_name'];
     $pipeGrData = $db->getPipelineGroupByName($group_name);
-    $pipeGrData = json_decode($pipeGrData,true)[0];
+    $pipeGrData = json_decode($pipeGrData,true);
     if (isset($pipeGrData)){
-        $pipeGrId = $pipeGrData["id"];
+        $pipeGrId = $pipeGrData[0]["id"];
     } else {
         $pipeGrId = "";
     }
@@ -549,9 +549,9 @@ else if ($p=="savePipelineGroup"){
 else if ($p=="saveProcessGroup"){
     $group_name = $_REQUEST['group_name'];
     $proGrData = $db->getProcessGroupByName($group_name);
-    $proGrData = json_decode($proGrData,true)[0];
+    $proGrData = json_decode($proGrData,true);
     if (isset($proGrData)){
-        $proGrId = $proGrData["id"];
+        $proGrId = $proGrData[0]["id"];
     } else {
         $proGrId = "";
     }
