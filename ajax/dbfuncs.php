@@ -1,7 +1,5 @@
 <?php
 require_once(__DIR__."/../api/funcs.php");
-
-
 require_once(__DIR__."/../config/config.php");
 class dbfuncs {
 
@@ -1226,10 +1224,8 @@ class dbfuncs {
 		return self::queryTable($sql);
     }
     public function getEditDelParameters($ownerID) {
-        if ($ownerID == ""){
-            $ownerID ="''";
-        }
-        $sql = "SELECT * FROM parameter WHERE owner_id = '$ownerID'";
+        $sql = "SELECT DISTINCT * FROM parameter p
+        WHERE p.owner_id = '$ownerID' AND id not in (select parameter_id from process_parameter WHERE owner_id != '$ownerID')";
         return self::queryTable($sql);
     }
 
@@ -1304,6 +1300,11 @@ class dbfuncs {
         $sql = "SELECT DISTINCT pg.id
         FROM pipeline_group pg
         WHERE pg.group_name = '$group_name'";
+        return self::queryTable($sql);
+    }
+    public function getParameterByName($name, $qualifier, $file_type) {
+        $sql = "SELECT DISTINCT id FROM parameter
+        WHERE name = '$name' AND qualifier = '$qualifier' AND file_type = '$file_type'";
         return self::queryTable($sql);
     }
     public function getEditDelProcessGroups($ownerID) {
@@ -1423,7 +1424,7 @@ class dbfuncs {
         if (isset(json_decode($userRoleCheck)[0])){
             $userRole = json_decode($userRoleCheck)[0]->{'role'};
             if ($userRole == "admin"){
-                $sql = "SELECT id, username
+                $sql = "SELECT *
                         FROM users
                         WHERE id <> '$ownerID'";
                 return self::queryTable($sql);

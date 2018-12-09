@@ -14,15 +14,17 @@ if ($p=="saveUser"){
     $google_image = $_REQUEST['google_image'];
     $username = $_REQUEST['username'];
     //check if Google ID already exits
-    $id = json_decode($db->getUser($google_id))[0]->{'id'};
+    $checkUserData = json_decode($db->getUser($google_id));
+    $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
+    $role = isset($checkUserData[0]) ? $checkUserData[0]->{'role'} : "";
     $_SESSION['username'] = $username;
     $_SESSION['email'] = $email;
     $_SESSION['name'] = $name;
     $_SESSION['google_id'] = $google_id;
     if (!empty($id)) {
 	    $_SESSION['ownerID'] = $id;
+	    $_SESSION['role'] = $role;
         $data = $db->updateUser($id, $google_id, $name, $email, $google_image, $username);  
-        
     } else {
         $data = $db->insertUser($google_id, $name, $email, $google_image, $username);  
         $ownerIDarr = json_decode($data,true); 
@@ -58,6 +60,7 @@ if ($p=="saveUser"){
         $username = $userData->{'username'};
         $email = $userData->{'email'};
         $name = $userData->{'name'};
+        $role = $userData->{'role'};
         session_destroy();
         session_start();
         $_SESSION['username'] = $username;
@@ -65,6 +68,7 @@ if ($p=="saveUser"){
         $_SESSION['name'] = $name;
         $_SESSION['google_id'] = $google_id;
         $_SESSION['ownerID'] = $admin_id;
+        $_SESSION['role'] = $role;
         session_write_close();
         $logOutAr = array('logOut' => 1);
 	    $data = json_encode($logOutAr);

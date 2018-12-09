@@ -303,11 +303,22 @@ else if ($p=="saveParameter"){
     $name = $_REQUEST['name'];
     $qualifier = $_REQUEST['qualifier'];
     $file_type = $_REQUEST['file_type'];
+    $parData = $db->getParameterByName($name,$qualifier,$file_type);
+    $parData = json_decode($parData,true);
+    if (isset($parData[0])){
+        $parId = $parData[0]["id"];
+    } else {
+        $parId = "";
+    }
     settype($id, 'integer');
     if (!empty($id)) {
        $data = $db->updateParameter($id, $name, $qualifier, $file_type, $ownerID);
     } else {
-       $data = $db->insertParameter($name, $qualifier, $file_type, $ownerID);
+        if (empty($parId)){
+            $data = $db->insertParameter($name, $qualifier, $file_type, $ownerID);
+        } else {
+            $data = json_encode(array('id' => $parId));
+        }
     }
 }
 else if ($p=="getAmz")
@@ -580,11 +591,11 @@ else if ($p=="saveProcess"){
     $process_uuid = isset($_REQUEST['process_uuid']) ? $_REQUEST['process_uuid'] : "";
     $process_rev_uuid = isset($_REQUEST['process_rev_uuid']) ? $_REQUEST['process_rev_uuid'] : "";
     
-    if (empty($process_uuid)) {
+    if (empty($id) && empty($process_uuid)) {
         $all_uuid = $db->getUUIDAPI("process");
         $process_uuid = $all_uuid->uuid;
         $process_rev_uuid = $all_uuid->rev_uuid;
-    } else if (empty($process_rev_uuid)){
+    } else if (empty($id) && empty($process_rev_uuid)){
         $all_uuid = $db->getUUIDAPI("process_rev");
         $process_rev_uuid = $all_uuid->rev_uuid;
         $process_uuid = "$process_uuid";

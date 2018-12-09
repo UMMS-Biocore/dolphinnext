@@ -2062,6 +2062,7 @@ $(document).ready(function () {
                     var scripteditorProHeader = getScriptEditor('editorProHeader');
                     var scripteditorProFooter = getScriptEditor('editorProFooter');
                     var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
+                    var process_uuid = getValues({ p: "getProcess_uuid", "process_id": proID })[0].process_uuid;
                     var script_mode = $('#script_mode').val();
                     var script_mode_header = $('#script_mode_header').val();
                     dataToProcess.push({ name: "script_mode", value: script_mode });
@@ -2070,6 +2071,7 @@ $(document).ready(function () {
                     dataToProcess.push({ name: "group", value: group });
                     dataToProcess.push({ name: "publish", value: publish });
                     dataToProcess.push({ name: "process_gid", value: process_gid });
+                    dataToProcess.push({ name: "process_uuid", value: process_uuid });
                     dataToProcess.push({ name: "script_header", value: scripteditorProHeader });
                     dataToProcess.push({ name: "script_footer", value: scripteditorProFooter });
                     dataToProcess.push({ name: "script", value: scripteditor });
