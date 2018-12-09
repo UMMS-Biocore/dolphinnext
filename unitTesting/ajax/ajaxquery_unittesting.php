@@ -1574,7 +1574,7 @@ class ajaxQueryTest extends TestCase
     public function testcheckProjectPublic() {
 		ob_start();
 		$_REQUEST['p'] = 'checkProjectPublic';
-		$_REQUEST['pipeline_id'] = '3';
+		$_REQUEST['pipeline_id'] = '2';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->id, '2');
 		$this->assertEquals(json_decode($data)[0]->name, 'test_project');
