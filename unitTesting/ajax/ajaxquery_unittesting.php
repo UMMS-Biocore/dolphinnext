@@ -869,33 +869,6 @@ class ajaxQueryTest extends TestCase
     /**
      * @depends testloadPipelinePublic
      */
-    public function testinsertPipelineName() {
-		ob_start();
-		$_REQUEST['p'] = 'savePipelineName';
-		$_REQUEST['id'] = '';
-		$_REQUEST['name'] = 'test_pipeline_before_update';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)->id,'2');
-		ob_end_clean();
-	}
-    /**
-     * @depends testinsertPipelineName
-     */
-    public function testupdatePipelineName() {
-		ob_start();
-		$_REQUEST['p'] = 'savePipelineName';
-		$_REQUEST['id'] = '2';
-		$_REQUEST['name'] = 'test_pipeline';
-		include('ajaxquery.php');
-        $_REQUEST['p'] = 'getSavedPipelines';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[1]->id,'2');
-		$this->assertEquals(json_decode($data)[1]->name,'test_pipeline');
-		ob_end_clean();
-	}
-    /**
-     * @depends testupdatePipelineName
-     */
     public function testgetSavedPipelinesPublic() {
 		ob_start();
 		$_REQUEST['p'] = 'getSavedPipelines';
@@ -947,7 +920,7 @@ class ajaxQueryTest extends TestCase
 	public function testgetMaxPipRev_id() {
 		ob_start();
 		$_REQUEST['p'] = 'getMaxPipRev_id';
-		$_REQUEST['pipeline_gid'] = '0';
+		$_REQUEST['pipeline_gid'] = '1';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->rev_id,'0');
 		ob_end_clean();
