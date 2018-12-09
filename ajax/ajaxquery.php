@@ -530,7 +530,12 @@ else if ($p=="checkLogin"){
 else if ($p=="savePipelineGroup"){
     $group_name = $_REQUEST['group_name'];
     $pipeGrData = $db->getPipelineGroupByName($group_name);
-    $pipeGrId = json_decode($pipeGrData,true)[0]["id"];
+    $pipeGrData = json_decode($pipeGrData,true)[0];
+    if (isset($pipeGrData)){
+        $pipeGrId = $pipeGrData["id"];
+    } else {
+        $pipeGrId = "";
+    }
     if (!empty($id)) {
        $data = $db->updatePipelineGroup($id, $group_name, $ownerID);
     } else {
@@ -544,11 +549,16 @@ else if ($p=="savePipelineGroup"){
 else if ($p=="saveProcessGroup"){
     $group_name = $_REQUEST['group_name'];
     $proGrData = $db->getProcessGroupByName($group_name);
-    $proGrId = json_decode($proGrData,true)[0]["id"];
+    $proGrData = json_decode($proGrData,true)[0];
+    if (isset($proGrData)){
+        $proGrId = $proGrData["id"];
+    } else {
+        $proGrId = "";
+    }
     if (!empty($id)) {
        $data = $db->updateProcessGroup($id, $group_name, $ownerID);
     } else {
-        if (empty($proGrId) || !isset($proGrId)){
+        if (empty($proGrId)){
             $data = $db->insertProcessGroup($group_name, $ownerID);
         } else {
             $data = json_encode(array('id' => $proGrId));
