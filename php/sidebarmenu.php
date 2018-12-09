@@ -33,7 +33,7 @@ function getSideMenuItem($obj)
 $html="";
 foreach ($obj as $item):
     $nameSub = substr($item->{'name'}, 0, 20);
-    $html.='<li pub="'.$item->{'publish'}.'" p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"><a data-toggle="modal" data-target="#addProcessModal" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="'.$item->{'name'}.'@'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$nameSub.'</a></li>';
+    $html.='<li pub="'.$item->{'publish'}.'" p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"><a data-toggle="modal" data-target="#addProcessModal" class="processItems" origin="'.$item->{'name'}.'" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="'.$item->{'name'}.'@'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$nameSub.'</a></li>';
 endforeach;
 return $html;
 }
@@ -43,7 +43,7 @@ function getSideMenuPipelineItem($obj)
 $html="";
 foreach ($obj as $item):
     $nameSub = substr($item->{'name'}, 0, 20);
-    $html.='<li pin="'.$item->{'pin'}.'" p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"><a href="index.php?np=1&id='.$item->{'id'}.'" class="pipelineItems"  ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="pipeline-'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$nameSub.'</a></li>';
+    $html.='<li pin="'.$item->{'pin'}.'"  p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"><a href="index.php?np=1&id='.$item->{'id'}.'" class="pipelineItems"  origin="'.$item->{'name'}.'" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="pipeline-'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$nameSub.'</a></li>';
 endforeach;
 return $html;
 }
@@ -59,33 +59,32 @@ $menuhtml.='<li id="outputs" class="treeview">  <a ondragstart="dragStart(event)
 $menuhtml.='<li class="header">PIPELINES</li>';
 foreach ($parentMenusPipeline as $parentitem):
     $nameSub = substr($parentitem->{'name'}, 0, 20);
-//
-    $menuhtml.='<li class="treeview">';
-    $menuhtml.='<a href="" draggable="false"><i class="fa fa-spinner"></i> <span p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
-
     $items = json_decode($db->getSubMenuFromSideBarPipe($parentitem->{'name'}, $ownerID));
-    
-	$menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
-    $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
-    $menuhtml.= getSideMenuPipelineItem($items);
-    $menuhtml.='</ul>';
-    $menuhtml.='</li>';
+    if (count($items) > 0){
+        $menuhtml.='<li class="treeview">';
+        $menuhtml.='<a href="" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
+	   $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
+        $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
+        $menuhtml.= getSideMenuPipelineItem($items);
+        $menuhtml.='</ul>';
+        $menuhtml.='</li>';
+    }
 endforeach;
  
 $menuhtml.='<li id="processSideHeader" class="header">PROCESSES</li>';
 foreach ($parentMenus as $parentitem):
     $nameSub = substr($parentitem->{'name'}, 0, 15);
-
-    $menuhtml.='<li class="treeview">';
-    $menuhtml.='<a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
-    
     $items = json_decode($db->getSubMenuFromSideBar($parentitem->{'name'}, $ownerID));
+    if (count($items) > 0){
+        $menuhtml.='<li class="treeview">';
+        $menuhtml.='<a href="" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
 
-    $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
-    $menuhtml.='<ul id="side-'.$parentitem->{'id'}.'" class="treeview-menu">';
-    $menuhtml.= getSideMenuItem($items);
-    $menuhtml.='</ul>';
-    $menuhtml.='</li>';
+        $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
+        $menuhtml.='<ul id="side-'.$parentitem->{'id'}.'" class="treeview-menu">';
+        $menuhtml.= getSideMenuItem($items);
+        $menuhtml.='</ul>';
+        $menuhtml.='</li>';
+    }
 endforeach;
 $menuhtml.='<ul>';
 echo $menuhtml;

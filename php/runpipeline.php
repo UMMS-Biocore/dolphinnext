@@ -311,16 +311,16 @@
             <!-- collapsed settings-->
             <div id="dispOpt" class="col-md-12 collapse">
                 <div class="form-group col-md-1">
-                    <input type="checkbox" id="withReport"> Report</input>
+                    <input type="checkbox" id="withReport" checked> Report</input>
                 </div>
                 <div class="form-group col-md-1">
-                    <input type="checkbox" id="withTrace"> Trace</input>
+                    <input type="checkbox" id="withTrace" checked> Trace</input>
                 </div>
                 <div class="form-group col-md-1">
-                    <input type="checkbox" id="withDag"> DAG</input>
+                    <input type="checkbox" id="withDag" checked> DAG</input>
                 </div>
                 <div class="form-group col-md-2">
-                    <input type="checkbox" id="withTimeline"> Timeline</input>
+                    <input type="checkbox" id="withTimeline" checked> Timeline</input>
                 </div>
 
             </div>

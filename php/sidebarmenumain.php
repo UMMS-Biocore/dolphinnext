@@ -23,16 +23,16 @@ $menuhtml='<ul id="autocompletes1" class="sidebar-menu" data-widget="tree">';
 $menuhtml.='<li class="header">PIPELINES</li>';
 foreach ($parentMenusPipeline as $parentitem):
     $nameSub = substr($parentitem->{'name'}, 0, 20);
-    $menuhtml.='<li class="treeview">';
-    $menuhtml.='<a href="" draggable="false"><i class="fa fa-spinner"></i> <span p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
-
     $items = json_decode($db->getSubMenuFromSideBarPipe($parentitem->{'name'}, $ownerID));
-    
-	$menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
-    $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
-    $menuhtml.= getSideMenuPipelineItem($items);
-    $menuhtml.='</ul>';
-    $menuhtml.='</li>';
+    if (count($items) > 0){
+        $menuhtml.='<li class="treeview">';
+        $menuhtml.='<a href="" draggable="false"><i class="fa fa-spinner"></i> <span origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
+	   $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
+        $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
+        $menuhtml.= getSideMenuPipelineItem($items);
+        $menuhtml.='</ul>';
+        $menuhtml.='</li>';
+    }
 endforeach;
 $menuhtml.='<ul>';
 echo $menuhtml;

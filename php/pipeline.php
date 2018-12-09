@@ -42,7 +42,7 @@
                 <div id="pipeMenuGroupTop" style="display:inline;">
                     <i id="pipeSepBar" style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px; ">|</i>
                     <i id="pipeGroupIcon" class="fa fa-th-list " style="margin-left:0px; margin-right:0px; font-size:16px;"></i> Menu Group:
-                    <select id="pipeGroupAll" style="width:165px; font-style: italic; font-size:17px; margin-top:0px; padding-top:0px;" class="fbtn btn-default" name="process_group_id"></select>
+                    <select id="pipeGroupAll" style="width:165px; font-style: italic; font-size:17px;" class="form-control" pipe_group_id=""></select>
                     <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:7px; padding-right:7px; margin-bottom:3px;" id="pipeGroupAdd" data-toggle="modal" data-target="#pipeGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Add Pipeline Menu Group"><span><i class="glyphicon glyphicon-plus"></i></span></a></button>
                     <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:7px; padding-right:7px; margin-bottom:3px;" id="pipeGroupEdit" data-toggle="modal" data-target="#pipeGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Edit Pipeline Menu Group"><span><i class="fa fa-pencil-square-o"></i></span></a></button>
                     <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:8px; padding-right:8px; margin-bottom:3px;" id="pipeGroupDel" data-toggle="modal" data-target="#pipeDelGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Pipeline Menu Group"><span><i class="fa fa-trash-o"></i></span></a></button>
@@ -257,6 +257,7 @@
             <input id="pin_order">
         </div>
     </div>
+    <div name="empty_space" style="height:100px; width:100%; clear:both;"></div>
 </div>
 
 

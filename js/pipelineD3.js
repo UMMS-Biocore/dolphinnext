@@ -182,14 +182,7 @@ $('#groupSelPipe').change(function () {
 $('#pin').click(function () {
     autosaveDetails();
 });
-$('#pipeGroupAll').change(function () {
-    var id = $("#pipeline-title").attr('pipelineid');
-    if (id !== "") {
-        autosaveDetails();
-    } else {
-        autosave();
-    }
-});
+
 $('#publishPipe').change(function () {
     autosaveDetails();
 });
@@ -1832,7 +1825,7 @@ function changeName() {
     if (pipeModulePipeId.match(/g-p(.*)/) && pipeModule.id.match(/g-(.*)/)) {
         window["pObj" + pipeModule.id.match(/g-(.*)/)[1]].lastPipeName = newName
         newNameShow = truncateName(newName, 'pipelineModule');
-    } else{
+    } else {
         newNameShow = truncateName(newName, d3.select("#" + renameTextID).attr('class'));
     }
     d3.select("#" + renameTextID).text(newNameShow)
@@ -1857,9 +1850,9 @@ function changeName() {
 function getInfo() {
     className = document.getElementById(this.id).className.baseVal.split("-");
     infoID = className[1];
-    if (this.id.match(/info-/)){
+    if (this.id.match(/info-/)) {
         gNumInfo = this.id.replace("info-", "");
-    }else { //for pipeline module windows
+    } else { //for pipeline module windows
         gNumInfo = this.id.replace("info", "");
     }
     $('#addProcessModal').modal("show");
@@ -1868,9 +1861,9 @@ function getInfo() {
 function getInfoPipe() {
     className = document.getElementById(this.id).className.baseVal.split("-");
     infoID = className[1];
-    if (this.id.match(/info-/)){
+    if (this.id.match(/info-/)) {
         gNumInfo = this.id.replace("info-", "");
-    }else {
+    } else {
         gNumInfo = this.id.replace("info", "");
     }
     $('#selectPipelineModal').modal("show");
@@ -1896,7 +1889,7 @@ function removeElement(delID) {
 function download(text, type) {
     var type = type || "";
     var filename = $('#pipeline-title').val();
-    if (type == "exportPipe" || type == "exportPro"){
+    if (type == "exportPipe" || type == "exportPro") {
         filename += '.dn';
     } else {
         filename += '.nf';
@@ -1945,6 +1938,11 @@ function saveDetails() {
     var pin_order = $('#pin_order').val();
     var publish = $('#publishPipe').val();
     var pipGroup = $('#pipeGroupAll').val()
+    var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
+    sName = document.getElementById("pipeline-title").value;
+    if (oldPipeGroupId != pipGroup) {
+        modifyPipelineSideBar(pipGroup, id, sName, "move")
+    }
     createSaveNodes();
     var data = {
         p: "savePipelineDetails",
@@ -2033,14 +2031,14 @@ function cleanRedBorder(borderId, checkValue) {
 //clean border in case value is entered
 $('#pipeGroupAll').change(function () {
     var checkVal = $('#pipeGroupAll').val();
-    cleanRedBorder('#pipeGroupAll', checkVal)
+    cleanRedBorder($("#pipeGroupAll").next().children()[0], checkVal)
 });
 $('#pipeline-title').change(function () {
     var checkVal = $('#pipeline-title').val();
     cleanRedBorder('#pipeline-title', checkVal)
 });
 
-function createSaveNodes(){
+function createSaveNodes() {
     saveNodes = {}
     processListDb = [];
     pipelineListDb = [];
@@ -2069,7 +2067,7 @@ function createSaveNodes(){
         processName = processList[key]
         saveNodes[key] = [x, y, prosessID, processName, processModule]
         if (prosessID.match(/^p(.*)/)) {
-            var pipeID= prosessID.match(/^p(.*)/)[1];
+            var pipeID = prosessID.match(/^p(.*)/)[1];
             pipelineListDb.push(pipeID);
         } else if (!prosessID.match(/(.*)Pro/)) {
             processListDb.push(prosessID);
@@ -2107,7 +2105,7 @@ function save() {
     if (!pipeline_group_id || pipeline_group_id == "") {
         var pipeGroupWarn = true;
     }
-    warnUserRedBorder('#pipeGroupAll', pipeline_group_id)
+    warnUserRedBorder($("#pipeGroupAll").next().children()[0], pipeline_group_id)
     id = 0
     if (sName !== "" && dupliPipe === false) {
         id = $("#pipeline-title").attr('pipelineid');
@@ -2167,13 +2165,13 @@ function save() {
             savedList.push({ "pipeline_rev_uuid": "" });
             sl = JSON.stringify(savedList);
             var ret = getValues({ p: "saveAllPipeline", dat: sl });
-            $("#pipeline-title").attr('pipelineid', ret.id);
-            pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
-            $('#pipeGr-' + pipeline_group_id).append('<li><a href="index.php?np=1&id=' + ret.id + '" class="pipelineItems" draggable="false" id="pipeline-' + ret.id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
+            pipeline_id = ret.id;
+            $("#pipeline-title").attr('pipelineid', pipeline_id);
+            modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "insert")
             //keep record for last group_id
             $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
             if (dupliPipe === true) {
-                setTimeout(function () { window.location.replace("index.php?np=1&id=" + ret.id); }, 0);
+                setTimeout(function () { window.location.replace("index.php?np=1&id=" + pipeline_id); }, 0);
                 dupliPipe = false;
             }
             $('#autosave').text('All changes saved');
@@ -2193,8 +2191,7 @@ function save() {
                 refreshCreatorData(pipeline_id);
                 var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
                 if (oldPipeGroupId != pipeline_group_id) {
-                    $('#pipeline-' + pipeline_id).parent().remove();
-                    $('#pipeGr-' + pipeline_group_id).append('<li><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" draggable="false" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
+                    modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "move")
                 }
                 //keep track of latest pipeline_group_id
                 $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
@@ -2214,7 +2211,7 @@ function save() {
                     $('#confirmYesNoText').html(warnPipeText);
                     if (numOfProjectPublic === 0 || usRole === "admin") {
                         $('#saveOnExist').css('display', 'inline');
-                        if (usRole == "admin" && !(numOfProjectPublic === 0)){
+                        if (usRole == "admin" && !(numOfProjectPublic === 0)) {
                             $('#saveOnExist').attr('class', 'btn btn-danger');
                         }
                     }
@@ -2234,9 +2231,7 @@ function save() {
                     refreshCreatorData(pipeline_id);
                     var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
                     if (oldPipeGroupId != pipeline_group_id) {
-                        $('#pipeline-' + pipeline_id).parent().remove();
-                        $('#pipeGr-' + pipeline_group_id).append('<li><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" draggable="false" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
-
+                        modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "move")
                     }
                     //keep track of latest pipeline_group_id
                     $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
@@ -2281,6 +2276,31 @@ function save() {
         }
     }
 }
+
+function modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, type) {
+    if (type == "move") {
+        $('#pipeline-' + pipeline_id).parent().remove();
+    }
+    $('#pipeGr-' + pipeline_group_id).append('<li><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" draggable="false" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
+}
+
+function modifyPipelineParentSideBar(name, groupID, type) {
+    if (type == "insert") {
+        $('#processSideHeader').before('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-spinner"></i> <span class="pipelineParent" origin="' + name + '">' + truncateName(name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="pipeGr-' + groupID + '" class="treeview-menu"></ul></li>');
+    } else if (type == "update") {
+        $('#pipeGr-' + groupID).parent().find('span').html(name);
+    }
+}
+function modifyProcessParentSideBar(name, groupID, type) {
+    if (type == "insert") {
+        $('#autocompletes1').append('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span class="processParent" origin="' + name + '">' + truncateName(name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="side-' + groupID + '" class="treeview-menu"></ul></li>');
+
+    } else if (type == "update") {
+        $('#side-' + groupID).parent().find('span').html(name);
+    }
+}
+
+
 
 function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, pObj) {
     var prefix = "";
@@ -2382,8 +2402,8 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     } else {
         addProPipeTab(id)
         //--Pipeline details table ends---
-        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_"+id]);
-        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_"+id]);
+        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_" + id]);
+        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_" + id]);
         //gnum uniqe, id same id (Written in class) in same type process
         pObj.g = d3.select("#mainG" + MainGNum).append("g")
             .attr("id", "g" + MainGNum + "-" + pObj.gNum)
@@ -2548,8 +2568,3 @@ function addCandidates2DictForLoad(fir, pObj) {
         }
     }
 }
-
-
-
-
-

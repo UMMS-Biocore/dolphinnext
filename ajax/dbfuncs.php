@@ -1235,7 +1235,7 @@ class dbfuncs {
 
     public function insertParameter($name, $qualifier, $file_type, $ownerID) {
         $sql = "INSERT INTO parameter(name, qualifier, file_type, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
-			('$name', '$qualifier', '$file_type', '$ownerID', 3, now(), now(), '$ownerID')";
+			('$name', '$qualifier', '$file_type', '$ownerID', 63, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
 
@@ -1245,7 +1245,7 @@ class dbfuncs {
     }
     
     public function insertProcessGroup($group_name, $ownerID) {
-        $sql = "INSERT INTO process_group (owner_id, group_name, date_created, date_modified, last_modified_user, perms) VALUES ('$ownerID', '$group_name', now(), now(), '$ownerID', 3)";
+        $sql = "INSERT INTO process_group (owner_id, group_name, date_created, date_modified, last_modified_user, perms) VALUES ('$ownerID', '$group_name', now(), now(), '$ownerID', 63)";
         return self::insTable($sql);
     }
     
@@ -1284,19 +1284,8 @@ class dbfuncs {
     }
     // --------- Process -----------
     public function getAllProcessGroups($ownerID) {
-        $userRoleCheck = $this->getUserRole($ownerID);
-        if (isset(json_decode($userRoleCheck)[0])){
-            $userRole = json_decode($userRoleCheck)[0]->{'role'};
-            if ($userRole == "admin"){
-                $sql = "SELECT DISTINCT pg.id, pg.group_name
-                FROM process_group pg";
-                return self::queryTable($sql);
-            }
-        }
         $sql = "SELECT DISTINCT pg.id, pg.group_name
-        FROM process_group pg
-        LEFT JOIN user_group ug ON pg.group_id=ug.g_id
-        WHERE pg.owner_id = '$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15)";
+                FROM process_group pg";
         return self::queryTable($sql);
     }
     public function getProcessGroupById($id) {
@@ -1305,8 +1294,22 @@ class dbfuncs {
         WHERE pg.id = '$id'";
         return self::queryTable($sql);
     }
+    public function getProcessGroupByName($group_name) {
+        $sql = "SELECT DISTINCT pg.id
+        FROM process_group pg
+        WHERE pg.group_name = '$group_name'";
+        return self::queryTable($sql);
+    }
+    public function getPipelineGroupByName($group_name) {
+        $sql = "SELECT DISTINCT pg.id
+        FROM pipeline_group pg
+        WHERE pg.group_name = '$group_name'";
+        return self::queryTable($sql);
+    }
     public function getEditDelProcessGroups($ownerID) {
-        $sql = "SELECT id, group_name FROM process_group WHERE owner_id = '$ownerID'";
+        $sql = "SELECT DISTINCT id, group_name
+        FROM process_group pg
+        Where pg.owner_id = '$ownerID' AND id not in (select process_group_id from process Where owner_id != '$ownerID')";
         return self::queryTable($sql);
     }
 	
@@ -1895,32 +1898,23 @@ class dbfuncs {
     }
 // --------- Pipeline -----------
 	  public function getPipelineGroup($ownerID) {
-        $userRoleCheck = $this->getUserRole($ownerID);
-        if (isset(json_decode($userRoleCheck)[0])){
-            $userRole = json_decode($userRoleCheck)[0]->{'role'};
-            if ($userRole == "admin"){
-                $sql = "SELECT DISTINCT pg.id, pg.group_name
+        $sql = "SELECT pg.id, pg.group_name
                 FROM pipeline_group pg";
-                return self::queryTable($sql);
-            }
-        }
-        $sql = "SELECT DISTINCT pg.id, pg.group_name
-        FROM pipeline_group pg
-        LEFT JOIN user_group ug ON pg.group_id=ug.g_id
-        WHERE pg.owner_id = '$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15)";
         return self::queryTable($sql);
     }
-	
 	public function insertPipelineGroup($group_name, $ownerID) {
-        $sql = "INSERT INTO pipeline_group (owner_id, group_name, date_created, date_modified, last_modified_user, perms) VALUES ('$ownerID', '$group_name', now(), now(), '$ownerID', 3)";
+        $sql = "INSERT INTO pipeline_group (owner_id, group_name, date_created, date_modified, last_modified_user, perms) VALUES ('$ownerID', '$group_name', now(), now(), '$ownerID', 63)";
         return self::insTable($sql);
     }
     public function updatePipelineGroup($id, $group_name, $ownerID) {
         $sql = "UPDATE pipeline_group SET group_name='$group_name', last_modified_user ='$ownerID', date_modified=now()  WHERE id = '$id'";
         return self::runSQL($sql);
     }
-	public function getEditDelPipelineGroups($ownerID) {
-        $sql = "SELECT id, group_name FROM pipeline_group WHERE owner_id = '$ownerID'";
+    
+    public function getEditDelPipelineGroups($ownerID) {
+        $sql = "SELECT DISTINCT id, group_name
+        FROM pipeline_group pg
+        Where pg.owner_id = '$ownerID' AND id not in (select pipeline_group_id from biocorepipe_save Where owner_id != '$ownerID')";
         return self::queryTable($sql);
     }
 	
@@ -2218,12 +2212,6 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline_input SET group_id='$group_id', perms='$perms', date_modified=now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$id' AND perms <= '$perms'";
         return self::runSQL($sql);
     }
-    public function updateInputGroupPerm($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE input i
-        INNER JOIN project_pipeline_input ppi ON ppi.input_id=i.id
-        SET i.group_id='$group_id', i.perms='$perms', i.date_modified=now(), i.last_modified_user ='$ownerID'  WHERE ppi.project_pipeline_id = '$id' and  i.perms <= '$perms'";
-        return self::runSQL($sql);
-    }
     public function updatePipelineGroupPerm($id, $group_id, $perms, $ownerID) {
         $sql = "UPDATE biocorepipe_save pi
         INNER JOIN project_pipeline_input ppi ON pi.id=ppi.pipeline_id
@@ -2246,10 +2234,8 @@ class dbfuncs {
         foreach ($nodes as $item):
             if ($item[2] !== "inPro" && $item[2] !== "outPro"){
                 $proId = $item[2];
-                $this->updateParameterGroupPerm($proId, $group_id, $perms, $ownerID);
                 $this->updateProcessGroupPerm($proId, $group_id, $perms, $ownerID);
                 $this->updateProcessParameterGroupPerm($proId, $group_id, $perms, $ownerID);
-                $this->updateProcessGroupGroupPerm($proId, $group_id, $perms, $ownerID);
             }
         endforeach;
         }
@@ -2266,32 +2252,6 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     
-    public function updateParameterGroupPerm($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE parameter p
-                INNER JOIN process_parameter pp ON p.id=pp.parameter_id
-                SET p.group_id='$group_id', p.perms='$perms', p.date_modified=now(), p.last_modified_user ='$ownerID'  WHERE pp.process_id = '$id' and  p.perms <= '$perms'";
-        return self::runSQL($sql);
-    }
-    
-    public function updateParameterGroupPermById($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE parameter
-                SET group_id='$group_id', perms='$perms', date_modified=now(), last_modified_user ='$ownerID'  WHERE id = '$id' and perms <= '$perms'";
-        return self::runSQL($sql);
-    }
-    
-    public function updateProcessGroupGroupPerm($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE process_group pg
-                INNER JOIN process p ON pg.id=p.process_group_id
-                SET pg.group_id='$group_id', pg.perms='$perms', pg.date_modified=now(), pg.last_modified_user ='$ownerID'  WHERE p.id = '$id' AND pg.perms <= '$perms'";
-        return self::runSQL($sql);
-    }
-    
-	public function updatePipelineGroupGroupPerm($id, $group_id, $perms, $ownerID) {
-        $sql = "UPDATE pipeline_group pg
-                INNER JOIN biocorepipe_save p ON pg.id=p.pipeline_group_id
-                SET pg.group_id='$group_id', pg.perms='$perms', pg.date_modified=now(), pg.last_modified_user ='$ownerID'  WHERE p.id = '$id' AND pg.perms <= '$perms'";
-        return self::runSQL($sql);
-    }
     public function updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID) {
         foreach ($nodesRaw as $item):
             if ($item[2] !== "inPro" && $item[2] !== "outPro" ){
@@ -2301,36 +2261,16 @@ class dbfuncs {
                     if (!empty($pipeModId)){
                         settype($pipeModId, "integer");
                         $this->updatePipelineGroupPermByPipeId($pipeModId, $group_id, $perms, $ownerID);
-                        $this->updatePipelineGroupGroupPerm($pipeModId, $group_id, $perms, $ownerID);
                     } 
                 //processes    
                 } else {
                     $proId = $item[2];
-                    $this->updateParameterGroupPerm($proId, $group_id, $perms, $ownerID);
                     $this->updateProcessGroupPerm($proId, $group_id, $perms, $ownerID);
                     $this->updateProcessParameterGroupPerm($proId, $group_id, $perms, $ownerID);
-                    $this->updateProcessGroupGroupPerm($proId, $group_id, $perms, $ownerID);
                 }
             }  
         endforeach;
     }
-    
-    
-//    public function curl_get( $url ) {
-//    if ( !isset($url) ) {
-//      return false;
-//    }
-//    $ch = curl_init();
-//    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
-//    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1200);
-//    curl_setopt($ch, CURLOPT_URL, $url);
-//    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-//    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-//    $result = curl_exec($ch);
-//    curl_close($ch);
-//    return $result;
-//  }
-
     
     
     public function getUUIDAPI($type){
@@ -2377,8 +2317,10 @@ class dbfuncs {
         if (empty($pipeline_gid)) {
             $max_gid = json_decode($this->getMaxPipeline_gid(),true)[0]["pipeline_gid"];
             settype($max_gid, "integer");
-            if (!empty($max_gid)) {
+            if (!empty($max_gid) && $max_gid != 0) {
                 $pipeline_gid = $max_gid +1;
+            } else {
+                $pipeline_gid = 1;
             }
         }
         $rev_comment = isset($obj[19]->{"rev_comment"}) ? $obj[19]->{"rev_comment"} : "";
@@ -2472,18 +2414,9 @@ class dbfuncs {
 		$sql = "DELETE FROM biocorepipe_save WHERE id = '$id'";
 	   return self::runSQL($sql);
 	}
-    public function updatePipelineName($id, $name) {
-        $sql = "UPDATE biocorepipe_save SET name='$name'  WHERE id = '$id'";
-        return self::runSQL($sql);
-    }
     public function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publish, $pipeline_group_id, $ownerID) {
         $sql = "UPDATE biocorepipe_save SET summary='$summary', group_id='$group_id', publish='$publish', perms='$perms', pin='$pin', pin_order='$pin_order', last_modified_user = '$ownerID', pipeline_group_id='$pipeline_group_id'  WHERE id = '$id'";
         return self::runSQL($sql);
-    }
-    public function insertPipelineName($name,$ownerID) {
-        $sql = "INSERT INTO biocorepipe_save(owner_id, name, rev_id, date_created, date_modified, last_modified_user) VALUES
-			('$ownerID','$name', '0', now(), now(), '$ownerID')";
-        return self::insTable($sql);
     }
     public function exportPipeline($id, $ownerID, $type, $layer) {
         $layer += 1;

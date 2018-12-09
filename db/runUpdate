@@ -12,3 +12,4 @@ mysql -u root $db < updateVersion0.2.39.sql
 mysql -u root $db < updateVersion0.2.41.sql
 mysql -u root $db < updateVersion0.2.42.sql
 mysql -u root $db < updateVersion0.2.46.sql
+mysql -u root $db < updateVersion0.2.50.sql
