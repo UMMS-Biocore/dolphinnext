@@ -548,7 +548,7 @@ else if ($p=="saveProcessGroup"){
     if (!empty($id)) {
        $data = $db->updateProcessGroup($id, $group_name, $ownerID);
     } else {
-        if (empty($proGrId)){
+        if (empty($proGrId) || !isset($proGrId)){
             $data = $db->insertProcessGroup($group_name, $ownerID);
         } else {
             $data = json_encode(array('id' => $proGrId));
