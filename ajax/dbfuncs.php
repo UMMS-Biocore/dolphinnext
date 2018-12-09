@@ -2468,18 +2468,9 @@ class dbfuncs {
 		$sql = "DELETE FROM biocorepipe_save WHERE id = '$id'";
 	   return self::runSQL($sql);
 	}
-    public function updatePipelineName($id, $name) {
-        $sql = "UPDATE biocorepipe_save SET name='$name'  WHERE id = '$id'";
-        return self::runSQL($sql);
-    }
     public function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publish, $pipeline_group_id, $ownerID) {
         $sql = "UPDATE biocorepipe_save SET summary='$summary', group_id='$group_id', publish='$publish', perms='$perms', pin='$pin', pin_order='$pin_order', last_modified_user = '$ownerID', pipeline_group_id='$pipeline_group_id'  WHERE id = '$id'";
         return self::runSQL($sql);
-    }
-    public function insertPipelineName($name,$ownerID) {
-        $sql = "INSERT INTO biocorepipe_save(owner_id, name, rev_id, date_created, date_modified, last_modified_user) VALUES
-			('$ownerID','$name', '0', now(), now(), '$ownerID')";
-        return self::insTable($sql);
     }
     public function exportPipeline($id, $ownerID, $type, $layer) {
         $layer += 1;

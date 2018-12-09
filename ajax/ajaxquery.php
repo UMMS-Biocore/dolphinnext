@@ -946,14 +946,6 @@ else if ($p=="savePipelineDetails")
         $db->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
     }
 }
-else if ($p=="savePipelineName"){
-    $name = $_REQUEST['name'];
-    if (!empty($id)) {
-        $data = $db->updatePipelineName($id, $name);
-    } else {
-        $data = $db->insertPipelineName($name,$ownerID);
-    }
-}
 else if ($p=="getSavedPipelines")
 {
     $data = $db->getSavedPipelines($ownerID);
