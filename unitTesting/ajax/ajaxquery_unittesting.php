@@ -812,7 +812,7 @@ class ajaxQueryTest extends TestCase
 		ob_start();
 		$_REQUEST['p'] = 'getMaxPipeline_gid';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->pipeline_gid,'0');
+		$this->assertEquals(json_decode($data)[0]->pipeline_gid,'1');
 		ob_end_clean();
 	}
     /**
