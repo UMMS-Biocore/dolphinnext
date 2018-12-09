@@ -353,7 +353,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['p'] = 'getProcess_gid';
 		$_REQUEST['process_id'] = '1';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->process_gid,'0');
+		$this->assertEquals(json_decode($data)[0]->process_gid,'1');
 		ob_end_clean();
 	}
 	/**
@@ -1260,6 +1260,7 @@ class ajaxQueryTest extends TestCase
 		ob_start();
 		$_REQUEST['p'] = 'duplicateProcess';
 		$_REQUEST['name'] = "duplicate_process";
+		$_REQUEST['process_gid'] = "2";
 		$_REQUEST['id'] = "1";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'2');
