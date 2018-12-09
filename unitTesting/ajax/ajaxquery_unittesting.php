@@ -362,7 +362,7 @@ class ajaxQueryTest extends TestCase
 	public function testgetMaxRev_id() {
 		ob_start();
 		$_REQUEST['p'] = 'getMaxRev_id';
-		$_REQUEST['process_gid'] = '0';
+		$_REQUEST['process_gid'] = '1';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->rev_id,'0');
 		ob_end_clean();
