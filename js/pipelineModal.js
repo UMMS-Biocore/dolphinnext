@@ -173,6 +173,9 @@ function loadPipeMenuGroup(newPipe) {
                 var optionGroup = new Option(param.group_name, param.id);
                 $("#pipeGroupAll").append(optionGroup);
             }
+            $('#pipeGroupAll').selectize({ dropdownParent: "body" });
+            $($("#pipeGroupAll").next().css("display", "inline-block").children()[0]).css("overflow", "unset");
+
         },
         error: function (errorThrown) {
             alert("Error: " + errorThrown);
@@ -1228,7 +1231,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 if (s[0].perms === "63" && usRole !== "admin") {
                     $("#permsPipe").attr('disabled', "disabled");
                     $("#publishPipe").attr('disabled', "disabled");
-                    $("#pipeGroupAll").attr('disabled', "disabled");
+                    $('#pipeGroupAll')[0].selectize.disable();
                     $('#deletePipeRevision').remove();
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
@@ -1243,13 +1246,18 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 }
                 $('#datecreatedPip').text(s[0].date_created);
                 $('.lasteditedPip').text(s[0].date_modified);
-                if (s[0].pipeline_group_id && s[0].pipeline_group_id != '') {
-                    if ($("#pipeGroupAll option[value='" + s[0].pipeline_group_id + "']").length > 0) {
-                        $('#pipeGroupAll').val(s[0].pipeline_group_id);
-                        $('#pipeGroupAll').attr("pipe_group_id", s[0].pipeline_group_id);
-                    }
+                if (s[0].pipeline_group_id !== "" && s[0].pipeline_group_id !== null) {
+                    $('#pipeGroupAll')[0].selectize.setValue(s[0].pipeline_group_id, false);
+                    $('#pipeGroupAll').attr("pipe_group_id", s[0].pipeline_group_id);
                 }
-
+                $('#pipeGroupAll').change(function () {
+                    var id = $("#pipeline-title").attr('pipelineid');
+                    if (id !== "") {
+                        autosaveDetails();
+                    } else {
+                        autosave();
+                    }
+                });
                 // fill the footer script
                 openPipeline(pipeline_id);
                 checkNameUnique(processListNoOutput);
@@ -2754,7 +2762,7 @@ $(document).ready(function () {
                             value: selProGroupID,
                             text: selProGroupName
                         });
-                        $('#side-' + selProGroupID).parent().find('span').html(selProGroupName);
+                        modifyProcessParentSideBar(selProGroupName, selProGroupID, "update")
                     } else { //Add process group
                         var allProBox = $('#proGroup').find('select');
                         var proGroBoxId = allProBox[0].getAttribute('id');
@@ -2763,7 +2771,10 @@ $(document).ready(function () {
                             value: selProGroupID,
                             text: selProGroupName
                         });
-                        $('#autocompletes1').append('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span>' + selProGroupName + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="side-' + selProGroupID + '" class="treeview-menu"></ul></li>');
+                        var checkGroupExist = $("span.processParent[origin='" + selProGroupName + "']")
+                        if (checkGroupExist.length === 0) {
+                            modifyProcessParentSideBar(selProGroupName, selProGroupID, "insert")
+                        }
                     }
                     $('#mProcessGroup')[0].selectize.setValue(selProGroupID, false);
                     $('#processGroupModal').modal('hide');
@@ -3076,17 +3087,27 @@ $(document).ready(function () {
                 async: false,
                 success: function (s) {
                     if (savetype === 'edit') { //Edit Group
-                        $("#pipeGroupAll option[value='" + selPipeGroupID + "']").remove();
-                        $('#pipeGroupAll').append($('<option>', { value: selPipeGroupID, text: selPipeGroupName }));
-                        $("#pipeGroupAll").val(selPipeGroupID);
+                        $('#pipeGroupAll')[0].selectize.updateOption(selPipeGroupID, {
+                            value: selPipeGroupID,
+                            text: selPipeGroupName
+                        });
                         //sidebar menu update
-                        $('#pipeGr-' + selPipeGroupID).parent().find('span').html(selPipeGroupName);
+                        modifyPipelineParentSideBar(selPipeGroupName, selPipeGroupID, "update")
                     } else { //Add group
                         var pipeGroupID = s.id;
-                        $('#pipeGroupAll').append($('<option>', { value: pipeGroupID, text: selPipeGroupName }));
                         $("#pipeGroupAll").val(pipeGroupID);
+                        $('#pipeGroupAll')[0].selectize.addOption({
+                            value: pipeGroupID,
+                            text: selPipeGroupName
+                        });
                         //sidebar menu add
-                        $('#processSideHeader').before('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-spinner"></i> <span>' + truncateName(selPipeGroupName, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="pipeGr-' + pipeGroupID + '" class="treeview-menu"></ul></li>');
+                        //check if item exist:
+                        var checkSideBar = $("span.pipelineParent[origin='" + selPipeGroupName + "']")
+                        if (checkSideBar.length === 0) {
+                            modifyPipelineParentSideBar(selPipeGroupName, pipeGroupID, "insert")
+                        }
+                        $('#pipeGroupAll')[0].selectize.setValue(pipeGroupID, false);
+
                     }
                     $('#pipeGroupModal').modal('hide');
 
@@ -3147,7 +3168,7 @@ $(document).ready(function () {
                     },
                     async: false,
                     success: function (s) {
-                        $("#pipeGroupAll option[value='" + selectPipeGro + "']").remove();
+                        $('#pipeGroupAll')[0].selectize.removeOption(selectPipeGro);
                         $('#pipeGr-' + selectPipeGro).parent().remove();
                         $('#pipeDelGroupModal').modal('hide');
                     },

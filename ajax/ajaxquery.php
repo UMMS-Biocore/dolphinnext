@@ -529,18 +529,30 @@ else if ($p=="checkLogin"){
 }
 else if ($p=="savePipelineGroup"){
     $group_name = $_REQUEST['group_name'];
+    $pipeGrData = $db->getPipelineGroupByName($group_name);
+    $pipeGrId = json_decode($pipeGrData,true)[0]["id"];
     if (!empty($id)) {
        $data = $db->updatePipelineGroup($id, $group_name, $ownerID);
     } else {
-       $data = $db->insertPipelineGroup($group_name, $ownerID);
+        if (empty($pipeGrId)){
+            $data = $db->insertPipelineGroup($group_name, $ownerID);
+        } else {
+            $data = json_encode(array('id' => $pipeGrId));
+        }
     }
 }
 else if ($p=="saveProcessGroup"){
     $group_name = $_REQUEST['group_name'];
+    $proGrData = $db->getProcessGroupByName($group_name);
+    $proGrId = json_decode($proGrData,true)[0]["id"];
     if (!empty($id)) {
        $data = $db->updateProcessGroup($id, $group_name, $ownerID);
     } else {
-       $data = $db->insertProcessGroup($group_name, $ownerID);
+        if (empty($proGrId)){
+            $data = $db->insertProcessGroup($group_name, $ownerID);
+        } else {
+            $data = json_encode(array('id' => $proGrId));
+        }
     }
 }
 else if ($p=="saveProcess"){
@@ -549,8 +561,10 @@ else if ($p=="saveProcess"){
     if (empty($process_gid)) {
         $max_gid = json_decode($db->getMaxProcess_gid(),true)[0]["process_gid"];
         settype($max_gid, "integer");
-        if (!empty($max_gid)) {
+        if (!empty($max_gid) && $max_gid != 0) {
             $process_gid = $max_gid +1;
+        } else {
+            $process_gid = 1;
         }
     }
     $process_uuid = isset($_REQUEST['process_uuid']) ? $_REQUEST['process_uuid'] : "";

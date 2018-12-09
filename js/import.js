@@ -266,6 +266,8 @@ function createImportReport(obj) {
     return [status, txt]
 }
 
+
+
 $('#importButton').on('click', function (e) {
     e.preventDefault();
     $('#importButton').css("display", "none");
@@ -418,6 +420,8 @@ $('#importButton').on('click', function (e) {
                 removeRedundantProPara();
                 indexCache = 0;
                 loop("pipeline", pipeRowList);
+            } else if (type == "pipeline" && i == list.length - 1) {
+                window.importObj["importStatus"] = "finalized";
             }
         }
     }
@@ -1043,4 +1047,12 @@ $('#importModal').on('hide.bs.modal', function (e) {
     for (var i = 0; i < fileList.length; i++) {
         var text = getValues({ p: "removeUpload", "name": fileList[i] });
     }
+    if (window.importObj["importStatus"] == "finalized") {
+        var obj = window.importObj[0].dict.pipeline
+        var lastPipeId = obj[Object.keys(obj)[0]];
+        if (lastPipeId) {
+            setTimeout(function () { window.location.replace("index.php?np=1&id=" + lastPipeId); }, 700);
+        }
+    }
+
 });

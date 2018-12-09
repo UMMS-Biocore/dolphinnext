@@ -1,3 +1,10 @@
+07.12.2018 Version 0.2.50
+Bug fixed regarding to creating gid for process and pipeline.
+Pipeline/process menu group will not visible if it doesn't have pipeline/process
+Pipeline/process menu group name will be case-insensitively unique.
+Reload page to imported page.
+Error fixed regarding to adding menu group in case its exist in db
+
 07.12.2018 Version 0.2.49
 Minor bugs fixed regarding to Import feature.
 Adding new menu group by using dropdown feature is added onto import modal.
