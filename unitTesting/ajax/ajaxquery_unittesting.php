@@ -1000,7 +1000,7 @@ class ajaxQueryTest extends TestCase
 		$_SESSION['ownerID'] = '2';
 		$_REQUEST['p'] = 'saveProjectPipeline';
 		$_REQUEST['id'] = '';
-		$_REQUEST['pipeline_id'] = '3';
+		$_REQUEST['pipeline_id'] = '2';
 		$_REQUEST['project_id'] = '1';
 		$_REQUEST['name'] = 'test_run2';
 		$_REQUEST['summary'] = 'test_sum2';
