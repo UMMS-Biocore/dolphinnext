@@ -802,7 +802,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['p'] = 'getPipeline_gid';
         $_REQUEST['pipeline_id'] = '1';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->pipeline_gid,'0');
+		$this->assertEquals(json_decode($data)[0]->pipeline_gid,'1');
 		ob_end_clean();
 	}
     /**
