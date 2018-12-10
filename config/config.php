@@ -13,4 +13,8 @@ $secConf = $secRaw['CONFIG'];
 date_default_timezone_set($secConf['TIMEZONE']);
 define('RUNPATH', $secConf['RUNPATH']);
 define('API_PATH', $secConf['API_PATH']);
+$secUsers = $secRaw['USERS'];
+define('SHOW_AMAZON_KEYS', $secUsers['SHOW_AMAZON_KEYS']);
+define('SHOW_SSH_KEYS', $secUsers['SHOW_SSH_KEYS']);
+define('SHOW_GROUPS', $secUsers['SHOW_GROUPS']);
 ?>

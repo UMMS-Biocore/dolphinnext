@@ -45,10 +45,7 @@ $(document).ready(function () {
             addAmazonRow(proAmzData[el].id, proAmzData[el].name, proAmzData[el].next_path, proAmzData[el].executor, proAmzData[el].instance_type, proAmzData[el].image_id);
         });
     }
-    //adminTab
-    if (usRole === "admin") {
-        $('#adminTabBut').css('display', 'inline');
-    }
+    
 
     function getProfileButton(type) {
         if (type === "amazon") {
@@ -161,18 +158,18 @@ $(document).ready(function () {
         }
     });
 
-//id='#execJobSetTable' or '#execNextSettTable'
-function showHideColumnProfile(id, colList, type) {
-    for (var k = 0; k < colList.length; k++) {
-        if (type == "hide"){
-            $(id).find('th:nth-child('+colList[k]+')').hide();
-            $(id).find('td:nth-child('+colList[k]+')').hide();
-        } else {
-            $(id).find('th:nth-child('+colList[k]+')').show();
-            $(id).find('td:nth-child('+colList[k]+')').show();
+    //id='#execJobSetTable' or '#execNextSettTable'
+    function showHideColumnProfile(id, colList, type) {
+        for (var k = 0; k < colList.length; k++) {
+            if (type == "hide") {
+                $(id).find('th:nth-child(' + colList[k] + ')').hide();
+                $(id).find('td:nth-child(' + colList[k] + ')').hide();
+            } else {
+                $(id).find('th:nth-child(' + colList[k] + ')').show();
+                $(id).find('td:nth-child(' + colList[k] + ')').show();
+            }
         }
     }
-}
 
     $(function () {
         $(document).on('change', '#chooseEnv', function () {
@@ -207,9 +204,9 @@ function showHideColumnProfile(id, colList, type) {
                 $('#mExecJob').trigger('change');
                 $('#execNextDiv').css('display', 'block');
                 $('#mExecJobDiv').css('display', 'block');
-                showHideColumnProfile('#execNextSettTable',[1,4,5],'hide');
+                showHideColumnProfile('#execNextSettTable', [1, 4, 5], 'hide');
             } else if (mExecType === "sge" || mExecType === "lsf" || mExecType === "slurm") {
-                showHideColumnProfile('#execNextSettTable',[1,4,5],'show');
+                showHideColumnProfile('#execNextSettTable', [1, 4, 5], 'show');
                 $('#mExecJob').val(mExecType).trigger('change');
                 $('#mExecJob').attr('disabled', "disabled");
                 $('#execNextDiv').css('display', 'block');
@@ -221,15 +218,15 @@ function showHideColumnProfile(id, colList, type) {
     $(function () {
         $(document).on('change', '#mExecJob', function () {
             var mExecJobType = $('#mExecJob option:selected').val();
-                if (mExecJobType === "ignite"){
-                    showHideColumnProfile('#execJobSetTable',[1,4,5],'show');
-                    showHideColumnProfile('#execJobSetTable',[1,4],'hide');
-                } else if (mExecJobType === "local"){
-                    showHideColumnProfile('#execJobSetTable',[1,4,5],'hide');
-                } else {
-                    showHideColumnProfile('#execJobSetTable',[1,4,5],'show');
-                }
-                $('#execJobSetDiv').css('display', 'block');
+            if (mExecJobType === "ignite") {
+                showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
+                showHideColumnProfile('#execJobSetTable', [1, 4], 'hide');
+            } else if (mExecJobType === "local") {
+                showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'hide');
+            } else {
+                showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
+            }
+            $('#execJobSetDiv').css('display', 'block');
         })
     });
 
@@ -254,31 +251,31 @@ function showHideColumnProfile(id, colList, type) {
         var profileName = $('#mEnvName').val();
         var data = formValues.serializeArray(); // convert form to array
         var selEnvType = $('#chooseEnv option:selected').val();
-        if (selEnvType === "cluster" && (data[19].value =="ignite" || data[19].value =="local")){
-            data[20].value =""; //queue
-            data[23].value =""; //time
+        if (selEnvType === "cluster" && (data[19].value == "ignite" || data[19].value == "local")) {
+            data[20].value = ""; //queue
+            data[23].value = ""; //time
         }
-        if (selEnvType === "amazon" && (data[20].value =="ignite" || data[20].value =="local")){
-            data[21].value = "";//queue
-            data[24].value = "";//time
+        if (selEnvType === "amazon" && (data[20].value == "ignite" || data[20].value == "local")) {
+            data[21].value = ""; //queue
+            data[24].value = ""; //time
         }
-        if (selEnvType === "cluster" && data[19].value =="local"){
-            data[24].value =""; //"job_clu_opt"
+        if (selEnvType === "cluster" && data[19].value == "local") {
+            data[24].value = ""; //"job_clu_opt"
         }
-        if (selEnvType === "amazon" && data[20].value =="local"){
-            data[25].value = "";//"job_clu_opt"
+        if (selEnvType === "amazon" && data[20].value == "local") {
+            data[25].value = ""; //"job_clu_opt"
         }
-        if (selEnvType === "cluster" && data[13].value =="local"){
-            data[14].value = "";//queue
-            data[17].value = "";//time
-            data[18].value = "";//next_clu_opt
+        if (selEnvType === "cluster" && data[13].value == "local") {
+            data[14].value = ""; //queue
+            data[17].value = ""; //time
+            data[18].value = ""; //next_clu_opt
         }
-        if (selEnvType === "amazon" && data[14].value =="local"){
-            data[15].value = "";//queue
-            data[18].value = "";//time
-            data[19].value = "";//next_clu_opt
+        if (selEnvType === "amazon" && data[14].value == "local") {
+            data[15].value = ""; //queue
+            data[18].value = ""; //time
+            data[19].value = ""; //next_clu_opt
         }
-            
+
         if (selEnvType.length && profileName !== '') {
             if (selEnvType === "cluster") {
                 var sshID = $('#mEnvSSHKey').val();
@@ -1121,60 +1118,68 @@ function showHideColumnProfile(id, colList, type) {
 
     //------------   amazon keys section ends -------------
     //------------   adminTab starts -------------
+    function getAdminUserTableOptions() {
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a class="impersonUser">Impersonate</a></li></ul></div>';
+        return button;
 
-    $('#impersonModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget);
-        $(this).find('option').remove();
-        if (button.attr('id') === 'impersonUser') {
-            $.ajax({
-                type: "GET",
+
+
+    }
+    if (usRole === "admin") {
+
+        var AdmUserTable = $('#AdminUserTable').DataTable({
+            "ajax": {
                 url: "ajax/ajaxquery.php",
-                data: {
-                    p: "getAllUsers"
-                },
-                async: false,
-                success: function (s) {
-                    for (var i = 0; i < s.length; i++) {
-                        var param = s[i];
-                        var optionGroup = new Option(param.username, param.id);
-                        $("#mUserList").append(optionGroup);
-                    }
-                },
-                error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                data: { "p": "getAllUsers" },
+                "dataSrc": ""
+            },
+            "columns": [{
+                "data": "name"
+            }, {
+                "data": "username"
+            }, {
+                "data": "email"
+            }, {
+                "data": "institute"
+            }, {
+                "data": "role"
+            }, {
+                "data": "memberdate"
+            }, {
+                data: null,
+                className: "center",
+                fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html(getAdminUserTableOptions());
                 }
-            });
+            }]
+        });
 
-        }
-    });
-
-
-    $('#impersonModal').on('click', '#confirmImpersonBut', function (event) {
-        event.preventDefault();
-        var userId = $('#mUserList').val();
-        if (userId !== '') {
-            var userData = [];
-            userData.push({ name: "user_id", value: userId });
-            userData.push({ name: "p", value: 'impersonUser' });
-            $.ajax({
-                type: "POST",
-                data: userData,
-                url: "ajax/login.php",
-                async: false,
-                success: function (msg) {
-                    if (msg.error == 1) {
-                        alert('Something Went Wrong!');
-                    } else {
-                        var logInSuccess = true;
-                        window.location.reload('true');
+        $('#AdminUserTable').on('click', '.impersonUser', function (event) {
+            var clickedRow = $(this).closest('tr');
+            var rowData = AdmUserTable.row(clickedRow).data();
+            var userId = rowData.id
+            if (userId !== '') {
+                var userData = [];
+                userData.push({ name: "user_id", value: userId });
+                userData.push({ name: "p", value: 'impersonUser' });
+                $.ajax({
+                    type: "POST",
+                    data: userData,
+                    url: "ajax/login.php",
+                    async: false,
+                    success: function (msg) {
+                        if (msg.error == 1) {
+                            alert('Something Went Wrong!');
+                        } else {
+                            var logInSuccess = true;
+                            window.location.reload('true');
+                        }
                     }
-                }
-            });
-            $('#impersonModal').modal('hide');
-        }
-    });
+                });
+                $('#impersonModal').modal('hide');
+            }
+        });
 
-
-
+    }
 
 });

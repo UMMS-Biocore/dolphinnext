@@ -1,3 +1,13 @@
+09.12.2018 Version 0.2.51
+Parameters will be case-insensitively unique.
+In case parameter is used by others, editing will be canceled for that parameter.
+Admin page updated.
+.sec file updated and added following section to hide profile tabs from users.
+[USERS]
+SHOW_AMAZON_KEYS=false
+SHOW_SSH_KEYS=false
+SHOW_GROUPS=false
+
 07.12.2018 Version 0.2.50
 Bug fixed regarding to creating gid for process and pipeline.
 Pipeline/process menu group will not visible if it doesn't have pipeline/process
