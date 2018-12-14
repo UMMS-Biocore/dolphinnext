@@ -1,3 +1,25 @@
+13.12.2018 Version 0.2.52
+Login page added to support LDAP, google and dolphinnext logins.
+Admin can update existing case of parameter, process/pipeline group names.
+Following parameters added to .sec file.
+[Dolphinnext]
+SALT=
+PEPPER=
+MASTER=
+VERIFY=
+
+[CONFIG]
+BASE_PATH =
+LDAP_SERVER= 
+DN_STRING= 
+BIND_USER= 
+BIND_PASS= 
+EMAIL_SENDER= 
+EMAIL_ADMIN= 
+
+[UICONFIG]
+COMPANY_NAME=
+
 09.12.2018 Version 0.2.51
 Parameters will be case-insensitively unique.
 In case parameter is used by others, editing will be canceled for that parameter.

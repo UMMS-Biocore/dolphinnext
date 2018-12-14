@@ -1165,7 +1165,7 @@ $(document).ready(function () {
                 $.ajax({
                     type: "POST",
                     data: userData,
-                    url: "ajax/login.php",
+                    url: "ajax/ajaxquery.php",
                     async: false,
                     success: function (msg) {
                         if (msg.error == 1) {

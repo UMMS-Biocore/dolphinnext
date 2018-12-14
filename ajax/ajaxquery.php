@@ -10,10 +10,10 @@ if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : "";
 $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
+$userRole = isset($_SESSION['role']) ? $_SESSION['role'] : "";
 if (!empty($username)){
     $usernameCl = str_replace(".","__",$username);   
 }
-$google_id = isset($_SESSION['google_id']) ? $_SESSION['google_id'] : "";
 session_write_close();
 $id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "";
 $p = isset($_REQUEST["p"]) ? $_REQUEST["p"] : "";
@@ -165,6 +165,54 @@ else if ($p=="getGroups"){
 else if ($p=="getAllUsers"){
     $data = $db -> getAllUsers($ownerID);
 }
+else if ($p=="saveGoogleUser"){
+    $google_id = $_REQUEST['google_id'];
+    $name = $_REQUEST['name'];
+    $email = $_REQUEST['email'];
+    $google_image = $_REQUEST['google_image'];
+    //check if Google ID already exits
+    $checkUserData = json_decode($db->getUserByEmail($email));
+    $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
+    $role = isset($checkUserData[0]) ? $checkUserData[0]->{'role'} : "";
+    $username = isset($checkUserData[0]) ? $checkUserData[0]->{'username'} : "";
+    session_start();
+    if ($username != ""){
+        $_SESSION['username'] = $username;
+    }
+    $_SESSION['google_login'] = true;
+    $_SESSION['email'] = $email;
+    $_SESSION['name'] = $name;
+    $_SESSION['google_image'] = $google_image;
+    if (!empty($id)) {
+	    $_SESSION['ownerID'] = $id;
+	    $_SESSION['role'] = $role;
+        $data = $db->updateGoogleUser($id, $google_id, $email, $google_image);  
+    } else {
+        $data = $db->insertGoogleUser($google_id, $email, $google_image);  
+        $ownerIDarr = json_decode($data,true); 
+	    $_SESSION['ownerID'] = $ownerIDarr['id'];
+	    $_SESSION['role'] = $ownerIDarr['role'];
+    }
+    session_write_close();
+} else if ($p=="impersonUser"){
+    $user_id = $_REQUEST['user_id'];
+    $admin_id =$_SESSION['ownerID'];
+    session_destroy();
+    session_start();
+    $userData = json_decode($db->getUserById($user_id))[0];
+    $username = $userData->{'username'};
+    $email = $userData->{'email'};
+    $name = $userData->{'name'};
+    $_SESSION['username'] = $username;
+    $_SESSION['name'] = $name;
+    $_SESSION['email'] = $email;
+    $_SESSION['ownerID'] = $user_id;
+    $_SESSION['admin_id'] = $admin_id;
+    session_write_close();
+    $impersonAr = array('imperson' => 1);
+	$data = json_encode($impersonAr);
+    
+} 
 else if ($p=="getUserGroups"){
     $data = $db -> getUserGroups($ownerID);
 }
@@ -317,6 +365,9 @@ else if ($p=="saveParameter"){
         if (empty($parId)){
             $data = $db->insertParameter($name, $qualifier, $file_type, $ownerID);
         } else {
+            if ($userRole == "admin"){
+                $db->updateParameter($pipeGrId, $name, $qualifier, $file_type, $ownerID);
+            }
             $data = json_encode(array('id' => $parId));
         }
     }
@@ -505,39 +556,6 @@ else if ($p=="saveProjectInput"){
     $project_id = $_REQUEST['project_id'];
     $data = $db->insertProjectInput($project_id, $input_id, $ownerID);
 }
-else if ($p=="saveUser"){
-    $google_id = $_REQUEST['google_id'];
-    $name = $_REQUEST['name'];
-    $email = $_REQUEST['email'];
-    $google_image = $_REQUEST['google_image'];
-    $username = $_REQUEST['username'];
-    //check if Google ID already exits
-    $checkUser = $db->getUser($google_id);
-    $checkarray = json_decode($checkUser,true); 
-    if (!empty($checkarray)){
-        $id = $checkarray[0]["id"];
-    } else {
-        $id = "";
-    }
-    if (!empty($id)) {
-        $data = $db->updateUser($id, $google_id, $name, $email, $google_image, $username);    
-    } else {
-        $data = $db->insertUser($google_id, $name, $email, $google_image, $username);  
-    }
-}
-else if ($p=="checkLogin"){
-    if (!empty($google_id)) {
-       $data = $db->getUserLess($google_id);
-    }else {
-       if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
-       $_SESSION['ownerID'] = "";
-       $_SESSION['username'] = "";
-       $_SESSION['google_id'] = "";
-       session_write_close();
-	   $errAr = array('error' => 1);
-	   $data = json_encode($errAr);
-    }
-}
 else if ($p=="savePipelineGroup"){
     $group_name = $_REQUEST['group_name'];
     $pipeGrData = $db->getPipelineGroupByName($group_name);
@@ -553,6 +571,9 @@ else if ($p=="savePipelineGroup"){
         if (empty($pipeGrId)){
             $data = $db->insertPipelineGroup($group_name, $ownerID);
         } else {
+            if ($userRole == "admin"){
+                $db->updatePipelineGroup($pipeGrId, $group_name, $ownerID);
+            }
             $data = json_encode(array('id' => $pipeGrId));
         }
     }
@@ -572,6 +593,9 @@ else if ($p=="saveProcessGroup"){
         if (empty($proGrId)){
             $data = $db->insertProcessGroup($group_name, $ownerID);
         } else {
+            if ($userRole == "admin"){
+                $db->updateProcessGroup($proGrId, $group_name, $ownerID);
+            }
             $data = json_encode(array('id' => $proGrId));
         }
     }
@@ -949,8 +973,7 @@ else if ($p=="getSavedPipelines")
 else if ($p=="exportPipeline"){
     $data = $db->exportPipeline($id,$ownerID, "main", 0);
 }
-else if ($p=="loadPipeline")
-{
+else if ($p=="loadPipeline"){
 	$id = $_REQUEST['id'];
     $data = $db->loadPipeline($id,$ownerID);
      //load process parameters 

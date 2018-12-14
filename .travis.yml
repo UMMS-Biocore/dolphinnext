@@ -32,7 +32,7 @@ before_script:
   - sudo ./runUpdate biocorepipe
   - cd ..
 
-  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=tmp/logs\nAPI_PATH=http://localhost/dolphinnext\n[USERS]\nSHOW_AMAZON_KEYS=false\nSHOW_SSH_KEYS=false\nSHOW_GROUPS=false" > config/.sec
+  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=tmp/logs\nAPI_PATH=https://www.dolphinnext.com\n[USERS]\nSHOW_AMAZON_KEYS=false\nSHOW_SSH_KEYS=false\nSHOW_GROUPS=false" > config/.sec
 
 script:
   #	ajax
