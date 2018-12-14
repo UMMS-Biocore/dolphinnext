@@ -111,9 +111,9 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['username'] = "admin";
 		$_REQUEST['email'] = "admin@gmail.com";
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($db->getUser("111"))[0]->id,'1');
+		$this->assertEquals(json_decode($db->getUserByGoogleId("111"))[0]->id,'1');
 		ob_end_clean();
-		$this->assertEquals(json_decode($db->getUser("111"))[0]->google_image,'https://lh6.googleusercontent.com/-j-GMmh9Xzd0/AAAAAAAAAAI/AAAAAAAAByM/HnRa5tGHpLU/s96-c/photo.jpg');
+		$this->assertEquals(json_decode($db->getUserByGoogleId("111"))[0]->google_image,'https://lh6.googleusercontent.com/-j-GMmh9Xzd0/AAAAAAAAAAI/AAAAAAAAByM/HnRa5tGHpLU/s96-c/photo.jpg');
 	}
     /**
      * @depends testUpdateUser
