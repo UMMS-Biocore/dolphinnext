@@ -999,7 +999,7 @@ class dbfuncs {
                 $where_pg = "pg.perms = 63";
                 $where_pr = "pr.perms = 63";
             }
-       $sql="SELECT DISTINCT p.id, p.name, p.perms, p.group_id
+       $sql="SELECT DISTINCT p.id, p.name, p.perms, p.group_id, p.owner_id, p.publish
              FROM process p
              LEFT JOIN user_group ug ON  p.group_id=ug.g_id
              INNER JOIN process_group pg
