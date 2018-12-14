@@ -8,9 +8,8 @@ UPDATE users SET active = 1;
 
 ALTER TABLE `users`
 MODIFY google_id VARCHAR(100) DEFAULT NULL AFTER `lab`,
-MODIFY google_image VARCHAR(255) DEFAULT NULL AFTER `photo_loc`;
-
-ALTER TABLE `users`
+MODIFY google_image VARCHAR(255) DEFAULT NULL AFTER `photo_loc`,
 MODIFY username VARCHAR(45) DEFAULT NULL AFTER `id`,
 MODIFY name VARCHAR(45) DEFAULT NULL AFTER `active`,
-MODIFY photo_loc VARCHAR(255) DEFAULT NULL AFTER `google_id`;
+MODIFY photo_loc VARCHAR(255) DEFAULT NULL AFTER `google_id`,
+DROP INDEX userind;
