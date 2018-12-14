@@ -13,11 +13,10 @@ function checkLDAP($email, $password){
 	$connection = ldap_connect($ldapserver);
 	ldap_set_option($connection, LDAP_OPT_PROTOCOL_VERSION, 3);
 	ldap_set_option($connection, LDAP_OPT_REFERRALS, 0);
-   
 	if($connection){
 	  $bind = ldap_bind($connection, $binduser, $bindpass );
 	  if($bind){
-		$filter="sAMAccountName=".$email."*";
+		$filter="mail=".$email."*";
 		$result = ldap_search($connection,$dn_string,$filter) or die ("Search error.");
 		$data = ldap_get_entries($connection, $result);
 		$binddn = $data[0]["dn"];
@@ -103,7 +102,7 @@ if(isset($_POST['login'])){
         $res=1;
     } else if (LDAP_SERVER != 'none' || LDAP_SERVER != '' || LDAP_SERVER != 'N'){
 	  //	LDAP check
-//	  $res=checkLDAP(strtolower($_POST['email']), $_POST['password']);
+	  $res=checkLDAP(strtolower($_POST['email']), $_POST['password']);
 	}
     if ($res == 0){
         //	Database password
@@ -125,18 +124,18 @@ if(isset($_POST['login'])){
         $checkUserData = json_decode($query->getUserByEmail($_SESSION['email']));
         //check if user exits
         $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
-        if ($id != "0"){
-        $role = isset($checkUserData[0]) ? $checkUserData[0]->{'role'} : "";
-        $name = isset($checkUserData[0]) ? $checkUserData[0]->{'name'} : "";
-        $email = isset($checkUserData[0]) ? $checkUserData[0]->{'email'} : "";
-        $username = isset($checkUserData[0]) ? $checkUserData[0]->{'username'} : "";
-        $_SESSION['email'] = $email;
-        $_SESSION['username'] = $username;
-        $_SESSION['name'] = $name;
-        $_SESSION['ownerID'] = $id;
-        $_SESSION['role'] = $role;
-        require_once("main.php");
-        exit;
+        if (!empty($id)){
+            $role = isset($checkUserData[0]) ? $checkUserData[0]->{'role'} : "";
+            $name = isset($checkUserData[0]) ? $checkUserData[0]->{'name'} : "";
+            $email = isset($checkUserData[0]) ? $checkUserData[0]->{'email'} : "";
+            $username = isset($checkUserData[0]) ? $checkUserData[0]->{'username'} : "";
+            $_SESSION['email'] = $email;
+            $_SESSION['username'] = $username;
+            $_SESSION['name'] = $name;
+            $_SESSION['ownerID'] = $id;
+            $_SESSION['role'] = $role;
+            require_once("main.php");
+            exit;
       } else{
           session_destroy();
           $loginfail = '<font class="text-center"  color="crimson">Incorrect E-mail/Password.</font>';

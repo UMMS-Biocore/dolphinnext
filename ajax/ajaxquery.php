@@ -175,8 +175,9 @@ else if ($p=="saveGoogleUser"){
     $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
     $role = isset($checkUserData[0]) ? $checkUserData[0]->{'role'} : "";
     $username = isset($checkUserData[0]) ? $checkUserData[0]->{'username'} : "";
+    //travis fix
     if (!headers_sent()) {
-    session_start();
+        session_start();
     }
     if ($username != ""){
         $_SESSION['username'] = $username;
@@ -205,11 +206,13 @@ else if ($p=="saveGoogleUser"){
     $username = $userData->{'username'};
     $email = $userData->{'email'};
     $name = $userData->{'name'};
+    $role = $userData->{'admin'};
     $_SESSION['username'] = $username;
     $_SESSION['name'] = $name;
     $_SESSION['email'] = $email;
     $_SESSION['ownerID'] = $user_id;
     $_SESSION['admin_id'] = $admin_id;
+    $_SESSION['role'] = $role;
     session_write_close();
     $impersonAr = array('imperson' => 1);
 	$data = json_encode($impersonAr);

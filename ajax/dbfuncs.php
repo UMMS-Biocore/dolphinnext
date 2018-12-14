@@ -142,19 +142,23 @@ class dbfuncs {
         $pid = fread($pid_command, 2096);
         pclose($pid_command);
         if (empty($logArray)){
-        $log_array = array($logName => $pid);
+            $log_array = array($logName => $pid);
         } else {
-        $log_array[$logName] = $pid;
+            $log_array[$logName] = $pid;
         }
         return $log_array;
     }
 
     //full path for file
     function readFile($path){
-        $handle = fopen($path, 'r');
-        $content = fread($handle, filesize($path));
-        fclose($handle);
-        return $content;
+        if (file_exists($path)){
+           $handle = fopen($path, 'r');
+            $content = fread($handle, filesize($path));
+            fclose($handle);
+            return $content; 
+        } else {
+            return null;
+        }
     }
 
      //get nextflow input parameters
