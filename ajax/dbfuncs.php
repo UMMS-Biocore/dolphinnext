@@ -1418,7 +1418,7 @@ class dbfuncs {
 		return self::queryTable($sql);
     }
     public function viewGroupMembers($g_id) {
-        $sql = "SELECT id, username
+        $sql = "SELECT id, username, email
 	           FROM users
 	           WHERE id in (
 		          SELECT u_id

@@ -175,7 +175,8 @@ else if ($p=="saveGoogleUser"){
     $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
     $role = isset($checkUserData[0]) ? $checkUserData[0]->{'role'} : "";
     $username = isset($checkUserData[0]) ? $checkUserData[0]->{'username'} : "";
-    if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
+    session_destroy();
+    session_start();
     if ($username != ""){
         $_SESSION['username'] = $username;
     }
