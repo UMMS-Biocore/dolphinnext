@@ -1427,7 +1427,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function getMemberAdd($g_id) {
-        $sql = "SELECT id, username
+        $sql = "SELECT id, username, email
 	           FROM users
 	           WHERE id NOT IN (
 		          SELECT u_id

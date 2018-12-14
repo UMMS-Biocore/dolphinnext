@@ -1322,7 +1322,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['g_id'] = '1';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->id,'2');
-		$this->assertEquals(json_decode($data)[0]->username,'member');
+		$this->assertEquals(json_decode($data)[0]->email,'member@gmail.com');
 		ob_end_clean();
 	}
     /**
@@ -1335,7 +1335,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['g_id'] = '1';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->id,'1');
-		$this->assertEquals(json_decode($data)[0]->username,'admin');
+		$this->assertEquals(json_decode($data)[0]->email,'admin@gmail.com');
 		ob_end_clean();
 	}
     /**
