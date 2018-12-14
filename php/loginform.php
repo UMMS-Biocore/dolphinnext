@@ -56,9 +56,10 @@
                 <div style="margin:auto; height:80px; padding-top:20px;">
                     <h2 class="text-center">Log In</h2>
                 </div>
-                <div style="margin:auto; width:50%;  height:100px; padding-top:20px;">
-                    <div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div>
-                </div>
+                <?php 
+                    echo '<div style="margin:auto; width:50%;  height:100px; padding-top:20px;"><div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div></div>';
+                ?>
+                
                 <div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center">
                     <span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span>
                 </div>
