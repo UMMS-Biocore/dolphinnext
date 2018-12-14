@@ -191,7 +191,7 @@ else if ($p=="saveGoogleUser"){
         $data = $db->insertGoogleUser($google_id, $email, $google_image);  
         $ownerIDarr = json_decode($data,true); 
 	    $_SESSION['ownerID'] = $ownerIDarr['id'];
-	    $_SESSION['role'] = $ownerIDarr['role'];
+	    $_SESSION['role'] = "";
     }
     session_write_close();
 } else if ($p=="impersonUser"){
