@@ -2,9 +2,9 @@
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 $_SESSION['ownerID'] = '1';
 $_SESSION['username'] = 'admin';
+session_write_close();
 $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : "";
-
 chdir('ajax/');
 use PHPUnit\Framework\TestCase;
 
