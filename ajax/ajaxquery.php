@@ -165,6 +165,36 @@ else if ($p=="getGroups"){
 else if ($p=="getAllUsers"){
     $data = $db -> getAllUsers($ownerID);
 }
+else if ($p=="getUserById"){
+    $data = $db -> getUserById($id);
+}
+else if ($p=="changeActiveUser"){
+    $user_id = $_REQUEST['user_id'];
+    $type = $_REQUEST['type'];
+    $data = $db->changeActiveUser($user_id, $type);  
+}
+else if ($p=="changeRoleUser"){
+    $user_id = $_REQUEST['user_id'];
+    $type = $_REQUEST['type'];
+    $data = $db->changeRoleUser($user_id, $type);  
+}
+else if ($p=="saveUserManual"){
+	$name = str_replace("'", "", $_REQUEST['name']);
+	$email = str_replace("'", "", $_REQUEST['email']);
+	$username = str_replace("'", "", $_REQUEST['username']);
+	$institute = str_replace("'", "", $_REQUEST['institute']);
+	$lab = str_replace("'", "", $_REQUEST['lab']);
+    $error = $db->checkExistUser($id,$username,$email);
+    if (!empty($error)){    
+        $data = json_encode($error);
+    } else {
+        if (!empty($id)) {
+            $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $ownerID);  
+        } else {
+            $data = $db->insertUserManual($name, $email, $username, $institute, $lab); 
+        }
+    }
+}
 else if ($p=="saveGoogleUser"){
     $google_id = $_REQUEST['google_id'];
     $name = $_REQUEST['name'];

@@ -57,12 +57,13 @@
                     <h2 class="text-center">Log In</h2>
                 </div>
                 <?php 
-                    echo '<div style="margin:auto; width:50%;  height:100px; padding-top:20px;"><div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div></div>';
+                    if (ALLOW_SIGNUPGOOGLE != false){
+                        echo '<div style="margin:auto; width:50%;  height:100px; padding-top:20px;"><div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div></div>';
+                        echo '<div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center"><span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span></div>';
+                    }
                 ?>
                 
-                <div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center">
-                    <span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span>
-                </div>
+                
                 <div class="form-group">
                     <input type="text" name="email" class="form-control" placeholder="E-mail" />
                 </div>
@@ -73,9 +74,15 @@
                 <div class="footer">
                     <button type="submit" name="login" class="btn btn-primary" style="float:right;">Login</button>
                 </div>
-                <div class="text-center" style="margin-top:30%;">Don't have a account
-                    <button type="submit" name="signup" class="btn btn-default" style="margin-left:10px;">Sign Up</button>
-                </div>
+                   <?php 
+                    if (ALLOW_SIGNUP != false){
+                        echo '<div class="text-center" style="margin-top:30%;">Don\'t have a account <button type="submit" name="signup" class="btn btn-default" style="margin-left:10px;">Sign Up</button></div>';
+                    } else {
+                        echo '<div class="text-center" style="margin-top:15%;"></div>';
+                        
+                    }
+                ?>
+                
             </div>
 
         </form>

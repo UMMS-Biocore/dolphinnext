@@ -35,5 +35,6 @@ if (!empty($secUiconfig)){
     define('SHOW_GROUPS', $secUiconfig['SHOW_GROUPS']);
     define('COMPANY_NAME', $secUiconfig['COMPANY_NAME']);
     define('ALLOW_SIGNUP', $secUiconfig['ALLOW_SIGNUP']);
+    define('ALLOW_SIGNUPGOOGLE', $secUiconfig['ALLOW_SIGNUPGOOGLE']);
 }
 ?>

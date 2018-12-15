@@ -1099,6 +1099,55 @@ class dbfuncs {
         $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', verification='$verification', last_modified_user='$id' WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    public function updateUserManual($id, $name, $email, $username, $institute, $lab, $ownerID) {
+        $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', email='$email', last_modified_user='$ownerID' WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function insertUserManual($name, $email, $username, $institute, $lab) {
+        $sql = "INSERT INTO users(name, email, username, institute, lab, role, active, memberdate, date_created, date_modified, perms) VALUES
+			('$name', '$email', '$username', '$institute', '$lab', 'user', 1, now() , now(), now(), '3')";
+        return self::insTable($sql);
+    }
+    public function checkExistUser($id,$username,$email) {
+        $error = array();
+        if (!empty($id)){//update
+            //check if username or e-mail is altered
+            $userData = json_decode($this->getUserById($id))[0];
+            $usernameDB = $userData->{'username'};
+            $emailDB = $userData->{'email'};
+            if ($usernameDB != $username){
+                $checkUsername = $this->queryAVal("SELECT id FROM users WHERE username = LCASE('" .$username. "')");
+            }
+            if ($emailDB != $email){
+                $checkEmail = $this->queryAVal("SELECT id FROM users WHERE email = LCASE('" .$email. "')");
+            }
+        } else { //insert
+           $checkUsername = $this->queryAVal("SELECT id FROM users WHERE username = LCASE('" .$username. "')");
+            $checkEmail = $this->queryAVal("SELECT id FROM users WHERE email = LCASE('" .$email. "')");
+        }
+            if (!empty($checkUsername)){
+                $error['username'] ="This username already exists.";
+            } 
+            if (!empty($checkEmail)){
+                $error['email'] ="This e-mail already exists.";
+            } 
+        return $error;
+    }
+    
+    public function changeActiveUser($user_id, $type) {
+        if ($type == "activate"){
+            $active = 1;
+        } else {
+            $active = "NULL";
+        }
+        $sql = "UPDATE users SET active=$active, last_modified_user='$user_id' WHERE id = '$user_id'";
+        return self::runSQL($sql);
+    }
+    public function changeRoleUser($user_id, $type) {
+        $sql = "UPDATE users SET role='$type', last_modified_user='$user_id' WHERE id = '$user_id'";
+        return self::runSQL($sql);
+    }
+    
 //    ------------- Profiles   ------------
     public function insertSSH($name, $check_userkey, $check_ourkey, $ownerID) {
         $sql = "INSERT INTO ssh(name, check_userkey, check_ourkey, date_created, date_modified, last_modified_user, perms, owner_id) VALUES

@@ -153,6 +153,9 @@
                         echo '<div class="tab-pane" id="adminTab">
                             <div class="panel panel-default">
                                 <div class="panel-heading clearfix">
+                                    <div class="pull-right">
+                                        <button type="button" class="btn btn-primary btn-sm" id="addUser" data-toggle="modal" data-target="#userModal">Add User</button>
+                                    </div>
                                     <div class="pull-left">
                                         <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> User Panel</h5>
                                     </div>
@@ -166,6 +169,7 @@
                                                 <th>E-mail</th>
                                                 <th>Institute</th>
                                                 <th>Role</th>
+                                                <th>Active</th>
                                                 <th>Member Date</th>
                                                 <th>Options</th>
                                             </tr>
@@ -613,6 +617,63 @@
         </div>
     </div>
     <!-- amz keys modal ends-->
+    
+    <!-- user modal starts-->
+    <div id="userModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="userModalTitle">Modal title</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group" style="display:none">
+                            <label for="mUserID" class="col-sm-2 control-label">ID</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="mUserID" name="id">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="mUserName" class="col-sm-3 control-label">Name</label>
+                            <div class="col-sm-9">
+                                <input type="text" required class="form-control" id="mUserName" name="name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="mUserUsername" class="col-sm-3 control-label">Username</label>
+                            <div class="col-sm-9">
+                                <input type="text" required class="form-control" id="mUserUsername" name="username">
+                            </div>
+                        </div>
+                        <div class="form-group has-feedback">
+                            <label for="mUserEmail" class="col-sm-3 control-label">E-mail</label>
+                            <div class="col-sm-9">
+                                <input type="email" required class="form-control" id="mUserEmail" name="email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="mUserInstitute" class="col-sm-3 control-label">Institute</label>
+                            <div class="col-sm-9">
+                                <input type="text" required class="form-control" id="mUserInstitute" name="institute">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="mUserLab" class="col-sm-3 control-label">Lab</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="mUserLab" name="lab">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="savemUser" data-clickedrow="">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- user modal ends-->
 
     <div id="warnDelete" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
