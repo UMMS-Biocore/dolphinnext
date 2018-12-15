@@ -45,7 +45,7 @@ $(document).ready(function () {
             addAmazonRow(proAmzData[el].id, proAmzData[el].name, proAmzData[el].next_path, proAmzData[el].executor, proAmzData[el].instance_type, proAmzData[el].image_id);
         });
     }
-    
+
 
     function getProfileButton(type) {
         if (type === "amazon") {
@@ -1118,8 +1118,18 @@ $(document).ready(function () {
 
     //------------   amazon keys section ends -------------
     //------------   adminTab starts -------------
-    function getAdminUserTableOptions() {
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a class="impersonUser">Impersonate</a></li></ul></div>';
+    function getAdminUserTableOptions(active, role) {
+        if (active && active == 1) {
+            var activeItem = '<li><a name="deactivate" class="changeActiveUser">Deactivate User</a></li>';
+        } else {
+            var activeItem = '<li><a name="activate" class="changeActiveUser">Activate User</a></li>';
+        }
+        if (role && role == "admin") {
+            var roleItem = '<li><a name="user" class="changeRoleUser">Assign user role</a></li>';
+        } else {
+            var roleItem = '<li><a name="admin" class="changeRoleUser">Assign admin role</a></li>';
+        }
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + '</ul></div>';
         return button;
 
 
@@ -1144,12 +1154,21 @@ $(document).ready(function () {
             }, {
                 "data": "role"
             }, {
+                "data": "active",
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    if (oData.active && oData.active == 1) {
+                        $(nTd).html("true");
+                    } else {
+                        $(nTd).html("false");
+                    }
+                }
+            }, {
                 "data": "memberdate"
             }, {
                 data: null,
                 className: "center",
                 fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                    $(nTd).html(getAdminUserTableOptions());
+                    $(nTd).html(getAdminUserTableOptions(oData.active, oData.role));
                 }
             }]
         });
@@ -1168,17 +1187,130 @@ $(document).ready(function () {
                     url: "ajax/ajaxquery.php",
                     async: false,
                     success: function (msg) {
-                        if (msg.error == 1) {
-                            alert('Something Went Wrong!');
-                        } else {
-                            var logInSuccess = true;
-                            window.location.reload('true');
-                        }
+                        var logInSuccess = true;
+                        window.location.reload('true');
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
                     }
                 });
-                $('#impersonModal').modal('hide');
             }
         });
+        $('#AdminUserTable').on('click', '.changeActiveUser, .changeRoleUser', function (event) {
+            var type = $(this).attr('name');
+            var p = $(this).attr('class');
+            var clickedRow = $(this).closest('tr');
+            var rowData = AdmUserTable.row(clickedRow).data();
+            var userId = rowData.id
+            if (userId !== '') {
+                var userData = [];
+                userData.push({ name: "user_id", value: userId });
+                userData.push({ name: "type", value: type });
+                userData.push({ name: "p", value: p });
+                $.ajax({
+                    type: "POST",
+                    data: userData,
+                    url: "ajax/ajaxquery.php",
+                    async: false,
+                    success: function (sc) {
+                        var newUserData = getValues({ p: "getUserById", id: userId })
+                        if (newUserData[0]) {
+                            AdmUserTable.row(clickedRow).remove().draw();
+                            AdmUserTable.row.add(newUserData[0]).draw();
+                        }
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        });
+
+        //       ---USER MODAL
+        $('#userModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            $(this).find('form').trigger('reset');
+            if (button.attr('id') === 'addUser') {
+                $('#userModalTitle').html('Add User');
+            } else {
+                $('#userModalTitle').html('Edit User');
+                var clickedRow = button.closest('tr');
+                var rowData = AdmUserTable.row(clickedRow).data();
+                $('#savemUser').data('clickedrow', clickedRow);
+                var formValues = $('#userModal').find('input');
+                var data = getValues({ p: "getUserById", id: rowData.id })[0];
+                fillFormByName('#userModal', 'input', rowData);
+            }
+        });
+
+        $('#userModal').on('click', '#savemUser', function (event) {
+            event.preventDefault();
+            var formValues = $('#userModal').find('input, select');
+            var requiredFields = ["name", "username", "email", "institute"];
+            var clickedRow = $('#savemUser').data('clickedrow')
+            var formObj = {};
+            var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+            var savetype = $('#mUserID').val();
+            if (stop === false) {
+                formObj.p = "saveUserManual"
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: formObj,
+                    async: true,
+                    success: function (s) {
+                        if (s.email || s.username) { //exist in database
+                            if (s.email) {
+                                toogleErrorUser("email", "insert", s.email)
+                            } else {
+                                toogleErrorUser("email", "delete", null)
+                            }
+                            if (s.username) {
+                                toogleErrorUser("username", "insert", s.username)
+                            } else {
+                                toogleErrorUser("username", "delete", null)
+                            }
+                        } else {
+                            toogleErrorUser("username", "delete", null)
+                            toogleErrorUser("email", "delete", null)
+                            if (savetype.length) { //edit
+                                var newUserData = getValues({ p: "getUserById", id: savetype })
+                                if (newUserData[0]) {
+                                    AdmUserTable.row(clickedRow).remove().draw();
+                                    AdmUserTable.row.add(newUserData[0]).draw();
+                                }
+                            } else { //insert
+                                var newUserData = getValues({ p: "getUserById", id: s.id })
+                                if (newUserData[0]) {
+                                    AdmUserTable.row.add(newUserData[0]).draw();
+                                }
+                            }
+                            $('#userModal').modal('hide');
+                        }
+
+
+
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        });
+
+        function toogleErrorUser(name, type, error) {
+            if (type == "delete") {
+                $('#userModal').find('input[name=' + name + ']').parent().parent().removeClass("has-error");
+                $('#userModal').find('font[name='+ name +']').remove();
+            } else if (type == "insert") {
+                $('#userModal').find('input[name=' + name + ']').parent().parent().addClass("has-error");
+                $('#userModal').find('font[name='+ name +']').remove();
+                $('#userModal').find('input[name='+ name +']').parent().append('<font name="'+ name +'" class="text-center" color="crimson">' + error + '</font>')
+            }
+        }
+
+
 
     }
 

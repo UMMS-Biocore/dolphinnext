@@ -1,7 +1,11 @@
-13.12.2018 Version 0.2.52
+15.12.2018 Version 0.2.53
+Deactivate/active button added to admin console (to block user login)
+Assign as Admin/user button added to admin console.
+Add/edit user feature added to admin console.
 .sec file updated and added following section to deactivate sign_up feature for users.
 [UICONFIG]
-ALLOW_SIGNUP:false
+ALLOW_SIGNUP=
+ALLOW_SIGNUPGOOGLE=
 
 13.12.2018 Version 0.2.52
 Login page added to support LDAP, google and dolphinnext logins.

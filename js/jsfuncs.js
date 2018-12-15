@@ -604,7 +604,7 @@ $inputText.each(function () {
 });
 
 function getValues(data, async) {
-    async = async || false; //default false
+    async = async ||false; //default false
     var result = null;
     $.ajax({
         url: "ajax/ajaxquery.php",
@@ -721,6 +721,26 @@ function refreshCollapseIconDiv() {
 
 }
 
+//creates ajax object and change color of requiredFields
+function createFormObj(formValues, requiredFields){
+    var formObj = {}
+    var stop = false;
+    for (var i = 0; i < formValues.length; i++) {
+        var name = $(formValues[i]).attr("name");
+        var val = $(formValues[i]).val();
+        if (requiredFields.includes(name)){
+            if (val != ""){
+                $(formValues[i]).parent().parent().removeClass("has-error")
+            } else {
+                $(formValues[i]).parent().parent().addClass("has-error")
+                stop = true;
+            }
+        }
+        formObj[name]=val
+    }
+    return [formObj,stop];
+}
+
 
 // fills the from with the object data. find is comma separated string for form types such as: 'input, p'
 //eg.  fillForm('#execNextSettTable','input', exec_next_settings);
@@ -732,6 +752,22 @@ function fillForm(formId, find, data) {
             $(formValues[i]).attr('checked', true);
         } else {
             $(formValues[i]).val(data[keys[i]]);
+        }
+    }
+}
+
+//use name attr to fill form
+function fillFormByName(formId, find, data) {
+    var formValues = $(formId).find(find)
+    for (var k = 0; k < formValues.length; k++) {
+        var nameAttr = $(formValues[k]).attr("name");
+        var keys = Object.keys(data);
+        if (data[nameAttr]) {
+            if (data[nameAttr] === "on") {
+                $(formValues[k]).attr('checked', true);
+            } else {
+                $(formValues[k]).val(data[nameAttr]);
+            }
         }
     }
 }
