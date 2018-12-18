@@ -33,18 +33,45 @@ function readGenerateKeys() {
 
 
 $(document).ready(function () {
-    //get profiles for user
-    var proCluData = getValues({ p: "getProfileCluster" });
-    var proAmzData = getValues({ p: "getProfileAmazon" });
-    if (proCluData.length + proAmzData.length !== 0) {
-        $('#noProfile').css('display', 'none');
-        $.each(proCluData, function (el) {
-            addClusterRow(proCluData[el].id, proCluData[el].name, proCluData[el].next_path, proCluData[el].executor, proCluData[el].username, proCluData[el].hostname);
-        });
-        $.each(proAmzData, function (el) {
-            addAmazonRow(proAmzData[el].id, proAmzData[el].name, proAmzData[el].next_path, proAmzData[el].executor, proAmzData[el].instance_type, proAmzData[el].image_id);
-        });
-    }
+    var profileTable = $('#profilesTable').DataTable({
+        "ajax": {
+            url: "ajax/ajaxquery.php",
+            data: { "p": "getProfiles" },
+            "dataSrc": ""
+        },
+        "columns": [{
+            "data": "name"
+            }, {
+            "data": null,
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                if (oData.hostname != undefined) {
+                    $(nTd).html("Host");
+                } else {
+                    $(nTd).html("Amazon");
+                }
+            }
+            }, {
+            "data": null,
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                if (oData.hostname != undefined) {
+                    $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Connection:" + oData.username + "@" + oData.hostname);
+                } else {
+                    $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Instance_type:" + oData.instance_type + "<br/>Image_id:" + oData.image_id);
+                }
+            }
+            }, {
+            data: null,
+            className: "center",
+            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                if (oData.hostname != undefined) {
+                    $(nTd).html(getProfileButton('cluster'));
+                } else {
+                    $(nTd).html(getProfileButton('amazon'));
+                }
+            }
+            }],
+        'order': [[2, 'desc']]
+    });
 
 
     function getProfileButton(type) {
@@ -56,28 +83,9 @@ $(document).ready(function () {
         return button;
     }
 
-    function addLocalRow(id, name, next_path, executor) {
-        $('#profilesTable > thead').append('<tr id="local-' + id + '"> <td>' + name + '</td> <td>Local</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '</td><td>' + getProfileButton('local') + '</td></tr>');
-    }
-
-    function addClusterRow(id, name, next_path, executor, username, hostname) {
-        $('#profilesTable > thead').append('<tr id="cluster-' + id + '"> <td>' + name + '</td> <td>Host</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '<br>  Connection: ' + username + '@' + hostname + '</td><td>' + getProfileButton('cluster') + '</td></tr>');
-    }
-
-    function addAmazonRow(id, name, next_path, executor, instance_type, image_id) {
-        $('#profilesTable > thead').append('<tr id="amazon-' + id + '"> <td>' + name + '</td> <td>Amazon</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '<br>  Instance_type: ' + instance_type + '<br>  Image_id: ' + image_id + '</td><td>' + getProfileButton('amazon') + '</td></tr>');
-    }
-
-    function updateLocalRow(id, name, next_path, executor) {
-        $('#profilesTable > thead > #local-' + id).html('<td>' + name + '</td> <td>Local</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '</td><td>' + getProfileButton('local') + '</td>');
-    }
-
-    function updateClusterRow(id, name, next_path, executor, username, hostname) {
-        $('#profilesTable > thead > #cluster-' + id).html('<td>' + name + '</td> <td>Host</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '<br>  Connection: ' + username + '@' + hostname + '</td><td>' + getProfileButton('cluster') + '</td>');
-    }
-
-    function updateAmazonRow(id, name, next_path, executor, instance_type, image_id) {
-        $('#profilesTable > thead > #amazon-' + id).html('<td>' + name + '</td> <td>Amazon</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '<br>  Instance_type: ' + instance_type + '<br>  Image_id: ' + image_id + '</td><td>' + getProfileButton('amazon') + '</td>');
+    function getPublicProfileButton() {
+        var button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="editPublicProfile" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="deletePublicProfile" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>'
+        return button;
     }
 
     function loadOptions(type) {
@@ -98,62 +106,157 @@ $(document).ready(function () {
         }
     }
 
+
+    if (usRole === "admin") {
+        var publicProfileTable = $('#publicProfileTable').DataTable({
+            "ajax": {
+                url: "ajax/ajaxquery.php",
+                data: { "p": "getProfiles", type: "public" },
+                "dataSrc": ""
+            },
+            "columns": [{
+                "data": "name"
+            }, {
+                "data": null,
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    if (oData.hostname != undefined) {
+                        $(nTd).html("Host");
+                    } else {
+                        $(nTd).html("Amazon");
+                    }
+                }
+            }, {
+                "data": null,
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    if (oData.hostname != undefined) {
+                        $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Connection:" + oData.username + "@" + oData.hostname);
+                    } else {
+                        $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Instance_type:" + oData.instance_type + "<br/>Image_id:" + oData.image_id);
+                    }
+                }
+            }, {
+                data: null,
+                className: "center",
+                fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html(getPublicProfileButton());
+                }
+            }]
+        });
+    }
+
+    function selectizeProfileName() {
+        var renderMenuGroup = {
+            option: function (data, escape) {
+                if (data.hostname !== undefined) {
+                    return '<div class="option">' +
+                        '<span class="title"><i>' + escape(data.name) + ' (Public Profile) </i></span>' +
+                        '<span class="url">' + 'Hostname: ' + escape(data.hostname) + '</span>' +
+                        '</div>';
+                } else if (data.image_id !== undefined) {
+                    return '<div class="option">' +
+                        '<span class="title"><i>' + escape(data.name) + ' (Public Profile) </i></span>' +
+                        '<span class="url">' + 'Image Id: ' + escape(data.image_id) + '</span>' +
+                        '</div>';
+                } else {
+                    return '<div class="option">' +
+                        '<span class="title"><i>' + escape(data.name) + '</i></span>' +
+                        '</div>';
+                }
+            },
+            item: function (data, escape) {
+                return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
+            }
+        };
+
+
+        var allMenuGroup = getValues({ p: "getProfiles", type: "public" });
+        $('#mEnvName').selectize({
+            valueField: 'id',
+            searchField: ['name'],
+            createOnBlur : true,
+            options: allMenuGroup,
+            render: renderMenuGroup,
+            create: function (input, callback) {
+                callback({ id: input, name: input });
+            }
+        });
+
+
+    }
+
+    $(function () {
+        $(document).on('change', '#mEnvName', function () {
+            var valueID = $('#mEnvName')[0].selectize.getValue();
+            var options = $('#mEnvName')[0].selectize.options
+            var cpOptions = $.extend(true, {}, options);
+            if (cpOptions[valueID]) {
+                if (cpOptions[valueID].executor != undefined) {
+                    delete cpOptions[valueID]["id"]; //to prevent profile update
+                    if (cpOptions[valueID].hostname != undefined) {
+                        $('#chooseEnv').val('cluster').trigger('change');
+                    } else {
+                        $('#chooseEnv').val('amazon').trigger('change');
+                    }
+                    fillFormByName('#profilemodal', 'input, select, textarea', cpOptions[valueID]);
+                    $('#mExec').trigger('change');
+                }
+            }
+
+        })
+    });
+
     $('#profilemodal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
+        selectizeProfileName();
         if (button.attr('id') === 'addEnv') {
             $('#mAddEnvTitle').html('Add Environment');
             loadOptions("ssh");
             loadOptions("amz");
-        } else if (button.attr('id') === 'profileedit') {
-            $('#mAddEnvTitle').html('Edit Environment');
-            loadOptions("ssh");
-            loadOptions("amz");
-            var clickedRowId = button.closest('tr').attr('id'); //local-20
-            var patt = /(.*)-(.*)/;
-            var proType = clickedRowId.replace(patt, '$1');
-            var proId = clickedRowId.replace(patt, '$2');
-            var formValues = $('#profilemodal').find('input, select, textarea');
-
-            function fillFixedCol(formValues, data) {
-                $(formValues[0]).val(data[0].id);
-                $(formValues[1]).val(data[0].name);
-                $(formValues[12]).val(data[0].cmd);
-                $(formValues[13]).val(data[0].next_path);
-                $(formValues[14]).val(data[0].executor);
-                $(formValues[15]).val(data[0].next_queue);
-                $(formValues[16]).val(data[0].next_memory);
-                $(formValues[17]).val(data[0].next_cpu);
-                $(formValues[18]).val(data[0].next_time);
-                $(formValues[19]).val(data[0].next_clu_opt);
-                $(formValues[20]).val(data[0].executor_job);
-                $(formValues[21]).val(data[0].job_queue);
-                $(formValues[22]).val(data[0].job_memory);
-                $(formValues[23]).val(data[0].job_cpu);
-                $(formValues[24]).val(data[0].job_time);
-                $(formValues[25]).val(data[0].job_clu_opt);
-            };
+        } else if (button.attr('id') === 'addPublicProfile') {
+            $('#mAddEnvTitle').html('Add Public Environment');
+        } else if (button.attr('id') === 'editPublicProfile' || button.attr('id') === 'profileedit') {
+            var clickedRow = button.closest('tr');
+            if (button.attr('id') === 'editPublicProfile') {
+                $('#mAddEnvTitle').html('Edit Public Environment');
+                var rowData = publicProfileTable.row(clickedRow).data();
+            } else if (button.attr('id') === 'profileedit') {
+                $('#mAddEnvTitle').html('Edit Run Environment');
+                var rowData = profileTable.row(clickedRow).data();
+                loadOptions("ssh");
+                loadOptions("amz");
+            }
+            $('#saveEnv').data('clickedrow', clickedRow);
+            var proType = "";
+            if (rowData.hostname != undefined) {
+                proType = "cluster";
+            } else {
+                proType = "amazon";
+            }
+            var proId = rowData.id;
             if (proType === "cluster") {
                 var data = getValues({ p: "getProfileCluster", id: proId });
                 $('#chooseEnv').val('cluster').trigger('change');
-                fillFixedCol(formValues, data);
-                $(formValues[3]).val(data[0].username);
-                $(formValues[4]).val(data[0].hostname);
-                $(formValues[5]).val(data[0].ssh_id);
+                fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             } else if (proType === "amazon") {
                 var data = getValues({ p: "getProfileAmazon", id: proId });
                 $('#chooseEnv').val('amazon').trigger('change');
-                fillFixedCol(formValues, data);
-                $(formValues[5]).val(data[0].ssh_id);
-                $(formValues[6]).val(data[0].amazon_cre_id);
-                $(formValues[7]).val(data[0].instance_type);
-                $(formValues[8]).val(data[0].image_id);
-                $(formValues[9]).val(data[0].subnet_id);
-                $(formValues[10]).val(data[0].shared_storage_id);
-                $(formValues[11]).val(data[0].shared_storage_mnt);
+                fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             }
+            if (!$('#mAddEnvTitle').html().match(/Public/)) {
+                $("#mEnvName")[0].selectize.addOption({
+                    id: rowData.name,
+                    name: rowData.name,
+                });
+                $("#mEnvName")[0].selectize.setValue(rowData.name, false);
+            } else {
+                $("#mEnvName")[0].selectize.setValue(rowData.id, false);
+            }
+
+
+
             $('#chooseEnv').attr('disabled', "disabled");
         }
     });
@@ -174,17 +277,21 @@ $(document).ready(function () {
     $(function () {
         $(document).on('change', '#chooseEnv', function () {
             var selEnvType = $('#chooseEnv option:selected').val();
+            var title = $('#mAddEnvTitle').html();
             var noneList = [];
             var blockList = [];
-            if (selEnvType === "local") {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
-                var blockList = ["mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv"];
-            } else if (selEnvType === "cluster") {
+            if (selEnvType === "cluster" && !title.match(/Public/)) {
                 var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv"];
                 var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv"];
-            } else if (selEnvType === "amazon") {
+            } else if (selEnvType === "amazon" && !title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv"];
                 var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
+            } else if (selEnvType === "cluster" && title.match(/Public/)) {
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvUsernameDiv", "mEnvSSHKeyDiv"];
+                var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv"];
+            } else if (selEnvType === "amazon" && title.match(/Public/)) {
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv"];
+                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
             }
             $.each(noneList, function (element) {
                 $('#' + noneList[element]).css('display', 'none');
@@ -240,6 +347,8 @@ $(document).ready(function () {
         $('#mExecJob').removeAttr('disabled');
         $('#mEnvAmzKey').find('option').not(':eq(0)').remove()
         $('#mEnvSSHKey').find('option').not(':eq(0)').remove()
+        $('#mEnvName')[0].selectize.destroy();
+        cleanHasErrorClass("#profilemodal")
     });
 
     $('#profilemodal').on('click', '#saveEnv', function (event) {
@@ -248,89 +357,85 @@ $(document).ready(function () {
         $('#mExecJob').removeAttr('disabled');
         var formValues = $('#profilemodal').find('input, select, textarea');
         var savetype = $('#mEnvId').val();
-        var profileName = $('#mEnvName').val();
-        var data = formValues.serializeArray(); // convert form to array
+        var formObj = {};
+        var stop = "";
+        var title = $('#mAddEnvTitle').html();
+        var clickedRow = $('#saveEnv').data('clickedrow');
+        [formObj, stop] = createFormObj(formValues, ["name"]);
         var selEnvType = $('#chooseEnv option:selected').val();
-        if (selEnvType === "cluster" && (data[19].value == "ignite" || data[19].value == "local")) {
-            data[20].value = ""; //queue
-            data[23].value = ""; //time
+        var nameID = $("#mEnvName")[0].selectize.getValue()
+        if (nameID){
+            if ($("#mEnvName")[0].selectize.options[nameID]){
+                formObj.name = $("#mEnvName")[0].selectize.options[nameID].name;
+            }
         }
-        if (selEnvType === "amazon" && (data[20].value == "ignite" || data[20].value == "local")) {
-            data[21].value = ""; //queue
-            data[24].value = ""; //time
+        if (formObj.executor_job == "ignite") {
+            formObj.job_queue = "";
+            formObj.job_time = "";
         }
-        if (selEnvType === "cluster" && data[19].value == "local") {
-            data[24].value = ""; //"job_clu_opt"
+        if (formObj.executor_job == "local") {
+            formObj.job_queue = "";
+            formObj.job_time = "";
+            formObj.job_clu_opt = "";
         }
-        if (selEnvType === "amazon" && data[20].value == "local") {
-            data[25].value = ""; //"job_clu_opt"
-        }
-        if (selEnvType === "cluster" && data[13].value == "local") {
-            data[14].value = ""; //queue
-            data[17].value = ""; //time
-            data[18].value = ""; //next_clu_opt
-        }
-        if (selEnvType === "amazon" && data[14].value == "local") {
-            data[15].value = ""; //queue
-            data[18].value = ""; //time
-            data[19].value = ""; //next_clu_opt
+        if (formObj.executor == "local") {
+            formObj.next_queue = "";
+            formObj.next_time = "";
+            formObj.next_clu_opt = "";
         }
 
-        if (selEnvType.length && profileName !== '') {
-            if (selEnvType === "cluster") {
-                var sshID = $('#mEnvSSHKey').val();
-                if (sshID) {
-                    data.push({ name: "p", value: "saveProfileCluster" });
-                } else {
-                    data = [];
-                }
-            } else if (selEnvType === "amazon") {
-                var sshID = $('#mEnvSSHKey').val();
-                var amzID = $('#mEnvAmzKey').val();
-                if (sshID && amzID) {
-                    data.push({ name: "p", value: "saveProfileAmazon" });
-                } else {
-                    data = [];
-                }
+        if (selEnvType.length && stop == false) {
+            if (title.match(/Public/)) {
+                formObj.public = "1";
             }
-            if (data != '') {
-                $.ajax({
-                    type: "POST",
-                    url: "ajax/ajaxquery.php",
-                    data: data,
-                    async: true,
-                    success: function (s) {
-                        if (savetype.length) { //edit
-                            var clickedRowId = selEnvType + '-' + savetype;
-                            if (selEnvType === "local") {
-                                updateLocalRow(data[0].value, data[1].value, data[12].value, data[13].value)
-                            } else if (selEnvType === "cluster") {
-                                updateClusterRow(data[0].value, data[1].value, data[12].value, data[13].value, data[3].value, data[4].value)
-                            } else if (selEnvType === "amazon") {
-                                updateAmazonRow(data[0].value, data[1].value, data[12].value, data[13].value, data[6].value, data[7].value);
+            if (selEnvType === "cluster") {
+                formObj.p = "saveProfileCluster";
+            } else if (selEnvType === "amazon") {
+                formObj.p = "saveProfileAmazon";
+            }
+            console.log(formObj)
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: formObj,
+                async: true,
+                success: function (s) {
+                    if (savetype.length) { //edit
+                        var proId = savetype
+                    } else {
+                        var proId = s.id;
+                    }
+                    if (selEnvType === "cluster") {
+                        var newProfileData = getValues({ p: "getProfileCluster", id: proId });
+                    } else if (selEnvType === "amazon") {
+                        var newProfileData = getValues({ p: "getProfileAmazon", id: proId });
+                    }
+                    if (newProfileData[0]) {
+                        if (title.match(/Public/)) {
+                            if (savetype.length) { //edit
+                                publicProfileTable.row(clickedRow).remove().draw();
+                                publicProfileTable.row.add(newProfileData[0]).draw();
+                            } else { //insert
+                                publicProfileTable.row.add(newProfileData[0]).draw();
                             }
-                        } else { //insert
-                            if (selEnvType === "local") {
-                                addLocalRow(s.id, data[1].value, data[12].value, data[13].value);
-                            } else if (selEnvType === "cluster") {
-                                addClusterRow(s.id, data[1].value, data[12].value, data[13].value, data[3].value, data[4].value);
-                            } else if (selEnvType === "amazon") {
-                                addAmazonRow(s.id, data[1].value, data[12].value, data[13].value, data[6].value, data[7].value);
-                                $('#manageAmz').css('display', 'inline');
-                                checkAmazonTimer(s.id, 40000);
-                            }
-                            var numRows = $('#profilesTable > > tr').length;
-                            if (numRows > 2) {
-                                $('#noProfile').css('display', 'none');
+                        } else {
+                            if (savetype.length) { //edit
+                                profileTable.row(clickedRow).remove().draw();
+                                profileTable.row.add(newProfileData[0]).draw();
+                            } else { //insert
+                                profileTable.row.add(newProfileData[0]).draw();
+                                if (selEnvType === "amazon") {
+                                    checkAmazonTimer(s.id, 40000);
+                                }
                             }
                         }
-                        $('#profilemodal').modal('hide');
-                    },
-                    error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
                     }
-                });
-            }
+                    $('#profilemodal').modal('hide');
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
         }
     });
 
@@ -338,28 +443,41 @@ $(document).ready(function () {
     // confirm Delete ssh modal 
     $('#confirmDelProModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
-        var clickedRowId = button.closest('tr').attr('id'); //local-20
+        var clickedRow = button.closest('tr');
         if (button.attr('id') === 'profileremove') {
-            $('#mDelProBtn').attr('clickedRowId', clickedRowId);
+            $('#mDelProBtn').data('clickedRow', clickedRow);
             $('#mDelProBtn').attr('class', 'btn btn-primary deleteProfile');
             $('#confirmDelProModalText').html('Are you sure you want to delete?');
+        } else if (button.attr('id') === 'deletePublicProfile') {
+            $('#mDelProBtn').data('clickedRow', clickedRow);
+            $('#mDelProBtn').attr('class', 'btn btn-primary deleteProfile');
+            $('#confirmDelProModalText').html('Are you sure you want to delete public profile?');
         }
+
     });
 
     $('#confirmDelProModal').on('click', '.deleteProfile', function (event) {
-        var clickedRowId = $('#mDelProBtn').attr('clickedRowId');
-        var patt = /(.*)-(.*)/;
-        var proType = clickedRowId.replace(patt, '$1');
-        var proId = clickedRowId.replace(patt, '$2');
+        var clickedRow = $('#mDelProBtn').data('clickedRow');
+        var title = $('#confirmDelProModalText').html();
+        if (title.match(/public/)) {
+            var rowData = publicProfileTable.row(clickedRow).data();
+        } else {
+            var rowData = profileTable.row(clickedRow).data();
+        }
+        var proType = "";
+        if (rowData.hostname != undefined) {
+            proType = "cluster";
+        } else {
+            proType = "amazon";
+        }
+        var proId = rowData.id;
         var data = {};
-        if (proType === "local") {
-            data = { "id": proId, "p": "removeProLocal" };
-        } else if (proType === "cluster") {
+        if (proType === "cluster") {
             data = { "id": proId, "p": "removeProCluster" };
         } else if (proType === "amazon") {
             data = { "id": proId, "p": "removeProAmazon" };
         }
-        if (clickedRowId !== '') {
+        if (proId !== '') {
             var warnUser = false;
             var warnText = '';
             //[warnUser, warnText] = checkDeletionProfile(remove_id);
@@ -372,10 +490,10 @@ $(document).ready(function () {
                     data: data,
                     async: true,
                     success: function (s) {
-                        $('#profilesTable > > #' + clickedRowId).remove();
-                        var numRows = $('#profilesTable > > tr').length;
-                        if (numRows === 2) {
-                            $('#noProfile').css('display', 'block');
+                        if (title.match(/public/)) {
+                            publicProfileTable.row(clickedRow).remove().draw();
+                        } else {
+                            profileTable.row(clickedRow).remove().draw();
                         }
                         // check the amazon profiles
                         if (proType === "amazon") {
@@ -402,8 +520,6 @@ $(document).ready(function () {
             $('#confirmDelProModal').modal('hide');
         }
     });
-
-
 
 
 
@@ -1242,6 +1358,10 @@ $(document).ready(function () {
                 fillFormByName('#userModal', 'input', rowData);
             }
         });
+        
+        $('#userModal').on('hide.bs.modal', function (event) {
+            cleanHasErrorClass("#userModal")
+        });
 
         $('#userModal').on('click', '#savemUser', function (event) {
             event.preventDefault();
@@ -1302,11 +1422,11 @@ $(document).ready(function () {
         function toogleErrorUser(name, type, error) {
             if (type == "delete") {
                 $('#userModal').find('input[name=' + name + ']').parent().parent().removeClass("has-error");
-                $('#userModal').find('font[name='+ name +']').remove();
+                $('#userModal').find('font[name=' + name + ']').remove();
             } else if (type == "insert") {
                 $('#userModal').find('input[name=' + name + ']').parent().parent().addClass("has-error");
-                $('#userModal').find('font[name='+ name +']').remove();
-                $('#userModal').find('input[name='+ name +']').parent().append('<font name="'+ name +'" class="text-center" color="crimson">' + error + '</font>')
+                $('#userModal').find('font[name=' + name + ']').remove();
+                $('#userModal').find('input[name=' + name + ']').parent().append('<font name="' + name + '" class="text-center" color="crimson">' + error + '</font>')
             }
         }
 

@@ -42,15 +42,17 @@
                     </ul>
                     <div class="tab-content">
                         <div class="tab-pane active" id="runEnvDiv">
-                            <form class="form-horizontal">
+                            <div class="panel panel-default" id="profilepanel">
                                 <div class="panel-heading clearfix">
-                                    <button class="btn btn-primary" type="button" id="addEnv" data-toggle="modal" href="#profilemodal" style="float:right; vertical-align:middle;">Add environment</button>
-                                    <h6><b></b></h6>
+                                   <div class="pull-right">
+                                        <button type="button" class="btn btn-primary btn-sm" id="addEnv" data-toggle="modal" data-target="#profilemodal">Add environment</button>
+                                    </div>
+                                    <div class="pull-left">
+                                        <h5><i class="fa fa-user " style="margin-left:0px; margin-right:0px;"></i> Run Environments</h5>
+                                    </div>
                                 </div>
-                                <div class="panel panel-default">
-                                    <div>
-                                        </br>
-                                        <table id="profilesTable" class="table">
+                                <div class="panel-body">
+                                        <table id="profilesTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                             <thead>
                                                 <tr>
                                                     <th scope="col">Profile Name</th>
@@ -58,15 +60,37 @@
                                                     <th scope="col">Details</th>
                                                     <th scope="col">Actions</th>
                                                 </tr>
-                                                <tr id="noProfile">
-                                                    <td>No Profile Available</td>
-                                                </tr>
                                             </thead>
-                                            <tbody></tbody>
                                         </table>
+                                </div>
+                            </div>
+                            <?php
+                            if ($login == 1 && $role == "admin"){
+                        echo '<div class="panel panel-default" id="publicprofilepanel">
+                                <div class="panel-heading clearfix">
+                                    <div class="pull-right">
+                                        <button type="button" class="btn btn-primary btn-sm" id="addPublicProfile" data-toggle="modal" data-target="#profilemodal">Add Public Profile</button>
+                                    </div>
+                                    <div class="pull-left">
+                                        <h5><i class="fa fa-user " style="margin-left:0px; margin-right:0px;"></i> Public Run Environments</h5>
                                     </div>
                                 </div>
-                            </form>
+                                <div class="panel-body">
+                                    <table id="publicProfileTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Profile Host</th>
+                                                <th>Type</th>
+                                                <th>Details</th>
+                                                <th>Options</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>';
+                            }
+                        ?>
+                            
                         </div>
                         <!-- /.tab-pane ends -->
 
@@ -213,7 +237,9 @@
                         <div class="form-group">
                             <label for="mEnvName" class="col-sm-3 control-label">Profile Name</label>
                             <div class="col-sm-9">
-                                <input type="text" class="form-control" id="mEnvName" name="name">
+                                <select  id="mEnvName" class="fbtn btn-default form-control" name="name">
+                                  <option value="" disabled selected>Choose or Type New Profile Name</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-group">
@@ -221,7 +247,6 @@
                             <div class="col-sm-9">
                                 <select style="width:150px" id="chooseEnv" class="fbtn btn-default form-control" name="runEnv">
                                   <option value="" disabled selected>Select environment </option>
-<!--                                  <option value="local">Local</option>-->
                                   <option value="cluster">Host</option>
                                   <option value="amazon">Amazon</option>
                                 </select>
@@ -264,7 +289,7 @@
                         <div id="mEnvInsTypeDiv" class="form-group" style="display:none">
                             <label for="mEnvInsType" class="col-sm-3 control-label">Instance Type</label>
                             <div class="col-sm-9">
-                                <input type="text" class="form-control" id="mEnvInsType" name="ins_type">
+                                <input type="text" class="form-control" id="mEnvInsType" name="instance_type">
                             </div>
                         </div>
                         <div id="mEnvImageIdDiv" class="form-group" style="display:none">
@@ -407,9 +432,8 @@
         </div>
     </div>
     <!-- profilemodal Ends-->
-
+    
     <!-- group modal starts-->
-
     <div id="groupmodal" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

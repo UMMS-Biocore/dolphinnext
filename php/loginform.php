@@ -65,7 +65,7 @@
                 
                 
                 <div class="form-group">
-                    <input type="text" name="email" class="form-control" placeholder="E-mail" />
+                    <input type="email" name="email" class="form-control" placeholder="E-mail" />
                 </div>
                 <div class="form-group">
                     <input type="password" name="password" class="form-control" placeholder="Password" />

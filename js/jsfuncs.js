@@ -722,25 +722,32 @@ function refreshCollapseIconDiv() {
 }
 
 //creates ajax object and change color of requiredFields
-function createFormObj(formValues, requiredFields){
+function createFormObj(formValues, requiredFields) {
     var formObj = {}
     var stop = false;
     for (var i = 0; i < formValues.length; i++) {
         var name = $(formValues[i]).attr("name");
         var val = $(formValues[i]).val();
-        if (requiredFields.includes(name)){
-            if (val != ""){
+        if (requiredFields.includes(name)) {
+            if (val != "") {
                 $(formValues[i]).parent().parent().removeClass("has-error")
             } else {
                 $(formValues[i]).parent().parent().addClass("has-error")
                 stop = true;
             }
         }
-        formObj[name]=val
+        formObj[name] = val
     }
-    return [formObj,stop];
+    return [formObj, stop];
 }
 
+function cleanHasErrorClass(modalID){
+        var formValues = $(modalID).find('.has-error');
+    for (var i = 0; i < formValues.length; i++) {
+    $(formValues[i]).removeClass("has-error")
+    }
+    
+}
 
 // fills the from with the object data. find is comma separated string for form types such as: 'input, p'
 //eg.  fillForm('#execNextSettTable','input', exec_next_settings);
