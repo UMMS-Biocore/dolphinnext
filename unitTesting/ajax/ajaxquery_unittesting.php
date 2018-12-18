@@ -653,6 +653,7 @@ class ajaxQueryTest extends TestCase
     public function testgetProfileCluster() {
 		ob_start();
 		$_REQUEST['p'] = 'getProfileCluster';
+        $_REQUEST['type'] = "";
         $_REQUEST['id'] = '';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->id,'2');
@@ -677,7 +678,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['job_time'] = "";
 		$_REQUEST['job_cpu'] = "";
         $_REQUEST['job_clu_opt'] = "";
-		$_REQUEST['ins_type'] = "";
+		$_REQUEST['instance_type'] = "";
 		$_REQUEST['image_id'] = "";
 		$_REQUEST['subnet_id'] = "";
 		$_REQUEST['shared_storage_id'] = "";
@@ -722,7 +723,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['job_time'] = "";
 		$_REQUEST['job_cpu'] = "";
         $_REQUEST['job_clu_opt'] = "";
-		$_REQUEST['ins_type'] = "";
+		$_REQUEST['instance_type'] = "";
 		$_REQUEST['image_id'] = "";
 		$_REQUEST['subnet_id'] = "";
 		$_REQUEST['shared_storage_id'] = "";
