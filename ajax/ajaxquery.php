@@ -260,7 +260,7 @@ else if ($p=="getExistProjectPipelines"){
 }
 else if ($p=="getProjectPipelines"){
     $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
-    $data = $db -> getProjectPipelines($id,$project_id,$ownerID);
+    $data = $db -> getProjectPipelines($id,$project_id,$ownerID,$userRole);
 }
 else if ($p=="getProjectInputs"){
     $project_id = $_REQUEST['project_id'];

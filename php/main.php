@@ -143,15 +143,11 @@ session_write_close();
 
             /*        table links should appear blue*/
 
-            #projecttable a,
-            #runtable a,
-            #allpipelinestable a {
+            .table.table-striped.table-bordered a {
                 color: #0570c1;
             }
 
-            #projecttable a:hover,
-            #runtable a:hover,
-            #allpipelinestable a:hover {
+            .table.table-striped.table-bordered a:hover {
                 color: #428bca !important;
                 text-decoration: underline;
             }
@@ -275,8 +271,9 @@ session_write_close();
                 <nav class="navbar navbar-static-top">
                     <div class="collapse navbar-collapse pull-left">
                         <ul class="nav navbar-nav">
-                            <li><a href="index.php?np=2">Projects </a></li>
                             <li><a href="index.php?np=1">Pipelines </a></li>
+                            <li><a href="index.php?np=2">Projects </a></li>
+                            <li><a href="index.php?np=5">Run Status </a></li>
                             <!-- <li><a href="#"><i class="fa fa-bell-o"></i></a></li>-->
                             <?php
                         include("php/funcs.php");
@@ -360,13 +357,13 @@ session_write_close();
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
                     <h1>
-                        Biocore
-                        <?php print getTitle($np); ?> Generation
+                        <?php echo COMPANY_NAME." ";
+                        print getTitle($np); ?> 
 
                     </h1>
                     <ol class="breadcrumb">
                         <li><a href=""><i class="fa fa-dashboard"></i> Home</a></li>
-                        <li><a href=""></a>Biocore</li>
+                        <li><a href=""></a><?php echo COMPANY_NAME?></li>
                         <li class="active">
                             <?php print getTitle($np); ?>
                         </li>

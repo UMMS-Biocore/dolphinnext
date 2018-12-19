@@ -182,7 +182,7 @@ class dbfuncs {
 
     //get nextflow executor parameters
     function getNextExecParam($project_pipeline_id,$profileType,$profileId, $ownerID){
-        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID));
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         $proPipeCmd = $proPipeAll[0]->{'cmd'};
         $jobname = $proPipeAll[0]->{'pp_name'};
@@ -448,7 +448,7 @@ class dbfuncs {
         chmod("../{$this->run_path}/run{$project_pipeline_id}/nextflow.config", 0755);
         if ($profileType == "cluster") {
             // get outputdir
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID));
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
             $outdir = $proPipeAll[0]->{'output_dir'};
             // get username and hostname for connection
             $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
@@ -483,7 +483,7 @@ class dbfuncs {
             return $log_array;
         } else if ($profileType == "amazon") {
             // get outputdir
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID));
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
             $outdir = $proPipeAll[0]->{'output_dir'};
             // get username and hostname for connection
             $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
@@ -1644,7 +1644,7 @@ class dbfuncs {
         $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
 			
 //get preCmd to load prerequisites (eg: source /etc/bashrc) (to run qstat qdel)
-        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID));
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $proPipeCmd = $proPipeAll[0]->{'cmd'};
         $profileCmd = $cluDataArr[0]["cmd"];
         $imageCmd = "";
@@ -1707,7 +1707,7 @@ class dbfuncs {
             $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
             // get outputdir
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID));
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
             $outdir = $proPipeAll[0]->{'output_dir'};
             $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
             $nextflow_log = shell_exec("ssh {$this->ssh_settings} -i $userpky $connect 'cat $dolphin_path_real/log.txt 2>/dev/null' 2>&1 &");
@@ -1822,9 +1822,14 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt' WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function getProjectPipelines($id,$project_id,$ownerID) {
+    public function getProjectPipelines($id,$project_id,$ownerID,$userRole) {
 		if ($id != ""){
-			$where = " where pp.id = '$id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
+            if ($userRole == "admin"){
+                $where = " where pp.id = '$id'";  
+            } else {
+                $where = " where pp.id = '$id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
+            }
+			
             $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, IF(pp.owner_id='$ownerID',1,0) as own
                     FROM project_pipeline pp
                     INNER JOIN users u ON pp.owner_id = u.id
@@ -1833,13 +1838,28 @@ class dbfuncs {
                     LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                     $where";
 		} else {
-            $where = " where pp.project_id = '$project_id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))" ;
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.date_modified, IF(pp.owner_id='$ownerID',1,0) as own
+            //for sidebar menu
+            if ($project_id != ""){
+                $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.date_modified, IF(pp.owner_id='$ownerID',1,0) as own
                     FROM project_pipeline pp
                     INNER JOIN biocorepipe_save pip ON pip.id = pp.pipeline_id
                     INNER JOIN users u ON pp.owner_id = u.id
                     LEFT JOIN user_group ug ON pp.group_id=ug.g_id
+                    WHERE pp.project_id = '$project_id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
+            //for run status page
+            } else {
+                if ($userRole == "admin"){
+                    $where = " ";  
+                } else {
+                    $where = " WHERE (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";    
+                }
+                $sql = "SELECT DISTINCT pp.id, pp.name, u.username, pp.summary, pp.date_modified, pp.output_dir, r.run_status
+                    FROM project_pipeline pp
+                    INNER JOIN users u ON pp.owner_id = u.id
+                    INNER JOIN run r ON r.project_pipeline_id = pp.id
+                    LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                     $where";
+            }
         }
 		return self::queryTable($sql);
     }

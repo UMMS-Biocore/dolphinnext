@@ -1248,8 +1248,6 @@ $(document).ready(function () {
         var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + '</ul></div>';
         return button;
 
-
-
     }
     if (usRole === "admin") {
 
