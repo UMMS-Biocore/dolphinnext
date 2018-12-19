@@ -453,21 +453,45 @@ else if ($p=="readGenerateKeys")
 {
     $data = $db->readGenerateKeys($ownerID);
 }
-
+else if ($p=="getProfiles")
+{
+    $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
+    if (empty($type)){
+        $proClu = $db->getProfileCluster($ownerID);
+        $proAmz = $db->getProfileAmazon($ownerID);
+    } else {
+        $proClu = $db->getPublicProfileCluster($ownerID);
+        $proAmz = $db->getPublicProfileAmazon($ownerID);
+    }
+    $clu_obj = json_decode($proClu,true);
+    $amz_obj = json_decode($proAmz,true);
+    $result = array_merge($clu_obj, $amz_obj);
+    $data = json_encode($result);
+}
 else if ($p=="getProfileCluster")
 {
+    $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     if (!empty($id)) {
         $data = $db->getProfileClusterbyID($id, $ownerID);
     } else {
-    $data = $db->getProfileCluster($ownerID);
+        if (empty($type)){
+            $data = $db->getProfileCluster($ownerID);
+        } else {
+            $data = $db->getPublicProfileCluster($ownerID);
+        }
     }
 }
 else if ($p=="getProfileAmazon")
 {
+    $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     if (!empty($id)) {
-    $data = $db->getProfileAmazonbyID($id, $ownerID);
+        $data = $db->getProfileAmazonbyID($id, $ownerID);
     } else {
-    $data = $db->getProfileAmazon($ownerID);
+        if (empty($type)){
+            $data = $db->getProfileAmazon($ownerID);
+        } else {
+            $data = $db->getPublicProfileAmazon($ownerID);
+        }
     }
 }
 else if ($p=="updateAmazonProStatus"){
@@ -510,6 +534,8 @@ else if ($p=="saveAmzKeys"){
 }
 else if ($p=="saveProfileCluster"){
     $name = $_REQUEST['name'];
+    $public = isset($_REQUEST['public']) ? $_REQUEST['public'] : "";
+    settype($public, 'integer');
     $executor = $_REQUEST['executor'];
     $cmd = $_REQUEST['cmd'];
     $next_memory = $_REQUEST['next_memory'];
@@ -526,14 +552,17 @@ else if ($p=="saveProfileCluster"){
     $username = $_REQUEST['username'];
     $hostname = $_REQUEST['hostname'];
     $next_path = $_REQUEST['next_path'];
-    $ssh_id = $_REQUEST['ssh_id'];
+    $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
+    settype($ssh_id, 'integer');
     if (!empty($id)) {
-       $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $ownerID);
+        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID);
     } else {
-       $data = $db->insertProfileCluster($name, $executor,$next_path, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $ownerID);
+       $data = $db->insertProfileCluster($name, $executor,$next_path, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID);
     }
 }
 else if ($p=="saveProfileAmazon"){
+    $public = isset($_REQUEST['public']) ? $_REQUEST['public'] : "";
+    settype($public, 'integer');
     $name = $_REQUEST['name'];
     $executor = $_REQUEST['executor'];
     $cmd = $_REQUEST['cmd'];
@@ -548,18 +577,20 @@ else if ($p=="saveProfileAmazon"){
     $job_time = $_REQUEST['job_time'];
     $job_cpu = $_REQUEST['job_cpu'];
     $job_clu_opt = $_REQUEST['job_clu_opt'];
-    $ins_type = $_REQUEST['ins_type'];
+    $ins_type = $_REQUEST['instance_type'];
     $image_id = $_REQUEST['image_id'];
     $subnet_id = $_REQUEST['subnet_id'];
     $shared_storage_id = $_REQUEST['shared_storage_id'];
     $shared_storage_mnt = $_REQUEST['shared_storage_mnt'];
     $next_path = $_REQUEST['next_path'];
-    $ssh_id = $_REQUEST['ssh_id'];
-    $amazon_cre_id = $_REQUEST['amazon_cre_id'];
+    $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
+    settype($ssh_id, 'integer');
+    $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
+    settype($amazon_cre_id, 'integer');
     if (!empty($id)) {
-       $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $ownerID);
+       $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $ownerID);
     } else {
-       $data = $db->insertProfileAmazon($name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $ownerID);
+       $data = $db->insertProfileAmazon($name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $ownerID);
     }
 }
 else if ($p=="saveInput"){

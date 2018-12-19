@@ -50,6 +50,8 @@ session_write_close();
         <link href="bower_components/jquery-ui-bootstrap/css/custom-theme/jquery-ui-1.10.0.custom.css" rel="stylesheet" />
         <!-- dropzone -->
         <link type="text/css" rel="stylesheet" href="bower_components/dropzone/dropzone.min.css"/>
+        <!-- to fix favicon.ico not found error-->
+        <link rel="shortcut icon" href="#">
         <style>
             /* Ace Editor scroll problem fix */
             .ace_text-input {
