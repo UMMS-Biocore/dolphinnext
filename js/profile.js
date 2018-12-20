@@ -173,7 +173,7 @@ $(document).ready(function () {
         $('#mEnvName').selectize({
             valueField: 'id',
             searchField: ['name'],
-            createOnBlur : true,
+            createOnBlur: true,
             options: allMenuGroup,
             render: renderMenuGroup,
             create: function (input, callback) {
@@ -364,8 +364,8 @@ $(document).ready(function () {
         [formObj, stop] = createFormObj(formValues, ["name"]);
         var selEnvType = $('#chooseEnv option:selected').val();
         var nameID = $("#mEnvName")[0].selectize.getValue()
-        if (nameID){
-            if ($("#mEnvName")[0].selectize.options[nameID]){
+        if (nameID) {
+            if ($("#mEnvName")[0].selectize.options[nameID]) {
                 formObj.name = $("#mEnvName")[0].selectize.options[nameID].name;
             }
         }
@@ -1236,9 +1236,9 @@ $(document).ready(function () {
     //------------   adminTab starts -------------
     function getAdminUserTableOptions(active, role) {
         if (active && active == 1) {
-            var activeItem = '<li><a name="deactivate" class="changeActiveUser">Deactivate User</a></li>';
+            var activeItem = '<li><a name="deactivate" class="changeActiveUser">Deactivate User</a></li><li><a name="activateSendUser" class="changeActiveUser">Send activation E-mail to User</a></li>';
         } else {
-            var activeItem = '<li><a name="activate" class="changeActiveUser">Activate User</a></li>';
+            var activeItem = '<li><a name="activate" class="changeActiveUser">Activate User</a></li><li><a name="activateSendUser" class="changeActiveUser">Activate and send E-mail to User</a></li>';
         }
         if (role && role == "admin") {
             var roleItem = '<li><a name="user" class="changeRoleUser">Assign user role</a></li>';
@@ -1249,6 +1249,108 @@ $(document).ready(function () {
         return button;
 
     }
+    //change password----
+
+    $("#password1, #password2").keyup(function () {
+        var vis8char = $("#8charDiv").css("display")
+        var visMatch = $("#pwmatchDiv").css("display")
+        if (vis8char == "none" && $("#password1").val().length > 0) {
+            $("#8charDiv").css("display", "block")
+        } else if (!$("#password1").val().length > 0) {
+            $("#8charDiv").css("display", "none")
+        }
+        if (visMatch == "none" && $("#password2").val().length > 0) {
+            $("#pwmatchDiv").css("display", "block")
+        } else if (!$("#password2").val().length > 0) {
+            $("#pwmatchDiv").css("display", "none")
+        }
+
+        if ($("#password1").val().length >= 8) {
+            $("#8char").removeClass("glyphicon-remove");
+            $("#8char").addClass("glyphicon-ok");
+            $("#8char").css("color", "#00A41E");
+        } else {
+            $("#8char").removeClass("glyphicon-ok");
+            $("#8char").addClass("glyphicon-remove");
+            $("#8char").css("color", "#FF0004");
+        }
+
+        if ($("#password1").val() == $("#password2").val() && $("#password1").val().length > 0) {
+            $("#pwmatch").removeClass("glyphicon-remove");
+            $("#pwmatch").addClass("glyphicon-ok");
+            $("#pwmatch").css("color", "#00A41E");
+        } else {
+            $("#pwmatch").removeClass("glyphicon-ok");
+            $("#pwmatch").addClass("glyphicon-remove");
+            $("#pwmatch").css("color", "#FF0004");
+        }
+    });
+
+    $('#passwordForm').on('click', '#changePassBtn', function (event) {
+        event.preventDefault();
+        var formValues = $('#passwordForm').find('input');
+        var requiredFields = ["password0", "password1", "password2"];
+        var formObj = {};
+        var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+        if (stop === false) {
+            if ($("#password1").val().length >= 8 && $("#password1").val() == $("#password2").val()) {
+                formObj.p = "changePassword";
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: formObj,
+                    async: true,
+                    success: function (s) {
+                        if (s.password0 || s.password1) { //error
+                            if (s.password0) {
+                                toogleErrorUser('#passwordForm', "password0", "insert", s.password0)
+                            } else {
+                                toogleErrorUser('#passwordForm', "password0", "delete", null)
+                            }
+                            if (s.password1) {
+                                toogleErrorUser('#passwordForm', "password1", "insert", s.password1)
+                            } else {
+                                toogleErrorUser('#passwordForm', "password1", "delete", null)
+                            }
+                        } else {
+                            toogleErrorUser('#passwordForm', "password0", "delete", null)
+                            toogleErrorUser('#passwordForm', "password1", "delete", null)
+                            $("#changePassBtn").html("Password has changed!")
+                            $("#changePassBtn").attr("class", "col-xs-12 btn btn-success btn-load");
+                            $("#changePassBtn").attr("disabled", "disabled");
+
+                            setTimeout(function () {
+                                $("#passwordForm").trigger('reset');
+                                $("#8charDiv").css("display", "none")
+                                $("#pwmatchDiv").css("display", "none")
+                                $("#changePassBtn").attr("class", "col-xs-12 btn btn-primary btn-load");
+                                $("#changePassBtn").html("Change Password ");
+                                $("#changePassBtn").removeAttr("disabled");
+                            }, 3000);
+                        }
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        }
+    });
+
+    function toogleErrorPassword(name, type, error) {
+        if (type == "delete") {
+            $('#passwordForm').find('input[name=' + name + ']').parent().parent().removeClass("has-error");
+            $('#passwordForm').find('font[name=' + name + ']').remove();
+        } else if (type == "insert") {
+            $('#passwordForm').find('input[name=' + name + ']').parent().parent().addClass("has-error");
+            $('#passwordForm').find('font[name=' + name + ']').remove();
+            $('#passwordForm').find('input[name=' + name + ']').parent().append('<font name="' + name + '" class="text-center" color="crimson">' + error + '</font>')
+        }
+    }
+
+    //change password ends----
+
     if (usRole === "admin") {
 
         var AdmUserTable = $('#AdminUserTable').DataTable({
@@ -1284,7 +1386,8 @@ $(document).ready(function () {
                 fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                     $(nTd).html(getAdminUserTableOptions(oData.active, oData.role));
                 }
-            }]
+            }],
+            'order': [[6, 'desc']]
         });
 
         $('#AdminUserTable').on('click', '.impersonUser', function (event) {
@@ -1311,7 +1414,7 @@ $(document).ready(function () {
             }
         });
         $('#AdminUserTable').on('click', '.changeActiveUser, .changeRoleUser', function (event) {
-            var type = $(this).attr('name');
+            var type = $(this).attr('name'); //activateSendUser or activate or deactivate
             var p = $(this).attr('class');
             var clickedRow = $(this).closest('tr');
             var rowData = AdmUserTable.row(clickedRow).data();
@@ -1351,12 +1454,10 @@ $(document).ready(function () {
                 var clickedRow = button.closest('tr');
                 var rowData = AdmUserTable.row(clickedRow).data();
                 $('#savemUser').data('clickedrow', clickedRow);
-                var formValues = $('#userModal').find('input');
-                var data = getValues({ p: "getUserById", id: rowData.id })[0];
-                fillFormByName('#userModal', 'input', rowData);
+                fillFormByName('#userModal', 'input, select', rowData);
             }
         });
-        
+
         $('#userModal').on('hide.bs.modal', function (event) {
             cleanHasErrorClass("#userModal")
         });
@@ -1364,7 +1465,7 @@ $(document).ready(function () {
         $('#userModal').on('click', '#savemUser', function (event) {
             event.preventDefault();
             var formValues = $('#userModal').find('input, select');
-            var requiredFields = ["name", "username", "email", "institute"];
+            var requiredFields = ["name", "username", "email", "institute", "logintype"];
             var clickedRow = $('#savemUser').data('clickedrow')
             var formObj = {};
             var stop = "";
@@ -1380,18 +1481,18 @@ $(document).ready(function () {
                     success: function (s) {
                         if (s.email || s.username) { //exist in database
                             if (s.email) {
-                                toogleErrorUser("email", "insert", s.email)
+                                toogleErrorUser('#userModal', "email", "insert", s.email)
                             } else {
-                                toogleErrorUser("email", "delete", null)
+                                toogleErrorUser('#userModal', "email", "delete", null)
                             }
                             if (s.username) {
-                                toogleErrorUser("username", "insert", s.username)
+                                toogleErrorUser('#userModal', "username", "insert", s.username)
                             } else {
-                                toogleErrorUser("username", "delete", null)
+                                toogleErrorUser('#userModal', "username", "delete", null)
                             }
                         } else {
-                            toogleErrorUser("username", "delete", null)
-                            toogleErrorUser("email", "delete", null)
+                            toogleErrorUser('#userModal', "username", "delete", null)
+                            toogleErrorUser('#userModal', "email", "delete", null)
                             if (savetype.length) { //edit
                                 var newUserData = getValues({ p: "getUserById", id: savetype })
                                 if (newUserData[0]) {
@@ -1417,16 +1518,7 @@ $(document).ready(function () {
             }
         });
 
-        function toogleErrorUser(name, type, error) {
-            if (type == "delete") {
-                $('#userModal').find('input[name=' + name + ']').parent().parent().removeClass("has-error");
-                $('#userModal').find('font[name=' + name + ']').remove();
-            } else if (type == "insert") {
-                $('#userModal').find('input[name=' + name + ']').parent().parent().addClass("has-error");
-                $('#userModal').find('font[name=' + name + ']').remove();
-                $('#userModal').find('input[name=' + name + ']').parent().append('<font name="' + name + '" class="text-center" color="crimson">' + error + '</font>')
-            }
-        }
+
 
 
 

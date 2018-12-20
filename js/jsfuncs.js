@@ -741,12 +741,23 @@ function createFormObj(formValues, requiredFields) {
     return [formObj, stop];
 }
 
-function cleanHasErrorClass(modalID){
-        var formValues = $(modalID).find('.has-error');
+function cleanHasErrorClass(modalID) {
+    var formValues = $(modalID).find('.has-error');
     for (var i = 0; i < formValues.length; i++) {
-    $(formValues[i]).removeClass("has-error")
+        $(formValues[i]).removeClass("has-error")
     }
-    
+}
+//toogleErrorUser('#userModal', "username", "insert", s.username)
+//toogleErrorUser('#userModal', "username", "delete", null)
+function toogleErrorUser(formID, name, type, error) {
+    if (type == "delete") {
+        $(formID).find('input[name=' + name + ']').parent().parent().removeClass("has-error");
+        $(formID).find('font[name=' + name + ']').remove();
+    } else if (type == "insert") {
+        $(formID).find('input[name=' + name + ']').parent().parent().addClass("has-error");
+        $(formID).find('font[name=' + name + ']').remove();
+        $(formID).find('input[name=' + name + ']').parent().append('<font name="' + name + '" class="text-center" color="crimson">' + error + '</font>')
+    }
 }
 
 // fills the from with the object data. find is comma separated string for form types such as: 'input, p'
