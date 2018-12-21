@@ -15,23 +15,11 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         $role = $userData->{'role'};
         session_destroy();
         session_start();
-        echo ($_SESSION['username']);
-        echo ($_SESSION['email']);
-        echo ($_SESSION['name']);
-        echo ($_SESSION['ownerID']);
-        echo ($_SESSION['role']);
         $_SESSION['username'] = $username;
         $_SESSION['email'] = $email;
         $_SESSION['name'] = $name;
         $_SESSION['ownerID'] = $admin_id;
         $_SESSION['role'] = $role;
-        echo ("----------");
-        echo ($_SESSION['username']);
-        echo ($_SESSION['email']);
-        echo ($_SESSION['name']);
-        echo ($_SESSION['ownerID']);
-        echo ($_SESSION['role']);
-        
         session_write_close();
         require_once("main.php");
         exit;
