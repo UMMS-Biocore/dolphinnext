@@ -1705,7 +1705,10 @@ class dbfuncs {
         // get contents of a file into a string
         $filename = "$path/nextflow.log";
         $handle = fopen($filename, "r");
-        $content = fread($handle, filesize($filename));
+        $content = "";
+        if (filesize($filename) >0){
+            $content = fread($handle, filesize($filename));
+        }
         fclose($handle);
         return json_encode($content);
     }
@@ -1870,10 +1873,15 @@ class dbfuncs {
                 } else {
                     $where = " WHERE (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";    
                 }
-                $sql = "SELECT DISTINCT pp.id, pp.name, u.username, pp.summary, pp.date_modified, pp.output_dir, r.run_status
-                    FROM project_pipeline pp
+                $sql = "SELECT DISTINCT r.id, r.project_pipeline_id, pp.name, u.username, pp.summary, pp.date_modified, pp.output_dir, r.run_status, r.date_created,  r.date_ended, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
+                    FROM run_log r
+                    INNER JOIN (
+                        SELECT project_pipeline_id, MAX(id) id
+                        FROM run_log
+                        GROUP BY project_pipeline_id
+                    ) b ON r.project_pipeline_id = b.project_pipeline_id AND r.id=b.id
+                    INNER JOIN project_pipeline pp ON r.project_pipeline_id = pp.id
                     INNER JOIN users u ON pp.owner_id = u.id
-                    INNER JOIN run r ON r.project_pipeline_id = pp.id
                     LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                     $where";
             }

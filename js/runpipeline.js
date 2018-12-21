@@ -2957,6 +2957,8 @@ function loadPipelineDetails(pipeline_id) {
         success: function (s) {
             $('#pipeline-title').text(s[0].name);
             $('#pipeline-title').attr('href', 'index.php?np=1&id=' + pipeline_id);
+            $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: '+s[0].name);
+            $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
             $('#pipelineSum').val(decodeHtml(s[0].summary));
             if (s[0].script_pipe_header !== null) {

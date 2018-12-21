@@ -20,8 +20,7 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         $_SESSION['name'] = $name;
         $_SESSION['ownerID'] = $admin_id;
         $_SESSION['role'] = $role;
-        session_write_close();
-        require_once("main.php");
+        header('Location: ' . $_SERVER['HTTP_REFERER']);
         exit;
     } else {
         require_once("loginform.php");
@@ -29,7 +28,6 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         exit;
     }
 }
-
 if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
     if(isset($_POST['ok'])){
         session_destroy();

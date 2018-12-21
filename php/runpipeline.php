@@ -416,10 +416,8 @@
         <h4>Workflow<i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a class="fa fa-minus-square-o collapseIcon" style="font-size:15px; padding-left:10px; vertical-align:2px;" data-toggle="collapse" data-target="#workFlowDiv"></a></i></h4>
     </div>
     <div id="workFlowDiv" class="collapse in">
-<!--
-       <i class="fa fa-spinner " style="margin-left:0px; margin-right:0px;"></i> Pipeline:
-        <a href="" projectpipelineid="<?php echo $id;?>" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;"></a>
--->
+       
+        <a href="" style="margin-left:0px;  align-self:center; max-width: 500px;" id="pipeline-title2"><i class="fa fa-spinner "></i></a>
         
         
         <h6><b>Description</b></h6>

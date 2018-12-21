@@ -9,35 +9,77 @@ function getProjectOptions(projectOwn) {
 
 $(document).ready(function () {
 
-    function getPublicProfileButton() {
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a class="viewrun">View Run</a></li></ul></div>';
+    function getRunStatusButton(oData) {
+        var viewRun = "";
+        var sendEmail = "";
+        console.log(oData)
+        if (oData.own === "1" || usRole === "admin") {
+            viewRun = '<li><a class="runLink">View Run</a></li>';
+        } 
+        if (oData.own !== "1" && usRole === "admin") {
+            sendEmail = '<li><a href="#sendMailModal" data-toggle="modal">Send E-Mail to User</a></li>';
+        }
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu">' + viewRun + sendEmail +'</ul></div>';
         return button;
     }
 
+    $('#sendMailModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        console.log(button)
+//        var clickedRow = $(this).closest('tr');
+//        var rowData = runStatusTable.row(clickedRow).data();
+//        var owner_id = rowData.owner_id;
+//        console.log(owner_id)
+        
+    });
 
-    $('#runstatustable').on('click', '.viewrun', function (event) {
+    $('#runstatustable').on('click', '.runLink', function (event) {
+        event.preventDefault();
         var clickedRow = $(this).closest('tr');
         var rowData = runStatusTable.row(clickedRow).data();
-        var runId = rowData.id
-        if (runId !== '') {
+        var runId = rowData.project_pipeline_id
+        var owner_id = rowData.owner_id
+        var own = rowData.own
+        if (runId !== '' && own === "1") {
             window.location.replace("index.php?np=3&id=" + runId);
+        } else if (usRole === "admin") {
+            var userData = [];
+            userData.push({ name: "user_id", value: owner_id });
+            userData.push({ name: "p", value: 'impersonUser' });
+            $.ajax({
+                type: "POST",
+                data: userData,
+                url: "ajax/ajaxquery.php",
+                async: false,
+                success: function (msg) {
+                    var logInSuccess = true;
+                    window.location.replace("index.php?np=3&id=" + runId);
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
         }
     });
 
-    var runStatusTable = $('#runstatustable').DataTable({
+    runStatusTable = $('#runstatustable').DataTable({
         "ajax": {
             url: "ajax/ajaxquery.php",
             data: { "p": "getProjectPipelines" },
             "dataSrc": ""
         },
         "columns": [{
-            "data": "id"
+            "data": "project_pipeline_id"
             }, {
             "data": "date_modified"
             }, {
             "data": "name",
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                $(nTd).html("<a href='index.php?np=3&id=" + oData.id + "'>" + oData.name + "</a>");
+                var href = "";
+                if (oData.own === "1" || usRole === "admin") {
+                    href = 'href=""';
+                }
+                $(nTd).html('<a ' + href + ' class="runLink">' + oData.name + "</a>");
             }
             }, {
             "data": "output_dir"
@@ -47,25 +89,31 @@ $(document).ready(function () {
             "data": "run_status",
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                 var st = oData.run_status;
+                var href = "";
+                if (oData.own === "1" || usRole === "admin") {
+                    href = 'href=""';
+                }
                 if (st == "NextErr" || st == "Error") {
-                    $(nTd).html("<a href='index.php?np=3&id=" + oData.id + "'>Error</a>");
+                    $(nTd).html('<a ' + href + ' class="runLink">Error</a>');
                 } else if (st == "Terminated") {
-                    $(nTd).html("<a href='index.php?np=3&id=" + oData.id + "'>Terminated</a>");
+                    $(nTd).html('<a ' + href + ' class="runLink">Terminated</a>');
                 } else if (st == "NextSuc") {
-                    $(nTd).html("<a href='index.php?np=3&id=" + oData.id + "'>Completed</a>");
+                    $(nTd).html('<a ' + href + ' class="runLink">Completed</a>');
                 } else if (st == "init" || st == "Waiting") {
-                    $(nTd).html("<a href='index.php?np=3&id=" + oData.id + "'>Initializing</a>");
+                    $(nTd).html('<a ' + href + ' class="runLink">Initializing</a>');
                 } else if (st == "NextRun") {
-                    $(nTd).html("<a href='index.php?np=3&id=" + oData.id + "'>Running</a>");
+                    $(nTd).html('<a ' + href + ' class="runLink">Running</a>');
                 }
             }
+            }, {
+            "data": "date_created"
             }, {
             "data": "username"
             }, {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                $(nTd).html(getPublicProfileButton());
+                $(nTd).html(getRunStatusButton(oData));
             }
             }],
         'order': [[1, 'desc']],
@@ -89,7 +137,7 @@ $(document).ready(function () {
             }
         }
     });
-    
+
     //reload the table each 30 secs
     setInterval(function () {
         runStatusTable.ajax.reload();
