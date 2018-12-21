@@ -86,15 +86,14 @@ $(document).ready(function () {
                 $(row).css("background-color", "#DFEFD8");
             } else if (st == "init" || st == "Waiting" || st == "NextRun") {
                 $(row).css("background-color", "#D8EDF6");
-            } 
+            }
         }
     });
-
-
-
-
-
-
+    
+    //reload the table each 30 secs
+    setInterval(function () {
+        runStatusTable.ajax.reload();
+    }, 30000);
 
 
 

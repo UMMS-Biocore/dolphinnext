@@ -171,12 +171,60 @@ else if ($p=="getUserById"){
 else if ($p=="changeActiveUser"){
     $user_id = $_REQUEST['user_id'];
     $type = $_REQUEST['type'];
-    $data = $db->changeActiveUser($user_id, $type);  
+    $data = $db->changeActiveUser($user_id, $type); 
+    if ($type == "activateSendUser"){
+        $userData = json_decode($db->getUserById($user_id))[0];
+        if (!empty($userData)){
+            $email = $userData->{'email'};
+            $name = $userData->{'name'};
+            $logintype = $userData->{'logintype'};
+            if ($email != ""){
+                $header = "MIME-Version: 1.0\r\nFrom: <".EMAIL_SENDER.">\r\nContent-Type: text/html; charset=ISO-8859-1\r\n";
+                $subject = "DolphinNext Account Activation";
+                $loginText = "You can start browsing at ".BASE_PATH;
+                if ($logintype == "google"){
+                    $loginText = "Please use <b>Sign-In with Google</b> button to enter your account at ".BASE_PATH;
+                } else if ($logintype == "ldap"){
+                    $loginText = "Please use your e-mail address($email) and e-mail password to enter your account at ".BASE_PATH;
+                } else if ($logintype == "password"){
+                    $password_val = $db->randomPassword();
+                    $pass_hash = hash('md5', $password_val . SALT) . hash('sha256', $password_val . PEPPER);
+                    $db->updateUserPassword($user_id, $pass_hash, $ownerID);
+                    $loginText = "Please use following e-mail address and password to enter your account at ".BASE_PATH;
+                    $loginText .= "<br><br>E-mail: $email<br>";
+                    $loginText .= "Password: $password_val";
+                }
+                mail($name." <".$email.">", $subject, "Dear $name,<br><br>Your DolphinNext account is now active!<br>$loginText<br><br>Best Regards,<br><br>".COMPANY_NAME." DolphinNext Team", $header);
+            }
+        }
+    }
 }
 else if ($p=="changeRoleUser"){
     $user_id = $_REQUEST['user_id'];
     $type = $_REQUEST['type'];
     $data = $db->changeRoleUser($user_id, $type);  
+}
+else if ($p=="changePassword"){
+    $error = array();
+    $password0 = $_REQUEST['password0'];
+    $password1 = $_REQUEST['password1'];
+    $password2 = $_REQUEST['password2'];
+    $pass_hash0 = hash('md5', $password0 . SALT) . hash('sha256', $password0 . PEPPER);
+    $pass_hash1 = "";
+    if ($password1 == $password2 && !empty($password1)){
+        $pass_hash1 = hash('md5', $password1 . SALT) . hash('sha256', $password1 . PEPPER);
+    } else {
+        $error['password1'] ="New password is not match";
+    }
+    $pass_hash0DB = $db->queryAVal("SELECT pass_hash FROM users WHERE id = '$ownerID'");
+    if ($pass_hash0DB !=  $pass_hash0 && !empty($pass_hash0DB)){
+        $error['password0'] ="Old password is not correct.";
+    } else if  (!empty($pass_hash1)){
+        $data =  $db->updateUserPassword($ownerID, $pass_hash1, $ownerID);
+    }
+    if (!empty($error)){
+        $data  = json_encode($error);
+    } 
 }
 else if ($p=="saveUserManual"){
 	$name = str_replace("'", "", $_REQUEST['name']);
@@ -184,14 +232,15 @@ else if ($p=="saveUserManual"){
 	$username = str_replace("'", "", $_REQUEST['username']);
 	$institute = str_replace("'", "", $_REQUEST['institute']);
 	$lab = str_replace("'", "", $_REQUEST['lab']);
+	$logintype = $_REQUEST['logintype'];
     $error = $db->checkExistUser($id,$username,$email);
     if (!empty($error)){    
         $data = json_encode($error);
     } else {
         if (!empty($id)) {
-            $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $ownerID);  
+            $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID);  
         } else {
-            $data = $db->insertUserManual($name, $email, $username, $institute, $lab); 
+            $data = $db->insertUserManual($name, $email, $username, $institute, $lab, $logintype); 
         }
     }
 }
@@ -230,22 +279,24 @@ else if ($p=="saveGoogleUser"){
 } else if ($p=="impersonUser"){
     $user_id = $_REQUEST['user_id'];
     $admin_id =$_SESSION['ownerID'];
-    session_destroy();
-    session_start();
-    $userData = json_decode($db->getUserById($user_id))[0];
-    $username = $userData->{'username'};
-    $email = $userData->{'email'};
-    $name = $userData->{'name'};
-    $role = $userData->{'admin'};
-    $_SESSION['username'] = $username;
-    $_SESSION['name'] = $name;
-    $_SESSION['email'] = $email;
-    $_SESSION['ownerID'] = $user_id;
-    $_SESSION['admin_id'] = $admin_id;
-    $_SESSION['role'] = $role;
-    session_write_close();
-    $impersonAr = array('imperson' => 1);
-	$data = json_encode($impersonAr);
+    if (!empty($admin_id)){
+        session_destroy();
+        session_start();
+        $userData = json_decode($db->getUserById($user_id))[0];
+        $username = $userData->{'username'};
+        $email = $userData->{'email'};
+        $name = $userData->{'name'};
+        $role = $userData->{'role'};
+        $_SESSION['username'] = $username;
+        $_SESSION['name'] = $name;
+        $_SESSION['email'] = $email;
+        $_SESSION['ownerID'] = $user_id;
+        $_SESSION['admin_id'] = $admin_id;
+        $_SESSION['role'] = $role;
+        session_write_close();
+        $impersonAr = array('imperson' => 1);
+	   $data = json_encode($impersonAr);
+    }
     
 } 
 else if ($p=="getUserGroups"){

@@ -160,6 +160,17 @@ class dbfuncs {
             return null;
         }
     }
+    
+    function randomPassword() {
+        $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+        $pass = array(); //remember to declare $pass as an array
+        $alphaLength = strlen($alphabet) - 1; //put the length -1 in cache
+        for ($i = 0; $i < 8; $i++) {
+            $n = rand(0, $alphaLength);
+            $pass[] = $alphabet[$n];
+        }
+    return implode($pass); //turn the array into a string
+    }
 
      //get nextflow input parameters
     function getNextInputs ($executor, $project_pipeline_id, $ownerID ){
@@ -1099,13 +1110,17 @@ class dbfuncs {
         $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', verification='$verification', last_modified_user='$id' WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function updateUserManual($id, $name, $email, $username, $institute, $lab, $ownerID) {
-        $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', email='$email', last_modified_user='$ownerID' WHERE id = '$id'";
+    public function updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID) {
+        $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', logintype='$logintype', email='$email', last_modified_user='$ownerID' WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function insertUserManual($name, $email, $username, $institute, $lab) {
-        $sql = "INSERT INTO users(name, email, username, institute, lab, role, active, memberdate, date_created, date_modified, perms) VALUES
-			('$name', '$email', '$username', '$institute', '$lab', 'user', 1, now() , now(), now(), '3')";
+    public function updateUserPassword($id, $pass_hash, $ownerID) {
+        $sql = "UPDATE users SET pass_hash='$pass_hash', last_modified_user='$ownerID' WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function insertUserManual($name, $email, $username, $institute, $lab, $logintype) {
+        $sql = "INSERT INTO users(name, email, username, institute, lab, logintype, role, active, memberdate, date_created, date_modified, perms) VALUES
+			('$name', '$email', '$username', '$institute', '$lab', '$logintype','user', 1, now() , now(), now(), '3')";
         return self::insTable($sql);
     }
     public function checkExistUser($id,$username,$email) {
@@ -1135,12 +1150,14 @@ class dbfuncs {
     }
     
     public function changeActiveUser($user_id, $type) {
-        if ($type == "activate"){
+        if ($type == "activate" || $type == "activateSendUser"){
             $active = 1;
+            $verify = "verification=NULL,";
         } else {
             $active = "NULL";
+            $verify = "";
         }
-        $sql = "UPDATE users SET active=$active, last_modified_user='$user_id' WHERE id = '$user_id'";
+        $sql = "UPDATE users SET $verify active=$active, last_modified_user='$user_id' WHERE id = '$user_id'";
         return self::runSQL($sql);
     }
     public function changeRoleUser($user_id, $type) {
