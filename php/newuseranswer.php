@@ -5,18 +5,20 @@ ini_set('report_errors','on');
 require_once(__DIR__."/../ajax/dbfuncs.php");
 $query=new dbfuncs();
 
-function sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email_val, $lab_val, $verify){
-    	mail(EMAIL_ADMIN, "Dolphin User Verification: $fullname_space",
-		 "User Information:
-		 
-First name: ".$firstname_val."
-Last name: ".$lastname_val."
-Username: ".$username_val."
-Institute: ".$institute_val."
-Lab: ".$lab_val."
-Email: ".$email_val."
-		 
-Please visit this link in order to activate this dolphin account:\n " . BASE_PATH . "?p=verify&code=$verify", "From: ".EMAIL_SENDER);
+function sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email_val, $lab_val, $verify, $query){
+    $message="New user has registered. User Information:<br><br>";
+    $message.="First name: ".$firstname_val;
+    $message.="<br>Last name: ".$lastname_val;
+    $message.="<br>Username: ".$username_val;
+    $message.="<br>Institute: ".$institute_val;
+    $message.="<br>Lab: ".$lab_val;
+    $message.="<br>Email: ".$email_val;
+    $message.="<br><br>Please visit this link in order to activate this dolphin account:<br> " . BASE_PATH . "?p=verify&code=$verify";
+    $from = EMAIL_SENDER;
+    $from_name = "DolphinNext Team";
+    $to =  EMAIL_ADMIN;
+    $subject = "DolphinNext User Verification: $fullname_space";
+    $ret = $query->sendEmail($from, $from_name, $to, $subject, $message);
 }
 
 if (isset($_POST['request'])){
@@ -93,24 +95,31 @@ if (isset($_POST['request'])){
 	VALUES
 	( '$username_val', '$fullname_space', '".strtolower($email_val)."', '$institute_val',
     '$lab_val', '$pass_hash', '".$verify."', NOW(), 1, 1, 3, NOW(), NOW(), 1 )");
-    sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email_val, $lab_val, $verify);  
+    sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email_val, $lab_val, $verify, $query);  
 	session_destroy();
 	require_once("newuserverification.php");
 	exit;
-  } else if (isset($_SESSION['google_login']) && $_SESSION['google_login'] = true && isset($_SESSION['email']) && $_SESSION['email'] != ""  && !isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_lab) && !isset($err_institute)){
+  } else if (isset($_SESSION['google_login']) && $_SESSION['google_login'] == true && isset($_SESSION['email']) && $_SESSION['email'] != ""  && !isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_lab) && !isset($err_institute)){
     $email = $_SESSION['email'];
     $checkUserData = json_decode($query->getUserByEmail($email));
     $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
 	$verify=hash('md5', $email . VERIFY);
     $query->updateUser($id, $fullname_space, $username_val, $institute_val, $lab_val, $verify);
-    sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email, $lab_val, $verify);
+    sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email, $lab_val, $verify,$query);
     session_destroy();
 	require_once("newuserverification.php");
 	exit;  
   } else {
+      $google_login = isset($_SESSION['google_login']) ? $_SESSION['google_login'] : "";
+      $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
       session_destroy();
       session_start();
-      $_SESSION['google_login'] = false;
+      if ($google_login == true && $email != ""){
+          $_SESSION['google_login'] = true;
+          $_SESSION['email'] = $email;
+      } else {
+          $_SESSION['google_login'] = false;
+      }
       session_write_close();
       require_once("newuserform.php");
       $e="Login Failed.";

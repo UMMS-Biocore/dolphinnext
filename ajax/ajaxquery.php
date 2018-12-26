@@ -179,7 +179,6 @@ else if ($p=="changeActiveUser"){
             $name = $userData->{'name'};
             $logintype = $userData->{'logintype'};
             if ($email != ""){
-                $header = "MIME-Version: 1.0\r\nFrom: <".EMAIL_SENDER.">\r\nContent-Type: text/html; charset=ISO-8859-1\r\n";
                 $subject = "DolphinNext Account Activation";
                 $loginText = "You can start browsing at ".BASE_PATH;
                 if ($logintype == "google"){
@@ -194,7 +193,11 @@ else if ($p=="changeActiveUser"){
                     $loginText .= "<br><br>E-mail: $email<br>";
                     $loginText .= "Password: $password_val";
                 }
-                mail($name." <".$email.">", $subject, "Dear $name,<br><br>Your DolphinNext account is now active!<br>$loginText<br><br>Best Regards,<br><br>".COMPANY_NAME." DolphinNext Team", $header);
+                $from = EMAIL_SENDER;
+                $from_name = "DolphinNext Team";
+                $to  = $email;
+                $message = "Dear $name,<br><br>Your DolphinNext account is now active!<br>$loginText<br><br>Best Regards,<br><br>".COMPANY_NAME." DolphinNext Team";
+                $db->sendEmail($from, $from_name, $to, $subject, $message);
             }
         }
     }
@@ -312,6 +315,15 @@ else if ($p=="getExistProjectPipelines"){
 else if ($p=="getProjectPipelines"){
     $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
     $data = $db -> getProjectPipelines($id,$project_id,$ownerID,$userRole);
+}
+else if ($p=="sendEmail"){
+    $adminemail = $_REQUEST['adminemail'];
+    $useremail = $_REQUEST['useremail'];
+    $message = $_REQUEST['message'];
+    $subject = $_REQUEST['subject'];
+    $checkAdminData = json_decode($db->getUserByEmail($adminemail));
+    $adminName = isset($checkAdminData[0]) ? $checkAdminData[0]->{'name'} : "";
+    $data = $db -> sendEmail($adminemail,$adminName,$useremail,$subject,$message);
 }
 else if ($p=="getProjectInputs"){
     $project_id = $_REQUEST['project_id'];

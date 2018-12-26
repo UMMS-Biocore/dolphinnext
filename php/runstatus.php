@@ -9,17 +9,18 @@
         <table id="runstatustable" class="table table-striped table-bordered" cellspacing="0" width="100%">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th style="width:5%;">ID</th>
                     <th style="display:none;">Date</th>
-                    <th>Run Name</th>
-                    <th>Work Directory</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Date Created</th>
-                    <th>Owner</th>
-                    <th>Options</th>
+                    <th style="width:20%;">Run Name</th>
+                    <th style="width:20%;">Work Directory</th>
+                    <th style="width:20%;">Description</th>
+                    <th style="width:8%;">Status</th>
+                    <th style="width:12%;">Date Created</th>
+                    <th style="width:10%;">Owner</th>
+                    <th style="width:5%;">Options</th>
                 </tr>
             </thead>
+            <tbody style="word-break: break-all;"></tbody>
         </table>
     </div>
 </div>
@@ -42,21 +43,32 @@
                     <div class="form-group">
                         <label for="adminemail">
                             Your E-mail:</label>
-                        <input type="email" class="form-control" name="adminemail" required="" maxlength="50">
-
+                        <div >
+                            <input type="email" class="form-control" name="adminemail" required="" maxlength="50">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="useremail">
-                            Users Email:</label>
-                        <input type="email" class="form-control"  name="useremail" required="" maxlength="50">
+                            User's E-mail:</label>
+                        <div >
+                            <input type="email" class="form-control" name="useremail" required="" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">
+                            Subject:</label>
+                        <div>
+                            <input type="text" class="form-control" name="subject" required="">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="name">
                             Message:</label>
-                        <textarea class="form-control" type="textarea" name="message" placeholder="Your Message Here" rows="7"></textarea>
+                        <div>
+                            <textarea class="form-control" type="textarea" name="message" placeholder="Your Message Here" rows="7"></textarea>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block" id="sendEmailUser">Send!</button>
-
                 </form>
                 <div id="success_message" style="width:100%; height:100%; display:none; ">
                     <h3>Sent your message successfully!</h3>
@@ -71,5 +83,3 @@
 
     </div>
 </div>
-
-

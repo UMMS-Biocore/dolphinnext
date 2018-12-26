@@ -1736,7 +1736,7 @@ class dbfuncs {
                 mkdir("../{$this->run_path}/run{$project_pipeline_id}", 0755, true);
             }
             // save $nextflow_log to a file 
-            if ($nextflow_log != "" && !empty($nextflow_log)){
+            if (!is_null($nextflow_log) && isset($nextflow_log) && $nextflow_log != "" && !empty($nextflow_log)){
                 $this->writeLog($project_pipeline_id,$nextflow_log,'w','nextflow.log');
                 return json_encode("nextflow log saved");
             } else {
@@ -1873,7 +1873,7 @@ class dbfuncs {
                 } else {
                     $where = " WHERE (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";    
                 }
-                $sql = "SELECT DISTINCT r.id, r.project_pipeline_id, pp.name, u.username, pp.summary, pp.date_modified, pp.output_dir, r.run_status, r.date_created,  r.date_ended, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
+                $sql = "SELECT DISTINCT r.id, r.project_pipeline_id, pp.name, u.email, u.username, pp.summary, pp.date_modified, pp.output_dir, r.run_status, r.date_created,  r.date_ended, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
                     FROM run_log r
                     INNER JOIN (
                         SELECT project_pipeline_id, MAX(id) id
@@ -2018,6 +2018,21 @@ class dbfuncs {
         $sql = "INSERT INTO feedback(email, message, url, date_created) VALUES
 			('$email', '$message','$url', now())";
         return self::insTable($sql);
+    }
+    
+    public function sendEmail($from, $from_name, $to, $subject, $message) {
+        $message = str_replace("\n","<br>",$message);
+        $message = wordwrap($message, 70);
+        $headers  = 'MIME-Version: 1.0' . "\r\n";
+        $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+        $headers .= 'From: '.$from_name.' <'.$from.'>' . "\r\n";
+        $ret = array();
+        if(@mail($to, $subject, $message, $headers)){
+            $ret['status'] = "sent";
+        } else{
+            $ret['status'] = "failed";
+        }
+        return json_encode($ret);
     }
 // --------- Pipeline -----------
 	  public function getPipelineGroup($ownerID) {

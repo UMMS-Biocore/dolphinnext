@@ -320,7 +320,9 @@ session_write_close();
                             ?>
                             " class="img-circle" alt="User Image">
                         </div>
-                        <div id="userInfo" style="display:inline" class="info">
+                        <div id="userInfo" style="display:inline" class="info" email="<?php
+                          echo $email;  
+                        ?>">
                             <p id="userName">
                                 <?php
                         if ($login == 1){

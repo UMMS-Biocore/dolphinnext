@@ -3443,11 +3443,12 @@ function checkReadytoRun(type) {
     if (publishReady && s3status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
         console.log("initial runStatus")
         console.log(runStatus)
-        if (((runStatus !== "NextRun" && runStatus !== "Waiting" && runStatus !== "init") && (checkType === "rerun" || checkType === "newrun" || checkType === "resumerun")) || runStatus === "") {
+        if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun")  {
             if (amzStatus) {
                 if (amzStatus === "running") {
                     console.log(checkType)
                     if (checkType === "rerun" || checkType === "resumerun") {
+                        runStatus = "aboutToStart"
                         runProjectPipe(runProPipeCall, checkType);
                     } else if (checkType === "newrun") {
                         displayButton('runProPipe');
@@ -3461,6 +3462,7 @@ function checkReadytoRun(type) {
                 console.log("checkType")
                 console.log(checkType)
                 if (checkType === "rerun" || checkType === "resumerun") {
+                    runStatus = "aboutToStart"
                     runProjectPipe(runProPipeCall, checkType);
                 } else if (checkType === "newrun") {
                     displayButton('runProPipe');
@@ -3954,8 +3956,7 @@ function readNextLog(proType, proId, type) {
     }
     //get nextflow log
     nextflowLog = getNextflowLog(project_pipeline_id, proType, proId);
-    
-    // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated
+    // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
     // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
         if (nextflowLog !== null && nextflowLog !== undefined) {
@@ -3988,9 +3989,13 @@ function readNextLog(proType, proId, type) {
     // when run hasn't finished yet and connection is down
     else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
         displayButton('abortedProPipe');
+        //log file might be deleted or couln't read the log file
+        var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
         if (nextflowLog !== null && nextflowLog !== undefined) {
             $('#runLogArea').val(serverLog + nextflowLog + "\nConnection is lost.");
             autoScrollLogArea()
+        } else {
+            $('#runLogArea').val(serverLog + "\nConnection is lost.");
         }
     }
     // otherwise parse nextflow file to get status
@@ -4096,7 +4101,7 @@ function readNextLog(proType, proId, type) {
     }
     // save nextflow log file
     setTimeout(function () {
-        window.saveNextLog = callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
+        callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
     }, 100);
 }
 
@@ -4448,10 +4453,10 @@ function saveRun() {
                     updateSideBarProPipe("", project_pipeline_id, run_name, "edit")
                 } else if (dupliProPipe === true) {
                     var duplicateProPipeIn = getValues({ p: "duplicateProjectPipelineInput", new_id: s.id, old_id: old_project_pipeline_id });
+                    dupliProPipe = false;
                     if (duplicateProPipeIn) {
                         setTimeout(function () { window.location.replace("index.php?np=3&id=" + s.id); }, 0);
                     }
-                    dupliProPipe = false;
                 }
             },
             error: function (errorThrown) {
