@@ -12,26 +12,76 @@ $(document).ready(function () {
     function getRunStatusButton(oData) {
         var viewRun = "";
         var sendEmail = "";
-        console.log(oData)
         if (oData.own === "1" || usRole === "admin") {
             viewRun = '<li><a class="runLink">View Run</a></li>';
-        } 
+        }
         if (oData.own !== "1" && usRole === "admin") {
             sendEmail = '<li><a href="#sendMailModal" data-toggle="modal">Send E-Mail to User</a></li>';
         }
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu">' + viewRun + sendEmail +'</ul></div>';
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu">' + viewRun + sendEmail + '</ul></div>';
         return button;
     }
 
     $('#sendMailModal').on('show.bs.modal', function (event) {
+        $(this).find('form').trigger('reset');
+        $("#sendEmailUser").attr("class", "btn btn-primary btn-block");
+                            $("#sendEmailUser").html("Send!");
+        $("#sendEmailUser").removeAttr("disabled");
         var button = $(event.relatedTarget);
-        console.log(button)
-//        var clickedRow = $(this).closest('tr');
-//        var rowData = runStatusTable.row(clickedRow).data();
-//        var owner_id = rowData.owner_id;
-//        console.log(owner_id)
-        
+        var clickedRow = $(button).closest('tr');
+        var rowData = runStatusTable.row(clickedRow).data();
+        var useremail = rowData.email;
+        var adminemail = $("#userInfo").attr("email");
+        var subject = "Regarding to your DophinNext run (" + truncateName(rowData.name, 'process') + ")";
+        fillFormByName('#sendMailModal', 'input', { useremail: useremail, adminemail: adminemail, subject: subject });
     });
+
+    $('#sendMailModal').on('hide.bs.modal', function (event) {
+        cleanHasErrorClass("#sendMailModal")
+    });
+
+    $('#sendMailModal').on('click', '#sendEmailUser', function (event) {
+        event.preventDefault();
+        var formValues = $('#sendMailModal').find('input, textarea');
+        var requiredFields = ["adminemail", "useremail", "message"];
+        var formObj = {};
+        var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+        if (stop === false) {
+            formObj.p = "sendEmail"
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: formObj,
+                async: true,
+                success: function (s) {
+                    console.log(s)
+                    if (s.status == "sent") {
+                        $("#sendEmailUser").html("Your mail has sent!")
+                        $("#sendEmailUser").attr("class", "btn btn-success btn-block");
+                        $("#sendEmailUser").attr("disabled", "disabled");
+                        setTimeout(function () {
+                            $('#sendMailModal').modal('hide');
+                        }, 2000);
+                    } else {
+                        $("#sendEmailUser").html("Your mail couldn't sent!")
+                        $("#sendEmailUser").attr("class", "col-xs-12 btn btn-danger btn-load");
+                        $("#sendEmailUser").attr("disabled", "disabled");
+                        setTimeout(function () {
+                            $("#sendEmailUser").attr("class", "btn btn-primary btn-block");
+                            $("#sendEmailUser").html("Send!");
+                            $("#sendEmailUser").removeAttr("disabled");
+                        }, 2000);
+                    }
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
+    });
+
+
 
     $('#runstatustable').on('click', '.runLink', function (event) {
         event.preventDefault();
@@ -84,7 +134,10 @@ $(document).ready(function () {
             }, {
             "data": "output_dir"
             }, {
-            "data": "summary"
+            "data": null,
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                $(nTd).html(truncateName(oData.summary, 'newTable'))
+            }
             }, {
             "data": "run_status",
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
@@ -103,6 +156,8 @@ $(document).ready(function () {
                     $(nTd).html('<a ' + href + ' class="runLink">Initializing</a>');
                 } else if (st == "NextRun") {
                     $(nTd).html('<a ' + href + ' class="runLink">Running</a>');
+                } else if (st == "Aborted") {
+                    $(nTd).html('<a ' + href + ' class="runLink">Aborted</a>');
                 }
             }
             }, {
@@ -128,7 +183,7 @@ $(document).ready(function () {
             var st = data.run_status;
             if (st == "NextErr" || st == "Error") {
                 $(row).css("background-color", "#F1DEDE");
-            } else if (st == "Terminated") {
+            } else if (st == "Terminated" || st == "Aborted") {
                 $(row).css("background-color", "#e2e2e2");
             } else if (st == "NextSuc") {
                 $(row).css("background-color", "#DFEFD8");

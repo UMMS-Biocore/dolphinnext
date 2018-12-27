@@ -1,3 +1,9 @@
+24.12.2018 Version 0.2.59
+Status bugs are fixed for aborted and connecting status.
+send e-mail option added for admin on run status page 
+Send e-mail script is updated to support gmail.
+Minor bug is fixed regarding to google sign in.
+
 21.12.2018 Version 0.2.58
 Run status page updated (data created column added, impersonate feature added for admin).
 

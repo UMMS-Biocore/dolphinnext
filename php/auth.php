@@ -23,8 +23,8 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         header('Location: ' . $_SERVER['HTTP_REFERER']);
         exit;
     } else {
-        require_once("loginform.php");
         session_destroy();
+        require_once("loginform.php");
         exit;
     }
 }

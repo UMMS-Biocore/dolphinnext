@@ -19,9 +19,12 @@ if(isset($_GET['p']) && $_GET['p'] == "verify"){
 	SET verification = NULL, active = 1
 	WHERE verification = '$code'
 	");
-	mail($newuser[0]->email, "Your DolphinNext account is now active!",
-"Your DolphinNext account is now active!
-You can start browsing at ".BASE_PATH, "From: ".EMAIL_SENDER);
+    $message.="Your DolphinNext account is now active!<br>You can start browsing at ".BASE_PATH;
+    $from = EMAIL_SENDER;
+    $from_name = "DolphinNext Team";
+    $to =  $newuser[0]->email;
+    $subject = "Your DolphinNext account is now active!";
+    $ret = $query->sendEmail($from, $from_name, $to, $subject, $message);
     require_once("newuserverified.php");
     session_destroy();
     exit;
