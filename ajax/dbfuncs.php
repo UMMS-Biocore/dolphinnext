@@ -2424,8 +2424,26 @@ class dbfuncs {
     public function getUUIDAPI($data,$type,$id){
         //travis fix
         if (!headers_sent()) {
-        ob_start();
-        // do initial processing here
+            ob_start();
+            // do initial processing here
+            if (!headers_sent()) {
+                header('Cache-Control: no-cache, must-revalidate');
+                header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+                header('Content-type: application/json');
+                echo $data;
+            } else {
+                echo $data;
+            }
+            //function returned at this point for user
+            $size = ob_get_length();
+            header("Content-Encoding: none");
+            header("Content-Length: {$size}");
+            header("Connection: close");
+            ob_end_flush();
+            ob_flush();
+            flush();
+        }
+        //server side keeps working
         $targetDir = "{$this->tmp_path}/api";
         if (!file_exists($targetDir)) {
             mkdir($targetDir, 0777, true);
@@ -2433,24 +2451,6 @@ class dbfuncs {
         $uuidPath = "{$targetDir}/{$type}{$id}.txt";
         $request = API_PATH."/api/service.php?func=getUUID&type=$type";
         exec("curl '$request' -o $uuidPath > /dev/null 2>&1 &", $res, $exit);
-        
-        if (!headers_sent()) {
-            header('Cache-Control: no-cache, must-revalidate');
-            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-            header('Content-type: application/json');
-            echo $data;
-        } else {
-            echo $data;
-        }
-        //function returned at this point for user
-        $size = ob_get_length();
-        header("Content-Encoding: none");
-        header("Content-Length: {$size}");
-        header("Connection: close");
-        ob_end_flush();
-        ob_flush();
-        flush();
-        //server side keep working
         for( $i= 0 ; $i < 4 ; $i++ ){
             sleep(5);
             $uuidFile = $this->readFile($uuidPath);
@@ -2471,7 +2471,6 @@ class dbfuncs {
             }
         } else {
             $this->updateUUID($id, $type, $res);
-        }
         }
 	}
     
