@@ -2422,6 +2422,8 @@ class dbfuncs {
     }
     
     public function getUUIDAPI($data,$type,$id){
+        //travis fix
+        if (!headers_sent()) {
         ob_start();
         // do initial processing here
         $targetDir = "{$this->tmp_path}/api";
@@ -2469,6 +2471,7 @@ class dbfuncs {
             }
         } else {
             $this->updateUUID($id, $type, $res);
+        }
         }
 	}
     
