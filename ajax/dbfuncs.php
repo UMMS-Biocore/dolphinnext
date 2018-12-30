@@ -2432,14 +2432,11 @@ class dbfuncs {
         $request = API_PATH."/api/service.php?func=getUUID&type=$type";
         exec("curl '$request' -o $uuidPath > /dev/null 2>&1 &", $res, $exit);
         
-        if (!headers_sent()) {
             header('Cache-Control: no-cache, must-revalidate');
             header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
             header('Content-type: application/json');
             echo $data;
-        } else {
-            echo $data;
-        }
+        
         //function returned at this point for user
         $size = ob_get_length();
         header("Content-Encoding: none");
