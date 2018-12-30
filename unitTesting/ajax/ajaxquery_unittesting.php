@@ -240,6 +240,7 @@ class ajaxQueryTest extends TestCase
 	}
     /**
      * @depends testgetMaxProcess_gid
+     * @runInSeparateProcess
      */
     public function testInsertProcess() {
 		ob_start();
@@ -784,6 +785,9 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)->id,'1');
 		ob_end_clean();
 	}
+    /**
+     * @runInSeparateProcess
+     */    
     public function testsaveAllPipeline() {
 		ob_start();
 		$_REQUEST['p'] = 'saveAllPipeline';
