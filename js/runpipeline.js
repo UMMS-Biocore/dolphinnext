@@ -187,7 +187,11 @@ function translateSVG(mG, pObj) {
     if (!mG[3]) {
         mG[3] = 1378; //default width of container if its not defined before
     }
-    var widthC = $("#container").width();
+//    var widthC = $("#container").width(); //not working for inactive run page div
+    var widthC = $("#runTabDiv").width();
+    if (!widthC){
+        widthC = 700;
+    }
     var coefW = widthC / mG[3];
     var height = widthC / 3;
     if (height < 300) {
@@ -3920,6 +3924,10 @@ function readNextflowLogTimer(proType, proId, type) {
 autoScrollLog = true;
 $('#runLogArea').on('click', function (e) {
     autoScrollLog = false;
+});
+
+$('a[href="#logTab"]').on('shown.bs.tab', function (e) {
+    autoScrollLogArea()
 });
 
 function autoScrollLogArea() {
