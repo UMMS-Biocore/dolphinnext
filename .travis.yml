@@ -36,7 +36,7 @@ before_script:
 
 script:
   #	ajax
-  - phpunit unitTesting/ajax/ajaxquery_unittesting.php
+  - phpunit --stderr unitTesting/ajax/ajaxquery_unittesting.php 
 
 after_script:
   - mysql -e "show databases;" -uroot
