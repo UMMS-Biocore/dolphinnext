@@ -483,7 +483,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pObj) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -572,6 +572,9 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
     if (dropDown) {
         $("#text-" + pObj.gNum).attr('dropDown', dropDown)
     }
+    if (pubWeb) {
+        $("#text-" + pObj.gNum).attr('pubWeb', pubWeb)
+    }
 
     if (pObj == window) {
         pObj.g.append("text").attr("id", "text" + MainGNum + "-" + gNum)
@@ -642,6 +645,7 @@ function addProcess(processDat, xpos, ypos) {
     z = t.scale[0]
     var defVal = null;
     var dropDown = null;
+    var pubWeb = null;
     //var process_id = processData[index].id;
     //for input parameters:  
     if (processDat === "inputparam@inPro") {
@@ -659,7 +663,7 @@ function addProcess(processDat, xpos, ypos) {
         var init = "o"
         var pColor = "orange"
 
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, window)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, window)
         processList[("g-" + gNum)] = name
         processListNoOutput[("g-" + gNum)] = name
         gNum = gNum + 1
@@ -679,7 +683,7 @@ function addProcess(processDat, xpos, ypos) {
         var classtoparam = classtoparam || "connect_to_output input"
         var init = "i"
         var pColor = "green"
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, window)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, window)
 
         processList[("g-" + gNum)] = name
         gNum = gNum + 1
@@ -1804,10 +1808,12 @@ function cancel() {
 
 function rename() {
     renameTextID = this.id;
+    console.log(d3.select("#" + this.id))
     renameText = d3.select("#" + this.id).attr('name');
     renameTextClassType = d3.select("#" + this.id).attr('classType');
     renameTextDefVal = d3.select("#" + this.id).attr('defVal');
     renameTextDropDown = d3.select("#" + this.id).attr('dropDown');
+    renameTextPubWeb = d3.select("#" + this.id).attr('pubWeb');
     body = document.body;
     bodyW = body.offsetWidth;
     bodyH = body.scrollHeight;
@@ -2054,15 +2060,19 @@ function createSaveNodes() {
         if (prosessID.match(/(.*) dragging/)) {
             prosessID = prosessID.match(/(.*) dragging/)[1];
         }
-        // save defVal and dropDown of input parameters if exist
+        // save defVal, dropDown, pubWeb parameters if exist
         var defVal = $("#text-" + gNum).attr("defVal");
         var dropDown = $("#text-" + gNum).attr("dropDown");
+        var pubWeb = $("#text-" + gNum).attr("pubWeb");
         var processModule = {};
         if (defVal) {
             processModule["defVal"] = defVal;
         }
         if (dropDown) {
             processModule["dropDown"] = dropDown;
+        }
+        if (pubWeb) {
+            processModule["pubWeb"] = pubWeb;
         }
         processName = processList[key]
         saveNodes[key] = [x, y, prosessID, processName, processModule]
@@ -2166,6 +2176,7 @@ function save() {
             sl = JSON.stringify(savedList);
             var ret = getValues({ p: "saveAllPipeline", dat: sl });
             pipeline_id = ret.id;
+            console.log(ret)
             $("#pipeline-title").attr('pipelineid', pipeline_id);
             modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "insert")
             //keep record for last group_id
@@ -2321,12 +2332,16 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var process_id = id;
     var defVal = null;
     var dropDown = null;
+    var pubWeb = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
             defVal = processModules.defVal;
         }
         if (processModules.dropDown) {
             dropDown = processModules.dropDown;
+        }
+        if (processModules.pubWeb) {
+            pubWeb = processModules.pubWeb;
         }
     }
 
@@ -2361,7 +2376,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.processListNoOutput[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
@@ -2395,7 +2410,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 

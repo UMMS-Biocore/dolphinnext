@@ -1,3 +1,11 @@
+30.12.2018 Version 0.2.60
+uuid operations now handled after process/pipeline creation
+run page organized with new tabs(advanced, workflow etc.)
+Following parameters added/updated in .sec file [CONFIG] section.
+TEMPPATH=../tmp
+Following parameter is updated as:
+RUNPATH=../tmp/logs
+ 
 24.12.2018 Version 0.2.59
 Status bugs are fixed for aborted and connecting status.
 send e-mail option added for admin on run status page 

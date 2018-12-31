@@ -122,7 +122,6 @@ session_write_close();
             /*    NavBar process details*/
 
             .nav-tabs {
-                background-color: #F9F9F9 !important;
                 color: #428bca;
                 font-weight: 600;
             }
@@ -137,7 +136,7 @@ session_write_close();
                 color: #0570c1;
             }
 
-            .active a {
+            .nav-item {
                 color: #428bca !important;
             }
 

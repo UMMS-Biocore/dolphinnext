@@ -961,6 +961,11 @@
                             <input type="text" class="form-control" id="dropDownOpt" name="dropDownOpt" disabled>
                         </div>
                     </div>
+                    <div id="pubWebDiv" class="form-group">
+                        <div class="col-sm-5 control-label">
+                            <label><input type="checkbox" id="checkPubWeb" name="pubWeb" style ="margin-right:3px;">  Publish to Web Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to publish connected output files to web publish directory."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">

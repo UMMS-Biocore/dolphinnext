@@ -352,7 +352,7 @@ else if ($p=="getProjectInput"){
     $data = $db -> getProjectInput($id,$ownerID);
 }
 else if ($p=="getProjectPipelineInputs"){
-    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
     if (!empty($id)) {
         $data = $db->getProjectPipelineInputsById($id,$ownerID);
     } else {
@@ -743,16 +743,7 @@ else if ($p=="saveProcess"){
     }
     $process_uuid = isset($_REQUEST['process_uuid']) ? $_REQUEST['process_uuid'] : "";
     $process_rev_uuid = isset($_REQUEST['process_rev_uuid']) ? $_REQUEST['process_rev_uuid'] : "";
-    
-    if (empty($id) && empty($process_uuid)) {
-        $all_uuid = $db->getUUIDAPI("process");
-        $process_uuid = $all_uuid->uuid;
-        $process_rev_uuid = $all_uuid->rev_uuid;
-    } else if (empty($id) && empty($process_rev_uuid)){
-        $all_uuid = $db->getUUIDAPI("process_rev");
-        $process_rev_uuid = $all_uuid->rev_uuid;
-        $process_uuid = "$process_uuid";
-    }
+    $process_uuid = "$process_uuid";
     $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
     $process_group_id = $_REQUEST['process_group_id'];
     $script = addslashes(htmlspecialchars(urldecode($_REQUEST['script']), ENT_QUOTES));
@@ -778,6 +769,13 @@ else if ($p=="saveProcess"){
         $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $publish, $script_mode, $script_mode_header, $ownerID);
     } else {
         $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID);
+        $idArray = json_decode($data,true);
+        $new_pro_id = $idArray["id"];
+        if (empty($id) && empty($process_uuid)) {
+            $db->getUUIDAPI($data, "process", $new_pro_id);
+        } else if (empty($id) && empty($process_rev_uuid)){
+            $db->getUUIDAPI($data, "process_rev", $new_pro_id);
+        }
     }
 }
 else if ($p=="saveProject"){
@@ -824,6 +822,8 @@ else if ($p=="duplicateProcess"){
     $idArray = json_decode($data,true);
     $new_pro_id = $idArray["id"];
     $db->duplicateProcessParameter($new_pro_id, $old_id, $ownerID);
+    $db->getUUIDAPI($data, "process", $new_pro_id);
+    
 }
 else if ($p=="createProcessRev"){
     $rev_comment = $_REQUEST['rev_comment'];
@@ -834,6 +834,7 @@ else if ($p=="createProcessRev"){
     $idArray = json_decode($data,true);
     $new_pro_id = $idArray["id"];
     $db->duplicateProcessParameter($new_pro_id, $old_id, $ownerID);
+    $db->getUUIDAPI($data, "process_rev", $new_pro_id);
 }
 else if ($p=="saveProjectPipeline"){
     $pipeline_id = $_REQUEST['pipeline_id'];
@@ -1076,6 +1077,18 @@ else if ($p=="saveAllPipeline")
 {
 	$dat = $_REQUEST['dat'];
     $data = $db->saveAllPipeline($dat,$ownerID);
+    $idArray = json_decode($data,true);
+    $new_pipe_id = $idArray["id"];
+    if (!empty($new_pipe_id)){
+        $obj = json_decode($dat);
+        $pipeline_uuid = isset($obj[21]->{"pipeline_uuid"}) ? $obj[21]->{"pipeline_uuid"} : "";
+        $pipeline_rev_uuid = isset($obj[22]->{"pipeline_rev_uuid"}) ? $obj[22]->{"pipeline_rev_uuid"} : "";
+        if (empty($pipeline_uuid)) {
+            $db->getUUIDAPI($data,"pipeline", $new_pipe_id);
+        } else if (empty($pipeline_rev_uuid)){
+            $db->getUUIDAPI($data,"pipeline_rev", $new_pipe_id);
+        }
+    }
 }
 else if ($p=="savePipelineDetails")
 {

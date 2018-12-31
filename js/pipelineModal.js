@@ -2657,22 +2657,40 @@ $(document).ready(function () {
 
     $('#renameModal').on('show.bs.modal', function (event) {
         $(this).find('form').trigger('reset');
-        if (renameTextClassType === "output" || renameTextClassType === null) {
+        if (renameTextClassType === null) {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")
+            $('#pubWebDiv').css("display", "none")
         } else if (renameTextClassType === "input") {
             $('#defValDiv').css("display", "block")
             $('#dropdownDiv').css("display", "block")
+            $('#pubWebDiv').css("display", "none")
+        } else if (renameTextClassType === "output") {
+            $('#defValDiv').css("display", "none")
+            $('#dropdownDiv').css("display", "none")
+            $('#pubWebDiv').css("display", "block")
         }
+
         fillRenameModal(renameTextDefVal, "#checkDefVal", '#defVal');
         fillRenameModal(renameTextDropDown, '#checkDropDown', '#dropDownOpt');
-
+        if (renameTextPubWeb) {
+            $("#checkPubWeb").attr('checked', true);
+        } else {
+            $("#checkPubWeb").removeAttr('checked');
+        }
         $('#renameModaltitle').html('Change Name');
         $('#mRenName').val(renameText);
     });
     $('#renameModal').on('click', '#renameProPara', function (event) {
         saveValue('#checkDefVal', '#defVal', "defVal");
         saveValue('#checkDropDown', '#dropDownOpt', "dropDown");
+        saveValue('#checkPubWeb', '#dropDownOpt', "pubWeb");
+        var checkValue = $("#checkPubWeb").is(":checked").toString();
+        if (checkValue === "true") {
+            $("#" + renameTextID).attr("pubWeb", "on")
+        } else {
+            $("#" + renameTextID).removeAttr("pubWeb");
+        }
         changeName();
         autosave();
         $('#renameModal').modal("hide");

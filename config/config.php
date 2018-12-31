@@ -19,6 +19,7 @@ $secConf = $secRaw['CONFIG'];
 if (!empty($secConf)){
     date_default_timezone_set($secConf['TIMEZONE']);
     define('RUNPATH', $secConf['RUNPATH']);
+    define('TEMPPATH', $secConf['TEMPPATH']);
     define('API_PATH', $secConf['API_PATH']);
     define('BASE_PATH', $secConf['BASE_PATH']);
     define('LDAP_SERVER', $secConf['LDAP_SERVER']);
