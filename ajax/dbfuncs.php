@@ -566,7 +566,6 @@ class dbfuncs {
                 $attempt = "0";
             }
             $renameArr= array("log.txt", "timeline.html", "trace.txt", "dag.html", "report.html");
-//            $renameArr= array("log.txt");
             $renameLog = "";
             foreach ($renameArr as $item):
                 if ($item == "log.txt"){

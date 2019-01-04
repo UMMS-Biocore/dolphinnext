@@ -3712,6 +3712,9 @@ function parseMountPath(path) {
 //when -E is not defined add paths, If -E defined then replace the content of -E "paths"
 function getNewExecOpt(oldExecOpt, newPaths) {
     var newExecAll = "";
+    if (!oldExecOpt){
+        oldExecOpt = "";
+    }
     if (!oldExecOpt.match(/\-E/)) {
         newExecAll = oldExecOpt + newPaths;
     } else if (oldExecOpt.match(/\-E "(.*)"/)) {
@@ -4625,11 +4628,11 @@ function fillRunVerOpt(dropDownId) {
             }
             if (run_log_uuid) {
                 $(dropDownId).prepend(
-                    $('<option ' + lastItem + '></option>').attr("ver", n).val(run_log_uuid).html("Log version " + n + " created at " + date_created)
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val(run_log_uuid).html("Run Log " + n + " created at " + date_created)
                 );
             } else if (project_pipeline_id) {
                 $(dropDownId).prepend(
-                    $('<option ' + lastItem + '></option>').attr("ver", n).val("run" + project_pipeline_id).html("Log version " + n + " created at " + date_created)
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val("run" + project_pipeline_id).html("Run Log " + n + " created at " + date_created)
                 );
             }
         }
@@ -4672,7 +4675,7 @@ $(function () {
         var run_log_uuid = $(this).val();
         var version = $('option:selected', this).attr('ver');
         if (version) {
-            var runTitleLog = "Run Log Version " + version + ":"
+            var runTitleLog = "Run Log " + version + ":"
             $('a[href="#logTab"]').css("display", "block")
         } else {
             var runTitleLog = "";
