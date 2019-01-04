@@ -1,3 +1,7 @@
+04.01.2019 Version 0.2.61
+Nextflow reports (DAG, timeline, report and trace) are added to run log section.
+Nextflow config and log files are saved for each run attempt and could be reached in the log section.
+
 30.12.2018 Version 0.2.60
 uuid operations now handled after process/pipeline creation
 run page organized with new tabs(advanced, workflow etc.)

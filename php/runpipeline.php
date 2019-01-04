@@ -125,8 +125,9 @@
     <ul id="runTabDiv" class="nav nav-tabs">
         <li class="active"><a class="nav-item" data-toggle="tab" href="#configTab">Run Settings</a></li>
         <li><a class="nav-item" data-toggle="tab" href="#advancedTab">Advanced</a></li>
-        <li><a class="nav-item" data-toggle="tab" href="#logTab">Log</a></li>
+        <li><a class="nav-item" data-toggle="tab" href="#logTab" style="display:none;">Log</a></li>
         <li><a class="nav-item" data-toggle="tab" href="#workflowTab">Workflow</a></li>
+<!--        <li><a class="nav-item" data-toggle="tab" href="#reportTab">Report</a></li>-->
     </ul>
     <div class="tab-content">
         <div id="configTab" class="tab-pane fade in active">
@@ -286,7 +287,7 @@
 
         <div id="advancedTab" class="tab-pane fade">
             <div id="advOpt" class="row" style="margin-top:10px; margin-bottom:2px;">
-                <div class="col-md-12" >
+                <div class="col-md-12">
                     <div class="form-group">
                         <label>Run Command <span><a data-toggle="tooltip" data-placement="bottom" title="You may run the command or commands (by seperating each command with && sign) before the nextflow job starts. (eg. source /etc/bashrc && module load java/1.8.0_31 && module load singularity/singularity-2.4)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <textarea id="runCmd" rows="1" name="runCmd" placeholder="Enter commands here.." style="min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea>
@@ -402,13 +403,18 @@
         </div>
 
         <div id="logTab" class="tab-pane fade">
-            <div id="runLogs" style=" display:none;">
-                <div>
-                    <div>
-                        <textarea readonly id="runLogArea" rows="30" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea>
+            <div class="row" style="margin-top:10px; margin-bottom:2px;">
+                <div class="col-md-12">
+                    <div style="width:140px; float:right;">
+                        <select id="runVerLog" class="fbtn btn-default form-control"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <h5 id="runTitleLog">Run Version 1:</h5>
                     </div>
                 </div>
-                </br>
+            </div>
+            <div id="logContentDiv">
             </div>
         </div>
         <!-- logTab ended-->
@@ -435,6 +441,35 @@
             </div>
         </div>
         <!-- workflowTab ended-->
+        <div id="reportTab" class="tab-pane fade">
+            <div class="row" style="margin-top:10px; margin-bottom:2px;">
+                <div class="col-md-12">
+                    <div style="width:110px; float:right;">
+                        <select id="runVerReport" class="fbtn btn-default form-control mRunVerReportChange"></select>
+                    </div>
+                    <div class="form-group">
+                        <h5 id="runTitleReport">Run Attempt-1:</h5>
+                        <table cellspacing="0" width="100%">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Output Directory</th>
+                                    <th scope="col">Process</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div class=" bg-yellow" style="height:60px;">
+                            <span class="info-box-icon" style="height:60px; width:30px; font-size:18px; line-height:60px; background:rgba(0,0,0,0.5);"><i class="fa fa-bar-chart"></i></span>
+                            <div class="info-box-content" style="margin-left:30px;">
+                                <span style="height:60px;">Inventory</span>
+                            </div>
+                            <!-- /.info-box-content -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- reportTab ended-->
 
     </div>
 </div>

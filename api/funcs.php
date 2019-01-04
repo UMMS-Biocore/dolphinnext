@@ -119,7 +119,10 @@ class funcs
         } else if ($type == "pipeline_rev" || $type == "process_rev"){
             $result['rev_uuid'] = $this->getKey($type);
             $this->insertUUID($result['rev_uuid'], $type);
-        } 
+        } else if ($type == "run_log"){
+            $result['rev_uuid'] = $this->getKey($type);
+            $this->insertUUID($result['rev_uuid'], $type);
+        }
         return $result;
     }
     function insertUUID($wkey,$type){
@@ -131,6 +134,8 @@ class funcs
             $sql = "INSERT INTO `uuid` ( `pipeline_rev_uuid`, `type`, `date_created`) VALUES ('$wkey', '$type', now())";
         } else if ($type == "process_rev"){
             $sql = "INSERT INTO `uuid` ( `process_rev_uuid`, `type`, `date_created`) VALUES ('$wkey', '$type', now())";
+        } else if ($type == "run_log"){
+            $sql = "INSERT INTO `uuid` ( `run_log_uuid`, `type`, `date_created`) VALUES ('$wkey', '$type', now())";
         }
         if ($result = $this->runSQL($sql)) {
             $ret = $result;
@@ -163,6 +168,8 @@ class funcs
             $sql    = "select id from uuid where pipeline_rev_uuid='$wkey'";
         } else if ($type == "process_rev"){
             $sql    = "select id from uuid where process_rev_uuid='$wkey'";
+        } else if ($type == "run_log"){
+            $sql    = "select id from uuid where run_log_uuid='$wkey'";
         }
         $result = $this->runSQL($sql);
         if (is_object($result) && $row = $result->fetch_row()) {

@@ -19,7 +19,7 @@ if(isset($_GET['p']) && $_GET['p'] == "verify"){
 	SET verification = NULL, active = 1
 	WHERE verification = '$code'
 	");
-    $message.="Your DolphinNext account is now active!<br>You can start browsing at ".BASE_PATH;
+    $message ="Your DolphinNext account is now active!<br>You can start browsing at ".BASE_PATH;
     $from = EMAIL_SENDER;
     $from_name = "DolphinNext Team";
     $to =  $newuser[0]->email;
