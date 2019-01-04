@@ -187,9 +187,9 @@ function translateSVG(mG, pObj) {
     if (!mG[3]) {
         mG[3] = 1378; //default width of container if its not defined before
     }
-//    var widthC = $("#container").width(); //not working for inactive run page div
+    //    var widthC = $("#container").width(); //not working for inactive run page div
     var widthC = $("#runTabDiv").width();
-    if (!widthC){
+    if (!widthC) {
         widthC = 700;
     }
     var coefW = widthC / mG[3];
@@ -1330,8 +1330,8 @@ function parseAutofill(script) {
                             if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
                                 autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
                             }
-                        //push global variables    
-                        } else if (!ifBlockStart){
+                            //push global variables    
+                        } else if (!ifBlockStart) {
                             if (conds && states && library && genConds && ($.isEmptyObject(conds) && $.isEmptyObject(genConds) && (!$.isEmptyObject(states) || !$.isEmptyObject(library)))) {
                                 autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
                             }
@@ -1497,7 +1497,7 @@ function decodeGenericCond(autoFillJSON) {
                 // get combinations array of each conditions
                 var combiConditions = cartesianProduct(genCondDefaultVal);
                 console.log(combiConditions)
-                
+
                 // get new statements for each combination of conditions
                 $.each(combiConditions, function (cond) {
                     newCondStatements = getNewStatements(combiConditions[cond], autoFillJSON, genStatements);
@@ -2961,7 +2961,7 @@ function loadPipelineDetails(pipeline_id) {
         success: function (s) {
             $('#pipeline-title').text(s[0].name);
             $('#pipeline-title').attr('href', 'index.php?np=1&id=' + pipeline_id);
-            $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: '+s[0].name);
+            $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: ' + s[0].name);
             $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
             $('#pipelineSum').val(decodeHtml(s[0].summary));
@@ -3447,7 +3447,7 @@ function checkReadytoRun(type) {
     if (publishReady && s3status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
         console.log("initial runStatus")
         console.log(runStatus)
-        if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun")  {
+        if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun") {
             if (amzStatus) {
                 if (amzStatus === "running") {
                     console.log(checkType)
@@ -3652,6 +3652,7 @@ function terminateProjectPipe() {
         setTimeout(function () {
             getValues({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId });
         }, 2000);
+        readPubWeb(proType, proId, "no_reload")
     }
 
 }
@@ -3778,6 +3779,9 @@ function runProjectPipe(runProPipeCall, checkType) {
     window['checkType'] = "";
     execOtherOpt = "";
     displayButton('connectingProPipe');
+    //create uuid for run
+    var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id });
+    fillRunVerOpt("#runVerLog")
     $('#runLogArea').val("");
     //autofill for ghpcc06 cluster to mount all directories before run executed.
     var hostname = $('#chooseEnv').find('option:selected').attr('host');
@@ -3785,11 +3789,11 @@ function runProjectPipe(runProPipeCall, checkType) {
         execOtherOpt = autofillMountPath()
     }
     // Call the callback
-    setTimeout(function () { runProPipeCall(keepCheckType); }, 1000);
+    setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
 }
 
 //click on run button (callback function)
-function runProPipeCall(checkType) {
+function runProPipeCall(checkType, uuid) {
     saveRun();
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run");
@@ -3904,10 +3908,12 @@ function runProPipeCall(checkType) {
         profileId: proId,
         amazon_cre_id: amazon_cre_id,
         project_pipeline_id: project_pipeline_id,
-        runType: checkType
+        runType: checkType,
+        uuid: uuid
     });
+    updateRunVerNavBar()
+    $('.nav-tabs a[href="#logTab"]').tab('show');
     readNextflowLogTimer(proType, proId, "default");
-    $('#runLogs').css('display', 'inline');
 }
 
 //#########read nextflow log file for status  ################################################
@@ -3919,6 +3925,9 @@ function readNextflowLogTimer(proType, proId, type) {
     interval_readNextlog = setInterval(function () {
         readNextLog(proType, proId, "no_reload")
     }, 10000);
+    interval_readPubWeb = setInterval(function () {
+        readPubWeb(proType, proId, "no_reload")
+    }, 60000);
 }
 
 autoScrollLog = true;
@@ -3926,53 +3935,77 @@ $('#runLogArea').on('click', function (e) {
     autoScrollLog = false;
 });
 
-$('a[href="#logTab"]').on('shown.bs.tab', function (e) {
-    autoScrollLogArea()
-});
-
 function autoScrollLogArea() {
     if (autoScrollLog) {
-        document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
+        if (document.getElementById("runLogArea")) {
+            document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
+        }
     }
 }
+
+$('a[href="#logTab"]').on('shown.bs.tab', function (e) {
+    //check if div is empty
+    if (!$.trim($('#logContentDiv').html()).length) {
+        $("#runVerLog").trigger("change");
+    } else {
+        autoScrollLogArea()
+    }
+});
+
+
 window.saveNextLog = false;
 
 function callAsyncSaveNextLog(data) {
     getValuesAsync(data, function (d) {
         if (d == "nextflow log not found") {
             window.saveNextLog = "logNotFound"
-        } else {
+        } else if (d == "nextflow log saved") {
             window.saveNextLog = true
+        } else if (d == "pubweb is not defined") {
+            if (typeof interval_readPubWeb !== 'undefined') {
+                clearInterval(interval_readPubWeb);
+            }
         }
     });
 }
 
+function readPubWeb(proType, proId, type) {
+    console.log("savePubWeb")
+    // save pubWeb files
+    callAsyncSaveNextLog({ p: "savePubWeb", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, pipeline_id: pipeline_id })
+    //update log navbar after saving files
+    setTimeout(function () { updateRunVerNavBar() }, 10000);
+}
+
+function clearIntPubWeb(intVar, proType, proId) {
+    clearInterval(interval_readPubWeb);
+    //last save call after run completed
+    setTimeout(function () { readPubWeb(proType, proId, "no_reload") }, 4000);
+}
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
     runStatus = getRunStatus(project_pipeline_id);
     console.log(runStatus)
     var pidStatus = "";
     serverLog = '';
-    //get server log
     serverLog = getServerLog(project_pipeline_id);
     if (serverLog && serverLog !== null && serverLog !== false) {
-        $('#runLogArea').val(serverLog);
-        autoScrollLogArea()
         var runPid = parseRunPid(serverLog);
     } else {
         serverLog = "";
     }
-    //get nextflow log
     nextflowLog = getNextflowLog(project_pipeline_id, proType, proId);
+    if (nextflowLog === null || nextflowLog === undefined) {
+        nextflowLog = "";
+    }
+
     // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
     // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
-        if (nextflowLog !== null && nextflowLog !== undefined) {
-            $('#runLogArea').val(serverLog + nextflowLog);
-            autoScrollLogArea()
-        }
+
         if (type !== "reload") {
             clearInterval(interval_readNextlog);
+            clearIntPubWeb(interval_readPubWeb, proType, proId);
         }
         if (runStatus === "NextSuc") {
             displayButton('completeProPipe');
@@ -3982,35 +4015,27 @@ function readNextLog(proType, proId, type) {
         } else if (runStatus === "Terminated") {
             displayButton('terminatedProPipe');
         }
-    } 
+    }
     // when run hasn't finished yet and page reloads then show connecting button
     else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
-        if (nextflowLog !== null && nextflowLog !== undefined) {
-            $('#runLogArea').val(serverLog + nextflowLog);
-            autoScrollLogArea()
-        }
         displayButton('connectingProPipe');
         if (type === "reload") {
             readNextflowLogTimer(proType, proId, type);
         }
-    } 
+    }
     // when run hasn't finished yet and connection is down
     else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
         displayButton('abortedProPipe');
-        //log file might be deleted or couln't read the log file
+        //log file might be deleted or couldn't read the log file
         var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
         if (nextflowLog !== null && nextflowLog !== undefined) {
-            $('#runLogArea').val(serverLog + nextflowLog + "\nConnection is lost.");
-            autoScrollLogArea()
+            nextflowLog += "\nConnection is lost.";
         } else {
-            $('#runLogArea').val(serverLog + "\nConnection is lost.");
+            serverLog += "\nConnection is lost.";
         }
     }
     // otherwise parse nextflow file to get status
     else if (nextflowLog !== null) {
-        $('#runLogArea').val(serverLog + nextflowLog);
-        autoScrollLogArea()
-
         if (nextflowLog.match(/N E X T F L O W/)) {
             if (nextflowLog.match(/##Success: failed/)) {
                 // status completed with error
@@ -4020,6 +4045,8 @@ function readNextLog(proType, proId, type) {
                 }
                 if (type !== "reload") {
                     clearInterval(interval_readNextlog);
+                    clearIntPubWeb(interval_readPubWeb, proType, proId);
+
                 }
                 displayButton('errorProPipe');
 
@@ -4033,6 +4060,8 @@ function readNextLog(proType, proId, type) {
                 }
                 if (type !== "reload") {
                     clearInterval(interval_readNextlog);
+                    clearIntPubWeb(interval_readPubWeb, proType, proId);
+
                 }
                 displayButton('completeProPipe');
                 showOutputPath();
@@ -4044,6 +4073,8 @@ function readNextLog(proType, proId, type) {
                 }
                 if (type !== "reload") {
                     clearInterval(interval_readNextlog);
+                    clearIntPubWeb(interval_readPubWeb, proType, proId);
+
                 }
                 displayButton('errorProPipe');
 
@@ -4073,8 +4104,6 @@ function readNextLog(proType, proId, type) {
             if (type === "reload") {
                 readNextflowLogTimer(proType, proId, type);
             }
-
-
         }
     } else {
         console.log("Nextflow log is not exist yet.")
@@ -4086,6 +4115,7 @@ function readNextLog(proType, proId, type) {
             }
             if (type !== "reload") {
                 clearInterval(interval_readNextlog);
+                clearIntPubWeb(interval_readPubWeb, proType, proId);
             }
             displayButton('errorProPipe');
 
@@ -4107,6 +4137,12 @@ function readNextLog(proType, proId, type) {
 
         }
     }
+    var lastrun = $('#runLogArea').attr('lastrun');
+    if (lastrun) {
+        $('#runLogArea').val(serverLog + nextflowLog);
+        autoScrollLogArea()
+    }
+
     // save nextflow log file
     setTimeout(function () {
         callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
@@ -4155,10 +4191,9 @@ function addOutFileDb() {
 
 function getNextflowLog(project_pipeline_id, proType, proId) {
     var logText = getValues({
-        p: "getNextflowLog",
+        p: "getFileContent",
         project_pipeline_id: project_pipeline_id,
-        profileType: proType,
-        profileId: proId
+        filename: "run/log.txt"
     });
     if (logText && logText != "") {
         return $.trim(logText);
@@ -4169,8 +4204,9 @@ function getNextflowLog(project_pipeline_id, proType, proId) {
 
 function getServerLog(project_pipeline_id) {
     var logText = getValues({
-        p: "getServerLog",
-        project_pipeline_id: project_pipeline_id
+        p: "getFileContent",
+        project_pipeline_id: project_pipeline_id,
+        filename: "run/serverlog.txt"
     });
     if (logText && logText != "") {
         return logText;
@@ -4554,10 +4590,181 @@ function duplicateProPipe() {
     }
 }
 
+function fillRunVerOpt(dropDownId) {
+    $(dropDownId).empty();
+    var runLogs = getValues({ "p": "getRunLog", project_pipeline_id: project_pipeline_id })
+    var n = 0;
+    var lastItem = "";
+    //allow one outdated log directory
+    var newRunLogs = [];
+    var once = true
+    $.each(runLogs, function (el) {
+        var run_log_uuid = runLogs[el].run_log_uuid;
+        var project_pipeline_id = runLogs[el].project_pipeline_id
+        if (run_log_uuid) {
+            newRunLogs.push(runLogs[el])
+        } else if (!run_log_uuid && once) {
+            once = false;
+            newRunLogs.push(runLogs[el])
+        }
+    });
+    console.log(newRunLogs)
+    var size = $(newRunLogs).size()
+    $.each(newRunLogs, function (el) {
+        var run_log_uuid = newRunLogs[el].run_log_uuid;
+        var date_created = newRunLogs[el].date_created
+        var project_pipeline_id = newRunLogs[el].project_pipeline_id
+        console.log(run_log_uuid)
+        console.log(project_pipeline_id)
+        if (run_log_uuid || project_pipeline_id) {
+            n++;
+            if (n == size) {
+                lastItem = 'lastRun="yes"';
+            } else {
+                lastItem = "";
+            }
+            if (run_log_uuid) {
+                $(dropDownId).prepend(
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val(run_log_uuid).html("Log version " + n + " created at " + date_created)
+                );
+            } else if (project_pipeline_id) {
+                $(dropDownId).prepend(
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val("run" + project_pipeline_id).html("Log version " + n + " created at " + date_created)
+                );
+            }
+        }
+    });
+    $(dropDownId).val($(dropDownId + ' option:first').val());
+    $("#runVerLog").trigger("change");
+}
+
+
+function updateRunVerNavBar() {
+    console.log("updateRunVerNavBar")
+    var run_log_uuid = $("#runVerLog").val();
+    var lastrun = $('option:selected', "#runVerLog").attr('lastrun');
+    if (lastrun) {
+        lastrun = 'lastrun="yes"';
+        var activeTab = $("ul#logNavBar li.active > a")
+        var activeID = "";
+        if (activeTab[0]) {
+            activeID = $(activeTab[0]).attr("href")
+        }
+        console.log(run_log_uuid)
+        var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: "run" })
+        var fileListAr = Object.values(fileList);
+        console.log(fileList)
+        fileListAr.splice($.inArray("serverlog.txt", fileListAr), 1);
+        if (fileListAr.length > 0) {
+            for (var j = 0; j < fileListAr.length; j++) {
+                var tabID = cleanProcessName(fileListAr[j]) + 'Tab';
+                $('a[href="#' + tabID + '"').css("display", "block")
+            }
+        }
+        if (!activeID) {
+            $('.nav-tabs a[href="' + "#log_txtTab" + '"]').trigger("click");
+        }
+    }
+}
+
+$(function () {
+    $(document).on('change', '#runVerLog', function (event) {
+        var run_log_uuid = $(this).val();
+        var version = $('option:selected', this).attr('ver');
+        if (version) {
+            var runTitleLog = "Run Log Version " + version + ":"
+            $('a[href="#logTab"]').css("display", "block")
+        } else {
+            var runTitleLog = "";
+            $('a[href="#logTab"]').css("display", "none")
+        }
+        var lastrun = $('option:selected', this).attr('lastrun');
+        if (lastrun) {
+            lastrun = 'lastrun="yes"';
+        } else {
+            lastrun = "";
+        }
+        var activeTab = $("ul#logNavBar li.active > a")
+        var activeID = "";
+        if (activeTab[0]) {
+            activeID = $(activeTab[0]).attr("href")
+        }
+        console.log(run_log_uuid)
+        $("#runTitleLog").text(runTitleLog)
+        $("#logContentDiv").empty();
+        //to support outdated log directory system 
+        if (run_log_uuid.match(/^run/)) {
+            var path = ""
+        } else {
+            var path = "run"
+        }
+        var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
+        var fileListAr = Object.values(fileList);
+        var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
+        //hide serverlog.txt
+        var pubWebPath = $("#basepathinfo").attr("pubweb")
+        var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
+        var k = 0;
+        var tabDiv = [];
+        var fileName = [];
+        for (var j = 0; j < order.length; j++) {
+            if (fileListAr.includes(order[j])) {
+                var exist = 'style="display:block;"';
+            } else {
+                var exist = 'style="display:none;"';
+            }
+            k++
+            var active = "";
+            if (k == 1) {
+                active = 'class="active"';
+            }
+            var tabID = cleanProcessName(order[j]) + 'Tab';
+            tabDiv.push(tabID);
+            fileName.push(order[j]);
+            navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
+        }
+        navTabDiv += '</ul>';
+        navTabDiv += '<div id="logNavCont" class="tab-content">';
+        for (var n = 0; n < tabDiv.length; n++) {
+            var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
+            var active = "";
+            if (n == 0) {
+                active = 'in active';
+            }
+            navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
+            if (fileName[n] == "log.txt") {
+                var serverlogText = "";
+                var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
+                if (fileListAr.includes("serverlog.txt")) {
+                    serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
+                    //to support outdated log directory system 
+                } else if (fileListAr.includes("nextflow.log")) {
+                    logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
+                }
+                navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="30" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
+            } else {
+                navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
+            }
+            navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
+            navTabDiv += '</div>';
+        }
+        navTabDiv += '</div>';
+        $("#logContentDiv").append(navTabDiv)
+        $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
+            autoScrollLogArea()
+        });
+        if (activeID) {
+            $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+        }
+    });
+});
+
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     pipeData = getValues({ p: "getProjectPipelines", id: project_pipeline_id });
     projectpipelineOwn = pipeData[0].own;
+    pipeline_id = pipeData[0].pipeline_id;
+    project_id = pipeData[0].project_id;
     runPid = "";
     // if user not own it, cannot change or delete run
     if (projectpipelineOwn === "0") {
@@ -4571,7 +4778,6 @@ $(document).ready(function () {
         runStatus = getRunStatus(project_pipeline_id);
     }
     if (runStatus !== "") {
-        $('#runLogs').css('display', 'inline');
         //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
         var profileTypeId = pipeData[0].profile //local-32
         var patt = /(.*)-(.*)/;
@@ -4580,19 +4786,18 @@ $(document).ready(function () {
         proTypeWindow = profileType;
         proIdWindow = profileId;
         readNextLog(profileType, profileId, "reload");
+        readPubWeb(profileType, profileId, "reload");
     } else {
         $('#statusProPipe').css('display', 'inline');
     }
 
-    pipeline_id = pipeData[0].pipeline_id;
-    project_id = pipeData[0].project_id;
     $('#pipeline-title').attr('pipeline_id', pipeline_id);
     if (project_pipeline_id !== '' && pipeline_id !== '') {
         projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
         loadPipelineDetails(pipeline_id);
         loadProjectPipeline(pipeData);
+        fillRunVerOpt("#runVerLog")
     }
-
     //not allow to check both docker and singularity
     $('#docker_imgDiv').on('show.bs.collapse', function () {
         if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
@@ -5106,4 +5311,23 @@ $(document).ready(function () {
         confirmNewRev = true;
         saveRun();
     });
+
+    $(function () {
+        $(document).on('click', '.updateIframe', function (event) {
+            var href = $(this).attr("href");
+            var iframe = $(href).find("iframe");
+            //update iframe in case its a txt file
+            if (iframe && iframe.attr("src") && href.match(/_txt|_log/)) {
+                iframe.attr('src', "");
+                setTimeout(function () { iframe.attr("src", iframe.attr("fillsrc")) }, 100);
+            }
+            //load iframe when first time it is clicked
+            if (iframe && iframe.attr("fillsrc") && !iframe.attr("src")) {
+                iframe.attr("src", iframe.attr("fillsrc"))
+            }
+        })
+    });
+
+
+
 });

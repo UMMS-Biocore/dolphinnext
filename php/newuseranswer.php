@@ -58,32 +58,38 @@ if (isset($_POST['request'])){
 	$lab_val = str_replace("'", "", $_POST['lab']);
   }
   
-  if($_POST['email'] == ""){
-	$err_email = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
-  } else{
-      $email_val = str_replace("'", "", $_POST['email']);
-      $email_check = $query->queryAVal("SELECT id FROM users WHERE email = LCASE('" . $_POST['email'] . "')");
-      if($email_check != "0"){
-          $err_email = '<font class="text-center" color="crimson">This Email already exists.</font>';
-      }
+    if (isset($_POST['email'])){
+        if($_POST['email'] == ""){
+            $err_email = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
+        } else{
+            $email_val = str_replace("'", "", $_POST['email']);
+            $email_check = $query->queryAVal("SELECT id FROM users WHERE email = LCASE('" . $_POST['email'] . "')");
+            if($email_check != "0"){
+                $err_email = '<font class="text-center" color="crimson">This Email already exists.</font>';
+            }
+        }
+    }
+  
+  if (isset($_POST['password'])){
+    if($_POST['password'] == ""){
+	   $err_password = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
+    }else{
+	   $password_val = str_replace("'", "", $_POST['password']);
+	   if(strlen($_POST['password']) < 7){
+	   $err_password = '<font class="text-center" color="crimson">Password must be at least 7 characters long.</font>';
+	   }
+    }
+  }
+    
+  if (isset($_POST['verifypassword'])){
+    if($_POST['verifypassword'] == ""){
+	   $err_verifypassword = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
+    }else if($_POST['password'] != $_POST['verifypassword']){
+	   $err_password = '<font class="text-center" color="crimson">Passwords must match.</font>';
+    }
   }
   
-  if($_POST['password'] == ""){
-	$err_password = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
-  }else{
-	$password_val = str_replace("'", "", $_POST['password']);
-	if(strlen($_POST['password']) < 7){
-	  $err_password = '<font class="text-center" color="crimson">Password must be at least 7 characters long.</font>';
-	}
-  }
-  
-  if($_POST['verifypassword'] == ""){
-	$err_verifypassword = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
-  }else if($_POST['password'] != $_POST['verifypassword']){
-	$err_password = '<font class="text-center" color="crimson">Passwords must match.</font>';
-  }
-  
-  if(!isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_email) && !isset($err_password) && !isset($err_verifypassword) && !isset($err_lab) && !isset($err_institute)){
+  if(!isset($_SESSION['google_login']) && !isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_email) && !isset($err_password) && !isset($err_verifypassword) && !isset($err_lab) && !isset($err_institute)){
 	//	Calc pass hash
 	$pass_hash=hash('md5', $password_val . SALT) . hash('sha256', $password_val . PEPPER);
 	$verify=hash('md5', $email_val . VERIFY);

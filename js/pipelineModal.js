@@ -2615,6 +2615,7 @@ $(document).ready(function () {
     // "change name" modal for input parameters: remove attr:disabled by click
     toggleCheckBox('#checkDropDown', '#dropDownOpt');
     toggleCheckBox('#checkDefVal', '#defVal');
+    toggleCheckBox('#checkPubWeb', '#pubWebOpt');
 
     function toggleCheckBox(checkboxId, inputId) {
         $(function () {
@@ -2673,24 +2674,14 @@ $(document).ready(function () {
 
         fillRenameModal(renameTextDefVal, "#checkDefVal", '#defVal');
         fillRenameModal(renameTextDropDown, '#checkDropDown', '#dropDownOpt');
-        if (renameTextPubWeb) {
-            $("#checkPubWeb").attr('checked', true);
-        } else {
-            $("#checkPubWeb").removeAttr('checked');
-        }
+        fillRenameModal(renameTextPubWeb, '#checkPubWeb', '#pubWebOpt');
         $('#renameModaltitle').html('Change Name');
         $('#mRenName').val(renameText);
     });
     $('#renameModal').on('click', '#renameProPara', function (event) {
         saveValue('#checkDefVal', '#defVal', "defVal");
         saveValue('#checkDropDown', '#dropDownOpt', "dropDown");
-        saveValue('#checkPubWeb', '#dropDownOpt', "pubWeb");
-        var checkValue = $("#checkPubWeb").is(":checked").toString();
-        if (checkValue === "true") {
-            $("#" + renameTextID).attr("pubWeb", "on")
-        } else {
-            $("#" + renameTextID).removeAttr("pubWeb");
-        }
+        saveValue('#checkPubWeb', '#pubWebOpt', "pubWeb");
         changeName();
         autosave();
         $('#renameModal').modal("hide");

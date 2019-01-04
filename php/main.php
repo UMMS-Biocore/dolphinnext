@@ -121,10 +121,6 @@ session_write_close();
 
             /*    NavBar process details*/
 
-            .nav-tabs {
-                color: #428bca;
-                font-weight: 600;
-            }
 
             .nav-tabs>li>a {
                 border: medium none;
@@ -138,6 +134,11 @@ session_write_close();
 
             .nav-item {
                 color: #428bca !important;
+                font-weight: 600;
+            }
+            .nav-item.sub {
+                color: #428bca !important;
+                font-weight: 500;
             }
 
             /*        table links should appear blue*/
@@ -256,7 +257,7 @@ session_write_close();
 
     <body class="hold-transition skin-blue sidebar-mini">
         <div class="wrapper">
-
+            <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo BASE_PATH?>/tmp/pub"></span>
             <header class="main-header">
                 <!-- Logo -->
                 <a href="index.php" class="logo">
@@ -312,7 +313,12 @@ session_write_close();
                             <img id="userAvatarImg" src="
                             <?php 
                             if ($google_image != ""){
-                                echo $google_image;
+                                $file_headers = @get_headers($google_image);
+                                if($file_headers && !strpos($file_headers[0], '404')) {
+                                    echo $google_image;
+                                } else {
+                                    echo 'dist/img/user-orange.png';
+                                }
                             } else {
                                 echo 'dist/img/user-orange.png';
                             }                      

@@ -2048,6 +2048,7 @@ function createSaveNodes() {
     saveNodes = {}
     processListDb = [];
     pipelineListDb = [];
+    pubWebDirListDb = [];
     for (var key in processList) {
         t = d3.transform(d3.select('#' + key).attr("transform")),
             x = t.translate[0]
@@ -2081,6 +2082,8 @@ function createSaveNodes() {
             pipelineListDb.push(pipeID);
         } else if (!prosessID.match(/(.*)Pro/)) {
             processListDb.push(prosessID);
+        } else if (!prosessID.match(/^inPro$/) && processModule.pubWeb){
+            pubWebDirListDb.push(processName);
         }
     }
 }
@@ -2160,6 +2163,8 @@ function save() {
         "process_list": processListDb.toString()
 	      }, {
         "pipeline_list": pipelineListDb.toString()
+	      },{
+        "publish_web_dir": pubWebDirListDb.toString()
 	      }];
     if (createPipeRev === "true") {
         return [savedList, id, sName];

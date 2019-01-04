@@ -32,30 +32,76 @@ if (isset($_REQUEST['id'])) {
 	$configTextRaw = $_REQUEST['configText'];
     $configText = urldecode($configTextRaw);
 	$runType = $_REQUEST['runType'];
+	$uuid = $_REQUEST['uuid'];
+    $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
     //create file and folders
-    $log_array = $db ->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $ownerID);
+    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $ownerID);
     //run the script
-    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $ownerID);
-    //add run into run table and increase the run attempt
-    //$status = "init";
-    $db->updateRunAttemptLog("init", $project_pipeline_id, $ownerID);
-
+    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $ownerID);
 }
-else if ($p=="getServerLog"){
-	$project_pipeline_id = $_REQUEST['project_pipeline_id'];
-    $data = $db -> getServerLog($project_pipeline_id,$ownerID);
+else if ($p=="updateRunAttemptLog") {
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $res= $db->getUUIDLocal("run_log");
+    $uuid = $res->rev_uuid;
+    //add run into run table and increase the run attempt. $status = "init";
+    $db->updateRunAttemptLog("init", $project_pipeline_id, $uuid, $ownerID);
+    $data = json_encode($uuid);
 }
-else if ($p=="getNextflowLog"){
-	$project_pipeline_id = $_REQUEST['project_pipeline_id'];
+else if ($p=="getFileContent"){
+    $filename = $_REQUEST['filename'];
+	if (isset($_REQUEST['project_pipeline_id'])){
+        $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+        $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
+    } else if (isset($_REQUEST['uuid'])){
+        $uuid = $_REQUEST['uuid'];
+    }
+    $data = $db -> getFileContent($uuid,$filename,$ownerID);
+}
+else if ($p=="getFileList")
+{
+    $uuid  = $_REQUEST['uuid'];
+    $path = $_REQUEST['path'];
+    $data = $db->getFileList($uuid, $path);
+}
+else if ($p=="savePubWeb"){
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $profileType = $_REQUEST['profileType'];
 	$profileId = $_REQUEST['profileId'];
-    $data = $db -> getNextflowLog($project_pipeline_id, $profileType, $profileId, $ownerID);
+	$pipeline_id = $_REQUEST['pipeline_id'];
+    $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
+    //get pubWebDir
+    $pipeData = json_decode($db->loadPipeline($pipeline_id,$ownerID));
+    $pubWebDir = $pipeData[0]->{'publish_web_dir'};
+    if (!empty($pubWebDir)){
+        // get outputdir
+        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        $outdir = $proPipeAll[0]->{'output_dir'};
+        $down_file_list = explode(',', $pubWebDir);
+        foreach ($down_file_list as &$value) {
+            $value = $outdir."/".$value;
+        }
+        unset($value);
+        $data = $db -> saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $ownerID);
+    } else {
+        $data = json_encode("pubweb is not defined");
+    }
+    
 }
 else if ($p=="saveNextflowLog"){
 	$project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $profileType = $_REQUEST['profileType'];
 	$profileId = $_REQUEST['profileId'];
-    $data = $db -> saveNextflowLog($project_pipeline_id, $profileType, $profileId, $ownerID);
+    $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
+    // get outputdir
+    $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+    $outdir = $proPipeAll[0]->{'output_dir'};
+    $run_path_real = "$outdir/run{$project_pipeline_id}";
+    $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html");
+    foreach ($down_file_list as &$value) {
+        $value = $run_path_real."/".$value;
+    }
+    unset($value);
+    $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $ownerID);
 }
 else if ($p=="getRun"){
 	$project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -315,6 +361,10 @@ else if ($p=="getExistProjectPipelines"){
 else if ($p=="getProjectPipelines"){
     $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
     $data = $db -> getProjectPipelines($id,$project_id,$ownerID,$userRole);
+}
+else if ($p=="getRunLog"){
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $data = $db -> getRunLog($project_pipeline_id);
 }
 else if ($p=="sendEmail"){
     $adminemail = $_REQUEST['adminemail'];
