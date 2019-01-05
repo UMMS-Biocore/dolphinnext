@@ -3702,7 +3702,7 @@ function parseMountPath(path) {
     if (path != null && path != "") {
         if (path.match(/\//)) {
             var allDir = path.split("/");
-            if (allDir.length > 1) {
+            if (allDir.length > 2) {
                 return "/" + allDir[1] + "/" + allDir[2]
             }
         }
@@ -3712,7 +3712,7 @@ function parseMountPath(path) {
 //when -E is not defined add paths, If -E defined then replace the content of -E "paths"
 function getNewExecOpt(oldExecOpt, newPaths) {
     var newExecAll = "";
-    if (!oldExecOpt){
+    if (!oldExecOpt) {
         oldExecOpt = "";
     }
     if (!oldExecOpt.match(/\-E/)) {
@@ -4673,91 +4673,93 @@ function updateRunVerNavBar() {
 $(function () {
     $(document).on('change', '#runVerLog', function (event) {
         var run_log_uuid = $(this).val();
-        var version = $('option:selected', this).attr('ver');
-        if (version) {
-            var runTitleLog = "Run Log " + version + ":"
-            $('a[href="#logTab"]').css("display", "block")
-        } else {
-            var runTitleLog = "";
-            $('a[href="#logTab"]').css("display", "none")
-        }
-        var lastrun = $('option:selected', this).attr('lastrun');
-        if (lastrun) {
-            lastrun = 'lastrun="yes"';
-        } else {
-            lastrun = "";
-        }
-        var activeTab = $("ul#logNavBar li.active > a")
-        var activeID = "";
-        if (activeTab[0]) {
-            activeID = $(activeTab[0]).attr("href")
-        }
-        console.log(run_log_uuid)
-        $("#runTitleLog").text(runTitleLog)
-        $("#logContentDiv").empty();
-        //to support outdated log directory system 
-        if (run_log_uuid.match(/^run/)) {
-            var path = ""
-        } else {
-            var path = "run"
-        }
-        var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
-        var fileListAr = Object.values(fileList);
-        var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
-        //hide serverlog.txt
-        var pubWebPath = $("#basepathinfo").attr("pubweb")
-        var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
-        var k = 0;
-        var tabDiv = [];
-        var fileName = [];
-        for (var j = 0; j < order.length; j++) {
-            if (fileListAr.includes(order[j])) {
-                var exist = 'style="display:block;"';
+        if (run_log_uuid) {
+            var version = $('option:selected', this).attr('ver');
+            if (version) {
+                var runTitleLog = "Run Log " + version + ":"
+                $('a[href="#logTab"]').css("display", "block")
             } else {
-                var exist = 'style="display:none;"';
+                var runTitleLog = "";
+                $('a[href="#logTab"]').css("display", "none")
             }
-            k++
-            var active = "";
-            if (k == 1) {
-                active = 'class="active"';
+            var lastrun = $('option:selected', this).attr('lastrun');
+            if (lastrun) {
+                lastrun = 'lastrun="yes"';
+            } else {
+                lastrun = "";
             }
-            var tabID = cleanProcessName(order[j]) + 'Tab';
-            tabDiv.push(tabID);
-            fileName.push(order[j]);
-            navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
-        }
-        navTabDiv += '</ul>';
-        navTabDiv += '<div id="logNavCont" class="tab-content">';
-        for (var n = 0; n < tabDiv.length; n++) {
-            var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
-            var active = "";
-            if (n == 0) {
-                active = 'in active';
+            var activeTab = $("ul#logNavBar li.active > a")
+            var activeID = "";
+            if (activeTab[0]) {
+                activeID = $(activeTab[0]).attr("href")
             }
-            navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
-            if (fileName[n] == "log.txt") {
-                var serverlogText = "";
-                var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
-                if (fileListAr.includes("serverlog.txt")) {
-                    serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
-                    //to support outdated log directory system 
-                } else if (fileListAr.includes("nextflow.log")) {
-                    logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
+            console.log(run_log_uuid)
+            $("#runTitleLog").text(runTitleLog)
+            $("#logContentDiv").empty();
+            //to support outdated log directory system 
+            if (run_log_uuid.match(/^run/)) {
+                var path = ""
+            } else {
+                var path = "run"
+            }
+            var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
+            var fileListAr = Object.values(fileList);
+            var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
+            //hide serverlog.txt
+            var pubWebPath = $("#basepathinfo").attr("pubweb")
+            var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
+            var k = 0;
+            var tabDiv = [];
+            var fileName = [];
+            for (var j = 0; j < order.length; j++) {
+                if (fileListAr.includes(order[j])) {
+                    var exist = 'style="display:block;"';
+                } else {
+                    var exist = 'style="display:none;"';
                 }
-                navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="30" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
-            } else {
-                navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
+                k++
+                var active = "";
+                if (k == 1) {
+                    active = 'class="active"';
+                }
+                var tabID = cleanProcessName(order[j]) + 'Tab';
+                tabDiv.push(tabID);
+                fileName.push(order[j]);
+                navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
             }
-            navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
+            navTabDiv += '</ul>';
+            navTabDiv += '<div id="logNavCont" class="tab-content">';
+            for (var n = 0; n < tabDiv.length; n++) {
+                var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
+                var active = "";
+                if (n == 0) {
+                    active = 'in active';
+                }
+                navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
+                if (fileName[n] == "log.txt") {
+                    var serverlogText = "";
+                    var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
+                    if (fileListAr.includes("serverlog.txt")) {
+                        serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
+                        //to support outdated log directory system 
+                    } else if (fileListAr.includes("nextflow.log")) {
+                        logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
+                    }
+                    navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="30" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
+                } else {
+                    navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
+                }
+                navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
+                navTabDiv += '</div>';
+            }
             navTabDiv += '</div>';
-        }
-        navTabDiv += '</div>';
-        $("#logContentDiv").append(navTabDiv)
-        $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
-            autoScrollLogArea()
-        });
-        if (activeID) {
-            $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+            $("#logContentDiv").append(navTabDiv)
+            $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
+                autoScrollLogArea()
+            });
+            if (activeID) {
+                $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+            }
         }
     });
 });
