@@ -5579,7 +5579,6 @@ $(document).ready(function () {
         $(document).on('change', '#runVerReport', function (event) {
             var run_log_uuid = $(this).val();
             var reload = true
-            console.log(run_log_uuid)
             if (run_log_uuid) {
                 var prevUUID = $(this).attr("prev")
                 $(this).attr("prev", run_log_uuid)
@@ -5598,8 +5597,6 @@ $(document).ready(function () {
                     }
                 }
                 var version = $('option:selected', this).attr('ver');
-                console.log(version)
-                console.log(reload)
                 if (version) {
                     var runTitleLog = "Run Report " + version + ":"
                     $('a[href="#reportTab"]').css("display", "block")
