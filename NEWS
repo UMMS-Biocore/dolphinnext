@@ -1,3 +1,13 @@
+10.01.2019 Version 0.2.63
+Report tab added to run page. Output data could be visualized by datatables.
+Reporting options added to pipeline output parameters.
+Following parameter added in .sec file [CONFIG] section.
+LOCAL_BASE_PATH = http://localhost:8080
+
+05.01.2019 Version 0.2.62
+Minor bug fixed in the run page.
+Fixed minor bug while  loading amazon status. 
+
 05.01.2019 Version 0.2.62
 Minor bug fixed in the run page.
 

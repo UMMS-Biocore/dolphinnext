@@ -969,7 +969,10 @@
                             <select id="pubWebOpt" name="pubWebOpt" class="form-control" disabled>
                                 <option value="" disabled selected>Choose data visualization method</option>
                                 <option value="text">Text</option>
-                                <option value="table">Table</option>
+                                <option value="table" plugin="dataTables.js">DataTables</option>
+                                <option value="highcharts" plugin="highcharts.js">Highcharts</option>
+                                <option value="rmarkdown" >R Markdown</option>
+                                <option value="pdf">PDF Reader</option>
                             </select>
                         </div>
                     </div>

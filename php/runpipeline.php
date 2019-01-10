@@ -127,7 +127,7 @@
         <li><a class="nav-item" data-toggle="tab" href="#advancedTab">Advanced</a></li>
         <li><a class="nav-item" data-toggle="tab" href="#logTab" style="display:none;">Log</a></li>
         <li><a class="nav-item" data-toggle="tab" href="#workflowTab">Workflow</a></li>
-<!--        <li><a class="nav-item" data-toggle="tab" href="#reportTab">Report</a></li>-->
+        <li><a class="nav-item" data-toggle="tab" href="#reportTab" style="display:none;">Report</a></li>
     </ul>
     <div class="tab-content">
         <div id="configTab" class="tab-pane fade in active">
@@ -449,23 +449,10 @@
                     </div>
                     <div class="form-group">
                         <h5 id="runTitleReport">Run Attempt-1:</h5>
-                        <table cellspacing="0" width="100%">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Output Directory</th>
-                                    <th scope="col">Process</th>
-                                    <th scope="col">Actions</th>
-                                </tr>
-                            </thead>
-                        </table>
-                        <div class=" bg-yellow" style="height:60px;">
-                            <span class="info-box-icon" style="height:60px; width:30px; font-size:18px; line-height:60px; background:rgba(0,0,0,0.5);"><i class="fa fa-bar-chart"></i></span>
-                            <div class="info-box-content" style="margin-left:30px;">
-                                <span style="height:60px;">Inventory</span>
-                            </div>
-                            <!-- /.info-box-content -->
-                        </div>
+                        
                     </div>
+                    <div id="reportRows" style="margin-top:25px;"></div>
+                    
                 </div>
             </div>
         </div>

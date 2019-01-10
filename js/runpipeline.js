@@ -777,7 +777,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         } else {
             var descText = '<p style=" font-style:italic; color:darkslategray; font-weight: 300; font-size:13px">' + desc + '</p>';
         }
-        var processParamDiv = '<div  class="form-group" style="' + clearFix + 'float:left; padding:5px; width:' + columnPercent + '%; class="form-group">';
+        var processParamDiv = '<div  class="form-group" style="' + clearFix + 'float:left; padding:5px; width:' + columnPercent + '%;" >';
         var label = '<label style="font-weight:600;">' + varName + toolText + ' </label>';
         if (type === "input") {
             var inputDiv = '<input type="text" class="form-control" style="padding:15px;" id="var_' + gNum + '-' + varName + '" name="var_' + gNum + '-' + varName + '" value="' + defaultVal + '">';
@@ -1317,8 +1317,8 @@ function parseAutofill(script) {
                     if (!ifBlockStart && !lines[i].match(/.*if *\((.*)\).*/i)) {
                         [varName, defaultVal] = parseVarPart(lines[i]);
                         if (varName && defaultVal) {
-                            console.log(varName)
-                            console.log(defaultVal)
+                            //                            console.log(varName)
+                            //                            console.log(defaultVal)
                             if (varName.match(/^_.*$/)) {
                                 library[varName] = defaultVal
                             }
@@ -1467,7 +1467,7 @@ function findDefVal(genConditions, autoFillJSON) {
             // find conditions and library that satisfy varName
             if (autoFillJSON[elem].condition && autoFillJSON[elem].condition != "" && !$.isEmptyObject(autoFillJSON[elem].condition) && autoFillJSON[elem].library && autoFillJSON[elem].library != "" && !$.isEmptyObject(autoFillJSON[elem].library)) {
                 var cond = autoFillJSON[elem].condition;
-                console.log(cond)
+                //                console.log(cond)
                 if (cond[varName]) {
                     var defaultVal = cond[varName];
                     var obj = {};
@@ -1493,10 +1493,10 @@ function decodeGenericCond(autoFillJSON) {
                 var newCondStatements = {};
                 //find each generic condition in other cond&state pairs and get their default values.
                 var genCondDefaultVal = findDefVal(genConditions, autoFillJSON);
-                console.log(genCondDefaultVal)
+                //                console.log(genCondDefaultVal)
                 // get combinations array of each conditions
                 var combiConditions = cartesianProduct(genCondDefaultVal);
-                console.log(combiConditions)
+                //                console.log(combiConditions)
 
                 // get new statements for each combination of conditions
                 $.each(combiConditions, function (cond) {
@@ -1683,7 +1683,7 @@ function insertProPipePanel(script, gNum, name, pObj) {
         //check if parameter comment is exist: //*
         if (script.match(/\/\/\*/)) {
             var panelObj = parseProPipePanelScript(script);
-            console.log(panelObj)
+            //            console.log(panelObj)
             //create processHeader
             var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + prefix + gNum + '"><h4 class="panel-title">' + name + ' options <i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
             var processBodyInt = '<div id="collapse-' + prefix + gNum + '" class="panel-collapse collapse"><div id="addProcessRow-' + prefix + gNum + '" class="panel-body">'
@@ -2959,6 +2959,7 @@ function loadPipelineDetails(pipeline_id) {
         data: getPipelineD,
         async: true,
         success: function (s) {
+            window.ajaxData.pipelineData = s;
             $('#pipeline-title').text(s[0].name);
             $('#pipeline-title').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: ' + s[0].name);
@@ -3650,8 +3651,8 @@ function terminateProjectPipe() {
         displayButton('terminatedProPipe');
         //trigger saving newxtflow log file
         setTimeout(function () {
-            getValues({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId });
-        }, 2000);
+            clearIntNextLog(proType, proId)
+        }, 3000);
         readPubWeb(proType, proId, "no_reload")
     }
 
@@ -3784,7 +3785,7 @@ function runProjectPipe(runProPipeCall, checkType) {
     displayButton('connectingProPipe');
     //create uuid for run
     var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id });
-    fillRunVerOpt("#runVerLog")
+    fillRunVerOpt(["#runVerLog", "#runVerReport"])
     $('#runLogArea').val("");
     //autofill for ghpcc06 cluster to mount all directories before run executed.
     var hostname = $('#chooseEnv').find('option:selected').attr('host');
@@ -3955,6 +3956,11 @@ $('a[href="#logTab"]').on('shown.bs.tab', function (e) {
     }
 });
 
+$('a[href="#reportTab"]').on('shown.bs.tab', function (e) {
+    //check if div is empty
+    $("#runVerReport").trigger("change");
+});
+
 
 window.saveNextLog = false;
 
@@ -3976,28 +3982,43 @@ function readPubWeb(proType, proId, type) {
     console.log("savePubWeb")
     // save pubWeb files
     callAsyncSaveNextLog({ p: "savePubWeb", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, pipeline_id: pipeline_id })
-    //update log navbar after saving files
-    setTimeout(function () { updateRunVerNavBar() }, 10000);
 }
 
-function clearIntPubWeb(intVar, proType, proId) {
+function saveNexLg(proType, proId) {
+    console.log("saveNextLog")
+    callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
+    //update log navbar after saving files
+    setTimeout(function () { updateRunVerNavBar() }, 2500);
+}
+
+function clearIntPubWeb(proType, proId) {
     clearInterval(interval_readPubWeb);
     //last save call after run completed
     setTimeout(function () { readPubWeb(proType, proId, "no_reload") }, 4000);
+}
+//
+
+function clearIntNextLog(proType, proId) {
+    clearInterval(interval_readNextlog);
+    //last save call after run completed
+    setTimeout(function () { saveNexLg(proType, proId) }, 5000);
 }
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
     runStatus = getRunStatus(project_pipeline_id);
     console.log(runStatus)
     var pidStatus = "";
-    serverLog = '';
-    serverLog = getServerLog(project_pipeline_id);
+    serverLog = getServerLog(project_pipeline_id, "serverlog.txt");
+    errorLog = getServerLog(project_pipeline_id, "err.log");
+    if (errorLog) {
+        serverLog = serverLog + "\n" + errorLog;
+    }
     if (serverLog && serverLog !== null && serverLog !== false) {
         var runPid = parseRunPid(serverLog);
     } else {
         serverLog = "";
     }
-    nextflowLog = getNextflowLog(project_pipeline_id, proType, proId);
+    nextflowLog = getServerLog(project_pipeline_id, "log.txt");
     if (nextflowLog === null || nextflowLog === undefined) {
         nextflowLog = "";
     }
@@ -4007,8 +4028,8 @@ function readNextLog(proType, proId, type) {
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
 
         if (type !== "reload") {
-            clearInterval(interval_readNextlog);
-            clearIntPubWeb(interval_readPubWeb, proType, proId);
+            clearIntNextLog(proType, proId);
+            clearIntPubWeb(proType, proId);
         }
         if (runStatus === "NextSuc") {
             displayButton('completeProPipe');
@@ -4036,6 +4057,17 @@ function readNextLog(proType, proId, type) {
         } else {
             serverLog += "\nConnection is lost.";
         }
+    } else if (serverLog.match(/error/gi) || serverLog.match(/command not found/gi)) {
+        console.log("Error");
+        if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
+            var setStatus = getValues({ p: "updateRunStatus", run_status: "Error", project_pipeline_id: project_pipeline_id });
+        }
+        if (type !== "reload") {
+            clearIntNextLog(proType, proId);
+            clearIntPubWeb(proType, proId);
+        }
+        displayButton('errorProPipe');
+
     }
     // otherwise parse nextflow file to get status
     else if (nextflowLog !== null) {
@@ -4047,8 +4079,8 @@ function readNextLog(proType, proId, type) {
                     var setStatus = getValues({ p: "updateRunStatus", run_status: "NextErr", project_pipeline_id: project_pipeline_id, duration: duration });
                 }
                 if (type !== "reload") {
-                    clearInterval(interval_readNextlog);
-                    clearIntPubWeb(interval_readPubWeb, proType, proId);
+                    clearIntNextLog(proType, proId);
+                    clearIntPubWeb(proType, proId);
 
                 }
                 displayButton('errorProPipe');
@@ -4062,8 +4094,8 @@ function readNextLog(proType, proId, type) {
                     addOutFileDb();
                 }
                 if (type !== "reload") {
-                    clearInterval(interval_readNextlog);
-                    clearIntPubWeb(interval_readPubWeb, proType, proId);
+                    clearIntNextLog(proType, proId);
+                    clearIntPubWeb(proType, proId);
 
                 }
                 displayButton('completeProPipe');
@@ -4075,8 +4107,8 @@ function readNextLog(proType, proId, type) {
                     var setStatus = getValues({ p: "updateRunStatus", run_status: "NextErr", project_pipeline_id: project_pipeline_id });
                 }
                 if (type !== "reload") {
-                    clearInterval(interval_readNextlog);
-                    clearIntPubWeb(interval_readPubWeb, proType, proId);
+                    clearIntNextLog(proType, proId);
+                    clearIntPubWeb(proType, proId);
 
                 }
                 displayButton('errorProPipe');
@@ -4110,46 +4142,30 @@ function readNextLog(proType, proId, type) {
         }
     } else {
         console.log("Nextflow log is not exist yet.")
-
-        if (serverLog.match(/error/gi)) {
-            console.log("Error");
-            if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
-                var setStatus = getValues({ p: "updateRunStatus", run_status: "Error", project_pipeline_id: project_pipeline_id });
-            }
-            if (type !== "reload") {
-                clearInterval(interval_readNextlog);
-                clearIntPubWeb(interval_readPubWeb, proType, proId);
-            }
-            displayButton('errorProPipe');
-
-        } else {
-            console.log("Waiting");
-            if (type === "reload") {
-                readNextflowLogTimer(proType, proId, type);
-            }
-            var setStatus = getValues({ p: "updateRunStatus", run_status: "Waiting", project_pipeline_id: project_pipeline_id });
-            displayButton('waitingProPipe');
-            if (runPid && proType === "cluster") {
-                pidStatus = checkRunPid(runPid, proType, proId);
-                if (pidStatus) { // if true, then it is exist in queue
-                    console.log("pid exist2")
-                } else { //pid not exist
-                    console.log("give error2")
-                }
-            }
-
+        console.log("Waiting");
+        if (type === "reload") {
+            readNextflowLogTimer(proType, proId, type);
         }
+        var setStatus = getValues({ p: "updateRunStatus", run_status: "Waiting", project_pipeline_id: project_pipeline_id });
+        displayButton('waitingProPipe');
+        if (runPid && proType === "cluster") {
+            pidStatus = checkRunPid(runPid, proType, proId);
+            if (pidStatus) { // if true, then it is exist in queue
+                console.log("pid exist2")
+            } else { //pid not exist
+                console.log("give error2")
+            }
+        }
+
     }
     var lastrun = $('#runLogArea').attr('lastrun');
     if (lastrun) {
-        $('#runLogArea').val(serverLog + nextflowLog);
+        $('#runLogArea').val(serverLog + "\n" + nextflowLog);
         autoScrollLogArea()
     }
 
     // save nextflow log file
-    setTimeout(function () {
-        callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
-    }, 100);
+    setTimeout(function () { saveNexLg(proType, proId) }, 100);
 }
 
 
@@ -4192,11 +4208,11 @@ function addOutFileDb() {
 }
 
 
-function getNextflowLog(project_pipeline_id, proType, proId) {
+function getServerLog(project_pipeline_id, name) {
     var logText = getValues({
         p: "getFileContent",
         project_pipeline_id: project_pipeline_id,
-        filename: "run/log.txt"
+        filename: "run/" + name
     });
     if (logText && logText != "") {
         return $.trim(logText);
@@ -4205,18 +4221,6 @@ function getNextflowLog(project_pipeline_id, proType, proId) {
     }
 }
 
-function getServerLog(project_pipeline_id) {
-    var logText = getValues({
-        p: "getFileContent",
-        project_pipeline_id: project_pipeline_id,
-        filename: "run/serverlog.txt"
-    });
-    if (logText && logText != "") {
-        return logText;
-    } else {
-        return "";
-    }
-}
 
 function filterKeys(obj, filter) {
     var key, keys = [];
@@ -4592,84 +4596,6 @@ function duplicateProPipe() {
         saveRun();
     }
 }
-
-function fillRunVerOpt(dropDownId) {
-    $(dropDownId).empty();
-    var runLogs = getValues({ "p": "getRunLog", project_pipeline_id: project_pipeline_id })
-    var n = 0;
-    var lastItem = "";
-    //allow one outdated log directory
-    var newRunLogs = [];
-    var once = true
-    $.each(runLogs, function (el) {
-        var run_log_uuid = runLogs[el].run_log_uuid;
-        var project_pipeline_id = runLogs[el].project_pipeline_id
-        if (run_log_uuid) {
-            newRunLogs.push(runLogs[el])
-        } else if (!run_log_uuid && once) {
-            once = false;
-            newRunLogs.push(runLogs[el])
-        }
-    });
-    console.log(newRunLogs)
-    var size = $(newRunLogs).size()
-    $.each(newRunLogs, function (el) {
-        var run_log_uuid = newRunLogs[el].run_log_uuid;
-        var date_created = newRunLogs[el].date_created
-        var project_pipeline_id = newRunLogs[el].project_pipeline_id
-        console.log(run_log_uuid)
-        console.log(project_pipeline_id)
-        if (run_log_uuid || project_pipeline_id) {
-            n++;
-            if (n == size) {
-                lastItem = 'lastRun="yes"';
-            } else {
-                lastItem = "";
-            }
-            if (run_log_uuid) {
-                $(dropDownId).prepend(
-                    $('<option ' + lastItem + '></option>').attr("ver", n).val(run_log_uuid).html("Run Log " + n + " created at " + date_created)
-                );
-            } else if (project_pipeline_id) {
-                $(dropDownId).prepend(
-                    $('<option ' + lastItem + '></option>').attr("ver", n).val("run" + project_pipeline_id).html("Run Log " + n + " created at " + date_created)
-                );
-            }
-        }
-    });
-    $(dropDownId).val($(dropDownId + ' option:first').val());
-    $("#runVerLog").trigger("change");
-}
-
-
-function updateRunVerNavBar() {
-    console.log("updateRunVerNavBar")
-    var run_log_uuid = $("#runVerLog").val();
-    var lastrun = $('option:selected', "#runVerLog").attr('lastrun');
-    if (lastrun) {
-        lastrun = 'lastrun="yes"';
-        var activeTab = $("ul#logNavBar li.active > a")
-        var activeID = "";
-        if (activeTab[0]) {
-            activeID = $(activeTab[0]).attr("href")
-        }
-        console.log(run_log_uuid)
-        var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: "run" })
-        var fileListAr = Object.values(fileList);
-        console.log(fileList)
-        fileListAr.splice($.inArray("serverlog.txt", fileListAr), 1);
-        if (fileListAr.length > 0) {
-            for (var j = 0; j < fileListAr.length; j++) {
-                var tabID = cleanProcessName(fileListAr[j]) + 'Tab';
-                $('a[href="#' + tabID + '"').css("display", "block")
-            }
-        }
-        if (!activeID) {
-            $('.nav-tabs a[href="' + "#log_txtTab" + '"]').trigger("click");
-        }
-    }
-}
-
 $(function () {
     $(document).on('change', '#runVerLog', function (event) {
         var run_log_uuid = $(this).val();
@@ -4678,9 +4604,11 @@ $(function () {
             if (version) {
                 var runTitleLog = "Run Log " + version + ":"
                 $('a[href="#logTab"]').css("display", "block")
+                $('a[href="#reportTab"]').css("display", "block")
             } else {
                 var runTitleLog = "";
                 $('a[href="#logTab"]').css("display", "none")
+                $('a[href="#reportTab"]').css("display", "none")
             }
             var lastrun = $('option:selected', this).attr('lastrun');
             if (lastrun) {
@@ -4693,7 +4621,6 @@ $(function () {
             if (activeTab[0]) {
                 activeID = $(activeTab[0]).attr("href")
             }
-            console.log(run_log_uuid)
             $("#runTitleLog").text(runTitleLog)
             $("#logContentDiv").empty();
             //to support outdated log directory system 
@@ -4745,7 +4672,11 @@ $(function () {
                     } else if (fileListAr.includes("nextflow.log")) {
                         logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
                     }
-                    navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="30" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
+                    if (fileListAr.includes("err.log")) {
+                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
+                        //to support outdated log directory system 
+                    }
+                    navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
                 } else {
                     navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
                 }
@@ -4758,11 +4689,98 @@ $(function () {
                 autoScrollLogArea()
             });
             if (activeID) {
-                $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+                if ($('.nav-tabs a[href="' + activeID + '"]').css("display") != "none") {
+                    $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+                }
             }
         }
     });
 });
+
+function fillRunVerOpt(dropDownAr) {
+    var runLogs = getValues({ "p": "getRunLog", project_pipeline_id: project_pipeline_id })
+    //allow one outdated log directory
+    var newRunLogs = [];
+    var once = true
+    $.each(runLogs, function (el) {
+        var run_log_uuid = runLogs[el].run_log_uuid;
+        var project_pipeline_id = runLogs[el].project_pipeline_id
+        if (run_log_uuid) {
+            newRunLogs.push(runLogs[el])
+        } else if (!run_log_uuid && once) {
+            once = false;
+            newRunLogs.push(runLogs[el])
+        }
+    });
+    var size = $(newRunLogs).size()
+    for (var j = 0; j < dropDownAr.length; j++) {
+
+        var n = 0;
+        var lastItem = "";
+        var dropDownId = dropDownAr[j];
+        var runType = "";
+        if (dropDownId == "#runVerReport") {
+            runType = "Report"
+        } else if (dropDownId == "#runVerLog") {
+            runType = "Log"
+        }
+
+        $(dropDownId).empty();
+        $.each(newRunLogs, function (el) {
+            var run_log_uuid = newRunLogs[el].run_log_uuid;
+            var date_created = newRunLogs[el].date_created
+            var project_pipeline_id = newRunLogs[el].project_pipeline_id
+            if (run_log_uuid || project_pipeline_id) {
+                n++;
+                if (n == size) {
+                    lastItem = 'lastRun="yes"';
+                } else {
+                    lastItem = "";
+                }
+                if (run_log_uuid) {
+                    $(dropDownId).prepend(
+                        $('<option ' + lastItem + '></option>').attr("ver", n).val(run_log_uuid).html("Run " + runType + " " + n + " created at " + date_created)
+                    );
+                } else if (project_pipeline_id) {
+                    $(dropDownId).prepend(
+                        $('<option ' + lastItem + '></option>').attr("ver", n).val("run" + project_pipeline_id).html("Run Log " + n + " created at " + date_created)
+                    );
+                }
+            }
+            $(dropDownId).val($(dropDownId + ' option:first').val());
+            $(dropDownId).trigger("change");
+        });
+    }
+}
+
+
+function updateRunVerNavBar() {
+    console.log("updateRunVerNavBar")
+    var run_log_uuid = $("#runVerLog").val();
+    var lastrun = $('option:selected', "#runVerLog").attr('lastrun');
+    if (lastrun) {
+        lastrun = 'lastrun="yes"';
+        var activeTab = $("ul#logNavBar li.active > a")
+        var activeID = "";
+        if (activeTab[0]) {
+            activeID = $(activeTab[0]).attr("href")
+        }
+        var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: "run" })
+        var fileListAr = Object.values(fileList);
+        fileListAr.splice($.inArray("serverlog.txt", fileListAr), 1);
+        if (fileListAr.length > 0) {
+            for (var j = 0; j < fileListAr.length; j++) {
+                var tabID = cleanProcessName(fileListAr[j]) + 'Tab';
+                $('a[href="#' + tabID + '"').css("display", "block")
+            }
+        }
+        if (!activeID) {
+            $('.nav-tabs a[href="' + "#log_txtTab" + '"]').trigger("click");
+        }
+    }
+}
+
+
 
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
@@ -4801,7 +4819,7 @@ $(document).ready(function () {
         projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
         loadPipelineDetails(pipeline_id);
         loadProjectPipeline(pipeData);
-        fillRunVerOpt("#runVerLog")
+        fillRunVerOpt(["#runVerLog", "#runVerReport"])
     }
     //not allow to check both docker and singularity
     $('#docker_imgDiv').on('show.bs.collapse', function () {
@@ -5322,7 +5340,7 @@ $(document).ready(function () {
             var href = $(this).attr("href");
             var iframe = $(href).find("iframe");
             //update iframe in case its a txt file
-            if (iframe && iframe.attr("src") && href.match(/_txt|_log/)) {
+            if (iframe && iframe.attr("src") && !href.match(/_html/)) {
                 iframe.attr('src', "");
                 setTimeout(function () { iframe.attr("src", iframe.attr("fillsrc")) }, 100);
             }
@@ -5333,6 +5351,400 @@ $(document).ready(function () {
         })
     });
 
+
+    //$(function () { allows to trigger when a.reportFile added later to DOM
+    $(function () {
+        $(document).on('shown.bs.tab click', 'a.reportFile', function (event) {
+            var href = $(this).attr("href");
+            $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+            //check if div is empty
+            if (!$.trim($(href).html()).length) {
+                var uuid = $("#runVerReport").val();
+                var visType = $(this).attr("visType");
+                var filePath = $(this).attr("filepath");
+                var fileid = $(this).attr("fileid");
+                var contentDiv = '<div style="margin:15px;"><table style="table-layout:fixed;" class="table table-striped table-bordered" cellspacing="0" width="100%" id="' + fileid + '"></table></div>';
+                $(href).append(contentDiv)
+                var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
+                var dataTableObj = tsvConvert(data, "json2")
+                dataTableObj.deferRender = true
+                dataTableObj.scroller = true
+                dataTableObj.scrollCollapse = true
+                dataTableObj.scrollY = 430
+                dataTableObj.scrollX = true
+                console.time("table");
+                $("#" + fileid).DataTable(dataTableObj);
+                console.timeEnd("table");
+            }
+
+        })
+    });
+
+    //left tab-pane collapse
+    //fix dataTable column width in case, width of the page is changed while panel closed 
+    $(function () {
+        $(document).on('shown.bs.collapse', '.tab-pane', function (event) {
+            $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+        });
+    });
+    //main row panel collapse
+    $(function () {
+        $(document).on('shown.bs.collapse', '.collapseRowBody', function (event) {
+            $(this).find("li.active > a").trigger("click");
+        });
+    });
+
+
+    //################################
+    // --dynamicRows jquery plugin --
+    //################################
+
+    (function ($) {
+        $.fn.dynamicRows = function (options) {
+            var settings = $.extend({
+                // default values.
+                color: "#556b2f",
+                backgroundColor: "white",
+                heightHeader: "60px",
+                lineHeightHeader: "60px",
+                heightBody: "600px",
+                heightTitle: "50px",
+                lineHeightTitle: "50px"
+            }, options);
+
+            var elems = $(this);
+            var elemsID = $(this).attr("id");
+            var refreshHandler = function (settings) {
+                $('.collapseRowDiv').on({
+                    mouseenter: function () {
+                        $(this).css("background-color", settings.backgroundcolorenter)
+                    },
+                    mouseleave: function () {
+                        $(this).css("background-color", settings.backgroundcolorleave)
+                    }
+                });
+
+                $('.collapseRowDiv').on('click', function (e) {
+                    var textClassPlus = $(this).find('.fa-plus-square-o')[0];
+                    var textClassMinus = $(this).find('.fa-minus-square-o')[0];
+                    if (textClassPlus) {
+                        $(this).css("background-color", settings.backgroundcolorenter)
+                        $(textClassPlus).removeClass('fa-plus-square-o');
+                        $(textClassPlus).addClass('fa-minus-square-o');
+                    } else if (textClassMinus) {
+                        $(this).css("background-color", settings.backgroundcolorleave)
+                        $(textClassMinus).removeClass('fa-minus-square-o');
+                        $(textClassMinus).addClass('fa-plus-square-o');
+                    }
+                });
+                $('.collapseIconItem').on('click', function (e) {
+                    var itemClass = $(this).attr("class")
+                    if (itemClass.match(/fa-plus-square-o/)) {
+                        $(this).removeClass('fa-plus-square-o');
+                        $(this).addClass('fa-minus-square-o');
+                    } else if (itemClass.match(/fa-minus-square-o/)) {
+                        $(this).removeClass('fa-minus-square-o');
+                        $(this).addClass('fa-plus-square-o');
+                    }
+                });
+            }
+
+            var getColumnContent = function (dataObj, colObj) {
+                var col = "";
+                if (colObj.fnCreatedCell) {
+                    var nTd = $("<span></span>");
+                    colObj.fnCreatedCell(nTd, dataObj)
+                    col = nTd.clone().wrap('<p>').parent().html();
+                } else if (colObj.data) {
+                    col = dataObj[colObj.data]
+                }
+                return col
+            };
+
+            var getColumnData = function (dataObj, settings, cols, height, lineHeight) {
+                var columnPercent = 100;
+                var clearFix = ""; //if its the first element of multicolumn
+                var center = ""; //align="center" to div
+                var columnCount = $(cols).size();
+                var processParamDiv = ""
+                var heightT = "";
+                var lineHeightT = "";
+                $.each(cols, function (el) {
+                    var overflowT = "";
+                    if (cols[el].overflow) {
+                        overflowT = 'overflow:' + cols[el].overflow + '; ';
+                    }
+                    if (cols[el].colPercent) {
+                        columnPercent = cols[el].colPercent;
+                    } else {
+                        columnPercent = Math.floor(columnPercent / columnCount * 100) / 100;
+                    }
+                    if (el === 0) {
+                        clearFix = " clear:both; "
+                    } else {
+                        clearFix = ""
+                    }
+                    if (cols[el].className == "center") {
+                        center = ' align="center"; '
+                    } else {
+                        center = ""
+                    }
+                    if (height) {
+                        heightT = 'height:' + height + '; ';
+                    }
+                    if (lineHeight) {
+                        lineHeightT = 'line-height:' + lineHeight + '; ';
+                    }
+
+                    processParamDiv += '<div ' + center + ' style="' + heightT + lineHeightT + clearFix + overflowT + 'float:left;  width:' + columnPercent + '%; ">';
+                    processParamDiv += getColumnContent(dataObj, cols[el])
+                    processParamDiv += '</div>';
+                });
+                return processParamDiv
+            }
+
+            var getPanel = function (dataObj, settings) {
+                if (dataObj) {
+                    var id = dataObj.id
+                    var headerDiv = getColumnData(dataObj, settings, settings.columnsHeader, settings.heightHeader, settings.lineHeightHeader);
+                    var bodyDiv = getColumnData(dataObj, settings, settings.columnsBody, settings.heightBody, settings.lineHeightBody);
+                    //                    var icon = '<i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i>';
+                    var processHeader = '<div class="collapsible collapseRowDiv" data-toggle="collapse" style="height:' + settings.heightHeader + ';" href="#' + elemsID + '-' + id + '"><h3 class="panel-title">' + headerDiv + '</h3></div>';
+                    var processBodyInt = '<div  id="' + elemsID + '-' + id + '" class="panel-collapse collapse collapseRowBody" style="word-break: break-all;"><div class="panel-body" style="background-color:white; height:' + settings.heightBody + '; padding:0px;">' + bodyDiv + '</div>';
+                    return '<div id="' + elemsID + 'PanelDiv-' + id + '" ><div class="panel" style="background-color:' + settings.backgroundcolorleave + '; margin-bottom:15px;">' + processHeader + processBodyInt + '</div></div>'
+                } else
+                    return ""
+            }
+
+            var getTitle = function (dataObj, settings) {
+                if (settings.columnsTitle) {
+                    var titleDiv = getColumnData({}, settings, settings.columnsTitle, settings.heightTitle, settings.lineHeightTitle);
+                    return '<div  style="font-weight:900; height:' + settings.heightTitle + ';">' + titleDiv + '</div>'
+                } else
+                    return ""
+            }
+
+            var getData = function (settings) {
+                if (settings.ajax.url) {
+                    var ret = $.ajax({
+                        type: "POST",
+                        url: settings.ajax.url,
+                        data: settings.ajax.data,
+                        datatype: "json",
+                        success: function (results) {
+                            if (results === undefined || results.length == 0) {
+                                elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to report</div>')
+                            } else {
+                                var title = getTitle(results[0], settings);
+                                if (title) {
+                                    elems.append(title);
+                                }
+                                $(results).each(function (i) {
+                                    elems.append(getPanel(results[i], settings));
+                                });
+                                refreshHandler(settings)
+                            }
+
+                        },
+                        error: function (errorThrown) {
+                            alert("Error: " + errorThrown);
+                        }
+                    });
+                    return ret
+                } else if (settings.ajax.data) {
+                    if (settings.ajax.data === undefined || settings.ajax.data.length == 0) {
+                        elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to report</div>')
+                    } else {
+                        var title = getTitle(settings.ajax.data[0], settings);
+                        if (title) {
+                            elems.append(title);
+                        }
+                        var ret = $(settings.ajax.data).each(function (i) {
+                            elems.append(getPanel(settings.ajax.data[i], settings));
+                            refreshHandler(settings);
+                        });
+                    }
+                    return ret
+                }
+            }
+
+            getData(settings);
+            return this;
+
+        };
+    }(jQuery));
+
+
+    $(function () {
+        $(document).on('change', '#runVerReport', function (event) {
+            var run_log_uuid = $(this).val();
+            var reload = true
+            console.log(run_log_uuid)
+            if (run_log_uuid) {
+                var prevUUID = $(this).attr("prev")
+                $(this).attr("prev", run_log_uuid)
+                var savedReportData = $.data(this, "reportData")
+                var reportData = getValues({ "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id })
+                $.data(this, "reportData", reportData);
+                if (prevUUID) {
+                    if (prevUUID == run_log_uuid) {
+                        if (savedReportData && reportData) {
+                            if (savedReportData.length && reportData.length) {
+                                if (savedReportData.length == reportData.length) {
+                                    reload = false
+                                }
+                            }
+                        }
+                    }
+                }
+                var version = $('option:selected', this).attr('ver');
+                console.log(version)
+                console.log(reload)
+                if (version) {
+                    var runTitleLog = "Run Report " + version + ":"
+                    $('a[href="#reportTab"]').css("display", "block")
+                } else {
+                    var runTitleLog = "";
+                    $('a[href="#reportTab"]').css("display", "none")
+                }
+
+                $("#runTitleReport").text(runTitleLog)
+                if (reload) {
+                    $("#reportRows").empty();
+
+                    //add 'className: "center"' to center text in columns array
+                    $("#reportRows").dynamicRows({
+                        ajax: {
+                            data: reportData
+                        },
+                        columnsBody: [{
+                            //file list
+                            data: null,
+                            colPercent: "25",
+                            overflow: "scroll",
+                            fnCreatedCell: function (nTd, oData) {
+                                var run_log_uuid = $("#runVerReport").val();
+                                var pubWebPath = $("#basepathinfo").attr("pubweb");
+                                var visType = oData.pubWeb
+                                var icon = "fa-file-text-o";
+                                if (visType == "table") {
+                                    icon = "fa-table";
+                                }
+                                var fileList = oData.fileList;
+                                var liText = "";
+                                var active = "";
+                                $.each(fileList, function (el) {
+                                    if (fileList[el]) {
+                                        if (el == 0) {
+                                            active = "active"
+                                        } else {
+                                            active = "";
+                                        }
+                                        var filepath = oData.name + "/" + fileList[el];
+                                        var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
+                                        var tabID = 'reportTab' + oData.id + "_" + el;
+                                        var fileID = oData.id + "_" + el;
+                                        liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="fa ' + icon + '"></i>' + fileList[el] + '</a></li>';
+                                    }
+                                });
+                                if (!liText) {
+                                    liText = '<div style="margin:10px;"> No data available</div>';
+                                }
+                                $(nTd).html('<ul class="nav nav-pills nav-stacked">' + liText + '</ul>');
+                            },
+        }, {
+                            //file content
+                            data: null,
+                            colPercent: "75",
+                            fnCreatedCell: function (nTd, oData) {
+                                var navTabDiv = "";
+                                navTabDiv += '<div class="tab-content">';
+                                var fileList = oData.fileList;
+                                var liText = "";
+                                var active = "";
+                                $.each(fileList, function (el) {
+                                    var tabID = 'reportTab' + oData.id + "_" + el;
+                                    var active = "";
+                                    if (el == 0) {
+                                        active = 'in active';
+                                    }
+                                    navTabDiv += '<div id = "' + tabID + '" class = "tab-pane fade ' + active + '" >';
+                                    navTabDiv += '</div>';
+                                });
+                                navTabDiv += '</div>';
+                                $(nTd).html(navTabDiv);
+                            },
+        }],
+                        columnsHeader: [{
+                            data: null,
+                            colPercent: "4",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
+                            },
+        }, {
+                            data: null,
+                            fnCreatedCell: function (nTd, oData) {
+                                var gNum = oData.id.split("-")[1];
+                                var rowID = "outputTa-" + gNum;
+                                var processName = $('#' + rowID + ' > :nth-child(5)').text();
+                                var processID = $('#' + rowID + ' > :nth-child(5)').text();
+                                $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + processName + '</span>');
+                            },
+                            colPercent: "37"
+        }, {
+                            data: "name",
+                            colPercent: "39"
+        }, {
+                            data: null,
+                            colPercent: "20",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<a><i class="fa fa-line-chart"></i></a>');
+                            }
+        }],
+                        columnsTitle: [{
+                            data: null,
+                            colPercent: "4"
+
+        }, {
+                            data: null,
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span>PROCESS</span>');
+                            },
+                            colPercent: "37"
+        }, {
+                            data: "name",
+                            colPercent: "39",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span>OUTPUT DIRECTORY</span>');
+                            },
+        }, {
+                            data: null,
+                            colPercent: "20",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span>ACTIONS</span>');
+                            }
+        }],
+                        backgroundcolorenter: "#ced9e3",
+                        backgroundcolorleave: "#ECF0F4",
+                        heightHeader: "60px"
+                    });
+                }
+            }
+        });
+    });
+
+
+
+
+
+
+
+
+    //####### RMarkDown ###########
+    //#############################
+    var editorText = "The Normal Distribution\n=======================\n\n> Output automatically refreshes 5 seconds after editing markdown!\n\nThe normal (or Gaussian) distribution is defined as follows:\n\n$$latex\nf(x;\\mu,\\sigma^2) = \\frac{1}{\\sigma\\sqrt{2\\pi}} \ne^{ -\\frac{1}{2}\\left(\\frac{x-\\mu}{\\sigma}\\right)^2 }\n$$\n\nTo generate random draws from a normal distribution we use the **rnorm** function:\n\n```{r block1}\noutput <- rnorm(1000, 100, 15);\n```\n\nThe normal distribution has the typical bell shape:\n\n```{r block2, fig.width=8, fig.height=5}\nlibrary(ggplot2)\nqplot(output)\n```\n\n## Kernel density estimation\n\nWe can perform density estimation on the sample:\n\n```{r block3, fig.width=8, fig.height=5}\nplot(density(output))\n``` \n\n## Carl Friedrich Gauß\n\nThis little guy had something to do with it\n\n!['Gauss'](https://goo.gl/eXN77h)\n";
+    var outputHtml = callMarkDownApp(editorText)
+    console.log(outputHtml)
 
 
 });
