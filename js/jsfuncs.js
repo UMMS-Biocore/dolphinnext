@@ -232,7 +232,8 @@ function checkAmazonStatus(proId) {
         }
         if (errorText === "" && checkAmazonStatusLog.logAmzStart) {
             var logTextStart = checkAmazonStatusLog.logAmzStart;
-            if (logTextStart.match(/error/i) || logTextStart.match(/denied/i) || logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
+            //WARN: One or more errors have been detected parsing EC2 prices
+            if ((logTextStart.match(/error/i) && !logTextStart.match(/WARN: One or more errors/i)) || logTextStart.match(/denied/i) || logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
                 errorText = "(" + logTextStart + ")";
         }
         $('#status-' + proId).html('Terminated <br/>' + errorText);
@@ -603,6 +604,37 @@ $inputText.each(function () {
     resizeForText.call($this, $this.val())
 });
 
+//var tsv is the TSV file with headers
+//columns: [{title: "Id", data: "Id"} 1: {title: "Name", data: "Name"}]
+//data: [{Id: "123", Name: "John Doe Fresno"},{Id: "124", Name: "Alice Alicia"}]
+function tsvConvert(tsv, format) {
+    var tsv = $.trim(tsv);
+    var lines = tsv.split("\n");
+    var headers = lines[0].split("\t");
+    var data = [];
+    for (var i = 1; i < lines.length; i++) {
+        var obj = {};
+        var currentline = lines[i].split("\t");
+        for (var j = 0; j < headers.length; j++) {
+            obj[headers[j]] = currentline[j];
+        }
+        data.push(obj);
+    }
+    if (format == "json") {
+        return data;
+    }
+    if (format == "json2") {
+        var result = { columns: [], data: data };
+        for (var j = 0; j < headers.length; j++) {
+            var obj = {};
+            obj.title = headers[j]
+            obj.data = headers[j]
+            result.columns.push(obj);
+        }
+        return result;
+    }
+}
+
 function getValues(data, async) {
     async = async ||false; //default false
     var result = null;
@@ -614,15 +646,54 @@ function getValues(data, async) {
         type: "POST",
         success: function (data) {
             result = data;
+        },
+        error: function (errorThrown) {
+            alert("Error: " + errorThrown);
         }
     });
     return result;
 }
 
+function callMarkDownApp(text) {
+    text = JSON.stringify(text)
+    var result = null;
+    var localbasepath = $("#basepathinfo").attr("localbasepath")
+    $.ajax({
+        url: localbasepath+"/ocpu/library/markdownapp/R/rmdtext",
+        data: {'text' : text},
+        async: false,
+        cache: false,
+        type: "POST",
+        success: function (data) {
+            result = data;
+        },
+        error: function (errorThrown) {
+            alert("Error: " + errorThrown);
+        }
+    });
+    if (result) {
+        var lines = result.split("\n");
+        for (var i = 0; i < lines.length; i++) {
+            if (lines[i].match(/output.html/)) {
+                result = localbasepath+lines[i];
+                return result
+            }
+        }
+    }
+    return result
+}
 
 
+function checkArraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
 
-
+    for (var i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
 
 function getValuesAsync(data, callback) {
     var result = null;
@@ -708,8 +779,6 @@ function refreshCollapseIconDiv() {
     });
     $('.collapseIconItem').on('click', function (e) {
         var itemClass = $(this).attr("class")
-        console.log(itemClass)
-        console.log(itemClass.match(/fa-minus-square-o/))
         if (itemClass.match(/fa-plus-square-o/)) {
             $(this).removeClass('fa-plus-square-o');
             $(this).addClass('fa-minus-square-o');

@@ -61,7 +61,47 @@ else if ($p=="getFileList")
 {
     $uuid  = $_REQUEST['uuid'];
     $path = $_REQUEST['path'];
-    $data = $db->getFileList($uuid, $path);
+    $data = $db->getFileList($uuid, $path, "filedir");
+}
+else if ($p=="getReportData")
+{
+    $uuid  = $_REQUEST['uuid'];
+    $path = $_REQUEST['path']; //pubweb, run
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $pipe = $db->loadPipeline($pipeline_id,$ownerID);
+    $pipeData = json_decode($pipe,true);
+    $pubWebDir = $pipeData[0]['publish_web_dir'];
+    $data = array();
+    if (!empty($pubWebDir)){
+        if (!empty($pipeData[0]["nodes"])){
+            $nodes = json_decode($pipeData[0]["nodes"]);
+            foreach ($nodes as $gNum => $item):
+                $out = array();
+                if ($item[2] == "outPro"){
+                    $push = false;
+                    $name = $item[3];
+                    $processOpt = $item[4];
+                    $out["id"] = $gNum;
+                    $out["name"] = $name;
+                    foreach ($processOpt as $key => $feature):
+                        if ($key == "pubWeb"){
+                            $push = true;
+                        }
+                        $out[$key] = $feature;
+                    endforeach;
+                    if ($push == true){
+                        $fileList = array_values((array)json_decode($db->getFileList($uuid, "$path/$name", "onlyfile")));
+                        $fileList = array_filter($fileList);
+                        if (!empty($fileList)){
+                            $out["fileList"] = $fileList;
+                            $data[] = $out; //push $out object into array
+                        }
+                    }
+                }
+            endforeach;
+        }
+    }
+    $data = json_encode($data);
 }
 else if ($p=="savePubWeb"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -96,7 +136,7 @@ else if ($p=="saveNextflowLog"){
     $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
     $outdir = $proPipeAll[0]->{'output_dir'};
     $run_path_real = "$outdir/run{$project_pipeline_id}";
-    $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html");
+    $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log");
     foreach ($down_file_list as &$value) {
         $value = $run_path_real."/".$value;
     }

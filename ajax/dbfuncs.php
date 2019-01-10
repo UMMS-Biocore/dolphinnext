@@ -402,7 +402,7 @@ class dbfuncs {
             $next_memory = $next_memory*1000;
             //-J $jobname
             $jobname = $this->cleanName($jobname);
-            $exec_string = "bsub $next_clu_opt -q $next_queue -J $jobname -n $next_cpu -W $next_time -R rusage[mem=$next_memory]";
+            $exec_string = "bsub -e err.log $next_clu_opt -q $next_queue -J $jobname -n $next_cpu -W $next_time -R rusage[mem=$next_memory]";
             $exec_next_all = "cd $dolphin_path_real && $exec_string \\\"$next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/log.txt\\\"";
         } else if ($executor == "sge"){
             $jobnameText = $this->getJobName($jobname, $executor);
@@ -414,7 +414,7 @@ class dbfuncs {
 			//-j y ->Specifies whether or not the standard error stream of the job is merged into the standard output stream.
 			$sgeRunFile= "printf '#!/bin/bash \\n#$ -j y\\n#$ -V\\n#$ -notify\\n#$ -wd $dolphin_path_real\\n#$ -o $dolphin_path_real/.dolphinnext.log\\n".$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/log.txt"."'> $dolphin_path_real/.dolphinnext.run";
             
-			$exec_string = "qsub $dolphin_path_real/.dolphinnext.run";
+			$exec_string = "qsub -e err.log $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $sgeRunFile && $exec_string";
         } else if ($executor == "slurm"){
         } else if ($executor == "ignite"){
@@ -565,7 +565,7 @@ class dbfuncs {
             if (empty($attempt) || $attempt == 0 || $attempt == "0"){
                 $attempt = "0";
             }
-            $renameArr= array("log.txt", "timeline.html", "trace.txt", "dag.html", "report.html");
+            $renameArr= array("log.txt", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log");
             $renameLog = "";
             foreach ($renameArr as $item):
                 if ($item == "log.txt"){
@@ -839,7 +839,7 @@ class dbfuncs {
                 $this->updateAmazonProStatus($id, "terminated", $ownerID);
                 $log_array['status'] = "terminated";
                 return json_encode($log_array);
-            }else if (preg_match("/Missing/i", $log_array['logAmzStart']) || preg_match("/denied/i", $log_array['logAmzStart']) || preg_match("/ERROR/i", $log_array['logAmzStart'])  || preg_match("/couldn't/i", $log_array['logAmzStart'])  || preg_match("/help/i", $log_array['logAmzStart']) || preg_match("/wrong/i", $log_array['logAmzStart'])){
+            }else if (preg_match("/Missing/i", $log_array['logAmzStart']) || preg_match("/denied/i", $log_array['logAmzStart']) || (preg_match("/ERROR/i", $log_array['logAmzStart']) && !preg_match("/WARN: One or more errors/i", $log_array['logAmzStart'])) || preg_match("/couldn't/i", $log_array['logAmzStart'])  || preg_match("/help/i", $log_array['logAmzStart']) || preg_match("/wrong/i", $log_array['logAmzStart'])){
                 $this->updateAmazonProStatus($id, "terminated", $ownerID);
                 $log_array['status'] = "terminated";
                 return json_encode($log_array);
@@ -1708,15 +1708,15 @@ class dbfuncs {
         $sql = "SELECT attempt FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
+    function file_get_contents_utf8($fn) {
+        $content = file_get_contents($fn);
+        return mb_convert_encoding($content, 'UTF-8', mb_detect_encoding($content, 'UTF-8, ISO-8859-1', true));
+    }
     public function getFileContent($uuid, $filename, $ownerID) {
         $file = "{$this->run_path}/$uuid/$filename";
         $content = "";
         if (file_exists($file)) {
-            $handle = fopen($file, "r");
-            if (filesize($file) >0){
-                $content = fread($handle, filesize($file));
-            }
-            fclose($handle);
+            $content = $this->file_get_contents_utf8($file);
         }
         return json_encode($content);
     }
@@ -1755,11 +1755,18 @@ class dbfuncs {
             }
     }
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
-    public function getFileList($uuid, $last_server_dir) {
+    //$opt = "onlyfile", "filedir"
+    public function getFileList($uuid, $last_server_dir, $opt) {
         $path= "{$this->run_path}/$uuid/$last_server_dir";
         $scanned_directory = "";
         if (file_exists($path)) {
-            $scanned_directory = array_diff(scandir($path), array('..', '.'));
+            if ($opt == "filedir"){
+                $scanned_directory = array_diff(scandir($path), array('..', '.'));
+            } else if ($opt == "onlyfile"){
+                $scanned_directory = array_filter(scandir($path), function($item) use ($path) {
+                    return !is_dir($path."/".$item);
+                });
+            }
         }
         return json_encode($scanned_directory);
     }

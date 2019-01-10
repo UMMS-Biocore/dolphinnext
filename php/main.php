@@ -140,6 +140,13 @@ session_write_close();
                 color: #428bca !important;
                 font-weight: 500;
             }
+            
+            .nav-pills > li.active > a, 
+            .nav-pills > li.active > a:hover, 
+            .nav-pills > li.active > a:focus{
+                background-color:transparent;
+                color:black;
+            }
 
             /*        table links should appear blue*/
 
@@ -257,7 +264,7 @@ session_write_close();
 
     <body class="hold-transition skin-blue sidebar-mini">
         <div class="wrapper">
-            <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo BASE_PATH?>/tmp/pub"></span>
+            <span id="basepathinfo" localbasepath="<?php echo LOCAL_BASE_PATH?>" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo BASE_PATH?>/tmp/pub"></span>
             <header class="main-header">
                 <!-- Logo -->
                 <a href="index.php" class="logo">
