@@ -646,9 +646,6 @@ function getValues(data, async) {
         type: "POST",
         success: function (data) {
             result = data;
-        },
-        error: function (errorThrown) {
-            alert("Error: " + errorThrown);
         }
     });
     return result;
