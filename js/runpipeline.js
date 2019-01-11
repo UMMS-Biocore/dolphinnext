@@ -5740,8 +5740,8 @@ $(document).ready(function () {
     //####### RMarkDown ###########
     //#############################
     var editorText = "The Normal Distribution\n=======================\n\n> Output automatically refreshes 5 seconds after editing markdown!\n\nThe normal (or Gaussian) distribution is defined as follows:\n\n$$latex\nf(x;\\mu,\\sigma^2) = \\frac{1}{\\sigma\\sqrt{2\\pi}} \ne^{ -\\frac{1}{2}\\left(\\frac{x-\\mu}{\\sigma}\\right)^2 }\n$$\n\nTo generate random draws from a normal distribution we use the **rnorm** function:\n\n```{r block1}\noutput <- rnorm(1000, 100, 15);\n```\n\nThe normal distribution has the typical bell shape:\n\n```{r block2, fig.width=8, fig.height=5}\nlibrary(ggplot2)\nqplot(output)\n```\n\n## Kernel density estimation\n\nWe can perform density estimation on the sample:\n\n```{r block3, fig.width=8, fig.height=5}\nplot(density(output))\n``` \n\n## Carl Friedrich Gauß\n\nThis little guy had something to do with it\n\n!['Gauss'](https://goo.gl/eXN77h)\n";
-    var outputHtml = callMarkDownApp(editorText)
-    console.log(outputHtml)
+//    var outputHtml = callMarkDownApp(editorText)
+//    console.log(outputHtml)
 
 
 });
