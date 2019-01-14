@@ -27,6 +27,11 @@ $(function () {
     $('[data-toggle="tooltip"]').tooltip();
 });
 
+//jquery clean css notation and add # sign to beginning
+function jqcss(myid) {
+    return "#" + myid.replace( /(:|\.|\[|\]|,|=|@)/g, "\\$1" );
+}
+
 function IsJsonString(str) {
     try {
         JSON.parse(str);
@@ -646,6 +651,10 @@ function getValues(data, async) {
         type: "POST",
         success: function (data) {
             result = data;
+        },
+        error: function (errorThrown) {
+            console.log("##Error:");
+            console.log(errorThrown);
         }
     });
     return result;
@@ -656,8 +665,8 @@ function callMarkDownApp(text) {
     var result = null;
     var localbasepath = $("#basepathinfo").attr("localbasepath")
     $.ajax({
-        url: localbasepath+"/ocpu/library/markdownapp/R/rmdtext",
-        data: {'text' : text},
+        url: localbasepath + "/ocpu/library/markdownapp/R/rmdtext",
+        data: { 'text': text },
         async: false,
         cache: false,
         type: "POST",
@@ -672,7 +681,7 @@ function callMarkDownApp(text) {
         var lines = result.split("\n");
         for (var i = 0; i < lines.length; i++) {
             if (lines[i].match(/output.html/)) {
-                result = localbasepath+lines[i];
+                result = localbasepath + lines[i];
                 return result
             }
         }
