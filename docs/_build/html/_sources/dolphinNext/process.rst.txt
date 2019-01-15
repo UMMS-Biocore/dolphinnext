@@ -332,21 +332,34 @@ In this example, var1 value is binded to other form fields. When var1 is selecte
        
 Autofill Feature for Process
 ============================
-You might define hostname specific executor properties and create autofill feature by using following syntax::
+
+**Hostname Independent Autofill :**
+
+If you want to define executor properties that are going to be automatically filled by default, you can use following syntax::
 
     //* autofill
-    if ($HOSTNAME == "ghpcc06.umassrc.org"){
     <executor properties>
-    }
-    //*
+    //* autofill
 
-Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname which is going to be run. Therefore, in this example, all ``<executor properties>`` will be active in case of pipeline is going to run on **ghpcc06.umassrc.org**.
+**Hostname Dependent Autofill :**
+
+Additionally, you might overwrite default executor properties by using **hostname dependent executor properties**. Please check the following syntax::
+
+    //* autofill
+    <executor properties>
+    if ($HOSTNAME == "ghpcc06.umassrc.org"){
+    <hostname dependent executor properties>
+    }
+    //* autofill
+
+Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname which is selected in the run as **Run Environment**. Therefore, in this example, all ``<executor properties>`` will be automatically filled in case of pipeline is going to run on **ghpcc06.umassrc.org**.
 
 **Executor Properties:**
 
 Five type of executor properties are available to autofill **Executor Settings for Each Process**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue and Other Options. See the example below::
     
     //* autofill
+    $TIME = 1000
     if ($HOSTNAME == "ghpcc06.umassrc.org"){
         $TIME = 3000
         $CPU  = 4
@@ -354,12 +367,31 @@ Five type of executor properties are available to autofill **Executor Settings f
         $QUEUE = "long"
         $EXEC_OPTIONS = '-E "file /home/garberlab"'
     }
-    //*
+    //* autofill
 
 .. image:: dolphinnext_images/process_autofill.png
 	:align: center
 	:width: 99%
 
+In the example, since run environment is selected as ghpcc06.umassrc.org, autofill feature overwrited the default ``$TIME`` value (1000) and filled with 3000.
+
+**Platform Tag :**
+
+Optionally, you can isolate platform dependent paramaters by using **platform** tag. This way, exported process won't have the platform dependent parameters and similarly when process is imported, exisiting platform dependent parameters won't be overwritten. Please check the the example usage at below::
+
+    //* autofill
+    $MEMORY = 32
+    $CPU  = 1
+        //* platform
+        if ($HOSTNAME == "ghpcc06.umassrc.org"){
+            $TIME = 3000
+            $CPU  = 4
+            $MEMORY = 100
+            $QUEUE = "long"
+            $EXEC_OPTIONS = '-E "file /home/garberlab"'
+        }
+        //* platform
+    //* autofill
 
 Permissions, Groups and Publish
 ===============================

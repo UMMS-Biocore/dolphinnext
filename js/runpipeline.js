@@ -187,7 +187,11 @@ function translateSVG(mG, pObj) {
     if (!mG[3]) {
         mG[3] = 1378; //default width of container if its not defined before
     }
-    var widthC = $("#container").width();
+    //    var widthC = $("#container").width(); //not working for inactive run page div
+    var widthC = $("#runTabDiv").width();
+    if (!widthC) {
+        widthC = 700;
+    }
     var coefW = widthC / mG[3];
     var height = widthC / 3;
     if (height < 300) {
@@ -228,7 +232,7 @@ function openSubPipeline(piID, pObj) {
     if (dispTitle == "none") {
         $('#subPipelinePanelTitle').css("display", "inline");
     }
-    var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + MainGNum + '"><h4 class="panel-title">' + pipeName + ' Module <i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
+    var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + MainGNum + '"><h4 class="panel-title">' + pipeName + '<i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
     var processBodyInt = '<div  id="collapse-' + MainGNum + '" class="panel-collapse collapse"><div style="height:500px; padding:0px;" id="container' + MainGNum + '" class="panel-body">'
     //create Pipeline Module Panel
     $('#subPipelinePanelTitle').append('<div id="proPanelDiv-' + MainGNum + '" pipeid="' + piID + '" ' + hideModuleText + '><div id="proPanel-' + MainGNum + '" class="panel panel-default" style="margin-bottom:3px;">' + processHeader + processBodyInt + '</div></div></div></div>')
@@ -318,7 +322,7 @@ function openPipeline(id) {
             x = nodes[key][0]
             y = nodes[key][1]
             pId = nodes[key][2]
-            name = nodes[key][3]
+            name = cleanProcessName(nodes[key][3])
             var processModules = nodes[key][4];
             gNum = parseInt(key.split("-")[1])
             //for pipeline circles
@@ -773,7 +777,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         } else {
             var descText = '<p style=" font-style:italic; color:darkslategray; font-weight: 300; font-size:13px">' + desc + '</p>';
         }
-        var processParamDiv = '<div  class="form-group" style="' + clearFix + 'float:left; padding:5px; width:' + columnPercent + '%; class="form-group">';
+        var processParamDiv = '<div  class="form-group" style="' + clearFix + 'float:left; padding:5px; width:' + columnPercent + '%;" >';
         var label = '<label style="font-weight:600;">' + varName + toolText + ' </label>';
         if (type === "input") {
             var inputDiv = '<input type="text" class="form-control" style="padding:15px;" id="var_' + gNum + '-' + varName + '" name="var_' + gNum + '-' + varName + '" value="' + defaultVal + '">';
@@ -798,10 +802,8 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
             var dynamicOpt = null;
             if (opt) {
                 if (opt.length) {
-                    console.log(opt)
                     //check if conditional options are defined.
                     var condOptCheck = $.isArray(opt[0])
-                    console.log(condOptCheck)
                     if (condOptCheck) {
                         //conditional options
                         var optArr = [];
@@ -815,7 +817,6 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                             opt = findDefaultArr(optArr)
                         }
                     }
-                    console.log(opt)
                     if (opt) {
                         for (var k = 0; k < opt.length; k++) {
                             if (defaultVal === opt[k]) {
@@ -1307,7 +1308,7 @@ function parseAutofill(script) {
                 var defaultVal = null;
                 var cond = null; // each condition
                 //first find the line of autofill
-                if (lines[i].match(/\/\/\* autofill/i)) {
+                if (lines[i].match(/^\s*\/\/\* autofill\s*$/i)) {
                     var blockStart = i;
                 }
                 // parse statements after first line of autofill
@@ -1316,16 +1317,22 @@ function parseAutofill(script) {
                     if (!ifBlockStart && !lines[i].match(/.*if *\((.*)\).*/i)) {
                         [varName, defaultVal] = parseVarPart(lines[i]);
                         if (varName && defaultVal) {
+                            //                            console.log(varName)
+                            //                            console.log(defaultVal)
                             if (varName.match(/^_.*$/)) {
                                 library[varName] = defaultVal
                             }
-                            autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
                         }
                     }
                     //find if condition
                     if (lines[i].match(/.*if *\((.*)\).*/i)) {
                         if (ifBlockStart) {
                             if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
+                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                            }
+                            //push global variables    
+                        } else if (!ifBlockStart) {
+                            if (conds && states && library && genConds && ($.isEmptyObject(conds) && $.isEmptyObject(genConds) && (!$.isEmptyObject(states) || !$.isEmptyObject(library)))) {
                                 autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
                             }
                         }
@@ -1347,7 +1354,7 @@ function parseAutofill(script) {
                             });
                         }
                         //end of the autofill block: //*or 
-                    } else if (lines[i].match(/\/\/\*/i)) {
+                    } else if (lines[i].match(/^\s*\/\/\*\s*$/i) || lines[i].match(/^\s*\/\/\* autofill\s*$/i)) {
                         blockStart = null;
                         ifBlockStart = null;
                         if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
@@ -1460,6 +1467,7 @@ function findDefVal(genConditions, autoFillJSON) {
             // find conditions and library that satisfy varName
             if (autoFillJSON[elem].condition && autoFillJSON[elem].condition != "" && !$.isEmptyObject(autoFillJSON[elem].condition) && autoFillJSON[elem].library && autoFillJSON[elem].library != "" && !$.isEmptyObject(autoFillJSON[elem].library)) {
                 var cond = autoFillJSON[elem].condition;
+                //                console.log(cond)
                 if (cond[varName]) {
                     var defaultVal = cond[varName];
                     var obj = {};
@@ -1485,8 +1493,11 @@ function decodeGenericCond(autoFillJSON) {
                 var newCondStatements = {};
                 //find each generic condition in other cond&state pairs and get their default values.
                 var genCondDefaultVal = findDefVal(genConditions, autoFillJSON);
+                //                console.log(genCondDefaultVal)
                 // get combinations array of each conditions
                 var combiConditions = cartesianProduct(genCondDefaultVal);
+                //                console.log(combiConditions)
+
                 // get new statements for each combination of conditions
                 $.each(combiConditions, function (cond) {
                     newCondStatements = getNewStatements(combiConditions[cond], autoFillJSON, genStatements);
@@ -1672,7 +1683,7 @@ function insertProPipePanel(script, gNum, name, pObj) {
         //check if parameter comment is exist: //*
         if (script.match(/\/\/\*/)) {
             var panelObj = parseProPipePanelScript(script);
-            console.log(panelObj)
+            //            console.log(panelObj)
             //create processHeader
             var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + prefix + gNum + '"><h4 class="panel-title">' + name + ' options <i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
             var processBodyInt = '<div id="collapse-' + prefix + gNum + '" class="panel-collapse collapse"><div id="addProcessRow-' + prefix + gNum + '" class="panel-body">'
@@ -2806,8 +2817,8 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         //--ProcessPanel (where process options defined)
         createProcessPanelAutoFill(id, pObj, name, process_id);
         //create process circle
-        pObj.inputs = getValues({ p: "getInputsPP", "process_id": id })
-        pObj.outputs = getValues({ p: "getOutputsPP", "process_id": id })
+        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_" + id]);
+        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_" + id]);
 
         //gnum uniqe, id same id (Written in class) in same type process
         pObj.g = d3.select("#mainG" + MainGNum).append("g")
@@ -2948,8 +2959,11 @@ function loadPipelineDetails(pipeline_id) {
         data: getPipelineD,
         async: true,
         success: function (s) {
+            window.ajaxData.pipelineData = s;
             $('#pipeline-title').text(s[0].name);
             $('#pipeline-title').attr('href', 'index.php?np=1&id=' + pipeline_id);
+            $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: ' + s[0].name);
+            $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
             $('#pipelineSum').val(decodeHtml(s[0].summary));
             if (s[0].script_pipe_header !== null) {
@@ -3028,14 +3042,7 @@ function refreshCreatorData(project_pipeline_id) {
     }
 }
 
-function IsJsonString(str) {
-    try {
-        JSON.parse(str);
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
+
 
 function showHideColumnRunSett(colList, type) {
     for (var k = 0; k < colList.length; k++) {
@@ -3441,10 +3448,12 @@ function checkReadytoRun(type) {
     if (publishReady && s3status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
         console.log("initial runStatus")
         console.log(runStatus)
-        if (((runStatus !== "NextRun" && runStatus !== "Waiting" && runStatus !== "init") && (checkType === "rerun" || checkType === "newrun" || checkType === "resumerun")) || runStatus === "") {
+        if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun") {
             if (amzStatus) {
                 if (amzStatus === "running") {
+                    console.log(checkType)
                     if (checkType === "rerun" || checkType === "resumerun") {
+                        runStatus = "aboutToStart"
                         runProjectPipe(runProPipeCall, checkType);
                     } else if (checkType === "newrun") {
                         displayButton('runProPipe');
@@ -3458,6 +3467,7 @@ function checkReadytoRun(type) {
                 console.log("checkType")
                 console.log(checkType)
                 if (checkType === "rerun" || checkType === "resumerun") {
+                    runStatus = "aboutToStart"
                     runProjectPipe(runProPipeCall, checkType);
                 } else if (checkType === "newrun") {
                     displayButton('runProPipe');
@@ -3610,7 +3620,7 @@ function configTextAllProcess(exec_all_settings, type, proName, executor_job) {
 }
 
 function displayButton(idButton) {
-    var buttonList = ['runProPipe', 'errorProPipe', 'completeProPipe', 'runningProPipe', 'waitingProPipe', 'statusProPipe', 'connectingProPipe', 'terminatedProPipe'];
+    var buttonList = ['runProPipe', 'errorProPipe', 'completeProPipe', 'runningProPipe', 'waitingProPipe', 'statusProPipe', 'connectingProPipe', 'terminatedProPipe', "abortedProPipe"];
     for (var i = 0; i < buttonList.length; i++) {
         document.getElementById(buttonList[i]).style.display = "none";
     }
@@ -3641,8 +3651,9 @@ function terminateProjectPipe() {
         displayButton('terminatedProPipe');
         //trigger saving newxtflow log file
         setTimeout(function () {
-            getValues({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId });
-        }, 2000);
+            clearIntNextLog(proType, proId)
+        }, 3000);
+        readPubWeb(proType, proId, "no_reload")
     }
 
 }
@@ -3692,7 +3703,7 @@ function parseMountPath(path) {
     if (path != null && path != "") {
         if (path.match(/\//)) {
             var allDir = path.split("/");
-            if (allDir.length > 1) {
+            if (allDir.length > 2) {
                 return "/" + allDir[1] + "/" + allDir[2]
             }
         }
@@ -3702,6 +3713,9 @@ function parseMountPath(path) {
 //when -E is not defined add paths, If -E defined then replace the content of -E "paths"
 function getNewExecOpt(oldExecOpt, newPaths) {
     var newExecAll = "";
+    if (!oldExecOpt) {
+        oldExecOpt = "";
+    }
     if (!oldExecOpt.match(/\-E/)) {
         newExecAll = oldExecOpt + newPaths;
     } else if (oldExecOpt.match(/\-E "(.*)"/)) {
@@ -3769,6 +3783,9 @@ function runProjectPipe(runProPipeCall, checkType) {
     window['checkType'] = "";
     execOtherOpt = "";
     displayButton('connectingProPipe');
+    //create uuid for run
+    var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id });
+    fillRunVerOpt(["#runVerLog", "#runVerReport"])
     $('#runLogArea').val("");
     //autofill for ghpcc06 cluster to mount all directories before run executed.
     var hostname = $('#chooseEnv').find('option:selected').attr('host');
@@ -3776,11 +3793,11 @@ function runProjectPipe(runProPipeCall, checkType) {
         execOtherOpt = autofillMountPath()
     }
     // Call the callback
-    setTimeout(function () { runProPipeCall(keepCheckType); }, 1000);
+    setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
 }
 
 //click on run button (callback function)
-function runProPipeCall(checkType) {
+function runProPipeCall(checkType, uuid) {
     saveRun();
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run");
@@ -3895,50 +3912,124 @@ function runProPipeCall(checkType) {
         profileId: proId,
         amazon_cre_id: amazon_cre_id,
         project_pipeline_id: project_pipeline_id,
-        runType: checkType
+        runType: checkType,
+        uuid: uuid
     });
-    console.log(serverLogGet)
+    updateRunVerNavBar()
+    $('.nav-tabs a[href="#logTab"]').tab('show');
     readNextflowLogTimer(proType, proId, "default");
-    $('#runLogs').css('display', 'inline');
 }
 
 //#########read nextflow log file for status  ################################################
 function readNextflowLogTimer(proType, proId, type) {
     //to trigger fast loading for new page reload
     if (type === "reload") {
-        setTimeout(function () { readNextLog(proType, proId, "no_reload") }, 3000);
+        setTimeout(function () { readNextLog(proType, proId, "no_reload") }, 3500);
     }
     interval_readNextlog = setInterval(function () {
         readNextLog(proType, proId, "no_reload")
     }, 10000);
+    interval_readPubWeb = setInterval(function () {
+        readPubWeb(proType, proId, "no_reload")
+    }, 60000);
 }
 
+autoScrollLog = true;
+$('#runLogArea').on('click', function (e) {
+    autoScrollLog = false;
+});
+
+function autoScrollLogArea() {
+    if (autoScrollLog) {
+        if (document.getElementById("runLogArea")) {
+            document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
+        }
+    }
+}
+
+$('a[href="#logTab"]').on('shown.bs.tab', function (e) {
+    //check if div is empty
+    if (!$.trim($('#logContentDiv').html()).length) {
+        $("#runVerLog").trigger("change");
+    } else {
+        autoScrollLogArea()
+    }
+});
+
+$('a[href="#reportTab"]').on('shown.bs.tab', function (e) {
+    //check if div is empty
+    $("#runVerReport").trigger("change");
+});
+
+
+window.saveNextLog = false;
+
+function callAsyncSaveNextLog(data) {
+    getValuesAsync(data, function (d) {
+        if (d == "nextflow log not found") {
+            window.saveNextLog = "logNotFound"
+        } else if (d == "nextflow log saved") {
+            window.saveNextLog = true
+        } else if (d == "pubweb is not defined") {
+            if (typeof interval_readPubWeb !== 'undefined') {
+                clearInterval(interval_readPubWeb);
+            }
+        }
+    });
+}
+
+function readPubWeb(proType, proId, type) {
+    console.log("savePubWeb")
+    // save pubWeb files
+    callAsyncSaveNextLog({ p: "savePubWeb", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, pipeline_id: pipeline_id })
+}
+
+function saveNexLg(proType, proId) {
+    console.log("saveNextLog")
+    callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
+    //update log navbar after saving files
+    setTimeout(function () { updateRunVerNavBar() }, 2500);
+}
+
+function clearIntPubWeb(proType, proId) {
+    clearInterval(interval_readPubWeb);
+    //last save call after run completed
+    setTimeout(function () { readPubWeb(proType, proId, "no_reload") }, 4000);
+}
+//
+
+function clearIntNextLog(proType, proId) {
+    clearInterval(interval_readNextlog);
+    //last save call after run completed
+    setTimeout(function () { saveNexLg(proType, proId) }, 5000);
+}
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
     runStatus = getRunStatus(project_pipeline_id);
+    console.log(runStatus)
     var pidStatus = "";
-    serverLog = '';
-    //get server log
-    serverLog = getServerLog(project_pipeline_id);
+    serverLog = getServerLog(project_pipeline_id, "serverlog.txt");
+    errorLog = getServerLog(project_pipeline_id, "err.log");
+    if (errorLog) {
+        serverLog = serverLog + "\n" + errorLog;
+    }
     if (serverLog && serverLog !== null && serverLog !== false) {
-        $('#runLogArea').val(serverLog);
-        document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
         var runPid = parseRunPid(serverLog);
     } else {
         serverLog = "";
     }
-    //get nextflow log
-    nextflowLog = getNextflowLog(project_pipeline_id, proType, proId);
-    // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated
+    nextflowLog = getServerLog(project_pipeline_id, "log.txt");
+    if (nextflowLog === null || nextflowLog === undefined) {
+        nextflowLog = "";
+    }
+
+    // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
     // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
     if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
-        if (nextflowLog !== null && nextflowLog !== undefined) {
-            $('#runLogArea').val(serverLog + nextflowLog);
-            document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
 
-        }
         if (type !== "reload") {
-            clearInterval(interval_readNextlog);
+            clearIntNextLog(proType, proId);
+            clearIntPubWeb(proType, proId);
         }
         if (runStatus === "NextSuc") {
             displayButton('completeProPipe');
@@ -3948,11 +4039,38 @@ function readNextLog(proType, proId, type) {
         } else if (runStatus === "Terminated") {
             displayButton('terminatedProPipe');
         }
-        // otherwise parse nextflow file to get status
-    } else if (nextflowLog !== null) {
-        $('#runLogArea').val(serverLog + nextflowLog);
-        document.getElementById("runLogArea").scrollTop = document.getElementById("runLogArea").scrollHeight
+    }
+    // when run hasn't finished yet and page reloads then show connecting button
+    else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
+        displayButton('connectingProPipe');
+        if (type === "reload") {
+            readNextflowLogTimer(proType, proId, type);
+        }
+    }
+    // when run hasn't finished yet and connection is down
+    else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
+        displayButton('abortedProPipe');
+        //log file might be deleted or couldn't read the log file
+        var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
+        if (nextflowLog !== null && nextflowLog !== undefined) {
+            nextflowLog += "\nConnection is lost.";
+        } else {
+            serverLog += "\nConnection is lost.";
+        }
+    } else if (serverLog.match(/error/gi) || serverLog.match(/command not found/gi)) {
+        console.log("Error");
+        if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
+            var setStatus = getValues({ p: "updateRunStatus", run_status: "Error", project_pipeline_id: project_pipeline_id });
+        }
+        if (type !== "reload") {
+            clearIntNextLog(proType, proId);
+            clearIntPubWeb(proType, proId);
+        }
+        displayButton('errorProPipe');
 
+    }
+    // otherwise parse nextflow file to get status
+    else if (nextflowLog !== null) {
         if (nextflowLog.match(/N E X T F L O W/)) {
             if (nextflowLog.match(/##Success: failed/)) {
                 // status completed with error
@@ -3961,7 +4079,9 @@ function readNextLog(proType, proId, type) {
                     var setStatus = getValues({ p: "updateRunStatus", run_status: "NextErr", project_pipeline_id: project_pipeline_id, duration: duration });
                 }
                 if (type !== "reload") {
-                    clearInterval(interval_readNextlog);
+                    clearIntNextLog(proType, proId);
+                    clearIntPubWeb(proType, proId);
+
                 }
                 displayButton('errorProPipe');
 
@@ -3974,7 +4094,9 @@ function readNextLog(proType, proId, type) {
                     addOutFileDb();
                 }
                 if (type !== "reload") {
-                    clearInterval(interval_readNextlog);
+                    clearIntNextLog(proType, proId);
+                    clearIntPubWeb(proType, proId);
+
                 }
                 displayButton('completeProPipe');
                 showOutputPath();
@@ -3985,7 +4107,9 @@ function readNextLog(proType, proId, type) {
                     var setStatus = getValues({ p: "updateRunStatus", run_status: "NextErr", project_pipeline_id: project_pipeline_id });
                 }
                 if (type !== "reload") {
-                    clearInterval(interval_readNextlog);
+                    clearIntNextLog(proType, proId);
+                    clearIntPubWeb(proType, proId);
+
                 }
                 displayButton('errorProPipe');
 
@@ -4015,43 +4139,36 @@ function readNextLog(proType, proId, type) {
             if (type === "reload") {
                 readNextflowLogTimer(proType, proId, type);
             }
-
-
         }
     } else {
         console.log("Nextflow log is not exist yet.")
-
-        if (serverLog.match(/error/gi)) {
-            console.log("Error");
-            if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
-                var setStatus = getValues({ p: "updateRunStatus", run_status: "Error", project_pipeline_id: project_pipeline_id });
-            }
-            if (type !== "reload") {
-                clearInterval(interval_readNextlog);
-            }
-            displayButton('errorProPipe');
-
-        } else {
-            console.log("Waiting");
-            if (type === "reload") {
-                readNextflowLogTimer(proType, proId, type);
-            }
-            var setStatus = getValues({ p: "updateRunStatus", run_status: "Waiting", project_pipeline_id: project_pipeline_id });
-            displayButton('waitingProPipe');
-            if (runPid && proType === "cluster") {
-                pidStatus = checkRunPid(runPid, proType, proId);
-                if (pidStatus) { // if true, then it is exist in queue
-                    console.log("pid exist2")
-                } else { //pid not exist
-                    console.log("give error2")
-                }
-            }
-
+        console.log("Waiting");
+        if (type === "reload") {
+            readNextflowLogTimer(proType, proId, type);
         }
+        var setStatus = getValues({ p: "updateRunStatus", run_status: "Waiting", project_pipeline_id: project_pipeline_id });
+        displayButton('waitingProPipe');
+        if (runPid && proType === "cluster") {
+            pidStatus = checkRunPid(runPid, proType, proId);
+            if (pidStatus) { // if true, then it is exist in queue
+                console.log("pid exist2")
+            } else { //pid not exist
+                console.log("give error2")
+            }
+        }
+
     }
+    var lastrun = $('#runLogArea').attr('lastrun');
+    if (lastrun) {
+        $('#runLogArea').val(serverLog + "\n" + nextflowLog);
+        autoScrollLogArea()
+    }
+
     // save nextflow log file
-    setTimeout(function () { getValues({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId }, true), 100 });
+    setTimeout(function () { saveNexLg(proType, proId) }, 100);
 }
+
+
 
 function showOutputPath() {
     var outTableRow = $('#outputsTable > tbody > >:last-child').find('span');
@@ -4091,12 +4208,11 @@ function addOutFileDb() {
 }
 
 
-function getNextflowLog(project_pipeline_id, proType, proId) {
+function getServerLog(project_pipeline_id, name) {
     var logText = getValues({
-        p: "getNextflowLog",
+        p: "getFileContent",
         project_pipeline_id: project_pipeline_id,
-        profileType: proType,
-        profileId: proId
+        filename: "run/" + name
     });
     if (logText && logText != "") {
         return $.trim(logText);
@@ -4105,17 +4221,6 @@ function getNextflowLog(project_pipeline_id, proType, proId) {
     }
 }
 
-function getServerLog(project_pipeline_id) {
-    var logText = getValues({
-        p: "getServerLog",
-        project_pipeline_id: project_pipeline_id
-    });
-    if (logText && logText != "") {
-        return logText;
-    } else {
-        return "";
-    }
-}
 
 function filterKeys(obj, filter) {
     var key, keys = [];
@@ -4399,10 +4504,10 @@ function saveRun() {
                     updateSideBarProPipe("", project_pipeline_id, run_name, "edit")
                 } else if (dupliProPipe === true) {
                     var duplicateProPipeIn = getValues({ p: "duplicateProjectPipelineInput", new_id: s.id, old_id: old_project_pipeline_id });
+                    dupliProPipe = false;
                     if (duplicateProPipeIn) {
                         setTimeout(function () { window.location.replace("index.php?np=3&id=" + s.id); }, 0);
                     }
-                    dupliProPipe = false;
                 }
             },
             error: function (errorThrown) {
@@ -4491,11 +4596,198 @@ function duplicateProPipe() {
         saveRun();
     }
 }
+$(function () {
+    $(document).on('change', '#runVerLog', function (event) {
+        var run_log_uuid = $(this).val();
+        if (run_log_uuid) {
+            var version = $('option:selected', this).attr('ver');
+            if (version) {
+                var runTitleLog = "Run Log " + version + ":"
+                $('a[href="#logTab"]').css("display", "block")
+                $('a[href="#reportTab"]').css("display", "block")
+            } else {
+                var runTitleLog = "";
+                $('a[href="#logTab"]').css("display", "none")
+                $('a[href="#reportTab"]').css("display", "none")
+            }
+            var lastrun = $('option:selected', this).attr('lastrun');
+            if (lastrun) {
+                lastrun = 'lastrun="yes"';
+            } else {
+                lastrun = "";
+            }
+            var activeTab = $("ul#logNavBar li.active > a")
+            var activeID = "";
+            if (activeTab[0]) {
+                activeID = $(activeTab[0]).attr("href")
+            }
+            $("#runTitleLog").text(runTitleLog)
+            $("#logContentDiv").empty();
+            //to support outdated log directory system 
+            if (run_log_uuid.match(/^run/)) {
+                var path = ""
+            } else {
+                var path = "run"
+            }
+            var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
+            var fileListAr = Object.values(fileList);
+            var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
+            //hide serverlog.txt
+            var pubWebPath = $("#basepathinfo").attr("pubweb")
+            var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
+            var k = 0;
+            var tabDiv = [];
+            var fileName = [];
+            for (var j = 0; j < order.length; j++) {
+                if (fileListAr.includes(order[j])) {
+                    var exist = 'style="display:block;"';
+                } else {
+                    var exist = 'style="display:none;"';
+                }
+                k++
+                var active = "";
+                if (k == 1) {
+                    active = 'class="active"';
+                }
+                var tabID = cleanProcessName(order[j]) + 'Tab';
+                tabDiv.push(tabID);
+                fileName.push(order[j]);
+                navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
+            }
+            navTabDiv += '</ul>';
+            navTabDiv += '<div id="logNavCont" class="tab-content">';
+            for (var n = 0; n < tabDiv.length; n++) {
+                var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
+                var active = "";
+                if (n == 0) {
+                    active = 'in active';
+                }
+                navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
+                if (fileName[n] == "log.txt") {
+                    var serverlogText = "";
+                    var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
+                    if (fileListAr.includes("serverlog.txt")) {
+                        serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
+                        //to support outdated log directory system 
+                    } else if (fileListAr.includes("nextflow.log")) {
+                        logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
+                    }
+                    if (fileListAr.includes("err.log")) {
+                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
+                        //to support outdated log directory system 
+                    }
+                    navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
+                } else {
+                    navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
+                }
+                navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
+                navTabDiv += '</div>';
+            }
+            navTabDiv += '</div>';
+            $("#logContentDiv").append(navTabDiv)
+            $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
+                autoScrollLogArea()
+            });
+            if (activeID) {
+                if ($('.nav-tabs a[href="' + activeID + '"]').css("display") != "none") {
+                    $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+                }
+            }
+        }
+    });
+});
+
+function fillRunVerOpt(dropDownAr) {
+    var runLogs = getValues({ "p": "getRunLog", project_pipeline_id: project_pipeline_id })
+    //allow one outdated log directory
+    var newRunLogs = [];
+    var once = true
+    $.each(runLogs, function (el) {
+        var run_log_uuid = runLogs[el].run_log_uuid;
+        var project_pipeline_id = runLogs[el].project_pipeline_id
+        if (run_log_uuid) {
+            newRunLogs.push(runLogs[el])
+        } else if (!run_log_uuid && once) {
+            once = false;
+            newRunLogs.push(runLogs[el])
+        }
+    });
+    var size = $(newRunLogs).size()
+    for (var j = 0; j < dropDownAr.length; j++) {
+
+        var n = 0;
+        var lastItem = "";
+        var dropDownId = dropDownAr[j];
+        var runType = "";
+        if (dropDownId == "#runVerReport") {
+            runType = "Report"
+        } else if (dropDownId == "#runVerLog") {
+            runType = "Log"
+        }
+
+        $(dropDownId).empty();
+        $.each(newRunLogs, function (el) {
+            var run_log_uuid = newRunLogs[el].run_log_uuid;
+            var date_created = newRunLogs[el].date_created
+            var project_pipeline_id = newRunLogs[el].project_pipeline_id
+            if (run_log_uuid || project_pipeline_id) {
+                n++;
+                if (n == size) {
+                    lastItem = 'lastRun="yes"';
+                } else {
+                    lastItem = "";
+                }
+                if (run_log_uuid) {
+                    $(dropDownId).prepend(
+                        $('<option ' + lastItem + '></option>').attr("ver", n).val(run_log_uuid).html("Run " + runType + " " + n + " created at " + date_created)
+                    );
+                } else if (project_pipeline_id) {
+                    $(dropDownId).prepend(
+                        $('<option ' + lastItem + '></option>').attr("ver", n).val("run" + project_pipeline_id).html("Run Log " + n + " created at " + date_created)
+                    );
+                }
+            }
+            $(dropDownId).val($(dropDownId + ' option:first').val());
+            $(dropDownId).trigger("change");
+        });
+    }
+}
+
+
+function updateRunVerNavBar() {
+    console.log("updateRunVerNavBar")
+    var run_log_uuid = $("#runVerLog").val();
+    var lastrun = $('option:selected', "#runVerLog").attr('lastrun');
+    if (lastrun) {
+        lastrun = 'lastrun="yes"';
+        var activeTab = $("ul#logNavBar li.active > a")
+        var activeID = "";
+        if (activeTab[0]) {
+            activeID = $(activeTab[0]).attr("href")
+        }
+        var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: "run" })
+        var fileListAr = Object.values(fileList);
+        fileListAr.splice($.inArray("serverlog.txt", fileListAr), 1);
+        if (fileListAr.length > 0) {
+            for (var j = 0; j < fileListAr.length; j++) {
+                var tabID = cleanProcessName(fileListAr[j]) + 'Tab';
+                $('a[href="#' + tabID + '"').css("display", "block")
+            }
+        }
+        if (!activeID) {
+            $('.nav-tabs a[href="' + "#log_txtTab" + '"]').trigger("click");
+        }
+    }
+}
+
+
 
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     pipeData = getValues({ p: "getProjectPipelines", id: project_pipeline_id });
     projectpipelineOwn = pipeData[0].own;
+    pipeline_id = pipeData[0].pipeline_id;
+    project_id = pipeData[0].project_id;
     runPid = "";
     // if user not own it, cannot change or delete run
     if (projectpipelineOwn === "0") {
@@ -4504,28 +4796,30 @@ $(document).ready(function () {
         $('#saveRunIcon').remove();
         $('#pipeRunDiv').remove();
     }
-    pipeline_id = pipeData[0].pipeline_id;
-    project_id = pipeData[0].project_id;
-    $('#pipeline-title').attr('pipeline_id', pipeline_id);
-    if (project_pipeline_id !== '' && pipeline_id !== '') {
-        projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
-        loadPipelineDetails(pipeline_id);
-        loadProjectPipeline(pipeData);
-        runStatus = "";
-        if (projectpipelineOwn === "1") {
-            runStatus = getRunStatus(project_pipeline_id);
-        }
+    runStatus = "";
+    if (projectpipelineOwn === "1") {
+        runStatus = getRunStatus(project_pipeline_id);
     }
     if (runStatus !== "") {
-        $('#runLogs').css('display', 'inline');
         //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
-        var profileTypeId = $('#chooseEnv').find(":selected").val(); //local-32
+        var profileTypeId = pipeData[0].profile //local-32
         var patt = /(.*)-(.*)/;
         var profileType = profileTypeId.replace(patt, '$1');
         var profileId = profileTypeId.replace(patt, '$2');
         proTypeWindow = profileType;
         proIdWindow = profileId;
-        setTimeout(function () { readNextLog(profileType, profileId, "reload"); }, 100);
+        readNextLog(profileType, profileId, "reload");
+        readPubWeb(profileType, profileId, "reload");
+    } else {
+        $('#statusProPipe').css('display', 'inline');
+    }
+
+    $('#pipeline-title').attr('pipeline_id', pipeline_id);
+    if (project_pipeline_id !== '' && pipeline_id !== '') {
+        projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
+        loadPipelineDetails(pipeline_id);
+        loadProjectPipeline(pipeData);
+        fillRunVerOpt(["#runVerLog", "#runVerReport"])
     }
     //not allow to check both docker and singularity
     $('#docker_imgDiv').on('show.bs.collapse', function () {
@@ -5040,4 +5334,804 @@ $(document).ready(function () {
         confirmNewRev = true;
         saveRun();
     });
+
+    $(function () {
+        $(document).on('click', '.updateIframe', function (event) {
+            var href = $(this).attr("href");
+            var iframe = $(href).find("iframe");
+            //update iframe in case its a txt file
+            if (iframe && iframe.attr("src") && !href.match(/_html/)) {
+                iframe.attr('src', "");
+                setTimeout(function () { iframe.attr("src", iframe.attr("fillsrc")) }, 100);
+            }
+            //load iframe when first time it is clicked
+            if (iframe && iframe.attr("fillsrc") && !iframe.attr("src")) {
+                iframe.attr("src", iframe.attr("fillsrc"))
+            }
+        })
+    });
+
+
+    //$(function () { allows to trigger when a.reportFile added later to DOM
+    $(function () {
+        $(document).on('shown.bs.tab click', 'a.reportFile', function (event) {
+            var href = $(this).attr("href");
+            $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+            //check if div is empty
+            if (!$.trim($(href).html()).length) {
+                var uuid = $("#runVerReport").val();
+                var visType = $(this).attr("visType");
+                var filePath = $(this).attr("filepath");
+                var split = filePath.split("/")
+                var filename = "";
+                var dir = "";
+                if (split.length > 1) {
+                    filename = split[split.length - 1];
+                    dir = filePath.substring(0, filePath.indexOf(filename));
+                }
+                var fileid = $(this).attr("fileid");
+                console.log(fileid)
+                if (visType == "table") {
+                    var contentDiv = '<div style="margin:15px;"><table style="table-layout:fixed;" class="table table-striped table-bordered" cellspacing="0"  id="' + fileid + '"></table></div>';
+                    $(href).append(contentDiv)
+                    var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
+                    var dataTableObj = tsvConvert(data, "json2")
+                    dataTableObj.deferRender = true
+                    dataTableObj.scroller = true
+                    dataTableObj.scrollCollapse = true
+                    dataTableObj.scrollY = 430
+                    dataTableObj.scrollX = true
+                    console.time("table");
+                    $("#" + fileid).DataTable(dataTableObj);
+                    console.timeEnd("table");
+                } else if (visType == "rmarkdown") {
+                    var contentDiv = '<div style="width:100%;" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></div>';
+                    $(href).append(contentDiv)
+                    var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
+                    var localbasepath = $("#basepathinfo").attr("localbasepath")
+                    console.time("rMarkEditor");
+                    $("#" + fileid).rMarkEditor({
+                        ajax: {
+                            localbasepath: localbasepath,
+                            text: data
+                        },
+                        editorWidth: "60%",
+                        reportWidth: "40%",
+                        height: "565px",
+                        theme: "monokai" //tomorrow
+                    });
+                    console.timeEnd("rMarkEditor");
+                }
+            }
+
+        })
+    });
+
+    //left tab-pane collapse
+    //fix dataTable column width in case, width of the page is changed while panel closed 
+    $(function () {
+        $(document).on('shown.bs.collapse', '.tab-pane', function (event) {
+            $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+        });
+    });
+    //main row panel collapse
+    $(function () {
+        $(document).on('shown.bs.collapse', '.collapseRowBody', function (event) {
+            $(this).find("li.active > a").trigger("click");
+        });
+    });
+
+    //################################
+    // --rMarkEditor jquery plugin --
+    //################################
+
+    (function ($) {
+        $.fn.rMarkEditor = function (options) {
+            var settings = $.extend({
+                // default values.
+                height: "500px",
+                heightIconBar: "35px"
+            }, options);
+            var elems = $(this);
+            var elemsID = $(this).attr("id");
+            console.log(elems)
+            console.log(elemsID)
+
+            var getEditorIconDiv = function () {
+                return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">
+                            <li role="presentation"><a class="rmarkeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>
+                            <li role="presentation"><a class="rmarkeditorsaveas" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As">
+                            <span class="glyphicon-stack">
+                                <i class="fa fa-pencil glyphicon-stack-3x"></i>
+                                <i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i>
+                            </span>
+                            </a></li>
+                            <li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>
+                            <li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>
+                        </ul>`
+            }
+            var getReportIconDiv = function () {
+                return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">
+                            <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                                <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li><a href="#">Download PDF</a></li>
+                                </ul>
+                            </li>
+                        </ul>`
+
+            }
+            var renameModal = `
+                <div id="rMarkRename" class="modal fade" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title">Save</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form style="padding-right:10px;" class="form-horizontal">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label">File Name</label>
+                                        <div class="col-sm-9">
+                                        <input type="text" class="form-control rmarkfilename">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary save" data-dismiss="modal">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            var settingsModal = ` 
+                <div id="rMarkSett" class="modal fade" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" >Settings</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form style="padding-right:10px;" class="form-horizontal">
+                                    <div class="form-group">
+                                        <label class="col-sm-5 control-label">Auto updating output</label>
+                                        <div class="col-sm-7">
+                                            <label class="switch">
+                                                <input class="aUpdateCh" type="checkbox">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal" >close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+
+            var getDiv = function (settings, outputHtml) {
+                var id = "rMarkEditor"
+                var editoriconBar = '<div id="' + elemsID + '-editoricons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.editorWidth + ';">' + getEditorIconDiv() + '</div>';
+                var reporticonBar = '<div id="' + elemsID + '-reporticons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.reportWidth + ';">' + getReportIconDiv() + '</div>';
+                var editorDiv = '<div id="' + elemsID + '-editor" style="clear:both; float:left; height:' + settings.height + '; width:' + settings.editorWidth + ';"></div>';
+                var reportDiv = '<div id="' + elemsID + '-report" style="float:left; height:' + settings.height + '; width:' + settings.reportWidth + ';"><iframe style="width:100%; height:100%" src="' + outputHtml + '"></iframe></div>';
+                return reporticonBar + editoriconBar + editorDiv + reportDiv
+            }
+            var createEditor = function (settings) {
+                var editorId = elemsID + "-editor";
+                window[editorId] = ace.edit(editorId);
+                window[editorId].setTheme("ace/theme/" + settings.theme);
+                window[editorId].getSession().setMode("ace/mode/r");
+                window[editorId].setFontSize("14px");
+                window[editorId].$blockScrolling = Infinity;
+                window[editorId].setValue(settings.ajax.text);
+            }
+            var createModal = function () {
+                if (document.getElementById("rMarkSett") === null) {
+                    $('body').append(settingsModal);
+                }
+                if (document.getElementById("rMarkRename") === null) {
+                    $('body').append(renameModal);
+                }
+            }
+
+            var getFileName = function () {
+                var res = { filename: "", rest: "" };
+                var filePath = elems.attr("filePath")
+                var split = filePath.split("/")
+                res.filename = split[split.length - 1]
+                res.rest = split.slice(0, -1).join('/');
+                return res
+            }
+            var saveCommand = function (editorId, filename) {
+                var obj = getFileName();
+                var newPath = obj.rest + "/" + filename
+                var text = window[editorId].getValue();
+                text = encodeURIComponent(text);
+                var run_log_uuid = $("#runVerReport").val();
+                var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
+                return saveData
+            }
+
+            var saveRmd = function (editorId, type) {
+                var obj = getFileName();
+                var newPath = obj.rest + "/" + obj.filename
+                //check if readonly
+                if (elems.attr("read_only") || type == "saveas") {
+                    //ask new name  
+                    $("#rMarkRename").attr("filename", obj.filename)
+                    $("#rMarkRename").modal("show");
+                    //if (saveData) {
+                    //click on the saved file: it will trigger the update.
+                    //} 
+                } else {
+                    var saveData = saveCommand(editorId, obj.filename)
+                    if (saveData) {
+                        update(editorId);
+                    }
+                }
+            }
+
+            var update = function (editorId) {
+                var text = window[editorId].getValue();
+                var outputHtml = getData(text, settings);
+                var reportId = elemsID + "-report";
+                $("#" + reportId + "> iframe").attr("src", outputHtml)
+            }
+            var timeoutId = 0;
+            var autoUpdate = function (editorId) {
+                if (timeoutId) clearTimeout(timeoutId);
+                timeoutId = setTimeout(function () { update(editorId) }, 2000);
+            }
+            var eventHandler = function (settings) {
+                var editorId = elemsID + "-editor";
+
+                $(function () {
+                    $('[data-toggle="tooltip"]').tooltip();
+                });
+                $(function () {
+                    $('a.rmarkeditorrun').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            update(editorId);
+                        }
+                    });
+                });
+                $(function () {
+                    $(document).on('change', 'input.aUpdateCh', function (event) {
+                        if ($(this).is(":checked")) {
+                            $('#' + editorId).keyup(function () {
+                                autoUpdate(editorId);
+                            });
+                        } else {
+                            $('#' + editorId).off();
+                        }
+                    });
+                });
+                $(function () {
+                    $('a.rmarkeditorsave').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            saveRmd(editorId, "save")
+                        }
+                    });
+                    $('a.rmarkeditorsaveas').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            saveRmd(editorId, "saveas")
+                        }
+                    });
+                    $('a.rmarkeditorsett').on('click', function (event) {
+                        $("#rMarkSett").modal("show");
+                    });
+                });
+                $(function () {
+                    $('#rMarkRename').on('show.bs.modal', function (event) {
+                        var divOldName = elems.attr("filename")
+                        var modalOldName = $("#rMarkRename").attr("filename")
+                        if (divOldName === modalOldName) {
+                            if ($('#rMarkRename').find("input.rmarkfilename")) {
+                                $($('#rMarkRename').find("input.rmarkfilename")[0]).val(divOldName)
+                            }
+                        }
+                    });
+                    $("#rMarkRename").on('click', '.save', function (event) {
+                        var divOldName = elems.attr("filename")
+                        var divOldDir = elems.attr("dir")
+                        var modalOldName = $("#rMarkRename").attr("filename")
+                        if (divOldName === modalOldName) {
+                            if ($('#rMarkRename').find("input.rmarkfilename")) {
+                                var newName = $($('#rMarkRename').find("input.rmarkfilename")[0]).val();
+                                var saveData = saveCommand(editorId, newName)
+                                $("#reportRows").dynamicRows("fnRefresh", "columnsBody")
+                                var newFilepath = divOldDir + newName;
+                                var allfiles = elems.closest("div.panel-body").find("a[filepath]")
+                                for (var i = 0; i < allfiles.length; i++) {
+                                    var menuFile2 = $(allfiles[i]).attr("filepath")
+                                    if (menuFile2 == newFilepath){
+                                        $(allfiles[i]).trigger("click");
+                                    }
+                                }
+                                if (saveData) {
+                                    $("#rMarkRename").modal("hide");
+                                }
+                            }
+                        }
+                    });
+                });
+
+
+            }
+            var replacePattern = function (tx) {
+                var lines = tx.split("\n");
+                var fi = "";
+                for (var i = 0; i < lines.length; i++) {
+                    if (lines[i].match(/(.*)\{\{(.*)\}\}(.*)/)) {
+                        elems.attr("read_only", "true")
+                        var reg = lines[i].match(/(.*)\{\{(.*)\}\}(.*)/);
+                        var before = reg[1];
+                        var patt = reg[2];
+                        var after = reg[3];
+                        var relaxedjson = "{" + patt + "}";
+                        var correctJson = relaxedjson.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+                        var json = JSON.parse(correctJson)
+                        var res = ""
+                        if (json) {
+                            if (json.webpath) {
+                                var pubWebPath = $("#basepathinfo").attr("pubweb");
+                                var run_log_uuid = $("#runVerReport").val();
+                                var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + json.webpath;
+                                res = '"' + link + '"';
+                            }
+                        }
+                        fi += before + res + after + "\n";
+                    } else {
+                        fi += lines[i] + "\n";
+                    }
+                }
+                return fi
+            }
+
+            var getData = function (editText, settings) {
+                var editTextSend = JSON.stringify(editText)
+                var ret = null
+                $.ajax({
+                    type: "POST",
+                    url: settings.ajax.localbasepath + "/ocpu/library/markdownapp/R/rmdtext",
+                    data: { 'text': editTextSend },
+                    async: false,
+                    cache: false,
+                    success: function (results) {
+                        if (results === undefined || results == "") {
+                            ret = "";
+                        } else {
+                            var lines = results.split("\n");
+                            for (var i = 0; i < lines.length; i++) {
+                                if (lines[i].match(/output.html/)) {
+                                    var outputHtml = settings.ajax.localbasepath + lines[i];
+                                    ret = outputHtml
+                                    break
+                                }
+                            }
+                        }
+
+                    },
+                    error: function (errorThrown) {
+                        console.log("##Error:");
+                        console.log(errorThrown);
+                    }
+                });
+                if (!ret) ret = "";
+                return ret
+            }
+            settings.ajax.text = replacePattern(settings.ajax.text);
+            var outputHtml = getData(settings.ajax.text, settings);
+            elems.append(getDiv(settings, outputHtml));
+            createEditor(settings)
+            createModal()
+            eventHandler(settings);
+            return this;
+
+        };
+    }(jQuery));
+
+    //################################
+    // --dynamicRows jquery plugin --
+    //################################
+
+    (function ($) {
+        var methods = {
+            init: function (options) {
+                var settings = $.extend({
+                    // default values.
+                    color: "#556b2f",
+                    backgroundColor: "white",
+                    heightHeader: "60px",
+                    lineHeightHeader: "60px",
+                    heightBody: "600px",
+                    heightTitle: "50px",
+                    lineHeightTitle: "50px"
+                }, options);
+                var elems = $(this);
+                var elemsID = $(this).attr("id");
+                elems.data('settings', settings);
+                var data = getData(settings);
+                if (data === undefined || data == null || data == "") {
+                    elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to report</div>')
+                } else {
+                    var title = getTitle(data[0], settings);
+                    if (title) {
+                        elems.append(title);
+                    }
+                    $(data).each(function (i) {
+                        elems.append(getPanel(data[i], settings, elemsID));
+                    });
+                    refreshHandler(settings)
+                }
+                return this;
+            },
+            fnRefresh: function (content) {
+                var elems = $(this);
+                var elemsID = $(this).attr("id");
+                var settings = elems.data('settings');
+                var data = getData(settings);
+                if (content == "columnsBody") {
+                    $(data).each(function (i) {
+                        var id = data[i].id
+                        var dataObj = data[i];
+                        console.log(dataObj)
+                        var existWrapBody = $("#" + elemsID + '-' + id);
+                        if (existWrapBody) {
+                            var existBodyDiv = existWrapBody.children().children()
+                            var col = settings.columnsBody;
+                            $.each(existBodyDiv, function (el) {
+                                if (existBodyDiv[el]) {
+                                    getColumnContent(dataObj, col[el], existBodyDiv[el])
+                                }
+                            })
+                        }
+                    });
+                }
+                return this;
+            }
+        };
+
+        $.fn.dynamicRows = function (methodOrOptions) {
+            if (methods[methodOrOptions]) {
+                return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
+            } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
+                // Default to "init"
+                return methods.init.apply(this, arguments);
+            } else {
+                $.error('Method ' + methodOrOptions + ' does not exist on jQuery.tooltip');
+            }
+        };
+
+
+
+        var refreshHandler = function (settings) {
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip();
+            });
+            $('.collapseRowDiv').on({
+                mouseenter: function () {
+                    $(this).css("background-color", settings.backgroundcolorenter)
+                },
+                mouseleave: function () {
+                    $(this).css("background-color", settings.backgroundcolorleave)
+                }
+            });
+
+            $('.collapseRowDiv').on('click', function (e) {
+                var textClassPlus = $(this).find('.fa-plus-square-o')[0];
+                var textClassMinus = $(this).find('.fa-minus-square-o')[0];
+                if (textClassPlus) {
+                    $(this).css("background-color", settings.backgroundcolorenter)
+                    $(textClassPlus).removeClass('fa-plus-square-o');
+                    $(textClassPlus).addClass('fa-minus-square-o');
+                } else if (textClassMinus) {
+                    $(this).css("background-color", settings.backgroundcolorleave)
+                    $(textClassMinus).removeClass('fa-minus-square-o');
+                    $(textClassMinus).addClass('fa-plus-square-o');
+                }
+            });
+            $('.collapseIconItem').on('click', function (e) {
+                var itemClass = $(this).attr("class")
+                if (itemClass.match(/fa-plus-square-o/)) {
+                    $(this).removeClass('fa-plus-square-o');
+                    $(this).addClass('fa-minus-square-o');
+                } else if (itemClass.match(/fa-minus-square-o/)) {
+                    $(this).removeClass('fa-minus-square-o');
+                    $(this).addClass('fa-plus-square-o');
+                }
+            });
+        }
+
+        var getColumnContent = function (dataObj, colObj, nTd) {
+            var col = "";
+            if (colObj.fnCreatedCell && !nTd) {
+                var nTd = $("<span></span>");
+                colObj.fnCreatedCell(nTd, dataObj)
+                col = nTd.clone().wrap('<p>').html();
+            } else if (colObj.fnCreatedCell && nTd) {
+                colObj.fnCreatedCell(nTd, dataObj)
+            } else if (colObj.data) {
+                col = dataObj[colObj.data]
+            }
+            return col
+        };
+
+        var getColumnData = function (dataObj, settings, cols, height, lineHeight) {
+            var columnPercent = 100;
+            var clearFix = ""; //if its the first element of multicolumn
+            var center = ""; //align="center" to div
+            var columnCount = $(cols).size();
+            var processParamDiv = ""
+            var heightT = "";
+            var lineHeightT = "";
+            $.each(cols, function (el) {
+                var overflowT = "";
+                if (cols[el].overflow) {
+                    overflowT = 'overflow:' + cols[el].overflow + '; ';
+                }
+                if (cols[el].colPercent) {
+                    columnPercent = cols[el].colPercent;
+                } else {
+                    columnPercent = Math.floor(columnPercent / columnCount * 100) / 100;
+                }
+                if (el === 0) {
+                    clearFix = " clear:both; "
+                } else {
+                    clearFix = ""
+                }
+                if (cols[el].className == "center") {
+                    center = ' align="center"; '
+                } else {
+                    center = ""
+                }
+                if (height) {
+                    heightT = 'height:' + height + '; ';
+                }
+                if (lineHeight) {
+                    lineHeightT = 'line-height:' + lineHeight + '; ';
+                }
+
+                processParamDiv += '<div ' + center + ' style="' + heightT + lineHeightT + clearFix + overflowT + 'float:left;  width:' + columnPercent + '%; ">';
+                processParamDiv += getColumnContent(dataObj, cols[el], null)
+                processParamDiv += '</div>';
+            });
+            return processParamDiv
+        }
+
+        var getPanel = function (dataObj, settings, elemsID) {
+            if (dataObj) {
+                var id = dataObj.id
+                var headerDiv = getColumnData(dataObj, settings, settings.columnsHeader, settings.heightHeader, settings.lineHeightHeader);
+                var bodyDiv = getColumnData(dataObj, settings, settings.columnsBody, settings.heightBody, settings.lineHeightBody);
+                var wrapHeader = '<div class="collapsible collapseRowDiv" data-toggle="collapse" style="height:' + settings.heightHeader + ';" href="#' + elemsID + '-' + id + '"><h3 class="panel-title">' + headerDiv + '</h3></div>';
+                var wrapBody = '<div  id="' + elemsID + '-' + id + '" class="panel-collapse collapse collapseRowBody" style="word-break: break-all;"><div class="panel-body" style="background-color:white; height:' + settings.heightBody + '; padding:0px;">' + bodyDiv + '</div>';
+                return '<div id="' + elemsID + 'PanelDiv-' + id + '" ><div class="panel" style="background-color:' + settings.backgroundcolorleave + '; margin-bottom:15px;">' + wrapHeader + wrapBody + '</div></div>'
+            } else
+                return ""
+        }
+
+        var getTitle = function (dataObj, settings) {
+            if (settings.columnsTitle) {
+                var titleDiv = getColumnData({}, settings, settings.columnsTitle, settings.heightTitle, settings.lineHeightTitle);
+                return '<div  style="font-weight:900; height:' + settings.heightTitle + ';">' + titleDiv + '</div>'
+            } else
+                return ""
+        }
+
+        var getData = function (settings) {
+            var res = null;
+            if (settings.ajax.url) {
+                $.ajax({
+                    type: "POST",
+                    url: settings.ajax.url,
+                    data: settings.ajax.data,
+                    datatype: "json",
+                    async: false,
+                    cache: false,
+                    success: function (results) {
+                        res = results
+                        console.log(res)
+                    },
+                    error: function (errorThrown) {
+                        console.log("##Error: ");
+                        console.log(errorThrown)
+                    }
+                });
+                return res
+            } else if (settings.ajax.data) {
+                if (settings.ajax.data === undefined || settings.ajax.data.length == 0) {
+                    res = null;
+                } else {
+                    res = settings.ajax.data;
+                }
+            }
+            return res
+        }
+
+    }(jQuery));
+
+
+    $(function () {
+        $(document).on('change', '#runVerReport', function (event) {
+            var run_log_uuid = $(this).val();
+            var reload = true
+            if (run_log_uuid) {
+                var prevUUID = $(this).attr("prev")
+                $(this).attr("prev", run_log_uuid)
+                var savedReportData = $.data(this, "reportData")
+                var reportData = getValues({ "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id })
+                $.data(this, "reportData", reportData);
+                if (prevUUID) {
+                    if (prevUUID == run_log_uuid) {
+                        if (savedReportData && reportData) {
+                            if (savedReportData.length && reportData.length) {
+                                if (savedReportData.length == reportData.length) {
+                                    reload = false
+                                }
+                            }
+                        }
+                    }
+                }
+                var version = $('option:selected', this).attr('ver');
+                if (version) {
+                    var runTitleLog = "Run Report " + version + ":"
+                    $('a[href="#reportTab"]').css("display", "block")
+                } else {
+                    var runTitleLog = "";
+                    $('a[href="#reportTab"]').css("display", "none")
+                }
+
+                $("#runTitleReport").text(runTitleLog)
+                if (reload) {
+                    $("#reportRows").empty();
+                    //add 'className: "center"' to center text in columns array
+                    $("#reportRows").dynamicRows({
+                        ajax: {
+                            url: "ajax/ajaxquery.php",
+                            data: { "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id }
+                        },
+                        columnsBody: [{
+                            //file list
+                            data: null,
+                            colPercent: "25",
+                            overflow: "scroll",
+                            fnCreatedCell: function (nTd, oData) {
+                                var run_log_uuid = $("#runVerReport").val();
+                                var pubWebPath = $("#basepathinfo").attr("pubweb");
+                                var visType = oData.pubWeb
+                                var icon = "fa-file-text-o";
+                                if (visType == "table") {
+                                    icon = "fa-table";
+                                }
+                                var fileList = oData.fileList;
+                                var liText = "";
+                                var active = "";
+                                $.each(fileList, function (el) {
+                                    if (fileList[el]) {
+                                        if (el == 0) {
+                                            active = "active"
+                                        } else {
+                                            active = "";
+                                        }
+                                        var filepath = oData.name + "/" + fileList[el];
+                                        var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
+                                        var filenameCl = cleanProcessName(fileList[el])
+                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                        var fileID = oData.id + "_" + filenameCl;
+                                        liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="fa ' + icon + '"></i>' + fileList[el] + '</a></li>';
+                                    }
+                                });
+                                if (!liText) {
+                                    liText = '<div style="margin:10px;"> No data available</div>';
+                                }
+                                $(nTd).html('<ul class="nav nav-pills nav-stacked">' + liText + '</ul>');
+                            },
+        }, {
+                            //file content
+                            data: null,
+                            colPercent: "75",
+                            fnCreatedCell: function (nTd, oData) {
+                                var fileList = oData.fileList;
+                                if ($(nTd).is(':empty')) {
+                                    var navTabDiv = "";
+                                    navTabDiv += '<div class="tab-content">';
+                                    var liText = "";
+                                    var active = "";
+                                    $.each(fileList, function (el) {
+                                        var filenameCl = cleanProcessName(fileList[el])
+                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                        var active = "";
+                                        if (el == 0) {
+                                            active = 'in active';
+                                        }
+                                        navTabDiv += '<div id = "' + tabID + '" class = "tab-pane fade ' + active + '" ></div>';
+                                    });
+                                    navTabDiv += '</div>';
+                                    $(nTd).html(navTabDiv);
+                                } else {
+                                    $.each(fileList, function (el) {
+                                        var filenameCl = cleanProcessName(fileList[el])
+                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                        if (!$(nTd).find("div#" + tabID).length) {
+                                            $(nTd).children().append('<div id = "' + tabID + '" class = "tab-pane fade" ></div>')
+                                        }
+                                    });
+                                }
+                            },
+        }],
+                        columnsHeader: [{
+                            data: null,
+                            colPercent: "4",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
+                            },
+        }, {
+                            data: null,
+                            fnCreatedCell: function (nTd, oData) {
+                                var gNum = oData.id.split("-")[1];
+                                var rowID = "outputTa-" + gNum;
+                                var processName = $('#' + rowID + ' > :nth-child(5)').text();
+                                var processID = $('#' + rowID + ' > :nth-child(5)').text();
+                                $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + processName + '</span>');
+                            },
+                            colPercent: "37"
+        }, {
+                            data: "name",
+                            colPercent: "39"
+        }, {
+                            data: null,
+                            colPercent: "20",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="fa fa-line-chart"></i></a>');
+                            }
+        }],
+                        columnsTitle: [{
+                            data: null,
+                            colPercent: "4"
+
+        }, {
+                            data: null,
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span>PROCESS</span>');
+                            },
+                            colPercent: "37"
+        }, {
+                            data: "name",
+                            colPercent: "39",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span>OUTPUT DIRECTORY</span>');
+                            },
+        }, {
+                            data: null,
+                            colPercent: "20",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span>ACTIONS</span>');
+                            }
+        }],
+                        backgroundcolorenter: "#ced9e3",
+                        backgroundcolorleave: "#ECF0F4",
+                        heightHeader: "60px"
+                    });
+                }
+            }
+        });
+    });
+
+
+
+
+
+
+
+
+
 });

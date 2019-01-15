@@ -1,3 +1,22 @@
+<?php
+    if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
+    $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
+    $name = isset($_SESSION['name']) ? $_SESSION['name'] : "";
+    $admin_id = isset($_SESSION['admin_id']) ? $_SESSION['admin_id'] : "";
+    $role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
+    if ($ownerID != ''){$login = 1;} 
+    else { $login = 0;}
+    session_write_close();
+
+    require_once(__DIR__."/../config/config.php");
+    $SHOW_AMAZON_KEYS= SHOW_AMAZON_KEYS;
+    $SHOW_SSH_KEYS=SHOW_SSH_KEYS;
+    $SHOW_GROUPS=SHOW_GROUPS;
+    $SHOW_AMAZON_KEYS = isset($SHOW_AMAZON_KEYS) ? $SHOW_AMAZON_KEYS : "notset";
+    $SHOW_SSH_KEYS = isset($SHOW_SSH_KEYS) ? $SHOW_SSH_KEYS : "notset";
+    $SHOW_GROUPS = isset($SHOW_GROUPS) ? $SHOW_GROUPS : "notset";
+?>
+
 <section class="content" style="max-width: 1500px; ">
     <h2 class="page-header">User Profile</h2>
     <div class="row">
@@ -6,38 +25,73 @@
             <div class="nav-tabs-custom">
                 <ul class="nav nav-tabs">
                     <li class="active"><a href="#runEnvDiv" data-toggle="tab" aria-expanded="true">Run Environments</a></li>
-                    <li class=""><a href="#groups" data-toggle="tab" aria-expanded="false">Groups</a></li>
-                    <li class=""><a href="#sshKeys" data-toggle="tab" aria-expanded="false">SSH Keys</a></li>
-                    <li class=""><a href="#amazonKeys" data-toggle="tab" aria-expanded="false">Amazon Keys</a></li>
-                    <li id="adminTabBut" style="display:none;" class=""><a href="#adminTab" data-toggle="tab" aria-expanded="false">Admin</a></li>
+                    <?php
+                        if ($login == 1 && ($SHOW_GROUPS != false || !empty($admin_id) || $role == "admin")){
+                            echo '<li class=""><a href="#groups" data-toggle="tab" aria-expanded="false">Groups</a></li>';
+                        }
+                        if ($login == 1 && ($SHOW_SSH_KEYS != false || !empty($admin_id) || $role == "admin")){
+                            echo '<li class=""><a href="#sshKeys" data-toggle="tab" aria-expanded="false">SSH Keys</a></li>';
+                        }
+                        if ($login == 1 && ($SHOW_AMAZON_KEYS != false || !empty($admin_id) || $role == "admin")){
+                            echo '<li class=""><a href="#amazonKeys" data-toggle="tab" aria-expanded="false">Amazon Keys</a></li>';
+                        }
+                        echo '<li class=""><a href="#changePass" data-toggle="tab" aria-expanded="false">Change Password</a></li>';
+                        if ($login == 1 && $role == "admin"){
+                            echo '<li id="adminTabBut"  class=""><a href="#adminTab" data-toggle="tab" aria-expanded="false">Admin</a></li>';
+                        } 
+                        ?>
                 </ul>
                 <div class="tab-content">
                     <div class="tab-pane active" id="runEnvDiv">
-                        <form class="form-horizontal">
+                        <div class="panel panel-default" id="profilepanel">
                             <div class="panel-heading clearfix">
-                                <button class="btn btn-primary" type="button" id="addEnv" data-toggle="modal" href="#profilemodal" style="float:right; vertical-align:middle;">Add environment</button>
-                                <h6><b></b></h6>
-                            </div>
-                            <div class="panel panel-default">
-                                <div>
-                                    </br>
-                                    <table id="profilesTable" class="table">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Profile Name</th>
-                                                <th scope="col">Type</th>
-                                                <th scope="col">Details</th>
-                                                <th scope="col">Actions</th>
-                                            </tr>
-                                            <tr id="noProfile">
-                                                <td>No Profile Available</td>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
+                                <div class="pull-right">
+                                    <button type="button" class="btn btn-primary btn-sm" id="addEnv" data-toggle="modal" data-target="#profilemodal">Add environment</button>
+                                </div>
+                                <div class="pull-left">
+                                    <h5><i class="fa fa-user " style="margin-left:0px; margin-right:0px;"></i> Run Environments</h5>
                                 </div>
                             </div>
-                        </form>
+                            <div class="panel-body">
+                                <table id="profilesTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Profile Name</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Details</th>
+                                            <th scope="col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                        <?php
+                            if ($login == 1 && $role == "admin"){
+                        echo '<div class="panel panel-default" id="publicprofilepanel">
+                                <div class="panel-heading clearfix">
+                                    <div class="pull-right">
+                                        <button type="button" class="btn btn-primary btn-sm" id="addPublicProfile" data-toggle="modal" data-target="#profilemodal">Add Public Profile</button>
+                                    </div>
+                                    <div class="pull-left">
+                                        <h5><i class="fa fa-user " style="margin-left:0px; margin-right:0px;"></i> Public Run Environments</h5>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    <table id="publicProfileTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Profile Host</th>
+                                                <th>Type</th>
+                                                <th>Details</th>
+                                                <th>Options</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>';
+                            }
+                        ?>
+
                     </div>
                     <!-- /.tab-pane ends -->
 
@@ -119,18 +173,85 @@
                     </div>
                     <!-- /.tab-pane ends -->
                     <!-- /.tab-pane starts -->
-                    <div class="tab-pane" id="adminTab">
-                        <div class="panel panel-default">
+                    <div class="tab-pane" id="changePass">
+                        <div class="panel panel-default" id="changePassPanel">
                             <div class="panel-heading clearfix">
                                 <div class="pull-left">
-                                    <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> Impersonation Page</h5>
+                                    <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> Change Password</h5>
                                 </div>
                             </div>
                             <div class="panel-body">
-                                <button class="btn btn-primary" type="button" id="impersonUser" data-toggle="modal" href="#impersonModal">Select User</button>
+                                <div class="col-sm-4 ">
+                                    <p>Use the form below to change your password.</p>
+                                    <form method="post" id="passwordForm">
+                                        <div class="form-group">
+                                           <div>
+                                            <input type="password" class="input form-control" name="password0" id="password0" placeholder="Old Password" autocomplete="off">
+                                        </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div >
+                                                <input type="password" class="input form-control" name="password1" id="password1" placeholder="New Password" autocomplete="off">
+                                                <div class="row" id="8charDiv" style="display:none;">
+                                                    <div class="col-sm-6">
+                                                        <span id="8char" class="glyphicon glyphicon-remove" style="color:#FF0004;"></span> 8 Characters Long<br>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div >
+                                                <input type="password" class="input form-control" name="password2" id="password2" placeholder="Repeat New Password" autocomplete="off">
+                                                <div class="row">
+                                                    <div class="col-sm-12" id="pwmatchDiv" style="display:none;">
+                                                        <span id="pwmatch" class="glyphicon glyphicon-remove" style="color:#FF0004;"></span> Passwords Match
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button id="changePassBtn" type="submit" class="col-xs-12 btn btn-primary btn-load" data-loading-text="Changing Password...">Change Password </button>
+                                    </form>
+                                </div>
+                                <!--/col-sm-6-->
                             </div>
                         </div>
                     </div>
+                    <!-- /.tab-pane ends -->
+                    <!-- /.tab-pane starts -->
+                    <?php 
+                        if ($login == 1 && $role == "admin"){
+                        echo '<div class="tab-pane" id="adminTab">
+                            <div class="panel panel-default">
+                                <div class="panel-heading clearfix">
+                                    <div class="pull-right">
+                                        <button type="button" class="btn btn-primary btn-sm" id="addUser" data-toggle="modal" data-target="#userModal">Add User</button>
+                                    </div>
+                                    <div class="pull-left">
+                                        <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> User Panel</h5>
+                                    </div>
+                                </div>
+                                <div class="panel-body">
+                                    <table id="AdminUserTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Username</th>
+                                                <th>E-mail</th>
+                                                <th>Institute</th>
+                                                <th>Role</th>
+                                                <th>Active</th>
+                                                <th>Member Date</th>
+                                                <th>Options</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>';
+                        }
+                        ?>
+
+
                 </div>
                 <!-- /.tab-content -->
             </div>
@@ -162,23 +283,24 @@
                     <div class="form-group">
                         <label for="mEnvName" class="col-sm-3 control-label">Profile Name</label>
                         <div class="col-sm-9">
-                            <input type="text" class="form-control" id="mEnvName" name="name">
+                            <select id="mEnvName" class="fbtn btn-default form-control" name="name">
+                                <option value="" disabled selected>Choose or Type New Profile Name</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="chooseEnv" class="col-sm-3 control-label">Type</label>
                         <div class="col-sm-9">
                             <select style="width:150px" id="chooseEnv" class="fbtn btn-default form-control" name="runEnv">
-                                  <option value="" disabled selected>Select environment </option>
-<!--                                  <option value="local">Local</option>-->
-                                  <option value="cluster">Host</option>
-                                  <option value="amazon">Amazon</option>
-                                </select>
+                                <option value="" disabled selected>Select environment </option>
+                                <option value="cluster">Host</option>
+                                <option value="amazon">Amazon</option>
+                            </select>
                         </div>
                     </div>
                     <div id="mEnvUsernameDiv" class="form-group" style="display:none">
                         <label for="mEnvUsername" class="col-sm-3 control-label">Username
-                        <span><a data-toggle="tooltip" data-placement="bottom" title="username@hostname (eg. us2r@ghpcc06.umassrc.org)"><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="username@hostname (eg. us2r@ghpcc06.umassrc.org)"><i class='glyphicon glyphicon-info-sign'></i></a></span>
                         </label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mEnvUsername" name="username">
@@ -186,7 +308,7 @@
                     </div>
                     <div id="mEnvHostnameDiv" class="form-group" style="display:none">
                         <label for="mEnvHostname" class="col-sm-3 control-label">Hostname
-                        <span><a data-toggle="tooltip" data-placement="bottom" title="username@hostname (eg. us2r@ghpcc06.umassrc.org)"><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="username@hostname (eg. us2r@ghpcc06.umassrc.org)"><i class='glyphicon glyphicon-info-sign'></i></a></span>
                         </label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mEnvHostname" name="hostname">
@@ -194,7 +316,7 @@
                     </div>
                     <div id="mEnvSSHKeyDiv" class="form-group" style="display:none">
                         <label for="mEnvSSHKey" class="col-sm-3 control-label">SSH Keys
-                        <span><a data-toggle="tooltip" data-placement="bottom" title="Keys that are saved in SSH keys tab and to be used while connecting to host"><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="Keys that are saved in SSH keys tab and to be used while connecting to host"><i class='glyphicon glyphicon-info-sign'></i></a></span>
                         </label>
                         <div class="col-sm-9">
                             <select id="mEnvSSHKey" class="fbtn btn-default form-control" name="ssh_id">
@@ -213,7 +335,7 @@
                     <div id="mEnvInsTypeDiv" class="form-group" style="display:none">
                         <label for="mEnvInsType" class="col-sm-3 control-label">Instance Type</label>
                         <div class="col-sm-9">
-                            <input type="text" class="form-control" id="mEnvInsType" name="ins_type">
+                            <input type="text" class="form-control" id="mEnvInsType" name="instance_type">
                         </div>
                     </div>
                     <div id="mEnvImageIdDiv" class="form-group" style="display:none">
@@ -242,7 +364,7 @@
                     </div>
                     <div id="mEnvCmdDiv" class="form-group" style="display:none">
                         <label for="mEnvCmd" class="col-sm-3 control-label">Run command
-                        <span><a data-toggle="tooltip" data-placement="bottom" title="You may run the command or commands (by seperating each command with && sign) before the nextflow job starts. (eg. source /etc/bashrc && module load java/1.8.0_31)"><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="You may run the command or commands (by seperating each command with && sign) before the nextflow job starts. (eg. source /etc/bashrc && module load java/1.8.0_31)"><i class='glyphicon glyphicon-info-sign'></i></a></span>
                         </label>
                         <div class="col-sm-9">
                             <textarea type="text" rows="2" class="form-control" id="mEnvCmd" name="cmd"></textarea>
@@ -250,7 +372,7 @@
                     </div>
                     <div id="mEnvNextPathDiv" class="form-group" style="display:none">
                         <label for="mEnvNextPath" class="col-sm-3 control-label">Nextflow Path
-                        <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the path of the nextflow, if it is not added to $PATH environment. (eg. /project/umw_biocore/bin for ghpcc06.umassrc.org)"><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the path of the nextflow, if it is not added to $PATH environment. (eg. /project/umw_biocore/bin for ghpcc06.umassrc.org)"><i class='glyphicon glyphicon-info-sign'></i></a></span>
                         </label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mEnvNextPath" name="next_path">
@@ -260,18 +382,18 @@
                         <label for="mExec" class="col-sm-3 control-label">Executor of Nextflow</label>
                         <div class="col-sm-9">
                             <select style=" width:150px" id="mExec" class="fbtn btn-default form-control" name="executor">
-<!--                                  <option value="none">None </option>-->
-                                  <option class="hideClu" value="local">Local</option>
-                                  <option value="sge">SGE</option>
-                                  <option value="lsf">LSF</option>
-<!--                                  <option value="slurm">SLURM</option>-->
-<!--                                  <option value="ignite">IGNITE</option>-->
-<!--                                  <option value="pbs">PBS/Torque</option>-->
-<!--                                  <option value="nqsii">NQSII</option>-->
-<!--                                  <option value="condor">HTCondor</option>-->
-<!--                                  <option value="k8s">Kubernetes</option>-->
-<!--                                  <option value="awsbatch">AWS Batch</option>-->
-                                </select>
+                                <!--                                  <option value="none">None </option>-->
+                                <option class="hideClu" value="local">Local</option>
+                                <option value="sge">SGE</option>
+                                <option value="lsf">LSF</option>
+                                <!--                                  <option value="slurm">SLURM</option>-->
+                                <!--                                  <option value="ignite">IGNITE</option>-->
+                                <!--                                  <option value="pbs">PBS/Torque</option>-->
+                                <!--                                  <option value="nqsii">NQSII</option>-->
+                                <!--                                  <option value="condor">HTCondor</option>-->
+                                <!--                                  <option value="k8s">Kubernetes</option>-->
+                                <!--                                  <option value="awsbatch">AWS Batch</option>-->
+                            </select>
                         </div>
                     </div>
                     <div id="execNextDiv" class="form-group" style="display:none">
@@ -305,18 +427,18 @@
                         <label for="mExecJob" class="col-sm-3 control-label">Executor of Nextflow Jobs</label>
                         <div class="col-sm-9">
                             <select style=" width:150px" id="mExecJob" class="fbtn btn-default form-control" name="executor_job">
-<!--                                  <option value="none">None </option>-->
-                                  <option value="local">Local</option>
-                                  <option value="sge">SGE</option>
-                                  <option value="lsf">LSF</option>
-                                  <option value="slurm">SLURM</option>
-                                  <option value="ignite">IGNITE</option>
-<!--                                  <option value="pbs">PBS/Torque</option>-->
-<!--                                  <option value="nqsii">NQSII</option>-->
-<!--                                  <option value="condor">HTCondor</option>-->
-<!--                                  <option value="k8s">Kubernetes</option>-->
-<!--                                  <option value="awsbatch">AWS Batch</option>-->
-                                </select>
+                                <!--                                  <option value="none">None </option>-->
+                                <option value="local">Local</option>
+                                <option value="sge">SGE</option>
+                                <option value="lsf">LSF</option>
+                                <option value="slurm">SLURM</option>
+                                <option value="ignite">IGNITE</option>
+                                <!--                                  <option value="pbs">PBS/Torque</option>-->
+                                <!--                                  <option value="nqsii">NQSII</option>-->
+                                <!--                                  <option value="condor">HTCondor</option>-->
+                                <!--                                  <option value="k8s">Kubernetes</option>-->
+                                <!--                                  <option value="awsbatch">AWS Batch</option>-->
+                            </select>
                         </div>
                     </div>
                     <div id="execJobSetDiv" class="form-group" style="display:none">
@@ -358,7 +480,6 @@
 <!-- profilemodal Ends-->
 
 <!-- group modal starts-->
-
 <div id="groupmodal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -446,7 +567,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="userKeyCheck" class="col-sm-4 control-label"><input type="checkbox" id="userKeyCheck" name="check_userkey"  data-toggle="collapse" data-target="#userKeyDiv"> Use your own keys </input><span><a data-toggle="tooltip" data-placement="bottom" title="Use your own ssh keys and paste them below"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        <label for="userKeyCheck" class="col-sm-4 control-label"><input type="checkbox" id="userKeyCheck" name="check_userkey" data-toggle="collapse" data-target="#userKeyDiv"> Use your own keys </input><span><a data-toggle="tooltip" data-placement="bottom" title="Use your own ssh keys and paste them below"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                     </div>
                     <div id="userKeyDiv" class="collapse">
                         <div id="mUserPriKeyDiv" class="form-group">
@@ -524,24 +645,24 @@
                         <label for="mAmzDefReg" class="col-sm-3 control-label">Default Region</label>
                         <div class="col-sm-9">
                             <select id="mAmzDefReg" class="fbtn btn-default form-control" name="amz_def_reg">
-                                  <option value="us-east-2">US East (Ohio) (us-east-2) </option>
-                                  <option value="us-east-1">US East (N. Virginia) (us-east-1)</option>
-                                  <option value="us-west-1">US West (N. California) (us-west-1)</option>
-                                  <option value="us-west-2">US West (Oregon) (us-west-2)</option>
-                                  <option value="ap-northeast-1">Asia Pacific (Tokyo) (ap-northeast-1)</option>
-                                  <option value="ap-northeast-2">Asia Pacific (Seoul) (ap-northeast-2)</option>
-                                  <option value="ap-south-1">Asia Pacific (Mumbai) (ap-south-1)</option>
-                                  <option value="ap-southeast-1">Asia Pacific (Singapore) (ap-southeast-1)</option>
-                                  <option value="ap-southeast-2">Asia Pacific (Sydney) (ap-southeast-2)</option>
-                                  <option value="ca-central-1">Canada (Central) (ca-central-1)</option>
-                                  <option value="cn-north-1">China (Beijing) (cn-north-1)</option>
-                                  <option value="cn-northwest-1">China (Ningxia) (cn-northwest-1)</option>
-                                  <option value="eu-central-1">EU (Frankfurt) (eu-central-1)</option>
-                                  <option value="eu-west-1">EU (Ireland) (eu-west-1)</option>
-                                  <option value="eu-west-2">EU (London) (eu-west-2)</option>
-                                  <option value="eu-west-3">EU (Paris) (eu-west-3)</option>
-                                  <option value="sa-east-1">South America (Sao Paulo) (sa-east-1)</option>
-                                  </select>
+                                <option value="us-east-2">US East (Ohio) (us-east-2) </option>
+                                <option value="us-east-1">US East (N. Virginia) (us-east-1)</option>
+                                <option value="us-west-1">US West (N. California) (us-west-1)</option>
+                                <option value="us-west-2">US West (Oregon) (us-west-2)</option>
+                                <option value="ap-northeast-1">Asia Pacific (Tokyo) (ap-northeast-1)</option>
+                                <option value="ap-northeast-2">Asia Pacific (Seoul) (ap-northeast-2)</option>
+                                <option value="ap-south-1">Asia Pacific (Mumbai) (ap-south-1)</option>
+                                <option value="ap-southeast-1">Asia Pacific (Singapore) (ap-southeast-1)</option>
+                                <option value="ap-southeast-2">Asia Pacific (Sydney) (ap-southeast-2)</option>
+                                <option value="ca-central-1">Canada (Central) (ca-central-1)</option>
+                                <option value="cn-north-1">China (Beijing) (cn-north-1)</option>
+                                <option value="cn-northwest-1">China (Ningxia) (cn-northwest-1)</option>
+                                <option value="eu-central-1">EU (Frankfurt) (eu-central-1)</option>
+                                <option value="eu-west-1">EU (Ireland) (eu-west-1)</option>
+                                <option value="eu-west-2">EU (London) (eu-west-2)</option>
+                                <option value="eu-west-3">EU (Paris) (eu-west-3)</option>
+                                <option value="sa-east-1">South America (Sao Paulo) (sa-east-1)</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-group">
@@ -566,6 +687,74 @@
     </div>
 </div>
 <!-- amz keys modal ends-->
+
+<!-- user modal starts-->
+<div id="userModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="userModalTitle">Modal title</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group" style="display:none">
+                        <label for="mUserID" class="col-sm-2 control-label">ID</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="mUserID" name="id">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mUserName" class="col-sm-3 control-label">Name</label>
+                        <div class="col-sm-9">
+                            <input type="text" required class="form-control" id="mUserName" name="name">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mUserUsername" class="col-sm-3 control-label">Username</label>
+                        <div class="col-sm-9">
+                            <input type="text" required class="form-control" id="mUserUsername" name="username">
+                        </div>
+                    </div>
+                    <div class="form-group has-feedback">
+                        <label for="mUserEmail" class="col-sm-3 control-label">E-mail</label>
+                        <div class="col-sm-9">
+                            <input type="email" required class="form-control" id="mUserEmail" name="email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mUserInstitute" class="col-sm-3 control-label">Institute</label>
+                        <div class="col-sm-9">
+                            <input type="text" required class="form-control" id="mUserInstitute" name="institute">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mUserLab" class="col-sm-3 control-label">Lab</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mUserLab" name="lab">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mUserLoginType" class="col-sm-3 control-label">Login Type</label>
+                        <div class="col-sm-9">
+                            <select id="mUserLoginType" class="form-control" name="logintype">
+                                <option value="" disabled selected>Select Login Type </option>
+                                <option value="password">Password</option>
+                                <option value="google">Google</option>
+                                <option value="ldap">LDAP</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="savemUser" data-clickedrow="">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- user modal ends-->
 
 <div id="warnDelete" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -641,31 +830,3 @@
     </div>
 </div>
 <!--Confirm Modal Ends-->
-
-<!---- impersonModal-->
-<div id="impersonModal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
-                <h4 class="modal-title">Impersonation</h4>
-            </div>
-            <form role="form" method="post">
-                <div class="modal-body" style="overflow:scroll">
-                    <fieldset>
-                        <label>Select user to impersonate</label>
-                        <div id="mUserListDiv" class="form-group">
-                            <select id="mUserList" class="form-control" size="25"></select></div>
-                    </fieldset>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" id="confirmImpersonBut" class="btn btn-primary" data-dismiss="">Select</button>
-                    <button type="button" class="btn btn-default" id="cancelImpersonBut" data-dismiss="modal" onclick="">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-<!---- impersonModal ends-->

@@ -1,3 +1,6 @@
+//global data libraries
+window.ajaxData = {};
+
 //user role
 function callusRole() {
     var userRole = getValues({ p: "getUserRole" });
@@ -24,6 +27,71 @@ $(function () {
     $('[data-toggle="tooltip"]').tooltip();
 });
 
+//jquery clean css notation and add # sign to beginning
+function jqcss(myid) {
+    return "#" + myid.replace( /(:|\.|\[|\]|,|=|@)/g, "\\$1" );
+}
+
+function IsJsonString(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+// example:
+//var filteredNames = filterObjKeys(names, /Peter/); // second parameter is a javascript regex object, so for exemple for case insensitive you would do /Peter/i  
+//third parameter is optional: return(array if keys/array of obj)=(keys/obj)
+function filterObjKeys(obj, filter, type) {
+    var type = type || "keys"
+    var key, keys = [];
+    for (key in obj) {
+        if (obj.hasOwnProperty(key) && filter.test(key)) {
+            if (type == "keys") {
+                keys.push(key);
+            } else if (type == "obj") {
+                keys.push(obj[key]);
+            }
+        }
+    }
+    return keys;
+}
+
+//var filteredObj = filterObjVal(obj, "34")
+function filterObjVal(obj, filter) {
+    var result = {};
+    for (var k in obj) {
+        if (obj[k] == filter) {
+            result[k] = obj[k];
+        }
+    }
+    return result
+}
+
+
+//sort array of object by key
+function sortByKey(array, key) {
+    return array.sort(function (a, b) {
+        var x = a[key];
+        var y = b[key];
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+}
+
+
+//after importing script text, remove extra quote if exist
+function removeDoubleQuote(script) {
+    if (script === null) {
+        return null
+    }
+    var lastLetter = script.length - 1;
+    if (script[0] === '"' && script[lastLetter] === '"' && script[1] !== '"') {
+        script = script.substring(1, script.length - 1); //remove first and last duble quote
+    }
+    return script
+}
 
 // check the amazon profiles activity each 40 sec.
 checkAmzProfiles("timer");
@@ -38,12 +106,13 @@ function checkAmzProfiles(timer) {
             for (var k = 0; k < proAmzData.length; k++) {
                 if (proAmzData[k].status === "running" || proAmzData[k].status === "waiting" || proAmzData[k].status === "initiated" || proAmzData[k].status === "retry") {
                     countActive++;
-                    window['last_status_log_' + proAmzData[k].id] = "";
-                    window['last_status_' + proAmzData[k].id] = proAmzData[k].status;
                 }
                 if (timer === "timer") {
                     checkAmazonTimer(proAmzData[k].id, 60000);
                 }
+                window.modalRec = {};
+                window.modalRec['last_status_log_' + proAmzData[k].id] = "";
+                window.modalRec['last_status_' + proAmzData[k].id] = proAmzData[k].status;
             }
             if (countActive > 0) {
                 $('#amzAmount').css('display', 'inline');
@@ -76,12 +145,12 @@ function checkAmazonStatus(proId) {
     var checkAmazonStatusLog = getValues({ p: "checkAmazonStatus", profileId: proId });
     console.log(checkAmazonStatusLog)
     if (stopAmz && checkAmazonStatusLog.status !== "terminated") {
-        window['last_status_log_' + proId] = "Waiting for termination..";
+        window.modalRec['last_status_log_' + proId] = "Waiting for termination..";
         $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, 5500);
     } else if (checkAmazonStatusLog.status === "waiting") {
-        window['last_status_log_' + proId] = "Waiting for reply..";
+        window.modalRec['last_status_log_' + proId] = "Waiting for reply..";
         $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..');
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
@@ -89,8 +158,8 @@ function checkAmazonStatus(proId) {
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, 20000);
     } else if (checkAmazonStatusLog.status === "initiated") {
-        window['last_status_log_' + proId] = "Initializing..";
-        window['last_status_' + proId] = checkAmazonStatusLog.status;
+        window.modalRec['last_status_log_' + proId] = "Initializing..";
+        window.modalRec['last_status_' + proId] = checkAmazonStatusLog.status;
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
         $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> Initializing..');
@@ -100,14 +169,18 @@ function checkAmazonStatus(proId) {
     } else if (checkAmazonStatusLog.status === "retry") { //could not read the log file
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'none');
-        $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + window['last_status_log_' + proId]);
-        console.log(retryTimer)
+        var tempLog = window.modalRec['last_status_log_' + proId]
+        if (tempLog) {
+            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + tempLog);
+        } else {
+            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ');
+        }
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, retryTimer);
         if (retryTimer <= 19000) {
             retryTimer += 1000;
         }
-        var lastStat = window['last_status_' + proId];
+        var lastStat = window.modalRec['last_status_' + proId];
         if (lastStat === "running" || lastStat === "initiated") {
             $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
             $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
@@ -115,7 +188,7 @@ function checkAmazonStatus(proId) {
 
 
     } else if (checkAmazonStatusLog.status === "running") {
-        window['last_status_' + proId] = checkAmazonStatusLog.status;
+        window.modalRec['last_status_' + proId] = checkAmazonStatusLog.status;
         //check if run env. in run page is amazon and status is not running (then activate loadRunOptions()
         var chooseEnv = $('#chooseEnv').find(":selected").val();
         if (chooseEnv) {
@@ -135,7 +208,7 @@ function checkAmazonStatus(proId) {
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
         $('#status-' + proId).html('Running <br/>' + sshText);
-        window['last_status_log_' + proId] = 'Running <br/>' + sshText;
+        window.modalRec['last_status_log_' + proId] = 'Running <br/>' + sshText;
         $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
 
     } else if (checkAmazonStatusLog.status === "inactive") {
@@ -147,6 +220,8 @@ function checkAmazonStatus(proId) {
     } else if (checkAmazonStatusLog.status === "terminated") {
         stopAmz = false;
         clearInterval(window['interval_amzStatus_' + proId]);
+        window.modalRec['last_status_log_' + proId] = "";
+        window.modalRec['last_status_' + proId] = checkAmazonStatusLog.status;
         if (checkAmazonStatusLog.logAmzCloudList) {
             var logText = checkAmazonStatusLog.logAmzCloudList;
             if (logText.match(/INSTANCE ID ADDRESS STATUS ROLE(.*)/)) {
@@ -162,7 +237,8 @@ function checkAmazonStatus(proId) {
         }
         if (errorText === "" && checkAmazonStatusLog.logAmzStart) {
             var logTextStart = checkAmazonStatusLog.logAmzStart;
-            if (logTextStart.match(/error/i) || logTextStart.match(/denied/i) || logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
+            //WARN: One or more errors have been detected parsing EC2 prices
+            if ((logTextStart.match(/error/i) && !logTextStart.match(/WARN: One or more errors/i)) || logTextStart.match(/denied/i) || logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
                 errorText = "(" + logTextStart + ")";
         }
         $('#status-' + proId).html('Terminated <br/>' + errorText);
@@ -175,6 +251,8 @@ function checkAmazonStatus(proId) {
     }
 
 }
+
+
 
 $(document).ready(function () {
     function addAmzRow(id, name, executor, instance_type, image_id, subnet_id) {
@@ -482,110 +560,8 @@ function getIconButton(name, buttons, icon) {
     return button;
 }
 
-//checklogin
-var loginSuccess = false;
-var userProfile = checkLogin();
-
-function checkLogin() {
-    var userLog = [];
-    var userPro = [];
-    userLog.push({ name: "p", value: 'checkLogin' });
-    $.ajax({
-        type: "POST",
-        data: userLog,
-        url: "ajax/ajaxquery.php",
-        async: false,
-        success: function (msg) {
-            if (msg.error == 1) {
-                loginSuccess = false;
-            } else {
-                userPro = msg;
-                loginSuccess = true;
-            }
-
-        }
-    });
-    return userPro;
-};
 
 
-if (loginSuccess === true && userProfile !== '') {
-    imgUrl = userProfile[0].google_image;
-    userName = userProfile[0].name;
-    if (imgUrl) {
-        $.ajax({
-            type: 'HEAD',
-            url: imgUrl,
-            success: function () {
-                $('#userAvatarImg').attr('src', imgUrl);
-            },
-            error: function () {}
-        });
-    }
-    if (userName) {
-        $('#userName').text(userName);
-    }
-}
-// google sign-in
-function Google_signIn(googleUser) {
-    var id_token = googleUser.getAuthResponse().id_token;
-    //    var auth2 = gapi.auth2.init({
-    //            client_id: '1051324819082-6mjdouf9dhmhv9ov5vvdkdknqrb8tont.apps.googleusercontent.com',
-    //            cookie_policy: 'none'
-    //        });
-    var auth2 = gapi.auth2.getAuthInstance();
-    auth2.disconnect();
-
-    var userProfile = [];
-    var profile = googleUser.getBasicProfile();
-    var emailUser = profile.getEmail();
-    var pattEmail = /(.*)@(.*)/;
-    var username = emailUser.replace(pattEmail, '$1');
-    userProfile.push({ name: "google_id", value: profile.getId() });
-    userProfile.push({ name: "name", value: profile.getName() });
-    userProfile.push({ name: "email", value: profile.getEmail() });
-    userProfile.push({ name: "google_image", value: profile.getImageUrl() });
-    userProfile.push({ name: "username", value: username });
-    userProfile.push({ name: "p", value: 'saveUser' });
-    update_user_data(userProfile);
-}
-
-function update_user_data(userProfile) {
-    $.ajax({
-        type: "POST",
-        data: userProfile,
-        url: "ajax/login.php",
-        async: false,
-        success: function (msg) {
-            if (msg.error == 1) {
-                alert('Something Went Wrong!');
-            } else {
-                var logInSuccess = true;
-                window.location.reload('true');
-            }
-        }
-    });
-}
-
-function signOut() {
-    var auth2 = gapi.auth2.getAuthInstance();
-    var userLog = [];
-    userLog.push({ name: "p", value: 'logOutUser' });
-    auth2.signOut().then(function () {
-        $.ajax({
-            type: "POST",
-            data: userLog,
-            url: "ajax/login.php",
-            async: false,
-            success: function (msg) {
-                if (msg.logOut == 1) {
-                    var logInSuccess = false;
-                    window.location.reload('true');
-                }
-            }
-        });
-    });
-}
 
 //use changeVal to trigger change event after using val()
 $.fn.changeVal = function (v) {
@@ -633,8 +609,39 @@ $inputText.each(function () {
     resizeForText.call($this, $this.val())
 });
 
+//var tsv is the TSV file with headers
+//columns: [{title: "Id", data: "Id"} 1: {title: "Name", data: "Name"}]
+//data: [{Id: "123", Name: "John Doe Fresno"},{Id: "124", Name: "Alice Alicia"}]
+function tsvConvert(tsv, format) {
+    var tsv = $.trim(tsv);
+    var lines = tsv.split("\n");
+    var headers = lines[0].split("\t");
+    var data = [];
+    for (var i = 1; i < lines.length; i++) {
+        var obj = {};
+        var currentline = lines[i].split("\t");
+        for (var j = 0; j < headers.length; j++) {
+            obj[headers[j]] = currentline[j];
+        }
+        data.push(obj);
+    }
+    if (format == "json") {
+        return data;
+    }
+    if (format == "json2") {
+        var result = { columns: [], data: data };
+        for (var j = 0; j < headers.length; j++) {
+            var obj = {};
+            obj.title = headers[j]
+            obj.data = headers[j]
+            result.columns.push(obj);
+        }
+        return result;
+    }
+}
+
 function getValues(data, async) {
-    async = async || false; //default false
+    async = async ||false; //default false
     var result = null;
     $.ajax({
         url: "ajax/ajaxquery.php",
@@ -644,10 +651,64 @@ function getValues(data, async) {
         type: "POST",
         success: function (data) {
             result = data;
+        },
+        error: function (errorThrown) {
+            console.log("##Error:");
+            console.log(errorThrown);
         }
     });
     return result;
 }
+
+function callMarkDownApp(text) {
+    text = JSON.stringify(text)
+    var result = null;
+    var localbasepath = $("#basepathinfo").attr("localbasepath")
+    $.ajax({
+        url: localbasepath + "/ocpu/library/markdownapp/R/rmdtext",
+        data: { 'text': text },
+        async: false,
+        cache: false,
+        type: "POST",
+        success: function (data) {
+            result = data;
+        },
+        error: function (errorThrown) {
+            alert("Error: " + errorThrown);
+        }
+    });
+    if (result) {
+        var lines = result.split("\n");
+        for (var i = 0; i < lines.length; i++) {
+            if (lines[i].match(/output.html/)) {
+                result = localbasepath + lines[i];
+                return result
+            }
+        }
+    }
+    return result
+}
+
+
+
+
+function getValuesAsync(data, callback) {
+    var result = null;
+    $.ajax({
+        url: "ajax/ajaxquery.php",
+        data: data,
+        async: true,
+        cache: false,
+        type: "POST",
+        success: function (data) {
+            result = data;
+            callback(result);
+        }
+    });
+}
+
+
+
 
 
 function truncateName(name, type) {
@@ -665,10 +726,29 @@ function truncateName(name, type) {
         return name.substring(0, 20);
     }
     if (name.length > letterLimit)
-        return name.substring(0, letterLimit-1) + '..';
+        return name.substring(0, letterLimit - 1) + '..';
     else
         return name;
 }
+
+
+function cleanProcessName(proName) {
+    proName = proName.replace(/ /g, "_");
+    proName = proName.replace(/-/g, "_");
+    proName = proName.replace(/:/g, "_");
+    proName = proName.replace(/,/g, "_");
+    proName = proName.replace(/\$/g, "_");
+    proName = proName.replace(/\!/g, "_");
+    proName = proName.replace(/\</g, "_");
+    proName = proName.replace(/\>/g, "_");
+    proName = proName.replace(/\?/g, "_");
+    proName = proName.replace(/\(/g, "_");
+    proName = proName.replace(/\"/g, "_");
+    proName = proName.replace(/\'/g, "_");
+    proName = proName.replace(/\./g, "_");
+    return proName;
+}
+
 $('.collapseIcon').on('click', function (e) {
     var textClass = $(this).attr('class');
     if (textClass.includes('fa-plus-square-o')) {
@@ -696,8 +776,6 @@ function refreshCollapseIconDiv() {
     });
     $('.collapseIconItem').on('click', function (e) {
         var itemClass = $(this).attr("class")
-        console.log(itemClass)
-        console.log(itemClass.match(/fa-minus-square-o/))
         if (itemClass.match(/fa-plus-square-o/)) {
             $(this).removeClass('fa-plus-square-o');
             $(this).addClass('fa-minus-square-o');
@@ -710,6 +788,44 @@ function refreshCollapseIconDiv() {
 
 }
 
+//creates ajax object and change color of requiredFields
+function createFormObj(formValues, requiredFields) {
+    var formObj = {}
+    var stop = false;
+    for (var i = 0; i < formValues.length; i++) {
+        var name = $(formValues[i]).attr("name");
+        var val = $(formValues[i]).val();
+        if (requiredFields.includes(name)) {
+            if (val != "") {
+                $(formValues[i]).parent().parent().removeClass("has-error")
+            } else {
+                $(formValues[i]).parent().parent().addClass("has-error")
+                stop = true;
+            }
+        }
+        formObj[name] = val
+    }
+    return [formObj, stop];
+}
+
+function cleanHasErrorClass(modalID) {
+    var formValues = $(modalID).find('.has-error');
+    for (var i = 0; i < formValues.length; i++) {
+        $(formValues[i]).removeClass("has-error")
+    }
+}
+//toogleErrorUser('#userModal', "username", "insert", s.username)
+//toogleErrorUser('#userModal', "username", "delete", null)
+function toogleErrorUser(formID, name, type, error) {
+    if (type == "delete") {
+        $(formID).find('input[name=' + name + ']').parent().parent().removeClass("has-error");
+        $(formID).find('font[name=' + name + ']').remove();
+    } else if (type == "insert") {
+        $(formID).find('input[name=' + name + ']').parent().parent().addClass("has-error");
+        $(formID).find('font[name=' + name + ']').remove();
+        $(formID).find('input[name=' + name + ']').parent().append('<font name="' + name + '" class="text-center" color="crimson">' + error + '</font>')
+    }
+}
 
 // fills the from with the object data. find is comma separated string for form types such as: 'input, p'
 //eg.  fillForm('#execNextSettTable','input', exec_next_settings);
@@ -721,6 +837,22 @@ function fillForm(formId, find, data) {
             $(formValues[i]).attr('checked', true);
         } else {
             $(formValues[i]).val(data[keys[i]]);
+        }
+    }
+}
+
+//use name attr to fill form
+function fillFormByName(formId, find, data) {
+    var formValues = $(formId).find(find)
+    for (var k = 0; k < formValues.length; k++) {
+        var nameAttr = $(formValues[k]).attr("name");
+        var keys = Object.keys(data);
+        if (data[nameAttr]) {
+            if (data[nameAttr] === "on") {
+                $(formValues[k]).attr('checked', true);
+            } else {
+                $(formValues[k]).val(data[nameAttr]);
+            }
         }
     }
 }
@@ -774,6 +906,14 @@ $(function () {
     });
 });
 
+//$("#example").multiline('this\n has\n newlines');
+$.fn.multiline = function (text) {
+    this.text(text);
+    this.html(this.html().replace(/\n/g, '<br/>'));
+    return this;
+}
+
+
 function escapeHtml(str) {
     var map = {
         '&': '&amp;',
@@ -782,6 +922,9 @@ function escapeHtml(str) {
         '"': '&quot;',
         "'": '&#039;'
     };
+    if (str === null) {
+        return null
+    }
     return str.replace(/[&<>"']/g, function (m) { return map[m]; });
 }
 
@@ -793,5 +936,8 @@ function decodeHtml(str) {
         '&quot;': '"',
         '&#039;': "'"
     };
+    if (str === null) {
+        return null
+    }
     return str.replace(/&amp;|&lt;|&gt;|&quot;|&#039;/g, function (m) { return map[m]; });
 }

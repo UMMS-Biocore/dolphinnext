@@ -33,22 +33,46 @@ function readGenerateKeys() {
 
 
 $(document).ready(function () {
-    //get profiles for user
-    var proCluData = getValues({ p: "getProfileCluster" });
-    var proAmzData = getValues({ p: "getProfileAmazon" });
-    if (proCluData.length + proAmzData.length !== 0) {
-        $('#noProfile').css('display', 'none');
-        $.each(proCluData, function (el) {
-            addClusterRow(proCluData[el].id, proCluData[el].name, proCluData[el].next_path, proCluData[el].executor, proCluData[el].username, proCluData[el].hostname);
-        });
-        $.each(proAmzData, function (el) {
-            addAmazonRow(proAmzData[el].id, proAmzData[el].name, proAmzData[el].next_path, proAmzData[el].executor, proAmzData[el].instance_type, proAmzData[el].image_id);
-        });
-    }
-    //adminTab
-    if (usRole === "admin") {
-        $('#adminTabBut').css('display', 'inline');
-    }
+    var profileTable = $('#profilesTable').DataTable({
+        "ajax": {
+            url: "ajax/ajaxquery.php",
+            data: { "p": "getProfiles" },
+            "dataSrc": ""
+        },
+        "columns": [{
+            "data": "name"
+            }, {
+            "data": null,
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                if (oData.hostname != undefined) {
+                    $(nTd).html("Host");
+                } else {
+                    $(nTd).html("Amazon");
+                }
+            }
+            }, {
+            "data": null,
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                if (oData.hostname != undefined) {
+                    $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Connection:" + oData.username + "@" + oData.hostname);
+                } else {
+                    $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Instance_type:" + oData.instance_type + "<br/>Image_id:" + oData.image_id);
+                }
+            }
+            }, {
+            data: null,
+            className: "center",
+            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                if (oData.hostname != undefined) {
+                    $(nTd).html(getProfileButton('cluster'));
+                } else {
+                    $(nTd).html(getProfileButton('amazon'));
+                }
+            }
+            }],
+        'order': [[2, 'desc']]
+    });
+
 
     function getProfileButton(type) {
         if (type === "amazon") {
@@ -59,28 +83,9 @@ $(document).ready(function () {
         return button;
     }
 
-    function addLocalRow(id, name, next_path, executor) {
-        $('#profilesTable > thead').append('<tr id="local-' + id + '"> <td>' + name + '</td> <td>Local</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '</td><td>' + getProfileButton('local') + '</td></tr>');
-    }
-
-    function addClusterRow(id, name, next_path, executor, username, hostname) {
-        $('#profilesTable > thead').append('<tr id="cluster-' + id + '"> <td>' + name + '</td> <td>Host</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '<br>  Connection: ' + username + '@' + hostname + '</td><td>' + getProfileButton('cluster') + '</td></tr>');
-    }
-
-    function addAmazonRow(id, name, next_path, executor, instance_type, image_id) {
-        $('#profilesTable > thead').append('<tr id="amazon-' + id + '"> <td>' + name + '</td> <td>Amazon</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '<br>  Instance_type: ' + instance_type + '<br>  Image_id: ' + image_id + '</td><td>' + getProfileButton('amazon') + '</td></tr>');
-    }
-
-    function updateLocalRow(id, name, next_path, executor) {
-        $('#profilesTable > thead > #local-' + id).html('<td>' + name + '</td> <td>Local</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '</td><td>' + getProfileButton('local') + '</td>');
-    }
-
-    function updateClusterRow(id, name, next_path, executor, username, hostname) {
-        $('#profilesTable > thead > #cluster-' + id).html('<td>' + name + '</td> <td>Host</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '<br>  Connection: ' + username + '@' + hostname + '</td><td>' + getProfileButton('cluster') + '</td>');
-    }
-
-    function updateAmazonRow(id, name, next_path, executor, instance_type, image_id) {
-        $('#profilesTable > thead > #amazon-' + id).html('<td>' + name + '</td> <td>Amazon</td><td>Nextflow Path: ' + next_path + '<br> Executor: ' + executor + '<br>  Instance_type: ' + instance_type + '<br>  Image_id: ' + image_id + '</td><td>' + getProfileButton('amazon') + '</td>');
+    function getPublicProfileButton() {
+        var button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="editPublicProfile" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="deletePublicProfile" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>'
+        return button;
     }
 
     function loadOptions(type) {
@@ -101,93 +106,192 @@ $(document).ready(function () {
         }
     }
 
+
+    if (usRole === "admin") {
+        var publicProfileTable = $('#publicProfileTable').DataTable({
+            "ajax": {
+                url: "ajax/ajaxquery.php",
+                data: { "p": "getProfiles", type: "public" },
+                "dataSrc": ""
+            },
+            "columns": [{
+                "data": "name"
+            }, {
+                "data": null,
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    if (oData.hostname != undefined) {
+                        $(nTd).html("Host");
+                    } else {
+                        $(nTd).html("Amazon");
+                    }
+                }
+            }, {
+                "data": null,
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    if (oData.hostname != undefined) {
+                        $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Connection:" + oData.username + "@" + oData.hostname);
+                    } else {
+                        $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Instance_type:" + oData.instance_type + "<br/>Image_id:" + oData.image_id);
+                    }
+                }
+            }, {
+                data: null,
+                className: "center",
+                fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html(getPublicProfileButton());
+                }
+            }]
+        });
+    }
+
+    function selectizeProfileName() {
+        var renderMenuGroup = {
+            option: function (data, escape) {
+                if (data.hostname !== undefined) {
+                    return '<div class="option">' +
+                        '<span class="title"><i>' + escape(data.name) + ' (Public Profile) </i></span>' +
+                        '<span class="url">' + 'Hostname: ' + escape(data.hostname) + '</span>' +
+                        '</div>';
+                } else if (data.image_id !== undefined) {
+                    return '<div class="option">' +
+                        '<span class="title"><i>' + escape(data.name) + ' (Public Profile) </i></span>' +
+                        '<span class="url">' + 'Image Id: ' + escape(data.image_id) + '</span>' +
+                        '</div>';
+                } else {
+                    return '<div class="option">' +
+                        '<span class="title"><i>' + escape(data.name) + '</i></span>' +
+                        '</div>';
+                }
+            },
+            item: function (data, escape) {
+                return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
+            }
+        };
+
+
+        var allMenuGroup = getValues({ p: "getProfiles", type: "public" });
+        $('#mEnvName').selectize({
+            valueField: 'id',
+            searchField: ['name'],
+            createOnBlur: true,
+            options: allMenuGroup,
+            render: renderMenuGroup,
+            create: function (input, callback) {
+                callback({ id: input, name: input });
+            }
+        });
+
+
+    }
+
+    $(function () {
+        $(document).on('change', '#mEnvName', function () {
+            var valueID = $('#mEnvName')[0].selectize.getValue();
+            var options = $('#mEnvName')[0].selectize.options
+            var cpOptions = $.extend(true, {}, options);
+            if (cpOptions[valueID]) {
+                if (cpOptions[valueID].executor != undefined) {
+                    delete cpOptions[valueID]["id"]; //to prevent profile update
+                    if (cpOptions[valueID].hostname != undefined) {
+                        $('#chooseEnv').val('cluster').trigger('change');
+                    } else {
+                        $('#chooseEnv').val('amazon').trigger('change');
+                    }
+                    fillFormByName('#profilemodal', 'input, select, textarea', cpOptions[valueID]);
+                    $('#mExec').trigger('change');
+                }
+            }
+
+        })
+    });
+
     $('#profilemodal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
+        selectizeProfileName();
         if (button.attr('id') === 'addEnv') {
             $('#mAddEnvTitle').html('Add Environment');
             loadOptions("ssh");
             loadOptions("amz");
-        } else if (button.attr('id') === 'profileedit') {
-            $('#mAddEnvTitle').html('Edit Environment');
-            loadOptions("ssh");
-            loadOptions("amz");
-            var clickedRowId = button.closest('tr').attr('id'); //local-20
-            var patt = /(.*)-(.*)/;
-            var proType = clickedRowId.replace(patt, '$1');
-            var proId = clickedRowId.replace(patt, '$2');
-            var formValues = $('#profilemodal').find('input, select, textarea');
-
-            function fillFixedCol(formValues, data) {
-                $(formValues[0]).val(data[0].id);
-                $(formValues[1]).val(data[0].name);
-                $(formValues[12]).val(data[0].cmd);
-                $(formValues[13]).val(data[0].next_path);
-                $(formValues[14]).val(data[0].executor);
-                $(formValues[15]).val(data[0].next_queue);
-                $(formValues[16]).val(data[0].next_memory);
-                $(formValues[17]).val(data[0].next_cpu);
-                $(formValues[18]).val(data[0].next_time);
-                $(formValues[19]).val(data[0].next_clu_opt);
-                $(formValues[20]).val(data[0].executor_job);
-                $(formValues[21]).val(data[0].job_queue);
-                $(formValues[22]).val(data[0].job_memory);
-                $(formValues[23]).val(data[0].job_cpu);
-                $(formValues[24]).val(data[0].job_time);
-                $(formValues[25]).val(data[0].job_clu_opt);
-            };
+        } else if (button.attr('id') === 'addPublicProfile') {
+            $('#mAddEnvTitle').html('Add Public Environment');
+        } else if (button.attr('id') === 'editPublicProfile' || button.attr('id') === 'profileedit') {
+            var clickedRow = button.closest('tr');
+            if (button.attr('id') === 'editPublicProfile') {
+                $('#mAddEnvTitle').html('Edit Public Environment');
+                var rowData = publicProfileTable.row(clickedRow).data();
+            } else if (button.attr('id') === 'profileedit') {
+                $('#mAddEnvTitle').html('Edit Run Environment');
+                var rowData = profileTable.row(clickedRow).data();
+                loadOptions("ssh");
+                loadOptions("amz");
+            }
+            $('#saveEnv').data('clickedrow', clickedRow);
+            var proType = "";
+            if (rowData.hostname != undefined) {
+                proType = "cluster";
+            } else {
+                proType = "amazon";
+            }
+            var proId = rowData.id;
             if (proType === "cluster") {
                 var data = getValues({ p: "getProfileCluster", id: proId });
                 $('#chooseEnv').val('cluster').trigger('change');
-                fillFixedCol(formValues, data);
-                $(formValues[3]).val(data[0].username);
-                $(formValues[4]).val(data[0].hostname);
-                $(formValues[5]).val(data[0].ssh_id);
+                fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             } else if (proType === "amazon") {
                 var data = getValues({ p: "getProfileAmazon", id: proId });
                 $('#chooseEnv').val('amazon').trigger('change');
-                fillFixedCol(formValues, data);
-                $(formValues[5]).val(data[0].ssh_id);
-                $(formValues[6]).val(data[0].amazon_cre_id);
-                $(formValues[7]).val(data[0].instance_type);
-                $(formValues[8]).val(data[0].image_id);
-                $(formValues[9]).val(data[0].subnet_id);
-                $(formValues[10]).val(data[0].shared_storage_id);
-                $(formValues[11]).val(data[0].shared_storage_mnt);
+                fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             }
+            if (!$('#mAddEnvTitle').html().match(/Public/)) {
+                $("#mEnvName")[0].selectize.addOption({
+                    id: rowData.name,
+                    name: rowData.name,
+                });
+                $("#mEnvName")[0].selectize.setValue(rowData.name, false);
+            } else {
+                $("#mEnvName")[0].selectize.setValue(rowData.id, false);
+            }
+
+
+
             $('#chooseEnv').attr('disabled', "disabled");
         }
     });
 
-//id='#execJobSetTable' or '#execNextSettTable'
-function showHideColumnProfile(id, colList, type) {
-    for (var k = 0; k < colList.length; k++) {
-        if (type == "hide"){
-            $(id).find('th:nth-child('+colList[k]+')').hide();
-            $(id).find('td:nth-child('+colList[k]+')').hide();
-        } else {
-            $(id).find('th:nth-child('+colList[k]+')').show();
-            $(id).find('td:nth-child('+colList[k]+')').show();
+    //id='#execJobSetTable' or '#execNextSettTable'
+    function showHideColumnProfile(id, colList, type) {
+        for (var k = 0; k < colList.length; k++) {
+            if (type == "hide") {
+                $(id).find('th:nth-child(' + colList[k] + ')').hide();
+                $(id).find('td:nth-child(' + colList[k] + ')').hide();
+            } else {
+                $(id).find('th:nth-child(' + colList[k] + ')').show();
+                $(id).find('td:nth-child(' + colList[k] + ')').show();
+            }
         }
     }
-}
 
     $(function () {
         $(document).on('change', '#chooseEnv', function () {
             var selEnvType = $('#chooseEnv option:selected').val();
+            var title = $('#mAddEnvTitle').html();
             var noneList = [];
             var blockList = [];
-            if (selEnvType === "local") {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
-                var blockList = ["mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv"];
-            } else if (selEnvType === "cluster") {
+            if (selEnvType === "cluster" && !title.match(/Public/)) {
                 var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv"];
                 var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv"];
-            } else if (selEnvType === "amazon") {
+            } else if (selEnvType === "amazon" && !title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv"];
                 var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
+            } else if (selEnvType === "cluster" && title.match(/Public/)) {
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvUsernameDiv", "mEnvSSHKeyDiv"];
+                var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv"];
+            } else if (selEnvType === "amazon" && title.match(/Public/)) {
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv"];
+                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
             }
             $.each(noneList, function (element) {
                 $('#' + noneList[element]).css('display', 'none');
@@ -207,9 +311,9 @@ function showHideColumnProfile(id, colList, type) {
                 $('#mExecJob').trigger('change');
                 $('#execNextDiv').css('display', 'block');
                 $('#mExecJobDiv').css('display', 'block');
-                showHideColumnProfile('#execNextSettTable',[1,4,5],'hide');
+                showHideColumnProfile('#execNextSettTable', [1, 4, 5], 'hide');
             } else if (mExecType === "sge" || mExecType === "lsf" || mExecType === "slurm") {
-                showHideColumnProfile('#execNextSettTable',[1,4,5],'show');
+                showHideColumnProfile('#execNextSettTable', [1, 4, 5], 'show');
                 $('#mExecJob').val(mExecType).trigger('change');
                 $('#mExecJob').attr('disabled', "disabled");
                 $('#execNextDiv').css('display', 'block');
@@ -221,15 +325,15 @@ function showHideColumnProfile(id, colList, type) {
     $(function () {
         $(document).on('change', '#mExecJob', function () {
             var mExecJobType = $('#mExecJob option:selected').val();
-                if (mExecJobType === "ignite"){
-                    showHideColumnProfile('#execJobSetTable',[1,4,5],'show');
-                    showHideColumnProfile('#execJobSetTable',[1,4],'hide');
-                } else if (mExecJobType === "local"){
-                    showHideColumnProfile('#execJobSetTable',[1,4,5],'hide');
-                } else {
-                    showHideColumnProfile('#execJobSetTable',[1,4,5],'show');
-                }
-                $('#execJobSetDiv').css('display', 'block');
+            if (mExecJobType === "ignite") {
+                showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
+                showHideColumnProfile('#execJobSetTable', [1, 4], 'hide');
+            } else if (mExecJobType === "local") {
+                showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'hide');
+            } else {
+                showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
+            }
+            $('#execJobSetDiv').css('display', 'block');
         })
     });
 
@@ -243,6 +347,8 @@ function showHideColumnProfile(id, colList, type) {
         $('#mExecJob').removeAttr('disabled');
         $('#mEnvAmzKey').find('option').not(':eq(0)').remove()
         $('#mEnvSSHKey').find('option').not(':eq(0)').remove()
+        $('#mEnvName')[0].selectize.destroy();
+        cleanHasErrorClass("#profilemodal")
     });
 
     $('#profilemodal').on('click', '#saveEnv', function (event) {
@@ -251,89 +357,85 @@ function showHideColumnProfile(id, colList, type) {
         $('#mExecJob').removeAttr('disabled');
         var formValues = $('#profilemodal').find('input, select, textarea');
         var savetype = $('#mEnvId').val();
-        var profileName = $('#mEnvName').val();
-        var data = formValues.serializeArray(); // convert form to array
+        var formObj = {};
+        var stop = "";
+        var title = $('#mAddEnvTitle').html();
+        var clickedRow = $('#saveEnv').data('clickedrow');
+        [formObj, stop] = createFormObj(formValues, ["name"]);
         var selEnvType = $('#chooseEnv option:selected').val();
-        if (selEnvType === "cluster" && (data[19].value =="ignite" || data[19].value =="local")){
-            data[20].value =""; //queue
-            data[23].value =""; //time
-        }
-        if (selEnvType === "amazon" && (data[20].value =="ignite" || data[20].value =="local")){
-            data[21].value = "";//queue
-            data[24].value = "";//time
-        }
-        if (selEnvType === "cluster" && data[19].value =="local"){
-            data[24].value =""; //"job_clu_opt"
-        }
-        if (selEnvType === "amazon" && data[20].value =="local"){
-            data[25].value = "";//"job_clu_opt"
-        }
-        if (selEnvType === "cluster" && data[13].value =="local"){
-            data[14].value = "";//queue
-            data[17].value = "";//time
-            data[18].value = "";//next_clu_opt
-        }
-        if (selEnvType === "amazon" && data[14].value =="local"){
-            data[15].value = "";//queue
-            data[18].value = "";//time
-            data[19].value = "";//next_clu_opt
-        }
-            
-        if (selEnvType.length && profileName !== '') {
-            if (selEnvType === "cluster") {
-                var sshID = $('#mEnvSSHKey').val();
-                if (sshID) {
-                    data.push({ name: "p", value: "saveProfileCluster" });
-                } else {
-                    data = [];
-                }
-            } else if (selEnvType === "amazon") {
-                var sshID = $('#mEnvSSHKey').val();
-                var amzID = $('#mEnvAmzKey').val();
-                if (sshID && amzID) {
-                    data.push({ name: "p", value: "saveProfileAmazon" });
-                } else {
-                    data = [];
-                }
+        var nameID = $("#mEnvName")[0].selectize.getValue()
+        if (nameID) {
+            if ($("#mEnvName")[0].selectize.options[nameID]) {
+                formObj.name = $("#mEnvName")[0].selectize.options[nameID].name;
             }
-            if (data != '') {
-                $.ajax({
-                    type: "POST",
-                    url: "ajax/ajaxquery.php",
-                    data: data,
-                    async: true,
-                    success: function (s) {
-                        if (savetype.length) { //edit
-                            var clickedRowId = selEnvType + '-' + savetype;
-                            if (selEnvType === "local") {
-                                updateLocalRow(data[0].value, data[1].value, data[12].value, data[13].value)
-                            } else if (selEnvType === "cluster") {
-                                updateClusterRow(data[0].value, data[1].value, data[12].value, data[13].value, data[3].value, data[4].value)
-                            } else if (selEnvType === "amazon") {
-                                updateAmazonRow(data[0].value, data[1].value, data[12].value, data[13].value, data[6].value, data[7].value);
+        }
+        if (formObj.executor_job == "ignite") {
+            formObj.job_queue = "";
+            formObj.job_time = "";
+        }
+        if (formObj.executor_job == "local") {
+            formObj.job_queue = "";
+            formObj.job_time = "";
+            formObj.job_clu_opt = "";
+        }
+        if (formObj.executor == "local") {
+            formObj.next_queue = "";
+            formObj.next_time = "";
+            formObj.next_clu_opt = "";
+        }
+
+        if (selEnvType.length && stop == false) {
+            if (title.match(/Public/)) {
+                formObj.public = "1";
+            }
+            if (selEnvType === "cluster") {
+                formObj.p = "saveProfileCluster";
+            } else if (selEnvType === "amazon") {
+                formObj.p = "saveProfileAmazon";
+            }
+            console.log(formObj)
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: formObj,
+                async: true,
+                success: function (s) {
+                    if (savetype.length) { //edit
+                        var proId = savetype
+                    } else {
+                        var proId = s.id;
+                    }
+                    if (selEnvType === "cluster") {
+                        var newProfileData = getValues({ p: "getProfileCluster", id: proId });
+                    } else if (selEnvType === "amazon") {
+                        var newProfileData = getValues({ p: "getProfileAmazon", id: proId });
+                    }
+                    if (newProfileData[0]) {
+                        if (title.match(/Public/)) {
+                            if (savetype.length) { //edit
+                                publicProfileTable.row(clickedRow).remove().draw();
+                                publicProfileTable.row.add(newProfileData[0]).draw();
+                            } else { //insert
+                                publicProfileTable.row.add(newProfileData[0]).draw();
                             }
-                        } else { //insert
-                            if (selEnvType === "local") {
-                                addLocalRow(s.id, data[1].value, data[12].value, data[13].value);
-                            } else if (selEnvType === "cluster") {
-                                addClusterRow(s.id, data[1].value, data[12].value, data[13].value, data[3].value, data[4].value);
-                            } else if (selEnvType === "amazon") {
-                                addAmazonRow(s.id, data[1].value, data[12].value, data[13].value, data[6].value, data[7].value);
-                                $('#manageAmz').css('display', 'inline');
-                                checkAmazonTimer(s.id, 40000);
-                            }
-                            var numRows = $('#profilesTable > > tr').length;
-                            if (numRows > 2) {
-                                $('#noProfile').css('display', 'none');
+                        } else {
+                            if (savetype.length) { //edit
+                                profileTable.row(clickedRow).remove().draw();
+                                profileTable.row.add(newProfileData[0]).draw();
+                            } else { //insert
+                                profileTable.row.add(newProfileData[0]).draw();
+                                if (selEnvType === "amazon") {
+                                    checkAmazonTimer(s.id, 40000);
+                                }
                             }
                         }
-                        $('#profilemodal').modal('hide');
-                    },
-                    error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
                     }
-                });
-            }
+                    $('#profilemodal').modal('hide');
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
         }
     });
 
@@ -341,28 +443,41 @@ function showHideColumnProfile(id, colList, type) {
     // confirm Delete ssh modal 
     $('#confirmDelProModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
-        var clickedRowId = button.closest('tr').attr('id'); //local-20
+        var clickedRow = button.closest('tr');
         if (button.attr('id') === 'profileremove') {
-            $('#mDelProBtn').attr('clickedRowId', clickedRowId);
+            $('#mDelProBtn').data('clickedRow', clickedRow);
             $('#mDelProBtn').attr('class', 'btn btn-primary deleteProfile');
             $('#confirmDelProModalText').html('Are you sure you want to delete?');
+        } else if (button.attr('id') === 'deletePublicProfile') {
+            $('#mDelProBtn').data('clickedRow', clickedRow);
+            $('#mDelProBtn').attr('class', 'btn btn-primary deleteProfile');
+            $('#confirmDelProModalText').html('Are you sure you want to delete public profile?');
         }
+
     });
 
     $('#confirmDelProModal').on('click', '.deleteProfile', function (event) {
-        var clickedRowId = $('#mDelProBtn').attr('clickedRowId');
-        var patt = /(.*)-(.*)/;
-        var proType = clickedRowId.replace(patt, '$1');
-        var proId = clickedRowId.replace(patt, '$2');
+        var clickedRow = $('#mDelProBtn').data('clickedRow');
+        var title = $('#confirmDelProModalText').html();
+        if (title.match(/public/)) {
+            var rowData = publicProfileTable.row(clickedRow).data();
+        } else {
+            var rowData = profileTable.row(clickedRow).data();
+        }
+        var proType = "";
+        if (rowData.hostname != undefined) {
+            proType = "cluster";
+        } else {
+            proType = "amazon";
+        }
+        var proId = rowData.id;
         var data = {};
-        if (proType === "local") {
-            data = { "id": proId, "p": "removeProLocal" };
-        } else if (proType === "cluster") {
+        if (proType === "cluster") {
             data = { "id": proId, "p": "removeProCluster" };
         } else if (proType === "amazon") {
             data = { "id": proId, "p": "removeProAmazon" };
         }
-        if (clickedRowId !== '') {
+        if (proId !== '') {
             var warnUser = false;
             var warnText = '';
             //[warnUser, warnText] = checkDeletionProfile(remove_id);
@@ -375,10 +490,10 @@ function showHideColumnProfile(id, colList, type) {
                     data: data,
                     async: true,
                     success: function (s) {
-                        $('#profilesTable > > #' + clickedRowId).remove();
-                        var numRows = $('#profilesTable > > tr').length;
-                        if (numRows === 2) {
-                            $('#noProfile').css('display', 'block');
+                        if (title.match(/public/)) {
+                            publicProfileTable.row(clickedRow).remove().draw();
+                        } else {
+                            profileTable.row(clickedRow).remove().draw();
                         }
                         // check the amazon profiles
                         if (proType === "amazon") {
@@ -405,8 +520,6 @@ function showHideColumnProfile(id, colList, type) {
             $('#confirmDelProModal').modal('hide');
         }
     });
-
-
 
 
 
@@ -799,6 +912,9 @@ function showHideColumnProfile(id, colList, type) {
     $('#sshKeyModal').on('hide.bs.modal', function (event) {
         $('#ourKeyCheck').prop('disabled', false);
         $('#userKeyCheck').prop('disabled', false);
+        $('#createKeysDiv').css('display', 'inline');
+        $('#mOurPriKeyDiv').css('display', 'none');
+        $('#mOurPubKeyDiv').css('display', 'none');
         if ($('#userKeyCheck').is(":checked")) {
             $('#userKeyCheck').trigger("click");
         }
@@ -1118,60 +1234,294 @@ function showHideColumnProfile(id, colList, type) {
 
     //------------   amazon keys section ends -------------
     //------------   adminTab starts -------------
+    function getAdminUserTableOptions(active, role) {
+        if (active && active == 1) {
+            var activeItem = '<li><a name="deactivate" class="changeActiveUser">Deactivate User</a></li><li><a name="activateSendUser" class="changeActiveUser">Send activation E-mail to User</a></li>';
+        } else {
+            var activeItem = '<li><a name="activate" class="changeActiveUser">Activate User</a></li><li><a name="activateSendUser" class="changeActiveUser">Activate and send E-mail to User</a></li>';
+        }
+        if (role && role == "admin") {
+            var roleItem = '<li><a name="user" class="changeRoleUser">Assign user role</a></li>';
+        } else {
+            var roleItem = '<li><a name="admin" class="changeRoleUser">Assign admin role</a></li>';
+        }
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + '</ul></div>';
+        return button;
 
-    $('#impersonModal').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget);
-        $(this).find('option').remove();
-        if (button.attr('id') === 'impersonUser') {
-            $.ajax({
-                type: "GET",
-                url: "ajax/ajaxquery.php",
-                data: {
-                    p: "getAllUsers"
-                },
-                async: false,
-                success: function (s) {
-                    for (var i = 0; i < s.length; i++) {
-                        var param = s[i];
-                        var optionGroup = new Option(param.username, param.id);
-                        $("#mUserList").append(optionGroup);
-                    }
-                },
-                error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
-                }
-            });
+    }
+    //change password----
 
+    $("#password1, #password2").keyup(function () {
+        var vis8char = $("#8charDiv").css("display")
+        var visMatch = $("#pwmatchDiv").css("display")
+        if (vis8char == "none" && $("#password1").val().length > 0) {
+            $("#8charDiv").css("display", "block")
+        } else if (!$("#password1").val().length > 0) {
+            $("#8charDiv").css("display", "none")
+        }
+        if (visMatch == "none" && $("#password2").val().length > 0) {
+            $("#pwmatchDiv").css("display", "block")
+        } else if (!$("#password2").val().length > 0) {
+            $("#pwmatchDiv").css("display", "none")
+        }
+
+        if ($("#password1").val().length >= 8) {
+            $("#8char").removeClass("glyphicon-remove");
+            $("#8char").addClass("glyphicon-ok");
+            $("#8char").css("color", "#00A41E");
+        } else {
+            $("#8char").removeClass("glyphicon-ok");
+            $("#8char").addClass("glyphicon-remove");
+            $("#8char").css("color", "#FF0004");
+        }
+
+        if ($("#password1").val() == $("#password2").val() && $("#password1").val().length > 0) {
+            $("#pwmatch").removeClass("glyphicon-remove");
+            $("#pwmatch").addClass("glyphicon-ok");
+            $("#pwmatch").css("color", "#00A41E");
+        } else {
+            $("#pwmatch").removeClass("glyphicon-ok");
+            $("#pwmatch").addClass("glyphicon-remove");
+            $("#pwmatch").css("color", "#FF0004");
         }
     });
 
-
-    $('#impersonModal').on('click', '#confirmImpersonBut', function (event) {
+    $('#passwordForm').on('click', '#changePassBtn', function (event) {
         event.preventDefault();
-        var userId = $('#mUserList').val();
-        if (userId !== '') {
-            var userData = [];
-            userData.push({ name: "user_id", value: userId });
-            userData.push({ name: "p", value: 'impersonUser' });
-            $.ajax({
-                type: "POST",
-                data: userData,
-                url: "ajax/login.php",
-                async: false,
-                success: function (msg) {
-                    if (msg.error == 1) {
-                        alert('Something Went Wrong!');
+        var formValues = $('#passwordForm').find('input');
+        var requiredFields = ["password0", "password1", "password2"];
+        var formObj = {};
+        var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+        if (stop === false) {
+            if ($("#password1").val().length >= 8 && $("#password1").val() == $("#password2").val()) {
+                formObj.p = "changePassword";
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: formObj,
+                    async: true,
+                    success: function (s) {
+                        if (s.password0 || s.password1) { //error
+                            if (s.password0) {
+                                toogleErrorUser('#passwordForm', "password0", "insert", s.password0)
+                            } else {
+                                toogleErrorUser('#passwordForm', "password0", "delete", null)
+                            }
+                            if (s.password1) {
+                                toogleErrorUser('#passwordForm', "password1", "insert", s.password1)
+                            } else {
+                                toogleErrorUser('#passwordForm', "password1", "delete", null)
+                            }
+                        } else {
+                            toogleErrorUser('#passwordForm', "password0", "delete", null)
+                            toogleErrorUser('#passwordForm', "password1", "delete", null)
+                            $("#changePassBtn").html("Password has changed!")
+                            $("#changePassBtn").attr("class", "col-xs-12 btn btn-success btn-load");
+                            $("#changePassBtn").attr("disabled", "disabled");
+
+                            setTimeout(function () {
+                                $("#passwordForm").trigger('reset');
+                                $("#8charDiv").css("display", "none")
+                                $("#pwmatchDiv").css("display", "none")
+                                $("#changePassBtn").attr("class", "col-xs-12 btn btn-primary btn-load");
+                                $("#changePassBtn").html("Change Password ");
+                                $("#changePassBtn").removeAttr("disabled");
+                            }, 3000);
+                        }
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        }
+    });
+
+    function toogleErrorPassword(name, type, error) {
+        if (type == "delete") {
+            $('#passwordForm').find('input[name=' + name + ']').parent().parent().removeClass("has-error");
+            $('#passwordForm').find('font[name=' + name + ']').remove();
+        } else if (type == "insert") {
+            $('#passwordForm').find('input[name=' + name + ']').parent().parent().addClass("has-error");
+            $('#passwordForm').find('font[name=' + name + ']').remove();
+            $('#passwordForm').find('input[name=' + name + ']').parent().append('<font name="' + name + '" class="text-center" color="crimson">' + error + '</font>')
+        }
+    }
+
+    //change password ends----
+
+    if (usRole === "admin") {
+
+        var AdmUserTable = $('#AdminUserTable').DataTable({
+            "ajax": {
+                url: "ajax/ajaxquery.php",
+                data: { "p": "getAllUsers" },
+                "dataSrc": ""
+            },
+            "columns": [{
+                "data": "name"
+            }, {
+                "data": "username"
+            }, {
+                "data": "email"
+            }, {
+                "data": "institute"
+            }, {
+                "data": "role"
+            }, {
+                "data": "active",
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    if (oData.active && oData.active == 1) {
+                        $(nTd).html("true");
                     } else {
+                        $(nTd).html("false");
+                    }
+                }
+            }, {
+                "data": "memberdate"
+            }, {
+                data: null,
+                className: "center",
+                fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html(getAdminUserTableOptions(oData.active, oData.role));
+                }
+            }],
+            'order': [[6, 'desc']]
+        });
+
+        $('#AdminUserTable').on('click', '.impersonUser', function (event) {
+            var clickedRow = $(this).closest('tr');
+            var rowData = AdmUserTable.row(clickedRow).data();
+            var userId = rowData.id
+            if (userId !== '') {
+                var userData = [];
+                userData.push({ name: "user_id", value: userId });
+                userData.push({ name: "p", value: 'impersonUser' });
+                $.ajax({
+                    type: "POST",
+                    data: userData,
+                    url: "ajax/ajaxquery.php",
+                    async: false,
+                    success: function (msg) {
                         var logInSuccess = true;
                         window.location.reload('true');
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
                     }
-                }
-            });
-            $('#impersonModal').modal('hide');
-        }
-    });
+                });
+            }
+        });
+        $('#AdminUserTable').on('click', '.changeActiveUser, .changeRoleUser', function (event) {
+            var type = $(this).attr('name'); //activateSendUser or activate or deactivate
+            var p = $(this).attr('class');
+            var clickedRow = $(this).closest('tr');
+            var rowData = AdmUserTable.row(clickedRow).data();
+            var userId = rowData.id
+            if (userId !== '') {
+                var userData = [];
+                userData.push({ name: "user_id", value: userId });
+                userData.push({ name: "type", value: type });
+                userData.push({ name: "p", value: p });
+                $.ajax({
+                    type: "POST",
+                    data: userData,
+                    url: "ajax/ajaxquery.php",
+                    async: false,
+                    success: function (sc) {
+                        var newUserData = getValues({ p: "getUserById", id: userId })
+                        if (newUserData[0]) {
+                            AdmUserTable.row(clickedRow).remove().draw();
+                            AdmUserTable.row.add(newUserData[0]).draw();
+                        }
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        });
+
+        //       ---USER MODAL
+        $('#userModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            $(this).find('form').trigger('reset');
+            if (button.attr('id') === 'addUser') {
+                $('#userModalTitle').html('Add User');
+            } else {
+                $('#userModalTitle').html('Edit User');
+                var clickedRow = button.closest('tr');
+                var rowData = AdmUserTable.row(clickedRow).data();
+                $('#savemUser').data('clickedrow', clickedRow);
+                fillFormByName('#userModal', 'input, select', rowData);
+            }
+        });
+
+        $('#userModal').on('hide.bs.modal', function (event) {
+            cleanHasErrorClass("#userModal")
+        });
+
+        $('#userModal').on('click', '#savemUser', function (event) {
+            event.preventDefault();
+            var formValues = $('#userModal').find('input, select');
+            var requiredFields = ["name", "username", "email", "institute", "logintype"];
+            var clickedRow = $('#savemUser').data('clickedrow')
+            var formObj = {};
+            var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+            var savetype = $('#mUserID').val();
+            if (stop === false) {
+                formObj.p = "saveUserManual"
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: formObj,
+                    async: true,
+                    success: function (s) {
+                        if (s.email || s.username) { //exist in database
+                            if (s.email) {
+                                toogleErrorUser('#userModal', "email", "insert", s.email)
+                            } else {
+                                toogleErrorUser('#userModal', "email", "delete", null)
+                            }
+                            if (s.username) {
+                                toogleErrorUser('#userModal', "username", "insert", s.username)
+                            } else {
+                                toogleErrorUser('#userModal', "username", "delete", null)
+                            }
+                        } else {
+                            toogleErrorUser('#userModal', "username", "delete", null)
+                            toogleErrorUser('#userModal', "email", "delete", null)
+                            if (savetype.length) { //edit
+                                var newUserData = getValues({ p: "getUserById", id: savetype })
+                                if (newUserData[0]) {
+                                    AdmUserTable.row(clickedRow).remove().draw();
+                                    AdmUserTable.row.add(newUserData[0]).draw();
+                                }
+                            } else { //insert
+                                var newUserData = getValues({ p: "getUserById", id: s.id })
+                                if (newUserData[0]) {
+                                    AdmUserTable.row.add(newUserData[0]).draw();
+                                }
+                            }
+                            $('#userModal').modal('hide');
+                        }
 
 
 
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        });
+
+
+
+
+
+    }
 
 });

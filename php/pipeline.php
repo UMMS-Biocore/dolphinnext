@@ -25,6 +25,10 @@
                 <button type="button" id="downPipeline" class="btn" name="button" onclick="download(createNextflowFile(&quot;pipeline&quot;))" data-backdrop="false" style=" margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Download Pipeline">
                         <i class="glyphicon glyphicon-save"></i></a></button>
+                <button type="button" id="importPipeline" class="btn" name="button" data-toggle="modal" data-target="#importModal" data-backdrop="false" style=" display:none; margin:0px; padding:0px;">
+                <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Import Pipeline"><i class="glyphicon glyphicon-import"></i></a></button>
+                <button type="button" id="exportPipeline" class="btn" name="button" onclick="download(exportPipeline(),&quot;exportPipe&quot;)" data-backdrop="false" style=" margin:0px; padding:0px; display:none;">
+                <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Export Pipeline"><i class="glyphicon glyphicon-export"></i></a></button>
                 <button type="button" id="savePDF" class="btn" name="button" data-backdrop="false" style=" margin:0px; padding:0px; padding-bottom:2px;">
                     <a href="#" download data-toggle="tooltip" data-placement="bottom" data-original-title="Download Workflow as PDF" onclick="return downloadPdf()">
                         <i class="fa fa-file-pdf-o"></i></a></button>
@@ -38,7 +42,7 @@
                 <div id="pipeMenuGroupTop" style="display:inline;">
                     <i id="pipeSepBar" style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px; ">|</i>
                     <i id="pipeGroupIcon" class="fa fa-th-list " style="margin-left:0px; margin-right:0px; font-size:16px;"></i> Menu Group:
-                    <select id="pipeGroupAll" style="width:165px; font-style: italic; font-size:17px; margin-top:0px; padding-top:0px;" class="fbtn btn-default" name="process_group_id"></select>
+                    <select id="pipeGroupAll" style="width:165px; font-style: italic; font-size:17px;" class="form-control" pipe_group_id=""></select>
                     <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:7px; padding-right:7px; margin-bottom:3px;" id="pipeGroupAdd" data-toggle="modal" data-target="#pipeGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Add Pipeline Menu Group"><span><i class="glyphicon glyphicon-plus"></i></span></a></button>
                     <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:7px; padding-right:7px; margin-bottom:3px;" id="pipeGroupEdit" data-toggle="modal" data-target="#pipeGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Edit Pipeline Menu Group"><span><i class="fa fa-pencil-square-o"></i></span></a></button>
                     <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:8px; padding-right:8px; margin-bottom:3px;" id="pipeGroupDel" data-toggle="modal" data-target="#pipeDelGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Pipeline Menu Group"><span><i class="fa fa-trash-o"></i></span></a></button>
@@ -61,6 +65,7 @@
                     <span class="sr-only">Toggle Dropdown</span>
                   </button>
                 <ul class="dropdown-menu" role="menu">
+                    <li><a href="#mRun" data-toggle="modal">Create New Run</a></li>
                     <li><a href="#mExistRun" data-toggle="modal">Existing Runs</a></li>
                 </ul>
             </div>
@@ -253,6 +258,7 @@
             <input id="pin_order">
         </div>
     </div>
+    <div name="empty_space" style="height:100px; width:100%; clear:both;"></div>
 </div>
 
 
@@ -955,6 +961,21 @@
                             <input type="text" class="form-control" id="dropDownOpt" name="dropDownOpt" disabled>
                         </div>
                     </div>
+                    <div id="pubWebDiv" class="form-group">
+                        <div class="col-sm-5 control-label">
+                            <label><input type="checkbox" id="checkPubWeb" name="pubWeb" style ="margin-right:3px;"> Publish to Web Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to publish connected output files to web publish directory."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        </div>
+                        <div class="col-sm-7">
+                            <select id="pubWebOpt" name="pubWebOpt" class="form-control" disabled>
+                                <option value="" disabled selected>Choose data visualization method</option>
+                                <option value="text">Text</option>
+                                <option value="table" plugin="dataTables.js">DataTables</option>
+                                <option value="highcharts" plugin="highcharts.js">Highcharts</option>
+                                <option value="rmarkdown" >R Markdown</option>
+                                <option value="pdf">PDF Reader</option>
+                            </select>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -967,6 +988,34 @@
 <!-- Rename Modal Ends-->
 
 
+<!--Import Modal-->
+<div id="importModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="importModalTitle">Import Tool</h4>
+            </div>
+            <div class="modal-body">
+                <div id="importModalPart1">
+                    <form id="importArea" action="ajax/import.php" class="dropzone">
+                      <div class="fallback">
+                            <input name="file" type="file" multiple />
+                        </div>
+                    </form>
+                </div>
+                <div id="importModalPart2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="cancelButton">Cancel</button>
+                <button type="button" class="btn btn-primary" id="nextButton">Next</button>
+                <button type="button" class="btn btn-primary" id="importButton">Import</button>
+                <button type="button" class="btn btn-success" data-dismiss="modal" id="compButton">Complete</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Import Modal Ends-->
 
 <!--Confirm Modal-->
 <div id="confirmModal" class="modal fade" tabindex="-1" role="dialog">
@@ -985,6 +1034,8 @@
     </div>
 </div>
 <!--Confirm Modal Ends-->
+
+
 
 <!--Confirm d3 Modal-->
 <div id="confirmD3Modal" class="modal fade" tabindex="-1" role="dialog">
@@ -1046,6 +1097,25 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="warnUser" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Information</h4>
+            </div>
+            <div class="modal-body">
+                <span id="warnUserText">Text</span>
+                </br>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" id="saveOnExistImport">Save on Existing</button>
             </div>
         </div>
     </div>

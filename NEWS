@@ -1,3 +1,158 @@
+14.01.2019 Version 0.2.64
+Module of rMarkdown editor added to run page.
+
+10.01.2019 Version 0.2.63
+Report tab added to run page. Output data could be visualized by datatables.
+Reporting options added to pipeline output parameters.
+Following parameter added in .sec file [CONFIG] section.
+LOCAL_BASE_PATH = http://localhost:8080
+
+05.01.2019 Version 0.2.62
+Minor bug fixed in the run page.
+Fixed minor bug while  loading amazon status. 
+
+05.01.2019 Version 0.2.62
+Minor bug fixed in the run page.
+
+04.01.2019 Version 0.2.61
+Nextflow reports (DAG, timeline, report and trace) are added to run log section.
+Nextflow config and log files are saved for each run attempt and could be reached in the log section.
+
+30.12.2018 Version 0.2.60
+uuid operations now handled after process/pipeline creation
+run page organized with new tabs(advanced, workflow etc.)
+Following parameters added/updated in .sec file [CONFIG] section.
+TEMPPATH=../tmp
+Following parameter is updated as:
+RUNPATH=../tmp/logs
+ 
+24.12.2018 Version 0.2.59
+Status bugs are fixed for aborted and connecting status.
+send e-mail option added for admin on run status page 
+Send e-mail script is updated to support gmail.
+Minor bug is fixed regarding to google sign in.
+
+21.12.2018 Version 0.2.58
+Run status page updated (data created column added, impersonate feature added for admin).
+
+21.12.2018 Version 0.2.57
+Minor bug fixed in logout page.
+
+20.12.2018 Version 0.2.56
+"Add user" feature updated to send password to activated users.
+Change password feature added for users.
+
+19.12.2018 Version 0.2.55
+Run Status page is added.
+
+18.12.2018 Version 0.2.54
+Public run environment feature added which will facilitate the creation of run environment.
+
+15.12.2018 Version 0.2.53
+Deactivate/active button added to admin console (to block user login)
+Assign as Admin/user button added to admin console.
+Add/edit user feature added to admin console.
+.sec file updated and added following section to deactivate sign_up feature for users.
+[UICONFIG]
+ALLOW_SIGNUP=
+ALLOW_SIGNUPGOOGLE=
+
+13.12.2018 Version 0.2.52
+Login page added to support LDAP, google and dolphinnext logins.
+Admin can update existing case of parameter, process/pipeline group names.
+Following parameters added to .sec file.
+[Dolphinnext]
+SALT=
+PEPPER=
+MASTER=
+VERIFY=
+
+[CONFIG]
+BASE_PATH =
+LDAP_SERVER= 
+DN_STRING= 
+BIND_USER= 
+BIND_PASS= 
+EMAIL_SENDER= 
+EMAIL_ADMIN= 
+
+[UICONFIG]
+COMPANY_NAME=
+
+09.12.2018 Version 0.2.51
+Parameters will be case-insensitively unique.
+In case parameter is used by others, editing will be canceled for that parameter.
+Admin page updated.
+.sec file updated and added following section to hide profile tabs from users.
+[UICONFIG]
+SHOW_AMAZON_KEYS=false
+SHOW_SSH_KEYS=false
+SHOW_GROUPS=false
+
+07.12.2018 Version 0.2.50
+Bug fixed regarding to creating gid for process and pipeline.
+Pipeline/process menu group will not visible if it doesn't have pipeline/process
+Pipeline/process menu group name will be case-insensitively unique.
+Reload page to imported page.
+Error fixed regarding to adding menu group in case its exist in db.
+All Parameters, and process/pipeline menu groups will be public available.
+
+07.12.2018 Version 0.2.49
+Minor bugs fixed regarding to Import feature.
+Adding new menu group by using dropdown feature is added onto import modal.
+Platform specific parameters are excluded in export/import feature.
+Documentation added for platform tag.
+
+06.12.2018 Version 0.2.48
+Import feature finalized.
+Platform tag feature is added.
+
+04.12.2018 Version 0.2.47
+Import feature improved (not completed).
+
+28.11.2018 Version 0.2.46
+Import feature improved (not completed).
+
+21.11.2018 Version 0.2.45
+API_PATH variable added to .sec file. (API_PATH=https://www.dolphinnext.com)
+Process and Pipeline UUID are delivered by API
+Revision specific UUID column added to db for pipeline and process.
+PHP error logs are fixed.
+
+21.11.2018 Version 0.2.44
+Showing connecting button is upgraded.
+
+21.11.2018 Version 0.2.43
+when run hasn't finished yet and page reloads then connecting button is shown.
+
+21.11.2018 Version 0.2.42
+"Aborted" button is added to run page in case connection is lost.
+
+21.11.2018 Version 0.2.41
+Reading log is fixed in run page 
+
+17.11.2018 Version 0.2.40
+Pipeline UUID feature is added.
+Sql command is added to fill previous process/pipeline uuid's.
+
+15.11.2018 Version 0.2.39
+Process UUID feature is added.
+Pipeline export feature initiated.
+
+14.11.2018 Version 0.2.38
+Spaces of pipeline modules are fixed with underscore.
+Extra "module" suffix removed from run and pipeline pages.
+Truncate name of the user if it is not fitting into sign-in section.
+
+13.11.2018 Version 0.2.37
+Process parameters are downloaded in one query to speed up loading pipeline.
+
+13.11.2018 Version 0.2.36
+Amazon loading status feature is updated to keep sshtext available while reloading.
+log scroll is disabled after click on log area.
+First log of the run is loaded before loading pipeline.
+Sequence of nodes are fixed while copying process as a revision.
+
 06.11.2018 Version 0.2.35
 Nextflow and process memory and cpu limits are added for local in the profile and run page.
 
