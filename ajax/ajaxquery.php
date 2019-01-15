@@ -57,6 +57,14 @@ else if ($p=="getFileContent"){
     }
     $data = $db -> getFileContent($uuid,$filename,$ownerID);
 }
+else if ($p=="saveFileContent"){
+    $textRaw = $_REQUEST['text'];
+    $text = urldecode($textRaw);
+    $filename = $_REQUEST['filename'];
+    $uuid = $_REQUEST['uuid'];
+    $data = $db -> saveFileContent($text,$uuid,$filename,$ownerID);
+}
+
 else if ($p=="getFileList")
 {
     $uuid  = $_REQUEST['uuid'];

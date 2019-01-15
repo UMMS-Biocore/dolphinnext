@@ -5362,19 +5362,46 @@ $(document).ready(function () {
                 var uuid = $("#runVerReport").val();
                 var visType = $(this).attr("visType");
                 var filePath = $(this).attr("filepath");
+                var split = filePath.split("/")
+                var filename = "";
+                var dir = "";
+                if (split.length > 1) {
+                    filename = split[split.length - 1];
+                    dir = filePath.substring(0, filePath.indexOf(filename));
+                }
                 var fileid = $(this).attr("fileid");
-                var contentDiv = '<div style="margin:15px;"><table style="table-layout:fixed;" class="table table-striped table-bordered" cellspacing="0" width="100%" id="' + fileid + '"></table></div>';
-                $(href).append(contentDiv)
-                var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
-                var dataTableObj = tsvConvert(data, "json2")
-                dataTableObj.deferRender = true
-                dataTableObj.scroller = true
-                dataTableObj.scrollCollapse = true
-                dataTableObj.scrollY = 430
-                dataTableObj.scrollX = true
-                console.time("table");
-                $("#" + fileid).DataTable(dataTableObj);
-                console.timeEnd("table");
+                console.log(fileid)
+                if (visType == "table") {
+                    var contentDiv = '<div style="margin:15px;"><table style="table-layout:fixed;" class="table table-striped table-bordered" cellspacing="0"  id="' + fileid + '"></table></div>';
+                    $(href).append(contentDiv)
+                    var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
+                    var dataTableObj = tsvConvert(data, "json2")
+                    dataTableObj.deferRender = true
+                    dataTableObj.scroller = true
+                    dataTableObj.scrollCollapse = true
+                    dataTableObj.scrollY = 430
+                    dataTableObj.scrollX = true
+                    console.time("table");
+                    $("#" + fileid).DataTable(dataTableObj);
+                    console.timeEnd("table");
+                } else if (visType == "rmarkdown") {
+                    var contentDiv = '<div style="width:100%;" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></div>';
+                    $(href).append(contentDiv)
+                    var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
+                    var localbasepath = $("#basepathinfo").attr("localbasepath")
+                    console.time("rMarkEditor");
+                    $("#" + fileid).rMarkEditor({
+                        ajax: {
+                            localbasepath: localbasepath,
+                            text: data
+                        },
+                        editorWidth: "60%",
+                        reportWidth: "40%",
+                        height: "565px",
+                        theme: "monokai" //tomorrow
+                    });
+                    console.timeEnd("rMarkEditor");
+                }
             }
 
         })
@@ -5394,184 +5421,542 @@ $(document).ready(function () {
         });
     });
 
+    //################################
+    // --rMarkEditor jquery plugin --
+    //################################
+
+    (function ($) {
+        $.fn.rMarkEditor = function (options) {
+            var settings = $.extend({
+                // default values.
+                height: "500px",
+                heightIconBar: "35px"
+            }, options);
+            var elems = $(this);
+            var elemsID = $(this).attr("id");
+            console.log(elems)
+            console.log(elemsID)
+
+            var getEditorIconDiv = function () {
+                return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">
+                            <li role="presentation"><a class="rmarkeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>
+                            <li role="presentation"><a class="rmarkeditorsaveas" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As">
+                            <span class="glyphicon-stack">
+                                <i class="fa fa-pencil glyphicon-stack-3x"></i>
+                                <i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i>
+                            </span>
+                            </a></li>
+                            <li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>
+                            <li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>
+                        </ul>`
+            }
+            var getReportIconDiv = function () {
+                return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">
+                            <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                                <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li><a href="#">Download PDF</a></li>
+                                </ul>
+                            </li>
+                        </ul>`
+
+            }
+            var renameModal = `
+                <div id="rMarkRename" class="modal fade" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title">Save</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form style="padding-right:10px;" class="form-horizontal">
+                                    <div class="form-group">
+                                        <label class="col-sm-3 control-label">File Name</label>
+                                        <div class="col-sm-9">
+                                        <input type="text" class="form-control rmarkfilename">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary save" data-dismiss="modal">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            var settingsModal = ` 
+                <div id="rMarkSett" class="modal fade" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" >Settings</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form style="padding-right:10px;" class="form-horizontal">
+                                    <div class="form-group">
+                                        <label class="col-sm-5 control-label">Auto updating output</label>
+                                        <div class="col-sm-7">
+                                            <label class="switch">
+                                                <input class="aUpdateCh" type="checkbox">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal" >close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+
+            var getDiv = function (settings, outputHtml) {
+                var id = "rMarkEditor"
+                var editoriconBar = '<div id="' + elemsID + '-editoricons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.editorWidth + ';">' + getEditorIconDiv() + '</div>';
+                var reporticonBar = '<div id="' + elemsID + '-reporticons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.reportWidth + ';">' + getReportIconDiv() + '</div>';
+                var editorDiv = '<div id="' + elemsID + '-editor" style="clear:both; float:left; height:' + settings.height + '; width:' + settings.editorWidth + ';"></div>';
+                var reportDiv = '<div id="' + elemsID + '-report" style="float:left; height:' + settings.height + '; width:' + settings.reportWidth + ';"><iframe style="width:100%; height:100%" src="' + outputHtml + '"></iframe></div>';
+                return reporticonBar + editoriconBar + editorDiv + reportDiv
+            }
+            var createEditor = function (settings) {
+                var editorId = elemsID + "-editor";
+                window[editorId] = ace.edit(editorId);
+                window[editorId].setTheme("ace/theme/" + settings.theme);
+                window[editorId].getSession().setMode("ace/mode/r");
+                window[editorId].setFontSize("14px");
+                window[editorId].$blockScrolling = Infinity;
+                window[editorId].setValue(settings.ajax.text);
+            }
+            var createModal = function () {
+                if (document.getElementById("rMarkSett") === null) {
+                    $('body').append(settingsModal);
+                }
+                if (document.getElementById("rMarkRename") === null) {
+                    $('body').append(renameModal);
+                }
+            }
+
+            var getFileName = function () {
+                var res = { filename: "", rest: "" };
+                var filePath = elems.attr("filePath")
+                var split = filePath.split("/")
+                res.filename = split[split.length - 1]
+                res.rest = split.slice(0, -1).join('/');
+                return res
+            }
+            var saveCommand = function (editorId, filename) {
+                var obj = getFileName();
+                var newPath = obj.rest + "/" + filename
+                var text = window[editorId].getValue();
+                text = encodeURIComponent(text);
+                var run_log_uuid = $("#runVerReport").val();
+                var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
+                return saveData
+            }
+
+            var saveRmd = function (editorId, type) {
+                var obj = getFileName();
+                var newPath = obj.rest + "/" + obj.filename
+                //check if readonly
+                if (elems.attr("read_only") || type == "saveas") {
+                    //ask new name  
+                    $("#rMarkRename").attr("filename", obj.filename)
+                    $("#rMarkRename").modal("show");
+                    //if (saveData) {
+                    //click on the saved file: it will trigger the update.
+                    //} 
+                } else {
+                    var saveData = saveCommand(editorId, obj.filename)
+                    if (saveData) {
+                        update(editorId);
+                    }
+                }
+            }
+
+            var update = function (editorId) {
+                var text = window[editorId].getValue();
+                var outputHtml = getData(text, settings);
+                var reportId = elemsID + "-report";
+                $("#" + reportId + "> iframe").attr("src", outputHtml)
+            }
+            var timeoutId = 0;
+            var autoUpdate = function (editorId) {
+                if (timeoutId) clearTimeout(timeoutId);
+                timeoutId = setTimeout(function () { update(editorId) }, 2000);
+            }
+            var eventHandler = function (settings) {
+                var editorId = elemsID + "-editor";
+
+                $(function () {
+                    $('[data-toggle="tooltip"]').tooltip();
+                });
+                $(function () {
+                    $('a.rmarkeditorrun').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            update(editorId);
+                        }
+                    });
+                });
+                $(function () {
+                    $(document).on('change', 'input.aUpdateCh', function (event) {
+                        if ($(this).is(":checked")) {
+                            $('#' + editorId).keyup(function () {
+                                autoUpdate(editorId);
+                            });
+                        } else {
+                            $('#' + editorId).off();
+                        }
+                    });
+                });
+                $(function () {
+                    $('a.rmarkeditorsave').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            saveRmd(editorId, "save")
+                        }
+                    });
+                    $('a.rmarkeditorsaveas').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            saveRmd(editorId, "saveas")
+                        }
+                    });
+                    $('a.rmarkeditorsett').on('click', function (event) {
+                        $("#rMarkSett").modal("show");
+                    });
+                });
+                $(function () {
+                    $('#rMarkRename').on('show.bs.modal', function (event) {
+                        var divOldName = elems.attr("filename")
+                        var modalOldName = $("#rMarkRename").attr("filename")
+                        if (divOldName === modalOldName) {
+                            if ($('#rMarkRename').find("input.rmarkfilename")) {
+                                $($('#rMarkRename').find("input.rmarkfilename")[0]).val(divOldName)
+                            }
+                        }
+                    });
+                    $("#rMarkRename").on('click', '.save', function (event) {
+                        var divOldName = elems.attr("filename")
+                        var divOldDir = elems.attr("dir")
+                        var modalOldName = $("#rMarkRename").attr("filename")
+                        if (divOldName === modalOldName) {
+                            if ($('#rMarkRename').find("input.rmarkfilename")) {
+                                var newName = $($('#rMarkRename').find("input.rmarkfilename")[0]).val();
+                                var saveData = saveCommand(editorId, newName)
+                                $("#reportRows").dynamicRows("fnRefresh", "columnsBody")
+                                var newFilepath = divOldDir + newName;
+                                var allfiles = elems.closest("div.panel-body").find("a[filepath]")
+                                for (var i = 0; i < allfiles.length; i++) {
+                                    var menuFile2 = $(allfiles[i]).attr("filepath")
+                                    if (menuFile2 == newFilepath){
+                                        $(allfiles[i]).trigger("click");
+                                    }
+                                }
+                                if (saveData) {
+                                    $("#rMarkRename").modal("hide");
+                                }
+                            }
+                        }
+                    });
+                });
+
+
+            }
+            var replacePattern = function (tx) {
+                var lines = tx.split("\n");
+                var fi = "";
+                for (var i = 0; i < lines.length; i++) {
+                    if (lines[i].match(/(.*)\{\{(.*)\}\}(.*)/)) {
+                        elems.attr("read_only", "true")
+                        var reg = lines[i].match(/(.*)\{\{(.*)\}\}(.*)/);
+                        var before = reg[1];
+                        var patt = reg[2];
+                        var after = reg[3];
+                        var relaxedjson = "{" + patt + "}";
+                        var correctJson = relaxedjson.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+                        var json = JSON.parse(correctJson)
+                        var res = ""
+                        if (json) {
+                            if (json.webpath) {
+                                var pubWebPath = $("#basepathinfo").attr("pubweb");
+                                var run_log_uuid = $("#runVerReport").val();
+                                var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + json.webpath;
+                                res = '"' + link + '"';
+                            }
+                        }
+                        fi += before + res + after + "\n";
+                    } else {
+                        fi += lines[i] + "\n";
+                    }
+                }
+                return fi
+            }
+
+            var getData = function (editText, settings) {
+                var editTextSend = JSON.stringify(editText)
+                var ret = null
+                $.ajax({
+                    type: "POST",
+                    url: settings.ajax.localbasepath + "/ocpu/library/markdownapp/R/rmdtext",
+                    data: { 'text': editTextSend },
+                    async: false,
+                    cache: false,
+                    success: function (results) {
+                        if (results === undefined || results == "") {
+                            ret = "";
+                        } else {
+                            var lines = results.split("\n");
+                            for (var i = 0; i < lines.length; i++) {
+                                if (lines[i].match(/output.html/)) {
+                                    var outputHtml = settings.ajax.localbasepath + lines[i];
+                                    ret = outputHtml
+                                    break
+                                }
+                            }
+                        }
+
+                    },
+                    error: function (errorThrown) {
+                        console.log("##Error:");
+                        console.log(errorThrown);
+                    }
+                });
+                if (!ret) ret = "";
+                return ret
+            }
+            settings.ajax.text = replacePattern(settings.ajax.text);
+            var outputHtml = getData(settings.ajax.text, settings);
+            elems.append(getDiv(settings, outputHtml));
+            createEditor(settings)
+            createModal()
+            eventHandler(settings);
+            return this;
+
+        };
+    }(jQuery));
 
     //################################
     // --dynamicRows jquery plugin --
     //################################
 
     (function ($) {
-        $.fn.dynamicRows = function (options) {
-            var settings = $.extend({
-                // default values.
-                color: "#556b2f",
-                backgroundColor: "white",
-                heightHeader: "60px",
-                lineHeightHeader: "60px",
-                heightBody: "600px",
-                heightTitle: "50px",
-                lineHeightTitle: "50px"
-            }, options);
-
-            var elems = $(this);
-            var elemsID = $(this).attr("id");
-            var refreshHandler = function (settings) {
-                $('.collapseRowDiv').on({
-                    mouseenter: function () {
-                        $(this).css("background-color", settings.backgroundcolorenter)
-                    },
-                    mouseleave: function () {
-                        $(this).css("background-color", settings.backgroundcolorleave)
+        var methods = {
+            init: function (options) {
+                var settings = $.extend({
+                    // default values.
+                    color: "#556b2f",
+                    backgroundColor: "white",
+                    heightHeader: "60px",
+                    lineHeightHeader: "60px",
+                    heightBody: "600px",
+                    heightTitle: "50px",
+                    lineHeightTitle: "50px"
+                }, options);
+                var elems = $(this);
+                var elemsID = $(this).attr("id");
+                elems.data('settings', settings);
+                var data = getData(settings);
+                if (data === undefined || data == null || data == "") {
+                    elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to report</div>')
+                } else {
+                    var title = getTitle(data[0], settings);
+                    if (title) {
+                        elems.append(title);
                     }
-                });
-
-                $('.collapseRowDiv').on('click', function (e) {
-                    var textClassPlus = $(this).find('.fa-plus-square-o')[0];
-                    var textClassMinus = $(this).find('.fa-minus-square-o')[0];
-                    if (textClassPlus) {
-                        $(this).css("background-color", settings.backgroundcolorenter)
-                        $(textClassPlus).removeClass('fa-plus-square-o');
-                        $(textClassPlus).addClass('fa-minus-square-o');
-                    } else if (textClassMinus) {
-                        $(this).css("background-color", settings.backgroundcolorleave)
-                        $(textClassMinus).removeClass('fa-minus-square-o');
-                        $(textClassMinus).addClass('fa-plus-square-o');
-                    }
-                });
-                $('.collapseIconItem').on('click', function (e) {
-                    var itemClass = $(this).attr("class")
-                    if (itemClass.match(/fa-plus-square-o/)) {
-                        $(this).removeClass('fa-plus-square-o');
-                        $(this).addClass('fa-minus-square-o');
-                    } else if (itemClass.match(/fa-minus-square-o/)) {
-                        $(this).removeClass('fa-minus-square-o');
-                        $(this).addClass('fa-plus-square-o');
-                    }
-                });
-            }
-
-            var getColumnContent = function (dataObj, colObj) {
-                var col = "";
-                if (colObj.fnCreatedCell) {
-                    var nTd = $("<span></span>");
-                    colObj.fnCreatedCell(nTd, dataObj)
-                    col = nTd.clone().wrap('<p>').parent().html();
-                } else if (colObj.data) {
-                    col = dataObj[colObj.data]
+                    $(data).each(function (i) {
+                        elems.append(getPanel(data[i], settings, elemsID));
+                    });
+                    refreshHandler(settings)
                 }
-                return col
-            };
-
-            var getColumnData = function (dataObj, settings, cols, height, lineHeight) {
-                var columnPercent = 100;
-                var clearFix = ""; //if its the first element of multicolumn
-                var center = ""; //align="center" to div
-                var columnCount = $(cols).size();
-                var processParamDiv = ""
-                var heightT = "";
-                var lineHeightT = "";
-                $.each(cols, function (el) {
-                    var overflowT = "";
-                    if (cols[el].overflow) {
-                        overflowT = 'overflow:' + cols[el].overflow + '; ';
-                    }
-                    if (cols[el].colPercent) {
-                        columnPercent = cols[el].colPercent;
-                    } else {
-                        columnPercent = Math.floor(columnPercent / columnCount * 100) / 100;
-                    }
-                    if (el === 0) {
-                        clearFix = " clear:both; "
-                    } else {
-                        clearFix = ""
-                    }
-                    if (cols[el].className == "center") {
-                        center = ' align="center"; '
-                    } else {
-                        center = ""
-                    }
-                    if (height) {
-                        heightT = 'height:' + height + '; ';
-                    }
-                    if (lineHeight) {
-                        lineHeightT = 'line-height:' + lineHeight + '; ';
-                    }
-
-                    processParamDiv += '<div ' + center + ' style="' + heightT + lineHeightT + clearFix + overflowT + 'float:left;  width:' + columnPercent + '%; ">';
-                    processParamDiv += getColumnContent(dataObj, cols[el])
-                    processParamDiv += '</div>';
-                });
-                return processParamDiv
-            }
-
-            var getPanel = function (dataObj, settings) {
-                if (dataObj) {
-                    var id = dataObj.id
-                    var headerDiv = getColumnData(dataObj, settings, settings.columnsHeader, settings.heightHeader, settings.lineHeightHeader);
-                    var bodyDiv = getColumnData(dataObj, settings, settings.columnsBody, settings.heightBody, settings.lineHeightBody);
-                    //                    var icon = '<i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i>';
-                    var processHeader = '<div class="collapsible collapseRowDiv" data-toggle="collapse" style="height:' + settings.heightHeader + ';" href="#' + elemsID + '-' + id + '"><h3 class="panel-title">' + headerDiv + '</h3></div>';
-                    var processBodyInt = '<div  id="' + elemsID + '-' + id + '" class="panel-collapse collapse collapseRowBody" style="word-break: break-all;"><div class="panel-body" style="background-color:white; height:' + settings.heightBody + '; padding:0px;">' + bodyDiv + '</div>';
-                    return '<div id="' + elemsID + 'PanelDiv-' + id + '" ><div class="panel" style="background-color:' + settings.backgroundcolorleave + '; margin-bottom:15px;">' + processHeader + processBodyInt + '</div></div>'
-                } else
-                    return ""
-            }
-
-            var getTitle = function (dataObj, settings) {
-                if (settings.columnsTitle) {
-                    var titleDiv = getColumnData({}, settings, settings.columnsTitle, settings.heightTitle, settings.lineHeightTitle);
-                    return '<div  style="font-weight:900; height:' + settings.heightTitle + ';">' + titleDiv + '</div>'
-                } else
-                    return ""
-            }
-
-            var getData = function (settings) {
-                if (settings.ajax.url) {
-                    var ret = $.ajax({
-                        type: "POST",
-                        url: settings.ajax.url,
-                        data: settings.ajax.data,
-                        datatype: "json",
-                        success: function (results) {
-                            if (results === undefined || results.length == 0) {
-                                elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to report</div>')
-                            } else {
-                                var title = getTitle(results[0], settings);
-                                if (title) {
-                                    elems.append(title);
+                return this;
+            },
+            fnRefresh: function (content) {
+                var elems = $(this);
+                var elemsID = $(this).attr("id");
+                var settings = elems.data('settings');
+                var data = getData(settings);
+                if (content == "columnsBody") {
+                    $(data).each(function (i) {
+                        var id = data[i].id
+                        var dataObj = data[i];
+                        console.log(dataObj)
+                        var existWrapBody = $("#" + elemsID + '-' + id);
+                        if (existWrapBody) {
+                            var existBodyDiv = existWrapBody.children().children()
+                            var col = settings.columnsBody;
+                            $.each(existBodyDiv, function (el) {
+                                if (existBodyDiv[el]) {
+                                    getColumnContent(dataObj, col[el], existBodyDiv[el])
                                 }
-                                $(results).each(function (i) {
-                                    elems.append(getPanel(results[i], settings));
-                                });
-                                refreshHandler(settings)
-                            }
-
-                        },
-                        error: function (errorThrown) {
-                            alert("Error: " + errorThrown);
+                            })
                         }
                     });
-                    return ret
-                } else if (settings.ajax.data) {
-                    if (settings.ajax.data === undefined || settings.ajax.data.length == 0) {
-                        elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to report</div>')
-                    } else {
-                        var title = getTitle(settings.ajax.data[0], settings);
-                        if (title) {
-                            elems.append(title);
-                        }
-                        var ret = $(settings.ajax.data).each(function (i) {
-                            elems.append(getPanel(settings.ajax.data[i], settings));
-                            refreshHandler(settings);
-                        });
+                }
+                return this;
+            }
+        };
+
+        $.fn.dynamicRows = function (methodOrOptions) {
+            if (methods[methodOrOptions]) {
+                return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
+            } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
+                // Default to "init"
+                return methods.init.apply(this, arguments);
+            } else {
+                $.error('Method ' + methodOrOptions + ' does not exist on jQuery.tooltip');
+            }
+        };
+
+
+
+        var refreshHandler = function (settings) {
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip();
+            });
+            $('.collapseRowDiv').on({
+                mouseenter: function () {
+                    $(this).css("background-color", settings.backgroundcolorenter)
+                },
+                mouseleave: function () {
+                    $(this).css("background-color", settings.backgroundcolorleave)
+                }
+            });
+
+            $('.collapseRowDiv').on('click', function (e) {
+                var textClassPlus = $(this).find('.fa-plus-square-o')[0];
+                var textClassMinus = $(this).find('.fa-minus-square-o')[0];
+                if (textClassPlus) {
+                    $(this).css("background-color", settings.backgroundcolorenter)
+                    $(textClassPlus).removeClass('fa-plus-square-o');
+                    $(textClassPlus).addClass('fa-minus-square-o');
+                } else if (textClassMinus) {
+                    $(this).css("background-color", settings.backgroundcolorleave)
+                    $(textClassMinus).removeClass('fa-minus-square-o');
+                    $(textClassMinus).addClass('fa-plus-square-o');
+                }
+            });
+            $('.collapseIconItem').on('click', function (e) {
+                var itemClass = $(this).attr("class")
+                if (itemClass.match(/fa-plus-square-o/)) {
+                    $(this).removeClass('fa-plus-square-o');
+                    $(this).addClass('fa-minus-square-o');
+                } else if (itemClass.match(/fa-minus-square-o/)) {
+                    $(this).removeClass('fa-minus-square-o');
+                    $(this).addClass('fa-plus-square-o');
+                }
+            });
+        }
+
+        var getColumnContent = function (dataObj, colObj, nTd) {
+            var col = "";
+            if (colObj.fnCreatedCell && !nTd) {
+                var nTd = $("<span></span>");
+                colObj.fnCreatedCell(nTd, dataObj)
+                col = nTd.clone().wrap('<p>').html();
+            } else if (colObj.fnCreatedCell && nTd) {
+                colObj.fnCreatedCell(nTd, dataObj)
+            } else if (colObj.data) {
+                col = dataObj[colObj.data]
+            }
+            return col
+        };
+
+        var getColumnData = function (dataObj, settings, cols, height, lineHeight) {
+            var columnPercent = 100;
+            var clearFix = ""; //if its the first element of multicolumn
+            var center = ""; //align="center" to div
+            var columnCount = $(cols).size();
+            var processParamDiv = ""
+            var heightT = "";
+            var lineHeightT = "";
+            $.each(cols, function (el) {
+                var overflowT = "";
+                if (cols[el].overflow) {
+                    overflowT = 'overflow:' + cols[el].overflow + '; ';
+                }
+                if (cols[el].colPercent) {
+                    columnPercent = cols[el].colPercent;
+                } else {
+                    columnPercent = Math.floor(columnPercent / columnCount * 100) / 100;
+                }
+                if (el === 0) {
+                    clearFix = " clear:both; "
+                } else {
+                    clearFix = ""
+                }
+                if (cols[el].className == "center") {
+                    center = ' align="center"; '
+                } else {
+                    center = ""
+                }
+                if (height) {
+                    heightT = 'height:' + height + '; ';
+                }
+                if (lineHeight) {
+                    lineHeightT = 'line-height:' + lineHeight + '; ';
+                }
+
+                processParamDiv += '<div ' + center + ' style="' + heightT + lineHeightT + clearFix + overflowT + 'float:left;  width:' + columnPercent + '%; ">';
+                processParamDiv += getColumnContent(dataObj, cols[el], null)
+                processParamDiv += '</div>';
+            });
+            return processParamDiv
+        }
+
+        var getPanel = function (dataObj, settings, elemsID) {
+            if (dataObj) {
+                var id = dataObj.id
+                var headerDiv = getColumnData(dataObj, settings, settings.columnsHeader, settings.heightHeader, settings.lineHeightHeader);
+                var bodyDiv = getColumnData(dataObj, settings, settings.columnsBody, settings.heightBody, settings.lineHeightBody);
+                var wrapHeader = '<div class="collapsible collapseRowDiv" data-toggle="collapse" style="height:' + settings.heightHeader + ';" href="#' + elemsID + '-' + id + '"><h3 class="panel-title">' + headerDiv + '</h3></div>';
+                var wrapBody = '<div  id="' + elemsID + '-' + id + '" class="panel-collapse collapse collapseRowBody" style="word-break: break-all;"><div class="panel-body" style="background-color:white; height:' + settings.heightBody + '; padding:0px;">' + bodyDiv + '</div>';
+                return '<div id="' + elemsID + 'PanelDiv-' + id + '" ><div class="panel" style="background-color:' + settings.backgroundcolorleave + '; margin-bottom:15px;">' + wrapHeader + wrapBody + '</div></div>'
+            } else
+                return ""
+        }
+
+        var getTitle = function (dataObj, settings) {
+            if (settings.columnsTitle) {
+                var titleDiv = getColumnData({}, settings, settings.columnsTitle, settings.heightTitle, settings.lineHeightTitle);
+                return '<div  style="font-weight:900; height:' + settings.heightTitle + ';">' + titleDiv + '</div>'
+            } else
+                return ""
+        }
+
+        var getData = function (settings) {
+            var res = null;
+            if (settings.ajax.url) {
+                $.ajax({
+                    type: "POST",
+                    url: settings.ajax.url,
+                    data: settings.ajax.data,
+                    datatype: "json",
+                    async: false,
+                    cache: false,
+                    success: function (results) {
+                        res = results
+                        console.log(res)
+                    },
+                    error: function (errorThrown) {
+                        console.log("##Error: ");
+                        console.log(errorThrown)
                     }
-                    return ret
+                });
+                return res
+            } else if (settings.ajax.data) {
+                if (settings.ajax.data === undefined || settings.ajax.data.length == 0) {
+                    res = null;
+                } else {
+                    res = settings.ajax.data;
                 }
             }
+            return res
+        }
 
-            getData(settings);
-            return this;
-
-        };
     }(jQuery));
 
 
@@ -5608,11 +5993,11 @@ $(document).ready(function () {
                 $("#runTitleReport").text(runTitleLog)
                 if (reload) {
                     $("#reportRows").empty();
-
                     //add 'className: "center"' to center text in columns array
                     $("#reportRows").dynamicRows({
                         ajax: {
-                            data: reportData
+                            url: "ajax/ajaxquery.php",
+                            data: { "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id }
                         },
                         columnsBody: [{
                             //file list
@@ -5639,8 +6024,9 @@ $(document).ready(function () {
                                         }
                                         var filepath = oData.name + "/" + fileList[el];
                                         var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
-                                        var tabID = 'reportTab' + oData.id + "_" + el;
-                                        var fileID = oData.id + "_" + el;
+                                        var filenameCl = cleanProcessName(fileList[el])
+                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                        var fileID = oData.id + "_" + filenameCl;
                                         liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="fa ' + icon + '"></i>' + fileList[el] + '</a></li>';
                                     }
                                 });
@@ -5654,22 +6040,32 @@ $(document).ready(function () {
                             data: null,
                             colPercent: "75",
                             fnCreatedCell: function (nTd, oData) {
-                                var navTabDiv = "";
-                                navTabDiv += '<div class="tab-content">';
                                 var fileList = oData.fileList;
-                                var liText = "";
-                                var active = "";
-                                $.each(fileList, function (el) {
-                                    var tabID = 'reportTab' + oData.id + "_" + el;
+                                if ($(nTd).is(':empty')) {
+                                    var navTabDiv = "";
+                                    navTabDiv += '<div class="tab-content">';
+                                    var liText = "";
                                     var active = "";
-                                    if (el == 0) {
-                                        active = 'in active';
-                                    }
-                                    navTabDiv += '<div id = "' + tabID + '" class = "tab-pane fade ' + active + '" >';
+                                    $.each(fileList, function (el) {
+                                        var filenameCl = cleanProcessName(fileList[el])
+                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                        var active = "";
+                                        if (el == 0) {
+                                            active = 'in active';
+                                        }
+                                        navTabDiv += '<div id = "' + tabID + '" class = "tab-pane fade ' + active + '" ></div>';
+                                    });
                                     navTabDiv += '</div>';
-                                });
-                                navTabDiv += '</div>';
-                                $(nTd).html(navTabDiv);
+                                    $(nTd).html(navTabDiv);
+                                } else {
+                                    $.each(fileList, function (el) {
+                                        var filenameCl = cleanProcessName(fileList[el])
+                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                        if (!$(nTd).find("div#" + tabID).length) {
+                                            $(nTd).children().append('<div id = "' + tabID + '" class = "tab-pane fade" ></div>')
+                                        }
+                                    });
+                                }
                             },
         }],
                         columnsHeader: [{
@@ -5695,7 +6091,7 @@ $(document).ready(function () {
                             data: null,
                             colPercent: "20",
                             fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<a><i class="fa fa-line-chart"></i></a>');
+                                $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="fa fa-line-chart"></i></a>');
                             }
         }],
                         columnsTitle: [{
@@ -5736,12 +6132,6 @@ $(document).ready(function () {
 
 
 
-
-    //####### RMarkDown ###########
-    //#############################
-    var editorText = "The Normal Distribution\n=======================\n\n> Output automatically refreshes 5 seconds after editing markdown!\n\nThe normal (or Gaussian) distribution is defined as follows:\n\n$$latex\nf(x;\\mu,\\sigma^2) = \\frac{1}{\\sigma\\sqrt{2\\pi}} \ne^{ -\\frac{1}{2}\\left(\\frac{x-\\mu}{\\sigma}\\right)^2 }\n$$\n\nTo generate random draws from a normal distribution we use the **rnorm** function:\n\n```{r block1}\noutput <- rnorm(1000, 100, 15);\n```\n\nThe normal distribution has the typical bell shape:\n\n```{r block2, fig.width=8, fig.height=5}\nlibrary(ggplot2)\nqplot(output)\n```\n\n## Kernel density estimation\n\nWe can perform density estimation on the sample:\n\n```{r block3, fig.width=8, fig.height=5}\nplot(density(output))\n``` \n\n## Carl Friedrich Gauß\n\nThis little guy had something to do with it\n\n!['Gauss'](https://goo.gl/eXN77h)\n";
-//    var outputHtml = callMarkDownApp(editorText)
-//    console.log(outputHtml)
 
 
 });

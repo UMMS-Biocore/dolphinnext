@@ -1720,6 +1720,13 @@ class dbfuncs {
         }
         return json_encode($content);
     }
+    public function saveFileContent($text, $uuid, $filename, $ownerID) {
+        $file = fopen("{$this->run_path}/$uuid/$filename", "w");
+        $res = fwrite($file, $text);
+        fclose($file);
+        return json_encode($res);
+    }
+    
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
     public function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$ownerID) {
          if ($profileType == 'cluster'){
