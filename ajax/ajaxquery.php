@@ -1179,8 +1179,8 @@ else if ($p=="saveAllPipeline")
     $new_pipe_id = $idArray["id"];
     if (!empty($new_pipe_id)){
         $obj = json_decode($dat);
-        $pipeline_uuid = isset($obj[21]->{"pipeline_uuid"}) ? $obj[21]->{"pipeline_uuid"} : "";
-        $pipeline_rev_uuid = isset($obj[22]->{"pipeline_rev_uuid"}) ? $obj[22]->{"pipeline_rev_uuid"} : "";
+        $pipeline_uuid = isset($obj[22]->{"pipeline_uuid"}) ? $obj[22]->{"pipeline_uuid"} : "";
+        $pipeline_rev_uuid = isset($obj[23]->{"pipeline_rev_uuid"}) ? $obj[23]->{"pipeline_rev_uuid"} : "";
         if (empty($pipeline_uuid)) {
             $db->getUUIDAPI($data,"pipeline", $new_pipe_id);
         } else if (empty($pipeline_rev_uuid)){
