@@ -1,3 +1,9 @@
+15.01.2019 Version 0.2.65
+Import module fixed to support publish_web_dir field.
+Symlink creation command is removed from php scripts.
+Deleted run,project_pipeline,project_pipeline_input,run and project will be flagged in database.
+fullscreen and download pdf functions added for rMarkdown editor.
+
 14.01.2019 Version 0.2.64
 Module of rMarkdown editor added to run page.
 

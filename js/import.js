@@ -511,6 +511,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
         sendJSON.pipeline_group_id = "" //modify later
         sendJSON.process_list = importJSON.process_list //modify later
         sendJSON.pipeline_list = importJSON.pipeline_list //modify later
+        sendJSON.publish_web_dir = importJSON.publish_web_dir 
         sendJSON.name = importJSON.name
         sendJSON.script_pipe_footer = importJSON.script_pipe_footer
         sendJSON.script_pipe_header = importJSON.script_pipe_header
@@ -960,7 +961,7 @@ function encodeElement(type, importJSON, fileID) {
         importJSON.pipeline_list = encodeProPipeList(importJSON.pipeline_list, fileID, "pipeline")
         importJSON.process_list = encodeProPipeList(importJSON.process_list, fileID, "process")
         var savedList = [];
-        var itemOrder = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publish", "script_pipe_header", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
+        var itemOrder = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publish", "script_pipe_header", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir","pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
         for (var i = 0; i < itemOrder.length; i++) {
             var key = itemOrder[i];
             var tObj = {};

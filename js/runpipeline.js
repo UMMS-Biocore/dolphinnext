@@ -5370,7 +5370,6 @@ $(document).ready(function () {
                     dir = filePath.substring(0, filePath.indexOf(filename));
                 }
                 var fileid = $(this).attr("fileid");
-                console.log(fileid)
                 if (visType == "table") {
                     var contentDiv = '<div style="margin:15px;"><table style="table-layout:fixed;" class="table table-striped table-bordered" cellspacing="0"  id="' + fileid + '"></table></div>';
                     $(href).append(contentDiv)
@@ -5433,10 +5432,9 @@ $(document).ready(function () {
                 heightIconBar: "35px"
             }, options);
             var elems = $(this);
+            elems.css("width", "100%")
+            elems.css("height", "100%")
             var elemsID = $(this).attr("id");
-            console.log(elems)
-            console.log(elemsID)
-
             var getEditorIconDiv = function () {
                 return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">
                             <li role="presentation"><a class="rmarkeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>
@@ -5447,6 +5445,7 @@ $(document).ready(function () {
                             </span>
                             </a></li>
                             <li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>
+                            <li role="presentation"><a class="rmarkeditorfull" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
                             <li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>
                         </ul>`
             }
@@ -5455,7 +5454,7 @@ $(document).ready(function () {
                             <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                                 <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
                                 <ul class="dropdown-menu dropdown-menu-right">
-                                    <li><a href="#">Download PDF</a></li>
+                                    <li><a class="rmarkeditordownpdf" href="#">Download PDF</a></li>
                                 </ul>
                             </li>
                         </ul>`
@@ -5568,9 +5567,6 @@ $(document).ready(function () {
                     //ask new name  
                     $("#rMarkRename").attr("filename", obj.filename)
                     $("#rMarkRename").modal("show");
-                    //if (saveData) {
-                    //click on the saved file: it will trigger the update.
-                    //} 
                 } else {
                     var saveData = saveCommand(editorId, obj.filename)
                     if (saveData) {
@@ -5579,9 +5575,49 @@ $(document).ready(function () {
                 }
             }
 
+            var toogleFullSize = function (editorId, type) {
+                if (type == "expand") {
+                    var featList = ["z-index", "height", "position", "top", "left", "background"]
+                    var newValue = ["1049", "100%", "fixed", "0", "0", "white"]
+                    var oldCSS = {};
+                    var newCSS = {};
+                    for (var i = 0; i < featList.length; i++) {
+                        oldCSS[featList[i]] = elems.css(featList[i])
+                        newCSS[featList[i]] = newValue[i]
+                    }
+                    elems.data("oldCSS", oldCSS);
+                    $("#" + elemsID + '-editor').css("height", $(window).height() - settings.heightIconBar.substring(0, settings.heightIconBar.length - 2))
+                    $("#" + elemsID + '-report').css("height", $(window).height() - settings.heightIconBar.substring(0, settings.heightIconBar.length - 2))
+                    window[elemsID + '-editor'].resize();
+                } else {
+                    var newCSS = elems.data("oldCSS");
+                    $("#" + elemsID + '-editor').css("height", settings.height)
+                    $("#" + elemsID + '-report').css("height", settings.height)
+                    window[elemsID + '-editor'].resize();
+                }
+                //apply css obj
+                $.each(newCSS, function (el) {
+                    elems.css(el, newCSS[el])
+                });
+            }
+
+            var downpdf = function (editorId) {
+                var text = window[editorId].getValue();
+                var outputPdf = getData(text, settings, "rmdpdf");
+                if (outputPdf) {
+                    var a = document.createElement('A');
+                    a.href = outputPdf;
+                    var filename = elems.attr("filename")
+                    a.download = filename.substr(0,filename.lastIndexOf('.'))+".pdf";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            }
+
             var update = function (editorId) {
                 var text = window[editorId].getValue();
-                var outputHtml = getData(text, settings);
+                var outputHtml = getData(text, settings, "rmdtext");
                 var reportId = elemsID + "-report";
                 $("#" + reportId + "> iframe").attr("src", outputHtml)
             }
@@ -5602,6 +5638,14 @@ $(document).ready(function () {
                             update(editorId);
                         }
                     });
+                    $('a.rmarkeditordownpdf').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            event.preventDefault();
+                            downpdf(editorId);
+                        }
+                    });
+
+
                 });
                 $(function () {
                     $(document).on('change', 'input.aUpdateCh', function (event) {
@@ -5628,6 +5672,18 @@ $(document).ready(function () {
                     $('a.rmarkeditorsett').on('click', function (event) {
                         $("#rMarkSett").modal("show");
                     });
+                    $('a.rmarkeditorfull').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            var iconClass = $(this).children().attr("class");
+                            if (iconClass == "fa fa-expand") {
+                                $(this).children().attr("class", "fa fa-compress")
+                                toogleFullSize(editorId, "expand");
+                            } else {
+                                $(this).children().attr("class", "fa fa-expand")
+                                toogleFullSize(editorId, "compress");
+                            }
+                        }
+                    });
                 });
                 $(function () {
                     $('#rMarkRename').on('show.bs.modal', function (event) {
@@ -5652,7 +5708,7 @@ $(document).ready(function () {
                                 var allfiles = elems.closest("div.panel-body").find("a[filepath]")
                                 for (var i = 0; i < allfiles.length; i++) {
                                     var menuFile2 = $(allfiles[i]).attr("filepath")
-                                    if (menuFile2 == newFilepath){
+                                    if (menuFile2 == newFilepath) {
                                         $(allfiles[i]).trigger("click");
                                     }
                                 }
@@ -5671,7 +5727,6 @@ $(document).ready(function () {
                 var fi = "";
                 for (var i = 0; i < lines.length; i++) {
                     if (lines[i].match(/(.*)\{\{(.*)\}\}(.*)/)) {
-                        elems.attr("read_only", "true")
                         var reg = lines[i].match(/(.*)\{\{(.*)\}\}(.*)/);
                         var before = reg[1];
                         var patt = reg[2];
@@ -5696,12 +5751,12 @@ $(document).ready(function () {
                 return fi
             }
 
-            var getData = function (editText, settings) {
+            var getData = function (editText, settings, type) {
                 var editTextSend = JSON.stringify(editText)
                 var ret = null
                 $.ajax({
                     type: "POST",
-                    url: settings.ajax.localbasepath + "/ocpu/library/markdownapp/R/rmdtext",
+                    url: settings.ajax.localbasepath + "/ocpu/library/markdownapp/R/" + type,
                     data: { 'text': editTextSend },
                     async: false,
                     cache: false,
@@ -5711,25 +5766,27 @@ $(document).ready(function () {
                         } else {
                             var lines = results.split("\n");
                             for (var i = 0; i < lines.length; i++) {
-                                if (lines[i].match(/output.html/)) {
-                                    var outputHtml = settings.ajax.localbasepath + lines[i];
-                                    ret = outputHtml
+                                if (type == "rmdtext" && lines[i].match(/output.html/)) {
+                                    ret = settings.ajax.localbasepath + lines[i];
+                                    break
+                                } else if (type == "rmdpdf" && lines[i].match(/output.pdf/)) {
+                                    ret = settings.ajax.localbasepath + lines[i];
                                     break
                                 }
                             }
                         }
-
                     },
-                    error: function (errorThrown) {
-                        console.log("##Error:");
-                        console.log(errorThrown);
+                    error: function (jqXHR, exception) {
+                        console.log("#Error:")
+                        console.log(jqXHR.status)
+                        console.log(exception)
                     }
                 });
                 if (!ret) ret = "";
                 return ret
             }
             settings.ajax.text = replacePattern(settings.ajax.text);
-            var outputHtml = getData(settings.ajax.text, settings);
+            var outputHtml = getData(settings.ajax.text, settings, "rmdtext");
             elems.append(getDiv(settings, outputHtml));
             createEditor(settings)
             createModal()
@@ -5783,7 +5840,6 @@ $(document).ready(function () {
                     $(data).each(function (i) {
                         var id = data[i].id
                         var dataObj = data[i];
-                        console.log(dataObj)
                         var existWrapBody = $("#" + elemsID + '-' + id);
                         if (existWrapBody) {
                             var existBodyDiv = existWrapBody.children().children()
@@ -5939,7 +5995,6 @@ $(document).ready(function () {
                     cache: false,
                     success: function (results) {
                         res = results
-                        console.log(res)
                     },
                     error: function (errorThrown) {
                         console.log("##Error: ");
