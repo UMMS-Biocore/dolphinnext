@@ -1435,7 +1435,7 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     public function removeProject($id) {
-        $sql = "UPDATE project SET deleted = 1, last_modified_user='$ownerID', date_modified = now() WHERE id = '$id'";
+        $sql = "UPDATE project SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
     public function removeGroup($id) {
@@ -1447,11 +1447,11 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     public function removeProjectPipeline($id) {
-        $sql = "UPDATE project_pipeline SET deleted = 1, last_modified_user='$ownerID', date_modified = now() WHERE id = '$id'";
+        $sql = "UPDATE project_pipeline SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
 	public function removeRun($id) {
-        $sql = "UPDATE run SET deleted = 1, last_modified_user='$ownerID', date_modified = now() WHERE project_pipeline_id = '$id'";
+        $sql = "UPDATE run SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id'";
         return self::runSQL($sql);
     }
     public function removeInput($id) {
@@ -1459,11 +1459,11 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     public function removeProjectPipelineInput($id) {
-        $sql = "UPDATE project_pipeline_input SET deleted = 1, last_modified_user='$ownerID', date_modified = now() WHERE id = '$id'";
+        $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
     public function removeProjectPipelineInputByPipe($id) {
-        $sql = "UPDATE project_pipeline_input SET deleted = 1, last_modified_user='$ownerID', date_modified = now() WHERE project_pipeline_id = '$id'";
+        $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id'";
         return self::runSQL($sql);
     }
     public function removeProjectInput($id) {
@@ -1471,7 +1471,7 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     public function removeProjectPipelinebyProjectID($id) {
-        $sql = "UPDATE project_pipeline SET deleted = 1, last_modified_user='$ownerID', date_modified = now() WHERE project_id = '$id'";
+        $sql = "UPDATE project_pipeline SET deleted = 1, date_modified = now() WHERE project_id = '$id'";
         return self::runSQL($sql);
     }
 	public function removeRunByProjectID($id) {
@@ -1481,7 +1481,7 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     public function removeProjectPipelineInputbyProjectID($id) {
-        $sql = "UPDATE project_pipeline_input SET deleted = 1, last_modified_user='$ownerID', date_modified = now() WHERE project_id = '$id'";
+        $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE project_id = '$id'";
         return self::runSQL($sql);
     }
     public function removeProjectInputbyProjectID($id) {
