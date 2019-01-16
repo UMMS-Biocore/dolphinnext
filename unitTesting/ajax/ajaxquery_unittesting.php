@@ -1695,7 +1695,24 @@ class ajaxQueryTest extends TestCase
 //#############################	
 	
 	
-	/**
+//	/**
+//     * @depends testrenameProjectPipelineInputByGnum
+//     */
+//    public function testremoveProjectPipelineInput() {
+//		ob_start();
+//		$_REQUEST['p'] = 'removeProjectPipelineInput';
+//		$_REQUEST['id'] = "1";
+//		include('ajaxquery.php');
+//		$_REQUEST['p'] = 'getProjectPipelineInputs';
+//		$_REQUEST['project_pipeline_id'] = '1';
+//		$_REQUEST['id'] = '';
+//		include('ajaxquery.php');
+//		$this->assertEquals($data,'[]');
+//		ob_end_clean();
+//	}
+	
+    
+    /**
      * @depends testrenameProjectPipelineInputByGnum
      */
     public function testremoveProjectPipelineInput() {
@@ -1707,10 +1724,9 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['project_pipeline_id'] = '1';
 		$_REQUEST['id'] = '';
 		include('ajaxquery.php');
-		$this->assertEquals($data,'[]');
+		$this->assertEquals(json_decode($data)[0]->deleted, '1');
 		ob_end_clean();
 	}
-	
-	
+    
 }
 ?>

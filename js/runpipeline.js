@@ -5454,7 +5454,7 @@ $(document).ready(function () {
                             <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                                 <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
                                 <ul class="dropdown-menu dropdown-menu-right">
-                                    <li><a href="#">Download PDF</a></li>
+                                    <li><a class="rmarkeditordownpdf" href="#">Download PDF</a></li>
                                 </ul>
                             </li>
                         </ul>`
@@ -5586,14 +5586,14 @@ $(document).ready(function () {
                         newCSS[featList[i]] = newValue[i]
                     }
                     elems.data("oldCSS", oldCSS);
-                    $("#"+elemsID+ '-editor').css("height", $(window).height()- settings.heightIconBar.substring(0, settings.heightIconBar.length - 2))
-                    $("#"+elemsID+ '-report').css("height", $(window).height()- settings.heightIconBar.substring(0, settings.heightIconBar.length - 2))
-                    window[elemsID+'-editor'].resize();
+                    $("#" + elemsID + '-editor').css("height", $(window).height() - settings.heightIconBar.substring(0, settings.heightIconBar.length - 2))
+                    $("#" + elemsID + '-report').css("height", $(window).height() - settings.heightIconBar.substring(0, settings.heightIconBar.length - 2))
+                    window[elemsID + '-editor'].resize();
                 } else {
                     var newCSS = elems.data("oldCSS");
-                    $("#"+elemsID+ '-editor').css("height", settings.height)
-                    $("#"+elemsID+ '-report').css("height", settings.height)
-                    window[elemsID+'-editor'].resize();
+                    $("#" + elemsID + '-editor').css("height", settings.height)
+                    $("#" + elemsID + '-report').css("height", settings.height)
+                    window[elemsID + '-editor'].resize();
                 }
                 //apply css obj
                 $.each(newCSS, function (el) {
@@ -5601,9 +5601,23 @@ $(document).ready(function () {
                 });
             }
 
+            var downpdf = function (editorId) {
+                var text = window[editorId].getValue();
+                var outputPdf = getData(text, settings, "rmdpdf");
+                if (outputPdf) {
+                    var a = document.createElement('A');
+                    a.href = outputPdf;
+                    var filename = elems.attr("filename")
+                    a.download = filename.substr(0,filename.lastIndexOf('.'))+".pdf";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            }
+
             var update = function (editorId) {
                 var text = window[editorId].getValue();
-                var outputHtml = getData(text, settings);
+                var outputHtml = getData(text, settings, "rmdtext");
                 var reportId = elemsID + "-report";
                 $("#" + reportId + "> iframe").attr("src", outputHtml)
             }
@@ -5624,6 +5638,14 @@ $(document).ready(function () {
                             update(editorId);
                         }
                     });
+                    $('a.rmarkeditordownpdf').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            event.preventDefault();
+                            downpdf(editorId);
+                        }
+                    });
+
+
                 });
                 $(function () {
                     $(document).on('change', 'input.aUpdateCh', function (event) {
@@ -5729,12 +5751,12 @@ $(document).ready(function () {
                 return fi
             }
 
-            var getData = function (editText, settings) {
+            var getData = function (editText, settings, type) {
                 var editTextSend = JSON.stringify(editText)
                 var ret = null
                 $.ajax({
                     type: "POST",
-                    url: settings.ajax.localbasepath + "/ocpu/library/markdownapp/R/rmdtext",
+                    url: settings.ajax.localbasepath + "/ocpu/library/markdownapp/R/" + type,
                     data: { 'text': editTextSend },
                     async: false,
                     cache: false,
@@ -5744,25 +5766,27 @@ $(document).ready(function () {
                         } else {
                             var lines = results.split("\n");
                             for (var i = 0; i < lines.length; i++) {
-                                if (lines[i].match(/output.html/)) {
-                                    var outputHtml = settings.ajax.localbasepath + lines[i];
-                                    ret = outputHtml
+                                if (type == "rmdtext" && lines[i].match(/output.html/)) {
+                                    ret = settings.ajax.localbasepath + lines[i];
+                                    break
+                                } else if (type == "rmdpdf" && lines[i].match(/output.pdf/)) {
+                                    ret = settings.ajax.localbasepath + lines[i];
                                     break
                                 }
                             }
                         }
-
                     },
-                    error: function (errorThrown) {
-                        console.log("##Error:");
-                        console.log(errorThrown);
+                    error: function (jqXHR, exception) {
+                        console.log("#Error:")
+                        console.log(jqXHR.status)
+                        console.log(exception)
                     }
                 });
                 if (!ret) ret = "";
                 return ret
             }
             settings.ajax.text = replacePattern(settings.ajax.text);
-            var outputHtml = getData(settings.ajax.text, settings);
+            var outputHtml = getData(settings.ajax.text, settings, "rmdtext");
             elems.append(getDiv(settings, outputHtml));
             createEditor(settings)
             createModal()
