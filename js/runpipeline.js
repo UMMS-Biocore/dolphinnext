@@ -391,7 +391,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pObj) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -481,6 +481,9 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
     }
     if (dropDown) {
         $("#text-" + pObj.gNum).attr('dropDown', dropDown)
+    }
+    if (pubWeb) {
+        $("#text-" + pObj.gNum).attr('pubWeb', pubWeb)
     }
 }
 
@@ -2731,12 +2734,16 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var process_id = id
     var defVal = null;
     var dropDown = null;
+    var pubWeb = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
             defVal = processModules.defVal;
         }
         if (processModules.dropDown) {
             dropDown = processModules.dropDown;
+        }
+        if (processModules.pubWeb) {
+            pubWeb = processModules.pubWeb;
         }
     }
 
@@ -2772,7 +2779,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             }
         }
 
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
@@ -2807,7 +2814,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
@@ -3800,7 +3807,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 function runProPipeCall(checkType, uuid) {
     saveRun();
     nxf_runmode = true;
-    var nextTextRaw = createNextflowFile("run");
+    var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
     var nextText = encodeURIComponent(nextTextRaw);
     var delIntermediate = '';
@@ -5500,7 +5507,16 @@ $(document).ready(function () {
                                         <label class="col-sm-5 control-label">Auto updating output</label>
                                         <div class="col-sm-7">
                                             <label class="switch">
-                                                <input class="aUpdateCh" type="checkbox">
+                                                <input class="aUpdateOut" type="checkbox">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-5 control-label">Autosave</label>
+                                        <div class="col-sm-7">
+                                            <label class="switch">
+                                                <input class="aSave" type="checkbox">
                                                 <span class="slider round"></span>
                                             </label>
                                         </div>
@@ -5569,7 +5585,7 @@ $(document).ready(function () {
                     $("#rMarkRename").modal("show");
                 } else {
                     var saveData = saveCommand(editorId, obj.filename)
-                    if (saveData) {
+                    if (saveData && type !== "autosave") {
                         update(editorId);
                     }
                 }
@@ -5601,17 +5617,44 @@ $(document).ready(function () {
                 });
             }
 
+            function download_file(fileURL, fileName) {
+                // for non-IE
+                if (!window.ActiveXObject) {
+                    var save = document.createElement('a');
+                    save.href = fileURL;
+                    save.target = '_blank';
+                    var filename = fileURL.substring(fileURL.lastIndexOf('/') + 1);
+                    save.download = fileName || filename;
+                    if (navigator.userAgent.toLowerCase().match(/(ipad|iphone|safari)/) && navigator.userAgent.search("Chrome") < 0) {
+                        document.location = save.href;
+                        // window event not working here
+                    } else {
+                        var evt = new MouseEvent('click', {
+                            'view': window,
+                            'bubbles': true,
+                            'cancelable': false
+                        });
+                        save.dispatchEvent(evt);
+                        (window.URL || window.webkitURL).revokeObjectURL(save.href);
+                    }
+                }
+                // for IE < 11
+                else if (!!window.ActiveXObject && document.execCommand) {
+                    var _window = window.open(fileURL, '_blank');
+                    _window.document.close();
+                    _window.document.execCommand('SaveAs', true, fileName || fileURL)
+                    _window.close();
+                }
+            }
+
             var downpdf = function (editorId) {
                 var text = window[editorId].getValue();
-                var outputPdf = getData(text, settings, "rmdpdf");
-                if (outputPdf) {
+                var fileURL = getData(text, settings, "rmdpdf");
+                if (fileURL) {
                     var a = document.createElement('A');
-                    a.href = outputPdf;
                     var filename = elems.attr("filename")
-                    a.download = filename.substr(0,filename.lastIndexOf('.'))+".pdf";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    filename = filename.substr(0, filename.lastIndexOf('.')) + ".pdf";
+                    download_file(fileURL, filename);
                 }
             }
 
@@ -5626,6 +5669,29 @@ $(document).ready(function () {
                 if (timeoutId) clearTimeout(timeoutId);
                 timeoutId = setTimeout(function () { update(editorId) }, 2000);
             }
+
+            var checkAutoUpdateOut = function (editorId) {
+                if ($('input.aUpdateOut').is(":checked")) {
+                    $('#' + editorId).keyup(function () {
+                        autoUpdate(editorId);
+                    });
+                } else {
+                    $('#' + editorId).off("keyup");
+                }
+            }
+            var checkAutoSave = function (editorId) {
+                if ($('input.aSave').is(":checked")) {
+                    window['interval_aSave_' + editorId] = setInterval(function () {
+                        saveRmd(editorId, "autosave");
+                        console.log("saved")
+                    }, 20000);
+                } else {
+                    if (window['interval_aSave_' + editorId]) {
+                        clearInterval(window['interval_aSave_' + editorId])
+                    }
+                }
+            }
+
             var eventHandler = function (settings) {
                 var editorId = elemsID + "-editor";
 
@@ -5648,14 +5714,14 @@ $(document).ready(function () {
 
                 });
                 $(function () {
-                    $(document).on('change', 'input.aUpdateCh', function (event) {
-                        if ($(this).is(":checked")) {
-                            $('#' + editorId).keyup(function () {
-                                autoUpdate(editorId);
-                            });
-                        } else {
-                            $('#' + editorId).off();
-                        }
+                    //check current status on first creation
+                    checkAutoUpdateOut(editorId)
+                    $(document).on('change', 'input.aUpdateOut', function (event) {
+                        checkAutoUpdateOut(editorId)
+                    });
+                    checkAutoSave(editorId)
+                    $(document).on('change', 'input.aSave', function (event) {
+                        checkAutoSave(editorId)
                     });
                 });
                 $(function () {
@@ -5719,36 +5785,6 @@ $(document).ready(function () {
                         }
                     });
                 });
-
-
-            }
-            var replacePattern = function (tx) {
-                var lines = tx.split("\n");
-                var fi = "";
-                for (var i = 0; i < lines.length; i++) {
-                    if (lines[i].match(/(.*)\{\{(.*)\}\}(.*)/)) {
-                        var reg = lines[i].match(/(.*)\{\{(.*)\}\}(.*)/);
-                        var before = reg[1];
-                        var patt = reg[2];
-                        var after = reg[3];
-                        var relaxedjson = "{" + patt + "}";
-                        var correctJson = relaxedjson.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-                        var json = JSON.parse(correctJson)
-                        var res = ""
-                        if (json) {
-                            if (json.webpath) {
-                                var pubWebPath = $("#basepathinfo").attr("pubweb");
-                                var run_log_uuid = $("#runVerReport").val();
-                                var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + json.webpath;
-                                res = '"' + link + '"';
-                            }
-                        }
-                        fi += before + res + after + "\n";
-                    } else {
-                        fi += lines[i] + "\n";
-                    }
-                }
-                return fi
             }
 
             var getData = function (editText, settings, type) {
@@ -5785,7 +5821,6 @@ $(document).ready(function () {
                 if (!ret) ret = "";
                 return ret
             }
-            settings.ajax.text = replacePattern(settings.ajax.text);
             var outputHtml = getData(settings.ajax.text, settings, "rmdtext");
             elems.append(getDiv(settings, outputHtml));
             createEditor(settings)

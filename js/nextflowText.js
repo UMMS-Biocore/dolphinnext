@@ -15,6 +15,40 @@ function findFinalSubNode(node) {
     }
 }
 
+var fillJsonPattern = function (tx, run_log_uuid) {
+    var lines = tx.split("\n");
+    var fi = "";
+    for (var i = 0; i < lines.length; i++) {
+        if (lines[i].match(/(.*)\{\{(.*)\}\}(.*)/)) {
+            var reg = lines[i].match(/(.*)\{\{(.*)\}\}(.*)/);
+            var before = reg[1];
+            var patt = reg[2];
+            var after = reg[3];
+            var relaxedjson = "{" + patt + "}";
+            var correctJson = relaxedjson.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+            var json = JSON.parse(correctJson)
+            var res = ""
+            if (json) {
+                if (json.webpath) {
+                    var pubWebPath = $("#basepathinfo").attr("pubweb");
+                    if (!pubWebPath){
+                        pubWebPath = "";
+                    }
+                    if (!run_log_uuid){
+                        run_log_uuid = $("#runVerReport").val();
+                    }
+                    var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + json.webpath;
+                    res = '"' + link + '"';
+                }
+            }
+            fi += before + res + after + "\n";
+        } else {
+            fi += lines[i] + "\n";
+        }
+    }
+    return fi
+}
+
 function splitEdges(edge) {
     //p2_7o-48-2-47-12_p2_7i-51-0-47-8 separate into p2_7o-48-2-47-12 and p2_7i-51-0-47-8 by ungreedy regex
     var patt = /(.*)-(.*)-(.*)-(.*)-(.*?)_(.*)-(.*)-(.*)-(.*)-(.*)/
@@ -332,7 +366,8 @@ function recursiveSort(sortedProcessList, initGnumList) {
 }
 
 
-function createNextflowFile(nxf_runmode) {
+function createNextflowFile(nxf_runmode, uuid) {
+    var run_uuid = uuid || false; //default false
     nextText = "";
     createPiGnumList();
     if (nxf_runmode === "run") {
@@ -384,6 +419,10 @@ function createNextflowFile(nxf_runmode) {
     var allEdgesList = getMergedEdges("all");
     //replace process nodes with ccID's for pipeline modules
     var allEdges = checkCopyId(allEdgesList);
+    var mainPipeEdgesList = edges.slice();
+    //replace process nodes with ccID's for pipeline modules
+    var mainPipeEdges = checkCopyId(mainPipeEdgesList);
+    
     //initial input data added
     for (var i = 0; i < sortedProcessList.length; i++) {
         className = document.getElementById(sortedProcessList[i]).getAttribute("class");
@@ -412,7 +451,7 @@ function createNextflowFile(nxf_runmode) {
             var script_header = "";
             var script_footer = "";
 
-            [body, script_header, script_footer] = IOandScriptForNf(mainProcessId, sortedProcessList[k], allEdges);
+            [body, script_header, script_footer] = IOandScriptForNf(mainProcessId, sortedProcessList[k], allEdges, nxf_runmode, run_uuid, mainPipeEdges);
             // add process options after the process script_header to overwite them
             if (nxf_runmode === "run" && process_opt) {
                 //check if parameter comment  //* and process_opt[gNum] are exist:
@@ -421,7 +460,7 @@ function createNextflowFile(nxf_runmode) {
                 }
             }
             var mergedProcessList = getMergedProcessList();
-            proText = script_header + "\nprocess " + mergedProcessList[sortedProcessList[k]].replace(/ /g, '_') + " {\n\n" + publishDir(mainProcessId, sortedProcessList[k]) + body + "\n}\n" + script_footer + "\n"
+            proText = script_header + "\nprocess " + mergedProcessList[sortedProcessList[k]].replace(/ /g, '_') + " {\n\n" + publishDir(mainProcessId, sortedProcessList[k], mainPipeEdges) + body + "\n}\n" + script_footer + "\n"
             nextText += proText;
         }
     };
@@ -456,12 +495,13 @@ function getChannelNameAll(channelName, Iid, allEdges) {
     }
     return channelNameAll
 }
-function getChannelSetInto(channelNameAll){
+
+function getChannelSetInto(channelNameAll) {
     var text = "";
-    if (channelNameAll.match(/;/)){
-        text = ".into{"+channelNameAll+"}";
+    if (channelNameAll.match(/;/)) {
+        text = ".into{" + channelNameAll + "}";
     } else {
-        text = ".set{"+channelNameAll+"}";
+        text = ".set{" + channelNameAll + "}";
     }
     return text
 }
@@ -484,8 +524,8 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
             inputParamName = document.getElementById(userEntryId).getAttribute('name')
             for (var e = 0; e < edges.length; e++) {
                 if (edges[e].indexOf(Iid) !== -1) { //if not exist: -1
-                    var secPartTemp="";
-                    var firstPartTemp="";
+                    var secPartTemp = "";
+                    var firstPartTemp = "";
                     var fNode = "";
                     var sNode = "";
                     [fNode, sNode] = splitEdges(edges[e]);
@@ -523,13 +563,13 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                             for (var e = 0; e < chanList.length; e++) {
                                 secPartTemp += chanList[e] + " = " + "file(params." + inputParamName + ") \n";
                             }
-                            
+
                         } else if (checkRegex === true) {
-                            secPartTemp = "Channel.fromPath(params." + inputParamName + ")"+channelSetInto + "\n";
+                            secPartTemp = "Channel.fromPath(params." + inputParamName + ")" + channelSetInto + "\n";
                         }
                         //if mate defined in process use fromFilePairs
                     } else if (qual === "set" && inputParMate > 0) {
-                        secPartTemp = "Channel\n\t.fromFilePairs( params." + inputParamName + " , size: (params.mate != \"pair\") ? 1 : 2 )\n\t.ifEmpty { error \"Cannot find any " + genParName + " matching: ${params." + inputParamName + "}\" }\n\t"+ channelSetInto +"\n\n";
+                        secPartTemp = "Channel\n\t.fromFilePairs( params." + inputParamName + " , size: (params.mate != \"pair\") ? 1 : 2 )\n\t.ifEmpty { error \"Cannot find any " + genParName + " matching: ${params." + inputParamName + "}\" }\n\t" + channelSetInto + "\n\n";
                     }
                     //if mate not defined in process use fromPath
                     else if (qual === "set" && inputParMate === 0) {
@@ -587,13 +627,10 @@ function getPublishDirRegex(outputName) {
     return outputName;
 }
 
-function publishDir(id, currgid) {
+function publishDir(id, currgid, mainPipeEdges) {
     oText = ""
     var closePar = false
     oList = d3.select("#" + currgid).selectAll("circle[kind ='output']")[0]
-    var mainPipeEdgesList = edges.slice();
-    //replace process nodes with ccID's for pipeline modules
-    var mainPipeEdges = checkCopyId(mainPipeEdgesList);
     for (var i = 0; i < oList.length; i++) {
         oId = oList[i].id
         for (var e = 0; e < mainPipeEdges.length; e++) {
@@ -623,6 +660,7 @@ function publishDir(id, currgid) {
                     } else {
                         outputName = document.getElementById(oId).getAttribute("name")
                         outputName = "/" + getPublishDirRegex(outputName) + "/";
+
                     }
                     oText = "publishDir params.outdir, mode: 'copy',\n\tsaveAs: {filename ->\n"
                     tempText = "\tif \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
@@ -734,7 +772,7 @@ function addChannelName(whenCond, whenLib, file_type, channelName, param_name, q
     return whenLib
 }
 
-function IOandScriptForNf(id, currgid, allEdges) {
+function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipeEdges) {
     var processData = getValues({ p: "getProcessData", "process_id": id });
     script = decodeHtml(processData[0].script);
     var whenCond = getWhenCond(script);
@@ -763,6 +801,32 @@ function IOandScriptForNf(id, currgid, allEdges) {
     bodyOutput = ""
     IList = d3.select("#" + currgid).selectAll("circle[kind ='input']")[0]
     OList = d3.select("#" + currgid).selectAll("circle[kind ='output']")[0]
+
+    if (nxf_runmode == "run") {
+        // find rMarkdown Output and replace path in script
+        for (var h = 0; h < OList.length; h++) {
+            var mainPipeOut = mainPipeEdges.filter(function (el) { return el.indexOf(OList[h].id) > -1 })
+            if (mainPipeOut.length > 0) {
+                var mainPipeOutNodeId = mainPipeOut[0];
+                var fNo = "";
+                var sNo = "";
+            [fNo, sNo] = splitEdges(mainPipeOutNodeId);
+                if (fNo.split("-")[1] === "outPro") {
+                    var parId = fNo.split("-")[4]
+                    var userEntryId = "text-" + fNo.split("-")[4]
+                    var outParUserEntry = document.getElementById(userEntryId).getAttribute('pubWeb');
+                    if (outParUserEntry) {
+                        if (outParUserEntry == "rmarkdown") {
+                            script = fillJsonPattern(script, run_uuid);
+                            break
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
     for (var i = 0; i < IList.length; i++) {
         if (bodyInput == "") {
             bodyInput = "input:\n"
