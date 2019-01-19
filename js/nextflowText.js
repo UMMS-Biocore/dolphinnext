@@ -31,10 +31,10 @@ var fillJsonPattern = function (tx, run_log_uuid) {
             if (json) {
                 if (json.webpath) {
                     var pubWebPath = $("#basepathinfo").attr("pubweb");
-                    if (!pubWebPath){
+                    if (!pubWebPath) {
                         pubWebPath = "";
                     }
-                    if (!run_log_uuid){
+                    if (!run_log_uuid) {
                         run_log_uuid = $("#runVerReport").val();
                     }
                     var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + json.webpath;
@@ -422,7 +422,7 @@ function createNextflowFile(nxf_runmode, uuid) {
     var mainPipeEdgesList = edges.slice();
     //replace process nodes with ccID's for pipeline modules
     var mainPipeEdges = checkCopyId(mainPipeEdgesList);
-    
+
     //initial input data added
     for (var i = 0; i < sortedProcessList.length; i++) {
         className = document.getElementById(sortedProcessList[i]).getAttribute("class");
@@ -534,6 +534,10 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                         return el.id == inputIdSplit[3]
                     })[0].name;
                     var gTxt = document.getElementById(fNode).getAttribute("parentG"); //g-0 
+                    var connectedNodeName = $(document.getElementById(sNode)).attr("name");
+                    if (!connectedNodeName) {
+                        connectedNodeName = "";
+                    }
                     var gNumIn = gTxt.replace(/(.*)-(.*)/, '$2'); //6
                     channelName = gFormat(gTxt) + "_" + genParName; //g_0_genome
                     var channelNameAll = channelNameAll = getChannelNameAll(channelName, Iid, allEdges);
@@ -552,9 +556,7 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                     if (qual === "set") {
                         var sNodeProId = inputIdSplit[1];
                         var inputParAll = getValues({ p: "getInputsPP", "process_id": sNodeProId });
-                        var inputParMate = inputParAll.filter(function (el) {
-                            return el.sname == "mate"
-                        }).length
+                        var inputParMate = inputParAll.filter(function (el) { return el.sname == "mate" }).length
                     }
                     firstPartTemp = 'if (!params.' + inputParamName + '){params.' + inputParamName + ' = ""} \n'
                     if (qual === "file") {
@@ -573,7 +575,11 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                     }
                     //if mate not defined in process use fromPath
                     else if (qual === "set" && inputParMate === 0) {
-                        secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ").toSortedList() \n"
+                        if (connectedNodeName.match(/.*val\(.*\).*file\(.*\).*/)) {
+                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ").map{ file -> tuple(file.baseName, file) } \n"
+                        } else {
+                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ").toSortedList() \n"
+                        }
                     } else if (qual === "val") {
                         secPartTemp = "Channel.value(params." + inputParamName + ")" + channelSetInto + "\n"
                     }

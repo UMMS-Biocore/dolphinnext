@@ -876,8 +876,18 @@ else if ($p=="saveProcess"){
         }
     }
 }
+else if ($p=="callRmarkdown"){
+    $url = $_REQUEST['url'];
+    $uuid = $_REQUEST['uuid'];
+    $dir = $_REQUEST['dir'];
+    $type = $_REQUEST['type'];
+    $filename = $_REQUEST['filename'];
+    $text = urldecode($_REQUEST['text']);
+    $data = json_encode("rmarkdown request done");
+    $db->callRmarkdown($data, $type, $url, $uuid, $text, $dir, $filename);
+}
 else if ($p=="saveProject"){
-    $name = $_REQUEST['name'];
+    $name = urldecode($_REQUEST['name']);
     $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
     if (!empty($id)) {
         $data = $db->updateProject($id, $name, $summary, $ownerID);
