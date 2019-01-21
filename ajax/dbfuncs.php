@@ -2490,6 +2490,29 @@ class dbfuncs {
         if (!headers_sent()) {
             ob_start();
             // send $data to user
+            $targetDir = "{$this->run_path}/$uuid/pubweb/$dir/.tmp";
+            $errorCheck = false;
+            $errorText = "";
+            if (!file_exists($targetDir)) {
+                mkdir($targetDir, 0777, true);
+            }
+            $format = "";
+            if ($type == "rmdtext"){
+                $format = "html";
+            } else if ($type == "rmdpdf"){
+                $format = "pdf";
+            }
+            $response = "{$targetDir}/{$filename}_curl";
+            $file = "{$targetDir}/{$filename}.{$format}";
+            $err = "{$targetDir}/{$filename}.{$format}.err";
+            if (file_exists($file)) {
+                unlink($file);
+            }
+            if (file_exists($err)) {
+                unlink($err);
+            }
+            exec("curl '$url' -H \"Content-Type: application/json\" -d '{\"text\":$text}' -o $response > /dev/null 2>&1 &", $res, $exit);
+            
             if (!headers_sent()) {
                 header('Cache-Control: no-cache, must-revalidate');
                 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -2508,27 +2531,6 @@ class dbfuncs {
             flush();
         }
         //server side keeps working
-        $targetDir = "{$this->run_path}/$uuid/pubweb/$dir/.tmp";
-        $errorCheck = false;
-        if (!file_exists($targetDir)) {
-            mkdir($targetDir, 0777, true);
-        }
-        $format = "";
-        if ($type == "rmdtext"){
-            $format = "html";
-        } else if ($type == "rmdpdf"){
-            $format = "pdf";
-        }
-        $response = "{$targetDir}/{$filename}_curl";
-        $file = "{$targetDir}/{$filename}.{$format}";
-        $err = "{$targetDir}/{$filename}.{$format}.err";
-        if (file_exists($file)) {
-            unlink($file);
-        }
-        if (file_exists($err)) {
-            unlink($err);
-        }
-        exec("curl '$url' -H \"Content-Type: application/json\" -d '{\"text\":$text}' -o $response > /dev/null 2>&1 &", $res, $exit);
         
         for( $i= 0 ; $i < 20 ; $i++ ){
             sleep(1);
@@ -2544,20 +2546,23 @@ class dbfuncs {
             }
             
         }
-
+        $ret = "";
         if (!empty($resText)){
             $lines = explode("\n", $resText);
             foreach ($lines as $lin):
-            error_log($lin);
                 if ($type == "rmdtext" && preg_match("/.*output.html/", $lin, $matches)){
                     $ret = LOCAL_BASE_PATH.$lin;
                     break;
                 } else if ($type == "rmdpdf" && preg_match("/.*output.pdf/", $lin, $matches)){
                     $ret = LOCAL_BASE_PATH.$lin;
                     break;
-                }
+                } 
             endforeach;
-            error_log($ret);
+            
+            if (empty($ret)){
+                $errorCheck =true;
+                $errorText = $resText;
+            }
             
             if (!empty($ret)){
                 exec("curl '$ret' -o \"{$file}\" > /dev/null 2>&1 &", $res, $exit);
@@ -2569,6 +2574,7 @@ class dbfuncs {
         }
         if ($errorCheck == true){
             $fp = fopen($err, 'w');
+            fwrite($fp, $errorText);
             fclose($fp);
         }
 	}
