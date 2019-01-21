@@ -5395,11 +5395,17 @@ $(document).ready(function () {
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
                     var localbasepath = $("#basepathinfo").attr("localbasepath")
+                    var pubWebPath = $("#basepathinfo").attr("pubweb");
                     console.time("rMarkEditor");
                     $("#" + fileid).rMarkEditor({
                         ajax: {
+                            url: "ajax/ajaxquery.php",
                             localbasepath: localbasepath,
-                            text: data
+                            text: data,
+                            uuid: uuid,
+                            dir: dir,
+                            filename: filename,
+                            pubWebPath: pubWebPath
                         },
                         editorWidth: "60%",
                         reportWidth: "40%",
@@ -5457,7 +5463,7 @@ $(document).ready(function () {
                         </ul>`
             }
             var getReportIconDiv = function () {
-                return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">
+                return `<ul style="float:inherit"  class="nav nav-pills rmarkeditor">
                             <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                                 <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
                                 <ul class="dropdown-menu dropdown-menu-right">
@@ -5533,10 +5539,17 @@ $(document).ready(function () {
 
             var getDiv = function (settings, outputHtml) {
                 var id = "rMarkEditor"
+                if (!outputHtml || outputHtml == null) {
+                    outputHtml = ""
+                } else {
+                    outputHtml = 'src="' + outputHtml + '"';
+                }
+                var log = '<div id="' + elemsID + '-log" style="position: absolute; padding-left:10px; padding-top:5px; height:' + settings.heightIconBar + '; width:20%;"></div>';
+                var progressBar = '<div id="' + elemsID + '-reportProgress" style="position: absolute; background-color:#ECF0F5; height:' + settings.heightIconBar + '; width:0;"></div>';
                 var editoriconBar = '<div id="' + elemsID + '-editoricons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.editorWidth + ';">' + getEditorIconDiv() + '</div>';
-                var reporticonBar = '<div id="' + elemsID + '-reporticons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.reportWidth + ';">' + getReportIconDiv() + '</div>';
+                var reporticonBar = '<div id="' + elemsID + '-reporticons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.reportWidth + ';">' + progressBar + log + getReportIconDiv() + '</div>';
                 var editorDiv = '<div id="' + elemsID + '-editor" style="clear:both; float:left; height:' + settings.height + '; width:' + settings.editorWidth + ';"></div>';
-                var reportDiv = '<div id="' + elemsID + '-report" style="float:left; height:' + settings.height + '; width:' + settings.reportWidth + ';"><iframe style="width:100%; height:100%" src="' + outputHtml + '"></iframe></div>';
+                var reportDiv = '<div id="' + elemsID + '-report" style="float:left; height:' + settings.height + '; width:' + settings.reportWidth + ';"><iframe style="width:100%; height:100%"' + outputHtml + '></iframe></div>';
                 return reporticonBar + editoriconBar + editorDiv + reportDiv
             }
             var createEditor = function (settings) {
@@ -5556,6 +5569,42 @@ $(document).ready(function () {
                     $('body').append(renameModal);
                 }
             }
+
+            var progress = function (value) {
+                var width; //percent
+                var rate = 1;
+                var n = 0;
+                var bar = $("#" + elemsID + '-reportProgress');
+                var maxWidthPx = bar.parent().width();
+
+                if (value) {
+                    width = value;
+                    if (width == 100){
+                        setTimeout(function () { bar.width(0) }, 300);
+                    }
+                    frame()
+                } else {
+                    width = Math.ceil(bar.width() / maxWidthPx * 100); //current percent
+                }
+                if (!window[elemsID + '_progress']) {
+                    window[elemsID + '_progress'] = setInterval(frame, 10);
+                }
+
+                function frame() {
+                    if (width >= 100) {
+                        clearInterval(window[elemsID + '_progress']);
+                        window[elemsID + '_progress'] = null;
+                        bar.width(bar.parent().width() + "px")
+                    } else {
+                        n += rate;
+                        width = Math.sqrt(n) / Math.sqrt(100) * 20; //logaritmic percent
+                        var widthPx = Math.ceil(width * bar.parent().width() / 100);
+                        bar.width(widthPx + "px")
+                    }
+                }
+            }
+            
+ 
 
             var getFileName = function () {
                 var res = { filename: "", rest: "" };
@@ -5585,8 +5634,8 @@ $(document).ready(function () {
                     $("#rMarkRename").modal("show");
                 } else {
                     var saveData = saveCommand(editorId, obj.filename)
-                    if (saveData && type !== "autosave") {
-                        update(editorId);
+                    if (saveData) {
+                        updateLogText("All changes saved.", "clean")
                     }
                 }
             }
@@ -5615,6 +5664,24 @@ $(document).ready(function () {
                 $.each(newCSS, function (el) {
                     elems.css(el, newCSS[el])
                 });
+            }
+            var callback = function (path, type) {
+                progress(100)
+                if (type == "rmdtext") {
+                    var reportId = elemsID + "-report";
+                    var iframe = $("#" + reportId + "> iframe")
+                    if (iframe && iframe.attr("src")) {
+                        iframe.attr('src', "");
+                        setTimeout(function () { iframe.attr("src", path) }, 100);
+                    } else {
+                        iframe.attr("src", path)
+                    }
+                } else if (type == "rmdpdf") {
+                    var a = document.createElement('A');
+                    var filename = elems.attr("filename")
+                    filename = filename.substr(0, filename.lastIndexOf('.')) + ".pdf";
+                    download_file(path, filename);
+                }
             }
 
             function download_file(fileURL, fileName) {
@@ -5649,20 +5716,12 @@ $(document).ready(function () {
 
             var downpdf = function (editorId) {
                 var text = window[editorId].getValue();
-                var fileURL = getData(text, settings, "rmdpdf");
-                if (fileURL) {
-                    var a = document.createElement('A');
-                    var filename = elems.attr("filename")
-                    filename = filename.substr(0, filename.lastIndexOf('.')) + ".pdf";
-                    download_file(fileURL, filename);
-                }
+                callData(text, settings, "rmdpdf", callback);
             }
 
             var update = function (editorId) {
                 var text = window[editorId].getValue();
-                var outputHtml = getData(text, settings, "rmdtext");
-                var reportId = elemsID + "-report";
-                $("#" + reportId + "> iframe").attr("src", outputHtml)
+                callData(text, settings, "rmdtext", callback);
             }
             var timeoutId = 0;
             var autoUpdate = function (editorId) {
@@ -5683,7 +5742,7 @@ $(document).ready(function () {
                 if ($('input.aSave').is(":checked")) {
                     window['interval_aSave_' + editorId] = setInterval(function () {
                         saveRmd(editorId, "autosave");
-                        console.log("saved")
+
                     }, 20000);
                 } else {
                     if (window['interval_aSave_' + editorId]) {
@@ -5787,30 +5846,109 @@ $(document).ready(function () {
                 });
             }
 
-            var getData = function (editText, settings, type) {
-                var editTextSend = JSON.stringify(editText)
+            var checkUrl = function (url) {
+                var request;
+                if (window.XMLHttpRequest)
+                    request = new XMLHttpRequest();
+                else
+                    request = new ActiveXObject("Microsoft.XMLHTTP");
+                request.open('GET', url, false);
+                request.send();
+                if (request.status === 404) {
+                    return false
+                } else {
+                    return true;
+                }
+            }
+
+            var updateLogText = function (text, type) {
+                $("#" + elemsID + '-log').text(text);
+                if (type == "clean") {
+                    setTimeout(function () {
+                        if ($("#" + elemsID + '-log').text() == text) {
+                            $("#" + elemsID + '-log').text("");
+                        }
+                    }, 2000);
+                }
+            }
+
+            var getUrl = function (settings, type, callback) {
+                if (window[elemsID + type]) {
+                    return; // Don't allow click if already running.
+                }
+                var format = ""
+                if (type == "rmdtext") {
+                    format = ".html"
+                } else if (type == "rmdpdf") {
+                    format = ".pdf"
+                }
+                var path = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.tmp/" + settings.ajax.filename + format
+                window[elemsID + type] = setInterval(function () {
+                    var checkExistUrl = checkUrl(path)
+                    if (!checkExistUrl) {
+                        var checkExistError = checkUrl(path + ".err")
+                        if (checkExistError) {
+                            updateLogText("Error occurred.", "clean")
+                            progress(100)
+                            if (window[elemsID + type]) {
+                                clearInterval(window[elemsID + type]);
+                                window[elemsID + type] = null;
+                            }
+                        }
+                        return ""
+                    } else {
+                        updateLogText("Done.", "clean")
+                        progress(100)
+                        if (window[elemsID + type]) {
+                            clearInterval(window[elemsID + type]);
+                            window[elemsID + type] = null;
+                            return callback(path, type)
+                        }
+                    }
+                }, 2000);
+
+            }
+            var initialUrlCheck = function (settings, type) {
+                var format = ""
+                if (type == "rmdtext") {
+                    format = ".html"
+                } else if (type == "rmdpdf") {
+                    format = ".pdf"
+                }
+                var path = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.tmp/" + settings.ajax.filename + format
+                var checkExistUrl = checkUrl(path)
+                if (checkExistUrl) {
+                    progress(100)
+                    callback(path, type)
+                }
+                return checkExistUrl
+            }
+
+            var callData = function (editText, settings, type, callback) {
+                if (window[elemsID + type]) {
+                    return; // Don't allow click if already running.
+                }
+                progress()
+                updateLogText("Preparing..", "")
+                var editTextSend = encodeURIComponent(JSON.stringify(editText))
                 var ret = null
                 $.ajax({
                     type: "POST",
-                    url: settings.ajax.localbasepath + "/ocpu/library/markdownapp/R/" + type,
-                    data: { 'text': editTextSend },
+                    url: settings.ajax.url,
+                    data: {
+                        "p": "callRmarkdown",
+                        "text": editTextSend,
+                        "type": type,
+                        "url": settings.ajax.localbasepath + "/ocpu/library/markdownapp/R/" + type,
+                        "uuid": settings.ajax.uuid,
+                        "dir": settings.ajax.dir,
+                        "filename": settings.ajax.filename
+                    },
                     async: false,
                     cache: false,
                     success: function (results) {
-                        if (results === undefined || results == "") {
-                            ret = "";
-                        } else {
-                            var lines = results.split("\n");
-                            for (var i = 0; i < lines.length; i++) {
-                                if (type == "rmdtext" && lines[i].match(/output.html/)) {
-                                    ret = settings.ajax.localbasepath + lines[i];
-                                    break
-                                } else if (type == "rmdpdf" && lines[i].match(/output.pdf/)) {
-                                    ret = settings.ajax.localbasepath + lines[i];
-                                    break
-                                }
-                            }
-                        }
+                        ret = results;
+                        getUrl(settings, type, callback)
                     },
                     error: function (jqXHR, exception) {
                         console.log("#Error:")
@@ -5820,9 +5958,13 @@ $(document).ready(function () {
                 });
                 if (!ret) ret = "";
                 return ret
+
             }
-            var outputHtml = getData(settings.ajax.text, settings, "rmdtext");
-            elems.append(getDiv(settings, outputHtml));
+            elems.append(getDiv(settings, ""));
+            var initialFileCheck = initialUrlCheck(settings, "rmdtext")
+            if (!initialFileCheck) {
+                callData(settings.ajax.text, settings, "rmdtext", callback);
+            }
             createEditor(settings)
             createModal()
             eventHandler(settings);

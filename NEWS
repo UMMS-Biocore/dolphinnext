@@ -1,3 +1,7 @@
+19.01.2019 Version 0.2.67
+Nextflowtext script updated to support processes that starts with val(), file() syntax.
+Rmarkdown module upgraded to prevent page blocking and shows loading bar while processing.
+
 17.01.2019 Version 0.2.66
 Path filler feature removed from rmarkdown module and inserted into nextflowtext.js.
 Rmarkdown module upgraded to support download pdf and autosave function.
