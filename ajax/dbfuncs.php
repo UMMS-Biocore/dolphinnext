@@ -2532,7 +2532,7 @@ class dbfuncs {
         }
         //server side keeps working
         
-        for( $i= 0 ; $i < 20 ; $i++ ){
+        for( $i= 0 ; $i < 100 ; $i++ ){
             sleep(1);
             $resText = $this->readFile($response);
             if (!empty($resText)){
@@ -2575,6 +2575,7 @@ class dbfuncs {
             }
         } else {
             $errorCheck =true;
+            $errorText = "Timeout error";
         }
         if ($errorCheck == true){
             $fp = fopen($err, 'w');

@@ -1,3 +1,7 @@
+22.01.2019 Version 0.2.70
+Import module error is fixed.
+Rmarkdown module upgraded to give timeout error.
+
 21.01.2019 Version 0.2.69
 Pipeline removal error is fixed by added flag for deleted pipelines.
 saveAllPipeline db function cleaned from indexes.
