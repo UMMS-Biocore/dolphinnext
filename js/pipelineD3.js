@@ -937,6 +937,19 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .text('\uf013')
         .style("opacity", 0.2)
         .on("mousedown", getInfoPipe)
+    pObjOrigin.g.append("text")
+        .attr("id", "link" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr('font-family', "FontAwesome, sans-serif")
+        .attr('font-size', '1em')
+        .attr('type', 'Show Module')
+        .attr("x", -6)
+        .attr("y", -1 * (rP + ior / 2 - 40))
+        .text('\uf08e')
+        .style("opacity", 0.2)
+        .on("mousedown", urlDirect)
+        .on("mouseover", mOverTooltip)
+        .on("mousemove", mMoveTooltip)
+        .on("mouseout", mOutTooltip)
 
 
     //get process list of pipeline
@@ -1117,6 +1130,7 @@ function mouseOverG() {
         if (!binding) {
             d3.select("#del-" + this.id.split("-")[1]).style("opacity", 1)
             d3.select("#info-" + this.id.split("-")[1]).style("opacity", 1)
+            d3.select("#link-" + this.id.split("-")[1]).style("opacity", 1)
         }
     }
 }
@@ -1125,6 +1139,7 @@ function mouseOutG() {
     d3.select("#container").on("mousedown", cancel)
     d3.select("#del-" + this.id.split("-")[1]).style("opacity", 0.2)
     d3.select("#info-" + this.id.split("-")[1]).style("opacity", 0.2)
+    d3.select("#link-" + this.id.split("-")[1]).style("opacity", 0.2)
 
 }
 
@@ -1308,6 +1323,33 @@ var tooltip = d3.select("body")
     .style("visibility", "hidden")
     .text("Something")
     .style("color", "black");
+
+//basic tooltip for icons
+basicTooltip = d3.select("body")
+    .append("div").attr("class", "tooltip-svg")
+    .style("border-radius", "4px")
+    .style("padding", "3px")
+    .style("max-width", "400px")
+    .style("max-height", "100px")
+    .style("font-size", "11px")
+    .style("z-index", "10")
+    .style("visibility", "hidden")
+    .text("Something")
+
+function mOverTooltip() {
+    var type = $(this).attr("type");
+    basicTooltip.html(type)
+    basicTooltip.style("visibility", "visible");
+}
+
+function mMoveTooltip() {
+    basicTooltip.style("top", (event.pageY + 10) + "px").style("left", (event.pageX - 33) + "px");
+}
+
+function mOutTooltip() {
+    basicTooltip.style("visibility", "hidden");
+}
+
 
 
 function IOmouseOver() {
@@ -1875,6 +1917,17 @@ function getInfoPipe() {
     $('#selectPipelineModal').modal("show");
 }
 
+function urlDirect() {
+    var className = $(this).parent().attr("class");
+    if (className.match(/-p/)) {
+        var pipeId = className.split("-p")[1];
+        if (pipeId) {
+            var w = window.open();
+            w.location = 'index.php?np=1&id=' + pipeId;
+        }
+    }
+}
+
 function removeElement(delID) {
     if (delID !== undefined) {
         deleteID = delID;
@@ -2082,7 +2135,7 @@ function createSaveNodes() {
             pipelineListDb.push(pipeID);
         } else if (!prosessID.match(/(.*)Pro/)) {
             processListDb.push(prosessID);
-        } else if (!prosessID.match(/^inPro$/) && processModule.pubWeb){
+        } else if (!prosessID.match(/^inPro$/) && processModule.pubWeb) {
             pubWebDirListDb.push(processName);
         }
     }
@@ -2163,7 +2216,7 @@ function save() {
         "process_list": processListDb.toString()
 	      }, {
         "pipeline_list": pipelineListDb.toString()
-	      },{
+	      }, {
         "publish_web_dir": pubWebDirListDb.toString()
 	      }];
     if (createPipeRev === "true") {
@@ -2307,6 +2360,7 @@ function modifyPipelineParentSideBar(name, groupID, type) {
         $('#pipeGr-' + groupID).parent().find('span').html(name);
     }
 }
+
 function modifyProcessParentSideBar(name, groupID, type) {
     if (type == "insert") {
         $('#autocompletes1').append('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span class="processParent" origin="' + name + '">' + truncateName(name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="side-' + groupID + '" class="treeview-menu"></ul></li>');

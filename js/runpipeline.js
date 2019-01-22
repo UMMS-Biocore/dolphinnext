@@ -5499,6 +5499,23 @@ $(document).ready(function () {
                     </div>
                 </div>`;
 
+            var infoModal = `
+                <div id="rMarkInfo" class="modal fade" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title">Info</h4>
+                            </div>
+                            <div class="modal-body">
+                                <p id="rMarkInfoText"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
             var settingsModal = ` 
                 <div id="rMarkSett" class="modal fade" tabindex="-1" role="dialog">
                     <div class="modal-dialog" role="document">
@@ -5545,7 +5562,7 @@ $(document).ready(function () {
                     outputHtml = 'src="' + outputHtml + '"';
                 }
                 var log = '<div id="' + elemsID + '-log" style="position: absolute; padding-left:10px; padding-top:5px; height:' + settings.heightIconBar + '; width:20%;"></div>';
-                var progressBar = '<div id="' + elemsID + '-reportProgress" style="position: absolute; background-color:#ECF0F5; height:' + settings.heightIconBar + '; width:0;"></div>';
+                var progressBar = '<div id="' + elemsID + '-reportProgress" style="position: absolute; background-color:lightgrey; height:' + settings.heightIconBar + '; width:0;"></div>';
                 var editoriconBar = '<div id="' + elemsID + '-editoricons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.editorWidth + ';">' + getEditorIconDiv() + '</div>';
                 var reporticonBar = '<div id="' + elemsID + '-reporticons" style="float:right; height:' + settings.heightIconBar + '; width:' + settings.reportWidth + ';">' + progressBar + log + getReportIconDiv() + '</div>';
                 var editorDiv = '<div id="' + elemsID + '-editor" style="clear:both; float:left; height:' + settings.height + '; width:' + settings.editorWidth + ';"></div>';
@@ -5568,18 +5585,20 @@ $(document).ready(function () {
                 if (document.getElementById("rMarkRename") === null) {
                     $('body').append(renameModal);
                 }
+                if (document.getElementById("rMarkInfo") === null) {
+                    $('body').append(infoModal);
+                }
             }
 
             var progress = function (value) {
                 var width; //percent
-                var rate = 1;
+                var rate = 5;
                 var n = 0;
                 var bar = $("#" + elemsID + '-reportProgress');
                 var maxWidthPx = bar.parent().width();
-
                 if (value) {
                     width = value;
-                    if (width == 100){
+                    if (width == 100) {
                         setTimeout(function () { bar.width(0) }, 300);
                     }
                     frame()
@@ -5587,7 +5606,7 @@ $(document).ready(function () {
                     width = Math.ceil(bar.width() / maxWidthPx * 100); //current percent
                 }
                 if (!window[elemsID + '_progress']) {
-                    window[elemsID + '_progress'] = setInterval(frame, 10);
+                    window[elemsID + '_progress'] = setInterval(frame, 50);
                 }
 
                 function frame() {
@@ -5596,15 +5615,21 @@ $(document).ready(function () {
                         window[elemsID + '_progress'] = null;
                         bar.width(bar.parent().width() + "px")
                     } else {
-                        n += rate;
+                        if (width < 70) {
+                            n += rate;
+                        } else if (width >= 70 && width < 90) {
+                            n += rate / 4;
+                        } else {
+                            n += rate / 30;
+                        }
                         width = Math.sqrt(n) / Math.sqrt(100) * 20; //logaritmic percent
                         var widthPx = Math.ceil(width * bar.parent().width() / 100);
                         bar.width(widthPx + "px")
                     }
                 }
             }
-            
- 
+
+
 
             var getFileName = function () {
                 var res = { filename: "", rest: "" };
@@ -5872,6 +5897,10 @@ $(document).ready(function () {
                 }
             }
 
+            var getUrlContent = function (url) {
+                return $.get(url);
+            }
+
             var getUrl = function (settings, type, callback) {
                 if (window[elemsID + type]) {
                     return; // Don't allow click if already running.
@@ -5888,7 +5917,16 @@ $(document).ready(function () {
                     if (!checkExistUrl) {
                         var checkExistError = checkUrl(path + ".err")
                         if (checkExistError) {
-                            updateLogText("Error occurred.", "clean")
+                            getUrlContent(path + ".err").success(function (data) {
+                                if (data) {
+                                    if (!$('#myModal').hasClass('in')) {
+                                        $("#rMarkInfoText").text(data)
+                                        $("#rMarkInfo").modal("show");
+                                    }
+                                }
+
+                            });
+                            updateLogText("Error occurred.", )
                             progress(100)
                             if (window[elemsID + type]) {
                                 clearInterval(window[elemsID + type]);
@@ -6234,7 +6272,7 @@ $(document).ready(function () {
                         columnsBody: [{
                             //file list
                             data: null,
-                            colPercent: "25",
+                            colPercent: "15",
                             overflow: "scroll",
                             fnCreatedCell: function (nTd, oData) {
                                 var run_log_uuid = $("#runVerReport").val();
@@ -6270,7 +6308,7 @@ $(document).ready(function () {
         }, {
                             //file content
                             data: null,
-                            colPercent: "75",
+                            colPercent: "85",
                             fnCreatedCell: function (nTd, oData) {
                                 var fileList = oData.fileList;
                                 if ($(nTd).is(':empty')) {

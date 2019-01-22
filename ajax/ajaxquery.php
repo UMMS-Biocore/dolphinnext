@@ -884,7 +884,7 @@ else if ($p=="callRmarkdown"){
     $filename = $_REQUEST['filename'];
     $text = urldecode($_REQUEST['text']);
     $data = json_encode("rmarkdown request done");
-    $db->callRmarkdown($data, $type, $url, $uuid, $text, $dir, $filename);
+    $data = $db->callRmarkdown($data, $type, $url, $uuid, $text, $dir, $filename);
 }
 else if ($p=="saveProject"){
     $name = urldecode($_REQUEST['name']);
