@@ -60,9 +60,7 @@ class dbfuncs {
         {
             if (isset($row['sname'])){
             $row['sname'] = htmlspecialchars_decode($row['sname'], ENT_QUOTES);
-            } else if (isset($row['process_parameter_name'])){
-            $row['process_parameter_name'] = htmlspecialchars_decode($row['process_parameter_name'], ENT_QUOTES);
-            }
+            } 
             $data[]=$row;
         }
 
@@ -990,7 +988,7 @@ class dbfuncs {
                 LEFT JOIN user_group ug ON p.group_id=ug.g_id
                 $where
                 GROUP BY p.pipeline_gid
-                ) b ON pip.rev_id = b.rev_id AND pip.pipeline_gid=b.pipeline_gid";
+                ) b ON pip.rev_id = b.rev_id AND pip.deleted = 0 AND pip.pipeline_gid=b.pipeline_gid";
 
         } else {
           $sql= "SELECT DISTINCT pip.id, pip.name, pip.perms, pip.group_id, pip.pin
@@ -1000,7 +998,7 @@ class dbfuncs {
                 FROM biocorepipe_save p
                 WHERE p.perms = 63
                 GROUP BY p.pipeline_gid
-                ) b ON pip.rev_id = b.rev_id AND pip.pipeline_gid=b.pipeline_gid AND pip.pin = 'true' ";
+                ) b ON pip.rev_id = b.rev_id AND pip.pipeline_gid=b.pipeline_gid AND pip.pin = 'true' AND pip.deleted = 0";
         }
         return self::queryTable($sql);
     }
@@ -1055,7 +1053,7 @@ class dbfuncs {
                 SELECT pr.pipeline_gid, MAX(pr.rev_id) rev_id
                 FROM biocorepipe_save pr
                 GROUP BY pr.pipeline_gid
-                ) b ON p.rev_id = b.rev_id AND p.pipeline_gid=b.pipeline_gid  ";
+                ) b ON p.rev_id = b.rev_id AND p.pipeline_gid=b.pipeline_gid AND p.deleted = 0 ";
             return self::queryTable($sql);
             }
             $where_pg = "(pg.owner_id='$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15))";
@@ -1074,7 +1072,7 @@ class dbfuncs {
                 FROM biocorepipe_save pr
                 LEFT JOIN user_group ug ON pr.group_id=ug.g_id where $where_pr
                 GROUP BY pr.pipeline_gid
-                ) b ON p.rev_id = b.rev_id AND p.pipeline_gid=b.pipeline_gid";
+                ) b ON p.rev_id = b.rev_id AND p.pipeline_gid=b.pipeline_gid AND p.deleted = 0";
 
       return self::queryTable($sql);
     }
@@ -1368,7 +1366,7 @@ class dbfuncs {
     }
     
 	public function updateAllPipelineGroupByGid($pipeline_gid, $pipeline_group_id,$ownerID) {
-        $sql = "UPDATE biocorepipe_save SET pipeline_group_id='$pipeline_group_id', last_modified_user ='$ownerID', date_modified=now() WHERE pipeline_gid = '$pipeline_gid' AND owner_id = '$ownerID'";
+        $sql = "UPDATE biocorepipe_save SET pipeline_group_id='$pipeline_group_id', last_modified_user ='$ownerID', date_modified=now() WHERE deleted = 0 AND pipeline_gid = '$pipeline_gid' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
 
@@ -1888,9 +1886,9 @@ class dbfuncs {
     public function getProjectPipelines($id,$project_id,$ownerID,$userRole) {
 		if ($id != ""){
             if ($userRole == "admin"){
-                $where = " where pp.id = '$id' AND pp.deleted = 0";  
+                $where = " where pp.id = '$id' AND pip.deleted = 0 AND pp.deleted = 0";  
             } else {
-                $where = " where pp.id = '$id' AND pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
+                $where = " where pp.id = '$id' AND pip.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
             }
 			
             $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, IF(pp.owner_id='$ownerID',1,0) as own
@@ -1908,7 +1906,7 @@ class dbfuncs {
                     INNER JOIN biocorepipe_save pip ON pip.id = pp.pipeline_id
                     INNER JOIN users u ON pp.owner_id = u.id
                     LEFT JOIN user_group ug ON pp.group_id=ug.g_id
-                    WHERE pp.deleted = 0 AND pp.project_id = '$project_id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
+                    WHERE pp.deleted = 0 AND pip.deleted = 0 AND pp.project_id = '$project_id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
             //for run status page
             } else {
                 if ($userRole == "admin"){
@@ -2078,7 +2076,7 @@ class dbfuncs {
     public function getEditDelPipelineGroups($ownerID) {
         $sql = "SELECT DISTINCT id, group_name
         FROM pipeline_group pg
-        Where pg.owner_id = '$ownerID' AND id not in (select pipeline_group_id from biocorepipe_save Where owner_id != '$ownerID')";
+        Where pg.owner_id = '$ownerID' AND id not in (SELECT pipeline_group_id FROM biocorepipe_save WHERE owner_id != '$ownerID' AND deleted = 0)";
         return self::queryTable($sql);
     }
 	
@@ -2090,7 +2088,7 @@ class dbfuncs {
                 FROM biocorepipe_save
                 WHERE pin = 'true' AND perms = 63
                 GROUP BY pipeline_gid
-                ) b ON pip.rev_id = b.rev_id AND pip.pipeline_gid=b.pipeline_gid ";
+                ) b ON pip.rev_id = b.rev_id AND pip.pipeline_gid=b.pipeline_gid AND pip.deleted = 0";
      return self::queryTable($sql);
    }
 	public function getProcessData($ownerID) {
@@ -2129,7 +2127,7 @@ class dbfuncs {
                 SELECT pr.{$type}_gid, MAX(pr.rev_id) rev_id
                 FROM $table pr
                 GROUP BY pr.{$type}_gid
-                ) b ON p.rev_id = b.rev_id AND p.{$type}_gid=b.{$type}_gid AND p.{$type}_uuid = '$id'";
+                ) b ON p.rev_id = b.rev_id AND p.{$type}_gid=b.{$type}_gid AND p.deleted = 0 AND p.{$type}_uuid = '$id'";
             return self::queryTable($sql);
             }
             $where_pg = "(pg.owner_id='$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15))";
@@ -2145,7 +2143,7 @@ class dbfuncs {
                 FROM $table pr
                 LEFT JOIN user_group ug ON pr.group_id=ug.g_id where $where_pr
                 GROUP BY pr.{$type}_gid
-                ) b ON p.rev_id = b.rev_id AND p.{$type}_gid=b.{$type}_gid";
+                ) b ON p.rev_id = b.rev_id AND p.{$type}_gid=b.{$type}_gid AND p.deleted = 0";
 
       return self::queryTable($sql);
     }
@@ -2166,7 +2164,7 @@ class dbfuncs {
 					FROM $table p 
 					INNER JOIN users u ON p.owner_id = u.id
                     INNER JOIN {$type}_group pg ON p.{$type}_group_id = pg.id
-					where p.{$type}_rev_uuid = '$rev_uuid' AND p.{$type}_uuid = '$uuid' ";
+					where p.deleted = 0 AND p.{$type}_rev_uuid = '$rev_uuid' AND p.{$type}_uuid = '$uuid' ";
                     return self::queryTable($sql);
                 }
             }
@@ -2176,7 +2174,7 @@ class dbfuncs {
         LEFT JOIN user_group ug ON p.group_id=ug.g_id
 		INNER JOIN users u ON p.owner_id = u.id
         INNER JOIN {$type}_group pg ON p.{$type}_group_id = pg.id
-        where p.{$type}_rev_uuid = '$rev_uuid' AND p.{$type}_uuid = '$uuid' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
+        where p.{$type}_rev_uuid = '$rev_uuid' AND p.{$type}_uuid = '$uuid' AND p.deleted = 0 AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
 		return self::queryTable($sql);
 	}
     
@@ -2231,7 +2229,7 @@ class dbfuncs {
                 if (isset(json_decode($userRoleCheck)[0])){
                     $userRole = json_decode($userRoleCheck)[0]->{'role'};
                     if ($userRole == "admin"){
-                        $sql = "SELECT DISTINCT pip.id, pip.rev_id, pip.rev_comment, pip.last_modified_user, pip.date_created, pip.date_modified, IF(pip.owner_id='$ownerID',1,0) as own, pip.perms FROM biocorepipe_save pip WHERE pip.pipeline_gid = '$pipeline_gid'";
+                        $sql = "SELECT DISTINCT pip.id, pip.rev_id, pip.rev_comment, pip.last_modified_user, pip.date_created, pip.date_modified, IF(pip.owner_id='$ownerID',1,0) as own, pip.perms FROM biocorepipe_save pip WHERE pip.deleted = 0 AND pip.pipeline_gid = '$pipeline_gid'";
                         return self::queryTable($sql);
                     }
                 }
@@ -2239,7 +2237,7 @@ class dbfuncs {
 		$sql = "SELECT DISTINCT pip.id, pip.rev_id, pip.rev_comment, pip.last_modified_user, pip.date_created, pip.date_modified, IF(pip.owner_id='$ownerID',1,0) as own, pip.perms
         FROM biocorepipe_save pip
         LEFT JOIN user_group ug ON pip.group_id=ug.g_id
-        WHERE pip.pipeline_gid = '$pipeline_gid' AND (pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15))";
+        WHERE pip.deleted = 0 AND pip.pipeline_gid = '$pipeline_gid' AND (pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15))";
 		return self::queryTable($sql);
 	}
 
@@ -2251,7 +2249,7 @@ class dbfuncs {
 		return self::queryTable($sql);
 	}
 	public function checkPipeline($process_id, $ownerID) {
-		$sql = "SELECT id, name FROM biocorepipe_save WHERE (owner_id = '$ownerID') AND nodes LIKE '%\"$process_id\",\"%'";
+		$sql = "SELECT id, name FROM biocorepipe_save WHERE deleted = 0 AND owner_id = '$ownerID' AND nodes LIKE '%\"$process_id\",\"%'";
 		return self::queryTable($sql);
 	}
     public function checkInput($name,$type) {
@@ -2267,18 +2265,18 @@ class dbfuncs {
 		return self::queryTable($sql);
     }
     public function checkPipelinePublic($process_id, $ownerID) {
-		$sql = "SELECT id, name FROM biocorepipe_save WHERE (owner_id != '$ownerID') AND nodes LIKE '%\"$process_id\",\"%'";
+		$sql = "SELECT id, name FROM biocorepipe_save WHERE deleted = 0 AND owner_id != '$ownerID' AND nodes LIKE '%\"$process_id\",\"%'";
 		return self::queryTable($sql);
 	}
 	public function checkProjectPipelinePublic($process_id, $ownerID) {
 		$sql = "SELECT DISTINCT p.id, p.name 
 				FROM biocorepipe_save p
 			    INNER JOIN project_pipeline pp ON p.id = pp.pipeline_id
-				WHERE pp.deleted = 0 AND (pp.owner_id != '$ownerID') AND p.nodes LIKE '%\"$process_id\",\"%'";
+				WHERE p.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id != '$ownerID') AND p.nodes LIKE '%\"$process_id\",\"%'";
 		return self::queryTable($sql);
 	}
     public function checkPipelinePerm($process_id) {
-		$sql = "SELECT id, name FROM biocorepipe_save WHERE perms>3 AND nodes LIKE '%\"$process_id\",\"%'";
+		$sql = "SELECT id, name FROM biocorepipe_save WHERE deleted = 0 AND perms>3 AND nodes LIKE '%\"$process_id\",\"%'";
 		return self::queryTable($sql);
 	}
     public function checkProjectPipePerm($pipeline_id) {
@@ -2303,7 +2301,7 @@ class dbfuncs {
 		$sql = "SELECT DISTINCT pg.id, p.name
         FROM biocorepipe_save p
         INNER JOIN pipeline_group pg ON p.pipeline_group_id = pg.id
-        WHERE pg.id = '$id'";
+        WHERE p.deleted = 0 AND pg.id = '$id'";
 		return self::queryTable($sql);
 	}
     public function checkProject($pipeline_id, $ownerID) {
@@ -2325,7 +2323,7 @@ class dbfuncs {
 		return self::queryTable($sql);
 	}
     public function getMaxPipeline_gid() {
-		$sql = "SELECT MAX(pipeline_gid) pipeline_gid FROM biocorepipe_save";
+		$sql = "SELECT MAX(pipeline_gid) pipeline_gid FROM biocorepipe_save WHERE deleted = 0";
 		return self::queryTable($sql);
 	}
     public function getProcess_gid($process_id) {
@@ -2341,7 +2339,7 @@ class dbfuncs {
 		return self::queryTable($sql);
 	}
     public function getPipeline_uuid($pipeline_id) {
-		$sql = "SELECT pipeline_uuid FROM biocorepipe_save WHERE id = '$pipeline_id'";
+		$sql = "SELECT pipeline_uuid FROM biocorepipe_save WHERE deleted = 0 AND id = '$pipeline_id'";
 		return self::queryTable($sql);
 	}
     public function getMaxRev_id($process_gid) {
@@ -2349,7 +2347,7 @@ class dbfuncs {
 		return self::queryTable($sql);
 	}
     public function getMaxPipRev_id($pipeline_gid) {
-		$sql = "SELECT MAX(rev_id) rev_id FROM biocorepipe_save WHERE pipeline_gid = '$pipeline_gid'";
+		$sql = "SELECT MAX(rev_id) rev_id FROM biocorepipe_save WHERE deleted = 0 AND pipeline_gid = '$pipeline_gid'";
 		return self::queryTable($sql);
 	}
     public function getOutputsPP($id) {
@@ -2382,13 +2380,13 @@ class dbfuncs {
     public function updatePipelineGroupPerm($id, $group_id, $perms, $ownerID) {
         $sql = "UPDATE biocorepipe_save pi
         INNER JOIN project_pipeline_input ppi ON pi.id=ppi.pipeline_id
-        SET pi.group_id='$group_id', pi.perms='$perms', pi.date_modified=now(), pi.last_modified_user ='$ownerID'  WHERE ppi.deleted=0 AND ppi.project_pipeline_id = '$id' AND pi.perms <= '$perms'";
+        SET pi.group_id='$group_id', pi.perms='$perms', pi.date_modified=now(), pi.last_modified_user ='$ownerID'  WHERE pi.deleted=0 AND ppi.deleted=0 AND ppi.project_pipeline_id = '$id' AND pi.perms <= '$perms'";
         return self::runSQL($sql);
     }
     
     public function updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID) {
         $sql = "UPDATE biocorepipe_save pi
-        SET pi.group_id='$group_id', pi.perms='$perms', pi.date_modified=now(), pi.last_modified_user ='$ownerID'  WHERE pi.id = '$id' AND pi.perms <= '$perms'";
+        SET pi.group_id='$group_id', pi.perms='$perms', pi.date_modified=now(), pi.last_modified_user ='$ownerID'  WHERE pi.deleted=0 AND pi.id = '$id' AND pi.perms <= '$perms'";
         return self::runSQL($sql);
     }
     
@@ -2396,7 +2394,7 @@ class dbfuncs {
         $sql = "SELECT pip.nodes
         FROM biocorepipe_save pip
         INNER JOIN project_pipeline_input pi ON pip.id=pi.pipeline_id
-        WHERE pi.deleted=0 AND pi.project_pipeline_id = '$id' and pi.owner_id='$ownerID'";
+        WHERE pi.deleted=0 AND pip.deleted=0 AND pi.project_pipeline_id = '$id' and pi.owner_id='$ownerID'";
         $nodesArr = json_decode(self::queryTable($sql));
         if (!empty($nodesArr[0])){
         $nodes = json_decode($nodesArr[0]->{"nodes"});
@@ -2505,6 +2503,9 @@ class dbfuncs {
             $response = "{$targetDir}/{$filename}_curl";
             $file = "{$targetDir}/{$filename}.{$format}";
             $err = "{$targetDir}/{$filename}.{$format}.err";
+            if (file_exists($response)) {
+                unlink($response);
+            }
             if (file_exists($file)) {
                 unlink($file);
             }
@@ -2512,7 +2513,6 @@ class dbfuncs {
                 unlink($err);
             }
             exec("curl '$url' -H \"Content-Type: application/json\" -d '{\"text\":$text}' -o $response > /dev/null 2>&1 &", $res, $exit);
-            
             if (!headers_sent()) {
                 header('Cache-Control: no-cache, must-revalidate');
                 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -2544,7 +2544,6 @@ class dbfuncs {
             } else {
                 sleep(4);
             }
-            
         }
         $ret = "";
         if (!empty($resText)){
@@ -2563,8 +2562,13 @@ class dbfuncs {
                 $errorCheck =true;
                 $errorText = $resText;
             }
-            
             if (!empty($ret)){
+                if (file_exists($file)) {
+                    unlink($file);
+                }
+                if (file_exists($err)) {
+                    unlink($err);
+                }
                 exec("curl '$ret' -o \"{$file}\" > /dev/null 2>&1 &", $res, $exit);
             } else {
                 $errorCheck =true;
@@ -2633,29 +2637,54 @@ class dbfuncs {
 	}
     
     
-    //if you add new field here, you need to update saveAllPipeline condition in ajaxquery.php and import.js (itemOrder)
+    public function convert_array_to_obj_recursive($a) {
+    if (is_array($a) ) {
+        foreach($a as $k => $v) {
+            if (is_integer($k)) {
+                // only need this if you want to keep the array indexes separate
+                // from the object notation: eg. $o->{1}
+                $a['index'][$k] = $this->convert_array_to_obj_recursive($v);
+            }
+            else {
+                $a[$k] = $this->convert_array_to_obj_recursive($v);
+            }
+        }
+
+        return (object) $a;
+    }
+
+    // else maintain the type of $a
+    return $a; 
+}
+    
+    
+    //if you add new field here, please consider import/export functionality(import.js - itemOrder)
 	public function saveAllPipeline($dat,$ownerID) {
 		$obj = json_decode($dat);
-		$name =  $obj[0]->{"name"};
-        $id = $obj[1]->{"id"};
-		$nodes = json_encode($obj[2]->{"nodes"});
-		$mainG = "{\'mainG\':".json_encode($obj[3]->{"mainG"})."}";
-		$edges = "{\'edges\':".json_encode($obj[4]->{"edges"})."}";
-        $summary = addslashes(htmlspecialchars(urldecode($obj[5]->{"summary"}), ENT_QUOTES));
-        $group_id = $obj[6]->{"group_id"};
-        $perms = $obj[7]->{"perms"};
-        $pin = $obj[8]->{"pin"};
-        $pin_order = $obj[9]->{"pin_order"};
-        $publish = $obj[10]->{"publish"};
-        $script_pipe_header = addslashes(htmlspecialchars(urldecode($obj[11]->{"script_pipe_header"}), ENT_QUOTES));
-        $script_pipe_footer = addslashes(htmlspecialchars(urldecode($obj[12]->{"script_pipe_footer"}), ENT_QUOTES));
-        $script_mode_header = $obj[13]->{"script_mode_header"};
-        $script_mode_footer = $obj[14]->{"script_mode_footer"};
-        $pipeline_group_id = $obj[15]->{"pipeline_group_id"};
-        $process_list = $obj[16]->{"process_list"};
-        $pipeline_list = $obj[17]->{"pipeline_list"};
-        $publish_web_dir = $obj[18]->{"publish_web_dir"};
-        $pipeline_gid = isset($obj[19]->{"pipeline_gid"}) ? $obj[19]->{"pipeline_gid"} : "";
+        $newObj = new stdClass();
+        foreach ($obj as $item):
+            foreach($item as $k => $v) $newObj->$k = $v;
+        endforeach;
+		$name =  $newObj->{"name"};
+        $id = $newObj->{"id"};
+		$nodes = json_encode($newObj->{"nodes"});
+		$mainG = "{\'mainG\':".json_encode($newObj->{"mainG"})."}";
+		$edges = "{\'edges\':".json_encode($newObj->{"edges"})."}";
+        $summary = addslashes(htmlspecialchars(urldecode($newObj->{"summary"}), ENT_QUOTES));
+        $group_id = $newObj->{"group_id"};
+        $perms = $newObj->{"perms"};
+        $pin = $newObj->{"pin"};
+        $pin_order = $newObj->{"pin_order"};
+        $publish = $newObj->{"publish"};
+        $script_pipe_header = addslashes(htmlspecialchars(urldecode($newObj->{"script_pipe_header"}), ENT_QUOTES));
+        $script_pipe_footer = addslashes(htmlspecialchars(urldecode($newObj->{"script_pipe_footer"}), ENT_QUOTES));
+        $script_mode_header = $newObj->{"script_mode_header"};
+        $script_mode_footer = $newObj->{"script_mode_footer"};
+        $pipeline_group_id = $newObj->{"pipeline_group_id"};
+        $process_list = $newObj->{"process_list"};
+        $pipeline_list = $newObj->{"pipeline_list"};
+        $publish_web_dir = $newObj->{"publish_web_dir"};
+        $pipeline_gid = isset($newObj->{"pipeline_gid"}) ? $newObj->{"pipeline_gid"} : "";
         if (empty($pipeline_gid)) {
             $max_gid = json_decode($this->getMaxPipeline_gid(),true)[0]["pipeline_gid"];
             settype($max_gid, "integer");
@@ -2665,10 +2694,10 @@ class dbfuncs {
                 $pipeline_gid = 1;
             }
         }
-        $rev_comment = isset($obj[20]->{"rev_comment"}) ? $obj[20]->{"rev_comment"} : "";
-        $rev_id = isset($obj[21]->{"rev_id"}) ? $obj[21]->{"rev_id"} : "";
-        $pipeline_uuid = isset($obj[22]->{"pipeline_uuid"}) ? $obj[22]->{"pipeline_uuid"} : "";
-        $pipeline_rev_uuid = isset($obj[23]->{"pipeline_rev_uuid"}) ? $obj[23]->{"pipeline_rev_uuid"} : ""; 
+        $rev_comment = isset($newObj->{"rev_comment"}) ? $newObj->{"rev_comment"} : "";
+        $rev_id = isset($newObj->{"rev_id"}) ? $newObj->{"rev_id"} : "";
+        $pipeline_uuid = isset($newObj->{"pipeline_uuid"}) ? $newObj->{"pipeline_uuid"} : "";
+        $pipeline_rev_uuid = isset($newObj->{"pipeline_rev_uuid"}) ? $newObj->{"pipeline_rev_uuid"} : ""; 
         settype($pipeline_group_id, "integer");
         settype($rev_id, "integer");
         settype($pipeline_gid, "integer");
@@ -2677,7 +2706,7 @@ class dbfuncs {
         settype($publish, "integer");
         settype($pin_order, "integer");
         settype($id, 'integer');
-        $nodesRaw = $obj[2]->{"nodes"};
+        $nodesRaw = $newObj->{"nodes"};
         if (!empty($nodesRaw)){
             $this->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
         }
@@ -2699,12 +2728,12 @@ class dbfuncs {
                 if ($userRole == "admin"){
                     $sql = "select DISTINCT pip.id, pip.rev_id, pip.name, pip.summary, pip.date_modified, u.username, pip.script_pipe_header, pip.script_pipe_footer, pip.script_mode_header, pip.script_mode_footer, pip.pipeline_group_id
                     FROM biocorepipe_save pip
-                    INNER JOIN users u ON pip.owner_id = u.id";
+                    INNER JOIN users u ON pip.deleted=0 AND pip.owner_id = u.id";
                     return self::queryTable($sql);
                 }
             }
         }
-        $where = " where pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15)";
+        $where = " where pip.deleted=0 AND pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15)";
 		$sql = "select DISTINCT pip.id, pip.rev_id, pip.name, pip.summary, pip.date_modified, u.username, pip.script_pipe_header, pip.script_pipe_footer, pip.script_mode_header, pip.script_mode_footer, pip.pipeline_group_id
         FROM biocorepipe_save pip
         INNER JOIN users u ON pip.owner_id = u.id
@@ -2722,7 +2751,7 @@ class dbfuncs {
                         FROM biocorepipe_save pip
                         INNER JOIN users u ON pip.owner_id = u.id
                         INNER JOIN pipeline_group pg ON pip.pipeline_group_id = pg.id
-                        where pip.id = '$id'";
+                        where pip.deleted=0 AND pip.id = '$id'";
                         return self::queryTable($sql);
                     }
                 }
@@ -2732,11 +2761,11 @@ class dbfuncs {
                 INNER JOIN users u ON pip.owner_id = u.id
                 INNER JOIN pipeline_group pg ON pip.pipeline_group_id = pg.id
                 LEFT JOIN user_group ug ON pip.group_id=ug.g_id
-                where pip.id = '$id' AND (pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15))";
+                where pip.deleted=0 AND pip.id = '$id' AND (pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15))";
 	   return self::queryTable($sql);
 	}
     public function removePipelineById($id) {
-		$sql = "DELETE FROM biocorepipe_save WHERE id = '$id'";
+        $sql = "UPDATE biocorepipe_save SET deleted = 1, date_modified = now() WHERE id = '$id'";
 	   return self::runSQL($sql);
 	}
     public function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publish, $pipeline_group_id, $ownerID) {

@@ -884,7 +884,7 @@ else if ($p=="callRmarkdown"){
     $filename = $_REQUEST['filename'];
     $text = urldecode($_REQUEST['text']);
     $data = json_encode("rmarkdown request done");
-    $data = $db->callRmarkdown($data, $type, $url, $uuid, $text, $dir, $filename);
+    $db->callRmarkdown($data, $type, $url, $uuid, $text, $dir, $filename);
 }
 else if ($p=="saveProject"){
     $name = urldecode($_REQUEST['name']);
@@ -1189,8 +1189,12 @@ else if ($p=="saveAllPipeline")
     $new_pipe_id = $idArray["id"];
     if (!empty($new_pipe_id)){
         $obj = json_decode($dat);
-        $pipeline_uuid = isset($obj[22]->{"pipeline_uuid"}) ? $obj[22]->{"pipeline_uuid"} : "";
-        $pipeline_rev_uuid = isset($obj[23]->{"pipeline_rev_uuid"}) ? $obj[23]->{"pipeline_rev_uuid"} : "";
+        $newObj = new stdClass();
+        foreach ($obj as $item):
+            foreach($item as $k => $v) $newObj->$k = $v;
+        endforeach;
+        $pipeline_uuid = isset($newObj->{"pipeline_uuid"}) ? $newObj->{"pipeline_uuid"} : "";
+        $pipeline_rev_uuid = isset($newObj->{"pipeline_rev_uuid"}) ? $newObj->{"pipeline_rev_uuid"} : "";
         if (empty($pipeline_uuid)) {
             $db->getUUIDAPI($data,"pipeline", $new_pipe_id);
         } else if (empty($pipeline_rev_uuid)){
