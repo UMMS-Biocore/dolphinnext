@@ -5879,6 +5879,7 @@ $(document).ready(function () {
                     request = new ActiveXObject("Microsoft.XMLHTTP");
                 request.open('GET', url, false);
                 request.send();
+                console.log(request.status)
                 if (request.status === 404) {
                     return false
                 } else {
@@ -5901,7 +5902,7 @@ $(document).ready(function () {
                 return $.get(url);
             }
 
-            var getUrl = function (settings, type, callback) {
+            var getUrl = function (settings, type, callback, ret) {
                 if (window[elemsID + type]) {
                     return; // Don't allow click if already running.
                 }
@@ -5913,7 +5914,10 @@ $(document).ready(function () {
                 }
                 var path = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.tmp/" + settings.ajax.filename + format
                 window[elemsID + type] = setInterval(function () {
+                    console.log("check url oncesi")
                     var checkExistUrl = checkUrl(path)
+                    console.log(path)
+                    console.log(checkExistUrl)
                     if (!checkExistUrl) {
                         var checkExistError = checkUrl(path + ".err")
                         if (checkExistError) {
@@ -5986,12 +5990,17 @@ $(document).ready(function () {
                     cache: false,
                     success: function (results) {
                         ret = results;
-                        getUrl(settings, type, callback)
+                        if (ret == "rmarkdown request done"){
+                            console.log(ret)
+                            getUrl(settings, type, callback, ret)
+                        }
                     },
                     error: function (jqXHR, exception) {
                         console.log("#Error:")
                         console.log(jqXHR.status)
                         console.log(exception)
+                        updateLogText("Error occurred.", )
+                        progress(100)
                     }
                 });
                 if (!ret) ret = "";

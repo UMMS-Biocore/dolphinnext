@@ -1,3 +1,7 @@
+21.01.2019 Version 0.2.69
+Pipeline removal error is fixed by added flag for deleted pipelines.
+saveAllPipeline db function cleaned from indexes.
+
 21.01.2019 Version 0.2.68
 Rmarkdown module upgraded.
 Pipeline page updated to show links of pipeline modules.
