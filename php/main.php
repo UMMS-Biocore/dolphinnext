@@ -341,7 +341,7 @@ input:checked + .slider:before {
 
 <body class="hold-transition skin-blue sidebar-mini">
     <div class="wrapper">
-        <span id="basepathinfo" localbasepath="<?php echo LOCAL_BASE_PATH?>" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo BASE_PATH?>/tmp/pub"></span>
+        <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
         <header class="main-header">
             <!-- Logo -->
             <a href="index.php" class="logo">

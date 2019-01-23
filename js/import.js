@@ -168,7 +168,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
                 if (dbJSONfilt.length >= 1) {
                     //pro para match found = update this item
                     if (dbJSONfilt[0].id) {
-                        window.importObj[fileID].dict.propara[importJSON[i].id] = dbJSONfilt[0].id; //insert default value now being replaced 
+                        window.importObj[fileID].dict.propara[importJSON[i].id] = dbJSONfilt[0].id; //default value ("insert") now being replaced 
                     }
                     checkObj[type + i] = keyChecker(["sname", "operator", "closure", "reg_ex", "file_type", "qualifier"], importJSON[i], dbJSONfilt[0])
                 }
@@ -421,6 +421,10 @@ $('#importButton').on('click', function (e) {
                 indexCache = 0;
                 loop("pipeline", pipeRowList);
             } else if (type == "pipeline" && i == list.length - 1) {
+                var parBoxId = list[list.length - 1].getAttribute('id');
+                var oldID = window.importObj[parBoxId]["oldPipelineId"];
+                var newID  = window.importObj[fileID].dict[type][oldID]
+                window.importObj[fileID].dict["lastpipeline"]=newID
                 window.importObj["importStatus"] = "finalized";
             }
         }
@@ -511,7 +515,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
         sendJSON.pipeline_group_id = "" //modify later
         sendJSON.process_list = importJSON.process_list //modify later
         sendJSON.pipeline_list = importJSON.pipeline_list //modify later
-        sendJSON.publish_web_dir = importJSON.publish_web_dir 
+        sendJSON.publish_web_dir = importJSON.publish_web_dir
         sendJSON.name = importJSON.name
         sendJSON.script_pipe_footer = importJSON.script_pipe_footer
         sendJSON.script_pipe_header = importJSON.script_pipe_header
@@ -695,7 +699,7 @@ function checkImport(optObj) {
             // add log of missing parameters 
             if (window.importObj[rowID]["missing_parameters"].length > 0) {
                 var existingHTML = $("#stat_" + rowID).html()
-                $("#stat_" + rowID).html(existingHTML + ' Missing Parameters <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Missing parameters (' + window.importObj[rowID]["missing_parameters"].join(", ") + ') will be added"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                $("#stat_" + rowID).html(existingHTML + ' New Parameters <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="New parameters (' + window.importObj[rowID]["missing_parameters"].join(", ") + ') will be added"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
             }
         }
     } else if (rowType == "pipeline" || rowType == "pipeModule") {
@@ -961,7 +965,7 @@ function encodeElement(type, importJSON, fileID) {
         importJSON.pipeline_list = encodeProPipeList(importJSON.pipeline_list, fileID, "pipeline")
         importJSON.process_list = encodeProPipeList(importJSON.process_list, fileID, "process")
         var savedList = [];
-        var itemOrder = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publish", "script_pipe_header", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir","pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
+        var itemOrder = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publish", "script_pipe_header", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
         for (var i = 0; i < itemOrder.length; i++) {
             var key = itemOrder[i];
             var tObj = {};
@@ -991,7 +995,7 @@ $('#nextButton').on('click', function (e) {
     for (var i = 0; i < fileList.length; i++) {
         window.importObj[i] = { dict: {}, missing_parameters: {}, redundant_propara: {}, missing_process_menu: {}, missing_pipeline_menu: {} };
         //dict:keep log of created process, parameter and process_paramater id's.
-        window.importObj[i].dict = { process: {}, pipeline: {}, parameter: {}, propara: {} };
+        window.importObj[i].dict = { process: {}, pipeline: {}, parameter: {}, propara: {}, lastpipeline: "" };
         var text = getValues({ p: "getUpload", "name": fileList[i] });
         if (text) {
             var decrypted = CryptoJS.AES.decrypt(text, "");
@@ -1049,11 +1053,14 @@ $('#importModal').on('hide.bs.modal', function (e) {
         var text = getValues({ p: "removeUpload", "name": fileList[i] });
     }
     if (window.importObj["importStatus"] == "finalized") {
-        var obj = window.importObj[0].dict.pipeline
-        var lastPipeId = obj[Object.keys(obj)[0]];
-        if (lastPipeId) {
-            setTimeout(function () { window.location.replace("index.php?np=1&id=" + lastPipeId); }, 700);
+        var obj = window.importObj[0].dict.lastpipeline
+        if (obj) {
+            var lastPipeId = obj;
+            if (lastPipeId) {
+                setTimeout(function () { window.location.replace("index.php?np=1&id=" + lastPipeId); }, 700);
+            }
         }
+
     }
 
 });
