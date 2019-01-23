@@ -1,3 +1,13 @@
+23.01.2019 Version 0.2.71
+Minor bug fixed in import module.
+Rmarkdown module reload error is fixed.
+LOCAL_BASE_PATH renamed as OCPU_URL and PUBWEB_URL, OCPU_PUBWEB_URL added.
+
+[CONFIG]
+OCPU_URL = http://localhost
+PUBWEB_URL = http://localhost:8080/dolphinnext/tmp/pub
+OCPU_PUBWEB_URL = http://localhost/dolphinnext/tmp/pub
+
 22.01.2019 Version 0.2.70
 Import module error is fixed.
 Rmarkdown module upgraded to give timeout error.

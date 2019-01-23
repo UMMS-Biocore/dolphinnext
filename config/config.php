@@ -22,7 +22,9 @@ if (!empty($secConf)){
     define('TEMPPATH', $secConf['TEMPPATH']);
     define('API_PATH', $secConf['API_PATH']);
     define('BASE_PATH', $secConf['BASE_PATH']);
-    define('LOCAL_BASE_PATH', $secConf['LOCAL_BASE_PATH']);
+    define('OCPU_URL', $secConf['OCPU_URL']);
+    define('OCPU_PUBWEB_URL', $secConf['OCPU_PUBWEB_URL']);
+    define('PUBWEB_URL', $secConf['PUBWEB_URL']);
     define('LDAP_SERVER', $secConf['LDAP_SERVER']);
     define('DN_STRING', $secConf['DN_STRING']);
     define('BIND_USER', $secConf['BIND_USER']);

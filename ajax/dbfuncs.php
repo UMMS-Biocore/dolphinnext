@@ -1742,10 +1742,6 @@ class dbfuncs {
             if (!file_exists("{$this->run_path}/$uuid/$last_server_dir")) {
                 mkdir("{$this->run_path}/$uuid/$last_server_dir", 0755, true);
             }
-//            if (@readlink("{$this->tmp_path}/pub") === false) {
-//                symlink("{$this->run_path}","{$this->tmp_path}/pub");
-//            }
-        
             $fileList="";
             foreach ($files as $item):
                 $fileList.="$connect:$item ";
@@ -2483,7 +2479,19 @@ class dbfuncs {
         return $res; 
     }
     
-    public function callRmarkdown($data, $type, $url, $uuid, $text, $dir, $filename){
+    public function moveFile($type, $from, $to, $ownerID){
+        $res = false;
+        if ($type == "pubweb"){
+            $from = "{$this->run_path}/$from";
+            $to = "{$this->run_path}/$to";
+        }
+        if (file_exists($from)) {
+            $res = rename($from, $to);
+        }
+        return json_encode($res); 
+    }
+    
+    public function callRmarkdown($type, $uuid, $text, $dir, $filename){
         //travis fix
         if (!headers_sent()) {
             ob_start();
@@ -2500,19 +2508,13 @@ class dbfuncs {
             } else if ($type == "rmdpdf"){
                 $format = "pdf";
             }
-            $response = "{$targetDir}/{$filename}_curl";
-            $file = "{$targetDir}/{$filename}.{$format}";
-            $err = "{$targetDir}/{$filename}.{$format}.err";
-            if (file_exists($response)) {
-                unlink($response);
-            }
-            if (file_exists($file)) {
-                unlink($file);
-            }
-            if (file_exists($err)) {
-                unlink($err);
-            }
-            exec("curl '$url' -H \"Content-Type: application/json\" -d '{\"text\":$text}' -o $response > /dev/null 2>&1 &", $res, $exit);
+            $pUUID = uniqid();
+            $response = "{$targetDir}/{$filename}.curl{$pUUID}";
+            $file = "{$targetDir}/{$filename}.{$format}{$pUUID}";
+            $err = "{$targetDir}/{$filename}.{$format}.err{$pUUID}";
+            $url =  OCPU_URL."/ocpu/library/markdownapp/R/".$type;
+            $pid = exec("(curl '$url' -H \"Content-Type: application/json\" -d '{\"text\":$text}' -o $response > /dev/null 2>/dev/null) & echo \$!");
+            $data = json_encode($pUUID);
             if (!headers_sent()) {
                 header('Cache-Control: no-cache, must-revalidate');
                 header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -2531,56 +2533,57 @@ class dbfuncs {
             flush();
         }
         //server side keeps working
-        
-        for( $i= 0 ; $i < 100 ; $i++ ){
-            sleep(1);
-            $resText = $this->readFile($response);
-            if (!empty($resText)){
-                unlink($response);
-                break; 
-            } 
-            if ($i <5){
+        if (!empty($pUUID)){
+            for( $i= 0 ; $i < 100 ; $i++ ){
                 sleep(1);
-            } else {
-                sleep(4);
-            }
-        }
-        $ret = "";
-        if (!empty($resText)){
-            $lines = explode("\n", $resText);
-            foreach ($lines as $lin):
-                if ($type == "rmdtext" && preg_match("/.*output.html/", $lin, $matches)){
-                    $ret = LOCAL_BASE_PATH.$lin;
-                    break;
-                } else if ($type == "rmdpdf" && preg_match("/.*output.pdf/", $lin, $matches)){
-                    $ret = LOCAL_BASE_PATH.$lin;
-                    break;
+                $resText = $this->readFile($response);
+                if (!empty($resText)){
+                    unlink($response);
+                    break; 
                 } 
-            endforeach;
-            
-            if (empty($ret)){
-                $errorCheck =true;
-                $errorText = $resText;
+                if ($i <5){
+                    sleep(1);
+                } else {
+                    sleep(4);
+                }
             }
-            if (!empty($ret)){
-                if (file_exists($file)) {
-                    unlink($file);
+            $ret = "";
+            if (!empty($resText)){
+                $lines = explode("\n", $resText);
+                foreach ($lines as $lin):
+                    if ($type == "rmdtext" && preg_match("/.*output.html/", $lin, $matches)){
+                        $ret = OCPU_URL.$lin;
+                        break;
+                    } else if ($type == "rmdpdf" && preg_match("/.*output.pdf/", $lin, $matches)){
+                        $ret = OCPU_URL.$lin;
+                        break;
+                    } 
+                endforeach;
+            
+                if (empty($ret)){
+                    $errorCheck =true;
+                    $errorText = $resText;
                 }
-                if (file_exists($err)) {
-                    unlink($err);
+                if (!empty($ret)){
+                    if (file_exists($file)) {
+                        unlink($file);
+                    }
+                    if (file_exists($err)) {
+                        unlink($err);
+                    }
+                    exec("curl '$ret' -o \"{$file}\" > /dev/null 2>&1 &", $res, $exit);
+                } else {
+                    $errorCheck =true;
                 }
-                exec("curl '$ret' -o \"{$file}\" > /dev/null 2>&1 &", $res, $exit);
             } else {
                 $errorCheck =true;
+                $errorText = "Timeout error";
             }
-        } else {
-            $errorCheck =true;
-            $errorText = "Timeout error";
-        }
-        if ($errorCheck == true){
-            $fp = fopen($err, 'w');
-            fwrite($fp, $errorText);
-            fclose($fp);
+            if ($errorCheck == true){
+                $fp = fopen($err, 'w');
+                fwrite($fp, $errorText);
+                fclose($fp);
+            }
         }
 	}
     

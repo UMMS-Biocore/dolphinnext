@@ -30,7 +30,7 @@ var fillJsonPattern = function (tx, run_log_uuid) {
             var res = ""
             if (json) {
                 if (json.webpath) {
-                    var pubWebPath = $("#basepathinfo").attr("pubweb");
+                    var pubWebPath = $("#basepathinfo").attr("ocpupubweb");
                     if (!pubWebPath) {
                         pubWebPath = "";
                     }

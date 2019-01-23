@@ -562,7 +562,7 @@ else if ($p=="saveParameter"){
             $data = $db->insertParameter($name, $qualifier, $file_type, $ownerID);
         } else {
             if ($userRole == "admin"){
-                $db->updateParameter($pipeGrId, $name, $qualifier, $file_type, $ownerID);
+                $db->updateParameter($parId, $name, $qualifier, $file_type, $ownerID);
             }
             $data = json_encode(array('id' => $parId));
         }
@@ -877,14 +877,18 @@ else if ($p=="saveProcess"){
     }
 }
 else if ($p=="callRmarkdown"){
-    $url = $_REQUEST['url'];
     $uuid = $_REQUEST['uuid'];
     $dir = $_REQUEST['dir'];
     $type = $_REQUEST['type'];
     $filename = $_REQUEST['filename'];
     $text = urldecode($_REQUEST['text']);
-    $data = json_encode("rmarkdown request done");
-    $db->callRmarkdown($data, $type, $url, $uuid, $text, $dir, $filename);
+    $data = $db->callRmarkdown($type, $uuid, $text, $dir, $filename);
+}
+else if ($p=="moveFile"){
+    $from = $_REQUEST['from'];
+    $to = $_REQUEST['to'];
+    $type = $_REQUEST['type'];
+    $data = $db->moveFile($type, $from, $to, $ownerID);
 }
 else if ($p=="saveProject"){
     $name = urldecode($_REQUEST['name']);
