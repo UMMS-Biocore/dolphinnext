@@ -270,6 +270,10 @@ session_write_close();
             .nav.rmarkeditor>li>a {
                 padding: 5px;
             }
+            
+            .nav.panelheader>li>a {
+                padding: 5px;
+            }
         
 /*        slider*/
         

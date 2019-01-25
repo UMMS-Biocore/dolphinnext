@@ -26,19 +26,22 @@ var fillJsonPattern = function (tx, run_log_uuid) {
             var after = reg[3];
             var relaxedjson = "{" + patt + "}";
             var correctJson = relaxedjson.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-            var json = JSON.parse(correctJson)
             var res = ""
-            if (json) {
-                if (json.webpath) {
-                    var pubWebPath = $("#basepathinfo").attr("ocpupubweb");
-                    if (!pubWebPath) {
-                        pubWebPath = "";
+            console.log(correctJson)
+            if (IsJsonString(correctJson)) {
+                var json = JSON.parse(correctJson)
+                if (json) {
+                    if (json.webpath) {
+                        var pubWebPath = $("#basepathinfo").attr("ocpupubweb");
+                        if (!pubWebPath) {
+                            pubWebPath = "";
+                        }
+                        if (!run_log_uuid) {
+                            run_log_uuid = $("#runVerReport").val();
+                        }
+                        var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + json.webpath;
+                        res = '"' + link + '"';
                     }
-                    if (!run_log_uuid) {
-                        run_log_uuid = $("#runVerReport").val();
-                    }
-                    var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + json.webpath;
-                    res = '"' + link + '"';
                 }
             }
             fi += before + res + after + "\n";
@@ -281,11 +284,22 @@ function sortProcessList(processList, gnumList) {
             sortProcessList.push("g-" + sortGnum[el]);
         }
     });
-
     //add remaining input and output params by using processlist
     for (var key in processList) {
         if (!sortProcessList.includes(key)) {
             sortProcessList.push(key);
+        }
+    }
+    //add remaining standalone processes in pipeline modules by using processListMain
+    for (var p = 0; p < piGnumList.length; p++) {
+        var processListPipeMod = {};
+        processListPipeMod = window["pObj" + piGnumList[p]].processListMain;
+        if (processListPipeMod) {
+            for (var key in processListPipeMod) {
+                if (!sortProcessList.includes(key)) {
+                    sortProcessList.push(key);
+                }
+            }
         }
     }
     return { processList: sortProcessList, gnumList: sortGnum };

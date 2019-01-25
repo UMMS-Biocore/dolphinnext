@@ -86,6 +86,7 @@ function createSVG() {
     diffy = 0
 
     processList = {}
+    processListMain = {}
     ccIDList = {} //pipeline module match id list
     edges = []
     candidates = []
@@ -216,6 +217,7 @@ function openSubPipeline(piID, pObj) {
     var lastGnum = pObj.lastGnum;
     var prefix = "p" + MainGNum;
     pObj.processList = {};
+    pObj.processListMain = {};
     pObj.edges = [];
     //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
     insertProPipePanel(decodeHtml(sData.script_pipe_header), "pipe", "Pipeline", window);
@@ -2919,6 +2921,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             //                .on("mousedown", IOconnect)
         }
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
+        pObj.processListMain[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
 
@@ -5359,6 +5362,8 @@ $(document).ready(function () {
     });
 
 
+
+
     //$(function () { allows to trigger when a.reportFile added later to DOM
     $(function () {
         $(document).on('shown.bs.tab click', 'a.reportFile', function (event) {
@@ -5377,25 +5382,72 @@ $(document).ready(function () {
                     dir = filePath.substring(0, filePath.indexOf(filename));
                 }
                 var fileid = $(this).attr("fileid");
+                var pubWebPath = $("#basepathinfo").attr("pubweb");
+                var bindEveHandlerIcon = function (fileid) {
+                    $('[data-toggle="tooltip"]').tooltip();
+                    $('#fullscr-' + fileid).on('click', function (event) {
+                        var iconClass = $(this).children().attr("class");
+                        if (iconClass == "fa fa-expand") {
+                            $(this).children().attr("class", "fa fa-compress")
+                            toogleFullSize(this, "expand");
+                        } else {
+                            $(this).children().attr("class", "fa fa-expand")
+                            toogleFullSize(this, "compress");
+                        }
+                    });
+                    $('#downUrl-' + fileid).on('click', function (event) {
+                        var fileid = $(this).attr("fileid")
+                        var filename = $("#"+fileid).attr("filename")
+                        var filepath = $("#"+fileid).attr("filepath")
+                        var a = document.createElement('A');
+                        var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath 
+                        download_file(url, filename);
+                    });
+                    $('#blankUrl-' + fileid).on('click', function (event) {
+                        var fileid = $(this).attr("fileid")
+                        var filename = $("#"+fileid).attr("filename")
+                        var filepath = $("#"+fileid).attr("filepath")
+                        var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath
+                        var w = window.open();
+                        w.location = url;
+                    });
+                    
+                }
+                var getHeaderIconDiv = function (fileid, visType) {
+                    var blankUrlIcon = "";
+                    if (visType !== "table"){
+                        blankUrlIcon = `<li role="presentation"><a fileid="` + fileid + `" id="blankUrl-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Open in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>`;
+                    }
+                    var content = `<ul style="float:inherit"  class="nav nav-pills panelheader">
+                            ` + blankUrlIcon + `
+                            <li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
+                            <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                                <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
+                                <ul class="dropdown-menu dropdown-menu-right">
+                                    <li><a fileid="` + fileid + `" id="downUrl-` + fileid + `" href="#">Download</a></li>
+                                </ul>
+                            </li>
+                        </ul>`
+                    var wrapDiv = '<div id="' + fileid + '-HeaderIconDiv" style="float:right; height:35px; width:100%;">' + content + '</div>';
+                    return wrapDiv;
+                }
                 if (visType == "table") {
-                    var contentDiv = '<div style="margin:15px;"><table style="table-layout:fixed;" class="table table-striped table-bordered" cellspacing="0"  id="' + fileid + '"></table></div>';
+                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px;"><table style="table-layout:fixed;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></table></div>';
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
                     var dataTableObj = tsvConvert(data, "json2")
                     dataTableObj.deferRender = true
                     dataTableObj.scroller = true
                     dataTableObj.scrollCollapse = true
-                    dataTableObj.scrollY = 430
+                    dataTableObj.scrollY = 395
                     dataTableObj.scrollX = true
-                    console.time("table");
+                    dataTableObj.autoWidth = false
                     $("#" + fileid).DataTable(dataTableObj);
-                    console.timeEnd("table");
+                    bindEveHandlerIcon(fileid)
                 } else if (visType == "rmarkdown") {
                     var contentDiv = '<div style="width:100%;" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></div>';
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
-                    var pubWebPath = $("#basepathinfo").attr("pubweb");
-                    console.time("rMarkEditor");
                     $("#" + fileid).rMarkEditor({
                         ajax: {
                             url: "ajax/ajaxquery.php",
@@ -5410,10 +5462,18 @@ $(document).ready(function () {
                         height: "565px",
                         theme: "monokai" //tomorrow
                     });
-                    console.timeEnd("rMarkEditor");
+                } else if (visType == "html" || visType == "pdf") {
+                    var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
+                    if (visType == "html") {
+                        var iframe = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>';
+                    } else if (visType == "pdf") {
+                        var iframe = '<object style="width:100%; height:100%;"  data="' + link + '" type="application/pdf"><embed src="' + link + '" type="application/pdf" /></object>';
+                    }
+                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
+                    $(href).append(contentDiv);
+                    bindEveHandlerIcon(fileid)
                 }
             }
-
         })
     });
 
@@ -5456,12 +5516,12 @@ $(document).ready(function () {
                             </span>
                             </a></li>
                             <li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>
-                            <li role="presentation"><a class="rmarkeditorfull" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
                             <li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>
                         </ul>`
             }
             var getReportIconDiv = function () {
                 return `<ul style="float:inherit"  class="nav nav-pills rmarkeditor">
+                            <li role="presentation"><a class="rmarkeditorfull" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
                             <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                                 <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
                                 <ul class="dropdown-menu dropdown-menu-right">
@@ -5837,8 +5897,6 @@ $(document).ready(function () {
                             downpdf(editorId);
                         }
                     });
-
-
                 });
                 $(function () {
                     //check current status on first creation
@@ -5914,20 +5972,22 @@ $(document).ready(function () {
                 });
             }
 
+
             var checkUrl = function (url) {
-                var request;
-                if (window.XMLHttpRequest) {
-                    request = new XMLHttpRequest();
-                } else{
-                    request = new ActiveXObject("Microsoft.XMLHTTP");
-                }
-                request.open('GET', url, false);
-                request.send();
-                if (request.status === 404) {
-                    return false
-                } else {
-                    return true;
-                }
+                var ret = null;
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    async: false,
+                    cache: false,
+                    error: function () {
+                        ret = false;
+                    },
+                    success: function () {
+                        ret = true;
+                    }
+                });
+                return ret;
             }
 
             var updateLogText = function (text, type) {
@@ -5959,10 +6019,11 @@ $(document).ready(function () {
                 var tmpPath = orgPath + pid
                 window[elemsID + type] = setInterval(function () {
                     var checkExistUrl = checkUrl(tmpPath)
+                    console.log(checkExistUrl)
                     if (!checkExistUrl) {
-                        var checkExistError = checkUrl(tmpPath + ".err")
+                        var checkExistError = checkUrl(orgPath + ".err" + pid)
                         if (checkExistError) {
-                            getUrlContent(tmpPath + ".err").success(function (data) {
+                            getUrlContent(orgPath + ".err" + pid).success(function (data) {
                                 if (data) {
                                     if (!$('#myModal').hasClass('in')) {
                                         $("#rMarkInfoText").text(data)
@@ -6344,7 +6405,9 @@ $(document).ready(function () {
                                         var filenameCl = cleanProcessName(fileList[el])
                                         var tabID = 'reportTab' + oData.id + "_" + filenameCl;
                                         var fileID = oData.id + "_" + filenameCl;
-                                        liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="fa ' + icon + '"></i>' + fileList[el] + '</a></li>';
+                                        //remove directory str, only show filename in label
+                                        var labelText = /[^/]*$/.exec(fileList[el])[0];
+                                        liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="fa ' + icon + '"></i>' + labelText + '</a></li>';
                                     }
                                 });
                                 if (!liText) {
@@ -6360,7 +6423,7 @@ $(document).ready(function () {
                                 var fileList = oData.fileList;
                                 if ($(nTd).is(':empty')) {
                                     var navTabDiv = "";
-                                    navTabDiv += '<div class="tab-content">';
+                                    navTabDiv += '<div style="height:inherit;" class="tab-content">';
                                     var liText = "";
                                     var active = "";
                                     $.each(fileList, function (el) {
@@ -6370,7 +6433,7 @@ $(document).ready(function () {
                                         if (el == 0) {
                                             active = 'in active';
                                         }
-                                        navTabDiv += '<div id = "' + tabID + '" class = "tab-pane fade ' + active + '" ></div>';
+                                        navTabDiv += '<div style="height:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
                                     });
                                     navTabDiv += '</div>';
                                     $(nTd).html(navTabDiv);
@@ -6379,7 +6442,7 @@ $(document).ready(function () {
                                         var filenameCl = cleanProcessName(fileList[el])
                                         var tabID = 'reportTab' + oData.id + "_" + filenameCl;
                                         if (!$(nTd).find("div#" + tabID).length) {
-                                            $(nTd).children().append('<div id = "' + tabID + '" class = "tab-pane fade" ></div>')
+                                            $(nTd).children().append('<div style="height:100%;" id = "' + tabID + '" class = "tab-pane fade" ></div>')
                                         }
                                     });
                                 }
@@ -6398,17 +6461,39 @@ $(document).ready(function () {
                                 var rowID = "outputTa-" + gNum;
                                 var processName = $('#' + rowID + ' > :nth-child(5)').text();
                                 var processID = $('#' + rowID + ' > :nth-child(5)').text();
-                                $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + processName + '</span>');
+                                $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + createLabel(processName) + '</span>');
                             },
                             colPercent: "37"
         }, {
-                            data: "name",
-                            colPercent: "39"
+                            data: null,
+                            colPercent: "39",
+                            fnCreatedCell: function (nTd, oData) {
+                                $(nTd).html('<span>' + createLabel(oData.name) + '</span>');
+                            }
         }, {
                             data: null,
                             colPercent: "20",
                             fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="fa fa-line-chart"></i></a>');
+                                var visType = oData.pubWeb
+                                var icon = "fa-file-text-o";
+                                var text = visType;
+                                if (visType === "table") {
+                                    icon = "fa fa-table";
+                                    text = "Table";
+                                } else if (visType === "html") {
+                                    icon = "fa fa-file-code-o";
+                                    text = "HTML";
+                                } else if (visType === "pdf") {
+                                    icon = "fa fa-file-pdf-o";
+                                    text = "PDF";
+                                } else if (visType === "rmarkdown") {
+                                    icon = "fa fa-pie-chart";
+                                    text = "R-Markdown";
+                                } else if (visType === "highcharts") {
+                                    icon = "fa fa-line-chart";
+                                    text = "Charts";
+                                }
+                                $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
                             }
         }],
                         columnsTitle: [{
@@ -6425,13 +6510,13 @@ $(document).ready(function () {
                             data: "name",
                             colPercent: "39",
                             fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<span>OUTPUT DIRECTORY</span>');
+                                $(nTd).html('<span>PUBLISHED DIRECTORY</span>');
                             },
         }, {
                             data: null,
                             colPercent: "20",
                             fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<span>ACTIONS</span>');
+                                $(nTd).html('<span>VIEW FORMAT</span>');
                             }
         }],
                         backgroundcolorenter: "#ced9e3",

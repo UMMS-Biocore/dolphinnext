@@ -135,6 +135,7 @@ function createSVG() {
     diffy = 0
 
     processList = {}
+    processListMain = {}
     ccIDList = {} //pipeline module match id list
     processListNoOutput = {}
     edges = []
@@ -281,6 +282,7 @@ function openSubPipeline(piID, pObj) {
     var lastGnum = pObj.lastGnum;
     var prefix = "p" + MainGNum;
     pObj.processList = {};
+    pObj.processListMain = {};
     pObj.edges = [];
     pObj.processListNoOutput = {};
     var hideModule = false;
@@ -838,6 +840,7 @@ function addProcess(processDat, xpos, ypos) {
                 .on("mousedown", IOconnect)
         }
         processList[("g-" + gNum)] = name
+        processListMain[("g-" + gNum)] = name
         processListNoOutput[("g-" + gNum)] = name
         gNum = gNum + 1
     }
@@ -1292,6 +1295,9 @@ function remove(delID) {
         d3.select("#" + g).remove()
         delete processList[g]
         delete processListNoOutput[g]
+        if (processListMain[g]){
+            delete processListMain[g]
+        }
         removeLines(g)
     }
 }
@@ -2609,6 +2615,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 .on("mousedown", IOconnect)
         }
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
+        pObj.processListMain[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.processListNoOutput[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
     }

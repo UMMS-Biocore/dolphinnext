@@ -62,6 +62,7 @@ function createSVG() {
     diffy = 0
 
     processList = {}
+    processListMain = {}
     ccIDList = {} //pipeline module match id list
     edges = []
     candidates = []
@@ -1262,6 +1263,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             //                .on("mousedown", IOconnect)
         }
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
+        pObj.processListMain[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
 

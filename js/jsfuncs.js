@@ -667,7 +667,7 @@ function getValues(data, async) {
             } else if (exception === 'abort') {
                 msg = 'Ajax request aborted.';
             } else {
-                if (jqXHR.responseText){
+                if (jqXHR.responseText) {
                     msg = 'Uncaught Error.\n' + jqXHR.responseText;
                 }
             }
@@ -764,7 +764,72 @@ function cleanProcessName(proName) {
     proName = proName.replace(/\"/g, "_");
     proName = proName.replace(/\'/g, "_");
     proName = proName.replace(/\./g, "_");
+    proName = proName.replace(/\//g, "_");
+    proName = proName.replace(/\\/g, "_");
     return proName;
+}
+
+function createLabel(proName) {
+    proName = proName.replace(/_/g, " ");
+    proName = proName.replace(/\w\S*/g, function (txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+
+    return proName;
+}
+
+//use fullsize class to find parent element which is going to be fullscreen
+var toogleFullSize = function (iconElem, type) {
+    var elems = $(iconElem).closest("div.fullsize")
+    if (type == "expand") {
+        var featList = ["z-index", "width", "height", "position", "top", "left", "background"]
+        var newValue = ["1049", "100%", "100%", "fixed", "0", "0", "white"]
+        var oldCSS = {};
+        var newCSS = {};
+        for (var i = 0; i < featList.length; i++) {
+            oldCSS[featList[i]] = elems.css(featList[i])
+            newCSS[featList[i]] = newValue[i]
+        }
+        elems.data("oldCSS", oldCSS);
+        elems.css("height", $(window).height())
+    } else {
+        var newCSS = elems.data("oldCSS");
+    }
+    //apply css obj
+    $.each(newCSS, function (el) {
+        elems.css(el, newCSS[el])
+    });
+    $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+}
+
+function download_file(fileURL, fileName) {
+    // for non-IE
+    if (!window.ActiveXObject) {
+        var save = document.createElement('a');
+        save.href = fileURL;
+        save.target = '_blank';
+        var filename = fileURL.substring(fileURL.lastIndexOf('/') + 1);
+        save.download = fileName || filename;
+        if (navigator.userAgent.toLowerCase().match(/(ipad|iphone|safari)/) && navigator.userAgent.search("Chrome") < 0) {
+            document.location = save.href;
+            // window event not working here
+        } else {
+            var evt = new MouseEvent('click', {
+                'view': window,
+                'bubbles': true,
+                'cancelable': false
+            });
+            save.dispatchEvent(evt);
+            (window.URL || window.webkitURL).revokeObjectURL(save.href);
+        }
+    }
+    // for IE < 11
+    else if (!!window.ActiveXObject && document.execCommand) {
+        var _window = window.open(fileURL, '_blank');
+        _window.document.close();
+        _window.document.execCommand('SaveAs', true, fileName || fileURL)
+        _window.close();
+    }
 }
 
 $('.collapseIcon').on('click', function (e) {
