@@ -1755,22 +1755,45 @@ class dbfuncs {
                 return json_encode("nextflow log not found");
             }
     }
+    public function readFileSubDir($path) {
+        $scanned_directory = array_diff(scandir($path), array('..', '.'));
+        foreach ($scanned_directory as $fileItem) {
+            // skip '.' and '..' and .tmp hidden directories
+            if ($fileItem[0] == '.')  continue;
+            $fileItem = rtrim($path,'/') . '/' . $fileItem;
+            // if dir found call again recursively
+            if (is_dir($fileItem)) {
+                foreach ($this->readFileSubDir($fileItem) as $childFileItem) {
+                    yield $childFileItem;
+                }
+            } else {
+                yield $fileItem;
+            }
+        }
+    }    
+    
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
     //$opt = "onlyfile", "filedir"
     public function getFileList($uuid, $last_server_dir, $opt) {
         $path= "{$this->run_path}/$uuid/$last_server_dir";
-        $scanned_directory = "";
+        $scanned_directory = array();
         if (file_exists($path)) {
             if ($opt == "filedir"){
                 $scanned_directory = array_diff(scandir($path), array('..', '.'));
             } else if ($opt == "onlyfile"){
-                $scanned_directory = array_filter(scandir($path), function($item) use ($path) {
-                    return !is_dir($path."/".$item);
-                });
+                //recursive read of all subdirectories
+                foreach ($this->readFileSubDir($path) as $fileItem) {
+                //remove initial part of the path
+                    $fileItemRet = preg_replace('/^' . preg_quote($path.'/', '/') . '/', '', $fileItem);
+                    $scanned_directory[]=$fileItemRet;
+                }
             }
         }
         return json_encode($scanned_directory);
     }
+    
+    
+    
     
 //    ----------- Inputs, Project Inputs   ---------
     public function getInputs($id,$ownerID) {
