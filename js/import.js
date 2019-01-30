@@ -170,7 +170,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
                     if (dbJSONfilt[0].id) {
                         window.importObj[fileID].dict.propara[importJSON[i].id] = dbJSONfilt[0].id; //default value ("insert") now being replaced 
                     }
-                    checkObj[type + i] = keyChecker(["sname", "operator", "closure", "reg_ex", "file_type", "qualifier"], importJSON[i], dbJSONfilt[0])
+                    checkObj[type + i] = keyChecker(["sname", "operator", "closure", "reg_ex", "optional", "file_type", "qualifier"], importJSON[i], dbJSONfilt[0])
                 }
             }
 
@@ -490,6 +490,9 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
             sendJSON[i].sname = encodeURIComponent(importJSON[i].sname);
             sendJSON[i].closure = encodeURIComponent(importJSON[i].closure);
             sendJSON[i].reg_ex = encodeURIComponent(importJSON[i].reg_ex);
+            if (importJSON[i].optional){
+            sendJSON[i].optional = importJSON[i].optional;
+            }
             sendJSON[i].operator = importJSON[i].operator;
             sendJSON[i].process_id = "" //modify later
             sendJSON[i].parameter_id = importJSON[i].parameter_id //it is the old_parameter_id. modify it later

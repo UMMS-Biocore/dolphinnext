@@ -804,6 +804,7 @@ function addProcess(processDat, xpos, ypos) {
                 .attr("name", inputs[k].sname)
                 .attr("operator", inputs[k].operator)
                 .attr("closure", inputs[k].closure)
+                .attr("optional", inputs[k].optional)
                 .attr("status", "standard")
                 .attr("connect", "single")
                 .attr("class", findType(inputs[k].parameter_id) + " input")
@@ -826,6 +827,7 @@ function addProcess(processDat, xpos, ypos) {
                 .attr("name", outputs[k].sname)
                 .attr("operator", outputs[k].operator)
                 .attr("closure", outputs[k].closure)
+                .attr("optional", outputs[k].optional)
                 .attr("reg_ex", outputs[k].reg_ex)
                 .attr("status", "standard")
                 .attr("connect", "single")
@@ -1959,14 +1961,9 @@ function download(text, type) {
     } else {
         filename += '.nf';
     }
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    downloadText(text, filename)
 }
+
 
 
 function refreshCreatorData(pipeline_id) {
@@ -2578,6 +2575,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 .attr("name", pObj.inputs[k].sname)
                 .attr("operator", pObj.inputs[k].operator)
                 .attr("closure", pObj.inputs[k].closure)
+                .attr("optional", pObj.inputs[k].optional)
                 .attr("connect", "single")
                 .attr("status", "standard")
                 .attr("class", findType(pObj.inputs[k].parameter_id) + " input")
@@ -2601,6 +2599,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 .attr("name", pObj.outputs[k].sname)
                 .attr("operator", pObj.outputs[k].operator)
                 .attr("closure", pObj.outputs[k].closure)
+                .attr("optional", pObj.outputs[k].optional)
                 .attr("reg_ex", pObj.outputs[k].reg_ex)
                 .attr("status", "standard")
                 .attr("connect", "single")

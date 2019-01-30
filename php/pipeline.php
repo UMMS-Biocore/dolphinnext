@@ -405,6 +405,9 @@
                         <div id="mInClosureT" class="col-sm-2 " style="width:160px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:20px;">Operator Content <span><a data-toggle="tooltip" data-placement="bottom" title="Optional operator content to specify how operators will act. Multiple operators can be added by starting paranthesis. i.e. (size:6).buffer(size:3)"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
+                        <div class="col-sm-2 " style="width:100px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
+                            <p style="padding-left:15px;">Optional <span><a data-toggle="tooltip" data-placement="bottom" title="Optional input parameter. Process will be executed in case parameter is empty."><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
+                        </div>
                     </div>
                     <div id="inputGroup" class="form-group">
                         <label for="mInputs-1" style="width:150px;" class="col-sm-2 control-label">Inputs</label>
@@ -479,8 +482,11 @@
                         <div id="mInClosure" class="col-sm-2 " style="width:140px; padding-left:5px; padding-right:0;">
                             <input type="text" style="display:none; " placeholder="Operator content" class="form-control" ppID="" id="mInClosure-0" name="mInClosure-0">
                         </div>
-                        <div id="mInOptdel" class="col-sm-1" style="width:40px; padding-left:0;padding-right:0;">
+                        <div id="mInOptdel" class="col-sm-1" style="width:40px; padding-left:0; padding-right:0; margin-right:10px;">
                             <button type="submit" style="display:none;" class="btn btn-default form-control" id="mInOptdel-0" name="mInOptdel-0"><i class="glyphicon glyphicon-remove"></i></button>
+                        </div>
+                        <div id="mInOptional" class="col-sm-1" style="width:40px; padding-left:0;padding-right:0;">
+                            <label style="display:none;" class="btn btn-default form-control"><input id="mInOptional-0" name="mInOptional-0" type="checkbox" autocomplete="off"> </label>
                         </div>
                     </div>
                     <div id="outputTitle" class="form-group" style="  margin-bottom:15px; padding-top:15px;">
@@ -503,11 +509,17 @@
                         <div id="mOutClosureT" class="col-sm-2 " style="width:160px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:20px;">Operator Content <span><a data-toggle="tooltip" data-placement="bottom" title="Optional operator content to specify how operators will work. Multiple operators can be added by starting paranthesis. i.e. (size:6).buffer(size:3)"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
+                        <div class="col-sm-2 " style="width:100px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
+                            <p style="padding-left:15px;">Optional <span><a data-toggle="tooltip" data-placement="bottom" title="Optional output parameter. Process won't fail in case output parameter isn't created."><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
+                        </div>
+<!--
                         <div id="mOutOptdelT" class="col-sm-1" style="width:45px; padding-left:0;padding-right:5px; padding-bottom:22px; border-bottom:1px solid lightgrey;">
                             <p> </p>
                         </div>
+-->
+                        
                         <div id="mOutRegT" class="col-sm-2 " style="width:180px; padding-left:0px; padding-right:0; border-bottom:1px solid lightgrey;">
-                            <p style="padding-left:30px;">Regular Expression <span><a data-toggle="tooltip" data-placement="bottom" title="Optional regular expresion to filter output files, which are going to be transferred to output directory. (Default: output name pattern is used)"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
+                            <p style="padding-left:15px;">Regular Expression <span><a data-toggle="tooltip" data-placement="bottom" title="Optional regular expresion to filter output files, which are going to be transferred to output directory. (Default: output name pattern is used)"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
                     </div>
                     <div id="outputGroup" class="form-group">
@@ -583,13 +595,16 @@
                         <div id="mOutClosure" class="col-sm-2 " style="width:140px; padding-left:5px; padding-right:0;">
                             <input type="text" style="display:none; " placeholder="Operator content" class="form-control" ppID="" id="mOutClosure-0" name="mOutClosure-0">
                         </div>
-                        <div id="mOutOptdel" class="col-sm-1" style="width:45px; padding-left:0;padding-right:5px;">
+                        <div id="mOutOptdel" class="col-sm-1" style="width:40px; padding-left:0;margin-right:10px; padding-right:0;">
                             <button type="submit" style="display:none;" class="btn btn-default form-control" id="mOutOptdel-0" name="mOutOptdel-0"><i class="glyphicon glyphicon-remove"></i></button>
                         </div>
-                        <div id="mOutRegBut" class="col-sm-1" style="width:45px; padding-left:0px; padding-right:0;">
+                        <div id="mOutOptional" class="col-sm-1" style="width:40px; padding-left:0;padding-right:0; margin-right:30px;">
+                            <label style="display:none;" class="btn btn-default form-control"><input id="mOutOptional-0" name="mOutOptional-0"  type="checkbox" autocomplete="off"> </label>
+                        </div>
+                        <div id="mOutRegBut" class="col-sm-1" style="width:40px; padding-left:0px; padding-right:0;">
                             <button type="submit" style="display:none;" class="btn btn-default form-control" id="mOutRegBut-0" name="mOutRegBut-0"><i class="fa fa-code"></i></button>
                         </div>
-                        <div id="mOutReg" class="col-sm-2 " style="width:140px; padding-left:0px; padding-right:0;">
+                        <div id="mOutReg" class="col-sm-2 " style="width:100px; padding-left:0px; padding-right:0;">
                             <input type="text" style="display:none; " placeholder="Operator content" class="form-control" ppID="" id="mOutReg-0" name="mOutReg-0">
                         </div>
                         <div id="mOutRegdel" class="col-sm-1" style="width:40px; padding-left:0; padding-right:0;">
@@ -974,6 +989,7 @@
                                 <option value="highcharts" plugin="highcharts.js">Highcharts</option>
                                 <option value="rmarkdown" >R Markdown</option>
                                 <option value="pdf">PDF Reader</option>
+                                <option value="rdata">RData</option>
                             </select>
                         </div>
                     </div>

@@ -324,6 +324,11 @@ function loadSelectedProcess(selProcessId) {
             $('#mInOpt-' + numForm).val(inputs[i].operator);
             $('#mInOptBut-' + numForm).trigger('click');
         }
+        if (inputs[i].optional) {
+            if (inputs[i].optional == 'true') {
+                $('#mInOptional-' + numForm).trigger('click');
+            }
+        }
 
     }
     for (var i = 0; i < outputs.length; i++) {
@@ -344,6 +349,11 @@ function loadSelectedProcess(selProcessId) {
             var reg_exText = decodeHtml(outputs[i].reg_ex);
             $('#mOutReg-' + numForm).val(reg_exText);
             $('#mOutRegBut-' + numForm).trigger('click');
+        }
+        if (outputs[i].optional) {
+            if (outputs[i].optional == 'true') {
+                $('#mOutOptional-' + numForm).trigger('click');
+            }
         }
     }
     if (showProcess.perms === "63" && usRole !== "admin") {
@@ -458,6 +468,10 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
                     }
                 }
             }
+            //rgb(255, 255, 255) for activated Optional button
+            if ($("#mInOptional-" + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
+                dataToProcessParam.push({ name: "optional", value: "true" });
+            }
             //for process parameters
             for (var k = startPoint; k < data.length; k++) {
                 if (data[k].name === 'mInName-' + matchSPart && data[k].value === '') {
@@ -495,6 +509,10 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
                     }
                 }
             }
+            //rgb(255, 255, 255) for activated Optional button
+            if ($("#mOutOptional-" + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
+                dataToProcessParam.push({ name: "optional", value: "true" });
+            }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
                 if (data[k].name === 'mOutName-' + matchSPart && data[k].value === '') {
@@ -514,6 +532,7 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
                 }
             }
         }
+        console.log(dataToProcessParam)
         if (dataToProcessParam.length > 0) {
             $.ajax({
                 type: "POST",
@@ -553,6 +572,14 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
                     }
                 }
             }
+            //rgb(255, 255, 255) for activated Optional button
+            if ($("#mInOptional-" + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
+                for (var n = startPoint; n < data.length; n++) {
+                    if (data[n].name === 'mInOptional-' + matchSPart) {
+                        dataToProcessParam.push({ name: "optional", value: "true" });
+                    }
+                }
+            }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
                 if (data[k].name === 'mInName-' + matchSPart && data[k].value === '') {
@@ -584,6 +611,14 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
                         dataToProcessParam.push({ name: "operator", value: data[n].value });
                     } else if (data[n].name === 'mOutClosure-' + matchSPart) {
                         dataToProcessParam.push({ name: "closure", value: encodeURIComponent(data[n].value) });
+                    }
+                }
+            }
+            //rgb(255, 255, 255) for activated Optional button
+            if ($("#mOutOptional-" + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
+                for (var n = startPoint; n < data.length; n++) {
+                    if (data[n].name === 'mOutOptional-' + matchSPart) {
+                        dataToProcessParam.push({ name: "optional", value: "true" });
                     }
                 }
             }
@@ -953,6 +988,7 @@ function disableProModal(selProcessId) {
         $('#mInClosure-' + numFormIn).attr('disabled', "disabled");
         $('#mInOpt-' + numFormIn).attr('disabled', "disabled");
         $('#mInOptBut-' + numFormIn).css("pointer-events", "none");
+        $('#mInOptional-' + numFormIn).css("pointer-events", "none");
         $('#mInOptdel-' + numFormIn).remove();
 
     }
@@ -966,6 +1002,7 @@ function disableProModal(selProcessId) {
         $('#mOutNamedel-' + numFormOut).remove();
         $('#mOutClosure-' + numFormOut).attr('disabled', "disabled");
         $('#mOutOpt-' + numFormOut).attr('disabled', "disabled");
+        $('#mOutOptional-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptdel-' + numFormOut).remove();
         $('#mOutReg-' + numFormOut).attr('disabled', "disabled");
@@ -1016,10 +1053,10 @@ function disableProModalPublic(selProcessId) {
         $('#mInName-' + numFormIn).attr('disabled', "disabled");
         $('#mInNamedel-' + numFormIn).remove();
         $('#mInClosure-' + numFormIn).attr('disabled', "disabled");
+        $('#mInOptional-' + numFormIn).css("pointer-events", "none");
         $('#mInOpt-' + numFormIn).attr('disabled', "disabled");
         $('#mInOptBut-' + numFormIn).css("pointer-events", "none");
         $('#mInOptdel-' + numFormIn).remove();
-
     }
     //
     var delNumIn = numFormIn + 1;
@@ -1030,6 +1067,7 @@ function disableProModalPublic(selProcessId) {
         $('#mOutName-' + numFormOut).attr('disabled', "disabled");
         $('#mOutNamedel-' + numFormOut).remove();
         $('#mOutClosure-' + numFormOut).attr('disabled', "disabled");
+        $('#mOutOptional-' + numFormOut).css("pointer-events", "none");
         $('#mOutOpt-' + numFormOut).attr('disabled', "disabled");
         $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptdel-' + numFormOut).remove();
@@ -1911,6 +1949,7 @@ $(document).ready(function () {
         if (!savetype.length) {
             var formValues = $('#addProcessModal').find('input, select, textarea');
             var data = formValues.serializeArray();
+            console.log(data)
             data[1].value = cleanProcessName(data[1].value);
             var dataToProcess = []; //dataToProcess to save in process table
             var proName = data[1].value;
@@ -1967,6 +2006,7 @@ $(document).ready(function () {
             var formValues = $('#addProcessModal').find('input, select, textarea');
             var data = formValues.serializeArray();
             data[2].value = cleanProcessName(data[2].value);
+            console.log(data)
             $('#mName').attr('disabled', "disabled");
 
             var proID = data[1].value;
@@ -2177,7 +2217,6 @@ $(document).ready(function () {
     //insert dropdown, textbox and 'remove button' for each parameters
     $(function () {
         $(document).on('change', '.mParChange', function () {
-
             var id = $(this).attr("id");
             var Patt = /m(.*)puts-(.*)/;
             var type = id.replace(Patt, '$1'); //In or Out
@@ -2188,9 +2227,10 @@ $(document).ready(function () {
             var col5init = "m" + type + "Opt";
             var col6init = "m" + type + "Closure";
             var col7init = "m" + type + "Optdel";
-            var col8init = "m" + type + "RegBut";
-            var col9init = "m" + type + "Reg";
-            var col10init = "m" + type + "Regdel";
+            var col8init = "m" + type + "Optional";
+            var col9init = "m" + type + "RegBut";
+            var col10init = "m" + type + "Reg";
+            var col11init = "m" + type + "Regdel";
 
             var num = id.replace(Patt, '$2');
             var prevParId = $("#" + id).attr("prev");
@@ -2212,9 +2252,10 @@ $(document).ready(function () {
                 $("#" + col5init).append('<select class="form-control" style ="visibility:hidden; margin-bottom: 6px;" id="' + col5init + '-' + String(idRows - 1) + '" name="' + col5init + '-' + String(idRows - 1) + '"></button>');
                 $("#" + col6init).append('<input type="text" ppID="" placeholder="Operator content" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col6init + '-' + String(idRows - 1) + '" name="' + col6init + '-' + String(idRows - 1) + '">');
                 $("#" + col7init).append('<button type="submit" class="btn btn-default form-control delOpt" style ="visibility:hidden; margin-bottom: 6px;" id="' + col7init + '-' + String(idRows - 1) + '" name="' + col7init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove operator"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
-                $("#" + col8init).append('<button  type="button" class="btn btn-default form-control addRegEx" style ="margin-bottom: 6px;" id="' + col8init + '-' + String(idRows - 1) + '" name="' + col8init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove Output RegEx"><span><i class="fa fa-code"></i></span></a></button>');
-                $("#" + col9init).append('<input type="text" ppID="" placeholder="Enter RegEx" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col9init + '-' + String(idRows - 1) + '" name="' + col9init + '-' + String(idRows - 1) + '">');
-                $("#" + col10init).append('<button type="submit" class="btn btn-default form-control delRegEx" style ="visibility:hidden; margin-bottom: 6px;" id="' + col10init + '-' + String(idRows - 1) + '" name="' + col10init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove Output RegEx"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
+                $("#" + col8init).append('<button  type="button" class="btn btn-default form-control addOptional" style ="margin-bottom: 6px;" id="' + col8init + '-' + String(idRows - 1) + '" name="' + col8init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check for Optional parameter"><span><i class="fa fa-square-o"></i></span></a></button>');
+                $("#" + col9init).append('<button  type="button" class="btn btn-default form-control addRegEx" style ="margin-bottom: 6px;" id="' + col9init + '-' + String(idRows - 1) + '" name="' + col9init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove Output RegEx"><span><i class="fa fa-code"></i></span></a></button>');
+                $("#" + col10init).append('<input type="text" ppID="" placeholder="Enter RegEx" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col10init + '-' + String(idRows - 1) + '" name="' + col10init + '-' + String(idRows - 1) + '">');
+                $("#" + col11init).append('<button type="submit" class="btn btn-default form-control delRegEx" style ="visibility:hidden; margin-bottom: 6px;" id="' + col11init + '-' + String(idRows - 1) + '" name="' + col11init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove Output RegEx"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
                 //refresh tooltips
                 $('[data-toggle="tooltip"]').tooltip();
                 //load closure options
@@ -2267,6 +2308,24 @@ $(document).ready(function () {
             $("#" + col7init + "-" + String(num)).css('visibility', 'visible');
         }
     });
+    //toggle optional process parameter addprocessmodal when click on button
+    $(function () {
+        $(document).on("click", ".addOptional", function (event) {
+            event.preventDefault();
+            var backg = $(this).css('background-color');
+            var inactiveColor = "rgb(231, 231, 231)";
+            var inactiveIcon = "fa fa-square-o";
+            var activeColor = "rgb(255, 255, 255)";
+            var activeIcon = "fa fa-check-square-o";
+            if (backg !== activeColor) {
+                $(this).css('background-color', activeColor);
+                $(this).find("i").attr("class", activeIcon)
+            } else {
+                $(this).css('background-color', inactiveColor);
+                $(this).find("i").attr("class", inactiveIcon)
+            }
+        });
+    });
     //remove operators section in addprocessmodal when click on wrench
     $(document).on("click", ".delOpt", function (event) {
         event.preventDefault();
@@ -2284,6 +2343,7 @@ $(document).ready(function () {
         $("#" + col7init + "-" + String(num)).css('visibility', 'hidden');
     });
     //toggle regEx section in addprocessmodal when click on Regex
+
     $(document).on("click", ".addRegEx", function (event) {
         event.preventDefault();
         var id = $(this).attr("id");
@@ -2335,9 +2395,10 @@ $(document).ready(function () {
         var col5init = "m" + type + "Opt";
         var col6init = "m" + type + "Closure";
         var col7init = "m" + type + "Optdel";
-        var col8init = "m" + type + "RegBut";
-        var col9init = "m" + type + "Reg";
-        var col10init = "m" + type + "Regdel";
+        var col8init = "m" + type + "Optional";
+        var col9init = "m" + type + "RegBut";
+        var col10init = "m" + type + "Reg";
+        var col11init = "m" + type + "Regdel";
         $("#" + col1init + "-" + String(num)).next().remove();
         $("#" + col1init + "-" + String(num)).remove();
         $("#" + col2init + "-" + String(num)).remove();
@@ -2349,6 +2410,7 @@ $(document).ready(function () {
         $("#" + col8init + "-" + String(num)).remove();
         $("#" + col9init + "-" + String(num)).remove();
         $("#" + col10init + "-" + String(num)).remove();
+        $("#" + col11init + "-" + String(num)).remove();
     });
 
     //parameter modal file type change:(save file type as identifier for val)
