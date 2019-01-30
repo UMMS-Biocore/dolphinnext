@@ -5576,7 +5576,7 @@ $(document).ready(function () {
                             <div class="modal-body">
                                 <form style="padding-right:10px;" class="form-horizontal">
                                     <div class="form-group">
-                                        <label class="col-sm-5 control-label">Auto updating output</label>
+                                        <label class="col-sm-5 control-label">Auto updating output <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="If enabled, the preview panel updates automatically as you code. If disabled, use the 'Run Script' button to update."><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
                                         <div class="col-sm-7">
                                             <label class="switch">
                                                 <input class="aUpdateOut" type="checkbox">
@@ -5585,7 +5585,7 @@ $(document).ready(function () {
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label class="col-sm-5 control-label">Autosave</label>
+                                        <label class="col-sm-5 control-label">Autosave <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="If active, DolphinNext will autosave the file content every 30 seconds."><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
                                         <div class="col-sm-7">
                                             <label class="switch">
                                                 <input class="aSave" type="checkbox">
@@ -5885,8 +5885,7 @@ $(document).ready(function () {
                 if ($('input.aSave').is(":checked")) {
                     window['interval_aSave_' + editorId] = setInterval(function () {
                         saveRmd(editorId, "autosave");
-
-                    }, 20000);
+                    }, 30000);
                 } else {
                     if (window['interval_aSave_' + editorId]) {
                         clearInterval(window['interval_aSave_' + editorId])
