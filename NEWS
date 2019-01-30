@@ -1,3 +1,8 @@
+30.01.2019 Version 0.2.73
+Rmarkdown download as rmd button or view in new page (external link icon) added.
+Optional input and output parameter added to process parameters.
+Documentation updated regarding to optional input and output parameter.
+
 23.01.2019 Version 0.2.72
 Bug fixed in the nextflow script where standalone process in pipeline module was missing.
 Report html and pdf features added in report page.

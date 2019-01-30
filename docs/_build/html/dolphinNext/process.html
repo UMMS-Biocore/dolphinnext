@@ -245,7 +245,7 @@
 </div>
 <div class="section" id="inputs">
 <h2>Inputs<a class="headerlink" href="#inputs" title="Permalink to this headline">¶</a></h2>
-<p>This section where you enter all of your input nodes of the process. You can start adding by clicking “Add input…” dropdown. After adding selected parameter as a input node, “input name” box and “add operator” button will appear.</p>
+<p>This section where you enter all of your input nodes of the process. You can start adding by clicking “Add input…” dropdown. After adding selected parameter as a input node, “input name” box and “add operator” and “optional” buttons will appear.</p>
 <img alt="../_images/process_inputs.png" class="align-center" src="../_images/process_inputs.png" />
 <p>Input name box used to define nextflow variables which will be used in the <a class="reference external" href="process.html#id4">scripts</a> section. For instance, if you enter input name as <code class="docutils literal notranslate"><span class="pre">genome</span></code>, in the scripts section you can recall this variable as <code class="docutils literal notranslate"><span class="pre">${genome}</span></code>. Other examples are listed in the following table:</p>
 <table border="1" class="docutils">
@@ -280,6 +280,39 @@
 </tbody>
 </table>
 <p>Additionally, if you need to transform values emitted by a channel, you can click “operators” button and select operators from dropdown. For detailed information, you can continue to read <a class="reference external" href="process.html#id5">operators</a> section.</p>
+<ul class="simple">
+<li><strong>Optional Inputs:</strong></li>
+</ul>
+<p>If you want use optional input parameter, you can check the optional checkbox. This feature allows flexibility for the user while defining process since the process will be executed in spite of the absence of the input parameter. Please check the example below for the use case:</p>
+<img alt="../_images/process_optional_input.png" class="align-center" src="../_images/process_optional_input.png" />
+<p>Here, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as blank string in case input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is empty. Otherwise, when input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is found, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as “—filter ${genome}”.</p>
+<p>Note that the condition is defined based on the “Input Name” of the parameter. Please check the other possibilities of condition scripts and their input parameters at below.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="39%" />
+<col width="61%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Input name</th>
+<th class="head">Condition in the Script for Empty Channel</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>genome</td>
+<td>genome.name == ‘genome’</td>
+</tr>
+<tr class="row-odd"><td>script</td>
+<td>script.name == ‘script’</td>
+</tr>
+<tr class="row-even"><td>val(name), file(index)</td>
+<td>index.name == ‘index’</td>
+</tr>
+<tr class="row-odd"><td>val(path)</td>
+<td>path.name == ‘path’</td>
+</tr>
+</tbody>
+</table>
+<p>Note that if <code class="docutils literal notranslate"><span class="pre">file()</span></code> or <code class="docutils literal notranslate"><span class="pre">val()</span></code> parameters are used, DolphinNext parse their content and use these parts in the condition. If both type are used, then content of the first file parameter will be used.</p>
 </div>
 <div class="section" id="outputs">
 <h2>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h2>
@@ -324,6 +357,10 @@
 </tbody>
 </table>
 <p>Additionally, if you need to transform values emitted by a channel, you can click “operators” button and select operators from dropdown. For detailed information, you can continue to read <a class="reference external" href="process.html#id5">operators</a> section. In addition to operators, regular expressions can be activated by clicking “regular expressions” button. You can learn more about this section by clicking <a class="reference external" href="process.html#id6">regular expressions</a> section.</p>
+<ul class="simple">
+<li><strong>Optional Outputs:</strong></li>
+</ul>
+<p>If your process doesn’t generate some outputs in some circumstances, you can check the optional checkbox which tells Nextflow not to fail the process if the declared output is not created.</p>
 </div>
 <div class="section" id="id4">
 <h2>Scripts<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>

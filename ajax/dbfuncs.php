@@ -1993,8 +1993,8 @@ class dbfuncs {
         return self::insTable($sql);
     }
     public function duplicateProcessParameter($new_pro_id, $old_id, $ownerID){
-        $sql = "INSERT INTO process_parameter(process_id, parameter_id, type, sname, operator, closure, reg_ex, owner_id, perms, date_created, date_modified, last_modified_user)
-                SELECT '$new_pro_id', parameter_id, type, sname, operator, closure, reg_ex, '$ownerID', '3', now(), now(),'$ownerID'
+        $sql = "INSERT INTO process_parameter(process_id, parameter_id, type, sname, operator, closure, reg_ex, optional, owner_id, perms, date_created, date_modified, last_modified_user)
+                SELECT '$new_pro_id', parameter_id, type, sname, operator, closure, reg_ex, optional, '$ownerID', '3', now(), now(),'$ownerID'
                 FROM process_parameter
                 WHERE process_id='$old_id'";
         return self::insTable($sql);
@@ -2025,14 +2025,14 @@ class dbfuncs {
                 $where";
 		return self::queryTable($sql);
     }
-    public function insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $perms, $group_id, $ownerID) {
-        $sql = "INSERT INTO process_parameter(sname, process_id, parameter_id, type, closure, operator, reg_ex, owner_id, date_created, date_modified, last_modified_user, perms, group_id)
-                VALUES ('$sname', '$process_id', '$parameter_id', '$type', '$closure', '$operator', '$reg_ex', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id')";
+    public function insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID) {
+        $sql = "INSERT INTO process_parameter(sname, process_id, parameter_id, type, closure, operator, reg_ex, optional, owner_id, date_created, date_modified, last_modified_user, perms, group_id)
+                VALUES ('$sname', '$process_id', '$parameter_id', '$type', '$closure', '$operator', '$reg_ex', '$optional', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id')";
         return self::insTable($sql);
     }
 
-    public function updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $perms, $group_id, $ownerID) {
-        $sql = "UPDATE process_parameter SET sname='$sname', process_id='$process_id', parameter_id='$parameter_id', type='$type', closure='$closure', operator='$operator', reg_ex='$reg_ex', last_modified_user ='$ownerID', perms='$perms', group_id='$group_id'  WHERE id = '$id'";
+    public function updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID) {
+        $sql = "UPDATE process_parameter SET sname='$sname', process_id='$process_id', parameter_id='$parameter_id', type='$type', closure='$closure', operator='$operator', reg_ex='$reg_ex', optional='$optional', last_modified_user ='$ownerID', perms='$perms', group_id='$group_id'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
@@ -2261,7 +2261,7 @@ class dbfuncs {
 	}
 
 	public function getInputsPP($id) {
-		$sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, p.name, p.file_type, p.qualifier 
+		$sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, pp.optional, p.name, p.file_type, p.qualifier 
         FROM process_parameter pp
         INNER JOIN parameter p ON pp.parameter_id = p.id
         WHERE pp.process_id = '$id' and pp.type = 'input'";
@@ -2370,7 +2370,7 @@ class dbfuncs {
 		return self::queryTable($sql);
 	}
     public function getOutputsPP($id) {
-		$sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, p.name, p.file_type, p.qualifier 
+		$sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, pp.optional, p.name, p.file_type, p.qualifier 
         FROM process_parameter pp
         INNER JOIN parameter p ON pp.parameter_id = p.id
         WHERE pp.process_id = '$id' and pp.type = 'output'";

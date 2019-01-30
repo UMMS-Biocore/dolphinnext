@@ -102,7 +102,13 @@ else if ($p=="getReportData")
                         $fileList = array_filter($fileList);
                         if (!empty($fileList)){
                             $out["fileList"] = $fileList;
-                            $data[] = $out; //push $out object into array
+                            error_log($name);
+                            if (strtolower($name) == "summary"){
+                                array_unshift($data , $out); //push to the top of the array
+                            } else {
+                                $data[] = $out; //push $out object into array
+                            }
+                            
                         }
                     }
                 }
@@ -998,6 +1004,7 @@ else if ($p=="saveProcessParameter"){
     $closure = isset($_REQUEST['closure']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['closure']), ENT_QUOTES)) : "";
     $reg_ex = isset($_REQUEST['reg_ex']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['reg_ex']), ENT_QUOTES)) : "";
     $operator = isset($_REQUEST['operator']) ? $_REQUEST['operator'] : "";
+    $optional = isset($_REQUEST['optional']) ? $_REQUEST['optional'] : "";
     $sname = addslashes(htmlspecialchars(urldecode($_REQUEST['sname']), ENT_QUOTES));
     $process_id = $_REQUEST['process_id'];
     $parameter_id = $_REQUEST['parameter_id'];
@@ -1010,9 +1017,9 @@ else if ($p=="saveProcessParameter"){
     settype($parameter_id, 'integer');
     settype($process_id, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $perms, $group_id, $ownerID);
+        $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID);
     } else {
-        $data = $db->insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $perms, $group_id, $ownerID);
+        $data = $db->insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID);
     }
 }
 else if ($p=="getProcessData")

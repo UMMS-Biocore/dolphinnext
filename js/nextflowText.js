@@ -27,7 +27,6 @@ var fillJsonPattern = function (tx, run_log_uuid) {
             var relaxedjson = "{" + patt + "}";
             var correctJson = relaxedjson.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
             var res = ""
-            console.log(correctJson)
             if (IsJsonString(correctJson)) {
                 var json = JSON.parse(correctJson)
                 if (json) {
@@ -633,7 +632,7 @@ function fixCurlyBrackets(outputName) {
 //eg. set val(name), file("${params.wdir}/validfastq/*.fastq") then take inside of the file(x)
 function getPublishDirRegex(outputName) {
     if (outputName.match(/file\((.*)\)/)) {
-        var outputName = outputName.match(/file\((.*)\)/)[1];
+        var outputName = outputName.match(/file\((.*)\)/i)[1];
     }
     //if name contains path and separated by '/' then replace with escape character '\/'
     outputName = outputName.replace(/\//g, '\\\/')
@@ -751,6 +750,25 @@ function getWhenCond(script) {
     return whenCond
 }
 
+
+//if (g119_14_outputFileTSV_g_118.isBound()){  g119_14_outputFileTSV_g_118 = file('OPTIONAL_FILE')}
+function getOptionalInText(optionalInAr, optionalInNameAr){
+    var optText = "";
+    for (var i = 0; i < optionalInAr.length; i++) {
+        var inputName = optionalInNameAr[i];
+        var inputNameOptional = "";
+        if (inputName.match(/file\((.*)\)/)){
+            inputNameOptional = $.trim(inputName.match(/file\((.*)\)/i)[1])
+        } else if (inputName.match(/val\((.*)\)/)){
+            inputNameOptional = $.trim(inputName.match(/val\((.*)\)/i)[1])
+        } else {
+            inputNameOptional = $.trim(inputName);
+        }
+        optText += 'if ('+optionalInAr[i]+'.isBound()){ '+optionalInAr[i] + "= file('"+inputNameOptional+"')} \n";
+    }
+    return optText
+}
+
 function getWhenText(whenCond, whenInLib, whenOutLib) {
     var whenText = ""
     var pairList = [];
@@ -795,10 +813,16 @@ function addChannelName(whenCond, whenLib, file_type, channelName, param_name, q
 function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipeEdges) {
     var processData = getValues({ p: "getProcessData", "process_id": id });
     script = decodeHtml(processData[0].script);
+    //check input and output channels in case of a when condition
+    //if any of the pattern of input and out matches then make the process conditional according to entered when condition
     var whenCond = getWhenCond(script);
     var whenInLib = {};
     var whenOutLib = {};
     var whenText = '';
+    //check optional inputs
+    var optionalInAr = [];
+    var optionalInNameAr = [];
+
     if (processData[0].script_header !== null) {
         var script_header = decodeHtml(processData[0].script_header);
     } else {
@@ -860,6 +884,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         var inputName = document.getElementById(Iid).getAttribute("name");
         var inputClosure = document.getElementById(Iid).getAttribute("closure");
         var inputOperator = document.getElementById(Iid).getAttribute("operator");
+        var inputOptional = document.getElementById(Iid).getAttribute("optional");
         inputClosure = decodeHtml(inputClosure);
         var inputOperatorText = '';
         if (inputOperator === 'mode flatten') {
@@ -891,11 +916,12 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                     var channelName = gFormat(document.getElementById(sNode).getAttribute("parentG")) + "_" + genParName + "_" + gFormat(document.getElementById(fNode).getAttribute("parentG"));
                 }
                 whenInLib = addChannelName(whenCond, whenInLib, file_type, channelName, param_name, qual)
+                if (inputOptional == "true") {
+                    optionalInAr.push(channelName)
+                    optionalInNameAr.push(inputName)
+                }
                 bodyInput = bodyInput + " " + qual + " " + inputName + " from " + channelName + inputOperatorText + "\n";
             }
-        }
-        if (find == false) {
-            bodyInput = bodyInput + " " + qual + " " + inputName + " from " + "param" + "\n"
         }
     }
 
@@ -912,6 +938,11 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         outputName = document.getElementById(Oid).getAttribute("name");
         var outputClosure = document.getElementById(Oid).getAttribute("closure");
         var outputOperator = document.getElementById(Oid).getAttribute("operator");
+        var outputOptional = document.getElementById(Oid).getAttribute("optional");
+        var outputOptionalText = ' ';
+        if (outputOptional == "true") {
+            outputOptionalText = " optional true ";
+        }
         outputClosure = decodeHtml(outputClosure);
         var outputOperatorText = '';
         if (outputOperator === 'mode flatten') {
@@ -960,9 +991,14 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
             channelNameAll = channelName;
         }
         whenOutLib = addChannelName(whenCond, whenOutLib, file_type, channelNameAll, param_name, qual)
-        bodyOutput = bodyOutput + " " + qual + " " + outputName + " into " + channelNameAll + outputOperatorText + "\n"
+        bodyOutput = bodyOutput + " " + qual + " " + outputName + outputOptionalText + " into " + channelNameAll + outputOperatorText + "\n"
 
     }
+    if (optionalInAr.length>0) {
+        var optionalInText = getOptionalInText(optionalInAr, optionalInNameAr)
+        script_header = optionalInText + "\n" + script_header
+    }
+
     if (whenCond) {
         whenText = getWhenText(whenCond, whenInLib, whenOutLib);
         if (whenText && whenText !== "") {

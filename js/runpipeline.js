@@ -2665,22 +2665,9 @@ function cancel() {
     }
 }
 
-
-
-
-
 function download(text) {
     var filename = $('#run-title').val() + '.nf';
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
+    downloadText(text, filename)
 }
 
 function createProcessPanelAutoFill(id, pObj, name, process_id) {
@@ -2884,6 +2871,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 .attr("name", pObj.inputs[k].sname)
                 .attr("operator", pObj.inputs[k].operator)
                 .attr("closure", pObj.inputs[k].closure)
+                .attr("optional", pObj.inputs[k].optional)
                 .attr("connect", "single")
                 .attr("status", "standard")
                 .attr("class", findType(pObj.inputs[k].parameter_id) + " input")
@@ -2907,6 +2895,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 .attr("name", pObj.outputs[k].sname)
                 .attr("operator", pObj.outputs[k].operator)
                 .attr("closure", pObj.outputs[k].closure)
+                .attr("optional", pObj.outputs[k].optional)
                 .attr("reg_ex", pObj.outputs[k].reg_ex)
                 .attr("status", "standard")
                 .attr("connect", "single")
@@ -5397,25 +5386,25 @@ $(document).ready(function () {
                     });
                     $('#downUrl-' + fileid).on('click', function (event) {
                         var fileid = $(this).attr("fileid")
-                        var filename = $("#"+fileid).attr("filename")
-                        var filepath = $("#"+fileid).attr("filepath")
+                        var filename = $("#" + fileid).attr("filename")
+                        var filepath = $("#" + fileid).attr("filepath")
                         var a = document.createElement('A');
-                        var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath 
+                        var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath
                         download_file(url, filename);
                     });
                     $('#blankUrl-' + fileid).on('click', function (event) {
                         var fileid = $(this).attr("fileid")
-                        var filename = $("#"+fileid).attr("filename")
-                        var filepath = $("#"+fileid).attr("filepath")
+                        var filename = $("#" + fileid).attr("filename")
+                        var filepath = $("#" + fileid).attr("filepath")
                         var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath
                         var w = window.open();
                         w.location = url;
                     });
-                    
+
                 }
                 var getHeaderIconDiv = function (fileid, visType) {
                     var blankUrlIcon = "";
-                    if (visType !== "table"){
+                    if (visType !== "table") {
                         blankUrlIcon = `<li role="presentation"><a fileid="` + fileid + `" id="blankUrl-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Open in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>`;
                     }
                     var content = `<ul style="float:inherit"  class="nav nav-pills panelheader">
@@ -5521,11 +5510,13 @@ $(document).ready(function () {
             }
             var getReportIconDiv = function () {
                 return `<ul style="float:inherit"  class="nav nav-pills rmarkeditor">
+                            <li role="presentation"><a class="rmarkeditorlink" data-toggle="tooltip" data-placement="bottom" data-original-title="Open Report in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>
                             <li role="presentation"><a class="rmarkeditorfull" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
                             <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                                 <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
                                 <ul class="dropdown-menu dropdown-menu-right">
-                                    <li><a class="rmarkeditordownpdf" href="#">Download PDF</a></li>
+                                    <li><a class="rmarkreportdownpdf" href="#">Download PDF</a></li>
+                                    <li><a class="rmarkeditordownrmd" href="#">Download RMD</a></li>
                                 </ul>
                             </li>
                         </ul>`
@@ -5722,6 +5713,14 @@ $(document).ready(function () {
                     }
                 }
             }
+            
+            var openBlankPage = function (editorId) {
+                var obj = getFileName();
+                var newPath = obj.rest + "/" + obj.filename
+                var url = settings.ajax.pubWebPath  + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.tmp/" + settings.ajax.filename + ".html"
+                var w = window.open();
+                w.location = url;
+            }
 
             var toogleFullSize = function (editorId, type) {
                 if (type == "expand") {
@@ -5842,9 +5841,25 @@ $(document).ready(function () {
                 }
             }
 
+            var downloadText = function (text, filename) {
+                var element = document.createElement('a');
+                element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+                element.setAttribute('download', filename);
+                element.style.display = 'none';
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            }
+
             var downpdf = function (editorId) {
                 var text = window[editorId].getValue();
                 callData(text, settings, "rmdpdf", callback);
+            }
+
+            var downRmd = function (editorId) {
+                var text = window[editorId].getValue();
+                var filename = elems.attr("filename")
+                downloadText(text, filename)
             }
 
             var update = function (editorId) {
@@ -5891,10 +5906,16 @@ $(document).ready(function () {
                             update(editorId);
                         }
                     });
-                    $('a.rmarkeditordownpdf').on('click', function (event) {
+                    $('a.rmarkreportdownpdf').on('click', function (event) {
                         if ($(this).parents("#" + elemsID).length) {
                             event.preventDefault();
                             downpdf(editorId);
+                        }
+                    });
+                    $('a.rmarkeditordownrmd').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            event.preventDefault();
+                            downRmd(editorId);
                         }
                     });
                 });
@@ -5935,6 +5956,13 @@ $(document).ready(function () {
                             }
                         }
                     });
+                    $('a.rmarkeditorlink').on('click', function (event) {
+                        if ($(this).parents("#" + elemsID).length) {
+                            openBlankPage(editorId)
+                        }
+                    });
+                    
+                    
                 });
                 $(function () {
                     $('#rMarkRename').on('show.bs.modal', function (event) {
@@ -6019,7 +6047,6 @@ $(document).ready(function () {
                 var tmpPath = orgPath + pid
                 window[elemsID + type] = setInterval(function () {
                     var checkExistUrl = checkUrl(tmpPath)
-                    console.log(checkExistUrl)
                     if (!checkExistUrl) {
                         var checkExistError = checkUrl(orgPath + ".err" + pid)
                         if (checkExistError) {
@@ -6433,7 +6460,7 @@ $(document).ready(function () {
                                         if (el == 0) {
                                             active = 'in active';
                                         }
-                                        navTabDiv += '<div style="height:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
+                                        navTabDiv += '<div style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
                                     });
                                     navTabDiv += '</div>';
                                     $(nTd).html(navTabDiv);
@@ -6442,7 +6469,7 @@ $(document).ready(function () {
                                         var filenameCl = cleanProcessName(fileList[el])
                                         var tabID = 'reportTab' + oData.id + "_" + filenameCl;
                                         if (!$(nTd).find("div#" + tabID).length) {
-                                            $(nTd).children().append('<div style="height:100%;" id = "' + tabID + '" class = "tab-pane fade" ></div>')
+                                            $(nTd).children().append('<div style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade" ></div>')
                                         }
                                     });
                                 }

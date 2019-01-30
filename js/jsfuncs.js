@@ -779,11 +779,12 @@ function createLabel(proName) {
 }
 
 //use fullsize class to find parent element which is going to be fullscreen
+//assign parent divs width as 100% and don't change within featList at below
 var toogleFullSize = function (iconElem, type) {
     var elems = $(iconElem).closest("div.fullsize")
     if (type == "expand") {
-        var featList = ["z-index", "width", "height", "position", "top", "left", "background"]
-        var newValue = ["1049", "100%", "100%", "fixed", "0", "0", "white"]
+        var featList = ["z-index", "height", "position", "top", "left", "background"]
+        var newValue = ["1049", "100%", "fixed", "0", "0", "white"]
         var oldCSS = {};
         var newCSS = {};
         for (var i = 0; i < featList.length; i++) {
@@ -830,6 +831,16 @@ function download_file(fileURL, fileName) {
         _window.document.execCommand('SaveAs', true, fileName || fileURL)
         _window.close();
     }
+}
+
+function downloadText(text, filename) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
 }
 
 $('.collapseIcon').on('click', function (e) {

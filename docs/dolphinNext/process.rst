@@ -58,7 +58,7 @@ This section is used to create parameters which will be used while defining *inp
 Inputs
 ======
     
-This section where you enter all of your input nodes of the process. You can start adding by clicking "Add input..." dropdown. After adding selected parameter as a input node, "input name" box and "add operator" button will appear. 
+This section where you enter all of your input nodes of the process. You can start adding by clicking "Add input..." dropdown. After adding selected parameter as a input node, "input name" box and "add operator" and "optional" buttons will appear. 
 
 .. image:: dolphinnext_images/process_inputs.png
 	:align: center
@@ -75,6 +75,29 @@ set         val(name), file(genome)    ${name}
 =========== ========================== ====================
 
 Additionally, if you need to transform values emitted by a channel, you can click "operators" button and select operators from dropdown. For detailed information, you can continue to read `operators <process.html#id5>`_ section.
+
+* **Optional Inputs:**
+
+If you want use optional input parameter, you can check the optional checkbox. This feature allows flexibility for the user while defining process since the process will be executed in spite of the absence of the input parameter. Please check the example below for the use case:
+
+.. image:: dolphinnext_images/process_optional_input.png
+	:align: center
+
+Here, ``filter`` parameter will be defined as blank string in case input parameter ``genome`` is empty. Otherwise, when input parameter ``genome`` is found, ``filter`` parameter will be defined as "---filter ${genome}".
+
+Note that the condition is defined based on the "Input Name" of the parameter. Please check the other possibilities of condition scripts and their input parameters at below.
+
+========================== =========================================
+Input name                 Condition in the Script for Empty Channel
+========================== =========================================
+genome                     genome.name == 'genome'
+script                     script.name == 'script'
+val(name), file(index)     index.name == 'index'
+val(path)                  path.name == 'path'
+========================== =========================================
+
+Note that if ``file()`` or ``val()`` parameters are used, DolphinNext parse their content and use these parts in the condition. If both type are used, then content of the first file parameter will be used.
+
 
 Outputs
 =======
@@ -96,6 +119,11 @@ set             val(name), file(genome)    file             "genome.index*"
 =============== ========================== ================ ====================================
 
 Additionally, if you need to transform values emitted by a channel, you can click "operators" button and select operators from dropdown. For detailed information, you can continue to read `operators <process.html#id5>`_ section. In addition to operators, regular expressions can be activated by clicking "regular expressions" button. You can learn more about this section by clicking `regular expressions <process.html#id6>`_ section.
+
+
+* **Optional Outputs:**
+
+If your process doesn't generate some outputs in some circumstances, you can check the optional checkbox which tells Nextflow not to fail the process if the declared output is not created. 
 
 Scripts
 =======
