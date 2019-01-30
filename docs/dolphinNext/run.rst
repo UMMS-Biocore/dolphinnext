@@ -92,6 +92,7 @@ Advanced Options
 
 Pipeline Files
 ==============
+
 This section is separated into two groups: **inputs** and **outputs**. 
 
 * **Inputs:** The input file paths or values are entered by clicking **Select File** or **Enter Value** button. In order to select **multiple files**, wildcard characters ``*``, ``?``, ``[]`` and ``{}`` should be used. These arguments are interpreted as a `glob <https://docs.oracle.com/javase/tutorial/essential/io/fileOps.html#glob>`_ path matcher by Nextflow and returns a list of paths that are matching the specified pattern. Several examples to define inputs are listed below:
@@ -109,14 +110,55 @@ Val         ~/scripts/filter.py
 
 Workflow
 ========
+
 To give you an overview, overall pipeline and its description are showed in this region. You may hide it by clicking minus/plus icon just next to **Workflow** title.
 
 Run Logs
 ========
-Log section will appear below of the **run description** as soon as you click the "Ready to Run" button. You can monitor each step of the run both before and after nextflow execution as shown at figure below. 
+
+Log section keeps track of each run logs which is initiated by clicking **Ready to Run** button. You can monitor each step of the run both before and after nextflow execution as shown at figure below. 
 
 .. image:: dolphinnext_images/run_log.png
     :align: center
+    
+You can view various log files such as timeline.html, dag.html, trace.txt, .nextflow.log, nextflow.nf, nextflow.config as shown at below:
+
+timeline.html:
+
+.. image:: dolphinnext_images/timeline.png
+    :align: center
+    :width: 99%
+    
+dag.html:
+
+.. image:: dolphinnext_images/dag.png
+    :align: center
+    :width: 99%
+    
+trace.txt:
+    
+.. image:: dolphinnext_images/trace.png
+    :align: center
+    :width: 99%
+    
+.nextflow.log:
+    
+.. image:: dolphinnext_images/nextflowlog.png
+    :align: center
+    :width: 99%
+
+nextflow.nf:
+
+.. image:: dolphinnext_images/nextflownf.png
+    :align: center
+    :width: 99%
+
+nextflow.config:
+
+.. image:: dolphinnext_images/nextflowconfig.png
+    :align: center
+    :width: 99%
+
 
 If any error occured on any of these steps, detailed explanation about the error will be displayed in this section and run error sign will appear in the right side of the header as show in the example below: 
 
@@ -124,12 +166,69 @@ If any error occured on any of these steps, detailed explanation about the error
     :align: center
 
 
+Reports
+=======
+
+Reports tab will be appear in the run page as soon as run is initiated by clicking **Ready to Run** button. You can view output files in various modules such as R-Markdown, Datatables, Highcharts, HTML or PDF viewer. Please check the example report section of RSEM pipeline at below.
+
+.. image:: dolphinnext_images/report_all.png
+    :align: center
+    :width: 99%
+
+Each report row corresponds to output parameter in the pipeline workflow and you can easily visualize their content by clicking on each row. All these sections have download, full screen, and open in new window icons in order to help you to investigate each report.
+
+* **R Markdown:**
+
+R Markdown feature provides interactive analysis of the produced data. We have prepared series of R Markdown reports which will allow you to reach your report in a HTML or PDF format as soon as your run complete. Within an R Markdown (.RMD) file, R Code Chunks can be embedded with the native Markdown syntax for fenced code regions. For example, the following code chunk computes a data histogram and renders a bar plot as a PNG image:
+
+.. image:: dolphinnext_images/report_rmarkdown.png
+    :align: center
+    :width: 99%
+
+You can reach the details about R Markdown in their web page by clicking `this link <https://rmarkdown.rstudio.com/>`_. 
+
+At the top of R-Markdown module, there are several icons which will help you to edit your rmd file, save as a new file and download in various formats such as RMD, PDF or HTML. In order to facilitate the review process, you can click "full screen" icon to fit the module in your screen. Besides you can adjust **Auto Updating Output** and **Autosave** features by clicking settings icon.
+
+        * **Auto Updating Output:** If enabled, the preview panel updates automatically as you code. If disabled, use the "Run Script" button to update.
+    
+        * **Autosave:** If active, DolphinNext will autosave the file content every 30 seconds.
 
 
+* **Datatables:**
+
+This module powered by `Datatables <https://datatables.net//>`_ which allows you view, sort and search in the table content. Please check following two examples where alignment and RSEM summaries are shown.
+
+        * Alignment Summary:
+
+        .. image:: dolphinnext_images/report_datatables2.png
+            :align: center
+            :width: 99%
 
 
+        * RSEM Summary:
 
 
+        .. image:: dolphinnext_images/report_datatables.png
+            :align: center
+            :width: 99%
+    
+This module allows you to fit the table in your screen by clicking "full screen" icon on top of the module.
 
+* **HTML Viewer:**
 
+You can easily embed html content in to our report section by using HTML viewer. Please check the example for FastQC output at below:
+
+.. image:: dolphinnext_images/report_html.png
+    :align: center
+    :width: 99%
+    
+    
+
+* **PDF Viewer:**
+
+Similar to HTML Viewer, PDF files can be embeded in report section. You can see the RseQC reports as an example at below:
+
+.. image:: dolphinnext_images/report_pdf.png
+    :align: center
+    :width: 99%
 
