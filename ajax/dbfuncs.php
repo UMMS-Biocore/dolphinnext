@@ -1993,7 +1993,7 @@ class dbfuncs {
         return self::insTable($sql);
     }
     public function duplicateProcessParameter($new_pro_id, $old_id, $ownerID){
-        $sql = "INSERT INTO process_parameter(process_id, parameter_id, type, sname, operator, closure, reg_ex, owner_id, perms, date_created, date_modified, last_modified_user)
+        $sql = "INSERT INTO process_parameter(process_id, parameter_id, type, sname, operator, closure, reg_ex, optional, owner_id, perms, date_created, date_modified, last_modified_user)
                 SELECT '$new_pro_id', parameter_id, type, sname, operator, closure, reg_ex, optional, '$ownerID', '3', now(), now(),'$ownerID'
                 FROM process_parameter
                 WHERE process_id='$old_id'";
