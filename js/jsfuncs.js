@@ -613,6 +613,7 @@ $inputText.each(function () {
 //columns: [{title: "Id", data: "Id"} 1: {title: "Name", data: "Name"}]
 //data: [{Id: "123", Name: "John Doe Fresno"},{Id: "124", Name: "Alice Alicia"}]
 function tsvConvert(tsv, format) {
+    console.log(tsv)
     var tsv = $.trim(tsv);
     var lines = tsv.split("\n");
     var headers = lines[0].split("\t");
@@ -625,6 +626,7 @@ function tsvConvert(tsv, format) {
         }
         data.push(obj);
     }
+    console.log(JSON.stringify(data))
     if (format == "json") {
         return data;
     }
@@ -636,6 +638,7 @@ function tsvConvert(tsv, format) {
             obj.data = headers[j]
             result.columns.push(obj);
         }
+        
         return result;
     }
 }

@@ -934,9 +934,11 @@ function addProcessPanelAutoform(gNum, name, varName, type, autoform) {
                 dataGroup.type = type;
                 var varNameCond = dataGroup.varNameCond;
                 //find dropdown/checkbox where condition based changes are created.
-                var condDiv = $("#addProcessRow-" + gNum).find("#var_" + gNum + "-" + varNameCond)[0];
+                //in order to grep all array rows which has same id, following jquery pattern is used.
+                var condDiv = $('[id="var_' + gNum + "-" + varNameCond+'"]');
                 //bind change event to dropdown
-                $(condDiv).change(dataGroup, function () {
+                $.each(condDiv, function (eachArrayForm) {
+                $(condDiv[eachArrayForm]).change(dataGroup, function () {
                     var lastdataGroup = $.extend(true, {}, dataGroup);
                     var autoVal = lastdataGroup.autoVal[0];
                     var varNameCond = lastdataGroup.varNameCond;
@@ -966,11 +968,13 @@ function addProcessPanelAutoform(gNum, name, varName, type, autoform) {
                         }
                     }
                 });
-                $(condDiv).trigger("change")
+                    $(condDiv[eachArrayForm]).trigger("change")
                 //trigger one more time to effectively change according to last value
                 if (el == allAutoForm.length - 1) {
-                    $(condDiv).trigger("change")
+                    $(condDiv[eachArrayForm]).trigger("change")
                 }
+                });
+                
             });
         }, 1000);
     }
@@ -4713,7 +4717,6 @@ function fillRunVerOpt(dropDownAr) {
     });
     var size = $(newRunLogs).size()
     for (var j = 0; j < dropDownAr.length; j++) {
-
         var n = 0;
         var lastItem = "";
         var dropDownId = dropDownAr[j];
@@ -4723,7 +4726,6 @@ function fillRunVerOpt(dropDownAr) {
         } else if (dropDownId == "#runVerLog") {
             runType = "Log"
         }
-
         $(dropDownId).empty();
         $.each(newRunLogs, function (el) {
             var run_log_uuid = newRunLogs[el].run_log_uuid;
@@ -4747,8 +4749,8 @@ function fillRunVerOpt(dropDownAr) {
                 }
             }
             $(dropDownId).val($(dropDownId + ' option:first').val());
-            $(dropDownId).trigger("change");
         });
+        $(dropDownId).trigger("change");
     }
 }
 
@@ -5404,19 +5406,23 @@ $(document).ready(function () {
                 }
                 var getHeaderIconDiv = function (fileid, visType) {
                     var blankUrlIcon = "";
-                    if (visType !== "table") {
+                    var downloadIcon = "";
+                    if (visType !== "table" && visType !== "debrowser") {
                         blankUrlIcon = `<li role="presentation"><a fileid="` + fileid + `" id="blankUrl-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Open in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>`;
                     }
-                    var content = `<ul style="float:inherit"  class="nav nav-pills panelheader">
-                            ` + blankUrlIcon + `
-                            <li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
-                            <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                    if (visType !== "debrowser") {
+                        downloadIcon = `<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
                                 <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
                                 <ul class="dropdown-menu dropdown-menu-right">
                                     <li><a fileid="` + fileid + `" id="downUrl-` + fileid + `" href="#">Download</a></li>
                                 </ul>
-                            </li>
-                        </ul>`
+                            </li>`;
+                    }
+                    var content = `<ul style="float:inherit"  class="nav nav-pills panelheader">
+                            ` + blankUrlIcon + `
+                            <li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>`
+                            +downloadIcon+
+                        `</ul>`
                     var wrapDiv = '<div id="' + fileid + '-HeaderIconDiv" style="float:right; height:35px; width:100%;">' + content + '</div>';
                     return wrapDiv;
                 }
@@ -5458,6 +5464,16 @@ $(document).ready(function () {
                     } else if (visType == "pdf") {
                         var iframe = '<object style="width:100%; height:100%;"  data="' + link + '" type="application/pdf"><embed src="' + link + '" type="application/pdf" /></object>';
                     }
+                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
+                    $(href).append(contentDiv);
+                    bindEveHandlerIcon(fileid)
+                } else if (visType == "debrowser") {
+                    var filePathJson = getValues({ p: "callDebrowser", dir: dir, uuid: uuid, filename: filename });
+                    var link = encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson);
+                    var debrowserlink = 'https://debrowser.umassmed.edu:444/debrowser/R/?jsonobject='+link;
+//                    var testlink = 'https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fpub%2FZYXtEdUDG2M4PTyzzeBDWiu6md7OI6%2Frsem%2Fgenes_expression_expected_count.tsv%26format%3DJSON&amp;'
+                    console.log(debrowserlink)
+                    var iframe = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + debrowserlink + '"></iframe>';
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
                     $(href).append(contentDiv);
                     bindEveHandlerIcon(fileid)
@@ -5713,11 +5729,11 @@ $(document).ready(function () {
                     }
                 }
             }
-            
+
             var openBlankPage = function (editorId) {
                 var obj = getFileName();
                 var newPath = obj.rest + "/" + obj.filename
-                var url = settings.ajax.pubWebPath  + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.tmp/" + settings.ajax.filename + ".html"
+                var url = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.tmp/" + settings.ajax.filename + ".html"
                 var w = window.open();
                 w.location = url;
             }
@@ -5960,8 +5976,8 @@ $(document).ready(function () {
                             openBlankPage(editorId)
                         }
                     });
-                    
-                    
+
+
                 });
                 $(function () {
                     $('#rMarkRename').on('show.bs.modal', function (event) {
@@ -6518,6 +6534,9 @@ $(document).ready(function () {
                                 } else if (visType === "highcharts") {
                                     icon = "fa fa-line-chart";
                                     text = "Charts";
+                                } else if (visType === "debrowser") {
+                                    icon = "glyphicon glyphicon-stats";
+                                    text = "DE-Browser";
                                 }
                                 $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
                             }
