@@ -988,6 +988,7 @@
                                 <option value="table" plugin="dataTables.js">DataTables</option>
                                 <option value="highcharts" plugin="highcharts.js">Highcharts</option>
                                 <option value="rmarkdown" >R Markdown</option>
+                                <option value="debrowser" >DEBrowser</option>
                                 <option value="pdf">PDF Reader</option>
                                 <option value="rdata">RData</option>
                             </select>

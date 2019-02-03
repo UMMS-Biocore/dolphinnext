@@ -51,8 +51,8 @@
     <div name="empty_space" style="height:10%; width:100%; clear:both;"></div>
     <div class="form-box" id="login-box" style="width:470px;">
         <h1 class="text-center" style="padding-bottom:20px;"><span class="logo-lg" style="color:white; font-size:30px;"><b><?php echo COMPANY_NAME?></b> DolphinNext</span></h1>
-        <form action="<?php echo BASE_PATH?>/" method="post">
             <div class="body bg-white" style=" border-radius:5px; padding:30px;">
+               <form action="<?php echo BASE_PATH?>/" method="post">
                 <div style="margin:auto; height:80px; padding-top:20px;">
                     <h2 class="text-center">Log In</h2>
                 </div>
@@ -62,9 +62,8 @@
                         echo '<div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center"><span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span></div>';
                     }
                 ?>
-                
-                
-                <div class="form-group">
+                    
+                <div class="form-group" style="margin-top:20px;">
                     <input type="email" name="email" class="form-control" placeholder="E-mail" />
                 </div>
                 <div class="form-group">
@@ -74,6 +73,8 @@
                 <div class="footer">
                     <button type="submit" name="login" class="btn btn-primary" style="float:right;">Login</button>
                 </div>
+            </form>
+                  <form action="<?php echo BASE_PATH?>/" method="post">      
                    <?php 
                     if (ALLOW_SIGNUP != false){
                         echo '<div class="text-center" style="margin-top:30%;">Don\'t have a account <button type="submit" name="signup" class="btn btn-default" style="margin-left:10px;">Sign Up</button></div>';
@@ -82,10 +83,10 @@
                         
                     }
                 ?>
-                
+                </form>
             </div>
 
-        </form>
+        
 
 
     </div>

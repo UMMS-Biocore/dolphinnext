@@ -2514,6 +2514,33 @@ class dbfuncs {
         return json_encode($res); 
     }
     
+    public function tsvConvert($tsv, $format){
+        $tsv = trim($tsv);
+        $lines = explode("\n", $tsv);
+        $header = explode("\t", $lines[0]); 
+        $data = array();
+        for ($i = 1; $i < count($lines); $i++) {
+            $obj = new stdClass();
+            $currentline = explode("\t", $lines[$i]); 
+            for ($j = 0; $j < count($header); $j++) {
+                $name = $header[$j];
+                $obj->$name = $currentline[$j];
+            }
+            $data[] = $obj;
+        }
+        return $data;
+    }
+    
+    
+    public function callDebrowser($uuid, $dir, $filename){
+        $targetDir = "{$this->run_path}/$uuid/pubweb/$dir";
+        $targetFile = "{$targetDir}/{$filename}";
+        $targetJson = "{$targetDir}/.{$filename}";
+        $tsv= file_get_contents($targetFile);
+        $array = $this->tsvConvert($tsv, "json");
+        file_put_contents($targetJson, json_encode($array));
+        return json_encode("$dir/.{$filename}");
+    }
     public function callRmarkdown($type, $uuid, $text, $dir, $filename){
         //travis fix
         if (!headers_sent()) {

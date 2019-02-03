@@ -890,6 +890,12 @@ else if ($p=="callRmarkdown"){
     $text = urldecode($_REQUEST['text']);
     $data = $db->callRmarkdown($type, $uuid, $text, $dir, $filename);
 }
+else if ($p=="callDebrowser"){
+    $uuid = $_REQUEST['uuid'];
+    $dir = $_REQUEST['dir'];
+    $filename = $_REQUEST['filename'];
+    $data = $db->callDebrowser($uuid, $dir, $filename);
+}
 else if ($p=="moveFile"){
     $from = $_REQUEST['from'];
     $to = $_REQUEST['to'];
