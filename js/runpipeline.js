@@ -1551,25 +1551,20 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name) {
     if ($("#userInputs").css("display") === "none") {
         $("#userInputs").css("display", "table-row")
     }
-
     //check if project_pipeline_inputs exist then fill:
-    var getProPipeInputs = projectPipeInputs.filter(function (el) { return el.g_num == pipeGnum })
+    var getProPipeInputs = projectPipeInputs.filter(function (el) { return el.given_name == paramGivenName })
     var rowID = rowType + 'Ta-' + firGnum;
     if (getProPipeInputs && getProPipeInputs != "") {
-        if (getProPipeInputs.length == 1) {
+        if (getProPipeInputs.length > 0) {
             var filePath = getProPipeInputs[0].name; //value for val type
             var proPipeInputID = getProPipeInputs[0].id;
             var given_name = getProPipeInputs[0].given_name;
-            if (paramGivenName === given_name) {
-                setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier); }, 2);
-            } else {
-                //input given name is changed, then delete the input from database.
-                var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
+            setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier); }, 2);
+        } 
+        if (getProPipeInputs.length > 1) {
+            for (var k = 1; k < getProPipeInputs.length; k++) {
+                var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
             }
-        } else if (getProPipeInputs.length > 1) {
-            $.each(getProPipeInputs, function (el) {
-                var removeInputAll = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[el].id });
-            });
         }
     }
     //check if run saved before
@@ -1692,7 +1687,7 @@ function insertProPipePanel(script, gNum, name, pObj) {
         //check if parameter comment is exist: //*
         if (script.match(/\/\/\*/)) {
             var panelObj = parseProPipePanelScript(script);
-            //            console.log(panelObj)
+            console.log(panelObj)
             //create processHeader
             var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + prefix + gNum + '"><h4 class="panel-title">' + name + ' options <i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
             var processBodyInt = '<div id="collapse-' + prefix + gNum + '" class="panel-collapse collapse"><div id="addProcessRow-' + prefix + gNum + '" class="panel-body">'
@@ -2519,23 +2514,19 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
             var inRow = insertRowTable(rowType, firGnum, secGnum, paramGivenName, paraIdentifier, paraFileType, paraQualifier, processName, selectFileButton);
             insertInRow(inRow, paramGivenName, rowType, "mainInputs")
             //get project_pipeline_inputs:
-            var getProPipeInputs = projectPipeInputs.filter(function (el) { return el.g_num == firGnum })
+            var getProPipeInputs = projectPipeInputs.filter(function (el) { return el.given_name == paramGivenName })
             var rowID = rowType + 'Ta-' + firGnum;
             if (getProPipeInputs && getProPipeInputs != "") {
                 if (getProPipeInputs.length > 0) {
                     var filePath = getProPipeInputs[0].name; //value for val type
                     var proPipeInputID = getProPipeInputs[0].id;
                     var given_name = getProPipeInputs[0].given_name;
-                    if (paramGivenName === given_name) {
-                        setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier); }, 2);
-                    } else {
-                        //input given name is changed, then delete the input from database.
-                        var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
+                    setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier); }, 2);
+                } 
+                if (getProPipeInputs.length > 1) {
+                    for (var k = 1; k < getProPipeInputs.length; k++) {
+                        var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
                     }
-                } else if (getProPipeInputs.length > 1) {
-                    $.each(getProPipeInputs, function (el) {
-                        var removeInputAll = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[el].id });
-                    });
                 }
             }
             //check if run saved before
@@ -3001,19 +2992,16 @@ function cleanDepProPipeInputs() {
         p: "getProjectPipelineInputs",
         project_pipeline_id: project_pipeline_id,
     });
-    var numInputRows = $('#inputsTable > tbody').find('tr[id*=input]');
-    var gNumAr = [];
+    var numInputRows = $('#inputsTable > tbody').find('td[given_name]');
+    var givenNameObj = {};
     $.each(numInputRows, function (el) {
-        var inId = $(numInputRows[el]).attr("id");
-        var inGnum = inId.match(/inputTa-(.*)/)[1];
-        if (inGnum) {
-            gNumAr.push(inGnum);
-        }
+        var inGName = $(numInputRows[el]).attr("given_name");
+        givenNameObj[inGName]="";
     });
     $.each(getProPipeInputs, function (el) {
-        var gnum = parseInt(getProPipeInputs[el].g_num);
-        //clean inputs whose gnum is not found in numInputRows
-        if (gNumAr.indexOf(gnum.toString()) < 0) {
+        var givenName = getProPipeInputs[el].given_name;
+        //clean inputs whose given_name is not found in numInputRows
+        if (givenNameObj[givenName] == undefined) {
             var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[el].id });
         }
     });
@@ -5472,7 +5460,6 @@ $(document).ready(function () {
                     var link = encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson);
                     var debrowserlink = 'https://debrowser.umassmed.edu:444/debrowser/R/?jsonobject='+link;
 //                    var testlink = 'https%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fapi%2F%3Fsource%3Dhttps%3A%2F%2Fdolphin.umassmed.edu%2Fpublic%2Fpub%2FZYXtEdUDG2M4PTyzzeBDWiu6md7OI6%2Frsem%2Fgenes_expression_expected_count.tsv%26format%3DJSON&amp;'
-                    console.log(debrowserlink)
                     var iframe = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + debrowserlink + '"></iframe>';
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
                     $(href).append(contentDiv);
