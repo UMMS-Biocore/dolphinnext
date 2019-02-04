@@ -745,7 +745,7 @@ function checkImport(optObj) {
                 //if !pipeline_rev_uuid but pipeline_uuid is found then add as new revision into existing pipeline_gid
             } else if (pipeUUID.pipeline_uuid) {
                 pipeUUID.pipeline_uuid = decodeElement("pipeline", pipeUUID.pipeline_uuid)
-                $("#stat_" + rowID).html('Process group has found <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Pipeline will be added as a new revision of the pipeline: ' + pipeUUID.pipeline_uuid.name + '"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                $("#stat_" + rowID).html('Pipeline group has found <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Pipeline will be added as a new revision of the pipeline: ' + pipeUUID.pipeline_uuid.name + '"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
                 sendJSONpipeline.rev_id = parseInt(pipeUUID.pipeline_uuid.rev_id) + 1;
                 sendJSONpipeline.pipeline_gid = pipeUUID.pipeline_uuid.pipeline_gid;
                 window.importObj[rowID]["command"] = sendJSONpipeline;

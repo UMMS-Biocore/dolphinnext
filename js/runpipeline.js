@@ -1252,8 +1252,7 @@ function fillStates(states) {
             }
         }
     });
-    checkReadytoRun();
-    $("#inputsTab").loading('stop');
+    
 
 }
 // to execute autofill function, binds event handlers
@@ -1267,7 +1266,10 @@ function bindEveHandler(autoFillJSON) {
                 $("#chooseEnv").change(function () {
                     var statusCond = checkConds(conds);
                     if (statusCond === true) {
+                        console.log("chooseEnvChanged")
+                        
                         fillStates(states)
+                        autoCheck("fillstates")
                     }
                 });
             }
@@ -1285,7 +1287,9 @@ function bindEveHandler(autoFillJSON) {
                                 $(varNameButAr[0]).change(function () {
                                     var statusCond = checkConds(conds);
                                     if (statusCond === true) {
+                                        console.log("buttonChanged")
                                         fillStates(states);
+                                        autoCheck("fillstates")
                                     }
                                 });
                             }
@@ -1687,7 +1691,7 @@ function insertProPipePanel(script, gNum, name, pObj) {
         //check if parameter comment is exist: //*
         if (script.match(/\/\/\*/)) {
             var panelObj = parseProPipePanelScript(script);
-            console.log(panelObj)
+//            console.log(panelObj)
             //create processHeader
             var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + prefix + gNum + '"><h4 class="panel-title">' + name + ' options <i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
             var processBodyInt = '<div id="collapse-' + prefix + gNum + '" class="panel-collapse collapse"><div id="addProcessRow-' + prefix + gNum + '" class="panel-body">'
@@ -3256,108 +3260,53 @@ function removeSelectFile(rowID, sType) {
 }
 
 function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID) {
-    //check if input exist?
-    if (inputID === null) {
-        var nameInput = data[1].value;
-        var checkInput = getValues({ name: nameInput, type: sType, p: "checkInput" });
-        if (checkInput && checkInput != '') {
-            var input_id = checkInput[0].id;
-        } else {
-            //insert into input table
-            data.push({ name: "type", value: sType });
-            data.push({ name: "p", value: "saveInput" });
-            var inputGet = getValues(data);
-            if (inputGet) {
-                var input_id = inputGet.id;
-            }
-        }
-    } else {
-        var input_id = inputID;
+    if (inputID === null) {inputID = ""}
+    var nameInput = "";
+    if (data){
+        nameInput = data[1].value;
     }
-    //check if project input is exist
-    var checkProjectInput = getValues({ "p": "checkProjectInput", "input_id": input_id, "project_id": project_id });
-    if (checkProjectInput && checkProjectInput != '') {
-        var projectInputID = checkProjectInput[0].id;
-    } else {
-        //insert into project_input table
-        var proInputGet = getValues({ "p": "saveProjectInput", "input_id": input_id, "project_id": project_id });
-        if (proInputGet) {
-            var projectInputID = proInputGet.id;
-        }
-    }
-    //insert into project_pipeline_input table
-    var propipeInputGet = getValues({
-        "p": "saveProPipeInput",
-        "input_id": input_id,
-        "project_id": project_id,
-        "pipeline_id": pipeline_id,
-        "project_pipeline_id": project_pipeline_id,
-        "g_num": gNumParam,
-        "given_name": given_name,
-        "qualifier": qualifier
-    });
-    if (propipeInputGet && propipeInputGet != "") {
-        var projectPipelineInputID = propipeInputGet.id;
-    }
-    //	      }
-    //get inputdata from input table
-    var proInputGet = getValues({ "p": "getInputs", "id": input_id });
-    if (proInputGet && proInputGet != "") {
-        var filePath = proInputGet[0].name;
-        //insert into #inputsTab
-        insertSelectInput(rowID, gNumParam, filePath, projectPipelineInputID, sType);
+    var fillInput = getValues({ 
+                p: "fillInput",
+                inputID: inputID,
+                inputName: nameInput,
+                inputType: sType,
+                project_id: project_id,
+                "pipeline_id": pipeline_id,
+                "project_pipeline_id": project_pipeline_id,
+                "g_num": gNumParam,
+                "given_name": given_name,
+                "qualifier": qualifier,
+                proPipeInputID : ""
+            });
+    //insert into #inputsTab
+    if (fillInput.projectPipelineInputID && fillInput.inputName){
+        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType);
     }
 }
 
 function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID) {
-    if (inputID === null) {
-        var nameInput = data[1].value;
-        var checkInput = getValues({ name: nameInput, type: sType, p: "checkInput" });
-        if (checkInput && checkInput != '') {
-            var input_id = checkInput[0].id;
-        } else {
-            //insert into input table
-            data[0].value = "";
-            data.push({ name: "type", value: sType });
-            data.push({ name: "p", value: "saveInput" });
-            var inputGet = getValues(data);
-            if (inputGet) {
-                var input_id = inputGet.id;
-            }
-        }
-    } else {
-        var input_id = inputID;
-        //get inputdata from input table
-        var proInputGet = getValues({ "p": "getInputs", "id": input_id });
-        if (proInputGet && proInputGet != "") {
-            var nameInput = proInputGet[0].name;
-        }
+    if (inputID === null) {inputID = ""}
+    var nameInput = "";
+    if (data){
+        nameInput = data[1].value;
     }
-    //check if project input is exist
-    var checkProjectInput = getValues({ "p": "checkProjectInput", "input_id": input_id, "project_id": project_id });
-    if (checkProjectInput && checkProjectInput != '') {
-        var projectInputID = checkProjectInput[0].id;
-    } else {
-        //insert into project_input table
-        var proInputGet = getValues({ "p": "saveProjectInput", "input_id": input_id, "project_id": project_id });
-        if (proInputGet && proInputGet != "") {
-            var projectInputID = proInputGet.id;
-        }
+    var fillInput = getValues({ 
+                p: "fillInput",
+                inputID: inputID,
+                inputName: nameInput,
+                inputType: sType,
+                project_id: project_id,
+                "pipeline_id": pipeline_id,
+                "project_pipeline_id": project_pipeline_id,
+                "g_num": gNumParam,
+                "given_name": given_name,
+                "qualifier": qualifier,
+                proPipeInputID: proPipeInputID
+            });
+    //update #inputsTab
+    if (fillInput.projectPipelineInputID && fillInput.inputName){
+        $('#filePath-' + gNumParam).text(fillInput.inputName);
     }
-    //update project_pipeline_input table
-    var propipeInputGet = getValues({
-        "id": proPipeInputID,
-        "p": "saveProPipeInput",
-        "input_id": input_id,
-        "project_id": project_id,
-        "pipeline_id": pipeline_id,
-        "project_pipeline_id": project_pipeline_id,
-        "g_num": gNumParam,
-        "given_name": given_name,
-        "qualifier": qualifier
-    });
-    //update file table
-    $('#filePath-' + gNumParam).text(nameInput);
 }
 
 function saveFileSetValModal(data, sType, inputID) {
@@ -3393,6 +3342,7 @@ function editFileSetValModal(data, sType, inputID) {
 checkType = "";
 //checkType become "rerun" or "resumerun" when rerun or resume button is clicked.
 function checkReadytoRun(type) {
+    console.log("checkReadytoRun")
     if (checkType === "") {
         checkType = type || "";
     }
@@ -3521,9 +3471,18 @@ $("#publish_dir_check").click(function () {
 
 var timeoutCheck = 0;
 
-function autoCheck() {
+function autoCheck(type) {
+    var autoCheckType = type || "";
+    console.log(timeoutCheck)
     if (timeoutCheck) clearTimeout(timeoutCheck);
-    timeoutCheck = setTimeout(function () { checkReadytoRun() }, 2000);
+    if (autoCheckType == "fillstates"){
+        timeoutCheck = setTimeout(function () { 
+            $("#inputsTab").loading('stop');
+            checkReadytoRun() }, 2000);
+    } else {
+        timeoutCheck = setTimeout(function () { checkReadytoRun() }, 2000);
+    }
+    
 }
 
 //check if path contains s3:// pattern and shows aws menu

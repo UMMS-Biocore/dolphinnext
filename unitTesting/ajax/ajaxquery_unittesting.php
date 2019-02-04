@@ -1614,34 +1614,6 @@ class ajaxQueryTest extends TestCase
 		ob_end_clean();
 	}
 	
-	/**
-     * @depends testgetPublicPipelines
-     * @depends testgetProjectPipelineInputsByGnum
-     */
-    public function testrenameProjectPipelineInputByGnum() {
-		ob_start();
-		$_REQUEST['p'] = 'renameProjectPipelineInputByGnum';
-		$_REQUEST['id'] = "1";
-		$_REQUEST['g_num'] = "0";
-		$_REQUEST['given_name'] = "test_inputparam2";
-		include('ajaxquery.php');
-        $_REQUEST['p'] = 'getProjectPipelineInputs';
-		$_REQUEST['project_pipeline_id'] = '1';
-		$_REQUEST['id'] = '';
-		$_REQUEST['g_num'] = '0';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->id, '1');
-		$this->assertEquals(json_decode($data)[0]->given_name, 'test_inputparam2');
-		ob_end_clean();
-	}
-
-
-	
-	
-	
-	
-	
-	
     /**
      * @depends testUpdateInput
      */
@@ -1697,7 +1669,8 @@ class ajaxQueryTest extends TestCase
 	
     
     /**
-     * @depends testrenameProjectPipelineInputByGnum
+     * @depends testgetPublicPipelines
+     * @depends testgetProjectPipelineInputsByGnum
      */
     public function testremoveProjectPipelineInput() {
 		ob_start();

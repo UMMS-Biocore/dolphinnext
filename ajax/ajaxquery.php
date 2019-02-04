@@ -519,12 +519,6 @@ else if ($p=="removeProjectPipeline"){
     $db -> removeProjectPipelineInputByPipe($id);
     $data = $db -> removeProjectPipeline($id);
 }
-else if ($p=="renameProjectPipelineInputByGnum"){  
-    $g_num = $_REQUEST['g_num'];
-    $given_name = $_REQUEST['given_name'];
-    settype($g_num, 'integer');
-    $data = $db -> renameProjectPipelineInputByGnum($id,$given_name,$g_num, $ownerID);
-}
 else if ($p=="removeProjectInput"){   
     $data = $db -> removeProjectInput($id);
 }
@@ -783,6 +777,65 @@ else if ($p=="saveProPipeInput"){
     } else {
        $data = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $ownerID);
     }
+}
+else if ($p=="fillInput"){
+    $inputID = $_REQUEST['inputID'];
+    $inputType = $_REQUEST['inputType'];
+    $inputName = $_REQUEST['inputName'];
+    $project_id = $_REQUEST['project_id'];
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $g_num = $_REQUEST['g_num'];
+    settype($g_num, 'integer');
+    $given_name = $_REQUEST['given_name'];
+    $qualifier = $_REQUEST['qualifier'];
+    $proPipeInputID = $_REQUEST['proPipeInputID'];
+    //check if input exist?
+    if (empty($inputID)) {
+        $checkIn = $db->checkInput($inputName,$inputType);
+        $checkInData = json_decode($checkIn,true);
+        if (isset($checkInData[0])){
+            $input_id = $checkInData[0]["id"];
+        } else {
+            //insert into input table
+            $insertIn = $db->insertInput($inputName, $inputType, $ownerID);
+            $insertInData = json_decode($insertIn,true);
+            $input_id = $insertInData["id"];
+        }
+    } else {
+        $input_id = $inputID;
+        //get inputdata from input table
+        $indata = $db -> getInputs($input_id,$ownerID);
+        $indata = json_decode($indata,true);
+        if (isset($indata[0])){
+            $inputName = $indata[0]["name"];
+        } 
+    }
+    $input_id = (string)$input_id;
+    //check if project input is exist
+    $checkPro = $db->checkProjectInput($project_id, $input_id);
+    $checkProData = json_decode($checkPro,true);
+    if (isset($checkProData[0])){
+        $projectInputID = $checkProData[0]["id"];
+    } else {
+        //insert into project_input table
+        $insertPro = $db->insertProjectInput($project_id, $input_id, $ownerID);
+        $insertProData = json_decode($insertPro,true);
+        $projectInputID = $insertProData["id"];
+    }
+    $projectInputID = (string)$projectInputID;
+    $data = json_encode($projectInputID);
+    //insert into project_pipeline_input table
+    if (!empty($proPipeInputID)){
+        $data = $db->updateProPipeInput($proPipeInputID, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $ownerID);
+        $projectPipelineInputID = $proPipeInputID;
+    } else {
+        $insertProPipe = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $ownerID);
+        $insertProPipeData = json_decode($insertProPipe,true);
+        $projectPipelineInputID = $insertProPipeData["id"];
+    }
+    $projectPipelineInputID = (string)$projectPipelineInputID;
+    $data = json_encode(array('projectPipelineInputID' => $projectPipelineInputID,'inputName' => $inputName ));
 }
 else if ($p=="saveProjectInput"){
     $input_id = $_REQUEST['input_id'];
