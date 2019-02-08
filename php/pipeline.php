@@ -23,21 +23,21 @@
                         <i class="fa fa-chain" style="font-size: 16px;"></i></a></button>
 
                 <button type="button" id="downPipeline" class="btn" name="button" onclick="download(createNextflowFile(&quot;pipeline&quot;))" data-backdrop="false" style=" margin:0px; padding:0px;">
-                    <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Download Pipeline">
+                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Pipeline">
                         <i class="glyphicon glyphicon-save"></i></a></button>
                 <button type="button" id="importPipeline" class="btn" name="button" data-toggle="modal" data-target="#importModal" data-backdrop="false" style=" display:none; margin:0px; padding:0px;">
-                <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Import Pipeline"><i class="glyphicon glyphicon-import"></i></a></button>
+                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Import Pipeline"><i class="glyphicon glyphicon-import"></i></a></button>
                 <button type="button" id="exportPipeline" class="btn" name="button" onclick="download(exportPipeline(),&quot;exportPipe&quot;)" data-backdrop="false" style=" margin:0px; padding:0px; display:none;">
-                <a data-toggle="tooltip" data-placement="bottom"  data-original-title="Export Pipeline"><i class="glyphicon glyphicon-export"></i></a></button>
+                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Export Pipeline"><i class="glyphicon glyphicon-export"></i></a></button>
                 <button type="button" id="savePDF" class="btn" name="button" data-backdrop="false" style=" margin:0px; padding:0px; padding-bottom:2px;">
                     <a href="#" download data-toggle="tooltip" data-placement="bottom" data-original-title="Download Workflow as PDF" onclick="return downloadPdf()">
                         <i class="fa fa-file-pdf-o"></i></a></button>
                 <button type="button" id="delPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style=" margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Pipeline">
                         <i class="glyphicon glyphicon-trash"></i></a>
-        		</button>
+                </button>
                 <span id="autosaveDiv">
-            		<span id="autosave" style="font-color:#C5C5C5; font-size:15px;"></span>
+                    <span id="autosave" style="font-color:#C5C5C5; font-size:15px;"></span>
                 </span>
                 <div id="pipeMenuGroupTop" style="display:inline;">
                     <i id="pipeSepBar" style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px; ">|</i>
@@ -51,7 +51,9 @@
 
 
             <div id="pipeActionsDiv" style="float:right; margin-right:5px;" class="dropdown">
-                <button class="btn btn-default dropdown-toggle" type="button" id="pipeActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;"><div class="fa fa-ellipsis-h"></div></button>
+                <button class="btn btn-default dropdown-toggle" type="button" id="pipeActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;">
+                    <div class="fa fa-ellipsis-h"></div>
+                </button>
                 <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu2">
                     <li><a id="deletePipeRevision" data-toggle="modal" href="#confirmModal">Delete Revision</a></li>
                     <li><a id="duplicaPipeline" onclick="duplicatePipeline()">Copy Pipeline</a></li>
@@ -63,7 +65,7 @@
                 <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                     <span class="sr-only">Toggle Dropdown</span>
-                  </button>
+                </button>
                 <ul class="dropdown-menu" role="menu">
                     <li><a href="#mRun" data-toggle="modal">Create New Run</a></li>
                     <li><a href="#mExistRun" data-toggle="modal">Existing Runs</a></li>
@@ -77,7 +79,7 @@
 </div>
 
 <div style="padding-left:16px; padding-right:16px; padding-bottom:20px; " id="desPipeline">
-    <div class="row" id="creatorInfoPip" style="font-size:12px; display:none;"> Created by <span id="ownUserNamePip">admin</span> on <span id="datecreatedPip">Jan. 26, 2016     04:12</span> • Last edited on <span class="lasteditedPip">Feb. 8, 2017 12:15</span>
+    <div class="row" id="creatorInfoPip" style="font-size:12px; display:none;"> Created by <span id="ownUserNamePip">admin</span> on <span id="datecreatedPip">Jan. 26, 2016 04:12</span> • Last edited on <span class="lasteditedPip">Feb. 8, 2017 12:15</span>
     </div>
     </br>
     <div class="row" id="desTitlePip">
@@ -192,8 +194,8 @@
                     <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
                     <div class="col-sm-3" style="padding-left:0;">
                         <select id="script_mode_pipe_header" name="script_mode_header" class="form-control">
-                        <option value="groovy" >groovy</option>
-                    </select>
+                            <option value="groovy">groovy</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -209,8 +211,8 @@
                     <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
                     <div class="col-sm-3" style="padding-left:0;">
                         <select id="script_mode_pipe_footer" name="script_mode_footer" class="form-control">
-                        <option value="groovy" >groovy</option>
-                    </select>
+                            <option value="groovy">groovy</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -224,27 +226,27 @@
         <div class="form-group">
             <label class="col-sm-12 control-label">Permissions to View</label>
             <select id="permsPipe" class="fbtn btn-default form-control" name="perms">
-                              <option value="3" selected="">Only me </option>
-                              <option value="15">Only my group</option>
-                              <option disabled value="63">Everyone </option>
-                        </select>
+                <option value="3" selected="">Only me </option>
+                <option value="15">Only my group</option>
+                <option disabled value="63">Everyone </option>
+            </select>
         </div>
     </div>
     <div id="groupSelPipeDiv" class="col-md-4">
         <div class="form-group">
             <label class="col-sm-12 control-label">Group Selection</label>
             <select id="groupSelPipe" class="fbtn btn-default form-control" name="group_id">
-                          <option value="" selected>Choose group </option>
-                        </select>
+                <option value="" selected>Choose group </option>
+            </select>
         </div>
     </div>
     <div id="publishPipeDiv" class="col-sm-4">
         <div class="form-group">
             <label class="col-sm-12 control-label">Publish</label>
             <select id="publishPipe" class="fbtn btn-default form-control" name="publish">
-                                      <option value="0">No</option>
-                                      <option value="1">Yes</option>
-                                    </select>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
         </div>
     </div>
     <div id="pipeMenuGroupBottom" class="col-md-12" style="display:none; margin-top:10px; margin-bottom:20px;">
@@ -270,12 +272,12 @@
             <div id="revModalHeaderPipe" class="modal-header">
                 <button style="padding-top:6px;" type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <span id="mPipeRevSpan" style="margin-right:5px; width:130px; float:right;">
-                <select id="mPipeRev" class="fbtn btn-default form-control mPipeRevChange" prev="-1" name="pipeline_rev_id"></select>
-                    </span>
+                    <select id="mPipeRev" class="fbtn btn-default form-control mPipeRevChange" prev="-1" name="pipeline_rev_id"></select>
+                </span>
                 <h4 class="modal-title">Select Pipeline</h4>
                 <div class="col-sm-12" id="creatorInfoPipe" style="display:none; font-size:12px; padding-left:0px; margin-left:0px;"> Created by
                     <span id="ownUserNamePipe">admin</span> on
-                    <span id="datecreatedPipe">Jan. 26, 2016     04:12</span> • Last edited on
+                    <span id="datecreatedPipe">Jan. 26, 2016 04:12</span> • Last edited on
                     <span id="lasteditedPipe">Feb. 8, 2017 12:15</span>
                 </div>
             </div>
@@ -320,12 +322,12 @@
                     </ul>
                 </div>
                 <span id="mProRevSpan" style="margin-right:5px; width:130px; float:right; display:none;">
-                <select id="mProRev" class="fbtn btn-default form-control mRevChange" prev="-1" name="process_rev_id"></select>
-                    </span>
+                    <select id="mProRev" class="fbtn btn-default form-control mRevChange" prev="-1" name="process_rev_id"></select>
+                </span>
                 <h4 class="modal-title" id="processmodaltitle">Title</h4>
                 <div class="col-sm-12" id="creatorInfoPro" style="display:none; font-size:12px; padding-left:0px; margin-left:0px;"> Created by
                     <span id="ownUserNamePro">admin</span> on
-                    <span id="datecreatedPro">Jan. 26, 2016     04:12</span> • Last edited on
+                    <span id="datecreatedPro">Jan. 26, 2016 04:12</span> • Last edited on
                     <span id="lasteditedPro">Feb. 8, 2017 12:15</span>
                 </div>
             </div>
@@ -400,7 +402,7 @@
                             <p> </p>
                         </div>
                         <div id="mInOptT" class="col-sm-3" style="width:100px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
-                            <p style="padding-left:10px;">Operators <span><a data-toggle="tooltip" data-placement="bottom"  title="Optional operator section to transform values emitted by a channel."><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
+                            <p style="padding-left:10px;">Operators <span><a data-toggle="tooltip" data-placement="bottom" title="Optional operator section to transform values emitted by a channel."><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
                         <div id="mInClosureT" class="col-sm-2 " style="width:160px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:20px;">Operator Content <span><a data-toggle="tooltip" data-placement="bottom" title="Optional operator content to specify how operators will act. Multiple operators can be added by starting paranthesis. i.e. (size:6).buffer(size:3)"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
@@ -425,59 +427,59 @@
                         </div>
                         <div id="mInOpt" class="col-sm-2" style="width:100px; padding-left:5px; padding-right:0;">
                             <select id="mInOpt-0" name="mInOpt-0" style=" display:none;" class="form-control">
-                                   <option value="Operators" disabled>Operators</option>
-                                    <option value="buffer">buffer</option>
-                                    <option value="choice">choice</option>
-                                    <option value="close">close</option>
-                                    <option value="collate">collate</option>
-                                    <option value="collect">collect</option>
-                                    <option value="collectFile">collectFile</option>
-                                    <option value="combine">combine</option>
-                                    <option value="concat">concat</option>
-                                    <option value="count">count</option>
-                                    <option value="countBy">countBy</option>
-                                    <option value="cross">cross</option>
-                                    <option value="distinct">distinct</option>
-                                    <option value="dump">dump</option>
-				                    <option value="filter">filter</option>
-                                    <option value="first">first</option>
-                                    <option value="flatMap">flatMap</option>
-                                    <option value="flatten">flatten</option>
-                                    <option value="groupBy">groupBy</option>
-                                    <option value="groupTuple">groupTuple</option>
-                                    <option value="ifEmpty">ifEmpty</option>
-                                    <option value="into">into</option>
-                                    <option value="join">join</option>
-                                    <option value="last">last</option>
-                                    <option value="map">map</option>
-                                    <option value="max">max</option>
-                                    <option value="merge">merge</option>
-                                    <option value="min">min</option>
-                                    <option value="mix">mix</option>
-                                    <option value="mode flatten">mode flatten</option>
-                                    <option value="phase">phase</option>
-                                    <option value="print">print</option>
-                                    <option value="println">println</option>
-                                    <option value="randomSample">randomSample</option>
-                                    <option value="reduce">reduce</option>
-                                    <option value="route">route</option>
-                                    <option value="separate">separate</option>
-                                    <option value="set">set</option>
-                                    <option value="splitCsv">splitCsv</option>
-                                    <option value="splitFasta">splitFasta</option>
-                                    <option value="splitFastq">splitFastq</option>
-                                    <option value="splitText">splitText</option>
-                                    <option value="spread">spread</option>
-                                    <option value="sum">sum</option>
-                                    <option value="take">take</option>
-                                    <option value="tap">tap</option>
-                                    <option value="toInteger">toInteger</option>
-                                    <option value="toList">toList</option>
-                                    <option value="toSortedList">toSortedList</option>
-                                    <option value="transpose">transpose</option>
-                                    <option value="unique">unique</option>
-                                    <option value="view">view</option>
-                                    </select>
+                                <option value="Operators" disabled>Operators</option>
+                                <option value="buffer">buffer</option>
+                                <option value="choice">choice</option>
+                                <option value="close">close</option>
+                                <option value="collate">collate</option>
+                                <option value="collect">collect</option>
+                                <option value="collectFile">collectFile</option>
+                                <option value="combine">combine</option>
+                                <option value="concat">concat</option>
+                                <option value="count">count</option>
+                                <option value="countBy">countBy</option>
+                                <option value="cross">cross</option>
+                                <option value="distinct">distinct</option>
+                                <option value="dump">dump</option>
+                                <option value="filter">filter</option>
+                                <option value="first">first</option>
+                                <option value="flatMap">flatMap</option>
+                                <option value="flatten">flatten</option>
+                                <option value="groupBy">groupBy</option>
+                                <option value="groupTuple">groupTuple</option>
+                                <option value="ifEmpty">ifEmpty</option>
+                                <option value="into">into</option>
+                                <option value="join">join</option>
+                                <option value="last">last</option>
+                                <option value="map">map</option>
+                                <option value="max">max</option>
+                                <option value="merge">merge</option>
+                                <option value="min">min</option>
+                                <option value="mix">mix</option>
+                                <option value="mode flatten">mode flatten</option>
+                                <option value="phase">phase</option>
+                                <option value="print">print</option>
+                                <option value="println">println</option>
+                                <option value="randomSample">randomSample</option>
+                                <option value="reduce">reduce</option>
+                                <option value="route">route</option>
+                                <option value="separate">separate</option>
+                                <option value="set">set</option>
+                                <option value="splitCsv">splitCsv</option>
+                                <option value="splitFasta">splitFasta</option>
+                                <option value="splitFastq">splitFastq</option>
+                                <option value="splitText">splitText</option>
+                                <option value="spread">spread</option>
+                                <option value="sum">sum</option>
+                                <option value="take">take</option>
+                                <option value="tap">tap</option>
+                                <option value="toInteger">toInteger</option>
+                                <option value="toList">toList</option>
+                                <option value="toSortedList">toSortedList</option>
+                                <option value="transpose">transpose</option>
+                                <option value="unique">unique</option>
+                                <option value="view">view</option>
+                            </select>
                         </div>
                         <div id="mInClosure" class="col-sm-2 " style="width:140px; padding-left:5px; padding-right:0;">
                             <input type="text" style="display:none; " placeholder="Operator content" class="form-control" ppID="" id="mInClosure-0" name="mInClosure-0">
@@ -512,12 +514,12 @@
                         <div class="col-sm-2 " style="width:100px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:15px;">Optional <span><a data-toggle="tooltip" data-placement="bottom" title="Optional output parameter. Process won't fail in case output parameter isn't created."><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
-<!--
+                        <!--
                         <div id="mOutOptdelT" class="col-sm-1" style="width:45px; padding-left:0;padding-right:5px; padding-bottom:22px; border-bottom:1px solid lightgrey;">
                             <p> </p>
                         </div>
 -->
-                        
+
                         <div id="mOutRegT" class="col-sm-2 " style="width:180px; padding-left:0px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:15px;">Regular Expression <span><a data-toggle="tooltip" data-placement="bottom" title="Optional regular expresion to filter output files, which are going to be transferred to output directory. (Default: output name pattern is used)"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
@@ -538,59 +540,59 @@
                         </div>
                         <div id="mOutOpt" class="col-sm-3" style="width:100px; padding-left:5px; padding-right:0;">
                             <select id="mOutOpt-0" name="mOutOpt-0" style="display:none;" class="form-control">
-                                   <option value="Operators" disabled>Operators</option>
-                                    <option value="buffer">buffer</option>
-                                    <option value="choice">choice</option>
-                                    <option value="close">close</option>
-                                    <option value="collate">collate</option>
-                                    <option value="collect">collect</option>
-                                    <option value="collectFile">collectFile</option>
-                                    <option value="combine">combine</option>
-                                    <option value="concat">concat</option>
-                                    <option value="count">count</option>
-                                    <option value="countBy">countBy</option>
-                                    <option value="cross">cross</option>
-                                    <option value="distinct">distinct</option>
-                                    <option value="dump">dump</option>
-				                    <option value="filter">filter</option>
-                                    <option value="first">first</option>
-                                    <option value="flatMap">flatMap</option>
-                                    <option value="flatten">flatten</option>
-                                    <option value="groupBy">groupBy</option>
-                                    <option value="groupTuple">groupTuple</option>
-                                    <option value="ifEmpty">ifEmpty</option>
-                                    <option value="into">into</option>
-                                    <option value="join">join</option>
-                                    <option value="last">last</option>
-                                    <option value="map">map</option>
-                                    <option value="max">max</option>
-                                    <option value="merge">merge</option>
-                                    <option value="min">min</option>
-                                    <option value="mix">mix</option>
-                                    <option value="mode flatten">mode flatten</option>
-                                    <option value="phase">phase</option>
-                                    <option value="print">print</option>
-                                    <option value="println">println</option>
-                                    <option value="randomSample">randomSample</option>
-                                    <option value="reduce">reduce</option>
-                                    <option value="route">route</option>
-                                    <option value="separate">separate</option>
-                                    <option value="set">set</option>
-                                    <option value="splitCsv">splitCsv</option>
-                                    <option value="splitFasta">splitFasta</option>
-                                    <option value="splitFastq">splitFastq</option>
-                                    <option value="splitText">splitText</option>
-                                    <option value="spread">spread</option>
-                                    <option value="sum">sum</option>
-                                    <option value="take">take</option>
-                                    <option value="tap">tap</option>
-                                    <option value="toInteger">toInteger</option>
-                                    <option value="toList">toList</option>
-                                    <option value="toSortedList">toSortedList</option>
-                                    <option value="transpose">transpose</option>
-                                    <option value="unique">unique</option>
-                                    <option value="view">view</option>
-                                    </select>
+                                <option value="Operators" disabled>Operators</option>
+                                <option value="buffer">buffer</option>
+                                <option value="choice">choice</option>
+                                <option value="close">close</option>
+                                <option value="collate">collate</option>
+                                <option value="collect">collect</option>
+                                <option value="collectFile">collectFile</option>
+                                <option value="combine">combine</option>
+                                <option value="concat">concat</option>
+                                <option value="count">count</option>
+                                <option value="countBy">countBy</option>
+                                <option value="cross">cross</option>
+                                <option value="distinct">distinct</option>
+                                <option value="dump">dump</option>
+                                <option value="filter">filter</option>
+                                <option value="first">first</option>
+                                <option value="flatMap">flatMap</option>
+                                <option value="flatten">flatten</option>
+                                <option value="groupBy">groupBy</option>
+                                <option value="groupTuple">groupTuple</option>
+                                <option value="ifEmpty">ifEmpty</option>
+                                <option value="into">into</option>
+                                <option value="join">join</option>
+                                <option value="last">last</option>
+                                <option value="map">map</option>
+                                <option value="max">max</option>
+                                <option value="merge">merge</option>
+                                <option value="min">min</option>
+                                <option value="mix">mix</option>
+                                <option value="mode flatten">mode flatten</option>
+                                <option value="phase">phase</option>
+                                <option value="print">print</option>
+                                <option value="println">println</option>
+                                <option value="randomSample">randomSample</option>
+                                <option value="reduce">reduce</option>
+                                <option value="route">route</option>
+                                <option value="separate">separate</option>
+                                <option value="set">set</option>
+                                <option value="splitCsv">splitCsv</option>
+                                <option value="splitFasta">splitFasta</option>
+                                <option value="splitFastq">splitFastq</option>
+                                <option value="splitText">splitText</option>
+                                <option value="spread">spread</option>
+                                <option value="sum">sum</option>
+                                <option value="take">take</option>
+                                <option value="tap">tap</option>
+                                <option value="toInteger">toInteger</option>
+                                <option value="toList">toList</option>
+                                <option value="toSortedList">toSortedList</option>
+                                <option value="transpose">transpose</option>
+                                <option value="unique">unique</option>
+                                <option value="view">view</option>
+                            </select>
                         </div>
                         <div id="mOutClosure" class="col-sm-2 " style="width:140px; padding-left:5px; padding-right:0;">
                             <input type="text" style="display:none; " placeholder="Operator content" class="form-control" ppID="" id="mOutClosure-0" name="mOutClosure-0">
@@ -599,7 +601,7 @@
                             <button type="submit" style="display:none;" class="btn btn-default form-control" id="mOutOptdel-0" name="mOutOptdel-0"><i class="glyphicon glyphicon-remove"></i></button>
                         </div>
                         <div id="mOutOptional" class="col-sm-1" style="width:40px; padding-left:0;padding-right:0; margin-right:30px;">
-                            <label style="display:none;" class="btn btn-default form-control"><input id="mOutOptional-0" name="mOutOptional-0"  type="checkbox" autocomplete="off"> </label>
+                            <label style="display:none;" class="btn btn-default form-control"><input id="mOutOptional-0" name="mOutOptional-0" type="checkbox" autocomplete="off"> </label>
                         </div>
                         <div id="mOutRegBut" class="col-sm-1" style="width:40px; padding-left:0px; padding-right:0;">
                             <button type="submit" style="display:none;" class="btn btn-default form-control" id="mOutRegBut-0" name="mOutRegBut-0"><i class="fa fa-code"></i></button>
@@ -619,10 +621,10 @@
                                 <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
                                 <div class="col-sm-3" style="padding-left:0;">
                                     <select id="script_mode" name="script_mode" class="form-control">
-                                    <option value="sh" >shell</option>
-                                    <option value="groovy" >groovy</option>
-                                    <option value="perl" >perl</option>
-                                    <option value="python" >python</option>
+                                        <option value="sh">shell</option>
+                                        <option value="groovy">groovy</option>
+                                        <option value="perl">perl</option>
+                                        <option value="python">python</option>
                                     </select>
                                 </div>
                             </div>
@@ -647,8 +649,8 @@
                                     <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
                                     <div class="col-sm-3" style="padding-left:0;">
                                         <select id="script_mode_header" name="script_mode_header" class="form-control">
-                                    <option value="groovy" >groovy</option>
-                                    </select>
+                                            <option value="groovy">groovy</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -661,8 +663,8 @@
                                     <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
                                     <div class="col-sm-3" style="padding-left:0;">
                                         <select id="script_mode_footer" name="script_mode_footer" class="form-control">
-                                    <option value="groovy" >groovy</option>
-                                    </select>
+                                            <option value="groovy">groovy</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -674,10 +676,10 @@
                                         <label class="col-sm-6 control-label">Permissions to View</label>
                                         <div class="col-sm-6">
                                             <select id="permsPro" class="fbtn btn-default form-control" name="perms">
-                              <option value="3" selected="">Only me </option>
-                              <option value="15">Only my groups</option>
-                              <option disabled value="63">Everyone </option>
-                        </select>
+                                                <option value="3" selected="">Only me </option>
+                                                <option value="15">Only my groups</option>
+                                                <option disabled value="63">Everyone </option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -686,8 +688,8 @@
                                         <label class="col-sm-6 control-label">Group Selection</label>
                                         <div class="col-sm-6">
                                             <select id="groupSelPro" class="fbtn btn-default form-control" name="group_id">
-                          <option value="" selected>Choose group </option>
-                        </select>
+                                                <option value="" selected>Choose group </option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -696,9 +698,9 @@
                                         <label class="col-sm-4 control-label">Publish</label>
                                         <div class="col-sm-3">
                                             <select id="publishPro" class="fbtn btn-default form-control" name="publish">
-                                      <option value="0">No</option>
-                                      <option value="1">Yes</option>
-                                    </select>
+                                                <option value="0">No</option>
+                                                <option value="1">Yes</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -739,7 +741,7 @@
                     <div class="form-group">
                         <label for="mParamList" class="col-sm-3 control-label">Parameters</label>
                         <div id="mParamsDynamic" class="col-sm-1" style=" display:none; width: auto;  ">
-                            <button type="button" class="btn btn-default form-control" id="mParamOpen"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show Parameters"><i class="fa fa-eye" ></i></a></button>
+                            <button type="button" class="btn btn-default form-control" id="mParamOpen"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show Parameters"><i class="fa fa-eye"></i></a></button>
                         </div>
                         <div id="mParamList" class="col-sm-9" style=" ">
                             <select id="mParamListIn" class="fbtn btn-default form-control" name="ParamAllIn"></select>
@@ -756,10 +758,10 @@
                         <label for="mQualifier" class="col-sm-3 control-label">Qualifier</label>
                         <div class="col-sm-9">
                             <select class="form-control" id="modalQualifier" name="qualifier">
-                                            <option value="file">file</option>
-                                            <option value="set">set</option>
-                                            <option value="val">val</option>
-                                        </select>
+                                <option value="file">file</option>
+                                <option value="set">set</option>
+                                <option value="val">val</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-group" id="mFileTypeDiv">
@@ -962,7 +964,7 @@
                     </div>
                     <div id="defValDiv" class="form-group">
                         <div class="col-sm-4 control-label">
-                            <label> <input type="checkbox" id="checkDefVal" name="checkDefVal" > Define Default Value</label>
+                            <label> <input type="checkbox" id="checkDefVal" name="checkDefVal"> Define Default Value</label>
                         </div>
                         <div class="col-sm-8">
                             <input type="text" class="form-control" id="defVal" name="defVal" disabled>
@@ -970,7 +972,7 @@
                     </div>
                     <div id="dropdownDiv" class="form-group">
                         <div class="col-sm-4 control-label">
-                            <label> <input type="checkbox" id="checkDropDown" name="checkDropDown" > Dropdown Options <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to use drop down menu in the run pipeline page. Options need to be entered in comma separated format. eg. single, pair"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <label> <input type="checkbox" id="checkDropDown" name="checkDropDown"> Dropdown Options <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to use drop down menu in the run pipeline page. Options need to be entered in comma separated format. eg. single, pair"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         </div>
                         <div class="col-sm-8">
                             <input type="text" class="form-control" id="dropDownOpt" name="dropDownOpt" disabled>
@@ -978,20 +980,20 @@
                     </div>
                     <div id="pubWebDiv" class="form-group">
                         <div class="col-sm-5 control-label">
-                            <label><input type="checkbox" id="checkPubWeb" name="pubWeb" style ="margin-right:3px;"> Publish to Web Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to publish connected output files to web publish directory."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <label><input type="checkbox" id="checkPubWeb" name="pubWeb" style="margin-right:3px;"> Publish to Web Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to publish connected output files to web publish directory."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         </div>
                         <div class="col-sm-7">
-                            <select id="pubWebOpt" name="pubWebOpt" class="form-control" disabled>
-                                <option value="" disabled selected>Choose data visualization method</option>
+                            <select multiple="multiple" id="pubWebOpt" name="pubWebOpt">
                                 <option value="text">Text</option>
                                 <option value="html">HTML</option>
                                 <option value="table" plugin="dataTables.js">DataTables</option>
                                 <option value="highcharts" plugin="highcharts.js">Highcharts</option>
-                                <option value="rmarkdown" >R Markdown</option>
-                                <option value="debrowser" >DEBrowser</option>
+                                <option value="rmarkdown">R Markdown</option>
+                                <option value="debrowser">DEBrowser</option>
                                 <option value="pdf">PDF Reader</option>
                                 <option value="rdata">RData</option>
                             </select>
+
                         </div>
                     </div>
                 </form>
@@ -1017,7 +1019,7 @@
             <div class="modal-body">
                 <div id="importModalPart1">
                     <form id="importArea" action="ajax/import.php" class="dropzone">
-                      <div class="fallback">
+                        <div class="fallback">
                             <input name="file" type="file" multiple />
                         </div>
                     </form>
@@ -1369,6 +1371,3 @@
         </div>
     </div>
 </div>
-
-
-

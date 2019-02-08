@@ -1,3 +1,8 @@
+08.02.2019 Version 0.2.80
+Bug fixed in pubweb selection in pipeline page.
+Multiselect feature added to pubweb visualization methods.
+Fixed multiple pubweb issue (support for both datatables and debrowser for rsem output.) 
+
 08.02.2019 Version 0.2.79
 Fix for old run logs.
 New Add sample modal feature initialized.

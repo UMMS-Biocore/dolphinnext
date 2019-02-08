@@ -49,6 +49,8 @@ session_write_close();
     <link href="dist/jquery_loading/jquery.loading.min.css" rel="stylesheet" />
     <!--    jquery-ui-bootstrap-->
     <link href="bower_components/jquery-ui-bootstrap/css/custom-theme/jquery-ui-1.10.0.custom.css" rel="stylesheet" />
+    <!--    bootstrap-multiselect-->
+    <link href="bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css" rel="stylesheet" />
     <!-- dropzone -->
     <link type="text/css" rel="stylesheet" href="bower_components/dropzone/dropzone.min.css" />
     <!-- to fix favicon.ico not found error-->
@@ -619,7 +621,8 @@ input:checked + .slider:before {
         <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
         <!-- jquery-migrate-3.0.0-->
         <script src="bower_components/jquery-ui-bootstrap/js/jquery-migrate-3.0.0.js"></script>
-
+        <!-- bootstrap-multiselect-->
+        <script src="bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js"></script>
         <!-- Selectize 0.12.4.  -->
         <script src="dist/selectize/selectize.js"></script>
         <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
