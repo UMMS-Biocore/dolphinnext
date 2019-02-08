@@ -2684,9 +2684,17 @@ $(document).ready(function () {
             $(document).on('change', checkboxId, function (event) {
                 var checkdropDownOpt = $(checkboxId).is(":checked").toString();
                 if (checkdropDownOpt === "true") {
-                    $(inputId).removeAttr('disabled')
+                    if ($(inputId).multiselect){
+                        $(inputId).multiselect("enable")
+                    } else {
+                        $(inputId).removeAttr('disabled')
+                    }
                 } else if (checkdropDownOpt === "false") {
-                    $(inputId).attr('disabled', 'disabled')
+                    if ($(inputId).multiselect){
+                        $(inputId).multiselect("disable")
+                    } else {
+                        $(inputId).attr('disabled', 'disabled')
+                    }
                 }
             })
         });
@@ -2694,22 +2702,43 @@ $(document).ready(function () {
     // "change name" modal for input parameters
     function fillRenameModal(renameTextDefVal, checkID, inputID) {
         if (renameTextDefVal) {
+            console.log(renameTextDefVal)
+            console.log(renameTextDefVal !== "")
             if (renameTextDefVal !== "") {
-                $(inputID).removeAttr('disabled')
-                $(inputID).val(renameTextDefVal)
+                if ($(inputID).multiselect) {
+                    $(inputID).multiselect('enable')
+                    var optAr = []
+                    optAr = renameTextDefVal.split(",")
+                    $(inputID).multiselect('select', optAr);
+                } else {
+                    $(inputID).removeAttr('disabled')
+                    $(inputID).val(renameTextDefVal)
+                }
                 $(checkID).attr('checked', true);
             } else {
+                if ($(inputID).multiselect) {
+                    $(inputID).multiselect('disable')
+                } else {
+                    $(inputID).attr('disabled', 'disabled')
+                }
                 $(checkID).removeAttr('checked');
-                $(inputID).attr('disabled', 'disabled')
             }
         } else {
             $(checkID).removeAttr('checked');
-            $(inputID).attr('disabled', 'disabled')
+            if ($(inputID).multiselect) {
+                $(inputID).multiselect('disable')
+            } else {
+                $(inputID).attr('disabled', 'disabled')
+            }
         }
     }
+
     // "change name" modal for input parameters
     function saveValue(checkId, valueId, attr) {
         var value = $(valueId).val();
+        if (value.length) {
+            value = value.join(",")
+        }
         var checkValue = $(checkId).is(":checked").toString();
         if (checkValue === "true" && value !== "") {
             $("#" + renameTextID).attr(attr, value)
@@ -2717,9 +2746,25 @@ $(document).ready(function () {
             $("#" + renameTextID).removeAttr(attr);
         }
     }
+    $('#pubWebOpt').multiselect({
+        buttonText: function (options, select) {
+            if (options.length == 0) {
+                return "Choose data visualization method";
+            } else if (options.length > 3){
+                return options.length + ' selected';
+            } else {
+                var labels = [];
+                options.each(function() {
+                    labels.push($(this).text());
+                });
+                return labels.join(', ') + '';
+            }
+        }
+    });
 
     $('#renameModal').on('show.bs.modal', function (event) {
         $(this).find('form').trigger('reset');
+        $('#pubWebOpt').multiselect('refresh')
         if (renameTextClassType === null) {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")

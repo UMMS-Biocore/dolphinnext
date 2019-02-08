@@ -99,6 +99,7 @@ else if ($p=="getReportData")
                     foreach ($processOpt as $key => $feature):
                         if ($key == "pubWeb"){
                             $push = true;
+                            $pubWebAr = explode(",", $feature);
                         }
                         $out[$key] = $feature;
                     endforeach;
@@ -107,13 +108,16 @@ else if ($p=="getReportData")
                         $fileList = array_filter($fileList);
                         if (!empty($fileList)){
                             $out["fileList"] = $fileList;
-                            error_log($name);
-                            if (strtolower($name) == "summary"){
-                                array_unshift($data , $out); //push to the top of the array
-                            } else {
-                                $data[] = $out; //push $out object into array
-                            }
-                            
+                            //split each view method into new array
+                            foreach ($pubWebAr as $eachPubWeb):
+                                $out["pubWeb"] = $eachPubWeb;
+                                $out["id"] = $out["id"]."_".$eachPubWeb;
+                                if (strtolower($name) == "summary"){
+                                    array_unshift($data , $out); //push to the top of the array
+                                } else {
+                                    $data[] = $out; //push $out object into array
+                                }
+                            endforeach;
                         }
                     }
                 }

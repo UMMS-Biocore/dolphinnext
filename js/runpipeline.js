@@ -475,17 +475,14 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         .attr("text-anchor", "middle")
         .attr("x", 0)
         .attr("y", 28)
-    //        .on("mouseover", scMouseOver)
-    //        .on("mouseout", scMouseOut)
-    //        .call(drag)
     if (defVal) {
-        $("#text-" + pObj.gNum).attr('defVal', defVal)
+        $("#text" + MainGNum + "-" + pObj.gNum).attr('defVal', defVal)
     }
     if (dropDown) {
-        $("#text-" + pObj.gNum).attr('dropDown', dropDown)
+        $("#text" + MainGNum + "-" + pObj.gNum).attr('dropDown', dropDown)
     }
     if (pubWeb) {
-        $("#text-" + pObj.gNum).attr('pubWeb', pubWeb)
+        $("#text" + MainGNum + "-" + pObj.gNum).attr('pubWeb', pubWeb)
     }
 }
 
@@ -1327,8 +1324,6 @@ function parseAutofill(script) {
                     if (!ifBlockStart && !lines[i].match(/.*if *\((.*)\).*/i)) {
                         [varName, defaultVal] = parseVarPart(lines[i]);
                         if (varName && defaultVal) {
-                            //                            console.log(varName)
-                            //                            console.log(defaultVal)
                             if (varName.match(/^_.*$/)) {
                                 library[varName] = defaultVal
                             }
@@ -6725,7 +6720,7 @@ $(document).ready(function () {
         }, {
                             data: null,
                             fnCreatedCell: function (nTd, oData) {
-                                var gNum = oData.id.split("-")[1];
+                                var gNum = oData.id.split("_")[0].split("-")[1];
                                 var rowID = "outputTa-" + gNum;
                                 var processName = $('#' + rowID + ' > :nth-child(5)').text();
                                 var processID = $('#' + rowID + ' > :nth-child(5)').text();

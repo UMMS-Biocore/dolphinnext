@@ -486,6 +486,17 @@ function zoomed() {
 
 //kind=input/output
 function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj) {
+    console.log(name)
+    console.log(pObj.gNum)
+    console.log(pubWeb)
+    console.log(paramid)
+    console.log(pName)
+    console.log(classtoparam)
+    console.log(init)
+    console.log(pColor)
+    console.log(defVal)
+    console.log(dropDown)
+    console.log(pObj)
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -493,6 +504,8 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         MainGNum = pObj.MainGNum;
         prefix = "p" + MainGNum; //prefix for node ids
     }
+    console.log(prefix)
+    
     //gnum uniqe, id same id (Written in class) in same type process
     pObj.g = d3.select("#mainG" + MainGNum).append("g")
         .attr("id", "g" + MainGNum + "-" + pObj.gNum)
@@ -569,13 +582,13 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         .on("mouseout", scMouseOut)
         .call(drag)
     if (defVal) {
-        $("#text-" + pObj.gNum).attr('defVal', defVal)
+        $("#text" + MainGNum + "-" + pObj.gNum).attr('defVal', defVal)
     }
     if (dropDown) {
-        $("#text-" + pObj.gNum).attr('dropDown', dropDown)
+        $("#text" + MainGNum + "-" + pObj.gNum).attr('dropDown', dropDown)
     }
     if (pubWeb) {
-        $("#text-" + pObj.gNum).attr('pubWeb', pubWeb)
+        $("#text" + MainGNum + "-" + pObj.gNum).attr('pubWeb', pubWeb)
     }
 
     if (pObj == window) {
@@ -1858,7 +1871,6 @@ function cancel() {
 
 function rename() {
     renameTextID = this.id;
-    console.log(d3.select("#" + this.id))
     renameText = d3.select("#" + this.id).attr('name');
     renameTextClassType = d3.select("#" + this.id).attr('classType');
     renameTextDefVal = d3.select("#" + this.id).attr('defVal');
@@ -2237,7 +2249,6 @@ function save() {
             sl = JSON.stringify(savedList);
             var ret = getValues({ p: "saveAllPipeline", dat: sl });
             pipeline_id = ret.id;
-            console.log(ret)
             $("#pipeline-title").attr('pipelineid', pipeline_id);
             modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "insert")
             //keep record for last group_id
@@ -2406,7 +2417,6 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             pubWeb = processModules.pubWeb;
         }
     }
-
     //for input parameters
     if (id === "inPro") {
         ipR = 70 / 2
