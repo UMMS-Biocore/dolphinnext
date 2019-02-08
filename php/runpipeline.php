@@ -1,9 +1,4 @@
-<style>
-    .nodisp {
-        display: block
-    }
-
-</style>
+<button type="button" id="theButton" style="display:none;">S</button>
 
 <div class="box-header" style=" padding-top:0px;  font-size:large; ">
     <div style="padding-bottom:6px;  border-bottom:1px solid lightgrey;">
@@ -449,10 +444,10 @@
                     </div>
                     <div class="form-group">
                         <h5 id="runTitleReport">Run Attempt-1:</h5>
-                        
+
                     </div>
                     <div id="reportRows" style="margin-top:25px;"></div>
-                    
+
                 </div>
             </div>
         </div>
@@ -730,3 +725,183 @@
         </div>
     </div>
 </div>
+
+
+
+
+
+
+<div id="sampleModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog fullscreen" role="document">
+        <div class="modal-content fullscreen">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="sampleModalTitle">Modal title</h4>
+            </div>
+            <div class="modal-body">
+                <div role="tabpanel">
+                    <div class="pull-right">
+                        <button type="button" class="btn btn-success btn-sm" title="Add Project" id="addSample" data-toggle="modal" data-target="#addSampleModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-plus"></i> Add Sample</button>
+                    </div>
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li id="samplesTab" class="active"><a class="nav-item" data-toggle="tab" href="#samplesCont">Samples</a></li>
+                        <!--                        <li id="projectTab"><a class="nav-item" data-toggle="tab" href="#projectCont">Project Samples</a></li>-->
+                        </li>
+                    </ul>
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" id="samplesCont">
+                            <div class="panel-body">
+                                <table id="sampleTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th>Check</th>
+                                            <th>Run Name</th>
+                                            <th>Project Name</th>
+                                            <th>Owner</th>
+                                            <th>Modified on</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="publicFileTab" class="tab-pane ">
+                            <div class="row">
+                                <div class="col-sm-12" style="padding-top:6px;">
+                                    <p id="publicFileTabWarn"></p>
+                                    <table id="publicFileTable" class="table table-striped table-bordered display" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Check</th>
+                                                <th scope="col">File/Values</th>
+                                                <th scope="col">Modified On</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="selectSample" data-clickedrow="">Select Sample</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--SampleModal ends-->
+
+<!--Add Sample Modal-->
+<div id="addSampleModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" style="width:1200px;" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="addSampleModaltitle">Add Sample</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="sample_dir" class="col-sm-3 control-label text-left" style="padding-left:45px;">1. Sample Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        <div class="col-sm-7">
+                            <input type="text" class="form-control" id="sample_dir" name="sample_dir" value="/share/data/umw_biocore/genome_data/mousetest/mm10/gz">
+                        </div>
+                        <div class="col-sm-2">
+                            <button id="viewDirBut" type="button" class="btn btn-default">View Directory <i class='fa fa-search'></i></button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-3"></div>
+                        <div class="col-sm-7">
+                            <select id="viewDir" class="form-control" size="5"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="collection_type" class="col-sm-3 control-label text-left" style="padding-left:45px;">2. Collection Type <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please choose 'paired list' and for single-end reads please choose 'single/list' option."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        <div class="col-sm-7">
+                            <select id="collection_type" class="fbtn btn-default form-control" name="collection_type">
+                                <option value="single" selected>Single/List</option>
+                                <option value="pair">Paired List</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label text-left" style="padding-left:45px;">3. File Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please enter forward and reverse read pattern to match file pairs."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                           <div class="col-sm-6 singlepatternDiv">
+                                <p class="col-sm-4 control-label">File Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter part of the file name to filter files eg. fastq"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="single_pattern" name="single_pattern" value="">
+                                </div>
+                            </div>
+                            <div class="col-sm-6 forwardpatternDiv" style="display:none;">
+                                <p class="col-sm-4 control-label">Forward Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for forward reads eg. _R1"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="forward_pattern" name="forward_pattern" value="_R1">
+                                </div>
+                            </div>
+                            <div class="col-sm-6 reversepatternDiv" style="display:none;">
+                                <p class="col-sm-4 control-label">Reverse Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reverse reads eg. _R2"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="reverse_pattern" name="reverse_pattern" value="_R2">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                           <div class="col-sm-6 singlepatternDiv">
+                                <div  class="col-sm-12">
+                                    <select id="singleList" type="select-multiple"  multiple class="form-control" size="9"></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 forwardpatternDiv" style="display:none;">
+                                <div id="forwardListDiv" class="col-sm-12">
+                                    <select id="forwardList" type="select-multiple"  multiple  class="form-control" size="9"></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 reversepatternDiv" style="display:none;">
+                                <div id="reverseListDiv" class="col-sm-12">
+                                    <select id="reverseList" type="select-multiple"  multiple  class="form-control" size="9"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-8"></div>
+                        <div class="col-sm-4">
+                            <button id="add_selection_file" type="button" class="btn btn-primary pull-right"  onclick="addSelection()">Add Selection</button>
+                            <button id="smart_add_file" type="button" class="btn btn-primary pull-right" style="margin-right:3px;" onclick="smartSelection()">Add All</button>
+                            <button id="clear_selection" type="button" class="btn btn-warning pull-right" style="margin-right:3px;" onclick="clearSelection()">Reset</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-12" style="padding:45px;">
+                            <table id="selectedSamples" class="table table-striped compact table-bordered display" cellspacing="0" width="100%">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Sample Name</th>
+                                        <th scope="col">Files Used</th>
+                                        <th scope="col" style="width:20px;">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Save Samples</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--addSampleModal ends-->

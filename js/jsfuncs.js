@@ -638,7 +638,7 @@ function tsvConvert(tsv, format) {
             obj.data = headers[j]
             result.columns.push(obj);
         }
-        
+
         return result;
     }
 }
@@ -753,6 +753,39 @@ function truncateName(name, type) {
 }
 
 
+function cleanRegEx(pat) {
+    return pat.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+function createElement(type, fields, options){
+	var element = document.createElement( type );
+	for(var x = 0; x < fields.length; x++){
+		if (fields[x] == 'OPTION') {
+			var opt = document.createElement( 'option' );
+				opt.value = options[x];
+				opt.innerHTML = options[x];
+				element.appendChild(opt);
+		}else if (fields[x] == 'OPTION_DIS_SEL') {
+			var opt = document.createElement( 'option' );
+				opt.value = options[x];
+				opt.innerHTML = options[x];
+				opt.disabled = true;
+				opt.selected = true;
+				element.appendChild(opt);
+		}else if (fields[x] == 'TEXTNODE'){
+			element.appendChild(document.createTextNode(options[x]));
+		}else if (fields[x] == 'type' && options[x] == 'button'){
+			element.setAttribute(fields[x], options[x]);
+			element.innerHTML = element.value;
+		}else if (fields[x] == 'INNERHTML'){
+			element.innerHTML = options[x]
+		}else{
+			element.setAttribute(fields[x], options[x]);
+		}
+	}
+	return element;
+}
+
 function cleanProcessName(proName) {
     proName = proName.replace(/ /g, "_");
     proName = proName.replace(/-/g, "_");
@@ -845,6 +878,18 @@ function downloadText(text, filename) {
     element.click();
     document.body.removeChild(element);
 }
+
+function fillArray2Select(arr, id, clean) {
+    if (clean === true){
+        $(id).empty();
+    }
+    for (var i = 0; i < arr.length; i++) {
+        var param = arr[i];
+        var optionGroup = new Option(param, param);
+        $(id).append(optionGroup);
+    }
+}
+
 
 $('.collapseIcon').on('click', function (e) {
     var textClass = $(this).attr('class');

@@ -1,9 +1,3 @@
-<style>
-    .nodisp {
-        display: block
-    }
-</style>
-
 <div class="box-header" style=" padding-top:0px;  font-size:large; ">
     <div style="padding-bottom:6px;  border-bottom:1px solid lightgrey;">
         <i class="fa fa-spinner " style="padding-top:12px; margin-left:0px; margin-right:0px;"></i> Pipeline:

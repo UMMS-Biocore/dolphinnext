@@ -1,3 +1,11 @@
+08.02.2019 Version 0.2.79
+Fix for old run logs.
+New Add sample modal feature initialized.
+
+04.02.2019 Version 0.2.78 
+Debrowser path added into sec file [CONFIG] section.
+DEBROWSER_URL = https://debrowser.umassmed.edu:444
+
 03.02.2019 Version 0.2.77
 Run page input filling performance improved.
 

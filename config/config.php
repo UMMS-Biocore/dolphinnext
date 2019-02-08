@@ -23,6 +23,7 @@ if (!empty($secConf)){
     define('API_PATH', $secConf['API_PATH']);
     define('BASE_PATH', $secConf['BASE_PATH']);
     define('OCPU_URL', $secConf['OCPU_URL']);
+    define('DEBROWSER_URL', $secConf['DEBROWSER_URL']);
     define('OCPU_PUBWEB_URL', $secConf['OCPU_PUBWEB_URL']);
     define('PUBWEB_URL', $secConf['PUBWEB_URL']);
     define('LDAP_SERVER', $secConf['LDAP_SERVER']);
