@@ -704,7 +704,7 @@ function publishDir(id, currgid, mainPipeEdges) {
                     var parId = fNode.split("-")[4]
                     var userEntryId = "text-" + fNode.split("-")[4]
                     outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
-                    tempText = "\tif \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
+                    tempText = "\telse if \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
                     oText = oText + tempText
 
                 }

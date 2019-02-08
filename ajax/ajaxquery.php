@@ -52,6 +52,11 @@ else if ($p=="getFileContent"){
 	if (isset($_REQUEST['project_pipeline_id'])){
         $project_pipeline_id = $_REQUEST['project_pipeline_id'];
         $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
+        //fix for old runs 
+        if (empty($uuid)){
+            $uuid = "run".$project_pipeline_id;
+            $filename = preg_replace('/^run/', '', $filename);
+        }
     } else if (isset($_REQUEST['uuid'])){
         $uuid = $_REQUEST['uuid'];
     }
@@ -156,6 +161,12 @@ else if ($p=="saveNextflowLog"){
     }
     unset($value);
     $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $ownerID);
+}
+else if ($p=="getLsDir"){
+    $dir = $_REQUEST['dir'];
+    $profileType = $_REQUEST['profileType'];
+	$profileId = $_REQUEST['profileId'];
+    $data = $db -> getLsDir($dir, $profileType, $profileId, $ownerID);
 }
 else if ($p=="getRun"){
 	$project_pipeline_id = $_REQUEST['project_pipeline_id'];

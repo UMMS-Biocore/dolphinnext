@@ -1712,6 +1712,7 @@ class dbfuncs {
     }
     public function getFileContent($uuid, $filename, $ownerID) {
         $file = "{$this->run_path}/$uuid/$filename";
+        error_log($file);
         $content = "";
         if (file_exists($file)) {
             $content = $this->file_get_contents_utf8($file);
@@ -1753,6 +1754,31 @@ class dbfuncs {
                 return json_encode("nextflow log saved");
             } else {
                 return json_encode("nextflow log not found");
+            }
+    }
+    
+    public function getLsDir($dir, $profileType, $profileId, $ownerID) {
+         if ($profileType == 'cluster'){
+            $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
+            $cluDataArr=json_decode($cluData,true);
+            $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
+         } else if ($profileType == 'amazon'){
+            $cluData=$this->getProfileAmazonbyID($profileId, $ownerID);
+            $cluDataArr=json_decode($cluData,true);
+            $connect = $cluDataArr[0]["ssh"];
+         }
+            $ssh_id = $cluDataArr[0]["ssh_id"];
+            $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+            if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
+            if (!file_exists("{$this->run_path}/$uuid/$last_server_dir")) {
+                mkdir("{$this->run_path}/$uuid/$last_server_dir", 0755, true);
+            }
+            $cmd="ssh {$this->ssh_settings} -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
+            $log = shell_exec($cmd);
+            if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
+                return json_encode($log);
+            } else {
+                return json_encode("Cannot run ls -1 command");
             }
     }
     public function readFileSubDir($path) {

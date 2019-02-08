@@ -266,6 +266,9 @@ session_write_close();
             .modal {
                 overflow: auto; 
             }
+            .form-horizontal .control-label.text-left{
+                text-align: left;
+            }
         
             .nav.rmarkeditor>li>a {
                 padding: 5px;
@@ -273,6 +276,19 @@ session_write_close();
             
             .nav.panelheader>li>a {
                 padding: 5px;
+            }
+            
+            .modal-dialog.fullscreen {
+              width: 100%;
+              height: 100%;
+              margin: 0;
+              padding: 0;
+            }
+
+            .modal-content.fullscreen {
+              height: auto;
+              min-height: 100%;
+              border-radius: 0;
             }
     
         
@@ -346,7 +362,7 @@ input:checked + .slider:before {
 
 <body class="hold-transition skin-blue sidebar-mini">
     <div class="wrapper">
-        <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
+        <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>"  ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
         <header class="main-header">
             <!-- Logo -->
             <a href="index.php" class="logo">
