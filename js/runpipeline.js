@@ -5683,11 +5683,14 @@ $(document).ready(function () {
                     return wrapDiv;
                 }
                 if (visType == "table") {
-                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; width:calc(100% - 35px);" class="table-responsive"><table style="border:none; table-layout:fixed; width:100%;" class="nowrap table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></table></div>';
+                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; width:calc(100% - 35px);" class="table-responsive"><table style="border:none; table-layout:fixed; width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"><thead style="white-space: nowrap; "></thead></table></div>';
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
                     var dataTableObj = tsvConvert(data, "json2")
-                    //                    dataTableObj.scrollY = 395
+                    dataTableObj.deferRender = true
+                    dataTableObj.scroller = true
+                    dataTableObj.scrollCollapse = true
+                    dataTableObj.scrollY = 395
                     dataTableObj.scrollX = true
                     $("#" + fileid).DataTable(dataTableObj);
                     bindEveHandlerIcon(fileid)
