@@ -1324,6 +1324,8 @@ function parseAutofill(script) {
                     if (!ifBlockStart && !lines[i].match(/.*if *\((.*)\).*/i)) {
                         [varName, defaultVal] = parseVarPart(lines[i]);
                         if (varName && defaultVal) {
+                            //                            console.log(varName)
+                            //                            console.log(defaultVal)
                             if (varName.match(/^_.*$/)) {
                                 library[varName] = defaultVal
                             }
@@ -4960,8 +4962,12 @@ $(document).ready(function () {
                 var reverseFile = files_used[x].split(",")[1]
                 document.getElementById('forwardList').innerHTML += '<option value="' + forwardFile + '">' + forwardFile + '</option>'
                 document.getElementById('reverseList').innerHTML += '<option value="' + reverseFile + '">' + reverseFile + '</option>'
+                recordDelList("#forwardList", forwardFile, "add")
+                recordDelList("#reverseList", reverseFile, "add")
+
             } else {
                 document.getElementById('singleList').innerHTML += '<option value="' + files_used[x] + '">' + files_used[x] + '</option>'
+                recordDelList("#singleList", files_used[x], "add")
             }
         }
         selectedSamplesTable.fnDeleteRow(row);
@@ -4974,6 +4980,27 @@ $(document).ready(function () {
         string = string.replace(/\./g, "_");
         string = string.replace(/-/g, "_");
         return string;
+    }
+
+    //keep record of the deleted items from singleList, forwardList, reverseList
+    //in case of new search don't show these items
+    recordDelList = function (listDiv, value, type) {
+        var delArr = $(listDiv).data("samples")
+        if (delArr.length) {
+            if (type !== "add") {
+                delArr.push(value)
+            } else {
+                var index = delArr.indexOf(value);
+                if (index > -1) {
+                    delArr.splice(index, 1);
+                }
+            }
+            $(listDiv).data("samples", delArr)
+        } else {
+            if (type !== "add") {
+                $(listDiv).data("samples", [value])
+            }
+        }
     }
 
     smartSelection = function () {
@@ -4996,6 +5023,7 @@ $(document).ready(function () {
                     if (file_regex.test(files_select[x].value)) {
                         file_string += files_select[x].value + ' | '
                         $('#singleList option[value="' + files_select[x].value + '"]')[0].remove();
+                        recordDelList("#singleList", files_select[x].value, "del")
                         x--;
                     }
                 }
@@ -5005,6 +5033,8 @@ $(document).ready(function () {
                         file_string += files_select[x].value + ',' + files_selectRev[x].value + ' | '
                         $('#forwardList option[value="' + files_select[x].value + '"]')[0].remove();
                         $('#reverseList option[value="' + files_selectRev[x].value + '"]')[0].remove();
+                        recordDelList("#forwardList", files_select[x].value, "del")
+                        recordDelList("#reverseList", files_selectRev[x].value, "del")
                         x--;
                     }
                 }
@@ -5018,6 +5048,7 @@ $(document).ready(function () {
             var icon = createElement('i', ['class'], ['fa fa-times']);
             remove_button.appendChild(icon);
             button_div.appendChild(remove_button);
+
             selectedSamplesTable.fnAddData([
 				input.outerHTML,
 				file_string,
@@ -5037,6 +5068,7 @@ $(document).ready(function () {
                 if (current_selection[x].selected) {
                     file_string += current_selection[x].value + ' | '
                     $('#singleList option[value="' + current_selection[x].value + '"]')[0].remove();
+                    recordDelList("#singleList", current_selection[x].value, "del")
                     x--
                 }
             }
@@ -5050,6 +5082,8 @@ $(document).ready(function () {
                     file_string += current_selectionF[x].value + ',' + current_selectionR[x].value + ' | '
                     $('#forwardList option[value="' + current_selectionF[x].value + '"]')[0].remove();
                     $('#reverseList option[value="' + current_selectionR[x].value + '"]')[0].remove();
+                    recordDelList("#forwardList", current_selectionF[x].value, "del")
+                    recordDelList("#reverseList", current_selectionR[x].value, "del")
                     x--
                 }
             }
@@ -5649,16 +5683,12 @@ $(document).ready(function () {
                     return wrapDiv;
                 }
                 if (visType == "table") {
-                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px;"><table style="table-layout:fixed;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></table></div>';
+                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; width:calc(100% - 35px);" class="table-responsive"><table style="border:none; table-layout:fixed; width:100%;" class="nowrap table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></table></div>';
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
                     var dataTableObj = tsvConvert(data, "json2")
-                    dataTableObj.deferRender = true
-                    dataTableObj.scroller = true
-                    dataTableObj.scrollCollapse = true
-                    dataTableObj.scrollY = 395
+                    //                    dataTableObj.scrollY = 395
                     dataTableObj.scrollX = true
-                    dataTableObj.autoWidth = false
                     $("#" + fileid).DataTable(dataTableObj);
                     bindEveHandlerIcon(fileid)
                 } else if (visType == "rmarkdown") {
@@ -5694,10 +5724,14 @@ $(document).ready(function () {
                     var link = encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson);
                     var debrowserlink = debrowserUrl + '/debrowser/R/?jsonobject=' + link;
                     console.log(debrowserlink)
-                    var iframe = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + debrowserlink + '"></iframe>';
+                    var iframe = '<iframe id="deb-' + fileid + '" frameborder="0"  style="width:100%; height:100%;" src="' + debrowserlink + '"></iframe>';
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
                     $(href).append(contentDiv);
                     bindEveHandlerIcon(fileid)
+                    $("#deb-" + fileid).load(function () {
+                        $("#deb-" + fileid).loading('stop');
+                    });
+                    $("#deb-" + fileid).loading('start');
                 }
             }
         })

@@ -1,3 +1,7 @@
+10.02.2019 Version 0.2.81
+Datatables width issue fixed.
+Debrowser will be opened with loading sign. 
+
 08.02.2019 Version 0.2.80
 Bug fixed in pubweb selection in pipeline page.
 Multiselect feature added to pubweb visualization methods.
