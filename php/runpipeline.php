@@ -824,7 +824,8 @@
                         <label for="collection_type" class="col-sm-3 control-label text-left" style="padding-left:45px;">2. Collection Type <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please choose 'paired list' and for single-end reads please choose 'single/list' option."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                         <div class="col-sm-7">
                             <select id="collection_type" class="fbtn btn-default form-control" name="collection_type">
-                                <option value="single" selected>Single/List</option>
+                                <option value="" disabled selected>Choose Collection Type</option>
+                                <option value="single">Single/List</option>
                                 <option value="pair">Paired List</option>
                             </select>
                         </div>
@@ -834,8 +835,8 @@
                     </div>
                     <div class="form-group">
                         <div class="col-sm-12">
-                           <div class="col-sm-6 singlepatternDiv">
-                                <p class="col-sm-4 control-label">File Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter part of the file name to filter files eg. fastq"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                            <div class="col-sm-6 singlepatternDiv">
+                                <p class="col-sm-4 control-label">Filename Extension <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter end of the file name to filter files (eg. .fastq). This pattern will be removed from the file name to create 'Sample Names' in the table below."><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
                                 <div class="col-sm-8">
                                     <input type="text" class="form-control" id="single_pattern" name="single_pattern" value="">
                                 </div>
@@ -856,19 +857,19 @@
                     </div>
                     <div class="form-group">
                         <div class="col-sm-12">
-                           <div class="col-sm-6 singlepatternDiv">
-                                <div  class="col-sm-12">
-                                    <select id="singleList" type="select-multiple"  multiple class="form-control" size="9"></select>
+                            <div class="col-sm-6 singlepatternDiv">
+                                <div class="col-sm-12">
+                                    <select id="singleList" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                             <div class="col-sm-6 forwardpatternDiv" style="display:none;">
                                 <div id="forwardListDiv" class="col-sm-12">
-                                    <select id="forwardList" type="select-multiple"  multiple  class="form-control" size="9"></select>
+                                    <select id="forwardList" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                             <div class="col-sm-6 reversepatternDiv" style="display:none;">
                                 <div id="reverseListDiv" class="col-sm-12">
-                                    <select id="reverseList" type="select-multiple"  multiple  class="form-control" size="9"></select>
+                                    <select id="reverseList" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                         </div>
@@ -876,7 +877,7 @@
                     <div class="form-group">
                         <div class="col-sm-8"></div>
                         <div class="col-sm-4">
-                            <button id="add_selection_file" type="button" class="btn btn-primary pull-right"  onclick="addSelection()">Add Selection</button>
+                            <button id="add_selection_file" type="button" class="btn btn-primary pull-right" onclick="addSelection()">Add Selection</button>
                             <button id="smart_add_file" type="button" class="btn btn-primary pull-right" style="margin-right:3px;" onclick="smartSelection()">Add All</button>
                             <button id="clear_selection" type="button" class="btn btn-warning pull-right" style="margin-right:3px;" onclick="clearSelection()">Reset</button>
                         </div>
@@ -894,6 +895,20 @@
                                 <tbody></tbody>
                             </table>
                         </div>
+                    </div>
+                    <div class="form-group">
+                            <label class="col-sm-3 control-label text-left" style="padding-left:45px;">4. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered samples"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <div class="col-sm-7">
+                                <select id="collection_name" class="fbtn btn-default form-control" name="collection_name">
+                                    <option value="" disabled selected>Name of Collection</option>
+                                </select>
+                            </div>
+                    </div>
+                    <div class="form-group">
+                            <label class="col-sm-3 control-label text-left" style="padding-left:45px;">5. Archive Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter directory where all of the entered samples will be published after merging/renaming operation"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <div class="col-sm-7">
+                                <input type="text" class="form-control" id="archive_dir" name="archive_dir" >
+                            </div>
                     </div>
                 </form>
             </div>

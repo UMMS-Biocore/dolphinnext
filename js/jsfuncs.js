@@ -383,6 +383,7 @@ $('.filterM a').on('click', function (event) {
     return false;
 });
 
+
 function filterSideBar(options) {
     var tagElems = $('#autocompletes1').children()
     if (options.length) {

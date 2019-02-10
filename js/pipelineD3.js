@@ -486,17 +486,6 @@ function zoomed() {
 
 //kind=input/output
 function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj) {
-    console.log(name)
-    console.log(pObj.gNum)
-    console.log(pubWeb)
-    console.log(paramid)
-    console.log(pName)
-    console.log(classtoparam)
-    console.log(init)
-    console.log(pColor)
-    console.log(defVal)
-    console.log(dropDown)
-    console.log(pObj)
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -504,8 +493,6 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         MainGNum = pObj.MainGNum;
         prefix = "p" + MainGNum; //prefix for node ids
     }
-    console.log(prefix)
-    
     //gnum uniqe, id same id (Written in class) in same type process
     pObj.g = d3.select("#mainG" + MainGNum).append("g")
         .attr("id", "g" + MainGNum + "-" + pObj.gNum)
