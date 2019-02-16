@@ -34,10 +34,17 @@ if (isset($_REQUEST['id'])) {
 	$runType = $_REQUEST['runType'];
 	$uuid = $_REQUEST['uuid'];
     $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
+    $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
+    $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
+    if (empty($attempt) || $attempt == 0 || $attempt == "0"){
+        $attempt = "0";
+    }
+    //create initialrun script
+    $initialRunScript = $db->initialRunScript($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
-    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $ownerID);
+    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $ownerID);
     //run the script
-    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $ownerID);
+    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $ownerID);
 }
 else if ($p=="updateRunAttemptLog") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -159,7 +166,7 @@ else if ($p=="saveNextflowLog"){
     $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
     $outdir = $proPipeAll[0]->{'output_dir'};
     $run_path_real = "$outdir/run{$project_pipeline_id}";
-    $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log");
+    $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
     foreach ($down_file_list as &$value) {
         $value = $run_path_real."/".$value;
     }
@@ -487,6 +494,20 @@ else if ($p=="getProjectPipelineInputsByGnum"){
 else if ($p=="getInputs"){
     $data = $db -> getInputs($id,$ownerID);
 }
+else if ($p=="getCollection"){
+    if (!empty($id)) {
+        $data = $db->getCollectionById($id,$ownerID);
+    } else {
+        $data = $db->getCollections($ownerID);
+    }
+}
+else if ($p=="getFile"){
+    if (!empty($id)) {
+        $data = $db->getFileById($id,$ownerID);
+    } else {
+        $data = $db->getFiles($ownerID);
+    }
+}
 else if ($p=="getPipelineGroup"){
     $data = $db -> getPipelineGroup($ownerID);
 }
@@ -778,6 +799,34 @@ else if ($p=="saveInput"){
        $data = $db->insertInput($name, $type, $ownerID);
     }
 }
+else if ($p=="saveCollection"){
+    $name = $_REQUEST['name'];
+    if (!empty($id)) {
+    } else {
+       $data = $db->insertCollection($name, $ownerID);
+    }
+}
+else if ($p=="saveFile"){
+    $collection_id = isset($_REQUEST['collection_id']) ? $_REQUEST['collection_id'] : "";
+    settype($collection_id, 'integer');
+    $collection_type = isset($_REQUEST['collection_type']) ? $_REQUEST['collection_type'] : "";
+    $archive_dir = isset($_REQUEST['archive_dir']) ? $_REQUEST['archive_dir'] : "";
+    $file_dir = $_REQUEST['file_dir'];
+    $file_type = $_REQUEST['file_type'];
+    $file_array = $_REQUEST['file_array'];
+    foreach ($file_array as $item):
+        $p = explode(" ", $item);
+        $name = $p[0];
+        unset($p[0]);
+        $files_used = join(' ', $p);
+        $insert = $db->insertFile($name, $file_dir, $file_type, $files_used, $collection_id, $collection_type, $archive_dir, $ownerID);
+        $insertData = json_decode($insert,true);
+        if (empty($insertData["id"])) {
+            break;
+        }
+    endforeach;
+    $data = $insert;
+}
 else if ($p=="saveProPipeInput"){
     $input_id = $_REQUEST['input_id'];
     $project_id = $_REQUEST['project_id'];
@@ -787,10 +836,13 @@ else if ($p=="saveProPipeInput"){
     settype($g_num, 'integer');
     $given_name = $_REQUEST['given_name'];
     $qualifier = $_REQUEST['qualifier'];
+    $collection_id = isset($_REQUEST['collection_id']) ? $_REQUEST['collection_id'] : "";
+    settype($collection_id, 'integer');
+    
     if (!empty($id)) {
-       $data = $db->updateProPipeInput($id, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $ownerID);
+       $data = $db->updateProPipeInput($id, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $collection_id, $ownerID);
     } else {
-       $data = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $ownerID);
+       $data = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $collection_id, $ownerID);
     }
 }
 else if ($p=="fillInput"){
@@ -798,10 +850,12 @@ else if ($p=="fillInput"){
     $inputType = $_REQUEST['inputType'];
     $inputName = $_REQUEST['inputName'];
     $project_id = $_REQUEST['project_id'];
+    $collection_id = isset($_REQUEST['collection_id']) ? $_REQUEST['collection_id'] : "";
     $pipeline_id = $_REQUEST['pipeline_id'];
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $g_num = $_REQUEST['g_num'];
     settype($g_num, 'integer');
+    settype($collection_id, 'integer');
     $given_name = $_REQUEST['given_name'];
     $qualifier = $_REQUEST['qualifier'];
     $proPipeInputID = $_REQUEST['proPipeInputID'];
@@ -842,10 +896,10 @@ else if ($p=="fillInput"){
     $data = json_encode($projectInputID);
     //insert into project_pipeline_input table
     if (!empty($proPipeInputID)){
-        $data = $db->updateProPipeInput($proPipeInputID, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $ownerID);
+        $data = $db->updateProPipeInput($proPipeInputID, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $ownerID);
         $projectPipelineInputID = $proPipeInputID;
     } else {
-        $insertProPipe = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $ownerID);
+        $insertProPipe = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $ownerID);
         $insertProPipeData = json_decode($insertProPipe,true);
         $projectPipelineInputID = $insertProPipeData["id"];
     }

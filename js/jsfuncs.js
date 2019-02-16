@@ -878,6 +878,7 @@ function downloadText(text, filename) {
     document.body.removeChild(element);
 }
 
+//use array of item to fill select element
 function fillArray2Select(arr, id, clean) {
     if (clean === true){
         $(id).empty();

@@ -1137,15 +1137,15 @@ function autoFillButton(buttonText, value) {
     // insert into project pipeline input table
     if (value && value != "") {
         if (checkDropDown == false && checkFileExist == false) {
-            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID);
+            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
         } else if (checkDropDown == false && checkFileExist == true) {
-            checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID);
+            checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, null);
         } else if (checkDropDown == true) {
             // if proPipeInputID exist, then first remove proPipeInputID.
             if (proPipeInputID) {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
             }
-            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID);
+            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
         }
     } else { // if value is empty:"" then remove from project pipeline input table
         var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
@@ -1557,7 +1557,7 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name) {
             var filePath = getProPipeInputs[0].name; //value for val type
             var proPipeInputID = getProPipeInputs[0].id;
             var given_name = getProPipeInputs[0].given_name;
-            setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier); }, 2);
+            setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, null); }, 2);
         }
         if (getProPipeInputs.length > 1) {
             for (var k = 1; k < getProPipeInputs.length; k++) {
@@ -1769,9 +1769,9 @@ function insertProPipePanel(script, gNum, name, pObj) {
 
 function insertRowTable(rowType, firGnum, secGnum, paramGivenName, paraIdentifier, paraFileType, paraQualifier, processName, button) {
     if (paraQualifier !== "val") {
-        return '<tr id=' + rowType + 'Ta-' + firGnum + '><td id="' + rowType + '-PName-' + firGnum + '" scope="row">' + paramGivenName + '</td><td>' + paraIdentifier + '</td><td>' + paraFileType + '</td><td>' + paraQualifier + '</td><td> <span id="proGName-' + secGnum + '">' + processName + '</span></td><td given_name="' + paramGivenName + '">' + button + '</td></tr>'
+        return '<tr id=' + rowType + 'Ta-' + firGnum + '><td id="' + rowType + '-PName-' + firGnum + '" scope="row">' + paramGivenName + '</td><td style="display:none;">' + paraIdentifier + '</td><td style="display:none;">' + paraFileType + '</td><td style="display:none;">' + paraQualifier + '</td><td style="display:none;"> <span id="proGName-' + secGnum + '">' + processName + '</span></td><td given_name="' + paramGivenName + '">' + button + '</td></tr>'
     } else {
-        return '<tr id=' + rowType + 'Ta-' + firGnum + '><td id="' + rowType + '-PName-' + firGnum + '" scope="row">' + paramGivenName + '</td><td>' + paraIdentifier + '</td><td>' + "-" + '</td><td>' + paraQualifier + '</td><td> <span id="proGName-' + secGnum + '">' + processName + '</span></td><td given_name="' + paramGivenName + '">' + button + '</td></tr>'
+        return '<tr id=' + rowType + 'Ta-' + firGnum + '><td id="' + rowType + '-PName-' + firGnum + '" scope="row">' + paramGivenName + '</td><td style="display:none;">' + paraIdentifier + '</td><td style="display:none;">' + "-" + '</td><td style="display:none;">' + paraQualifier + '</td><td style="display:none;"> <span id="proGName-' + secGnum + '">' + processName + '</span></td><td given_name="' + paramGivenName + '">' + button + '</td></tr>'
     }
 }
 
@@ -2519,7 +2519,7 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
                     var filePath = getProPipeInputs[0].name; //value for val type
                     var proPipeInputID = getProPipeInputs[0].id;
                     var given_name = getProPipeInputs[0].given_name;
-                    setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier); }, 2);
+                    setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, null); }, 2);
                 }
                 if (getProPipeInputs.length > 1) {
                     for (var k = 1; k < getProPipeInputs.length; k++) {
@@ -3200,7 +3200,7 @@ function loadRunOptions() {
     }
 }
 //insert selected input to inputs table
-function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier) {
+function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection) {
     var checkDropDown = $('#' + rowID).find('#dropDown')[0];
     if (checkDropDown) {
         $(checkDropDown).val(filePath);
@@ -3220,6 +3220,15 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
         }
         $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id=filePath-' + gNumParam + '>' + filePath + '</span>' + editIcon + deleteIcon);
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
+        if (collection) {
+            if (collection.collection_id) {
+                $('#filePath-' + gNumParam).attr("collection_id", collection.collection_id)
+            } else {
+                $('#filePath-' + gNumParam).attr("collection_id", "")
+            }
+        } else {
+            $('#filePath-' + gNumParam).attr("collection_id", "")
+        }
     }
 }
 //remove for both dropdown and file/val options
@@ -3253,15 +3262,22 @@ function removeSelectFile(rowID, sType) {
     }
 }
 
-function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID) {
+function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection) {
     if (inputID === null) { inputID = "" }
     var nameInput = "";
     if (data) {
         nameInput = data[1].value;
     }
+    var collection_id = ""
+    if (collection) {
+        if (collection.collection_id) {
+            collection_id = collection.collection_id;
+        }
+    }
     var fillInput = getValues({
         p: "fillInput",
         inputID: inputID,
+        collection_id: collection_id,
         inputName: nameInput,
         inputType: sType,
         project_id: project_id,
@@ -3274,19 +3290,26 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
     });
     //insert into #inputsTab
     if (fillInput.projectPipelineInputID && fillInput.inputName) {
-        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType);
+        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection);
     }
 }
 
-function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID) {
+function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection) {
     if (inputID === null) { inputID = "" }
     var nameInput = "";
     if (data) {
         nameInput = data[1].value;
     }
+    var collection_id = ""
+    if (collection) {
+        if (collection.collection_id) {
+            collection_id = collection.collection_id;
+        }
+    }
     var fillInput = getValues({
         p: "fillInput",
         inputID: inputID,
+        collection_id: collection_id,
         inputName: nameInput,
         inputType: sType,
         project_id: project_id,
@@ -3301,9 +3324,18 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
     if (fillInput.projectPipelineInputID && fillInput.inputName) {
         $('#filePath-' + gNumParam).text(fillInput.inputName);
     }
+    if (collection) {
+        if (collection.collection_id) {
+            $('#filePath-' + gNumParam).attr("collection_id", collection.collection_id)
+        } else {
+            $('#filePath-' + gNumParam).attr("collection_id", "")
+        }
+    } else {
+        $('#filePath-' + gNumParam).attr("collection_id", "")
+    }
 }
 
-function saveFileSetValModal(data, sType, inputID) {
+function saveFileSetValModal(data, sType, inputID, collection) {
     if (sType === 'file' || sType === 'set') {
         sType = 'file'; //for simplification 
         var rowID = $('#mIdFile').attr('rowID'); //the id of table-row to be updated #inputTa-3
@@ -3314,11 +3346,11 @@ function saveFileSetValModal(data, sType, inputID) {
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
     //check database if file is exist, if not exist then insert
-    checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID);
+    checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection);
     checkReadytoRun();
 }
 
-function editFileSetValModal(data, sType, inputID) {
+function editFileSetValModal(data, sType, inputID, collection) {
     if (sType === 'file' || sType === 'set') {
         sType = 'file';
         var rowID = $('#mIdFile').attr('rowID'); //the id of table-row to be updated #inputTa-3
@@ -3330,7 +3362,7 @@ function editFileSetValModal(data, sType, inputID) {
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
     //check database if file is exist, if not exist then insert
-    checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID);
+    checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection);
     checkReadytoRun();
 }
 checkType = "";
@@ -3953,15 +3985,20 @@ function readNextLog(proType, proId, type) {
     var pidStatus = "";
     serverLog = getServerLog(project_pipeline_id, "serverlog.txt");
     errorLog = getServerLog(project_pipeline_id, "err.log");
+    initialLog = getServerLog(project_pipeline_id, "initial.log");
     if (errorLog) {
         serverLog = serverLog + "\n" + errorLog;
     }
+
     if (serverLog && serverLog !== null && serverLog !== false) {
         var runPid = parseRunPid(serverLog);
     } else {
         serverLog = "";
     }
     nextflowLog = getServerLog(project_pipeline_id, "log.txt");
+    if (initialLog) {
+        nextflowLog = initialLog + "\n" + nextflowLog;
+    }
     if (nextflowLog === null || nextflowLog === undefined) {
         nextflowLog = "";
     }
@@ -4573,6 +4610,7 @@ $(function () {
                 var path = "run"
             }
             var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
+            console.log(fileList);
             var fileListAr = Object.values(fileList);
             var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
             //hide serverlog.txt
@@ -4617,7 +4655,9 @@ $(function () {
                     }
                     if (fileListAr.includes("err.log")) {
                         serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
-                        //to support outdated log directory system 
+                    }
+                    if (fileListAr.includes("initial.log")) {
+                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initial.log" });
                     }
                     navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
                 } else {
@@ -4736,6 +4776,7 @@ $(document).ready(function () {
         $('#delRun').remove();
         $('#saveRunIcon').remove();
         $('#pipeRunDiv').remove();
+        $("#run-title").prop("disabled", true);
     }
     runStatus = "";
     if (projectpipelineOwn === "1") {
@@ -4761,6 +4802,13 @@ $(document).ready(function () {
         loadPipelineDetails(pipeline_id);
         loadProjectPipeline(pipeData);
         fillRunVerOpt(["#runVerLog", "#runVerReport"])
+    }
+    //after loading pipeline disable all the inputs
+    if (projectpipelineOwn === "0") {
+        setTimeout(function () {
+            $("#configTab :input").prop("disabled", true);
+            $("#advancedTab :input").prop("disabled", true);
+        }, 1000);
     }
     //not allow to check both docker and singularity
     $('#docker_imgDiv').on('show.bs.collapse', function () {
@@ -4807,6 +4855,103 @@ $(document).ready(function () {
 
     //##################
     //Sample Modal
+
+
+    createMultiselect = function (id) {
+        $(id).multiselect({
+            includeResetOption: true,
+            resetText: "Clear selected",
+            includeResetDivider: true,
+            buttonText: function (options, select) {
+                if (options.length == 0) {
+                    return select.attr("name") + ": All";
+                } else if (options.length > 2) {
+                    return select.attr("name") + ": " + options.length + ' selected';
+                } else {
+                    var labels = [];
+                    options.each(function () {
+                        labels.push($(this).text());
+                    });
+                    return select.attr("name") + ": " + labels.join(', ') + '';
+                }
+            }
+        });
+    }
+    createMultiselectBinder = function (id) {
+        var resetBut = $(id).find("a.btn-block");
+        resetBut.click(function () {
+            $($(id).find("input")[0]).trigger("change")
+        });
+    }
+
+    var columnsToSearch = {
+        2: 'collection'
+    };
+
+    sampleTable = $('#sampleTable').DataTable({
+        "dom": '<"#searchBarST.pull-left"f>rt<"pull-left"i><"bottom"p><"clear">',
+        "destroy": true,
+        "ajax": {
+            url: "ajax/ajaxquery.php",
+            data: { "p": "getFile" },
+            "dataSrc": ""
+        },
+        "hover": true,
+        "columns": [{
+            "data": "id",
+            "checkboxes": {
+                'targets': 0,
+                'selectRow': true
+            }
+            }, {
+            "data": "name"
+            }, {
+            "data": "collection_name"
+            }, {
+            "data": "date_created"
+            }],
+        'select': {
+            'style': 'multi'
+        },
+        'order': [[3, 'desc']],
+        initComplete: function () {
+            for (var i in columnsToSearch) {
+                var api = this.api();
+                $("#sampleTable_filter").css("display", "inline-block")
+                $("#searchBarST").append('<div style="margin-bottom:20px; padding-left:8px; display:inline-block;" id="filter-' + columnsToSearch[i] + '"></div>')
+                var select = $('<select name="' + columnsToSearch[i] + '" multiple="multiple"></select>')
+                    .appendTo($('#filter-' + columnsToSearch[i]).empty())
+                    .attr('data-col', i)
+                    .on('change', function () {
+                        var vals = $(this).val();
+                        var valReg = "";
+                        for (var k = 0; k < vals.length; k++) {
+                            var val = $.fn.dataTable.util.escapeRegex(vals[k]);
+                            if (val) {
+                                if (k + 1 !== vals.length) {
+                                    valReg += val + "|"
+                                } else {
+                                    valReg += val
+                                }
+                            }
+                        }
+                        api.column($(this).attr('data-col'))
+                            .search(valReg ? '^' + valReg + '$' : '', true, false)
+                            .draw();
+                    });
+                api.column(i).data().unique().sort().each(function (d, j) {
+                    select.append('<option value="' + d + '">' + d + '</option>');
+                });
+                createMultiselect('#filter-' + columnsToSearch[i] + " > select")
+                createMultiselectBinder('#filter-' + columnsToSearch[i])
+            }
+        }
+    });
+
+    selectedSamplesTable = $('#selectedSamples').dataTable();
+
+
+
     $(function () {
         $('#sampleModal').on('show.bs.modal', function () {
             $('body').css('overflow', 'hidden');
@@ -4815,17 +4960,88 @@ $(document).ready(function () {
             $('body').css('overflow', 'hidden auto');
             $('body').css('position', 'static');
         })
-        $('#addSampleModal').on('show.bs.modal', function () {
-            $('#addSampleModal').find('form').trigger('reset');
+        $('#addFileModal').on('show.bs.modal', function () {
+            $('#addFileModal').find('form').trigger('reset');
             fillArray2Select([], "#viewDir", true)
             resetPatternList()
-            $('#collection_type').trigger("change");
+            clearSelection()
+            $('.forwardpatternDiv').css("display", "none")
+            $('.reversepatternDiv').css("display", "none")
+            $('.singlepatternDiv').css("display", "none")
+            $('.patternButs').css("display", "none")
+            $('.patternTable').css("display", "none")
+            $("#viewDir").css("display", "none")
+
+            var renderMenu = {
+                option: function (data, escape) {
+                    return '<div class="option">' +
+                        '<span class="title"><i>' + escape(data.name) + '</i></span>' +
+                        '</div>';
+                },
+                item: function (data, escape) {
+                    return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
+                }
+            };
+
+            $('#collection_id').selectize({
+                valueField: 'id',
+                searchField: ['name'],
+                createOnBlur: true,
+                render: renderMenu,
+                options: getValues({ p: "getCollection" }),
+                create: function (input, callback) {
+                    callback({ id: "_newItm_" + input, name: input });
+                }
+            });
+
         });
+
+
+
+        //        $('#addFileModal').on('click', '#mSaveFiles', function (event) {
+        //            event.preventDefault();
+        //            var formValues = $('#addFileModal').find('input, select');
+        //            var requiredFields = ["file_dir", "collection_type", "collection_id"];
+        //            var ret = {};
+        //            ret = getTableSamples()
+        //            if (ret.warnUser) {
+        //                alert(ret.warnUser);
+        //            }
+        //            if (!ret.file_array.length) {
+        //                alert("Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.");
+        //            }
+        //            var formObj = {};
+        //            var stop = "";
+        //        [formObj, stop] = createFormObj(formValues, requiredFields)
+        //            if (stop === false && !ret.warnUser && ret.file_array.length) {
+        //                formObj.file_array = ret.file_array
+        //                formObj.p = "saveFile"
+        //                $.ajax({
+        //                    type: "POST",
+        //                    url: "ajax/ajaxquery.php",
+        //                    data: formObj,
+        //                    async: true,
+        //                    success: function (s) {
+        //                        if (s.id) {
+        //                            sampleTable.ajax.reload();
+        //                            $('#addFileModal').modal('hide');
+        //
+        //                        }
+        //                    },
+        //                    error: function (errorThrown) {
+        //                        alert("Error: " + errorThrown);
+        //                    }
+        //                });
+        //            }
+        //        });
+
+
     });
 
     $('#theButton').click(function () {
         $('#sampleModal').modal("show")
     });
+
 
     function resetPatternList() {
         fillArray2Select([], "#singleList", true)
@@ -4840,9 +5056,13 @@ $(document).ready(function () {
                 $('.forwardpatternDiv').css("display", "inline")
                 $('.reversepatternDiv').css("display", "inline")
                 $('.singlepatternDiv').css("display", "none")
+                $('.patternButs').css("display", "inline")
+                $('.patternTable').css("display", "inline")
                 $('#forward_pattern').trigger("keyup");
                 $('#reverse_pattern').trigger("keyup");
-            } else {
+            } else if (collection_type == "single") {
+                $('.patternButs').css("display", "inline")
+                $('.patternTable').css("display", "inline")
                 $('.singlepatternDiv').css("display", "inline")
                 $('.forwardpatternDiv').css("display", "none")
                 $('.reversepatternDiv').css("display", "none")
@@ -4881,7 +5101,7 @@ $(document).ready(function () {
     });
 
     $('#viewDirBut').click(function () {
-        var dir = $('#sample_dir').val()
+        var dir = $('#file_dir').val()
         if (dir) {
             var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow });
             if (dirList) {
@@ -4889,7 +5109,6 @@ $(document).ready(function () {
                 var fileArr = dirList.split('\n');
                 var errorAr = fileArr.filter(line => line.match(/ls:/));
                 fileArr = fileArr.filter(line => !line.match(/:/));
-                console.log(errorAr)
                 if (fileArr.length > 0) {
                     fillArray2Select(fileArr, "#viewDir", true)
                     $("#viewDir").data("fileArr", fileArr)
@@ -4908,28 +5127,43 @@ $(document).ready(function () {
                 resetPatternList()
             }
         }
+        $("#viewDir > option").attr("style", "pointer-events: none;");
+        $("#viewDir").css("display", "inline")
     });
 
     function updateFileArea(selectId, pattern) {
-        var fileAr = $("#viewDir").data("fileArr")
-        if (fileAr) {
-            pattern = cleanRegEx(pattern);
-            var reg = new RegExp(pattern)
-            var filteredAr = fileAr.filter(line => line.match(reg));
-            if (filteredAr.length > 0) {
-                fillArray2Select(filteredAr, selectId, true)
-            } else {
-                fillArray2Select(["No File Match with Pattern."], selectId, true)
+        var fileOrj = $("#viewDir").data("fileArr")
+        if (fileOrj) {
+            var fileAr = fileOrj.slice(); //clone list
+            var delArr = $(selectId).data("samples")
+            if (delArr) {
+                if (delArr.length) {
+                    for (var i = 0; i < delArr.length; i++) {
+                        var index = fileAr.indexOf(delArr[i]);
+                        if (index > -1) {
+                            fileAr.splice(index, 1);
+                        }
+                    }
+                }
             }
-        } else {
-            fillArray2Select(["There is no file to match pattern"], selectId, true)
+            if (fileAr) {
+                pattern = cleanRegEx(pattern);
+                var reg = new RegExp(pattern)
+                var filteredAr = fileAr.filter(line => line.match(reg));
+                if (filteredAr.length > 0) {
+                    fillArray2Select(filteredAr, selectId, true)
+                } else {
+                    fillArray2Select(["No file match with pattern."], selectId, true)
+                }
+            } else {
+                fillArray2Select(["There is no file to match pattern"], selectId, true)
+            }
         }
-
     }
-    window.timeoutID = {}
-    window.timeoutID['#forward_pattern'] = 0
-    window.timeoutID['#reverse_pattern'] = 0
-    window.timeoutID['#single_pattern'] = 0
+    window.timeoutID = {};
+    window.timeoutID['#forward_pattern'] = 0;
+    window.timeoutID['#reverse_pattern'] = 0;
+    window.timeoutID['#single_pattern'] = 0;
 
     function updateFileList(selectId, pattern) {
         if (window.timeoutID[selectId]) clearTimeout(window.timeoutID[selectId]);
@@ -4950,7 +5184,20 @@ $(document).ready(function () {
         });
     });
 
-    selectedSamplesTable = $('#selectedSamples').dataTable();
+
+
+    clearSelection = function () {
+        selectedSamplesTable.fnClearTable();
+        $('#forwardList').html("")
+        $('#reverseList').html("")
+        $('#singleList').html("")
+        recordDelList("#forwardList", null, "reset")
+        recordDelList("#reverseList", null, "reset")
+        recordDelList("#singleList", null, "reset")
+        $('#collection_type').trigger("change");
+
+    }
+
 
     removeRowSelTable = function (button, collection_type) {
         var row = $(button).closest('tr');
@@ -4960,12 +5207,16 @@ $(document).ready(function () {
             if (files_used[x].match(/,/)) {
                 var forwardFile = files_used[x].split(",")[0]
                 var reverseFile = files_used[x].split(",")[1]
+                $("#forwardList > option").each(function () { if (this.value.match(/no file/i)) { $(this).remove() } });
+                $("#reverseList > option").each(function () { if (this.value.match(/no file/i)) { $(this).remove() } });
+
                 document.getElementById('forwardList').innerHTML += '<option value="' + forwardFile + '">' + forwardFile + '</option>'
                 document.getElementById('reverseList').innerHTML += '<option value="' + reverseFile + '">' + reverseFile + '</option>'
                 recordDelList("#forwardList", forwardFile, "add")
                 recordDelList("#reverseList", reverseFile, "add")
 
             } else {
+                $("#singleList > option").each(function () { if (this.value.match(/no file/i)) { $(this).remove() } });
                 document.getElementById('singleList').innerHTML += '<option value="' + files_used[x] + '">' + files_used[x] + '</option>'
                 recordDelList("#singleList", files_used[x], "add")
             }
@@ -4985,20 +5236,26 @@ $(document).ready(function () {
     //keep record of the deleted items from singleList, forwardList, reverseList
     //in case of new search don't show these items
     recordDelList = function (listDiv, value, type) {
-        var delArr = $(listDiv).data("samples")
-        if (delArr.length) {
-            if (type !== "add") {
-                delArr.push(value)
-            } else {
-                var index = delArr.indexOf(value);
-                if (index > -1) {
-                    delArr.splice(index, 1);
-                }
-            }
-            $(listDiv).data("samples", delArr)
+        if (type == "reset") {
+            $(listDiv).removeData("samples")
         } else {
-            if (type !== "add") {
-                $(listDiv).data("samples", [value])
+            var delArr = $(listDiv).data("samples")
+            if (delArr) {
+                if (delArr.length) {
+                    if (type !== "add") {
+                        delArr.push(value)
+                    } else {
+                        var index = delArr.indexOf(value);
+                        if (index > -1) {
+                            delArr.splice(index, 1);
+                        }
+                    }
+                    $(listDiv).data("samples", delArr)
+                }
+            } else {
+                if (type !== "add") {
+                    $(listDiv).data("samples", [value])
+                }
             }
         }
     }
@@ -5018,12 +5275,14 @@ $(document).ready(function () {
             //	use regex to find the values before the pivot
             var regex_string = files_select[0].value.split(regex)[0];
             var file_regex = new RegExp(regex_string);
+
+
             if (collection_type == "single") {
                 for (var x = 0; x < files_select.length; x++) {
                     if (file_regex.test(files_select[x].value)) {
                         file_string += files_select[x].value + ' | '
-                        $('#singleList option[value="' + files_select[x].value + '"]')[0].remove();
                         recordDelList("#singleList", files_select[x].value, "del")
+                        $('#singleList option[value="' + files_select[x].value + '"]')[0].remove();
                         x--;
                     }
                 }
@@ -5031,20 +5290,19 @@ $(document).ready(function () {
                 for (var x = 0; x < files_select.length; x++) {
                     if (file_regex.test(files_select[x].value) && file_regex.test(files_selectRev[x].value)) {
                         file_string += files_select[x].value + ',' + files_selectRev[x].value + ' | '
-                        $('#forwardList option[value="' + files_select[x].value + '"]')[0].remove();
-                        $('#reverseList option[value="' + files_selectRev[x].value + '"]')[0].remove();
                         recordDelList("#forwardList", files_select[x].value, "del")
                         recordDelList("#reverseList", files_selectRev[x].value, "del")
+                        $('#forwardList option[value="' + files_select[x].value + '"]')[0].remove();
+                        $('#reverseList option[value="' + files_selectRev[x].value + '"]')[0].remove();
                         x--;
                     }
                 }
             }
-
             file_string = file_string.substring(0, file_string.length - 3);
             var name = regex_string.split(' | ')[0].split('.')[0];
-            var input = createElement('input', ['id', 'type', 'class', 'value', 'onChange'], [replaceCharacters(name), 'text', 'form-control', replaceCharacters(name), 'updateNameTable(this)'])
+            var input = createElement('input', ['id', 'type', 'class', 'value', 'onChange'], [name, 'text', '', name, 'updateNameTable(this)'])
             var button_div = createElement('div', ['class'], ['text-center'])
-            var remove_button = createElement('button', ['class', 'type', 'onclick'], ['btn btn-danger text-center', 'button', 'removeRowSelTable(this,\'' + collection_type + '\')']);
+            var remove_button = createElement('button', ['class', 'type', 'onclick'], ['btn-sm btn-danger text-center', 'button', 'removeRowSelTable(this,\'' + collection_type + '\')']);
             var icon = createElement('i', ['class'], ['fa fa-times']);
             remove_button.appendChild(icon);
             button_div.appendChild(remove_button);
@@ -5063,12 +5321,11 @@ $(document).ready(function () {
             var current_selection = document.getElementById('singleList').options;
             var regex = $('#single_pattern').val();
             var file_string = '';
-            console.log(current_selection)
             for (var x = 0; x < current_selection.length; x++) {
                 if (current_selection[x].selected) {
                     file_string += current_selection[x].value + ' | '
-                    $('#singleList option[value="' + current_selection[x].value + '"]')[0].remove();
                     recordDelList("#singleList", current_selection[x].value, "del")
+                    $('#singleList option[value="' + current_selection[x].value + '"]')[0].remove();
                     x--
                 }
             }
@@ -5080,22 +5337,26 @@ $(document).ready(function () {
             for (var x = 0; x < current_selectionF.length; x++) {
                 if (current_selectionF[x].selected && current_selectionR[x].selected) {
                     file_string += current_selectionF[x].value + ',' + current_selectionR[x].value + ' | '
-                    $('#forwardList option[value="' + current_selectionF[x].value + '"]')[0].remove();
-                    $('#reverseList option[value="' + current_selectionR[x].value + '"]')[0].remove();
                     recordDelList("#forwardList", current_selectionF[x].value, "del")
                     recordDelList("#reverseList", current_selectionR[x].value, "del")
+                    $('#forwardList option[value="' + current_selectionF[x].value + '"]')[0].remove();
+                    $('#reverseList option[value="' + current_selectionR[x].value + '"]')[0].remove();
                     x--
                 }
             }
         }
-        console.log(file_string)
         if (file_string) {
             file_string = file_string.substring(0, file_string.length - 3);
             if (file_string != '') {
-                var name = file_string.split(regex)[0];
-                var input = createElement('input', ['id', 'type', 'class', 'value', 'onChange'], [replaceCharacters(name), 'text', 'form-control', replaceCharacters(name), 'updateNameTable(this)'])
+                if (regex == "") {
+                    var name = file_string;
+                } else {
+                    var name = file_string.split(regex)[0];
+                }
+                var name = name.split(' | ')[0].split('.')[0];
+                var input = createElement('input', ['id', 'type', 'class', 'value', 'onChange'], [name, 'text', '', name, 'updateNameTable(this)'])
                 var button_div = createElement('div', ['class'], ['text-center'])
-                var remove_button = createElement('button', ['class', 'type', 'onclick'], ['btn btn-danger text-center', 'button', 'removeRowSelTable(this,\'' + collection_type + '\')']);
+                var remove_button = createElement('button', ['class', 'type', 'onclick'], ['btn-sm btn-danger text-center', 'button', 'removeRowSelTable(this,\'' + collection_type + '\')']);
                 var icon = createElement('i', ['class'], ['fa fa-times']);
                 remove_button.appendChild(icon);
                 button_div.appendChild(remove_button);
@@ -5129,7 +5390,7 @@ $(document).ready(function () {
         data.push({ name: "name", value: value });
         var inputID = null;
         //check database if file is exist, if not exist then insert
-        checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID);
+        checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
         button.css("display", "none");
         checkReadytoRun();
     });
@@ -5170,7 +5431,7 @@ $(document).ready(function () {
                 data.push({ name: "id", value: "" });
                 data.push({ name: "name", value: value });
                 var inputID = null;
-                checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID);
+                checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
             } else { // remove from project pipeline input table
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
                 removeSelectFile(rowID, qualifier);
@@ -5211,6 +5472,38 @@ $(document).ready(function () {
         });
     });
 
+    prepareImportSection = function () {
+        fillArray2Select([], "#viewDir", true)
+        resetPatternList()
+        clearSelection()
+        $('.forwardpatternDiv').css("display", "none")
+        $('.reversepatternDiv').css("display", "none")
+        $('.singlepatternDiv').css("display", "none")
+        $('.patternButs').css("display", "none")
+        $('.patternTable').css("display", "none")
+        $("#viewDir").css("display", "none")
+        var renderMenu = {
+            option: function (data, escape) {
+                return '<div class="option">' +
+                    '<span class="title"><i>' + escape(data.name) + '</i></span>' +
+                    '</div>';
+            },
+            item: function (data, escape) {
+                return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
+            }
+        };
+
+        $('#collection_id').selectize({
+            valueField: 'id',
+            searchField: ['name'],
+            createOnBlur: true,
+            render: renderMenu,
+            options: getValues({ p: "getCollection" }),
+            create: function (input, callback) {
+                callback({ id: "_newItm_" + input, name: input });
+            }
+        });
+    }
     $('#inputFilemodal').on('show.bs.modal', function (e) {
         var button = $(e.relatedTarget);
         $(this).find('form').trigger('reset');
@@ -5218,7 +5511,7 @@ $(document).ready(function () {
         var clickedRow = button.closest('tr');
         var rowID = clickedRow[0].id; //#inputTa-3
         var gNumParam = rowID.split("Ta-")[1];
-
+        prepareImportSection()
         if (button.attr('id') === 'inputFileSelect') {
             $('#filemodaltitle').html('Select/Add Input File');
             $('#mIdFile').attr('rowID', rowID);
@@ -5234,8 +5527,9 @@ $(document).ready(function () {
                 var inputGet = getValues({ "p": "getInputs", "id": input_id })[0];
                 if (inputGet) {
                     //insert data into form
-                    var formValues = $('#inputFilemodal').find('input');
+                    var formValues = $('#manualTab').find('input');
                     var keys = Object.keys(inputGet);
+                    console.log(keys)
                     for (var i = 0; i < keys.length; i++) {
                         $(formValues[i]).val(inputGet[keys[i]]);
                     }
@@ -5244,6 +5538,40 @@ $(document).ready(function () {
         }
     });
 
+
+    getTableSamples = function () {
+        var ret = {};
+        var file_array = [];
+        var warnUser = "";
+        var table_data = selectedSamplesTable.fnGetData();
+        var table_nodes = selectedSamplesTable.fnGetNodes();
+        for (var y = 0; y < table_data.length; y++) {
+            var name = $.trim(table_nodes[y].children[0].children[0].id)
+            if (!name) {
+                warnUser = 'Please fill all the filenames in the table.'
+            }
+            var files_used = table_data[y][1]
+            file_array.push(name + " " + files_used)
+        }
+        ret.file_array = file_array
+        ret.warnUser = warnUser
+        return ret
+    }
+
+    getNewFilePattern = function (formObj) {
+        var archive_dir = formObj.archive_dir
+        var collection_type = formObj.collection_type
+        var file_type = formObj.file_type
+        var newPatt = "";
+        if (collection_type == "single") {
+            var regEx = "*."
+        } else if (collection_type == "pair") {
+            var regEx = "*.{R1,R2}."
+        }
+        newPatt = archive_dir + "/" + regEx + file_type
+        return newPatt
+    }
+    //xxxxxxxx
     $('#inputFilemodal').on('click', '#savefile', function (e) {
         $('#inputFilemodal').loading({
             message: 'Working...'
@@ -5251,63 +5579,131 @@ $(document).ready(function () {
         e.preventDefault();
         var savetype = $('#mIdFile').val();
         var checkdata = $('#inputFilemodal').find('.active.tab-pane')[0].getAttribute('id');
-        if (!savetype.length) { //add item
-            if (checkdata === 'manualTab') {
-                var formValues = $('#inputFilemodal').find('input');
-                var data = formValues.serializeArray(); // convert form to array
-                // check if name is entered
-                data[1].value = $.trim(data[1].value);
-                if (data[1].value !== '') {
-                    saveFileSetValModal(data, 'file', null);
-                    $('#inputFilemodal').loading("stop");
-                    $('#inputFilemodal').modal('hide');
-                }
-            } else if (checkdata === 'projectFileTab') {
-                var rows_selected = projectFileTable.column(0).checkboxes.selected();
-                if (rows_selected.length === 1) {
-                    var input_id = rows_selected[0];
-                    saveFileSetValModal(null, 'file', input_id);
-                }
-                $('#inputFilemodal').loading("stop");
-                $('#inputFilemodal').modal('hide');
-            } else if (checkdata === 'publicFileTab') {
-                var rows_selected = publicFileTable.column(0).checkboxes.selected();
-                if (rows_selected.length === 1) {
-                    var input_id = rows_selected[0];
-                    saveFileSetValModal(null, 'file', input_id);
-                }
-                $('#inputFilemodal').loading("stop");
-                $('#inputFilemodal').modal('hide');
+        if (checkdata === 'importTab') {
+            var formValues = $('#importTab').find('input, select');
+            var requiredFields = ["file_dir", "collection_type", "collection_id", "archive_dir"];
+            var ret = {};
+            ret = getTableSamples()
+            if (ret.warnUser) {
+                alert(ret.warnUser);
             }
-        } else { //edit item
-            if (checkdata === 'manualTab') {
-                var formValues = $('#inputFilemodal').find('input');
-                var data = formValues.serializeArray(); // convert form to array
-                // check if file_path is entered 
-                data[1].value = $.trim(data[1].value);
-                if (data[1].value !== '') {
-                    editFileSetValModal(data, 'file', null);
+            if (!ret.file_array.length) {
+                alert("Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.");
+            }
+            var formObj = {};
+            var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+            if (stop === false && !ret.warnUser && ret.file_array.length) {
+                //new items come with prefix: _newItm_
+                console.log(formObj)
+                if (formObj.collection_id.match(/^_newItm_(.*)/)) {
+                    var collection_name = formObj.collection_id.match(/^_newItm_(.*)/)[1];
+                    console.log(collection_name)
+                    var collection_data = getValues({ p: "saveCollection", name: collection_name })
+                    if (collection_data.id) {
+                        formObj.collection_id = collection_data.id
+                    }
+                }
+                var collection = { collection_id: formObj.collection_id }
+
+                formObj.file_array = ret.file_array
+                formObj.p = "saveFile"
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: formObj,
+                    async: true,
+                    success: function (s) {
+                        if (s.id) {
+                            var formVal = $('#manualTab').find('input');
+                            var data = formVal.serializeArray();
+                            var newFilePattern = getNewFilePattern(formObj)
+                            data[1].value = $.trim(newFilePattern);
+                            if (data[1].value !== '') {
+                                if (!savetype.length) { //add item
+                                    saveFileSetValModal(data, 'file', null, collection);
+                                } else {
+                                    editFileSetValModal(data, 'file', null, collection);
+                                }
+                                $('#inputFilemodal').loading("stop");
+                                $('#inputFilemodal').modal('hide');
+                            }
+                        }
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            } else {
+                $('#inputFilemodal').loading("stop");
+            }
+        } else {
+            if (!savetype.length) { //add item
+                if (checkdata === 'manualTab') {
+                    var formValues = $('#manualTab').find('input');
+                    var data = formValues.serializeArray(); // convert form to array
+                    // check if name is entered
+                    data[1].value = $.trim(data[1].value);
+                    console.log(data)
+                    if (data[1].value !== '') {
+                        saveFileSetValModal(data, 'file', null, null);
+                        $('#inputFilemodal').loading("stop");
+                        $('#inputFilemodal').modal('hide');
+                    }
+                } else if (checkdata === 'projectFileTab') {
+                    var rows_selected = projectFileTable.column(0).checkboxes.selected();
+                    if (rows_selected.length === 1) {
+                        var input_id = rows_selected[0];
+                        saveFileSetValModal(null, 'file', input_id, null);
+                    }
+                    $('#inputFilemodal').loading("stop");
+                    $('#inputFilemodal').modal('hide');
+                } else if (checkdata === 'publicFileTab') {
+                    var rows_selected = publicFileTable.column(0).checkboxes.selected();
+                    if (rows_selected.length === 1) {
+                        var input_id = rows_selected[0];
+                        saveFileSetValModal(null, 'file', input_id, null);
+                    }
                     $('#inputFilemodal').loading("stop");
                     $('#inputFilemodal').modal('hide');
                 }
-            } else if (checkdata === 'projectFileTab') {
-                var rows_selected = projectFileTable.column(0).checkboxes.selected();
-                if (rows_selected.length === 1) {
-                    var input_id = rows_selected[0];
-                    editFileSetValModal(null, 'file', input_id);
-                    $('#inputFilemodal').loading("stop");
-                    $('#inputFilemodal').modal('hide');
-                }
-            } else if (checkdata === 'publicFileTab') {
-                var rows_selected = publicFileTable.column(0).checkboxes.selected();
-                if (rows_selected.length === 1) {
-                    var input_id = rows_selected[0];
-                    editFileSetValModal(null, 'file', input_id);
-                    $('#inputFilemodal').loading("stop");
-                    $('#inputFilemodal').modal('hide');
+            } else { //edit item
+                if (checkdata === 'manualTab') {
+                    var formValues = $('#inputFilemodal').find('input');
+                    var data = formValues.serializeArray(); // convert form to array
+                    // check if file_path is entered 
+                    data[1].value = $.trim(data[1].value);
+                    if (data[1].value !== '') {
+                        editFileSetValModal(data, 'file', null, null);
+                        $('#inputFilemodal').loading("stop");
+                        $('#inputFilemodal').modal('hide');
+                    }
+                } else if (checkdata === 'projectFileTab') {
+                    var rows_selected = projectFileTable.column(0).checkboxes.selected();
+                    if (rows_selected.length === 1) {
+                        var input_id = rows_selected[0];
+                        editFileSetValModal(null, 'file', input_id, null);
+                        $('#inputFilemodal').loading("stop");
+                        $('#inputFilemodal').modal('hide');
+                    }
+                } else if (checkdata === 'publicFileTab') {
+                    var rows_selected = publicFileTable.column(0).checkboxes.selected();
+                    if (rows_selected.length === 1) {
+                        var input_id = rows_selected[0];
+                        editFileSetValModal(null, 'file', input_id, null);
+                        $('#inputFilemodal').loading("stop");
+                        $('#inputFilemodal').modal('hide');
+                    }
                 }
             }
+
+
         }
+
+
+
+
+
     });
 
     //clicking on tabs of select files table
@@ -5501,7 +5897,7 @@ $(document).ready(function () {
                 // check if name is entered
                 data[1].value = $.trim(data[1].value);
                 if (data[1].value !== '') {
-                    saveFileSetValModal(data, 'val', null);
+                    saveFileSetValModal(data, 'val', null, null);
                     $('#inputValmodal').loading("stop");
                     $('#inputValmodal').modal('hide');
                 }
@@ -5509,7 +5905,7 @@ $(document).ready(function () {
                 var rows_selected = projectValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
                     var input_id = rows_selected[0];
-                    saveFileSetValModal(null, 'val', input_id);
+                    saveFileSetValModal(null, 'val', input_id, null);
                 }
                 $('#inputValmodal').loading("stop");
                 $('#inputValmodal').modal('hide');
@@ -5517,7 +5913,7 @@ $(document).ready(function () {
                 var rows_selected = publicValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
                     var input_id = rows_selected[0];
-                    saveFileSetValModal(null, 'val', input_id);
+                    saveFileSetValModal(null, 'val', input_id, null);
                 }
                 $('#inputValmodal').loading("stop");
                 $('#inputValmodal').modal('hide');
@@ -5529,7 +5925,7 @@ $(document).ready(function () {
                 // check if file_path is entered 
                 data[1].value = $.trim(data[1].value);
                 if (data[1].value !== '') {
-                    editFileSetValModal(data, 'val', null);
+                    editFileSetValModal(data, 'val', null, null);
                     $('#inputValmodal').loading("stop");
                     $('#inputValmodal').modal('hide');
                 }
@@ -5537,7 +5933,7 @@ $(document).ready(function () {
                 var rows_selected = projectValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
                     var input_id = rows_selected[0];
-                    editFileSetValModal(null, 'val', input_id);
+                    editFileSetValModal(null, 'val', input_id, null);
                     $('#inputValmodal').loading("stop");
                     $('#inputValmodal').modal('hide');
                 }
@@ -5545,7 +5941,7 @@ $(document).ready(function () {
                 var rows_selected = publicValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
                     var input_id = rows_selected[0];
-                    editFileSetValModal(null, 'val', input_id);
+                    editFileSetValModal(null, 'val', input_id, null);
                     $('#inputValmodal').loading("stop");
                     $('#inputValmodal').modal('hide');
                 }
@@ -5687,6 +6083,7 @@ $(document).ready(function () {
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
                     var dataTableObj = tsvConvert(data, "json2")
+                    //speed up the table loading
                     dataTableObj.deferRender = true
                     dataTableObj.scroller = true
                     dataTableObj.scrollCollapse = true

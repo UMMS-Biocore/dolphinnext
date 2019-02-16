@@ -1,3 +1,8 @@
+16.02.2019 Version 0.2.82
+Shared run issues fixed, run inputs are disabled.
+Nextflow version added into sec file [CONFIG] section.
+NEXTFLOW_VERSION = 0.30.0
+
 10.02.2019 Version 0.2.81
 Datatables width issue fixed.
 Debrowser will be opened with loading sign. 

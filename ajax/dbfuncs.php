@@ -14,6 +14,7 @@ class dbfuncs {
     private $ssh_settings = "-oStrictHostKeyChecking=no -q -oChallengeResponseAuthentication=no -oBatchMode=yes -oPasswordAuthentication=no -oConnectTimeout=3";
     private $amz_path = AMZPATH;
     private $amazon = AMAZON;
+    private $nextflow_verison = NEXTFLOW_VERSION;
     private static $link;
 
     function __construct() {
@@ -124,7 +125,9 @@ class dbfuncs {
     //type:w creates new file
     function createDirFile ($pathDir, $fileName, $type, $text){
         if ($pathDir != ""){
-            mkdir("$pathDir", 0755, true);
+            if (!file_exists($pathDir)) {
+                mkdir($pathDir, 0777, true);
+            }
         }
         if ($fileName != ""){
             $file = fopen("$pathDir/$fileName", $type);
@@ -170,6 +173,80 @@ class dbfuncs {
     return implode($pass); //turn the array into a string
     }
 
+    function initialRunScript ($project_pipeline_id, $attempt, $ownerID){
+        $script="";
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        $outdir = $proPipeAll[0]->{'output_dir'};
+        $input_dir = "$outdir/run{$project_pipeline_id}/inputs";
+        $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+        $file_name = array();
+        $file_dir = array();
+        $file_type = array();
+        $files_used = array();
+        $archive_dir = array();
+        $collection_type = array();
+        foreach ($allinputs as $inputitem):
+            $collection_id = $inputitem->{'collection_id'};
+            if (!empty($collection_id)){
+                $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
+                foreach ($allfiles as $fileData):
+                    $file_name[] = $fileData->{'name'};
+                    $file_dir[] = $fileData->{'file_dir'};
+                    $file_type[] = $fileData->{'file_type'};
+                    $files_used[] = $fileData->{'files_used'};
+                    $archive_dir[] = $fileData->{'archive_dir'};
+                    $collection_type[] = $fileData->{'collection_type'};
+                endforeach;
+            }
+        endforeach;
+        if (!empty($file_name)) {
+            $file_nameS = "'" . implode ( "', '", $file_name ) . "'";
+            $file_dirS = "'" . implode ( "', '", $file_dir ) . "'";
+            $file_typeS = "'" . implode ( "', '", $file_type ) . "'";
+            $files_usedS = "'" . implode ( "', '", $files_used ) . "'";
+            $archive_dirS = "'" . implode ( "', '", $archive_dir ) . "'";
+            $collection_typeS = "'" . implode ( "', '", $collection_type ) . "'";
+            
+            $script = "process initialRun {
+output:
+    file('success.$attempt')  into success
+shell:
+'''
+#!/usr/bin/env perl
+use strict;
+use File::Basename;
+use Getopt::Long;
+use Pod::Usage; 
+use File::Path qw( make_path );
+
+my \$input_dir = \"$input_dir\";
+my @file_name = ($file_nameS);
+my @file_dir = ($file_dirS);
+my @file_type = ($file_typeS);
+my @files_used = ($files_usedS);
+my @archive_dir = ($archive_dirS);
+my @collection_type = ($collection_typeS);
+
+if ( !-d \$input_dir ) {
+    make_path \$input_dir or die 'Failed to create path: $input_dir';
+}
+
+system('touch success.$attempt');
+'''
+}
+workflow.onComplete {
+    println \"##Initial run summary##\"
+    println \"---------------------------\"
+    println \"##Completed at: \$workflow.complete\"
+    println \"##Duration: \${workflow.duration}\"
+    println \"##Success: \${workflow.success ? 'PASSED' : 'failed' }\"
+    println \"##Exit status: \${workflow.exitStatus}\"
+}
+";
+        }   
+        return $script;
+    }
+    
      //get nextflow input parameters
     function getNextInputs ($executor, $project_pipeline_id, $ownerID ){
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
@@ -252,8 +329,13 @@ class dbfuncs {
     if ($profileType == "amazon"){
         $profile_def = "source /etc/profile && source ~/.bash_profile";
     } 
+    $nextVer = isset($this->nextflow_verison) ? $this->nextflow_verison : "";
+    $nextVerText = "";
+    if (!empty($nextVer)){
+        $nextVerText = "export NXF_VER=$nextVer";
+    }
     //combine pre-run cm
-    $arr = array($profile_def, $profileCmd, $proPipeCmd, $imageCmd);
+    $arr = array($nextVerText, $profile_def, $profileCmd, $proPipeCmd, $imageCmd);
     $preCmd="";
     for ($i=0; $i<count($arr); $i++) {
         if (!empty($arr[$i]) && !empty($preCmd)){
@@ -380,7 +462,7 @@ class dbfuncs {
     }
 
     //get all nextflow executor text
-    function getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId,$ownerID) {
+    function getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $logName, $ownerID) {
 		if ($runType == "resumerun"){
 			$runType = "-resume";
 		} else {
@@ -390,9 +472,9 @@ class dbfuncs {
     //for lsf "bsub -q short -n 1  -W 100 -R rusage[mem=32024]";
         if ($executor == "local"){
             if ($executor_job == 'ignite'){
-                $exec_next_all = "cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf -w $dolphin_path_real/work -process.executor ignite $next_inputs $runType $reportOptions > $dolphin_path_real/log.txt ";
+                $exec_next_all = "cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf -w $dolphin_path_real/work -process.executor ignite $next_inputs $runType $reportOptions > $dolphin_path_real/$logName ";
             }else {
-                $exec_next_all = "cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/log.txt ";
+                $exec_next_all = "cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/$logName ";
             }
         } else if ($executor == "lsf"){
             //convert gb to mb
@@ -401,7 +483,7 @@ class dbfuncs {
             //-J $jobname
             $jobname = $this->cleanName($jobname);
             $exec_string = "bsub -e err.log $next_clu_opt -q $next_queue -J $jobname -n $next_cpu -W $next_time -R rusage[mem=$next_memory]";
-            $exec_next_all = "cd $dolphin_path_real && $exec_string \\\"$next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/log.txt\\\"";
+            $exec_next_all = "cd $dolphin_path_real && $exec_string \\\"$next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/$logName\\\"";
         } else if ($executor == "sge"){
             $jobnameText = $this->getJobName($jobname, $executor);
             $memoryText = $this->getMemory($next_memory, $executor);
@@ -410,7 +492,7 @@ class dbfuncs {
             $clu_optText = $this->getNextCluOpt($next_clu_opt, $executor);
             $cpuText = $this->getCPU($next_cpu, $executor);
 			//-j y ->Specifies whether or not the standard error stream of the job is merged into the standard output stream.
-			$sgeRunFile= "printf '#!/bin/bash \\n#$ -j y\\n#$ -V\\n#$ -notify\\n#$ -wd $dolphin_path_real\\n#$ -o $dolphin_path_real/.dolphinnext.log\\n".$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/log.txt"."'> $dolphin_path_real/.dolphinnext.run";
+			$sgeRunFile= "printf '#!/bin/bash \\n#$ -j y\\n#$ -V\\n#$ -notify\\n#$ -wd $dolphin_path_real\\n#$ -o $dolphin_path_real/.dolphinnext.log\\n".$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/$logName"."'> $dolphin_path_real/.dolphinnext.run";
             
 			$exec_string = "qsub -e err.log $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $sgeRunFile && $exec_string";
@@ -420,8 +502,31 @@ class dbfuncs {
     return $exec_next_all;
     }
 
+    function getRenameCmd($dolphin_path_real,$attempt,$initialRunScript){
+        $renameLog = "";
+        if (!empty($initialRunScript)){
+            $pathArr = array($dolphin_path_real, "$dolphin_path_real/initialrun");
+        } else {
+            $pathArr = array($dolphin_path_real);
+        }
+        foreach ($pathArr as $path):
+            if ($path == $dolphin_path_real){
+                $renameArr= array("log.txt", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log");
+            } else {
+                $renameArr= array("initial.log", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log");
+            }
+            foreach ($renameArr as $item):
+                if ($item == "log.txt" || $item == "initial.log"){
+                    $renameLog .= "cp $path/$item $path/$item.$attempt 2>/dev/null || true && >$path/$item && ";   
+                } else {
+                    $renameLog .= "mv $path/$item $path/$item.$attempt 2>/dev/null || true && ";   
+                }
+            endforeach;
+        endforeach;
+        return $renameLog;
+    }
 
-    function initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $ownerID){
+    function initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $ownerID){
         //if  $amazon_cre_id is defined append the aws credentials into nextflow.config
         if ($amazon_cre_id != "" ){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
@@ -455,86 +560,60 @@ class dbfuncs {
         fwrite($file, $configText);
         fclose($file);
         chmod("{$this->run_path}/$uuid/run/nextflow.config", 0755);
+        $initialRunText = "";
+        $run_path_real = "{$this->run_path}/$uuid/run";
+        if (!empty($initialRunScript)){
+            $this->createDirFile ("{$this->run_path}/$uuid/initialrun", "nextflow.config", 'w', $configText );
+            $this->createDirFile ("{$this->run_path}/$uuid/initialrun", "nextflow.nf", 'w', $initialRunScript );
+            $initialRunText = "{$this->run_path}/$uuid/initialrun";
+        }
+        // get outputdir
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        $outdir = $proPipeAll[0]->{'output_dir'};
+        // get username and hostname for connection
         if ($profileType == "cluster") {
-            // get outputdir
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-            $outdir = $proPipeAll[0]->{'output_dir'};
-            // get username and hostname for connection
             $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
             $cluDataArr=json_decode($cluData,true);
             $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
             $ssh_id = $cluDataArr[0]["ssh_id"];
-            //get userpky
-            $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
-            //check $userpky file exist
-            if (!file_exists($userpky)) {
-                $this->writeLog($uuid,'Private key is not found!','a','serverlog.txt');
-                $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-                die(json_encode('Private key is not found!'));
-            }
-            $run_path_real = "{$this->run_path}/$uuid/run";
-            if (!file_exists($run_path_real."/nextflow.nf")) {
-                $this->writeLog($uuid,'Nextflow file is not found!','a','serverlog.txt');
-                $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-                die(json_encode('Nextflow file is not found!'));
-            }
-            if (!file_exists($run_path_real."/nextflow.config")) {
-                $this->writeLog($uuid,'Nextflow config file is not found!','a','serverlog.txt');
-                $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-                die(json_encode('Nextflow config file is not found!'));
-            }
-            $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
-            //mkdir and copy nextflow file to run directory in cluster
-            $cmd = "ssh {$this->ssh_settings}  -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp {$this->ssh_settings} -i $userpky $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
-            $mkdir_copynext_pid =shell_exec($cmd);
-            $this->writeLog($uuid,$cmd,'a','serverlog.txt');
-            $log_array = array('mkdir_copynext_pid' => $mkdir_copynext_pid);
-            return $log_array;
         } else if ($profileType == "amazon") {
-            // get outputdir
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-            $outdir = $proPipeAll[0]->{'output_dir'};
-            // get username and hostname for connection
             $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
             $amzDataArr=json_decode($amzData,true);
             $connect = $amzDataArr[0]["ssh"];
             $ssh_id = $amzDataArr[0]["ssh_id"];
-            //get userpky
-            $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
-            //check $userpky file exist
-            if (!file_exists($userpky)) {
-                $this->writeLog($uuid,'Private key is not found!','a','serverlog.txt');
-                $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-                die(json_encode('Private key is not found!'));
-            }
-            $run_path_real = "{$this->run_path}/$uuid/run";
-            if (!file_exists($run_path_real."/nextflow.nf")) {
-                $this->writeLog($uuid,'Nextflow file is not found!','a','serverlog.txt');
-                $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-                die(json_encode('Nextflow file is not found!'));
-            }
-            if (!file_exists($run_path_real."/nextflow.config")) {
-                $this->writeLog($uuid,'Nextflow config file is not found!','a','serverlog.txt');
-                $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-                die(json_encode('Nextflow config file is not found!'));
-            }
-            $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
-            //mkdir and copy nextflow file to run directory in cluster
-            $cmd = "ssh {$this->ssh_settings}  -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp {$this->ssh_settings} -i $userpky $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
-            $mkdir_copynext_pid =shell_exec($cmd);
-            $this->writeLog($uuid,$cmd,'a','serverlog.txt');
-            $log_array = array('mkdir_copynext_pid' => $mkdir_copynext_pid);
-            return $log_array;
         }
+        //get userpky
+        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+        //check $userpky file exist
+        if (!file_exists($userpky)) {
+            $this->writeLog($uuid,'Private key is not found!','a','serverlog.txt');
+            $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+            $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
+            die(json_encode('Private key is not found!'));
+        }
+        
+        if (!file_exists($run_path_real."/nextflow.nf")) {
+            $this->writeLog($uuid,'Nextflow file is not found!','a','serverlog.txt');
+            $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+            $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
+            die(json_encode('Nextflow file is not found!'));
+        }
+        if (!file_exists($run_path_real."/nextflow.config")) {
+            $this->writeLog($uuid,'Nextflow config file is not found!','a','serverlog.txt');
+            $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+            $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
+            die(json_encode('Nextflow config file is not found!'));
+        }
+        $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
+        //mkdir and copy nextflow file to run directory in cluster
+        $cmd = "ssh {$this->ssh_settings}  -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} -i $userpky $initialRunText $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
+        $mkdir_copynext_pid =shell_exec($cmd);
+        $this->writeLog($uuid,$cmd,'a','serverlog.txt');
+        $log_array = array('mkdir_copynext_pid' => $mkdir_copynext_pid);
+        return $log_array;
     }
 
-    function runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $ownerID)
+    function runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $ownerID)
     {
             //get nextflow executor parameters
             list($outdir, $proPipeCmd, $jobname, $singu_check, $singu_img, $imageCmd, $reportOptions) = $this->getNextExecParam($project_pipeline_id,$profileType, $profileId, $ownerID);
@@ -546,7 +625,6 @@ class dbfuncs {
             $preCmd = $this->getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd);
             //eg. /project/umw_biocore/bin
             $next_path_real = $this->getNextPathReal($next_path);
-        
             //get userpky
             $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) {
@@ -558,20 +636,7 @@ class dbfuncs {
             $run_path_real = "{$this->run_path}/$uuid/run";
             $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
             //get command for renaming previous log file
-            $attemptData = json_decode($this->getRunAttempt($project_pipeline_id));
-            $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
-            if (empty($attempt) || $attempt == 0 || $attempt == "0"){
-                $attempt = "0";
-            }
-            $renameArr= array("log.txt", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log");
-            $renameLog = "";
-            foreach ($renameArr as $item):
-                if ($item == "log.txt"){
-                    $renameLog .= "cp $dolphin_path_real/$item $dolphin_path_real/$item.$attempt 2>/dev/null || true && >$dolphin_path_real/$item && ";   
-                } else {
-                    $renameLog .= "mv $dolphin_path_real/$item $dolphin_path_real/$item.$attempt 2>/dev/null || true && ";   
-                }
-            endforeach;
+            $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt, $initialRunScript);
             //check if files are exist
             $next_exist_cmd= "ssh {$this->ssh_settings} -i $userpky $connect test  -f \"$dolphin_path_real/nextflow.nf\"  && echo \"Nextflow file exists\" || echo \"Nextflow file not exists\" 2>&1 & echo $! &";
             $next_exist = shell_exec($next_exist_cmd);
@@ -579,8 +644,14 @@ class dbfuncs {
             preg_match("/(.*)Nextflow file(.*)exists(.*)/", $next_exist, $matches);
             $log_array['next_exist'] = $next_exist;
             if ($matches[2] == " ") {
-                $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId,$ownerID);
-                $cmd="ssh {$this->ssh_settings}  -i $userpky $connect \"$renameLog $preCmd $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
+                $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "log.txt", $ownerID);
+                // command for initial run   
+                $exec_initial_next = "";
+                if (!empty($initialRunScript)){
+                    $exec_initial_next .= $this->getExecNextAll($executor, "$dolphin_path_real/initialrun", $next_path_real, "", $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "initial.log", $ownerID);
+                    $exec_initial_next .= " && while [ true ]; do sleep 60; if grep -s \\\"##Success: failed\\\" $dolphin_path_real/initialrun/initial.log; then exit 128;elif grep -s \\\"##Success: PASSED\\\" $dolphin_path_real/initialrun/initial.log; then break; fi done && ";
+                }
+                $cmd="ssh {$this->ssh_settings}  -i $userpky $connect \"$renameLog $preCmd $exec_initial_next $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
                 $next_submit_pid= shell_exec($cmd); //"Job <203477> is submitted to queue <long>.\n"
                 $this->writeLog($uuid,$cmd,'a','serverlog.txt');
                 if (!$next_submit_pid) {
@@ -1219,6 +1290,17 @@ class dbfuncs {
         $sql = "SELECT * FROM profile_cluster WHERE (public != '1' OR public IS NULL) AND owner_id = '$ownerID'";
         return self::queryTable($sql);
     }
+    public function getCollections($ownerID) {
+        $sql = "SELECT id, name FROM collection WHERE owner_id = '$ownerID'";
+        return self::queryTable($sql);
+    }
+    public function getFiles($ownerID) {
+        $sql = "SELECT f.*, c.name as collection_name 
+        FROM file f
+        INNER JOIN collection c ON f.collection_id = c.id
+        WHERE f.owner_id = '$ownerID'";
+        return self::queryTable($sql);
+    }
     public function getPublicProfileCluster($ownerID) {
         $sql = "SELECT * FROM profile_cluster WHERE public = '1'";
         return self::queryTable($sql);
@@ -1712,7 +1794,6 @@ class dbfuncs {
     }
     public function getFileContent($uuid, $filename, $ownerID) {
         $file = "{$this->run_path}/$uuid/$filename";
-        error_log($file);
         $content = "";
         if (file_exists($file)) {
             $content = $this->file_get_contents_utf8($file);
@@ -1892,6 +1973,20 @@ class dbfuncs {
 			('$project_id', '$input_id', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
+    public function insertFile($name, $file_dir, $file_type, $files_used, $collection_id, $collection_type, $archive_dir, $ownerID) {
+        $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_id, collection_type, archive_dir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
+			('$name', '$file_dir', '$file_type', '$files_used', '$collection_id', '$collection_type', '$archive_dir', '$ownerID', 3, now(), now(), '$ownerID')";
+        return self::insTable($sql);
+    }
+    public function insertCollection($name, $ownerID) {
+        $sql = "INSERT INTO collection (name, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
+			('$name', '$ownerID', 3, now(), now(), '$ownerID')";
+        return self::insTable($sql);
+    }
+    public function updateCollection($id, $name, $ownerID) {
+        $sql = "UPDATE collection SET name='$name', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
     public function insertInput($name, $type, $ownerID) {
         $sql = "INSERT INTO input(name, type, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
 			('$name', '$type', '$ownerID', 3, now(), now(), '$ownerID')";
@@ -1985,12 +2080,12 @@ class dbfuncs {
 		return self::queryTable($sql);
     }
      // ------- Project Pipeline Inputs  ------
-    public function insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $ownerID) {
-        $sql = "INSERT INTO project_pipeline_input(project_pipeline_id, input_id, project_id, pipeline_id, g_num, given_name, qualifier, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$project_pipeline_id', '$input_id', '$project_id', '$pipeline_id', '$g_num', '$given_name', '$qualifier', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $ownerID) {
+        $sql = "INSERT INTO project_pipeline_input(collection_id, project_pipeline_id, input_id, project_id, pipeline_id, g_num, given_name, qualifier, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$collection_id', '$project_pipeline_id', '$input_id', '$project_id', '$pipeline_id', '$g_num', '$given_name', '$qualifier', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function updateProPipeInput($id, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $ownerID) {
-        $sql = "UPDATE project_pipeline_input SET project_pipeline_id='$project_pipeline_id', input_id='$input_id', project_id='$project_id', pipeline_id='$pipeline_id', g_num='$g_num', given_name='$given_name', qualifier='$qualifier', last_modified_user ='$ownerID'  WHERE id = $id";
+    public function updateProPipeInput($id, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $ownerID) {
+        $sql = "UPDATE project_pipeline_input SET collection_id='$collection_id', project_pipeline_id='$project_pipeline_id', input_id='$input_id', project_id='$project_id', pipeline_id='$pipeline_id', g_num='$g_num', given_name='$given_name', qualifier='$qualifier', last_modified_user ='$ownerID'  WHERE id = $id";
         return self::runSQL($sql);
     }
     public function duplicateProjectPipelineInput($new_id,$old_id,$ownerID) {
@@ -2021,9 +2116,17 @@ class dbfuncs {
                 WHERE process_id='$old_id'";
         return self::insTable($sql);
     }
+    public function getCollectionFiles($collection_id,$ownerID) {
+        $where = " where f.collection_id = '$collection_id' AND (f.owner_id = '$ownerID' OR f.perms = 63 OR (ug.u_id ='$ownerID' and f.perms = 15))";
+		$sql = "SELECT DISTINCT f.*
+                FROM file f
+                LEFT JOIN user_group ug ON f.group_id=ug.g_id
+                $where";
+		return self::queryTable($sql);
+    }
     public function getProjectPipelineInputs($project_pipeline_id,$ownerID) {
         $where = " where ppi.deleted=0 AND ppi.project_pipeline_id = '$project_pipeline_id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63 OR (ug.u_id ='$ownerID' and ppi.perms = 15))";
-		$sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num
+		$sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num, ppi.collection_id
                 FROM project_pipeline_input ppi
                 INNER JOIN input i ON i.id = ppi.input_id
                 LEFT JOIN user_group ug ON ppi.group_id=ug.g_id
