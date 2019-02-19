@@ -10,11 +10,8 @@ function getProjectOptions(projectOwn) {
 $(document).ready(function () {
 
     function getRunStatusButton(oData) {
-        var viewRun = "";
         var sendEmail = "";
-        if (oData.own === "1" || usRole === "admin") {
-            viewRun = '<li><a class="runLink">View Run</a></li>';
-        }
+        var viewRun = '<li><a class="runLink">View Run</a></li>';
         if (oData.own !== "1" && usRole === "admin") {
             sendEmail = '<li><a href="#sendMailModal" data-toggle="modal">Send E-Mail to User</a></li>';
         }
@@ -25,7 +22,7 @@ $(document).ready(function () {
     $('#sendMailModal').on('show.bs.modal', function (event) {
         $(this).find('form').trigger('reset');
         $("#sendEmailUser").attr("class", "btn btn-primary btn-block");
-                            $("#sendEmailUser").html("Send!");
+        $("#sendEmailUser").html("Send!");
         $("#sendEmailUser").removeAttr("disabled");
         var button = $(event.relatedTarget);
         var clickedRow = $(button).closest('tr');
@@ -90,25 +87,27 @@ $(document).ready(function () {
         var runId = rowData.project_pipeline_id
         var owner_id = rowData.owner_id
         var own = rowData.own
-        if (runId !== '' && own === "1") {
-            window.location.replace("index.php?np=3&id=" + runId);
-        } else if (usRole === "admin") {
-            var userData = [];
-            userData.push({ name: "user_id", value: owner_id });
-            userData.push({ name: "p", value: 'impersonUser' });
-            $.ajax({
-                type: "POST",
-                data: userData,
-                url: "ajax/ajaxquery.php",
-                async: false,
-                success: function (msg) {
-                    var logInSuccess = true;
-                    window.location.replace("index.php?np=3&id=" + runId);
-                },
-                error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
-                }
-            });
+        if (runId !== '') {
+            if ((usRole === "admin" && own == "1") || usRole !== "admin") {
+                window.location.replace("index.php?np=3&id=" + runId);
+            } else if (usRole === "admin" && own !== "1") {
+                var userData = [];
+                userData.push({ name: "user_id", value: owner_id });
+                userData.push({ name: "p", value: 'impersonUser' });
+                $.ajax({
+                    type: "POST",
+                    data: userData,
+                    url: "ajax/ajaxquery.php",
+                    async: false,
+                    success: function (msg) {
+                        var logInSuccess = true;
+                        window.location.replace("index.php?np=3&id=" + runId);
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
         }
     });
 
@@ -195,7 +194,7 @@ $(document).ready(function () {
 
     //reload the table each 30 secs
     setInterval(function () {
-        runStatusTable.ajax.reload();
+        runStatusTable.ajax.reload(null,false);
     }, 30000);
 
 

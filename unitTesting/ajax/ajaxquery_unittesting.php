@@ -1205,6 +1205,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['input_id'] = "1";
 		$_REQUEST['project_id'] = "1";
 		$_REQUEST['pipeline_id'] = "1";
+		$_REQUEST['collection_id'] = "0";
 		$_REQUEST['project_pipeline_id'] = "1";
 		$_REQUEST['g_num'] = "0";
 		$_REQUEST['given_name'] = "test_inputparam";
@@ -1239,6 +1240,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['input_id'] = "1";
 		$_REQUEST['project_id'] = "1";
 		$_REQUEST['pipeline_id'] = "1";
+		$_REQUEST['collection_id'] = "0";
 		$_REQUEST['project_pipeline_id'] = "1";
 		$_REQUEST['g_num'] = "0";
 		$_REQUEST['given_name'] = "test_inputparam";
@@ -1438,23 +1440,7 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)[0]->input_id, '1');
 		ob_end_clean();
 	}
-    /**
-     * @depends testUpdateProject
-     * @depends testUpdateInput
-     * @depends testInsertProjectPipeline
-     * @depends testInsertProPipeInput
-     */
-    public function testgetProjectPipelineInputsByGnum() {
-		ob_start();
-		$_REQUEST['p'] = 'getProjectPipelineInputsByGnum';
-		$_REQUEST['g_num'] = '0';
-		$_REQUEST['project_pipeline_id'] = '1';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->id, '1');
-		$this->assertEquals(json_decode($data)[0]->input_id, '1');
-		$this->assertEquals(json_decode($data)[0]->given_name, 'test_inputparam');
-		ob_end_clean();
-	}
+
     /**
      * @depends testUpdateProject
      * @depends testUpdateInput
@@ -1670,8 +1656,12 @@ class ajaxQueryTest extends TestCase
     
     /**
      * @depends testgetPublicPipelines
-     * @depends testgetProjectPipelineInputsByGnum
+     * @depends testUpdateProject
+     * @depends testUpdateInput
+     * @depends testInsertProjectPipeline
+     * @depends testInsertProPipeInput
      */
+    
     public function testremoveProjectPipelineInput() {
 		ob_start();
 		$_REQUEST['p'] = 'removeProjectPipelineInput';
