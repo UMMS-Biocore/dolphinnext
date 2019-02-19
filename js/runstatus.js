@@ -194,7 +194,7 @@ $(document).ready(function () {
 
     //reload the table each 30 secs
     setInterval(function () {
-        runStatusTable.ajax.reload();
+        runStatusTable.ajax.reload(null,false);
     }, 30000);
 
 

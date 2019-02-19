@@ -216,7 +216,9 @@ shell:
 use strict;
 use File::Basename;
 use Getopt::Long;
-use Pod::Usage; 
+use Pod::Usage;
+use Data::Dumper;
+use File::Copy;
 use File::Path qw( make_path );
 
 my \$input_dir = \"$input_dir\";
@@ -227,20 +229,227 @@ my @files_used = ($files_usedS);
 my @archive_dir = ($archive_dirS);
 my @collection_type = ($collection_typeS);
 
+
 if ( !-d \$input_dir ) {
-    make_path \$input_dir or die 'Failed to create path: $input_dir';
+    make_path \$input_dir or die 'Failed to create path: \$input_dir';
 }
 
+my %passHash;    ## Keep record of completed operation
+my %validInputHash; ## Keep record of files as fullpath
+
+for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
+    my \$fileType        = \$file_type[\$i];
+    my \$archiveDir      = trim( \$archive_dir[\$i] );
+    my @fileAr          = split( / \\\| /, \$files_used[\$i], -1 );
+    my @fullfileAr      = ();
+    my @fullfileArR1    = ();
+    my @fullfileArR2    = ();
+    my \$inputDirCheck   = \"false\";
+    my \$archiveDirCheck = \"false\";
+    my \$inputFile       = \"\";
+    my \$inputFile1      = \"\";
+    my \$inputFile2      = \"\";
+    my \$archFile        = \"\";
+    my \$archFile1       = \"\";
+    my \$archFile2       = \"\";
+
+    ## first check input folder then archive dir for expected files
+    if ( \$collection_type[\$i] eq \"single\" ) {
+        \$inputFile = \"\$input_dir/\$file_name[\$i].\$fileType\";
+        \$validInputHash{\$inputFile} = 1;
+        if ( checkFile(\$inputFile) ) {
+            \$inputDirCheck = \"true\";
+        }
+    }
+    elsif ( \$collection_type[\$i] eq \"pair\" ) {
+        \$inputFile1                  = \"\$input_dir/\$file_name[\$i].R1.\$fileType\";
+        \$inputFile2                  = \"\$input_dir/\$file_name[\$i].R2.\$fileType\";
+        \$validInputHash{\$inputFile1} = 1;
+        \$validInputHash{\$inputFile2} = 1;
+
+        if ( checkFile(\$inputFile1) && checkFile(\$inputFile2) ) {
+            \$inputDirCheck = \"true\";
+        }
+    }
+
+    if ( \$archiveDir ne \"\" ) {
+        if ( !-d \$archiveDir ) {
+            make_path \$archiveDir or die 'Failed to create path: \$input_dir';
+        }
+        if ( \$collection_type[\$i] eq \"single\" ) {
+            \$archFile = \"\$archiveDir/\$file_name[\$i].\$fileType\";
+            if ( checkFile(\"\$archFile.gz\") ) {
+                \$archiveDirCheck = \"true\";
+            }
+        }
+        elsif ( \$collection_type[\$i] eq \"pair\" ) {
+            \$archFile1 = \"\$archiveDir/\$file_name[\$i].R1.\$fileType\";
+            \$archFile2 = \"\$archiveDir/\$file_name[\$i].R2.\$fileType\";
+            if ( checkFile(\"\$archFile1.gz\") && checkFile(\"\$archFile2.gz\") ) {
+                \$archiveDirCheck = \"true\";
+            }
+        }
+    }
+
+    print \"inputDirCheck for \$file_name[\$i]: \$inputDirCheck\\\\n\";
+    print \"archiveDirCheck for \$file_name[\$i]: \$archiveDirCheck\\\\n\";
+
+    if (   \$inputDirCheck eq \"true\"
+        && \$archiveDirCheck eq \"false\"
+        && \$archiveDir ne \"\" )
+    {
+        ## remove inputDir files and cleanstart
+        if ( \$collection_type[\$i] eq \"single\" ) {
+            runCommand(\"rm \$inputFile\");
+        }
+        elsif ( \$collection_type[\$i] eq \"pair\" ) {
+            runCommand(\"rm \$inputFile1\");
+            runCommand(\"rm \$inputFile2\");
+        }
+        \$inputDirCheck = \"false\";
+    }
+
+    if ( \$inputDirCheck eq \"false\" && \$archiveDirCheck eq \"true\" ) {
+        if ( \$collection_type[\$i] eq \"single\" ) {
+            copyFile( \"\$archFile.gz\", \"\$inputFile.gz\" );
+            runCommand(\"gunzip \$inputFile.gz\");
+        }
+        elsif ( \$collection_type[\$i] eq \"pair\" ) {
+            copyFile( \"\$archFile1.gz\", \"\$inputFile1.gz\" );
+            copyFile( \"\$archFile2.gz\", \"\$inputFile2.gz\" );
+            runCommand(\"gunzip \$inputFile1.gz\");
+            runCommand(\"gunzip \$inputFile2.gz\");
+        }
+        \$passHash{ \$file_name[\$i] } = \"passed\";
+    }
+    elsif ( \$inputDirCheck eq \"false\" && \$archiveDirCheck eq \"false\" ) {
+        ##create new collection files
+        ##Keep full path of files that needs to merge
+        for ( my \$k = 0 ; \$k <= \$#fileAr ; \$k++ ) {
+            if ( \$collection_type[\$i] eq \"single\" ) {
+                push @fullfileAr, \$file_dir[\$i] . \"/\" . \$fileAr[\$k];
+            }
+            elsif ( \$collection_type[\$i] eq \"pair\" ) {
+                my @pair = split( /,/, \$fileAr[\$k], -1 );
+                push @fullfileArR1, \$file_dir[\$i] . \"/\" . \$pair[0];
+                push @fullfileArR2, \$file_dir[\$i] . \"/\" . \$pair[1];
+            }
+        }
+        if ( \$archiveDir ne \"\" ) {
+            ##merge files in archive dir then copy to inputdir
+            my \$cat = \"cat\";
+            if ( \$collection_type[\$i] eq \"single\" ) {
+                my \$filestr = join( ' ', @fullfileAr );
+                \$cat = \"zcat\" if ( \$filestr =~ /\\\.gz/ );
+                mergeGzipCountMd5sum( \$cat, \$filestr, \$archFile );
+            }
+            elsif ( \$collection_type[\$i] eq \"pair\" ) {
+                my \$filestrR1 = join( ' ', @fullfileArR1 );
+                my \$filestrR2 = join( ' ', @fullfileArR2 );
+                \$cat = \"zcat\" if ( \$filestrR1 =~ /\\\.gz/ );
+                mergeGzipCountMd5sum( \$cat, \$filestrR1, \$archFile1 );
+                mergeGzipCountMd5sum( \$cat, \$filestrR2, \$archFile2 );
+            }
+            if ( \$collection_type[\$i] eq \"single\" ) {
+                copyFile( \"\$archFile.gz\", \"\$inputFile.gz\" );
+                runCommand(\"gunzip \$inputFile.gz\");
+            }
+            elsif ( \$collection_type[\$i] eq \"pair\" ) {
+                copyFile( \"\$archFile1.gz\", \"\$inputFile1.gz\" );
+                copyFile( \"\$archFile2.gz\", \"\$inputFile2.gz\" );
+                runCommand(\"gunzip \$inputFile1.gz\");
+                runCommand(\"gunzip \$inputFile2.gz\");
+            }
+        }
+        else {
+            ##archive dir not defined then merge files in input dir
+            my \$cat = \"cat\";
+            if ( \$collection_type[\$i] eq \"single\" ) {
+                my \$filestr = join( ' ', @fullfileAr );
+                \$cat = \"zcat\" if ( \$filestr =~ /\\\.gz/ );
+                runCommand(\"\$cat \$filestr > \$inputFile\");
+            }
+            elsif ( \$collection_type[\$i] eq \"pair\" ) {
+                my \$filestrR1 = join( ' ', @fullfileArR1 );
+                my \$filestrR2 = join( ' ', @fullfileArR2 );
+                \$cat = \"zcat\" if ( \$filestrR1 =~ /\\\.gz/ );
+                runCommand(\"\$cat \$filestrR1 > \$inputFile1\");
+                runCommand(\"\$cat \$filestrR2 > \$inputFile2\");
+            }
+        }
+
+        \$passHash{ \$file_name[\$i] } = \"passed\";
+    }
+    elsif (\$inputDirCheck eq \"true\"
+        && \$archiveDirCheck eq \"false\"
+        && \$archiveDir eq \"\" )
+    {
+        \$passHash{ \$file_name[\$i] } = \"passed\";
+    }
+    elsif ( \$inputDirCheck eq \"true\" && \$archiveDirCheck eq \"true\" ) {
+        \$passHash{ \$file_name[\$i] } = \"passed\";
+    }
+}
+
+##remove invalid files (not found in @validInputAr) from \$input_dir
+
+my @inputDirFiles = <\$input_dir/*>;
+foreach my \$file (@inputDirFiles) {
+    if ( !exists( \$validInputHash{\$file} ) ) {
+        print \"Invalid file \$file will be removed from input directory\\\\n\";
+        runCommand(\"rm \$file\");
+    }
+}
+
+for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
+    die \"Error 64: please check your input file:\$file_name[\$i]\"
+      unless ( \$passHash{ \$file_name[\$i] } eq \"passed\" );
+}
 system('touch success.$attempt');
+
+##Subroutines
+
+sub checkFile {
+    my (\$file) = @_;
+    print \"\$file\\\\n\";
+    return 1 if ( -e \$file );
+    return 0;
+}
+
+sub trim {
+    my \$s = shift;
+    \$s =~ s/^\\\s+|\\\s+\$//g;
+    return \$s;
+}
+
+sub copyFile {
+    my ( \$file, \$target ) = @_;
+    runCommand(\"rsync -vazu \$file \$target\");
+}
+
+sub runCommand {
+    my (\$com) = @_;
+    my \$error = system(\$com);
+    if   (\$error) { die \"Command failed: \$com\\\\n\"; }
+    else          { print \"Command successful: \$com\\\\n\"; }
+}
+
+sub mergeGzipCountMd5sum {
+    my ( \$cat, \$filestr, \$inputFile ) = @_;
+    runCommand(\"\$cat \$filestr > \$inputFile && gzip \$inputFile && s=\\\\$(zcat \$inputFile.gz|wc -l) && echo \\\\\$((\\\\\$s/4)) > \$inputFile.gz.count && md5sum \$inputFile.gz > \$inputFile.gz.md5sum\");
+}
+
+
+
 '''
 }
 workflow.onComplete {
     println \"##Initial run summary##\"
-    println \"---------------------------\"
     println \"##Completed at: \$workflow.complete\"
     println \"##Duration: \${workflow.duration}\"
     println \"##Success: \${workflow.success ? 'PASSED' : 'failed' }\"
     println \"##Exit status: \${workflow.exitStatus}\"
+    println \"##Waiting for the Next Run..\"
 }
 ";
         }   
@@ -248,19 +457,31 @@ workflow.onComplete {
     }
     
      //get nextflow input parameters
-    function getNextInputs ($executor, $project_pipeline_id, $ownerID ){
+    function getNextInputs ($executor, $project_pipeline_id, $outdir, $ownerID ){
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $next_inputs="";
-        if ($executor === "local"){
+        if (!empty($allinputs)){
             foreach ($allinputs as $inputitem):
-                $next_inputs.="--".$inputitem->{'given_name'}." \\\"".$inputitem->{'name'}."\\\" ";
+                $inputName = $inputitem->{'name'};
+                $collection_id = $inputitem->{'collection_id'};
+                if (!empty($collection_id)){
+                    $inputsPath = "$outdir/run{$project_pipeline_id}/inputs";
+                    $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
+                    $file_type = $allfiles[0]->{'file_type'};
+                    $collection_type = $allfiles[0]->{'collection_type'};
+                    if ($collection_type == "single"){
+                        $inputName = "$inputsPath/*.$file_type";
+                    } else if ($collection_type == "pair"){
+                        $inputName = "$inputsPath/*.{R1,R2}.$file_type";
+                    }
+                } 
+            
+                if ($executor === "local"){
+                    $next_inputs.="--".$inputitem->{'given_name'}." \\\"".$inputName."\\\" ";
+                } else if ($executor !== "local"){
+                    $next_inputs.="--".$inputitem->{'given_name'}." \\\\\\\"".$inputName."\\\\\\\" ";
+                }
             endforeach;
-        } else if ($executor !== "local"){
-            if (!empty($allinputs)){
-                foreach ($allinputs as $inputitem):
-                    $next_inputs.="--".$inputitem->{'given_name'}." \\\\\\\"".$inputitem->{'name'}."\\\\\\\" ";
-                endforeach;
-            }
         }
         return $next_inputs;
 
@@ -620,7 +841,7 @@ workflow.onComplete {
             //get username and hostname and exec info for connection
             list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id)=$this->getNextConnectExec($profileId,$ownerID, $profileType);
             //get nextflow input parameters
-            $next_inputs = $this->getNextInputs($executor, $project_pipeline_id,$ownerID);
+            $next_inputs = $this->getNextInputs($executor, $project_pipeline_id, $outdir, $ownerID);
             //get cmd before run
             $preCmd = $this->getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd);
             //eg. /project/umw_biocore/bin
@@ -1294,11 +1515,19 @@ workflow.onComplete {
         $sql = "SELECT id, name FROM collection WHERE owner_id = '$ownerID'";
         return self::queryTable($sql);
     }
+    public function getCollectionById($id,$ownerID) {
+        $sql = "SELECT id, name FROM collection WHERE id = '$id' AND owner_id = '$ownerID'";
+        return self::queryTable($sql);
+    }
     public function getFiles($ownerID) {
-        $sql = "SELECT f.*, c.name as collection_name 
+        $sql = "SELECT DISTINCT f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type,
+        GROUP_CONCAT( c.name order by c.name) as collection_name,
+        GROUP_CONCAT( c.id order by c.id) as collection_id
         FROM file f
-        INNER JOIN collection c ON f.collection_id = c.id
-        WHERE f.owner_id = '$ownerID'";
+        LEFT JOIN file_collection fc  ON f.id = fc.f_id
+        LEFT JOIN collection c on fc.c_id = c.id
+        WHERE f.owner_id = '$ownerID'
+        GROUP BY f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type";
         return self::queryTable($sql);
     }
     public function getPublicProfileCluster($ownerID) {
@@ -1851,9 +2080,6 @@ workflow.onComplete {
             $ssh_id = $cluDataArr[0]["ssh_id"];
             $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
-            if (!file_exists("{$this->run_path}/$uuid/$last_server_dir")) {
-                mkdir("{$this->run_path}/$uuid/$last_server_dir", 0755, true);
-            }
             $cmd="ssh {$this->ssh_settings} -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
             $log = shell_exec($cmd);
             if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
@@ -1973,9 +2199,9 @@ workflow.onComplete {
 			('$project_id', '$input_id', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function insertFile($name, $file_dir, $file_type, $files_used, $collection_id, $collection_type, $archive_dir, $ownerID) {
-        $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_id, collection_type, archive_dir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
-			('$name', '$file_dir', '$file_type', '$files_used', '$collection_id', '$collection_type', '$archive_dir', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $ownerID) {
+        $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_type, archive_dir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
+			('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
     public function insertCollection($name, $ownerID) {
@@ -1987,6 +2213,11 @@ workflow.onComplete {
         $sql = "UPDATE collection SET name='$name', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    public function insertFileCollection($f_id, $c_id, $ownerID) {
+        $sql = "INSERT INTO file_collection (f_id, c_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$c_id', '$ownerID', now(), now(), '$ownerID', 3)";
+        return self::insTable($sql);
+    }
+    
     public function insertInput($name, $type, $ownerID) {
         $sql = "INSERT INTO input(name, type, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
 			('$name', '$type', '$ownerID', 3, now(), now(), '$ownerID')";
@@ -2089,8 +2320,8 @@ workflow.onComplete {
         return self::runSQL($sql);
     }
     public function duplicateProjectPipelineInput($new_id,$old_id,$ownerID) {
-        $sql = "INSERT INTO project_pipeline_input(input_id, project_id, pipeline_id, g_num, given_name, qualifier, project_pipeline_id, owner_id, perms, date_created, date_modified, last_modified_user)
-                SELECT input_id, project_id, pipeline_id, g_num, given_name, qualifier, '$new_id', '$ownerID', '3', now(), now(),'$ownerID'
+        $sql = "INSERT INTO project_pipeline_input(input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, project_pipeline_id, owner_id, perms, date_created, date_modified, last_modified_user)
+                SELECT input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, '$new_id', '$ownerID', '3', now(), now(),'$ownerID'
                 FROM project_pipeline_input
                 WHERE deleted=0 AND project_pipeline_id='$old_id'";
         return self::insTable($sql);
@@ -2117,36 +2348,30 @@ workflow.onComplete {
         return self::insTable($sql);
     }
     public function getCollectionFiles($collection_id,$ownerID) {
-        $where = " where f.collection_id = '$collection_id' AND (f.owner_id = '$ownerID' OR f.perms = 63 OR (ug.u_id ='$ownerID' and f.perms = 15))";
+        $where = " where fc.c_id = '$collection_id' AND (f.owner_id = '$ownerID' OR f.perms = 63 OR (ug.u_id ='$ownerID' and f.perms = 15))";
 		$sql = "SELECT DISTINCT f.*
                 FROM file f
+                INNER JOIN file_collection fc ON f.id=fc.f_id
                 LEFT JOIN user_group ug ON f.group_id=ug.g_id
                 $where";
 		return self::queryTable($sql);
     }
     public function getProjectPipelineInputs($project_pipeline_id,$ownerID) {
         $where = " where ppi.deleted=0 AND ppi.project_pipeline_id = '$project_pipeline_id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63 OR (ug.u_id ='$ownerID' and ppi.perms = 15))";
-		$sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num, ppi.collection_id
+		$sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num, ppi.collection_id, c.name as collection_name
                 FROM project_pipeline_input ppi
-                INNER JOIN input i ON i.id = ppi.input_id
-                LEFT JOIN user_group ug ON ppi.group_id=ug.g_id
-                $where";
-		return self::queryTable($sql);
-    }
-    public function getProjectPipelineInputsByGnum($g_num, $project_pipeline_id,$ownerID) {
-        $where = " where ppi.deleted=0 AND ppi.g_num= '$g_num' AND ppi.project_pipeline_id = '$project_pipeline_id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63 OR (ug.u_id ='$ownerID' and ppi.perms = 15))";
-		$sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num
-                FROM project_pipeline_input ppi
-                INNER JOIN input i ON i.id = ppi.input_id
+                LEFT JOIN input i ON i.id = ppi.input_id
+                LEFT JOIN collection c ON c.id = ppi.collection_id
                 LEFT JOIN user_group ug ON ppi.group_id=ug.g_id
                 $where";
 		return self::queryTable($sql);
     }
     public function getProjectPipelineInputsById($id,$ownerID) {
         $where = " where ppi.deleted=0 AND ppi.id= '$id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63)" ;
-		$sql = "SELECT ppi.id, ppi.qualifier, i.id as input_id, i.name
+		$sql = "SELECT ppi.id, ppi.qualifier, i.id as input_id, i.name, ppi.collection_id, c.name as collection_name
                 FROM project_pipeline_input ppi
-                INNER JOIN input i ON i.id = ppi.input_id
+                LEFT JOIN input i ON i.id = ppi.input_id
+                LEFT JOIN collection c ON c.id = ppi.collection_id
                 $where";
 		return self::queryTable($sql);
     }

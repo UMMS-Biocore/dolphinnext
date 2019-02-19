@@ -80,6 +80,33 @@ function sortByKey(array, key) {
     });
 }
 
+function checkArraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+
+    for (var i = 0; i < a.length; ++i) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+//eg showInfoModal('#warnDelete','#warnDeleteText', text)
+function showInfoModal(modalId, textID, text) {
+    $(modalId).off();
+    $(modalId).on('show.bs.modal', function (event) {
+        $(this).find('form').trigger('reset');
+        $(textID).html(text);
+    });
+    $(modalId).modal('show');
+}
+
+
+function selectMultiselect(id, nameArr) {
+    $(id).multiselect('deselectAll', false)
+    $(id).multiselect('select', nameArr)
+    $(id).trigger("change")
+}
 
 //after importing script text, remove extra quote if exist
 function removeDoubleQuote(script) {
@@ -756,33 +783,33 @@ function cleanRegEx(pat) {
     return pat.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-function createElement(type, fields, options){
-	var element = document.createElement( type );
-	for(var x = 0; x < fields.length; x++){
-		if (fields[x] == 'OPTION') {
-			var opt = document.createElement( 'option' );
-				opt.value = options[x];
-				opt.innerHTML = options[x];
-				element.appendChild(opt);
-		}else if (fields[x] == 'OPTION_DIS_SEL') {
-			var opt = document.createElement( 'option' );
-				opt.value = options[x];
-				opt.innerHTML = options[x];
-				opt.disabled = true;
-				opt.selected = true;
-				element.appendChild(opt);
-		}else if (fields[x] == 'TEXTNODE'){
-			element.appendChild(document.createTextNode(options[x]));
-		}else if (fields[x] == 'type' && options[x] == 'button'){
-			element.setAttribute(fields[x], options[x]);
-			element.innerHTML = element.value;
-		}else if (fields[x] == 'INNERHTML'){
-			element.innerHTML = options[x]
-		}else{
-			element.setAttribute(fields[x], options[x]);
-		}
-	}
-	return element;
+function createElement(type, fields, options) {
+    var element = document.createElement(type);
+    for (var x = 0; x < fields.length; x++) {
+        if (fields[x] == 'OPTION') {
+            var opt = document.createElement('option');
+            opt.value = options[x];
+            opt.innerHTML = options[x];
+            element.appendChild(opt);
+        } else if (fields[x] == 'OPTION_DIS_SEL') {
+            var opt = document.createElement('option');
+            opt.value = options[x];
+            opt.innerHTML = options[x];
+            opt.disabled = true;
+            opt.selected = true;
+            element.appendChild(opt);
+        } else if (fields[x] == 'TEXTNODE') {
+            element.appendChild(document.createTextNode(options[x]));
+        } else if (fields[x] == 'type' && options[x] == 'button') {
+            element.setAttribute(fields[x], options[x]);
+            element.innerHTML = element.value;
+        } else if (fields[x] == 'INNERHTML') {
+            element.innerHTML = options[x]
+        } else {
+            element.setAttribute(fields[x], options[x]);
+        }
+    }
+    return element;
 }
 
 function cleanProcessName(proName) {
@@ -880,7 +907,7 @@ function downloadText(text, filename) {
 
 //use array of item to fill select element
 function fillArray2Select(arr, id, clean) {
-    if (clean === true){
+    if (clean === true) {
         $(id).empty();
     }
     for (var i = 0; i < arr.length; i++) {
@@ -928,6 +955,17 @@ function refreshCollapseIconDiv() {
     });
 
 
+}
+
+// return array of (.*) in the following regex = "/Job <(.*)> is submitted/g";
+function getMultipleRegex(txt, regex) {
+    var matches = [];
+    var match = regex.exec(txt);
+    while (match != null) {
+        matches.push(match[1]);
+        match = regex.exec(txt);
+    }
+    return matches;
 }
 
 //creates ajax object and change color of requiredFields

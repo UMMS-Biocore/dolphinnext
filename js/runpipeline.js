@@ -1557,7 +1557,10 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name) {
             var filePath = getProPipeInputs[0].name; //value for val type
             var proPipeInputID = getProPipeInputs[0].id;
             var given_name = getProPipeInputs[0].given_name;
-            setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, null); }, 2);
+            var collection_id = getProPipeInputs[0].collection_id;
+            var collection_name = getProPipeInputs[0].collection_name;
+            var collection = { collection_id: collection_id, collection_name: collection_name }
+            setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection); }, 2);
         }
         if (getProPipeInputs.length > 1) {
             for (var k = 1; k < getProPipeInputs.length; k++) {
@@ -2519,7 +2522,10 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
                     var filePath = getProPipeInputs[0].name; //value for val type
                     var proPipeInputID = getProPipeInputs[0].id;
                     var given_name = getProPipeInputs[0].given_name;
-                    setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, null); }, 2);
+                    var collection_id = getProPipeInputs[0].collection_id;
+                    var collection_name = getProPipeInputs[0].collection_name;
+                    var collection = { collection_id: collection_id, collection_name: collection_name }
+                    setTimeout(function () { insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection); }, 2);
                 }
                 if (getProPipeInputs.length > 1) {
                     for (var k = 1; k < getProPipeInputs.length; k++) {
@@ -3218,17 +3224,16 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
             $('#' + rowID).find('#inputValEnter').css('display', 'none');
             $('#' + rowID).find('#defValUse').css('display', 'none');
         }
-        $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id=filePath-' + gNumParam + '>' + filePath + '</span>' + editIcon + deleteIcon);
-        $('#' + rowID).attr('propipeinputid', proPipeInputID);
+        var collectionAttr = ' collection_id="" ';
         if (collection) {
-            if (collection.collection_id) {
-                $('#filePath-' + gNumParam).attr("collection_id", collection.collection_id)
-            } else {
-                $('#filePath-' + gNumParam).attr("collection_id", "")
+            if (collection.collection_id && collection.collection_name) {
+                collectionAttr = ' collection_id="' + collection.collection_id + '" ';
+                filePath = '<i class="fa fa-database"></i> ' + collection.collection_name
             }
-        } else {
-            $('#filePath-' + gNumParam).attr("collection_id", "")
         }
+        $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + filePath + '</span>' + editIcon + deleteIcon);
+        $('#' + rowID).attr('propipeinputid', proPipeInputID);
+
     }
 }
 //remove for both dropdown and file/val options
@@ -3269,9 +3274,11 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
         nameInput = data[1].value;
     }
     var collection_id = ""
+    var collection_name = ""
     if (collection) {
         if (collection.collection_id) {
             collection_id = collection.collection_id;
+            collection_name = collection.collection_name;
         }
     }
     var fillInput = getValues({
@@ -3289,7 +3296,9 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
         proPipeInputID: ""
     });
     //insert into #inputsTab
-    if (fillInput.projectPipelineInputID && fillInput.inputName) {
+    if (fillInput.projectPipelineInputID && collection_name) {
+        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection);
+    } else if (fillInput.projectPipelineInputID && fillInput.inputName) {
         insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection);
     }
 }
@@ -3301,9 +3310,11 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
         nameInput = data[1].value;
     }
     var collection_id = ""
+    var collection_name = ""
     if (collection) {
-        if (collection.collection_id) {
+        if (collection.collection_id && collection.collection_name) {
             collection_id = collection.collection_id;
+            collection_name = collection.collection_name;
         }
     }
     var fillInput = getValues({
@@ -3321,18 +3332,12 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
         proPipeInputID: proPipeInputID
     });
     //update #inputsTab
-    if (fillInput.projectPipelineInputID && fillInput.inputName) {
+    if (fillInput.projectPipelineInputID && collection_name) {
+        $('#filePath-' + gNumParam).html('<i class="fa fa-database"></i> ' + collection_name);
+    } else if (fillInput.projectPipelineInputID && fillInput.inputName) {
         $('#filePath-' + gNumParam).text(fillInput.inputName);
     }
-    if (collection) {
-        if (collection.collection_id) {
-            $('#filePath-' + gNumParam).attr("collection_id", collection.collection_id)
-        } else {
-            $('#filePath-' + gNumParam).attr("collection_id", "")
-        }
-    } else {
-        $('#filePath-' + gNumParam).attr("collection_id", "")
-    }
+    $('#filePath-' + gNumParam).attr("collection_id", collection_id)
 }
 
 function saveFileSetValModal(data, sType, inputID, collection) {
@@ -3529,9 +3534,11 @@ function checkS3(path, getProPipeInputs) {
     var nameCheck = 0;
     $.each(getProPipeInputs, function (el) {
         var inputName = getProPipeInputs[el].name;
-        if (inputName.indexOf(s3pattern) > -1) {
-            $("#mRunAmzKeyDiv").css('display', "inline");
-            nameCheck = nameCheck + 1;
+        if (inputName) {
+            if (inputName.indexOf(s3pattern) > -1) {
+                $("#mRunAmzKeyDiv").css('display', "inline");
+                nameCheck = nameCheck + 1;
+            }
         }
     });
     if (nameCheck === 0 && pathCheck === false) {
@@ -3638,16 +3645,24 @@ function parseRunPid(serverLog) {
     //for lsf: Job <203477> is submitted to queue <long>.\n"
     //for sge: Your job 2259 ("run_bowtie2") has been submitted
     if (serverLog.match(/Job <(.*)> is submitted/)) {
-        runPid = serverLog.match(/Job <(.*)> is submitted/)[1];
-        runPid = $.trim(runPid);
+        var regEx = /Job <(.*)> is submitted/g;
+        var runPidAr = getMultipleRegex(serverLog, regEx);
+        if (runPidAr.length) {
+            runPid = runPidAr[runPidAr.length - 1];
+            runPid = $.trim(runPid);
+        }
         if (runPid && runPid != "") {
             var updateRunPidComp = getValues({ p: "updateRunPid", pid: runPid, project_pipeline_id: project_pipeline_id });
         } else {
             runPid = null;
         }
     } else if (serverLog.match(/job (.*) \(.*\) .* submitted/)) {
-        runPid = serverLog.match(/job (.*) \(.*\) .* submitted/)[1];
-        runPid = $.trim(runPid);
+        var regEx = /job (.*) \(.*\) .* submitted/g;
+        var runPidAr = getMultipleRegex(serverLog, regEx);
+        if (runPidAr.length) {
+            runPid = runPidAr[runPidAr.length - 1];
+            runPid = $.trim(runPid);
+        }
         if (runPid && runPid != "") {
             var updateRunPidComp = getValues({ p: "updateRunPid", pid: runPid, project_pipeline_id: project_pipeline_id });
         } else {
@@ -4855,12 +4870,190 @@ $(document).ready(function () {
 
     //##################
     //Sample Modal
+    initCompleteFunction = function (settings, json) {
+        var columnsToSearch = { 2: 'collection' };
+        for (var i in columnsToSearch) {
+            var api = new $.fn.dataTable.Api(settings);
+            console.log("initCompleteFunction")
+            $("#sampleTable_filter").css("display", "inline-block")
+            $("#searchBarST").append('<div style="margin-bottom:20px; padding-left:8px; display:inline-block;" id="filter-' + columnsToSearch[i] + '"></div>')
+            var select = $('<select id="select-' + columnsToSearch[i] + '" name="' + columnsToSearch[i] + '" multiple="multiple"></select>')
+                .appendTo($('#filter-' + columnsToSearch[i]).empty())
+                .attr('data-col', i)
+                .on('change', function () {
+                    var vals = $(this).val();
+                    var valReg = "";
+                    for (var k = 0; k < vals.length; k++) {
+                        var val = $.fn.dataTable.util.escapeRegex(vals[k]);
+                        if (val) {
+                            if (k + 1 !== vals.length) {
+                                valReg += val + "|"
+                            } else {
+                                valReg += val
+                            }
+                        }
+                    }
+                    api.column($(this).attr('data-col'))
+                        .search(valReg ? '(^|,)' + valReg + '(,|$)' : '', true, false)
+                        .draw();
+                });
+            var collectionList = []
+            api.column(i).data().unique().sort().each(function (d, j) {
+                var multiCol = d.split(",");
+                for (var n = 0; n < multiCol.length; n++) {
+                    if (collectionList.indexOf(multiCol[n]) == -1) {
+                        collectionList.push(multiCol[n])
+                        select.append('<option value="' + multiCol[n] + '">' + multiCol[n] + '</option>');
+                    }
+                }
+            });
+            createMultiselect('#select-' + columnsToSearch[i])
+            createMultiselectBinder('#filter-' + columnsToSearch[i])
+            var selCollectionNameArr = $("#sampleTable").data("select")
+            if (selCollectionNameArr) {
+                if (selCollectionNameArr.length) {
+                    $("#sampleTable").removeData("select");
+                    selectMultiselect("#select-collection", selCollectionNameArr);
+                    sampleTable.rows({ search: 'applied' }).select();
+                }
+            }
+        }
+    };
 
+    $(function () {
+        $(document).on('xhr.dt', '#sampleTable', function (e, settings, json, xhr) {
+            new $.fn.dataTable.Api(settings).one('draw', function () {
+                initCompleteFunction(settings, json);
+            });
+        });
+        //fullscreen modal
+        //        $('#sampleModal').on('show.bs.modal', function () {
+        //            $('body').css('overflow', 'hidden');
+        //            $('body').css('position', 'fixed');
+        //        }).on('hidden.bs.modal', function () {
+        //            $('body').css('overflow', 'hidden auto');
+        //            $('body').css('position', 'static');
+        //        })
+
+        $('#addFileModal').on('show.bs.modal', function () {
+            $('#addFileModal').find('form').trigger('reset');
+            $("#viewDir").removeData("fileArr");
+            fillArray2Select([], "#viewDir", true)
+            resetPatternList()
+            clearSelection()
+            $('.forwardpatternDiv').css("display", "none")
+            $('.reversepatternDiv').css("display", "none")
+            $('.singlepatternDiv').css("display", "none")
+            $('.patternButs').css("display", "none")
+            $('.patternTable').css("display", "none")
+            $("#viewDir").css("display", "none")
+            var renderMenu = {
+                option: function (data, escape) {
+                    return '<div class="option">' +
+                        '<span class="title"><i>' + escape(data.name) + '</i></span>' +
+                        '</div>';
+                },
+                item: function (data, escape) {
+                    return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
+                }
+            };
+
+            $('#collection_id').selectize({
+                valueField: 'id',
+                searchField: ['name'],
+                createOnBlur: true,
+                render: renderMenu,
+                options: getValues({ p: "getCollection" }),
+                create: function (input, callback) {
+                    callback({ id: "_newItm_" + input, name: input });
+                }
+            });
+            $("#collection_id")[0].selectize.clear()
+        });
+
+        $('#viewDirBut').click(function () {
+            var dir = $('#file_dir').val()
+            if (dir) {
+                var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow });
+                if (dirList) {
+                    dirList = $.trim(dirList)
+                    var fileArr = dirList.split('\n');
+                    var errorAr = fileArr.filter(line => line.match(/ls:/));
+                    fileArr = fileArr.filter(line => !line.match(/:/));
+                    if (fileArr.length > 0) {
+                        fillArray2Select(fileArr, "#viewDir", true)
+                        $("#viewDir").data("fileArr", fileArr)
+                        $('#collection_type').trigger("change");
+                    } else {
+                        if (errorAr.length > 0) {
+                            fillArray2Select(errorAr, "#viewDir", true)
+                            resetPatternList()
+                        } else {
+                            fillArray2Select(["Files Not Found."], "#viewDir", true)
+                            resetPatternList()
+                        }
+                    }
+                } else {
+                    fillArray2Select(["Files Not Found."], "#viewDir", true)
+                    resetPatternList()
+                }
+            }
+            $("#viewDir > option").attr("style", "pointer-events: none;");
+            $("#viewDir").css("display", "inline")
+        });
+
+
+        $('#addFileModal').on('click', '#mSaveFiles', function (event) {
+            event.preventDefault();
+            var formValues = $('#addFileModal').find('input, select');
+            var requiredFields = ["file_dir", "collection_type", "collection_id"];
+            var ret = {};
+            ret = getTableSamples()
+            if (ret.warnUser) {
+                showInfoModal("#infoModal", "#infoModalText", ret.warnUser)
+            }
+            if (!ret.file_array.length) {
+                showInfoModal("#infoModal", "#infoModalText", "Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.")
+            }
+            var formObj = {};
+            var stop = "";
+                [formObj, stop] = createFormObj(formValues, requiredFields)
+            if (stop === false && !ret.warnUser && ret.file_array.length) {
+                //new items come with prefix: _newItm_
+                var collection_name = $("#collection_id")[0].selectize.getItem(formObj.collection_id)[0].innerHTML;
+                if (formObj.collection_id.match(/^_newItm_(.*)/)) {
+                    var collection_data = getValues({ p: "saveCollection", name: collection_name })
+                    if (collection_data.id) {
+                        formObj.collection_id = collection_data.id
+                    }
+                }
+                var collection = { collection_id: formObj.collection_id, collection_name: collection_name }
+                formObj.file_array = ret.file_array
+                formObj.p = "saveFile"
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: formObj,
+                    async: true,
+                    success: function (s) {
+                        if (s.id) {
+                            $("#sampleTable").data("select", [collection_name])
+                            $("#sampleTable").DataTable().ajax.reload(null, false);
+                            $('#addFileModal').modal('hide');
+                        }
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        });
+    });
 
     createMultiselect = function (id) {
         $(id).multiselect({
             includeResetOption: true,
-            resetText: "Clear selected",
+            resetText: "Clear filters",
             includeResetDivider: true,
             buttonText: function (options, select) {
                 if (options.length == 0) {
@@ -4884,9 +5077,8 @@ $(document).ready(function () {
         });
     }
 
-    var columnsToSearch = {
-        2: 'collection'
-    };
+
+
 
     sampleTable = $('#sampleTable').DataTable({
         "dom": '<"#searchBarST.pull-left"f>rt<"pull-left"i><"bottom"p><"clear">',
@@ -4914,133 +5106,12 @@ $(document).ready(function () {
             'style': 'multi'
         },
         'order': [[3, 'desc']],
-        initComplete: function () {
-            for (var i in columnsToSearch) {
-                var api = this.api();
-                $("#sampleTable_filter").css("display", "inline-block")
-                $("#searchBarST").append('<div style="margin-bottom:20px; padding-left:8px; display:inline-block;" id="filter-' + columnsToSearch[i] + '"></div>')
-                var select = $('<select name="' + columnsToSearch[i] + '" multiple="multiple"></select>')
-                    .appendTo($('#filter-' + columnsToSearch[i]).empty())
-                    .attr('data-col', i)
-                    .on('change', function () {
-                        var vals = $(this).val();
-                        var valReg = "";
-                        for (var k = 0; k < vals.length; k++) {
-                            var val = $.fn.dataTable.util.escapeRegex(vals[k]);
-                            if (val) {
-                                if (k + 1 !== vals.length) {
-                                    valReg += val + "|"
-                                } else {
-                                    valReg += val
-                                }
-                            }
-                        }
-                        api.column($(this).attr('data-col'))
-                            .search(valReg ? '^' + valReg + '$' : '', true, false)
-                            .draw();
-                    });
-                api.column(i).data().unique().sort().each(function (d, j) {
-                    select.append('<option value="' + d + '">' + d + '</option>');
-                });
-                createMultiselect('#filter-' + columnsToSearch[i] + " > select")
-                createMultiselectBinder('#filter-' + columnsToSearch[i])
-            }
-        }
+        initComplete: initCompleteFunction
     });
 
     selectedSamplesTable = $('#selectedSamples').dataTable();
 
 
-
-    $(function () {
-        $('#sampleModal').on('show.bs.modal', function () {
-            $('body').css('overflow', 'hidden');
-            $('body').css('position', 'fixed');
-        }).on('hidden.bs.modal', function () {
-            $('body').css('overflow', 'hidden auto');
-            $('body').css('position', 'static');
-        })
-        $('#addFileModal').on('show.bs.modal', function () {
-            $('#addFileModal').find('form').trigger('reset');
-            fillArray2Select([], "#viewDir", true)
-            resetPatternList()
-            clearSelection()
-            $('.forwardpatternDiv').css("display", "none")
-            $('.reversepatternDiv').css("display", "none")
-            $('.singlepatternDiv').css("display", "none")
-            $('.patternButs').css("display", "none")
-            $('.patternTable').css("display", "none")
-            $("#viewDir").css("display", "none")
-
-            var renderMenu = {
-                option: function (data, escape) {
-                    return '<div class="option">' +
-                        '<span class="title"><i>' + escape(data.name) + '</i></span>' +
-                        '</div>';
-                },
-                item: function (data, escape) {
-                    return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
-                }
-            };
-
-            $('#collection_id').selectize({
-                valueField: 'id',
-                searchField: ['name'],
-                createOnBlur: true,
-                render: renderMenu,
-                options: getValues({ p: "getCollection" }),
-                create: function (input, callback) {
-                    callback({ id: "_newItm_" + input, name: input });
-                }
-            });
-
-        });
-
-
-
-        //        $('#addFileModal').on('click', '#mSaveFiles', function (event) {
-        //            event.preventDefault();
-        //            var formValues = $('#addFileModal').find('input, select');
-        //            var requiredFields = ["file_dir", "collection_type", "collection_id"];
-        //            var ret = {};
-        //            ret = getTableSamples()
-        //            if (ret.warnUser) {
-        //                alert(ret.warnUser);
-        //            }
-        //            if (!ret.file_array.length) {
-        //                alert("Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.");
-        //            }
-        //            var formObj = {};
-        //            var stop = "";
-        //        [formObj, stop] = createFormObj(formValues, requiredFields)
-        //            if (stop === false && !ret.warnUser && ret.file_array.length) {
-        //                formObj.file_array = ret.file_array
-        //                formObj.p = "saveFile"
-        //                $.ajax({
-        //                    type: "POST",
-        //                    url: "ajax/ajaxquery.php",
-        //                    data: formObj,
-        //                    async: true,
-        //                    success: function (s) {
-        //                        if (s.id) {
-        //                            sampleTable.ajax.reload();
-        //                            $('#addFileModal').modal('hide');
-        //
-        //                        }
-        //                    },
-        //                    error: function (errorThrown) {
-        //                        alert("Error: " + errorThrown);
-        //                    }
-        //                });
-        //            }
-        //        });
-
-
-    });
-
-    $('#theButton').click(function () {
-        $('#sampleModal').modal("show")
-    });
 
 
     function resetPatternList() {
@@ -5100,36 +5171,7 @@ $(document).ready(function () {
 
     });
 
-    $('#viewDirBut').click(function () {
-        var dir = $('#file_dir').val()
-        if (dir) {
-            var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow });
-            if (dirList) {
-                dirList = $.trim(dirList)
-                var fileArr = dirList.split('\n');
-                var errorAr = fileArr.filter(line => line.match(/ls:/));
-                fileArr = fileArr.filter(line => !line.match(/:/));
-                if (fileArr.length > 0) {
-                    fillArray2Select(fileArr, "#viewDir", true)
-                    $("#viewDir").data("fileArr", fileArr)
-                    $('#collection_type').trigger("change");
-                } else {
-                    if (errorAr.length > 0) {
-                        fillArray2Select(errorAr, "#viewDir", true)
-                        resetPatternList()
-                    } else {
-                        fillArray2Select(["Files Not Found."], "#viewDir", true)
-                        resetPatternList()
-                    }
-                }
-            } else {
-                fillArray2Select(["Files Not Found."], "#viewDir", true)
-                resetPatternList()
-            }
-        }
-        $("#viewDir > option").attr("style", "pointer-events: none;");
-        $("#viewDir").css("display", "inline")
-    });
+
 
     function updateFileArea(selectId, pattern) {
         var fileOrj = $("#viewDir").data("fileArr")
@@ -5472,46 +5514,16 @@ $(document).ready(function () {
         });
     });
 
-    prepareImportSection = function () {
-        fillArray2Select([], "#viewDir", true)
-        resetPatternList()
-        clearSelection()
-        $('.forwardpatternDiv').css("display", "none")
-        $('.reversepatternDiv').css("display", "none")
-        $('.singlepatternDiv').css("display", "none")
-        $('.patternButs').css("display", "none")
-        $('.patternTable').css("display", "none")
-        $("#viewDir").css("display", "none")
-        var renderMenu = {
-            option: function (data, escape) {
-                return '<div class="option">' +
-                    '<span class="title"><i>' + escape(data.name) + '</i></span>' +
-                    '</div>';
-            },
-            item: function (data, escape) {
-                return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
-            }
-        };
 
-        $('#collection_id').selectize({
-            valueField: 'id',
-            searchField: ['name'],
-            createOnBlur: true,
-            render: renderMenu,
-            options: getValues({ p: "getCollection" }),
-            create: function (input, callback) {
-                callback({ id: "_newItm_" + input, name: input });
-            }
-        });
-    }
     $('#inputFilemodal').on('show.bs.modal', function (e) {
         var button = $(e.relatedTarget);
         $(this).find('form').trigger('reset');
         $('.nav-tabs a[href="#manualTab"]').tab('show');
+        selectMultiselect("#select-collection", []);
+        sampleTable.rows().deselect();
         var clickedRow = button.closest('tr');
         var rowID = clickedRow[0].id; //#inputTa-3
         var gNumParam = rowID.split("Ta-")[1];
-        prepareImportSection()
         if (button.attr('id') === 'inputFileSelect') {
             $('#filemodaltitle').html('Select/Add Input File');
             $('#mIdFile').attr('rowID', rowID);
@@ -5519,19 +5531,30 @@ $(document).ready(function () {
             $('#filemodaltitle').html('Change Input File');
             $('#mIdFile').attr('rowID', rowID);
             var proPipeInputID = $('#' + rowID).attr('propipeinputid');
+            console.log(proPipeInputID)
             $('#mIdFile').val(proPipeInputID);
             // Get the input id of proPipeInput;
             var proInputGet = getValues({ "p": "getProjectPipelineInputs", "id": proPipeInputID });
             if (proInputGet) {
+                console.log(proInputGet)
                 var input_id = proInputGet[0].input_id;
-                var inputGet = getValues({ "p": "getInputs", "id": input_id })[0];
-                if (inputGet) {
-                    //insert data into form
-                    var formValues = $('#manualTab').find('input');
-                    var keys = Object.keys(inputGet);
-                    console.log(keys)
-                    for (var i = 0; i < keys.length; i++) {
-                        $(formValues[i]).val(inputGet[keys[i]]);
+                var collection_id = proInputGet[0].collection_id;
+                var collection_name = proInputGet[0].collection_name;
+                console.log(collection_name)
+                if (collection_id && collection_id != "0" && collection_name) {
+                    selectMultiselect("#select-collection", [collection_name]);
+                    sampleTable.rows({ search: 'applied' }).select();
+                    $('.nav-tabs a[href="#importedFilesTab"]').tab('show');
+                    //xxxxxxxxxxxxxxx
+                } else if (input_id) {
+                    var inputGet = getValues({ "p": "getInputs", "id": input_id })[0];
+                    if (inputGet) {
+                        //insert data (input_id) into form
+                        var formValues = $('#manualTab').find('input');
+                        var keys = Object.keys(inputGet);
+                        for (var i = 0; i < keys.length; i++) {
+                            $(formValues[i]).val(inputGet[keys[i]]);
+                        }
                     }
                 }
             }
@@ -5558,20 +5581,34 @@ $(document).ready(function () {
         return ret
     }
 
-    getNewFilePattern = function (formObj) {
-        var archive_dir = formObj.archive_dir
-        var collection_type = formObj.collection_type
-        var file_type = formObj.file_type
-        var newPatt = "";
-        if (collection_type == "single") {
-            var regEx = "*."
-        } else if (collection_type == "pair") {
-            var regEx = "*.{R1,R2}."
+    checkOneCollection = function (selectedRows) {
+        console.log(selectedRows)
+        //get collection_id of first item. it can be space separated multiple ids
+        var pushFeatureIntoArray = function (ar, column) {
+            var vals = [];
+            for (var i = 0; i < ar.length; i++) {
+                vals.push(ar[i][column]);
+            }
+            return vals
         }
-        newPatt = archive_dir + "/" + regEx + file_type
-        return newPatt
+        var collectionIdAr = selectedRows[0].collection_id.split(",")
+        console.log(collectionIdAr)
+        var selRowsfileIdAr = [];
+        selRowsfileIdAr = pushFeatureIntoArray(selectedRows, "id")
+        for (var n = 0; n < collectionIdAr.length; n++) {
+            var selColData = getValues({ "id": collectionIdAr[n], "p": "getCollectionFiles" })
+
+            var selColfileIdAr = pushFeatureIntoArray(selColData, "id")
+            var checkEq = checkArraysEqual(selColfileIdAr.sort(), selRowsfileIdAr.sort())
+            if (checkEq === true) {
+                return [collectionIdAr[n], selRowsfileIdAr]
+                break;
+            }
+        }
+        return [false, selRowsfileIdAr];
     }
-    //xxxxxxxx
+
+    //xxxxxxxxxxx
     $('#inputFilemodal').on('click', '#savefile', function (e) {
         $('#inputFilemodal').loading({
             message: 'Working...'
@@ -5579,63 +5616,71 @@ $(document).ready(function () {
         e.preventDefault();
         var savetype = $('#mIdFile').val();
         var checkdata = $('#inputFilemodal').find('.active.tab-pane')[0].getAttribute('id');
-        if (checkdata === 'importTab') {
-            var formValues = $('#importTab').find('input, select');
-            var requiredFields = ["file_dir", "collection_type", "collection_id", "archive_dir"];
-            var ret = {};
-            ret = getTableSamples()
-            if (ret.warnUser) {
-                alert(ret.warnUser);
-            }
-            if (!ret.file_array.length) {
-                alert("Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.");
-            }
-            var formObj = {};
-            var stop = "";
-        [formObj, stop] = createFormObj(formValues, requiredFields)
-            if (stop === false && !ret.warnUser && ret.file_array.length) {
-                //new items come with prefix: _newItm_
-                console.log(formObj)
-                if (formObj.collection_id.match(/^_newItm_(.*)/)) {
-                    var collection_name = formObj.collection_id.match(/^_newItm_(.*)/)[1];
-                    console.log(collection_name)
-                    var collection_data = getValues({ p: "saveCollection", name: collection_name })
-                    if (collection_data.id) {
-                        formObj.collection_id = collection_data.id
-                    }
+        if (checkdata === 'importedFilesTab') {
+            $('#inputFilemodal').loading("stop");
+            var fillCollection = function (savetype, collection) {
+                //                console.log(savetype)
+                //                console.log(!savetype.length)
+                if (!savetype.length) { //add item
+                    saveFileSetValModal(null, 'file', null, collection);
+                } else {
+                    editFileSetValModal(null, 'file', null, collection);
                 }
-                var collection = { collection_id: formObj.collection_id }
-
-                formObj.file_array = ret.file_array
-                formObj.p = "saveFile"
-                $.ajax({
-                    type: "POST",
-                    url: "ajax/ajaxquery.php",
-                    data: formObj,
-                    async: true,
-                    success: function (s) {
-                        if (s.id) {
-                            var formVal = $('#manualTab').find('input');
-                            var data = formVal.serializeArray();
-                            var newFilePattern = getNewFilePattern(formObj)
-                            data[1].value = $.trim(newFilePattern);
-                            if (data[1].value !== '') {
-                                if (!savetype.length) { //add item
-                                    saveFileSetValModal(data, 'file', null, collection);
-                                } else {
-                                    editFileSetValModal(data, 'file', null, collection);
+            }
+            var selectedRows = sampleTable.rows({ selected: true }).data();
+            if (selectedRows.length === 0) {
+                showInfoModal("#infoModal", "#infoModalText", "None of the file is selected in the table. Please use checkboxes to select files.")
+            } else if (selectedRows.length > 0) {
+                //check if selected items belong to only one collection
+                var collection_id = "";
+                var selRowsfileIdAr = [];
+                var checkOneCol = "";
+                [checkOneCol, selRowsfileIdAr] = checkOneCollection(selectedRows)
+                console.log(checkOneCol)
+                console.log(selRowsfileIdAr)
+                //if new collection required, ask for name
+                if (!checkOneCol) {
+                    $("#newCollectionModal").off();
+                    $("#newCollectionModal").on('show.bs.modal', function (event) {
+                        $(this).find('form').trigger('reset');
+                    });
+                    $('#newCollectionModal').on('click', '#saveNewCollect', function (e) {
+                        e.preventDefault();
+                        var newCollName = $('#newCollectionName').val();
+                        if (newCollName != "") {
+                            newCollName = newCollName.replace(/:/g, "_").replace(/,/g, "_").replace(/\$/g, "_").replace(/\!/g, "_").replace(/\</g, "_").replace(/\>/g, "_").replace(/\?/g, "_").replace(/\(/g, "_").replace(/\"/g, "_").replace(/\'/g, "_").replace(/\./g, "_").replace(/\//g, "_").replace(/\\/g, "_");
+                            var collection_data = getValues({ p: "saveCollection", name: newCollName })
+                            if (collection_data.id) {
+                                collection_id = collection_data.id;
+                                var savecollection = getValues({
+                                    p: "saveFileByID",
+                                    file_array: selRowsfileIdAr,
+                                    collection_id: collection_id
+                                })
+                                if (savecollection.id) {
+                                    var collection = { collection_id: collection_id, collection_name: newCollName }
+                                    fillCollection(savetype, collection)
+                                    $("#sampleTable").DataTable().ajax.reload(null, false);
+                                    $("#newCollectionModal").modal('hide');
+                                    $('#inputFilemodal').modal('hide');
                                 }
-                                $('#inputFilemodal').loading("stop");
-                                $('#inputFilemodal').modal('hide');
                             }
                         }
-                    },
-                    error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
+                    });
+                    $("#newCollectionModal").modal('show');
+                } else {
+                    collection_id = checkOneCol;
+                    var getcollection = getValues({ p: "getCollection", id: collection_id })
+                    if (getcollection.length) {
+                        if (getcollection[0].name) {
+                            var collection = { collection_id: collection_id, collection_name: getcollection[0].name }
+                            fillCollection(savetype, collection)
+                            $('#inputFilemodal').modal('hide');
+                        }
                     }
-                });
-            } else {
-                $('#inputFilemodal').loading("stop");
+                }
+
+
             }
         } else {
             if (!savetype.length) { //add item

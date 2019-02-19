@@ -519,23 +519,8 @@
 <!--Confirm Modal Ends-->
 
 
-<div id="warnDelete" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Information</h4>
-            </div>
-            <div class="modal-body">
-                <span id="warnDelText">Text</span>
-                </br>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
+
+
 
 
 <!--Select File modal-->
@@ -550,8 +535,8 @@
                 <div id="fileAddOptions" role="tabpanel">
                     <!-- Nav tabs -->
                     <ul id="fileNav" class="nav nav-tabs" role="tablist">
-                        <li id="manualTabFile" class="active"><a class="nav-item" data-toggle="tab" href="#manualTab">Manually</a></li>
-                        <li id="importTool"><a class="nav-item" data-toggle="tab" href="#importTab">Import Tool</a></li>
+                        <li id="manualTabFile" class="nav-item"><a class="nav-item" data-toggle="tab" href="#manualTab">Manually</a></li>
+                        <li id="importedFiles" class="active"><a class="nav-item" data-toggle="tab" href="#importedFilesTab">Imported Files</a></li>
                         <li id="publicFileTabFile"><a class="nav-item" data-toggle="tab" href="#publicFileTab">Public Files</a></li>
                         <li id="projectFileTabFile"><a class="nav-item" data-toggle="tab" href="#projectFileTab">Project Files</a></li>
 
@@ -559,6 +544,26 @@
                     </ul>
                     <!-- Tab panes -->
                     <div id="fileContent" class="tab-content">
+                        <div role="tabpanel" class="tab-pane" id="importedFilesTab">
+                            <div class="panel panel-default">
+                                </br>
+                                <div class="panel-body">
+                                    <div class="pull-right">
+                                        <button type="button" class="btn btn-success btn-sm" title="Add Project" id="addSample" data-toggle="modal" data-target="#addFileModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-plus"></i> Add File</button>
+                                    </div>
+                                    <table id="sampleTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:40px;">Check</th>
+                                                <th>Name</th>
+                                                <th>Collection</th>
+                                                <th>Added on</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                         <div role="tabpanel" class="tab-pane active" id="manualTab">
                             <div class="panel panel-default">
                                 </br>
@@ -577,131 +582,6 @@
                                     </div>
                                 </form>
                             </div>
-                        </div>
-                        <div role="tabpanel" class="tab-pane" id="importTab">
-                           </br>
-                            <form class="form-horizontal">
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:45px;">1. File Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
-                                        <input type="text" class="form-control" id="file_dir" name="file_dir" value="/share/data/umw_biocore/genome_data/mousetest/mm10/gz">
-                                    </div>
-                                    <div class="col-sm-2">
-                                        <button id="viewDirBut" type="button" class="btn btn-default">View Directory <i class='fa fa-search'></i></button>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <div class="col-sm-3"></div>
-                                    <div class="col-sm-7">
-                                        <select id="viewDir" class="form-control" size="5" style="display:none;"></select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:45px;">2. File Type <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose your file type"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
-                                        <select id="file_type" class="fbtn btn-default form-control" name="file_type">
-                                            <option value="fastq" selected>Fastq</option>
-                                            <option value="bam">Bam</option>
-                                            <option value="bai">Bai</option>
-                                            <option value="txt">Txt</option>
-                                            <option value="other">Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="collection_type" class="col-sm-3 control-label text-left" style="padding-left:45px;">3. Collection Type <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please choose 'paired list' and for single-end reads or any list of files choose 'single/list' option."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
-                                        <select id="collection_type" class="fbtn btn-default form-control" name="collection_type">
-                                            <option value="" disabled selected>Choose Collection Type</option>
-                                            <option value="single">Single/List</option>
-                                            <option value="pair">Paired List</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:45px;">4. File Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please enter forward and reverse read pattern to match file pairs."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                </div>
-                                <div class="form-group">
-                                    <div class="col-sm-12">
-                                        <div class="col-sm-6 singlepatternDiv" style="display:none;">
-                                            <p class="col-sm-4 control-label">Filename Extension <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter end of the file name to filter files (eg. .fastq). This pattern will be removed from the file name to create 'File Names' in the table below."><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
-                                            <div class="col-sm-8">
-                                                <input type="text" class="form-control" id="single_pattern" name="single_pattern" value="">
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6 forwardpatternDiv" style="display:none;">
-                                            <p class="col-sm-4 control-label">Forward Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for forward reads eg. _R1"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
-                                            <div class="col-sm-8">
-                                                <input type="text" class="form-control" id="forward_pattern" name="forward_pattern" value="_R1">
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6 reversepatternDiv" style="display:none;">
-                                            <p class="col-sm-4 control-label">Reverse Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reverse reads eg. _R2"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
-                                            <div class="col-sm-8">
-                                                <input type="text" class="form-control" id="reverse_pattern" name="reverse_pattern" value="_R2">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <div class="col-sm-12">
-                                        <div class="col-sm-6 singlepatternDiv" style="display:none;">
-                                            <div class="col-sm-12">
-                                                <select id="singleList" type="select-multiple" multiple class="form-control" size="9"></select>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6 forwardpatternDiv" style="display:none;">
-                                            <div id="forwardListDiv" class="col-sm-12">
-                                                <select id="forwardList" type="select-multiple" multiple class="form-control" size="9"></select>
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6 reversepatternDiv" style="display:none;">
-                                            <div id="reverseListDiv" class="col-sm-12">
-                                                <select id="reverseList" type="select-multiple" multiple class="form-control" size="9"></select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group patternButs" style="display:none;">
-                                    <div class="col-sm-12">
-                                        <div class="col-sm-8"></div>
-                                        <div class="col-sm-4">
-                                            <span class="pull-right" style="padding-top:7px; padding-left:5px;"><a data-toggle="tooltip" data-placement="bottom" title="In order to merge multiple files, first select the files and then click 'Add Selected Files' button. If you don't need to merge files, you can simply click 'Add All Files' button."><i class='glyphicon glyphicon-info-sign'></i></a></span>
-                                            <button id="add_selection_file" type="button" class="btn btn-primary pull-right" onclick="addSelection()">Add Selected Files</button>
-                                            <button id="smart_add_file" type="button" class="btn btn-primary pull-right" style="margin-right:3px;" onclick="smartSelection()">Add All Files</button>
-                                            <button id="clear_selection" type="button" class="btn btn-warning pull-right" style="margin-right:3px;" onclick="clearSelection()">Reset</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="form-group patternTable" style="display:none;">
-                                    <div class="col-sm-12" style="padding:45px;">
-                                        <table id="selectedSamples" class="table table-striped compact table-bordered display" cellspacing="0" width="100%">
-                                            <thead>
-                                                <tr>
-                                                    <th scope="col">Name</th>
-                                                    <th scope="col">Files Used</th>
-                                                    <th scope="col" style="width:20px;">Remove</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:45px;">5. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered files later"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
-                                        <select id="collection_id" class="fbtn btn-default form-control" name="collection_id">
-                                            <option value="" disabled selected>Choose or Type New Collection Name</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:45px;">6. Archive Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
-                                        <input type="text" class="form-control" id="archive_dir" name="archive_dir">
-                                    </div>
-                                </div>
-                            </form>
                         </div>
                         <div id="publicFileTab" class="tab-pane ">
                             <div class="row">
@@ -856,72 +736,7 @@
 
 
 
-
-<div id="sampleModal" class="modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog fullscreen" role="document">
-        <div class="modal-content fullscreen">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="sampleModalTitle">Modal title</h4>
-            </div>
-            <div class="modal-body">
-                <div role="tabpanel">
-                    <div class="pull-right">
-                        <button type="button" class="btn btn-success btn-sm" title="Add Project" id="addSample" data-toggle="modal" data-target="#addFileModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-plus"></i> Add File</button>
-                    </div>
-                    <!-- Nav tabs -->
-                    <ul class="nav nav-tabs" role="tablist">
-                        <li id="samplesTab" class="active"><a class="nav-item" data-toggle="tab" href="#samplesCont">Files</a></li>
-                        <!--                        <li id="projectTab"><a class="nav-item" data-toggle="tab" href="#projectCont">Project Samples</a></li>-->
-                        </li>
-                    </ul>
-                    <!-- Tab panes -->
-                    <div class="tab-content">
-                        <div role="tabpanel" class="tab-pane active" id="samplesCont">
-                            <div class="panel-body">
-                                <table id="sampleTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:40px;">Check</th>
-                                            <th>Name</th>
-                                            <th>Collection</th>
-                                            <th>Added on</th>
-                                        </tr>
-                                    </thead>
-                                </table>
-                            </div>
-                        </div>
-                        <div id="publicFileTab" class="tab-pane ">
-                            <div class="row">
-                                <div class="col-sm-12" style="padding-top:6px;">
-                                    <p id="publicFileTabWarn"></p>
-                                    <table id="publicFileTable" class="table table-striped table-bordered display" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Check</th>
-                                                <th scope="col">File/Values</th>
-                                                <th scope="col">Modified On</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="selectFile" data-clickedrow="">Select Files</button>
-            </div>
-        </div>
-    </div>
-</div>
-<!--SampleModal ends-->
-
 <!--Add Sample Modal-->
-<!--
 <div id="addFileModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" style="width:1200px;" role="document">
         <div class="modal-content">
@@ -1046,7 +861,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label text-left" style="padding-left:45px;">6. Archive Directory (Optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        <label class="col-sm-3 control-label text-left" style="padding-left:45px;">6. Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                         <div class="col-sm-7">
                             <input type="text" class="form-control" id="archive_dir" name="archive_dir">
                         </div>
@@ -1060,5 +875,58 @@
         </div>
     </div>
 </div>
--->
 <!--addFileModal ends-->
+
+<!--Info Modal Starts-->
+<div id="infoModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Information</h4>
+            </div>
+            <div class="modal-body">
+                <span id="infoModalText">Text</span>
+                </br>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Info Modal ENDs-->
+
+<!--New Collection Modal Starts-->
+<div id="newCollectionModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">New Collection</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <div>Selected files are not match with the existing collections. Please enter a new collection name in the field below.</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <label for="mUserLab" class="col-sm-3 control-label">Collection Name</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="newCollectionName">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveNewCollect">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--New Collection Modal ENDs-->
