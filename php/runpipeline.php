@@ -749,7 +749,7 @@
                     <div class="form-group">
                         <label class="col-sm-3 control-label text-left" style="padding-left:45px;">1. File Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                         <div class="col-sm-7">
-                            <input type="text" class="form-control" id="file_dir" name="file_dir" value="/share/data/umw_biocore/genome_data/mousetest/mm10/gz">
+                            <input type="text" class="form-control" id="file_dir" name="file_dir" value="">
                         </div>
                         <div class="col-sm-2">
                             <button id="viewDirBut" type="button" class="btn btn-default">View Directory <i class='fa fa-search'></i></button>
