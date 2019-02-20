@@ -4797,16 +4797,22 @@ $(document).ready(function () {
     if (projectpipelineOwn === "1") {
         runStatus = getRunStatus(project_pipeline_id);
     }
+    var profileTypeId = pipeData[0].profile //local-32
+    console.log(profileTypeId)
+    proTypeWindow = "";
+    proIdWindow = "";
+    if (profileTypeId) {
+        if (profileTypeId.match(/-/)) {
+            var patt = /(.*)-(.*)/;
+            proTypeWindow = profileTypeId.replace(patt, '$1');
+            proIdWindow = profileTypeId.replace(patt, '$2');
+        }
+    } 
+
     if (runStatus !== "") {
         //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
-        var profileTypeId = pipeData[0].profile //local-32
-        var patt = /(.*)-(.*)/;
-        var profileType = profileTypeId.replace(patt, '$1');
-        var profileId = profileTypeId.replace(patt, '$2');
-        proTypeWindow = profileType;
-        proIdWindow = profileId;
-        readNextLog(profileType, profileId, "reload");
-        readPubWeb(profileType, profileId, "reload");
+        readNextLog(proTypeWindow, proIdWindow, "reload");
+        readPubWeb(proTypeWindow, proIdWindow, "reload");
     } else {
         $('#statusProPipe').css('display', 'inline');
     }
@@ -4934,6 +4940,16 @@ $(document).ready(function () {
         //            $('body').css('overflow', 'hidden auto');
         //            $('body').css('position', 'static');
         //        })
+
+
+        $('#inputFilemodal').on('click', '#addSample', function (event) {
+            event.preventDefault();
+            if (proTypeWindow && proIdWindow) {
+                $("#addFileModal").modal("show");
+            } else {
+                showInfoModal("#infoModal", "#infoModalText", "Please first select a run environment in the run page so that you can search files in the specified host.")
+            }
+        });
 
         $('#addFileModal').on('show.bs.modal', function () {
             $('#addFileModal').find('form').trigger('reset');
