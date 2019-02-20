@@ -2085,7 +2085,7 @@ workflow.onComplete {
             if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
                 return json_encode($log);
             } else {
-                return json_encode("Cannot run ls -1 command");
+                return json_encode("Connection failed! Please check your connection profile or internet connection");
             }
     }
     public function readFileSubDir($path) {

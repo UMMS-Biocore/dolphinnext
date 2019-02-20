@@ -549,7 +549,7 @@
                                 </br>
                                 <div class="panel-body">
                                     <div class="pull-right">
-                                        <button type="button" class="btn btn-success btn-sm" title="Add Project" id="addSample" data-toggle="modal" data-target="#addFileModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-plus"></i> Add File</button>
+                                        <button type="button" class="btn btn-success btn-sm" title="Add Project" id="addSample" data-toggle="modal" data-backdrop="static" data-keyboard="false"><i class="fa fa-plus"></i> Add File</button>
                                     </div>
                                     <table id="sampleTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                         <thead>
@@ -768,8 +768,8 @@
                                 <option value="fastq" selected>Fastq</option>
                                 <option value="bam">Bam</option>
                                 <option value="bai">Bai</option>
+                                <option value="bed">Bed</option>
                                 <option value="txt">Txt</option>
-                                <option value="other">Other</option>
                             </select>
                         </div>
                     </div>
