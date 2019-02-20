@@ -1,6 +1,8 @@
 # dolphinNext Documentation
 (For readthedocs documentation https://dolphinnext.readthedocs.io)
 
+[![Build Status](https://api.travis-ci.com/UMMS-Biocore/dolphinnext.svg?branch=master)](https://api.travis-ci.com/UMMS-Biocore/dolphinnext)
+
 ## Release 1.
 
 ## Alper Kucukural, Onur Yukselen
