@@ -269,17 +269,24 @@
 <li><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</li>
 <li><strong>Amazon Keys:</strong> AWS credentials that are saved in Amazon keys tab and will allow to start/stop Amazon EC2 instances.</li>
 <li><strong>Instance Type:</strong> <a class="reference external" href="https://aws.amazon.com/ec2/instance-types">Amazon EC2 instance types</a> that comprise varying combinations of CPU, memory, storage, and networking capacity (eg. <code class="docutils literal notranslate"><span class="pre">m3.xlarge</span></code>).</li>
-<li><strong>Image Id:</strong> Virtual machine ID (eg. <code class="docutils literal notranslate"><span class="pre">ami-35626d4f</span></code>). If you want to create your own image, it should support <a class="reference external" href="http://singularity.lbl.gov">singularity</a>, <a class="reference external" href="https://www.docker.com/">docker engine</a> (version 1.11 or higher), Apache Ignite, Cloud-init package, and Java runtime (version 8).</li>
+<li><strong>Image Id:</strong> Virtual machine ID (eg. <code class="docutils literal notranslate"><span class="pre">ami-032a33ebe57465518</span></code>). If you want to create your own image, it should support <a class="reference external" href="http://singularity.lbl.gov">singularity</a>, <a class="reference external" href="https://www.docker.com/">docker engine</a> (version 1.11 or higher), Apache Ignite, Cloud-init package, and Java runtime (version 8).</li>
 <li><dl class="first docutils">
 <dt><strong>Subnet Id/Shared Storage Id/Shared Storage Mount:</strong> The filesystem needs to be created at <a class="reference external" href="https://console.aws.amazon.com/efs/">https://console.aws.amazon.com/efs/</a> and these three information will be obtained upon creation of shared file system. Make sure following criterias are satisfied:</dt>
 <dd><ol class="first last arabic">
 <li>Image has the directory to mount this storage.</li>
 <li>The output directory needs to be under this mount location.</li>
 <li>The storage system needs to be created in selected region and necessary rights need to be given in the console.</li>
+<li>Add EC2FullAccess and S3FullAccess permissions.</li>
 </ol>
 </dd>
 </dl>
 </li>
+</ul>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Both EFS and images should be located in same location (eg. N. Virginia, Ohio etc.)</p>
+</div>
+<ul class="simple">
 <li><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></li>
 <li><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg. <code class="docutils literal notranslate"><span class="pre">/project/umw_biocore/bin</span></code></li>
 <li><strong>Executor of Nextflow/Executor of Nextflow Jobs:</strong> Amazon instances are automatically configured to use the Ignite executors. Therefore, while defining amazon profile, you should select <code class="docutils literal notranslate"><span class="pre">local</span></code> for <strong>Executor of Nextflow</strong> and <code class="docutils literal notranslate"><span class="pre">ignite</span></code> for <strong>Executor of Nextflow Jobs.</strong></li>

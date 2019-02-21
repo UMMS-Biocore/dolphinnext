@@ -789,7 +789,7 @@
                     <div class="form-group">
                         <div class="col-sm-12">
                             <div class="col-sm-6 singlepatternDiv" style="display:none;">
-                                <p class="col-sm-4 control-label">Filename Extension <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter end of the file name to filter files (eg. .fastq). This pattern will be removed from the file name to create 'File Names' in the table below."><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <p class="col-sm-4 control-label">Filename Extension <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter end of the file name to filter files (eg. fastq or fq.gz). This pattern will be removed from the file names to fill 'Names' field in the table below."><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
                                 <div class="col-sm-8">
                                     <input type="text" class="form-control" id="single_pattern" name="single_pattern" value="">
                                 </div>
