@@ -6189,10 +6189,11 @@ $(document).ready(function () {
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
                     $(href).append(contentDiv);
                     bindEveHandlerIcon(fileid)
-                    $("#deb-" + fileid).load(function () {
-                        $("#deb-" + fileid).loading('stop');
-                    });
-                    $("#deb-" + fileid).loading('start');
+                    
+//                    $("#deb-" + fileid).load(function () {
+//                        $("#deb-" + fileid).loading('stop');
+//                    });
+//                    $("#deb-" + fileid).loading('start');
                 }
             }
         })

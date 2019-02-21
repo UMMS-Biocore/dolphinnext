@@ -725,11 +725,7 @@ workflow.onComplete {
 
     function getRenameCmd($dolphin_path_real,$attempt,$initialRunScript){
         $renameLog = "";
-        if (!empty($initialRunScript)){
-            $pathArr = array($dolphin_path_real, "$dolphin_path_real/initialrun");
-        } else {
-            $pathArr = array($dolphin_path_real);
-        }
+        $pathArr = array($dolphin_path_real, "$dolphin_path_real/initialrun");
         foreach ($pathArr as $path):
             if ($path == $dolphin_path_real){
                 $renameArr= array("log.txt", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log");
@@ -1267,9 +1263,9 @@ workflow.onComplete {
           $userRoleArr = json_decode($this->getUserRole($ownerID));
           $userRole = $userRoleArr[0]->{'role'};
           if ($userRole == "admin"){
-              $where = " ";
+              $where = " WHERE p.deleted = 0";
           } else {
-              $where = " WHERE (p.owner_id='$ownerID' OR (p.perms = 63 AND p.pin = 'true') OR (ug.u_id ='$ownerID' and p.perms = 15)) ";
+              $where = " WHERE p.deleted = 0 AND (p.owner_id='$ownerID' OR (p.perms = 63 AND p.pin = 'true') OR (ug.u_id ='$ownerID' and p.perms = 15)) ";
           }
           $sql= "SELECT DISTINCT pip.id, pip.name, pip.perms, pip.group_id, pip.pin
                FROM biocorepipe_save pip
@@ -1288,7 +1284,7 @@ workflow.onComplete {
                INNER JOIN (
                 SELECT p.pipeline_gid, MAX(p.rev_id) rev_id
                 FROM biocorepipe_save p
-                WHERE p.perms = 63
+                WHERE p.perms = 63 AND p.deleted=0
                 GROUP BY p.pipeline_gid
                 ) b ON pip.rev_id = b.rev_id AND pip.pipeline_gid=b.pipeline_gid AND pip.pin = 'true' AND pip.deleted = 0";
         }
@@ -1307,15 +1303,16 @@ workflow.onComplete {
                 INNER JOIN (
                 SELECT pr.process_gid, MAX(pr.rev_id) rev_id
                 FROM process pr
+                WHERE pr.deleted=0
                 GROUP BY pr.process_gid
-                ) b ON p.rev_id = b.rev_id AND p.process_gid=b.process_gid  ";
+                ) b ON p.rev_id = b.rev_id AND p.process_gid=b.process_gid AND p.deleted=0 ";
             return self::queryTable($sql);
             }
-            $where_pg = "(pg.owner_id='$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15))";
-            $where_pr = "(pr.owner_id='$ownerID' OR pr.perms = 63 OR (ug.u_id ='$ownerID' and pr.perms = 15))";
+            $where_pg = "p.deleted=0 AND (pg.owner_id='$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15))";
+            $where_pr = "pr.deleted=0 AND (pr.owner_id='$ownerID' OR pr.perms = 63 OR (ug.u_id ='$ownerID' and pr.perms = 15))";
             } else {
-                $where_pg = "pg.perms = 63";
-                $where_pr = "pr.perms = 63";
+                $where_pg = "p.deleted=0 AND pg.perms = 63";
+                $where_pr = "pr.deleted=0 AND pr.perms = 63";
             }
        $sql="SELECT DISTINCT p.id, p.name, p.perms, p.group_id, p.owner_id, p.publish
              FROM process p
@@ -1344,15 +1341,16 @@ workflow.onComplete {
                 INNER JOIN (
                 SELECT pr.pipeline_gid, MAX(pr.rev_id) rev_id
                 FROM biocorepipe_save pr
+                WHERE pr.deleted=0
                 GROUP BY pr.pipeline_gid
                 ) b ON p.rev_id = b.rev_id AND p.pipeline_gid=b.pipeline_gid AND p.deleted = 0 ";
             return self::queryTable($sql);
             }
-            $where_pg = "(pg.owner_id='$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15))";
-            $where_pr = "(pr.owner_id='$ownerID' OR pr.perms = 63 OR (ug.u_id ='$ownerID' and pr.perms = 15))";
+            $where_pg = "p.deleted=0 AND (pg.owner_id='$ownerID' OR pg.perms = 63 OR (ug.u_id ='$ownerID' and pg.perms = 15))";
+            $where_pr = "pr.deleted=0 AND (pr.owner_id='$ownerID' OR pr.perms = 63 OR (ug.u_id ='$ownerID' and pr.perms = 15))";
             } else {
-                $where_pg = "pg.perms = 63";
-                $where_pr = "pr.perms = 63";
+                $where_pg = "p.deleted=0 AND pg.perms = 63";
+                $where_pr = "pr.deleted=0 AND pr.perms = 63";
             }
        $sql="SELECT DISTINCT p.id, p.name, p.perms, p.group_id, p.pin
              FROM biocorepipe_save p
