@@ -119,7 +119,7 @@ else if ($p=="getReportData")
                             foreach ($pubWebAr as $eachPubWeb):
                                 $out["pubWeb"] = $eachPubWeb;
                                 $out["id"] = $out["id"]."_".$eachPubWeb;
-                                if (strtolower($name) == "summary"){
+                                if (strtolower($name) == "summary"  || strtolower($name) == "multiqc"){
                                     array_unshift($data , $out); //push to the top of the array
                                 } else {
                                     $data[] = $out; //push $out object into array

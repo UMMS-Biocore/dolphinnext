@@ -369,7 +369,7 @@
                         <input type="checkbox" id="withTrace" checked> Trace</input>
                     </div>
                     <div class="form-group col-md-1">
-                        <input type="checkbox" id="withDag" checked> DAG</input>
+                        <input type="checkbox" id="withDag"> DAG</input>
                     </div>
                     <div class="form-group col-md-2">
                         <input type="checkbox" id="withTimeline" checked> Timeline</input>

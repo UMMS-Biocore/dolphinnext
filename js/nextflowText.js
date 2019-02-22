@@ -741,8 +741,8 @@ function getWhenCond(script) {
     return whenCond
 }
 
-
-//if (g119_14_outputFileTSV_g_118.isBound()){  g119_14_outputFileTSV_g_118 = file('OPTIONAL_FILE')}
+//g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum'))
+//outdated:  if (g119_14_outputFileTSV_g_118.isBound()){  g119_14_outputFileTSV_g_118 = file('OPTIONAL_FILE')}
 function getOptionalInText(optionalInAr, optionalInNameAr){
     var optText = "";
     for (var i = 0; i < optionalInAr.length; i++) {
@@ -755,7 +755,8 @@ function getOptionalInText(optionalInAr, optionalInNameAr){
         } else {
             inputNameOptional = $.trim(inputName);
         }
-        optText += 'if ('+optionalInAr[i]+'.isBound()){ '+optionalInAr[i] + "= file('"+inputNameOptional+"')} \n";
+        console.log(inputNameOptional)
+        optText += optionalInAr[i] + "= "+optionalInAr[i]+".ifEmpty(file('"+inputNameOptional+"')) \n";
     }
     return optText
 }
@@ -783,7 +784,11 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
             }
         }
         for (var n = 0; n < dummyOutList.length; n++) {
-            whenText += dummyOutList[n] + " = Channel.empty()\n";
+            var tmp = dummyOutList[n];
+            if (dummyOutList[n].length){
+                tmp = dummyOutList[n].join(";").replace(/,/g, ';')
+            } 
+            whenText += tmp + " = Channel.empty()\n";
         }
         whenText += "} else {";
     }
