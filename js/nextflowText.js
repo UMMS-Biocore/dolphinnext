@@ -743,20 +743,20 @@ function getWhenCond(script) {
 
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum'))
 //outdated:  if (g119_14_outputFileTSV_g_118.isBound()){  g119_14_outputFileTSV_g_118 = file('OPTIONAL_FILE')}
-function getOptionalInText(optionalInAr, optionalInNameAr){
+function getOptionalInText(optionalInAr, optionalInNameAr) {
     var optText = "";
     for (var i = 0; i < optionalInAr.length; i++) {
         var inputName = optionalInNameAr[i];
         var inputNameOptional = "";
-        if (inputName.match(/file\((.*)\)/)){
+        if (inputName.match(/file\((.*)\)/)) {
             inputNameOptional = $.trim(inputName.match(/file\((.*)\)/i)[1])
-        } else if (inputName.match(/val\((.*)\)/)){
+        } else if (inputName.match(/val\((.*)\)/)) {
             inputNameOptional = $.trim(inputName.match(/val\((.*)\)/i)[1])
         } else {
             inputNameOptional = $.trim(inputName);
         }
         console.log(inputNameOptional)
-        optText += optionalInAr[i] + "= "+optionalInAr[i]+".ifEmpty(file('"+inputNameOptional+"')) \n";
+        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(file('" + inputNameOptional + "')) \n";
     }
     return optText
 }
@@ -785,14 +785,18 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
         }
         for (var n = 0; n < dummyOutList.length; n++) {
             var tmp = dummyOutList[n];
-            if (dummyOutList[n].length){
-                tmp = dummyOutList[n].join(";").replace(/,/g, ';')
-            } 
+            if (tmp.length) {
+                tmp = tmp.join(",").split(",")
+                for (var k = 0; k < tmp.length; k++) {
+                    whenText += $.trim(tmp[k]) + " = Channel.empty()\n";
+                }
+        } else {
             whenText += tmp + " = Channel.empty()\n";
         }
-        whenText += "} else {";
     }
-    return whenText
+    whenText += "} else {";
+}
+return whenText
 }
 
 function addChannelName(whenCond, whenLib, file_type, channelName, param_name, qual) {
@@ -990,7 +994,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         bodyOutput = bodyOutput + " " + qual + " " + outputName + outputOptionalText + " into " + channelNameAll + outputOperatorText + "\n"
 
     }
-    if (optionalInAr.length>0) {
+    if (optionalInAr.length > 0) {
         var optionalInText = getOptionalInText(optionalInAr, optionalInNameAr)
         script_header = optionalInText + "\n" + script_header
     }
