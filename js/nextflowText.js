@@ -742,7 +742,6 @@ function getWhenCond(script) {
 }
 
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum'))
-//outdated:  if (g119_14_outputFileTSV_g_118.isBound()){  g119_14_outputFileTSV_g_118 = file('OPTIONAL_FILE')}
 function getOptionalInText(optionalInAr, optionalInNameAr) {
     var optText = "";
     for (var i = 0; i < optionalInAr.length; i++) {

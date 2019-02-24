@@ -24,10 +24,6 @@ Projects are platforms to categorize all of your runs and files. To run a pipeli
         .. image:: dolphinnext_images/project_runs.png
 	       :align: center
 
-        * **Project Files:** Table for adding your project files. It allows you to reuse them in the multiple runs.
-
-        .. image:: dolphinnext_images/project_files.png
-	       :align: center
 
     * B. Alternatively you may click the "Pipelines" button in the top left of the screen. Then select the pipeline you want run from left sidebar menu. At the right top of the page, you will notice "Run" button.
 

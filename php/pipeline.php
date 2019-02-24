@@ -987,6 +987,7 @@
                                 <option value="text">Text</option>
                                 <option value="html">HTML</option>
                                 <option value="table" plugin="dataTables.js">DataTables</option>
+                                <option value="table-percent" plugin="dataTables.js">DataTables Percentage</option>
                                 <option value="highcharts" plugin="highcharts.js">Highcharts</option>
                                 <option value="rmarkdown">R Markdown</option>
                                 <option value="debrowser">DEBrowser</option>

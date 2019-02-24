@@ -637,6 +637,28 @@ $inputText.each(function () {
     resizeForText.call($this, $this.val())
 });
 
+
+
+function tsvPercent(tsv) {
+    var tsvPercent = "";
+    var tsv = $.trim(tsv);
+    var lines = tsv.split("\n");
+    tsvPercent += lines[0] + "\n";
+    var headers = lines[0].split("\t");
+    for (var i = 1; i < lines.length; i++) {
+        var currentline = lines[i].split("\t");
+        var divider = currentline[1];
+        tsvPercent += currentline[0] + "\t" + currentline[1];
+        for (var j = 2; j < currentline.length; j++) {
+            tsvPercent += "\t" + currentline[j] + " (" + parseFloat(Math.round(currentline[j] / divider * 100 * 100) / 100).toFixed(2) + "%)";
+            if (currentline.length - 1 == j) {
+                tsvPercent += "\n"
+            }
+        }
+    }
+
+    return tsvPercent
+}
 //var tsv is the TSV file with headers
 //columns: [{title: "Id", data: "Id"} 1: {title: "Name", data: "Name"}]
 //data: [{Id: "123", Name: "John Doe Fresno"},{Id: "124", Name: "Alice Alicia"}]
@@ -656,6 +678,7 @@ function tsvConvert(tsv, format) {
     if (format == "json") {
         return data;
     }
+    console.log(data)
     if (format == "json2") {
         var result = { columns: [], data: data };
         for (var j = 0; j < headers.length; j++) {

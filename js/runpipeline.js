@@ -6120,7 +6120,7 @@ $(document).ready(function () {
                 var getHeaderIconDiv = function (fileid, visType) {
                     var blankUrlIcon = "";
                     var downloadIcon = "";
-                    if (visType !== "table" && visType !== "debrowser") {
+                    if (visType !== "table-percent" && visType !== "table" && visType !== "debrowser") {
                         blankUrlIcon = `<li role="presentation"><a fileid="` + fileid + `" id="blankUrl-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Open in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>`;
                     }
                     if (visType !== "debrowser") {
@@ -6139,10 +6139,14 @@ $(document).ready(function () {
                     var wrapDiv = '<div id="' + fileid + '-HeaderIconDiv" style="float:right; height:35px; width:100%;">' + content + '</div>';
                     return wrapDiv;
                 }
-                if (visType == "table") {
+                if (visType == "table" || visType == "table-percent") {
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; width:calc(100% - 35px);" class="table-responsive"><table style="border:none; table-layout:fixed; width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"><thead style="white-space: nowrap; "></thead></table></div>';
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
+                    if (visType == "table-percent"){
+                        //by default based on second column data, calculate percentages for each row
+                        data = tsvPercent(data)
+                    }
                     var dataTableObj = tsvConvert(data, "json2")
                     //speed up the table loading
                     dataTableObj.deferRender = true
@@ -7146,7 +7150,7 @@ $(document).ready(function () {
                                 var pubWebPath = $("#basepathinfo").attr("pubweb");
                                 var visType = oData.pubWeb
                                 var icon = "fa-file-text-o";
-                                if (visType == "table") {
+                                if (visType == "table" || visType === "table-percent") {
                                     icon = "fa-table";
                                 }
                                 var fileList = oData.fileList;
@@ -7236,7 +7240,7 @@ $(document).ready(function () {
                                 var visType = oData.pubWeb
                                 var icon = "fa-file-text-o";
                                 var text = visType;
-                                if (visType === "table") {
+                                if (visType === "table" || visType === "table-percent") {
                                     icon = "fa fa-table";
                                     text = "Table";
                                 } else if (visType === "html") {
