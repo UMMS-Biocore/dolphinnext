@@ -2682,15 +2682,16 @@ $(document).ready(function () {
     function toggleCheckBox(checkboxId, inputId) {
         $(function () {
             $(document).on('change', checkboxId, function (event) {
+                console.log(checkboxId)
                 var checkdropDownOpt = $(checkboxId).is(":checked").toString();
                 if (checkdropDownOpt === "true") {
-                    if ($(inputId).multiselect){
+                    if ($(inputId).data().multiselect){
                         $(inputId).multiselect("enable")
                     } else {
                         $(inputId).removeAttr('disabled')
                     }
                 } else if (checkdropDownOpt === "false") {
-                    if ($(inputId).multiselect){
+                    if ($(inputId).data().multiselect){
                         $(inputId).multiselect("disable")
                     } else {
                         $(inputId).attr('disabled', 'disabled')
@@ -2702,10 +2703,10 @@ $(document).ready(function () {
     // "change name" modal for input parameters
     function fillRenameModal(renameTextDefVal, checkID, inputID) {
         if (renameTextDefVal) {
-            console.log(renameTextDefVal)
+            
             console.log(renameTextDefVal !== "")
             if (renameTextDefVal !== "") {
-                if ($(inputID).multiselect) {
+                if ($(inputID).data().multiselect) {
                     $(inputID).multiselect('enable')
                     var optAr = []
                     optAr = renameTextDefVal.split(",")
@@ -2716,7 +2717,7 @@ $(document).ready(function () {
                 }
                 $(checkID).attr('checked', true);
             } else {
-                if ($(inputID).multiselect) {
+                if ($(inputID).data().multiselect) {
                     $(inputID).multiselect('disable')
                 } else {
                     $(inputID).attr('disabled', 'disabled')
@@ -2725,7 +2726,7 @@ $(document).ready(function () {
             }
         } else {
             $(checkID).removeAttr('checked');
-            if ($(inputID).multiselect) {
+            if ($(inputID).data().multiselect) {
                 $(inputID).multiselect('disable')
             } else {
                 $(inputID).attr('disabled', 'disabled')
