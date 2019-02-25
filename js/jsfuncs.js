@@ -637,6 +637,9 @@ $inputText.each(function () {
     resizeForText.call($this, $this.val())
 });
 
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 
 function tsvPercent(tsv) {
@@ -648,9 +651,9 @@ function tsvPercent(tsv) {
     for (var i = 1; i < lines.length; i++) {
         var currentline = lines[i].split("\t");
         var divider = currentline[1];
-        tsvPercent += currentline[0] + "\t" + currentline[1];
+        tsvPercent += currentline[0] + "\t" + numberWithCommas(currentline[1]);
         for (var j = 2; j < currentline.length; j++) {
-            tsvPercent += "\t" + currentline[j] + " (" + parseFloat(Math.round(currentline[j] / divider * 100 * 100) / 100).toFixed(2) + "%)";
+            tsvPercent += "\t" + numberWithCommas(currentline[j]) + " (" + parseFloat(Math.round(currentline[j] / divider * 100 * 100) / 100).toFixed(2) + "%)";
             if (currentline.length - 1 == j) {
                 tsvPercent += "\n"
             }
