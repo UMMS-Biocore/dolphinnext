@@ -1194,10 +1194,8 @@ function autofillEmptyInputs(autoFillJSON) {
                         if (st.match(/params\.(.*)/)) {
                             var varName = st.match(/params\.(.*)/)[1]; //variable Name
                             var checkVarName = $("#inputsTab").find("td[given_name='" + varName + "']")[0];
-                            console.log(checkVarName)
                             if (checkVarName) {
                                 var varNameButAr = $(checkVarName).children();
-                                console.log(varNameButAr)
                                 if (varNameButAr && varNameButAr[0]) {
                                     var keepExist = true;
                                     autoFillButton(varNameButAr[0], defName, keepExist);
@@ -3017,9 +3015,10 @@ function loadPipelineDetails(pipeline_id) {
             openPipeline(pipeline_id);
             // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
             setTimeout(function () {
-                console.time('Timer');
-                autofillEmptyInputs(autoFillJSON)
-                console.timeEnd('Timer');
+                //position where all inputs filled
+                if (autoFillJSON !== undefined && autoFillJSON !== null){
+                    autofillEmptyInputs(autoFillJSON)
+                }
                 cleanDepProPipeInputs();
             }, 100);
 
