@@ -294,67 +294,91 @@ session_write_close();
             }
     
         
-/*        slider*/
+            /* slider*/
         
-        .switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
-}
+            .switch {
+              position: relative;
+              display: inline-block;
+              width: 60px;
+              height: 34px;
+            }
 
-.switch input { 
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
+            .switch input { 
+              opacity: 0;
+              width: 0;
+              height: 0;
+            }
+            
+            .slider {
+              position: absolute;
+              cursor: pointer;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background-color: #ccc;
+              -webkit-transition: .4s;
+              transition: .4s;
+            }
+            
+            .slider:before {
+              position: absolute;
+              content: "";
+              height: 26px;
+              width: 26px;
+              left: 4px;
+              bottom: 4px;
+              background-color: white;
+              -webkit-transition: .4s;
+              transition: .4s;
+            }
+            
+            input:checked + .slider {
+              background-color: #2196F3;
+            }
+            
+            input:focus + .slider {
+              box-shadow: 0 0 1px #2196F3;
+            }
+            
+            input:checked + .slider:before {
+              -webkit-transform: translateX(26px);
+              -ms-transform: translateX(26px);
+              transform: translateX(26px);
+            }
+            
+            /* Rounded sliders */
+            .slider.round {
+              border-radius: 34px;
+            }
+            
+            .slider.round:before {
+              border-radius: 50%;
+            }
+                    
+            /*   Loader div      */
+        
+            .loader-spin-parent{
+              position:relative;
+            }
+            
+            .loader-spin-icon{
+              display:block; 
+                margin:auto;
+            }
+            .loader-spin-iconDiv{
+              display:block; 
+                z-index: 1000; 
+                position: absolute; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: 100%; 
+                background: rgba( 255, 255, 255, .8 );
+            }
+        
+        
 
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
-
-input:checked + .slider {
-  background-color: #2196F3;
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
-}
-
-input:checked + .slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
-  transform: translateX(26px);
-}
-
-/* Rounded sliders */
-.slider.round {
-  border-radius: 34px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
-}
         
         
             
@@ -364,7 +388,7 @@ input:checked + .slider:before {
 
 <body class="hold-transition skin-blue sidebar-mini">
     <div class="wrapper">
-        <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>"  ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
+        <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
         <header class="main-header">
             <!-- Logo -->
             <a href="index.php" class="logo">
@@ -372,7 +396,7 @@ input:checked + .slider:before {
                 <span class="logo-mini"><b>U</b>Bio</span>
                 <!-- logo for regular state and mobile devices -->
                 <span class="logo-lg" style="font-size:17px;"><b>
-                        <?php echo COMPANY_NAME?></b> DolphinNext<b><sub> BETA</sub></b></span>
+                        <?php echo COMPANY_NAME?></b> DolphinNext<b></b></span>
             </a>
 
             <!-- Header Navbar: style can be found in header.less -->
@@ -403,7 +427,7 @@ input:checked + .slider:before {
                         }
                         ?>
                         <li><a href="http://dolphinnext.readthedocs.io/" target="_blank"><i class="fa fa-mortar-board"></i></a></li>
-                        <li> <a><b style="color:#7c1842;"> BETA VERSION </b> </a></li>
+                        <li> <a><b style="color:#7c1842;"> ALPHA VERSION </b> </a></li>
                     </ul>
                 </div>
             </nav>

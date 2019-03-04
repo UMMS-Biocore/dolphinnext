@@ -177,29 +177,7 @@
 <div class="section" id="pipipes">
 <h2>piPipes<a class="headerlink" href="#pipipes" title="Permalink to this headline">¶</a></h2>
 <p>piPipes is a set of pipelines developed in the Zamore Lab and ZLab to analyze piRNA/transposon from different Next Generation Sequencing libraries such as small RNA-seq, RNA-seq, Genome-seq, ChIP-seq, CAGE/Degradome-Seq. Please see their Wiki pages (<a class="reference external" href="https://github.com/bowhan/piPipes/wiki">https://github.com/bowhan/piPipes/wiki</a>) for the original content.</p>
-<p>These pipelines are loaded to DolphinNext to facilitate their usage. An singularity image is provided (shub://onuryukselen/piPipes_singularity) where all the neccessary programs are installed to execute the piPipes. Additionally, all of the pipelines requires parameterFile in which library specific parameters are defined. You can either run the default parameters by entering <cite>default</cite> as input for the parameterFilePath or you can create a custom parameter file and enter the full path of it. To download and edit parameter file you can use <a class="reference external" href="https://raw.githubusercontent.com/onuryukselen/piPipes_singularity/37e6778bbfae56844e7b722bd68876cb6a9cf862/files/parameterFile.txt">this link</a>.</p>
-<p>Content of the parameterFile.txt is showed at below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">rRNA_MM</span><span class="o">=</span><span class="mi">1</span>
-<span class="n">export</span> <span class="n">hairpin_MM</span><span class="o">=</span><span class="mi">1</span>
-<span class="n">export</span> <span class="n">genome_MM</span><span class="o">=</span><span class="mi">1</span>
-<span class="n">export</span> <span class="n">transposon_MM</span><span class="o">=</span><span class="mi">1</span>
-<span class="n">export</span> <span class="n">siRNA_bot</span><span class="o">=</span><span class="mi">20</span>
-<span class="n">export</span> <span class="n">siRNA_top</span><span class="o">=</span><span class="mi">22</span>
-<span class="n">export</span> <span class="n">piRNA_bot</span><span class="o">=</span><span class="mi">23</span>
-<span class="n">export</span> <span class="n">piRNA_top</span><span class="o">=</span><span class="mi">29</span>
-</pre></div>
-</div>
-<p>Explaination of the variables listed below:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rRNA_MM</span><span class="p">:</span> <span class="n">Number</span> <span class="n">of</span> <span class="n">mismatches</span> <span class="n">should</span> <span class="n">be</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">rRNA</span> <span class="n">mapping</span> <span class="n">by</span> <span class="n">bowtie</span>
-<span class="n">hairpin_MM</span><span class="p">:</span> <span class="n">Number</span> <span class="n">of</span> <span class="n">mismatches</span> <span class="n">should</span> <span class="n">be</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">microRNA</span> <span class="n">hairping</span> <span class="n">mapping</span> <span class="n">by</span> <span class="n">bowtie</span>
-<span class="n">genome_MM</span><span class="p">:</span> <span class="n">Number</span> <span class="n">of</span> <span class="n">mismatches</span> <span class="n">should</span> <span class="n">be</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">genome</span> <span class="n">mapping</span> <span class="n">by</span> <span class="n">bowtie</span>
-<span class="n">transposon_MM</span><span class="p">:</span> <span class="n">Number</span> <span class="n">of</span> <span class="n">mismatches</span> <span class="n">should</span> <span class="n">be</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">transposons</span><span class="o">/</span><span class="n">piRNAcluster</span> <span class="n">mapping</span> <span class="n">by</span> <span class="n">bowtie</span>
-<span class="n">siRNA_bot</span><span class="p">:</span> <span class="n">shortest</span> <span class="n">length</span> <span class="k">for</span> <span class="n">siRNA</span>
-<span class="n">siRNA_top</span><span class="p">:</span> <span class="n">longest</span> <span class="n">length</span> <span class="k">for</span> <span class="n">siRNA</span>
-<span class="n">piRNA_bot</span><span class="p">:</span> <span class="n">shortest</span> <span class="n">length</span> <span class="k">for</span> <span class="n">piRNA</span>
-<span class="n">piRNA_top</span><span class="p">:</span> <span class="n">longest</span> <span class="n">length</span> <span class="k">for</span> <span class="n">piRNA</span>
-</pre></div>
-</div>
+<p>These pipelines are loaded to DolphinNext to facilitate their usage. An singularity image is provided (shub://UMMS-Biocore/piPipes_singularity) where all the neccessary programs are installed to execute the piPipes.</p>
 </div>
 </div>
 

@@ -1116,7 +1116,7 @@ function getInputVariables(button) {
 }
 
 //fill file/Val buttons
-function autoFillButton(buttonText, value) {
+function autoFillButton(buttonText, value, keepExist) {
     var button = $(buttonText);
     var checkDropDown = button.attr("id") == "dropDown";
     var checkFileExist = button.css("display") == "none";
@@ -1138,9 +1138,9 @@ function autoFillButton(buttonText, value) {
     if (value && value != "") {
         if (checkDropDown == false && checkFileExist == false) {
             checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
-        } else if (checkDropDown == false && checkFileExist == true) {
+        } else if (checkDropDown == false && checkFileExist == true && keepExist == false) {
             checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, null);
-        } else if (checkDropDown == true) {
+        } else if (checkDropDown == true && keepExist == false) {
             // if proPipeInputID exist, then first remove proPipeInputID.
             if (proPipeInputID) {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
@@ -1148,8 +1148,10 @@ function autoFillButton(buttonText, value) {
             checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
         }
     } else { // if value is empty:"" then remove from project pipeline input table
-        var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
-        removeSelectFile(rowID, qualifier);
+        if (keepExist == false){
+            var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
+            removeSelectFile(rowID, qualifier);
+        }
     }
 }
 // fill pipeline or process executor settings
@@ -1174,6 +1176,42 @@ function fillExecSettings(id, defName, type, inputName) {
     }
 }
 
+//run after page loads to fill if missing inputs
+//reason-1: new input added into pipeline without changing rev
+//reason-2: run copied into new revision 
+function autofillEmptyInputs(autoFillJSON) {
+    $.each(autoFillJSON, function (el) {
+        var conds = autoFillJSON[el].condition;
+        var states = autoFillJSON[el].statement;
+        if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
+            //bind eventhandler to #chooseEnv
+            if (conds.$HOSTNAME) {
+                var statusCond = checkConds(conds);
+                if (statusCond === true) {
+                    $.each(states, function (st) {
+                        var defName = states[st]; // expected Value
+                        //if variable start with "params." then check #inputsTab
+                        if (st.match(/params\.(.*)/)) {
+                            var varName = st.match(/params\.(.*)/)[1]; //variable Name
+                            var checkVarName = $("#inputsTab").find("td[given_name='" + varName + "']")[0];
+                            console.log(checkVarName)
+                            if (checkVarName) {
+                                var varNameButAr = $(checkVarName).children();
+                                console.log(varNameButAr)
+                                if (varNameButAr && varNameButAr[0]) {
+                                    var keepExist = true;
+                                    autoFillButton(varNameButAr[0], defName, keepExist);
+                                }
+                            }
+                            autoCheck("fillstates")
+                        }
+                    });
+                }
+            }
+        }
+    })
+}
+
 //change propipeinputs in case all conds are true
 function fillStates(states) {
     $("#inputsTab").loading('start');
@@ -1186,7 +1224,8 @@ function fillStates(states) {
             if (checkVarName) {
                 var varNameButAr = $(checkVarName).children();
                 if (varNameButAr && varNameButAr[0]) {
-                    autoFillButton(varNameButAr[0], defName);
+                    var keepExist = false;
+                    autoFillButton(varNameButAr[0], defName, keepExist);
                 }
             }
             //if variable starts with "$" then run parameters for pipeline are defined. Fill run parameters. $SINGULARITY_IMAGE, $SINGULARITY_OPTIONS, $DOCKER_IMAGE, $DOCKER_OPTIONS, $MEMORY, $TIME, $QUEUE, $CPU, $EXEC_OPTIONS 
@@ -2968,14 +3007,21 @@ function loadPipelineDetails(pipeline_id) {
                 pipeGnum = 0;
                 script_pipe_header = decodeHtml(s[0].script_pipe_header);
                 //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
+                //insertInputRowParams will add inputs rows within insertProPipePanel
                 insertProPipePanel(script_pipe_header, "pipe", "Pipeline", window);
                 //generate json for autofill by using script of pipeline header
                 autoFillJSON = parseAutofill(script_pipe_header);
                 autoFillJSON = decodeGenericCond(autoFillJSON);
+
             }
             openPipeline(pipeline_id);
             // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
-            setTimeout(function () { cleanDepProPipeInputs(); }, 100);
+            setTimeout(function () {
+                console.time('Timer');
+                autofillEmptyInputs(autoFillJSON)
+                console.timeEnd('Timer');
+                cleanDepProPipeInputs();
+            }, 100);
 
             // activate collapse icon for process options
             refreshCollapseIconDiv()
@@ -3104,6 +3150,7 @@ function loadProjectPipeline(pipeData) {
     setTimeout(function () {
         if (autoFillJSON !== null && autoFillJSON !== undefined) {
             bindEveHandler(autoFillJSON);
+
         }
     }, 1000);
     //load amazon keys for possible s3 connection
@@ -4807,7 +4854,7 @@ $(document).ready(function () {
             proTypeWindow = profileTypeId.replace(patt, '$1');
             proIdWindow = profileTypeId.replace(patt, '$2');
         }
-    } 
+    }
 
     if (runStatus !== "") {
         //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
@@ -4953,16 +5000,21 @@ $(document).ready(function () {
 
         $('#addFileModal').on('show.bs.modal', function () {
             $('#addFileModal').find('form').trigger('reset');
+            $('.nav-tabs a[href="#hostFiles"]').tab('show');
             $("#viewDir").removeData("fileArr");
             fillArray2Select([], "#viewDir", true)
             resetPatternList()
             clearSelection()
+            selectedGeoSamplesTable.fnClearTable();
+            searchedGeoSamplesTable.fnClearTable();
             $('.forwardpatternDiv').css("display", "none")
             $('.reversepatternDiv').css("display", "none")
             $('.singlepatternDiv').css("display", "none")
             $('.patternButs').css("display", "none")
             $('.patternTable').css("display", "none")
             $("#viewDir").css("display", "none")
+            $("#seaGeoSamplesDiv").css("display", "none")
+            $("#selGeoSamplesDiv").css("display", "none")
             var renderMenu = {
                 option: function (data, escape) {
                     return '<div class="option">' +
@@ -4973,18 +5025,20 @@ $(document).ready(function () {
                     return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
                 }
             };
-
-            $('#collection_id').selectize({
-                valueField: 'id',
-                searchField: ['name'],
-                createOnBlur: true,
-                render: renderMenu,
-                options: getValues({ p: "getCollection" }),
-                create: function (input, callback) {
-                    callback({ id: "_newItm_" + input, name: input });
-                }
-            });
-            $("#collection_id")[0].selectize.clear()
+            var selectizeIDs = ['#collection_id', '#collection_id_geo']
+            for (var i = 0; i < selectizeIDs.length; i++) {
+                $(selectizeIDs[i]).selectize({
+                    valueField: 'id',
+                    searchField: ['name'],
+                    createOnBlur: true,
+                    render: renderMenu,
+                    options: getValues({ p: "getCollection" }),
+                    create: function (input, callback) {
+                        callback({ id: "_newItm_" + input, name: input });
+                    }
+                });
+                $(selectizeIDs[i])[0].selectize.clear()
+            }
         });
 
         $('#viewDirBut').click(function () {
@@ -5013,57 +5067,211 @@ $(document).ready(function () {
                     fillArray2Select(["Files Not Found."], "#viewDir", true)
                     resetPatternList()
                 }
+                $("#viewDir > option").attr("style", "pointer-events: none;");
+                $("#viewDir").css("display", "inline")
+            } else {
+                showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Directory' to search files in your host.")
             }
-            $("#viewDir > option").attr("style", "pointer-events: none;");
-            $("#viewDir").css("display", "inline")
+        });
+
+        removeSRA = function (name, srr_id, collection_type, button) {
+            var row = $(button).closest('tr');
+            selectedGeoSamplesTable.fnDeleteRow(row);
+            selectedGeoSamplesTable.fnDraw();
+            //check table data before adding.
+            var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
+            //check table data before adding.
+            var table_data = searchedGeoSamplesTable.fnGetData();
+            var checkTableUniqueData = table_data.filter(function (el) { return el[0] == srr_id });
+            if (checkTableUniqueData.length == 0) {
+                searchedGeoSamplesTable.fnAddData([name, srr_id, collection_type, select_button]);
+            }
+        }
+
+        selectSRA = function (name, srr_id, collection_type, button) {
+            var row = $(button).closest('tr');
+            searchedGeoSamplesTable.fnDeleteRow(row);
+            searchedGeoSamplesTable.fnDraw();
+            $("#selGeoSamplesDiv").css("display", "block");
+            selectedGeoSamplesTable.fnAddData([
+		          '<input type="text" id="' + name + '" size="70" class="col-mid-12" onchange="updateNameTable(this)" value="' + name + '">',
+		          srr_id,
+		          collection_type,
+		          '<button class="btn btn-danger pull-right" id="' + srr_id + '_remove" onclick="removeSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Remove</button>'
+	       ])
+        }
+
+        selectAllSRA = function () {
+            var table_nodes = searchedGeoSamplesTable.fnGetNodes()
+            for (var x = 0; x < table_nodes.length; x++) {
+                if (table_nodes[x].children[3].children[0].disabled == false) {
+                    table_nodes[x].children[3].children[0].click()
+                }
+            }
+        }
+
+        $('#viewGeoBut').click(function () {
+            var geo_id = $('#geo_id').val()
+            if (geo_id) {
+                var geoList = "";
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: { p: 'getGeoData', geo_id: geo_id },
+                    beforeSend: function () { showLoadingDiv("viewGeoButDiv"); },
+                    complete: function () {
+                        $("#seaGeoSamplesDiv").css("display", "block");
+                        hideLoadingDiv("viewGeoButDiv");
+                    },
+                    async: true,
+                    success: function (s) {
+                        if (s == "") {
+                            showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
+                        } else {
+                            var errCount = 0;
+                            geoList = s;
+                            if (geoList) {
+                                if (geoList.length) {
+                                    for (var i = 0; i < geoList.length; i++) {
+                                        if (geoList[i].srr_id && geoList[i].collection_type) {
+                                            var name = geoList[i].srr_id;
+                                            if (geoList[i].name) {
+                                                name = geoList[i].name;
+                                            }
+                                            var srr_id = geoList[i].srr_id;
+                                            var collection_type = geoList[i].collection_type;
+                                            if (collection_type == "single") {
+                                                collection_type = "Single";
+                                            } else if (collection_type == "pair") {
+                                                collection_type = "Paired";
+                                            }
+                                            var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
+                                            //check table data before adding.
+                                            var selected_data = selectedGeoSamplesTable.fnGetData();
+                                            var checkSelectedUniqueData = selected_data.filter(function (el) { return el[1] == srr_id });
+                                            var table_data = searchedGeoSamplesTable.fnGetData();
+                                            var checkTableUniqueData = table_data.filter(function (el) { return el[1] == srr_id });
+                                            if (checkTableUniqueData.length == 0 && checkSelectedUniqueData.length == 0) {
+                                                searchedGeoSamplesTable.fnAddData([name, srr_id, collection_type, select_button]);
+                                            } else {
+                                                if (errCount < 1) {
+                                                    showInfoModal("#infoModal", "#infoModalText", "Search term " + srr_id + " already added into table.")
+                                                } else {
+                                                    var oldtext = $("#infoModalText").html();
+                                                    $("#infoModalText").html(oldtext + "</br>" + "Search term " + srr_id + " already added into table.");
+                                                }
+                                                errCount += 1
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+            }
         });
 
 
         $('#addFileModal').on('click', '#mSaveFiles', function (event) {
             event.preventDefault();
-            var formValues = $('#addFileModal').find('input, select');
-            var requiredFields = ["file_dir", "collection_type", "collection_id"];
-            var ret = {};
-            ret = getTableSamples()
-            if (ret.warnUser) {
-                showInfoModal("#infoModal", "#infoModalText", ret.warnUser)
-            }
-            if (!ret.file_array.length) {
-                showInfoModal("#infoModal", "#infoModalText", "Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.")
-            }
-            var formObj = {};
-            var stop = "";
-                [formObj, stop] = createFormObj(formValues, requiredFields)
-            if (stop === false && !ret.warnUser && ret.file_array.length) {
-                //new items come with prefix: _newItm_
-                var collection_name = $("#collection_id")[0].selectize.getItem(formObj.collection_id)[0].innerHTML;
-                if (formObj.collection_id.match(/^_newItm_(.*)/)) {
-                    var collection_data = getValues({ p: "saveCollection", name: collection_name })
-                    if (collection_data.id) {
-                        formObj.collection_id = collection_data.id
-                    }
+            var checkTab = $('#addFileModal').find('.active.tab-pane')[0].getAttribute('id');
+            if (checkTab === 'hostFiles') {
+                var formValues = $('#hostFiles').find('input, select');
+                var requiredFields = ["file_dir", "collection_type", "collection_id"];
+                var ret = {};
+                ret = getTableSamples("selectedSamplesTable")
+                if (ret.warnUser) {
+                    showInfoModal("#infoModal", "#infoModalText", ret.warnUser)
                 }
-                var collection = { collection_id: formObj.collection_id, collection_name: collection_name }
-                formObj.file_array = ret.file_array
-                formObj.p = "saveFile"
-                $.ajax({
-                    type: "POST",
-                    url: "ajax/ajaxquery.php",
-                    data: formObj,
-                    async: true,
-                    success: function (s) {
-                        if (s.id) {
-                            $("#sampleTable").data("select", [collection_name])
-                            $("#sampleTable").DataTable().ajax.reload(null, false);
-                            $('#addFileModal').modal('hide');
+                if (!ret.file_array.length) {
+                    showInfoModal("#infoModal", "#infoModalText", "Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.")
+                }
+                var formObj = {};
+                var stop = "";
+                [formObj, stop] = createFormObj(formValues, requiredFields)
+                if (stop === false && !ret.warnUser && ret.file_array.length) {
+                    //new items come with prefix: _newItm_
+                    var collection_name = $("#collection_id")[0].selectize.getItem(formObj.collection_id)[0].innerHTML;
+                    if (formObj.collection_id.match(/^_newItm_(.*)/)) {
+                        var collection_data = getValues({ p: "saveCollection", name: collection_name })
+                        if (collection_data.id) {
+                            formObj.collection_id = collection_data.id
                         }
-                    },
-                    error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
                     }
-                });
+                    formObj.file_array = ret.file_array
+                    formObj.p = "saveFile"
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: formObj,
+                        async: true,
+                        success: function (s) {
+                            if (s.id) {
+                                $("#sampleTable").data("select", [collection_name])
+                                $("#sampleTable").DataTable().ajax.reload(null, false);
+                                $('#addFileModal').modal('hide');
+                            }
+                        },
+                        error: function (errorThrown) {
+                            alert("Error: " + errorThrown);
+                        }
+                    });
+                }
+            } else if (checkTab === 'geoFiles') {
+                var formValues = $('#geoFiles').find('input, select');
+                var requiredFields = ["collection_id"];
+                var ret = {};
+                ret = getTableSamples("selectedGeoSamplesTable")
+                if (ret.warnUser) {
+                    showInfoModal("#infoModal", "#infoModalText", ret.warnUser)
+                }
+                if (!ret.file_array.length) {
+                    showInfoModal("#infoModal", "#infoModalText", "Please fill 'Selected GEO Files' table by clicking 'Select' buttons in the 'Searched GEO Files' table.")
+                }
+                var formObj = {};
+                var stop = "";
+                [formObj, stop] = createFormObj(formValues, requiredFields)
+                if (stop === false && !ret.warnUser && ret.file_array.length) {
+                    //new items come with prefix: _newItm_
+                    var collection_name = $("#collection_id_geo")[0].selectize.getItem(formObj.collection_id)[0].innerHTML;
+                    if (formObj.collection_id.match(/^_newItm_(.*)/)) {
+                        var collection_data = getValues({ p: "saveCollection", name: collection_name })
+                        if (collection_data.id) {
+                            formObj.collection_id = collection_data.id
+                        }
+                    }
+                    formObj.file_type = "fastq";
+                    var collection_type = selectedGeoSamplesTable.fnGetData();
+                    if (collection_type[0][2] == "Paired") {
+                        formObj.collection_type = "pair";
+                    } else if (collection_type[0][2] == "Single") {
+                        formObj.collection_type = "single";
+                    }
+                    formObj.file_array = ret.file_array
+                    formObj.p = "saveFile"
+                    console.log(formObj)
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: formObj,
+                        async: true,
+                        success: function (s) {
+                            if (s.id) {
+                                $("#sampleTable").data("select", [collection_name])
+                                $("#sampleTable").DataTable().ajax.reload(null, false);
+                                $('#addFileModal').modal('hide');
+                            }
+                        },
+                        error: function (errorThrown) {
+                            alert("Error: " + errorThrown);
+                        }
+                    });
+                }
             }
         });
+
     });
 
     createMultiselect = function (id) {
@@ -5126,6 +5334,8 @@ $(document).ready(function () {
     });
 
     selectedSamplesTable = $('#selectedSamples').dataTable();
+    selectedGeoSamplesTable = $('#selectedGeoSamples').dataTable();
+    searchedGeoSamplesTable = $('#searchedGeoSamples').dataTable();
 
 
 
@@ -5260,7 +5470,6 @@ $(document).ready(function () {
     removeRowSelTable = function (button, collection_type) {
         var row = $(button).closest('tr');
         var files_used = row.children()[1].innerHTML.split(' | ');
-        console.log(files_used)
         for (var x = 0; x < files_used.length; x++) {
             if (files_used[x].match(/,/)) {
                 var forwardFile = files_used[x].split(",")[0]
@@ -5578,14 +5787,16 @@ $(document).ready(function () {
     });
 
 
-    getTableSamples = function () {
+    getTableSamples = function (tableId) {
         var ret = {};
         var file_array = [];
         var warnUser = "";
-        var table_data = selectedSamplesTable.fnGetData();
-        var table_nodes = selectedSamplesTable.fnGetNodes();
+        var table_data = window[tableId].fnGetData();
+        var table_nodes = window[tableId].fnGetNodes();
         for (var y = 0; y < table_data.length; y++) {
             var name = $.trim(table_nodes[y].children[0].children[0].id)
+            console.log(name)
+            name = name.replace(/:/g, "_").replace(/,/g, "_").replace(/\$/g, "_").replace(/\!/g, "_").replace(/\</g, "_").replace(/\>/g, "_").replace(/\?/g, "_").replace(/\(/g, "-").replace(/\)/g, "-").replace(/\"/g, "_").replace(/\'/g, "_").replace(/\//g, "_").replace(/\\/g, "_");
             if (!name) {
                 warnUser = 'Please fill all the filenames in the table.'
             }
@@ -6143,7 +6354,7 @@ $(document).ready(function () {
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; width:calc(100% - 35px);" class="table-responsive"><table style="border:none; table-layout:fixed; width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"><thead style="white-space: nowrap; "></thead></table></div>';
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
-                    if (visType == "table-percent"){
+                    if (visType == "table-percent") {
                         //by default based on second column data, calculate percentages for each row
                         data = tsvPercent(data)
                     }
@@ -6193,11 +6404,11 @@ $(document).ready(function () {
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
                     $(href).append(contentDiv);
                     bindEveHandlerIcon(fileid)
-                    
-//                    $("#deb-" + fileid).load(function () {
-//                        $("#deb-" + fileid).loading('stop');
-//                    });
-//                    $("#deb-" + fileid).loading('start');
+
+                    //                    $("#deb-" + fileid).load(function () {
+                    //                        $("#deb-" + fileid).loading('stop');
+                    //                    });
+                    //                    $("#deb-" + fileid).loading('start');
                 }
             }
         })

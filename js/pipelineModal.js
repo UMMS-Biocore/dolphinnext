@@ -1211,7 +1211,6 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 pipelinePerm = s[0].perms;
                 // if user not own it, cannot change or delete pipeline
                 if (pipelineOwn === "0") {
-                    $('#deletePipeRevision').remove();
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
                     $('#pipelineSum').attr('disabled', 'disabled');
@@ -1270,7 +1269,6 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     $("#permsPipe").attr('disabled', "disabled");
                     $("#publishPipe").attr('disabled', "disabled");
                     $('#pipeGroupAll')[0].selectize.disable();
-                    $('#deletePipeRevision').remove();
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
                 }
@@ -1835,7 +1833,7 @@ $(document).ready(function () {
         if (button.attr('id') === 'deleteRevision') {
             $('#deleteBtn').attr('class', 'btn btn-primary delprocess');
             $('#confirmModalText').html('Are you sure you want to delete this process revision?');
-        } else if (button.attr('id') === 'deletePipeRevision' || button.attr('id') === 'delPipeline') {
+        } else if (button.attr('id') === 'delPipeline') {
             $('#deleteBtn').attr('class', 'btn btn-primary delpipeline');
             $('#confirmModalText').html('Are you sure you want to delete this pipeline?');
         }

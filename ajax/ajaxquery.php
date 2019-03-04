@@ -40,11 +40,12 @@ if (isset($_REQUEST['id'])) {
         $attempt = "0";
     }
     //create initialrun script
+    $initialrun_img = "shub://onuryukselen/initialrun";
     $initialRunScript = $db->initialRunScript($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
-    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $ownerID);
+    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $initialrun_img, $ownerID);
     //run the script
-    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $ownerID);
+    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $initialrun_img, $ownerID);
 }
 else if ($p=="updateRunAttemptLog") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -179,6 +180,10 @@ else if ($p=="getLsDir"){
 	$profileId = $_REQUEST['profileId'];
     $data = $db -> getLsDir($dir, $profileType, $profileId, $ownerID);
 }
+else if ($p=="getGeoData"){
+    $geo_id = $_REQUEST['geo_id'];
+    $data = $db -> getGeoData($geo_id, $ownerID);
+}
 else if ($p=="getRun"){
 	$project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $data = $db -> getRun($project_pipeline_id,$ownerID);
@@ -230,6 +235,7 @@ else if ($p=="startProAmazon"){
 	$nodes = $_REQUEST['nodes'];
 	$autoscale_check = $_REQUEST['autoscale_check'];
 	$autoscale_maxIns = $_REQUEST['autoscale_maxIns'];
+    $autoscale_minIns = isset($_REQUEST['autoscale_minIns']) ? $_REQUEST['autoscale_minIns'] : "";
     $db -> updateProfileAmazonNode($id,$nodes,$autoscale_check, $autoscale_maxIns,$autoscale_minIns,$ownerID);
     $data = $db -> startProAmazon($id,$ownerID,$usernameCl);
 }
@@ -798,9 +804,20 @@ else if ($p=="saveInput"){
 }
 else if ($p=="saveCollection"){
     $name = $_REQUEST['name'];
+    $colData = $db->getCollectionByName($name, $ownerID);
+    $colData = json_decode($colData,true);
+    if (isset($colData[0])){
+        $colId = $colData[0]["id"];
+    } else {
+        $colId = "";
+    }
     if (!empty($id)) {
     } else {
-       $data = $db->insertCollection($name, $ownerID);
+        if (empty($colId)){
+            $data = $db->insertCollection($name, $ownerID);
+        } else {
+            $data = json_encode(array('id' => $colId));
+        }
     }
 }
 else if ($p=="saveFileByID"){
@@ -823,9 +840,10 @@ else if ($p=="saveFile"){
     settype($collection_id, 'integer');
     $collection_type = $_REQUEST['collection_type'];
     $archive_dir = isset($_REQUEST['archive_dir']) ? $_REQUEST['archive_dir'] : "";
-    $file_dir = $_REQUEST['file_dir'];
+    $file_dir = isset($_REQUEST['file_dir']) ? $_REQUEST['file_dir'] : "";
     $file_type = $_REQUEST['file_type'];
     $file_array = $_REQUEST['file_array'];
+    
     foreach ($file_array as $item):
         $p = explode(" ", $item);
         $name = $p[0];

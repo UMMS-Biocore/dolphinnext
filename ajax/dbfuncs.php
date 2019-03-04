@@ -175,6 +175,7 @@ class dbfuncs {
 
     function initialRunScript ($project_pipeline_id, $attempt, $ownerID){
         $script="";
+        $parallel = true;
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         $input_dir = "$outdir/run{$project_pipeline_id}/inputs";
@@ -200,16 +201,56 @@ class dbfuncs {
             }
         endforeach;
         if (!empty($file_name)) {
-            $file_nameS = "'" . implode ( "', '", $file_name ) . "'";
-            $file_dirS = "'" . implode ( "', '", $file_dir ) . "'";
-            $file_typeS = "'" . implode ( "', '", $file_type ) . "'";
-            $files_usedS = "'" . implode ( "', '", $files_used ) . "'";
-            $archive_dirS = "'" . implode ( "', '", $archive_dir ) . "'";
-            $collection_typeS = "'" . implode ( "', '", $collection_type ) . "'";
+            if ($parallel == true){
+                $file_nameS = "Channel.from(\"'" . implode ( "'\", \"'", $file_name ) . "'\")";
+                
+                $file_dirS = "Channel.from(\"'" . implode ( "'\", \"'", $file_dir ) . "'\")";
+                $file_typeS = "Channel.from(\"'" . implode ( "'\", \"'", $file_type ) . "'\")";
+                $files_usedS = "Channel.from(\"'" . implode ( "'\", \"'", $files_used ) . "'\")";
+                $archive_dirS = "Channel.from(\"'" . implode ( "'\", \"'", $archive_dir ) . "'\")";
+                $collection_typeS = "Channel.from(\"'" . implode ( "'\", \"'", $collection_type ) . "'\")"; 
+                //for all file control
+                $file_name_allS = "Channel.value(\"'" . implode ( "', '", $file_name ) . "'\")";
+                $file_type_allS = "Channel.value(\"'" . implode ( "', '", $file_type ) . "'\")";
+                $collection_type_allS = "Channel.value(\"'" . implode ( "', '", $collection_type ) . "'\")";
+            } else {
+                $file_nameS = "Channel.value(\"'" . implode ( "', '", $file_name ) . "'\")";
+                $file_dirS = "Channel.value(\"'" . implode ( "', '", $file_dir ) . "'\")";
+                $file_typeS = "Channel.value(\"'" . implode ( "', '", $file_type ) . "'\")";
+                $files_usedS = "Channel.value(\"'" . implode ( "', '", $files_used ) . "'\")";
+                $archive_dirS = "Channel.value(\"'" . implode ( "', '", $archive_dir ) . "'\")";
+                $collection_typeS = "Channel.value(\"'" . implode ( "', '", $collection_type ) . "'\")";
+                //for all file control
+                $file_name_allS = $file_nameS;
+                $file_type_allS = $file_typeS;
+                $collection_type_allS  = $collection_typeS;
+            }
             
-            $script = "process initialRun {
+            $script = "file_name = $file_nameS;
+file_dir = $file_dirS;
+file_type = $file_typeS;
+files_used = $files_usedS;
+archive_dir = $archive_dirS;
+collection_type = $collection_typeS;
+file_name_all = $file_name_allS;
+file_type_all = $file_type_allS;
+collection_type_all = $collection_type_allS;
+
+process initialRun {
+
+input:
+    val file_name from file_name
+    val file_dir from file_dir
+    val file_type from file_type
+    val files_used from files_used
+    val archive_dir from archive_dir
+    val collection_type from collection_type
+    val file_name_all from file_name_all
+    val file_type_all from file_type_all
+    val collection_type_all from collection_type_all
+
 output:
-    file('success.$attempt')  into success
+    val('success.$attempt')  into success
 shell:
 '''
 #!/usr/bin/env perl
@@ -222,16 +263,19 @@ use File::Copy;
 use File::Path qw( make_path );
 
 my \$input_dir = \"$input_dir\";
-my @file_name = ($file_nameS);
-my @file_dir = ($file_dirS);
-my @file_type = ($file_typeS);
-my @files_used = ($files_usedS);
-my @archive_dir = ($archive_dirS);
-my @collection_type = ($collection_typeS);
+my @file_name = (!{file_name});
+my @file_dir = (!{file_dir});
+my @file_type = (!{file_type});
+my @files_used = (!{files_used});
+my @archive_dir = (!{archive_dir});
+my @collection_type = (!{collection_type});
+my @file_name_all = (!{file_name_all});
+my @file_type_all = (!{file_type_all});
+my @collection_type_all = (!{collection_type_all});
 
 
 if ( !-d \$input_dir ) {
-    make_path \$input_dir or die 'Failed to create path: \$input_dir';
+    runCommand(\"mkdir -p \$input_dir\");
 }
 
 my %passHash;    ## Keep record of completed operation
@@ -256,7 +300,6 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
     ## first check input folder then archive dir for expected files
     if ( \$collection_type[\$i] eq \"single\" ) {
         \$inputFile = \"\$input_dir/\$file_name[\$i].\$fileType\";
-        \$validInputHash{\$inputFile} = 1;
         if ( checkFile(\$inputFile) ) {
             \$inputDirCheck = \"true\";
         }
@@ -264,29 +307,35 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
     elsif ( \$collection_type[\$i] eq \"pair\" ) {
         \$inputFile1                  = \"\$input_dir/\$file_name[\$i].R1.\$fileType\";
         \$inputFile2                  = \"\$input_dir/\$file_name[\$i].R2.\$fileType\";
-        \$validInputHash{\$inputFile1} = 1;
-        \$validInputHash{\$inputFile2} = 1;
-
         if ( checkFile(\$inputFile1) && checkFile(\$inputFile2) ) {
             \$inputDirCheck = \"true\";
+        } elsif ( checkFile(\$inputFile1) || checkFile(\$inputFile2) ) {
+            ## if only one of them exist then remove files
+            runCommand(\"rm -f \$inputFile1 && rm -f \$inputFile2\");
         }
     }
 
     if ( \$archiveDir ne \"\" ) {
         if ( !-d \$archiveDir ) {
-            make_path \$archiveDir or die 'Failed to create path: \$input_dir';
+            runCommand(\"mkdir -p \$archiveDir\");
         }
         if ( \$collection_type[\$i] eq \"single\" ) {
             \$archFile = \"\$archiveDir/\$file_name[\$i].\$fileType\";
-            if ( checkFile(\"\$archFile.gz\") ) {
+            if ( checkFile(\"\$archFile.gz\") && checkFile(\"\$archFile.gz.count\")) {
                 \$archiveDirCheck = \"true\";
+            } elsif ( checkFile(\"\$archFile.gz\") || checkFile(\"\$archFile.gz.count\") ) {
+                ## if only one of them exist then remove files
+                runCommand(\"rm -f \$archFile.gz\");
             }
         }
         elsif ( \$collection_type[\$i] eq \"pair\" ) {
             \$archFile1 = \"\$archiveDir/\$file_name[\$i].R1.\$fileType\";
             \$archFile2 = \"\$archiveDir/\$file_name[\$i].R2.\$fileType\";
-            if ( checkFile(\"\$archFile1.gz\") && checkFile(\"\$archFile2.gz\") ) {
+            if ( checkFile(\"\$archFile1.gz\") && checkFile(\"\$archFile1.gz.count\") && checkFile(\"\$archFile2.gz\") && checkFile(\"\$archFile2.gz.count\") ) {
                 \$archiveDirCheck = \"true\";
+            } elsif ( checkFile(\"\$archFile1.gz\") || checkFile(\"\$archFile2.gz\") ) {
+                ## if only one of them exist then remove files
+                runCommand(\"rm -f \$archFile1.gz && rm -f \$archFile2.gz\");
             }
         }
     }
@@ -327,28 +376,45 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
         ##Keep full path of files that needs to merge
         for ( my \$k = 0 ; \$k <= \$#fileAr ; \$k++ ) {
             if ( \$collection_type[\$i] eq \"single\" ) {
-                push @fullfileAr, \$file_dir[\$i] . \"/\" . \$fileAr[\$k];
+                if (trim( \$file_dir[\$i] ne \"\")){
+                    push @fullfileAr, \$file_dir[\$i] . \"/\" . \$fileAr[\$k];
+                } 
+                
             }
             elsif ( \$collection_type[\$i] eq \"pair\" ) {
-                my @pair = split( /,/, \$fileAr[\$k], -1 );
-                push @fullfileArR1, \$file_dir[\$i] . \"/\" . \$pair[0];
-                push @fullfileArR2, \$file_dir[\$i] . \"/\" . \$pair[1];
+                if (trim( \$file_dir[\$i] ne \"\")){
+                    my @pair = split( /,/, \$fileAr[\$k], -1 );
+                    push @fullfileArR1, \$file_dir[\$i] . \"/\" . \$pair[0];
+                    push @fullfileArR2, \$file_dir[\$i] . \"/\" . \$pair[1];
+                } 
             }
         }
         if ( \$archiveDir ne \"\" ) {
             ##merge files in archive dir then copy to inputdir
             my \$cat = \"cat\";
-            if ( \$collection_type[\$i] eq \"single\" ) {
+            ##Don't run mergeGzip for GEO files
+            if (scalar @fullfileAr != 0 && \$collection_type[\$i] eq \"single\"){
                 my \$filestr = join( ' ', @fullfileAr );
                 \$cat = \"zcat\" if ( \$filestr =~ /\\\.gz/ );
                 mergeGzipCountMd5sum( \$cat, \$filestr, \$archFile );
-            }
-            elsif ( \$collection_type[\$i] eq \"pair\" ) {
+            } elsif ( scalar @fullfileArR1 != 0 && \$collection_type[\$i] eq \"pair\" ) {
                 my \$filestrR1 = join( ' ', @fullfileArR1 );
                 my \$filestrR2 = join( ' ', @fullfileArR2 );
                 \$cat = \"zcat\" if ( \$filestrR1 =~ /\\\.gz/ );
                 mergeGzipCountMd5sum( \$cat, \$filestrR1, \$archFile1 );
                 mergeGzipCountMd5sum( \$cat, \$filestrR2, \$archFile2 );
+            } else {
+                ##Run fastqdump and CountMd5sum for GEO files
+                my \$gzip = \"--gzip\";
+                if ( \$collection_type[\$i] eq \"single\" ) {
+                    fasterqDump(\$gzip, \$archiveDir, \$fileAr[0], \$file_name[\$i], \$collection_type[\$i]);
+                    countMd5sum(\"\$archFile\");
+                }
+                elsif ( \$collection_type[\$i] eq \"pair\" ) {
+                    fasterqDump(\$gzip, \$archiveDir, \$fileAr[0], \$file_name[\$i], \$collection_type[\$i]);
+                    countMd5sum(\"\$archFile1\");
+                    countMd5sum(\"\$archFile2\");
+                }
             }
             if ( \$collection_type[\$i] eq \"single\" ) {
                 copyFile( \"\$archFile.gz\", \"\$inputFile.gz\" );
@@ -362,19 +428,22 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
             }
         }
         else {
-            ##archive dir not defined then merge files in input dir
+            ##archive_dir is not defined then merge files in input_dir
             my \$cat = \"cat\";
-            if ( \$collection_type[\$i] eq \"single\" ) {
+            ##Don't run merge for GEO files
+            if ( scalar @fullfileAr != 0 && \$collection_type[\$i] eq \"single\" ) {
                 my \$filestr = join( ' ', @fullfileAr );
                 \$cat = \"zcat\" if ( \$filestr =~ /\\\.gz/ );
                 runCommand(\"\$cat \$filestr > \$inputFile\");
-            }
-            elsif ( \$collection_type[\$i] eq \"pair\" ) {
+            } elsif ( scalar @fullfileArR1 != 0 && \$collection_type[\$i] eq \"pair\" ) {
                 my \$filestrR1 = join( ' ', @fullfileArR1 );
                 my \$filestrR2 = join( ' ', @fullfileArR2 );
                 \$cat = \"zcat\" if ( \$filestrR1 =~ /\\\.gz/ );
                 runCommand(\"\$cat \$filestrR1 > \$inputFile1\");
                 runCommand(\"\$cat \$filestrR2 > \$inputFile2\");
+            } else {
+                ##Run fastqdump without --gzip for GEO files
+                fasterqDump(\"\", \$input_dir, \$fileAr[0], \$file_name[\$i], \$collection_type[\$i]);
             }
         }
 
@@ -391,21 +460,12 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
     }
 }
 
-##remove invalid files (not found in @validInputAr) from \$input_dir
-
-my @inputDirFiles = <\$input_dir/*>;
-foreach my \$file (@inputDirFiles) {
-    if ( !exists( \$validInputHash{\$file} ) ) {
-        print \"Invalid file \$file will be removed from input directory\\\\n\";
-        runCommand(\"rm \$file\");
-    }
-}
 
 for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
     die \"Error 64: please check your input file:\$file_name[\$i]\"
       unless ( \$passHash{ \$file_name[\$i] } eq \"passed\" );
 }
-system('touch success.$attempt');
+
 
 ##Subroutines
 
@@ -434,15 +494,104 @@ sub runCommand {
     else          { print \"Command successful: \$com\\\\n\"; }
 }
 
-sub mergeGzipCountMd5sum {
-    my ( \$cat, \$filestr, \$inputFile ) = @_;
-    runCommand(\"\$cat \$filestr > \$inputFile && gzip \$inputFile && s=\\\\$(zcat \$inputFile.gz|wc -l) && echo \\\\\$((\\\\\$s/4)) > \$inputFile.gz.count && md5sum \$inputFile.gz > \$inputFile.gz.md5sum\");
+sub countMd5sum {
+    my (\$inputFile ) = @_;
+    runCommand(\"s=\\\\$(zcat \$inputFile.gz|wc -l) && echo \\\\\$((\\\\\$s/4)) > \$inputFile.gz.count && md5sum \$inputFile.gz > \$inputFile.gz.md5sum\");
 }
 
+sub mergeGzipCountMd5sum {
+    my ( \$cat, \$filestr, \$inputFile ) = @_;
+    runCommand(\"\$cat \$filestr > \$inputFile && gzip \$inputFile\");
+    countMd5sum(\$inputFile);
+}
+
+sub fasterqDump {
+    my ( \$gzip, \$outDir, \$srrID, \$file_name,  \$collection_type) = @_;
+    runCommand(\"mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra -o \$file_name \$srrID\");
+    if (\$collection_type eq \"pair\"){
+        runCommand(\"mv \$outDir/\${file_name}_1.fastq  \$outDir/\${file_name}.R1.fastq \");
+        runCommand(\"mv \$outDir/\${file_name}_2.fastq  \$outDir/\${file_name}.R2.fastq \");
+        if (\$gzip ne \"\"){
+            runCommand(\"gzip  \$outDir/\${file_name}.R1.fastq \");
+            runCommand(\"gzip  \$outDir/\${file_name}.R2.fastq \");
+        }
+    } elsif (\$collection_type eq \"single\"){
+        runCommand(\"mv \$outDir/\${file_name}  \$outDir/\${file_name}.fastq \");
+        if (\$gzip ne \"\"){
+            runCommand(\"gzip  \$outDir/\${file_name}.fastq \");
+        }
+    }
+    runCommand(\"rm -f \${outDir}/sra/sra/\${srrID}.sra.cache\");
+}
 
 
 '''
 }
+
+process cleanUp {
+
+input:
+    val file_name_all from file_name_all
+    val file_type_all from file_type_all
+    val collection_type_all from collection_type_all
+    val successList from success.toList()
+
+output:
+    file('success.$attempt')  into successCleanUp
+shell:
+'''
+#!/usr/bin/env perl
+use strict;
+use File::Basename;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper;
+
+my \$input_dir = \"$input_dir\";
+my @file_name_all = (!{file_name_all});
+my @file_type_all = (!{file_type_all});
+my @collection_type_all = (!{collection_type_all});
+
+
+my %validInputHash; ## Keep record of files as fullpath
+
+for ( my \$i = 0 ; \$i <= \$#file_name_all ; \$i++ ) {
+    my \$fileType        = \$file_type_all[\$i];
+    if ( \$collection_type_all[\$i] eq \"single\" ) {
+        my \$inputFile = \"\$input_dir/\$file_name_all[\$i].\$fileType\";
+        \$validInputHash{\$inputFile} = 1;
+    }
+    elsif ( \$collection_type_all[\$i] eq \"pair\" ) {
+        my \$inputFile1                  = \"\$input_dir/\$file_name_all[\$i].R1.\$fileType\";
+        my \$inputFile2                  = \"\$input_dir/\$file_name_all[\$i].R2.\$fileType\";
+        \$validInputHash{\$inputFile1} = 1;
+        \$validInputHash{\$inputFile2} = 1;
+    }
+}
+
+print Dumper \\\\\\\\%validInputHash;
+
+##remove invalid files (not found in @validInputAr) from \$input_dir
+my @inputDirFiles = <\$input_dir/*>;
+foreach my \$file (@inputDirFiles) {
+    if ( !exists( \$validInputHash{\$file} ) ) {
+        print \"Invalid file \$file will be removed from input directory\\\\n\";
+        runCommand(\"rm -rf \$file\");
+    }
+}
+system('touch success.$attempt');
+
+sub runCommand {
+    my (\$com) = @_;
+    my \$error = system(\$com);
+    if   (\$error) { die \"Command failed: \$com\\\\n\"; }
+    else          { print \"Command successful: \$com\\\\n\"; }
+}
+
+'''
+
+}
+
 workflow.onComplete {
     println \"##Initial run summary##\"
     println \"##Completed at: \$workflow.complete\"
@@ -488,12 +637,17 @@ workflow.onComplete {
     }
 
     //get nextflow executor parameters
-    function getNextExecParam($project_pipeline_id,$profileType,$profileId, $ownerID){
+    function getNextExecParam($project_pipeline_id,$profileType,$profileId, $initialRunScript, $initialrun_img, $ownerID){
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         $proPipeCmd = $proPipeAll[0]->{'cmd'};
         $jobname = $proPipeAll[0]->{'pp_name'};
         $singu_check = $proPipeAll[0]->{'singu_check'};
+        $initImageCmd = "";
+        $imageCmd = "";
+        if (!empty($initialRunScript)){
+            $initImageCmd = $this->imageCmd($initialrun_img, "", 'singularity', $profileType,$profileId,$ownerID);
+        }
         if ($singu_check == "true"){
             $singu_img = $proPipeAll[0]->{'singu_img'};
             $singu_save = $proPipeAll[0]->{'singu_save'};
@@ -517,7 +671,7 @@ workflow.onComplete {
         if ($withDag == "true"){
             $reportOptions .= " -with-dag dag.html";
         }
-        return array($outdir, $proPipeCmd, $jobname, $singu_check, $singu_img, $imageCmd, $reportOptions);
+        return array($outdir, $proPipeCmd, $jobname, $singu_check, $singu_img, $imageCmd, $initImageCmd, $reportOptions);
     }
     
 
@@ -545,7 +699,7 @@ workflow.onComplete {
         return array($connect, $next_path, $profileCmd, $executor,$next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job,$ssh_id);
     }
     
-    function getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd){
+    function getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd){
     $profile_def = "";
     if ($profileType == "amazon"){
         $profile_def = "source /etc/profile && source ~/.bash_profile";
@@ -556,7 +710,7 @@ workflow.onComplete {
         $nextVerText = "export NXF_VER=$nextVer";
     }
     //combine pre-run cm
-    $arr = array($nextVerText, $profile_def, $profileCmd, $proPipeCmd, $imageCmd);
+    $arr = array($nextVerText, $profile_def, $profileCmd, $proPipeCmd, $imageCmd , $initImageCmd);
     $preCmd="";
     for ($i=0; $i<count($arr); $i++) {
         if (!empty($arr[$i]) && !empty($preCmd)){
@@ -722,6 +876,28 @@ workflow.onComplete {
         }
     return $exec_next_all;
     }
+    
+    function getInitialRunConfig($configText,$profileType,$profileId, $initialrun_img, $ownerID){
+        $configTextClean = "";
+            $configTextLines = explode("\n", $configText);
+            //clean container specific lines and insert initialrun image
+            for ($i = 0; $i < count($configTextLines); $i++) {
+                if (!preg_match("/process.container =/",$configTextLines[$i]) && !preg_match("/singularity.enabled =/",$configTextLines[$i]) && !preg_match("/docker.enabled =/",$configTextLines[$i])){
+                    $configTextClean .= $configTextLines[$i]."\n";
+                }
+            }
+            $singuPath = '//$HOME';
+            if ($profileType == "amazon"){
+                $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
+                $amzDataArr=json_decode($amzData,true);
+                $singuPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
+            }
+            preg_match("/shub:\/\/(.*)/", $initialrun_img, $matches);
+            $imageName = str_replace("/","-",$matches[1]);
+            $image = $singuPath.'/.dolphinnext/singularity/'.$imageName.'.simg';
+            $configText = "process.container = '$image'\n"."singularity.enabled = true\n".$configTextClean;
+            return $configText;
+    }
 
     function getRenameCmd($dolphin_path_real,$attempt,$initialRunScript){
         $renameLog = "";
@@ -743,7 +919,7 @@ workflow.onComplete {
         return $renameLog;
     }
 
-    function initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $ownerID){
+    function initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $initialrun_img, $ownerID){
         //if  $amazon_cre_id is defined append the aws credentials into nextflow.config
         if ($amazon_cre_id != "" ){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
@@ -780,6 +956,8 @@ workflow.onComplete {
         $initialRunText = "";
         $run_path_real = "{$this->run_path}/$uuid/run";
         if (!empty($initialRunScript)){
+            $configText = $this->getInitialRunConfig($configText,$profileType,$profileId,$initialrun_img,  $ownerID);
+            
             $this->createDirFile ("{$this->run_path}/$uuid/initialrun", "nextflow.config", 'w', $configText );
             $this->createDirFile ("{$this->run_path}/$uuid/initialrun", "nextflow.nf", 'w', $initialRunScript );
             $initialRunText = "{$this->run_path}/$uuid/initialrun";
@@ -830,16 +1008,16 @@ workflow.onComplete {
         return $log_array;
     }
 
-    function runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $ownerID)
+    function runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $initialrun_img, $ownerID)
     {
             //get nextflow executor parameters
-            list($outdir, $proPipeCmd, $jobname, $singu_check, $singu_img, $imageCmd, $reportOptions) = $this->getNextExecParam($project_pipeline_id,$profileType, $profileId, $ownerID);
+            list($outdir, $proPipeCmd, $jobname, $singu_check, $singu_img, $imageCmd, $initImageCmd, $reportOptions) = $this->getNextExecParam($project_pipeline_id,$profileType, $profileId, $initialRunScript, $initialrun_img, $ownerID);
             //get username and hostname and exec info for connection
             list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id)=$this->getNextConnectExec($profileId,$ownerID, $profileType);
             //get nextflow input parameters
             $next_inputs = $this->getNextInputs($executor, $project_pipeline_id, $outdir, $ownerID);
             //get cmd before run
-            $preCmd = $this->getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd);
+            $preCmd = $this->getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd);
             //eg. /project/umw_biocore/bin
             $next_path_real = $this->getNextPathReal($next_path);
             //get userpky
@@ -1068,6 +1246,7 @@ workflow.onComplete {
         } 
         //start amazon cluster
         $cmd = "cd {$this->amz_path}/pro_{$profileName} && yes | nextflow cloud create $profileName $nodeText > logAmzStart.txt 2>&1 & echo $! &";
+        error_log("cd {$this->amz_path}/pro_{$profileName} && yes | nextflow cloud create $profileName $nodeText");
         $log_array = $this->runCommand ($cmd, 'start_cloud', '');
         $log_array['start_cloud_cmd'] = $cmd;
         //xxx save pid of nextflow cloud create cluster job
@@ -1710,6 +1889,12 @@ workflow.onComplete {
         WHERE pg.group_name = '$group_name'";
         return self::queryTable($sql);
     }
+    public function getCollectionByName($col_name, $owner_id) {
+        $sql = "SELECT DISTINCT c.id
+        FROM collection c
+        WHERE c.name = '$col_name' AND owner_id='$owner_id'";
+        return self::queryTable($sql);
+    }
     public function getPipelineGroupByName($group_name) {
         $sql = "SELECT DISTINCT pg.id
         FROM pipeline_group pg
@@ -1981,7 +2166,7 @@ workflow.onComplete {
         $proPipeCmd = $proPipeAll[0]->{'cmd'};
         $profileCmd = $cluDataArr[0]["cmd"];
         $imageCmd = "";
-        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd);
+        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, "");
 			
         if ($executor == "lsf" && $commandType == "checkRunPid"){
         	$check_run = shell_exec("ssh {$this->ssh_settings} -i $userpky $connect \"$preCmd bjobs\" 2>&1 &");
@@ -2085,6 +2270,59 @@ workflow.onComplete {
             } else {
                 return json_encode("Connection failed! Please check your connection profile or internet connection");
             }
+    }
+    public function getSRRData($srr_id, $ownerID) {
+        $obj = new stdClass();
+        $command = "esearch -db sra -query $srr_id |efetch -format runinfo";
+        $resText = shell_exec("$command 2>&1 & echo $! &");
+        if (!empty($resText)){
+            $resText = trim($resText);
+            $lines = explode("\n", $resText);
+            error_log(count($lines));
+            if (count($lines) == 3){
+                $header = explode(",", $lines[1]); 
+                $vals = explode(",", $lines[2]); 
+                for ($i = 0; $i < count($header); $i++) {
+                    $col = $header[$i];
+                    if ($col == "Run"){
+                        $obj->srr_id = trim($vals[$i]);
+                    } else if ($col == "LibraryLayout"){
+                        if (trim($vals[$i]) == "PAIRED"){
+                            $obj->collection_type = "pair";
+                        } else {
+                            $obj->collection_type = "single";
+                        }
+                    }
+                }
+            }    
+        }
+        return $obj;
+    }
+    public function getGeoData($geo_id, $ownerID) {
+        $data = array();
+        if (preg_match("/SRR/", $geo_id) || preg_match("/GSM/", $geo_id)){
+            $obj = $this->getSRRData($geo_id, $ownerID);
+            $data[] = $obj;   
+        } else if (preg_match("/GSE/", $geo_id)){
+            $command = "esearch -db gds -query $geo_id | esummary | xtract -pattern DocumentSummary -element title Accession";
+            $resText = shell_exec("$command 2>&1 & echo $! &");
+            if (!empty($resText)){
+                $resText = trim($resText);
+                error_log($resText);
+                $lines = explode("\n", $resText);
+                error_log(count($lines));
+                for ($i = 0; $i < count($lines); $i++) {
+                    $cols = explode("\t", $lines[$i]);
+                    error_log(count($cols));
+                    if (count($cols) == 2){
+                        $obj = $this->getSRRData($cols[1], $ownerID);
+                        $obj->name = trim(str_replace(" ","_",$cols[0]));
+                        $data[] = $obj;
+                    }
+                }
+            }
+        }
+        return json_encode($data);
     }
     public function readFileSubDir($path) {
         $scanned_directory = array_diff(scandir($path), array('..', '.'));
