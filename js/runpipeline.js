@@ -5746,7 +5746,7 @@ $(document).ready(function () {
         var button = $(e.relatedTarget);
         $(this).find('form').trigger('reset');
         $('#projectFileTable').DataTable().rows().deselect();
-        $('.nav-tabs a[href="#manualTab"]').trigger("click");
+        $('.nav-tabs a[href="#importedFiles"]').trigger("click");
         selectMultiselect("#select-collection", []);
         sampleTable.rows().deselect();
         var clickedRow = button.closest('tr');
