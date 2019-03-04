@@ -1148,7 +1148,7 @@ function autoFillButton(buttonText, value, keepExist) {
             checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
         }
     } else { // if value is empty:"" then remove from project pipeline input table
-        if (keepExist == false){
+        if (keepExist == false) {
             var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
             removeSelectFile(rowID, qualifier);
         }
@@ -5124,49 +5124,49 @@ $(document).ready(function () {
                         hideLoadingDiv("viewGeoButDiv");
                     },
                     async: true,
-                    success: function (s) {
-                        if (s == "") {
+                    success: function (geoList) {
+                        if (!geoList) {
+                            showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
+                        } else if (geoList.length == 0) {
+                            showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
+                        } else if (geoList.length == 1 && $.isEmptyObject(geoList[0])) {
                             showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
                         } else {
                             var errCount = 0;
-                            geoList = s;
-                            if (geoList) {
-                                if (geoList.length) {
-                                    for (var i = 0; i < geoList.length; i++) {
-                                        if (geoList[i].srr_id && geoList[i].collection_type) {
-                                            var name = geoList[i].srr_id;
-                                            if (geoList[i].name) {
-                                                name = geoList[i].name;
-                                            }
-                                            var srr_id = geoList[i].srr_id;
-                                            var collection_type = geoList[i].collection_type;
-                                            if (collection_type == "single") {
-                                                collection_type = "Single";
-                                            } else if (collection_type == "pair") {
-                                                collection_type = "Paired";
-                                            }
-                                            var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
-                                            //check table data before adding.
-                                            var selected_data = selectedGeoSamplesTable.fnGetData();
-                                            var checkSelectedUniqueData = selected_data.filter(function (el) { return el[1] == srr_id });
-                                            var table_data = searchedGeoSamplesTable.fnGetData();
-                                            var checkTableUniqueData = table_data.filter(function (el) { return el[1] == srr_id });
-                                            if (checkTableUniqueData.length == 0 && checkSelectedUniqueData.length == 0) {
-                                                searchedGeoSamplesTable.fnAddData([name, srr_id, collection_type, select_button]);
+                            if (geoList.length) {
+                                for (var i = 0; i < geoList.length; i++) {
+                                    if (geoList[i].srr_id && geoList[i].collection_type) {
+                                        var name = geoList[i].srr_id;
+                                        if (geoList[i].name) {
+                                            name = geoList[i].name;
+                                        }
+                                        var srr_id = geoList[i].srr_id;
+                                        var collection_type = geoList[i].collection_type;
+                                        if (collection_type == "single") {
+                                            collection_type = "Single";
+                                        } else if (collection_type == "pair") {
+                                            collection_type = "Paired";
+                                        }
+                                        var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
+                                        //check table data before adding.
+                                        var selected_data = selectedGeoSamplesTable.fnGetData();
+                                        var checkSelectedUniqueData = selected_data.filter(function (el) { return el[1] == srr_id });
+                                        var table_data = searchedGeoSamplesTable.fnGetData();
+                                        var checkTableUniqueData = table_data.filter(function (el) { return el[1] == srr_id });
+                                        if (checkTableUniqueData.length == 0 && checkSelectedUniqueData.length == 0) {
+                                            searchedGeoSamplesTable.fnAddData([name, srr_id, collection_type, select_button]);
+                                        } else {
+                                            if (errCount < 1) {
+                                                showInfoModal("#infoModal", "#infoModalText", "Search term " + srr_id + " already added into table.")
                                             } else {
-                                                if (errCount < 1) {
-                                                    showInfoModal("#infoModal", "#infoModalText", "Search term " + srr_id + " already added into table.")
-                                                } else {
-                                                    var oldtext = $("#infoModalText").html();
-                                                    $("#infoModalText").html(oldtext + "</br>" + "Search term " + srr_id + " already added into table.");
-                                                }
-                                                errCount += 1
+                                                var oldtext = $("#infoModalText").html();
+                                                $("#infoModalText").html(oldtext + "</br>" + "Search term " + srr_id + " already added into table.");
                                             }
+                                            errCount += 1
                                         }
                                     }
                                 }
-                            }
-                        }
+                            }                        }
                     }
                 });
 
