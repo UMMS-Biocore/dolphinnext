@@ -2467,11 +2467,11 @@ function getSelectFileButton(paraQualifier, dropDownQual, dropDownMenu, defValBu
     var buttons = ""
     if (!dropDownQual) {
         if (paraQualifier === 'file') {
-            var buttons = getButtonsModal('inputFile', 'Select File') + defValButton;
+            var buttons = getButtonsModal('inputFile', 'Enter File') + defValButton;
         } else if (paraQualifier === 'val') {
             var buttons = getButtonsModal('inputVal', 'Enter Value') + defValButton;
         } else {
-            var buttons = getButtonsModal('inputFile', 'Select Set') + defValButton;
+            var buttons = getButtonsModal('inputFile', 'Enter File') + defValButton;
         }
     } else {
         var buttons = dropDownMenu + defValButton;
@@ -3016,7 +3016,7 @@ function loadPipelineDetails(pipeline_id) {
             // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
             setTimeout(function () {
                 //position where all inputs filled
-                if (autoFillJSON !== undefined && autoFillJSON !== null){
+                if (autoFillJSON !== undefined && autoFillJSON !== null) {
                     autofillEmptyInputs(autoFillJSON)
                 }
                 cleanDepProPipeInputs();
@@ -3262,7 +3262,7 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
         if (qualifier === 'file' || qualifier === 'set') {
             var editIcon = getIconButtonModal('inputFile', 'Edit', 'fa fa-pencil');
             var deleteIcon = getIconButton('inputDel', 'Delete', 'fa fa-trash-o');
-            $('#' + rowID).find('#inputFileSelect').css('display', 'none');
+            $('#' + rowID).find('#inputFileEnter').css('display', 'none');
             $('#' + rowID).find('#defValUse').css('display', 'none');
         } else {
             var editIcon = getIconButtonModal('inputVal', 'Edit', 'fa fa-pencil');
@@ -3290,7 +3290,7 @@ function removeSelectFile(rowID, sType) {
         $('#' + rowID).removeAttr('propipeinputid');
     } else {
         if (sType === 'file' || sType === 'set') {
-            $('#' + rowID).find('#inputFileSelect').css('display', 'inline');
+            $('#' + rowID).find('#inputFileEnter').css('display', 'inline');
             $('#' + rowID).find('#defValUse').css('display', 'inline');
         } else if (sType === 'val') {
             $('#' + rowID).find('#inputValEnter').css('display', 'inline');
@@ -3393,6 +3393,8 @@ function saveFileSetValModal(data, sType, inputID, collection) {
     } else if (sType === 'val') {
         var rowID = $('#mIdVal').attr('rowID'); //the id of table-row to be updated #inputTa-3
     }
+    console.log(sType)
+    console.log(rowID)
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
@@ -5165,7 +5167,8 @@ $(document).ready(function () {
                                         }
                                     }
                                 }
-                            }                        }
+                            }
+                        }
                     }
                 });
 
@@ -5742,13 +5745,15 @@ $(document).ready(function () {
     $('#inputFilemodal').on('show.bs.modal', function (e) {
         var button = $(e.relatedTarget);
         $(this).find('form').trigger('reset');
-        $('.nav-tabs a[href="#manualTab"]').tab('show');
+        $('#projectFileTable').DataTable().rows().deselect();
+        $('.nav-tabs a[href="#manualTab"]').trigger("click");
         selectMultiselect("#select-collection", []);
         sampleTable.rows().deselect();
         var clickedRow = button.closest('tr');
         var rowID = clickedRow[0].id; //#inputTa-3
+        console.log(rowID)
         var gNumParam = rowID.split("Ta-")[1];
-        if (button.attr('id') === 'inputFileSelect') {
+        if (button.attr('id') === 'inputFileEnter') {
             $('#filemodaltitle').html('Select/Add Input File');
             $('#mIdFile').attr('rowID', rowID);
         } else if (button.attr('id') === 'inputFileEdit') {
@@ -5783,6 +5788,9 @@ $(document).ready(function () {
                 }
             }
         }
+    });
+    $('#inputFilemodal').on('shown.bs.modal', function (e) {
+        $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
     });
 
 
@@ -5845,8 +5853,6 @@ $(document).ready(function () {
         if (checkdata === 'importedFilesTab') {
             $('#inputFilemodal').loading("stop");
             var fillCollection = function (savetype, collection) {
-                //                console.log(savetype)
-                //                console.log(!savetype.length)
                 if (!savetype.length) { //add item
                     saveFileSetValModal(null, 'file', null, collection);
                 } else {
@@ -5905,8 +5911,6 @@ $(document).ready(function () {
                         }
                     }
                 }
-
-
             }
         } else {
             if (!savetype.length) { //add item
@@ -5920,15 +5924,10 @@ $(document).ready(function () {
                         saveFileSetValModal(data, 'file', null, null);
                         $('#inputFilemodal').loading("stop");
                         $('#inputFilemodal').modal('hide');
+                    } else {
+                        $('#inputFilemodal').loading("stop");
+                        showInfoModal("#infoModal", "#infoModalText", "Please enter or select files from table to fill 'File Path' box.")
                     }
-                } else if (checkdata === 'projectFileTab') {
-                    var rows_selected = projectFileTable.column(0).checkboxes.selected();
-                    if (rows_selected.length === 1) {
-                        var input_id = rows_selected[0];
-                        saveFileSetValModal(null, 'file', input_id, null);
-                    }
-                    $('#inputFilemodal').loading("stop");
-                    $('#inputFilemodal').modal('hide');
                 } else if (checkdata === 'publicFileTab') {
                     var rows_selected = publicFileTable.column(0).checkboxes.selected();
                     if (rows_selected.length === 1) {
@@ -5948,14 +5947,9 @@ $(document).ready(function () {
                         editFileSetValModal(data, 'file', null, null);
                         $('#inputFilemodal').loading("stop");
                         $('#inputFilemodal').modal('hide');
-                    }
-                } else if (checkdata === 'projectFileTab') {
-                    var rows_selected = projectFileTable.column(0).checkboxes.selected();
-                    if (rows_selected.length === 1) {
-                        var input_id = rows_selected[0];
-                        editFileSetValModal(null, 'file', input_id, null);
+                    } else {
                         $('#inputFilemodal').loading("stop");
-                        $('#inputFilemodal').modal('hide');
+                        showInfoModal("#infoModal", "#infoModalText", "Please enter or select files from table to fill 'File Path' box.")
                     }
                 } else if (checkdata === 'publicFileTab') {
                     var rows_selected = publicFileTable.column(0).checkboxes.selected();
@@ -5967,29 +5961,29 @@ $(document).ready(function () {
                     }
                 }
             }
-
-
         }
-
-
-
-
-
+        $('#inputFilemodal').loading("stop");
     });
 
-    //clicking on tabs of select files table
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+
+
+    //clicking on top tabs of select files table
+    $('a[data-toggle="tab"]').on('shown.bs.tab click', function (e) {
         // header fix of datatabes in add to files/values tab
         $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
         var activatedTab = $(e.target).attr("href")
-        if (activatedTab === "#projectFileTab") {
+        console.log(activatedTab)
+        if (activatedTab === "#manualTab") {
             var projectRows = $('#projectListTable > tbody >');
             // if project is exist click on the first one to show files
+            console.log(projectRows)
             if (projectRows && projectRows.length > 0) {
                 $('#projectListTable > tbody > tr > td ').find('[projectid="' + project_id + '"]').trigger("click")
             }
-        } else if (activatedTab === "#projectValTab") {
+        } else if (activatedTab === "#manualTabV") {
             var projectRows = $('#projectListTableVal > tbody >');
+            console.log(projectRows)
+            
             // if project is exist click on the first one to show files
             if (projectRows && projectRows.length > 0) {
                 $('#projectListTableVal > tbody > tr > td ').find('[projectid="' + project_id + '"]').trigger("click")
@@ -6033,10 +6027,9 @@ $(document).ready(function () {
 
     function createFileTable(table_id, ajax) {
         window[table_id] = $('#' + table_id).DataTable({
-            scrollY: '42vh',
+//            scrollY: '42vh',
             "dom": '<"top"i>rt<"pull-left"f><"bottom"p><"clear">',
             "bInfo": false,
-            "autoWidth": false,
             "ajax": {
                 url: "ajax/ajaxquery.php",
                 data: ajax,
@@ -6088,6 +6081,28 @@ $(document).ready(function () {
             }
         });
     }
+
+    //clicking on rows of projectFileTable
+    $('#projectFileTable').on('click', 'tr', function (event) {
+        var a = $('#projectFileTable').dataTable().fnGetData(this);
+        if (a) {
+            if (a.name) {
+                var name = a.name;
+                $("#mFilePath").val(name)
+            }
+        }
+    });
+    //clicking on rows of projectValTable
+    $('#projectValTable').on('click', 'tr', function (event) {
+        var a = $('#projectValTable').dataTable().fnGetData(this);
+        if (a) {
+            if (a.name) {
+                var name = a.name;
+                $("#mValName").val(name)
+            }
+        }
+    });
+
     //left side project list table on add File/value modals
     createProjectListTable('projectListTable');
     createProjectListTable('projectListTableVal');
@@ -6125,7 +6140,8 @@ $(document).ready(function () {
     $('#inputValmodal').on('show.bs.modal', function (e) {
         var button = $(e.relatedTarget);
         $(this).find('form').trigger('reset');
-        $('.nav-tabs a[href="#manualTabV"]').tab('show');
+        $('#projectValTable').DataTable().rows().deselect();
+        $('.nav-tabs a[href="#manualTabV"]').trigger("click");
         var clickedRow = button.closest('tr');
         var rowID = clickedRow[0].id; //#inputTa-3
         var gNumParam = rowID.split("Ta-")[1];
@@ -6153,6 +6169,10 @@ $(document).ready(function () {
             }
         }
     });
+    $('#inputValmodal').on('shown.bs.modal', function (e) {
+        $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+
+    });
 
     $('#inputValmodal').on('click', '#saveValue', function (e) {
         e.preventDefault();
@@ -6171,15 +6191,10 @@ $(document).ready(function () {
                     saveFileSetValModal(data, 'val', null, null);
                     $('#inputValmodal').loading("stop");
                     $('#inputValmodal').modal('hide');
-                }
-            } else if (checkdata === 'projectValTab') {
-                var rows_selected = projectValTable.column(0).checkboxes.selected();
-                if (rows_selected.length === 1) {
-                    var input_id = rows_selected[0];
-                    saveFileSetValModal(null, 'val', input_id, null);
-                }
-                $('#inputValmodal').loading("stop");
-                $('#inputValmodal').modal('hide');
+                } else {
+                        $('#inputValmodal').loading("stop");
+                        showInfoModal("#infoModal", "#infoModalText", "Please enter or select values from table to fill 'Value' box.")
+                    }
             } else if (checkdata === 'publicValTab') {
                 var rows_selected = publicValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
@@ -6199,16 +6214,11 @@ $(document).ready(function () {
                     editFileSetValModal(data, 'val', null, null);
                     $('#inputValmodal').loading("stop");
                     $('#inputValmodal').modal('hide');
-                }
-            } else if (checkdata === 'projectValTab') {
-                var rows_selected = projectValTable.column(0).checkboxes.selected();
-                if (rows_selected.length === 1) {
-                    var input_id = rows_selected[0];
-                    editFileSetValModal(null, 'val', input_id, null);
-                    $('#inputValmodal').loading("stop");
-                    $('#inputValmodal').modal('hide');
-                }
-            } else if (checkdata === 'publicValTab') {
+                } else {
+                        $('#inputValmodal').loading("stop");
+                        showInfoModal("#infoModal", "#infoModalText", "Please enter or select values from table to fill 'Value' box.")
+                    }
+            }  else if (checkdata === 'publicValTab') {
                 var rows_selected = publicValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
                     var input_id = rows_selected[0];

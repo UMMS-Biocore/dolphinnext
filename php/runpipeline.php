@@ -535,16 +535,16 @@
                 <div id="fileAddOptions" role="tabpanel">
                     <!-- Nav tabs -->
                     <ul id="fileNav" class="nav nav-tabs" role="tablist">
-                        <li id="manualTabFile" class="nav-item"><a class="nav-item" data-toggle="tab" href="#manualTab">Manually</a></li>
                         <li id="importedFiles" class="active"><a class="nav-item" data-toggle="tab" href="#importedFilesTab">Files</a></li>
+                        <li id="manualTabFile" class="nav-item"><a class="nav-item" data-toggle="tab" href="#manualTab">Manually</a></li>
                         <li id="publicFileTabFile"><a class="nav-item" data-toggle="tab" href="#publicFileTab">Public Files</a></li>
-                        <li id="projectFileTabFile"><a class="nav-item" data-toggle="tab" href="#projectFileTab">Project Files</a></li>
+                        <!--                        <li id="projectFileTabFile"><a class="nav-item" data-toggle="tab" href="#projectFileTab">Project Files</a></li>-->
 
                         </li>
                     </ul>
                     <!-- Tab panes -->
                     <div id="fileContent" class="tab-content">
-                        <div role="tabpanel" class="tab-pane" id="importedFilesTab">
+                        <div role="tabpanel" class="tab-pane active" id="importedFilesTab">
                             <div class="panel panel-default">
                                 </br>
                                 <div class="panel-body">
@@ -564,10 +564,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div role="tabpanel" class="tab-pane active" id="manualTab">
+                        <div role="tabpanel" class="tab-pane" id="manualTab">
                             <div class="panel panel-default">
                                 </br>
-                                <form style="padding-right:10px;" class="form-horizontal">
+                                <form style="padding-top:30px; padding-right:10px; padding-bottom:50px; border-bottom:1px solid lightgrey; " class="form-horizontal">
                                     <div class="form-group" style="display:none">
                                         <label for="mIdFile" class="col-sm-2 control-label">ID</label>
                                         <div class="col-sm-10">
@@ -576,11 +576,36 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="mFilePath" class="col-sm-2 control-label">File Path</label>
-                                        <div class="col-sm-10">
+                                        <div class="col-sm-9">
                                             <input type="text" class="form-control" id="mFilePath" name="name">
                                         </div>
                                     </div>
                                 </form>
+                                </br>
+                                <div class="row">
+                                    <div class="col-sm-3" style="border-right:1px solid lightgrey; padding-top:6px;">
+                                        <table id="projectListTable" class="table  table-striped display" cellspacing="0" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Project Name</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-9" style="overflow:auto">
+                                        <table id="projectFileTable" class="table table-striped  display" cellspacing="0" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Check</th>
+                                                    <th scope="col">File/Values</th>
+                                                    <th scope="col">Modified On</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody style="word-break: break-all; "></tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div id="publicFileTab" class="tab-pane ">
@@ -596,32 +621,6 @@
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        <div role="tabpanel" class="tab-pane" id="projectFileTab">
-                            <div class="row">
-                                <div class="col-sm-3" style="border-right:1px solid lightgrey; padding-top:6px;">
-                                    <table id="projectListTable" class="table  table-striped display" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Project Name</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
-                                </div>
-                                <div class="col-sm-9" style="padding-top:6px;">
-                                    <table id="projectFileTable" class="table  table-striped  display" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Check</th>
-                                                <th scope="col">File/Values</th>
-                                                <th scope="col">Modified On</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody style="word-break: break-all; "></tbody>
                                     </table>
                                 </div>
                             </div>
@@ -653,8 +652,6 @@
                     <ul id="ValNav" class="nav nav-tabs" role="tablist">
                         <li id="manualTabVal" class="active"><a class="nav-item" data-toggle="tab" href="#manualTabV">Manually</a></li>
                         <li id="publicValTabVal"><a class="nav-item" data-toggle="tab" href="#publicValTab">Public Values</a></li>
-                        <li id="projectValTabVal"><a class="nav-item" data-toggle="tab" href="#projectValTab">Project Values</a></li>
-
                         </li>
                     </ul>
                     <!-- Tab panes -->
@@ -662,7 +659,7 @@
                         <div role="tabpanel" class="tab-pane active" id="manualTabV">
                             <div class="panel panel-default">
                                 </br>
-                                <form style="padding-right:10px;" class="form-horizontal">
+                                <form style="padding-top:30px; padding-right:10px; padding-bottom:50px; border-bottom:1px solid lightgrey; " class="form-horizontal">
                                     <div class="form-group" style="display:none">
                                         <label for="mIdVal" class="col-sm-2 control-label">ID</label>
                                         <div class="col-sm-10">
@@ -670,12 +667,36 @@
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="mValName" class="col-sm-2 control-label">Value</label>
-                                        <div class="col-sm-10">
+                                        <label for="mValName" class="col-sm-1 control-label">Value</label>
+                                        <div class="col-sm-11">
                                             <input type="text" class="form-control" id="mValName" name="name">
                                         </div>
                                     </div>
                                 </form>
+                                <div class="row">
+                                <div class="col-sm-3" style="border-right:1px solid lightgrey; padding-top:6px;">
+                                    <table id="projectListTableVal" class="table  table-striped display" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Project Name</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                                <div class="col-sm-9" style="overflow:auto">
+                                    <table id="projectValTable" class="table  table-striped  display" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Check</th>
+                                                <th scope="col">File/Values</th>
+                                                <th scope="col">Modified On</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody style="word-break: break-all; "></tbody>
+                                    </table>
+                                </div>
+                            </div>
                             </div>
                         </div>
                         <div id="publicValTab" class="tab-pane ">
@@ -691,32 +712,6 @@
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        <div role="tabpanel" class="tab-pane" id="projectValTab">
-                            <div class="row">
-                                <div class="col-sm-3" style="border-right:1px solid lightgrey; padding-top:6px;">
-                                    <table id="projectListTableVal" class="table  table-striped display" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Project Name</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
-                                </div>
-                                <div class="col-sm-9" style="padding-top:6px;">
-                                    <table id="projectValTable" class="table  table-striped  display" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Check</th>
-                                                <th scope="col">File/Values</th>
-                                                <th scope="col">Modified On</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody style="word-break: break-all; "></tbody>
                                     </table>
                                 </div>
                             </div>
@@ -916,7 +911,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                    
+
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:45px;">3. Selected GEO Files <span><a data-toggle="tooltip" data-placement="bottom" title="These files will be added into collection" class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                 </div>

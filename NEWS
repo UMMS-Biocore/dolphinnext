@@ -1,5 +1,6 @@
 03.03.2019 Version 0.2.89
 Initial run is parallelized.
+Project files/values tab moved into manually tab.
 Autofill empty system inputs feature added.
 GEO import added.
 Pipeline copy button removed from top right of the screen and documentation updated.
