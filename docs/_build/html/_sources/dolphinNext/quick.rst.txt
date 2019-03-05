@@ -7,7 +7,7 @@ This guide will walk you through how to start using dolphinNext pipelines and cr
 Getting Started
 ===============
 
-First off, you need to enter dolphinNext web page: https://dolphinnext.umassmed.edu/ and click **Sign in with Google** button on the top left. You will be asked to choose your google account to enter your profile. 
+First off, you need to enter dolphinNext web page: https://dolphinnext.umassmed.edu/ and click **Sign Up** or **Sign in with Google** buttons. You will be asked to enter your institute information. An email will be sent to you upon verification of your information. 
 
 .. image:: dolphinnext_images/sign_in.png
 	:align: center
@@ -28,7 +28,7 @@ Follow through the steps `in profile page <profile.html>`_ to create SSH Key (op
 Running Pipelines
 =================
 
-The easiest way to run pipeline is going to main page by clicking the **Biocore DolphinNext** button at the top left of the screen. Now, you can investigate publicly available pipelines as shown at below and select the pipeline you want run by clicking **Learn More** button.
+The easiest way to run pipeline is going to use main page by clicking the **Biocore DolphinNext** button at the top left of the screen. Now, you can investigate publicly available pipelines as shown at below and select the pipeline you want run by clicking **Learn More** button.
 
     .. image:: dolphinnext_images/main_page.png
 	   :align: center
@@ -77,15 +77,17 @@ You can initiate your run by clicking ``ready to run`` button. Please go through
 Editing Processes/Pipelines
 ===========================
 
-The simpliest way to edit pipelines/processes is creating copy of the existing ones by clicking **copy pipeline**/**copy process** buttons on the top right of the pages.
+The simpliest way to edit pipelines is creating a copy of the existing ones by clicking **copy pipeline** icon which is located just next to pipeline title. 
 
 .. image:: dolphinnext_images/copy_pipeline.png
 	:align: center
     
+Similarly you can create a copy of process by clicking **copy process** button on the top right of the process window.
+    
 .. image:: dolphinnext_images/copy_process.png
 	:align: center
     
-Once you copied the pipeline/process, you can easily modify and save on the your versions.
+Once you copied the pipeline/process, you will own all the  permissions of your process/pipeline and you can easily modify and save on your version.
 
 Creating New Pipelines/Processes
 ================================

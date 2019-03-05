@@ -91,14 +91,25 @@ function checkArraysEqual(a, b) {
     return true;
 }
 
+function showLoadingDiv(parentId) {
+    $("#" + parentId).addClass("loader-spin-parent")
+    $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /></div>');
+}
+
+function hideLoadingDiv(parentId) {
+    $("#" + parentId).removeClass("loader-spin-parent")
+    $('#loading-image-' + parentId).remove();
+}
+
+
 //eg showInfoModal('#warnDelete','#warnDeleteText', text)
 function showInfoModal(modalId, textID, text) {
-    $(modalId).off();
-    $(modalId).on('show.bs.modal', function (event) {
-        $(this).find('form').trigger('reset');
-        $(textID).html(text);
-    });
-    $(modalId).modal('show');
+        $(modalId).off();
+        $(modalId).on('show.bs.modal', function (event) {
+            $(this).find('form').trigger('reset');
+            $(textID).html(text);
+        });
+        $(modalId).modal('show');
 }
 
 

@@ -49,17 +49,6 @@
                 </div>
             </div>
 
-
-            <div id="pipeActionsDiv" style="float:right; margin-right:5px;" class="dropdown">
-                <button class="btn btn-default dropdown-toggle" type="button" id="pipeActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;">
-                    <div class="fa fa-ellipsis-h"></div>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu2">
-                    <li><a id="deletePipeRevision" data-toggle="modal" href="#confirmModal">Delete Revision</a></li>
-                    <li><a id="duplicaPipeline" onclick="duplicatePipeline()">Copy Pipeline</a></li>
-                    <li><a id="createRevPipe" style="display:none;" onclick="createRevPipeline()">Create Revision</a></li>
-                </ul>
-            </div>
             <div id="pipeRunDiv" style="float:right; margin-right:5px;" class="btn-group">
                 <button class="btn btn-success" type="button" id="pipeRun" data-toggle="modal" href="#mRun" style="vertical-align:middle;">Run</button>
                 <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
