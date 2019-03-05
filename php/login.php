@@ -19,10 +19,9 @@ function checkLDAP($email, $password){
 		$filter="mail=".$email."*";
 		$result = ldap_search($connection,$dn_string,$filter) or die ("Search error.");
 		$data = ldap_get_entries($connection, $result);
-		$binddn = $data[0]["dn"];
-		if (!isset($binddn))
+		if (!isset($data[0]["dn"]))
 		  return 0;
-		$bind = ldap_bind($connection, $binddn, $password);
+		$bind = ldap_bind($connection, $data[0]["dn"], $password);
 		if($bind) 
 		  return 1;
 		else
@@ -83,7 +82,8 @@ if(isset($_SESSION['google_login'])){
 if(isset($_POST['login'])){
     // check if user is active?
     if(!empty($_POST) && isset($_POST['email']) && $_POST['email'] !=""){
-    $check_active = $query->queryAVal("SELECT active FROM users WHERE email = '" . $_POST['email']."'");
+        
+    $check_active = $query->queryAVal("SELECT active FROM users WHERE email = '" .strtolower(str_replace("'","''",$_POST['email']))."'");
         list($active_user,$loginfail) = checkActive($check_active);
         if (is_null($loginfail) && $active_user == false){
            session_destroy();
@@ -102,11 +102,12 @@ if(isset($_POST['login'])){
         $res=1;
     } else if (LDAP_SERVER != 'none' || LDAP_SERVER != '' || LDAP_SERVER != 'N'){
 	  //	LDAP check
-	  $res=checkLDAP(strtolower($_POST['email']), $_POST['password']);
+	  $res=checkLDAP(strtolower(str_replace("'","''",$_POST['email'])), $_POST['password']);
 	}
     if ($res == 0){
         //	Database password
-		$pass_hash = $query->queryAVal("SELECT pass_hash FROM users WHERE email = '" . $_POST['email']."'");
+        error_log(strtolower(str_replace("'","''",$_POST['email'])));
+		$pass_hash = $query->queryAVal("SELECT pass_hash FROM users WHERE email = '" .strtolower(str_replace("'","''",$_POST['email']))."'");
 		if($pass_hash == $post_pass && $active_user == true){
             $res=1;
 		} else{
@@ -120,7 +121,7 @@ if(isset($_POST['login'])){
   
 	if($login_ok){ 
         $s="Successfull";
-        $_SESSION['email'] = strtolower($_POST['email']);
+        $_SESSION['email'] = strtolower(str_replace("'","''",$_POST['email']));
         $checkUserData = json_decode($query->getUserByEmail($_SESSION['email']));
         //check if user exits
         $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";

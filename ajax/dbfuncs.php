@@ -2271,6 +2271,8 @@ workflow.onComplete {
                 return json_encode("Connection failed! Please check your connection profile or internet connection");
             }
     }
+    
+    //installed edirect(esearch,efetch) path should be added into .bashrc
     public function getSRRData($srr_id, $ownerID) {
         $obj = new stdClass();
         $command = "source ~/.bashrc && esearch -db sra -query $srr_id |efetch -format runinfo";
@@ -2297,6 +2299,8 @@ workflow.onComplete {
         }
         return $obj;
     }
+    
+    //installed edirect(esearch,efetch) path should be added into .bashrc
     public function getGeoData($geo_id, $ownerID) {
         $data = array();
         if (preg_match("/SRR/", $geo_id) || preg_match("/GSM/", $geo_id)){
