@@ -311,7 +311,7 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
             \$inputDirCheck = \"true\";
         } elsif ( checkFile(\$inputFile1) || checkFile(\$inputFile2) ) {
             ## if only one of them exist then remove files
-            runCommand(\"rm -f \$inputFile1 && rm -f \$inputFile2\");
+            runCommand(\"rm -f \$inputFile1 \$inputFile2\");
         }
     }
 
@@ -335,7 +335,7 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
                 \$archiveDirCheck = \"true\";
             } elsif ( checkFile(\"\$archFile1.gz\") || checkFile(\"\$archFile2.gz\") ) {
                 ## if only one of them exist then remove files
-                runCommand(\"rm -f \$archFile1.gz && rm -f \$archFile2.gz\");
+                runCommand(\"rm -f \$archFile1.gz \$archFile2.gz\");
             }
         }
     }
@@ -507,7 +507,7 @@ sub mergeGzipCountMd5sum {
 
 sub fasterqDump {
     my ( \$gzip, \$outDir, \$srrID, \$file_name,  \$collection_type) = @_;
-    runCommand(\"mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra -o \$file_name \$srrID\");
+    runCommand(\"rm -f \$outDir/\${file_name}_1.fastq \$outDir/\${file_name}_2.fastq \$outDir/\${file_name} && mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra -o \$file_name \$srrID\");
     if (\$collection_type eq \"pair\"){
         runCommand(\"mv \$outDir/\${file_name}_1.fastq  \$outDir/\${file_name}.R1.fastq \");
         runCommand(\"mv \$outDir/\${file_name}_2.fastq  \$outDir/\${file_name}.R2.fastq \");
