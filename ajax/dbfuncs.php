@@ -311,7 +311,7 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
             \$inputDirCheck = \"true\";
         } elsif ( checkFile(\$inputFile1) || checkFile(\$inputFile2) ) {
             ## if only one of them exist then remove files
-            runCommand(\"rm -f \$inputFile1 && rm -f \$inputFile2\");
+            runCommand(\"rm -f \$inputFile1 \$inputFile2\");
         }
     }
 
@@ -335,7 +335,7 @@ for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
                 \$archiveDirCheck = \"true\";
             } elsif ( checkFile(\"\$archFile1.gz\") || checkFile(\"\$archFile2.gz\") ) {
                 ## if only one of them exist then remove files
-                runCommand(\"rm -f \$archFile1.gz && rm -f \$archFile2.gz\");
+                runCommand(\"rm -f \$archFile1.gz \$archFile2.gz\");
             }
         }
     }
@@ -507,7 +507,7 @@ sub mergeGzipCountMd5sum {
 
 sub fasterqDump {
     my ( \$gzip, \$outDir, \$srrID, \$file_name,  \$collection_type) = @_;
-    runCommand(\"mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra -o \$file_name \$srrID\");
+    runCommand(\"rm -f \$outDir/\${file_name}_1.fastq \$outDir/\${file_name}_2.fastq \$outDir/\${file_name} && mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra -o \$file_name \$srrID\");
     if (\$collection_type eq \"pair\"){
         runCommand(\"mv \$outDir/\${file_name}_1.fastq  \$outDir/\${file_name}.R1.fastq \");
         runCommand(\"mv \$outDir/\${file_name}_2.fastq  \$outDir/\${file_name}.R2.fastq \");
@@ -1573,15 +1573,18 @@ workflow.onComplete {
         return self::queryTable($sql);
     }
     public function getUserByEmail($email) {
+        $email = str_replace("'", "''", $email);
         $sql = "SELECT * FROM users WHERE email = '$email'";
         return self::queryTable($sql);
     }
     public function insertGoogleUser($google_id, $email, $google_image) {
+        $email = str_replace("'", "''", $email);
         $sql = "INSERT INTO users(google_id, email, google_image, username, institute, lab, memberdate, date_created, date_modified, perms) VALUES
 			('$google_id', '$email', '$google_image', '', '', '', now() , now(), now(), '3')";
         return self::insTable($sql);
     }
     public function updateGoogleUser($id, $google_id, $email, $google_image) {
+        $email = str_replace("'", "''", $email);
         $sql = "UPDATE users SET google_id='$google_id', email='$email', google_image='$google_image', last_modified_user='$id' WHERE id = '$id'";
         return self::runSQL($sql);
     }
@@ -1591,6 +1594,7 @@ workflow.onComplete {
         return self::runSQL($sql);
     }
     public function updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID) {
+        $email = str_replace("'", "''", $email);
         $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', logintype='$logintype', email='$email', last_modified_user='$ownerID' WHERE id = '$id'";
         return self::runSQL($sql);
     }
@@ -1599,11 +1603,13 @@ workflow.onComplete {
         return self::runSQL($sql);
     }
     public function insertUserManual($name, $email, $username, $institute, $lab, $logintype) {
+        $email = str_replace("'", "''", $email);
         $sql = "INSERT INTO users(name, email, username, institute, lab, logintype, role, active, memberdate, date_created, date_modified, perms) VALUES
 			('$name', '$email', '$username', '$institute', '$lab', '$logintype','user', 1, now() , now(), now(), '3')";
         return self::insTable($sql);
     }
     public function checkExistUser($id,$username,$email) {
+        $email = str_replace("'", "''", $email);
         $error = array();
         if (!empty($id)){//update
             //check if username or e-mail is altered
@@ -2119,6 +2125,7 @@ workflow.onComplete {
     }
     
     public function getUpload($name,$email) {
+        $email = str_replace("'", "__", $email);
         $filename= "{$this->tmp_path}/uploads/$email/$name";
         // get contents of a file into a string
         $handle = fopen($filename, "r");
@@ -2127,6 +2134,7 @@ workflow.onComplete {
         return json_encode($content);
     }
     public function removeUpload($name,$email) {
+        $email = str_replace("'", "__", $email);
         $filename= "{$this->tmp_path}/uploads/$email/$name";
         unlink($filename);
         return json_encode("file deleted");
@@ -2271,6 +2279,8 @@ workflow.onComplete {
                 return json_encode("Connection failed! Please check your connection profile or internet connection");
             }
     }
+    
+    //installed edirect(esearch,efetch) path should be added into .bashrc
     public function getSRRData($srr_id, $ownerID) {
         $obj = new stdClass();
         $command = "source ~/.bashrc && esearch -db sra -query $srr_id |efetch -format runinfo";
@@ -2297,6 +2307,8 @@ workflow.onComplete {
         }
         return $obj;
     }
+    
+    //installed edirect(esearch,efetch) path should be added into .bashrc
     public function getGeoData($geo_id, $ownerID) {
         $data = array();
         if (preg_match("/SRR/", $geo_id) || preg_match("/GSM/", $geo_id)){
@@ -2643,6 +2655,7 @@ workflow.onComplete {
     }
     //------- feedback ------
     public function savefeedback($email,$message,$url) {
+        $email = str_replace("'", "''", $email);
         $sql = "INSERT INTO feedback(email, message, url, date_created) VALUES
 			('$email', '$message','$url', now())";
         return self::insTable($sql);
