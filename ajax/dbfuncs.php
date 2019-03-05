@@ -2273,12 +2273,11 @@ workflow.onComplete {
     }
     public function getSRRData($srr_id, $ownerID) {
         $obj = new stdClass();
-        $command = "esearch -db sra -query $srr_id |efetch -format runinfo";
+        $command = "source ~/.bashrc && esearch -db sra -query $srr_id |efetch -format runinfo";
         $resText = shell_exec("$command 2>&1 & echo $! &");
         if (!empty($resText)){
             $resText = trim($resText);
             $lines = explode("\n", $resText);
-            error_log(count($lines));
             if (count($lines) == 3){
                 $header = explode(",", $lines[1]); 
                 $vals = explode(",", $lines[2]); 
@@ -2304,7 +2303,7 @@ workflow.onComplete {
             $obj = $this->getSRRData($geo_id, $ownerID);
             $data[] = $obj;   
         } else if (preg_match("/GSE/", $geo_id)){
-            $command = "esearch -db gds -query $geo_id | esummary | xtract -pattern DocumentSummary -element title Accession";
+            $command = "source ~/.bashrc && esearch -db gds -query $geo_id | esummary | xtract -pattern DocumentSummary -element title Accession";
             $resText = shell_exec("$command 2>&1 & echo $! &");
             if (!empty($resText)){
                 $resText = trim($resText);
