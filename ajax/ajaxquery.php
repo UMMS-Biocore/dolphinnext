@@ -359,7 +359,7 @@ else if ($p=="changePassword"){
 }
 else if ($p=="saveUserManual"){
 	$name = str_replace("'", "", $_REQUEST['name']);
-	$email = str_replace("'", "", $_REQUEST['email']);
+	$email = $_REQUEST['email'];
 	$username = str_replace("'", "", $_REQUEST['username']);
 	$institute = str_replace("'", "", $_REQUEST['institute']);
 	$lab = str_replace("'", "", $_REQUEST['lab']);
