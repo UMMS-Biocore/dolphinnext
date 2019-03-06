@@ -1166,7 +1166,7 @@ function createRevision() {
                         //update process link into sidebar menu
                         sMenuProIdFinal = proName + '@' + newProcess_id;
                         updateSideBar(sMenuProIdFirst, sMenuProIdFinal, sMenuProGroupIdFirst, sMenuProGroupIdFinal);
-                        refreshDataset();
+//                        refreshDataset();
                         $('#addProcessModal').modal('hide');
                     },
                     error: function (errorThrown) {

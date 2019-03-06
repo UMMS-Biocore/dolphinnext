@@ -84,7 +84,9 @@ function drop(event) {
         window[newMainGnum].piID = piID;
         window[newMainGnum].MainGNum = gNum;
         window[newMainGnum].lastGnum = gNum;
-        window[newMainGnum].sData = getValues({ p: "loadPipeline", id: piID })
+        var newPipeObj = getValues({ p: "exportPipeline", id: piID });
+        $.extend(window.pipeObj, newPipeObj);
+        window[newMainGnum].sData = [window.pipeObj["main_pipeline_" + piID]]
         var proName = cleanProcessName(window[newMainGnum].sData[0].name);
         window[newMainGnum].lastPipeName = proName;
         // create new SVG workplace inside panel
@@ -94,23 +96,14 @@ function drop(event) {
     } else {
         addProcess(processDat, posX, posY);
     }
-
     autosave();
     event.stopPropagation();
     return false;
 }
 
-refreshDataset()
+parametersData = getValues({ p: "getAllParameters" })
 
-function refreshDataset() {
-    processData = getValues({
-        p: "getProcessData"
-    })
-    parametersData = getValues({
-        p: "getAllParameters"
-    })
 
-}
 var sData = "";
 var svg = "";
 var mainG = "";
@@ -133,7 +126,7 @@ function createSVG() {
     selectedg = ""
     diffx = 0
     diffy = 0
-
+    window.pipeObj = {};
     processList = {}
     processListMain = {}
     ccIDList = {} //pipeline module match id list
@@ -255,9 +248,9 @@ function getNewNodeId(edges, nullId, MainGNum) {
     var nullProcessGnum = nullId.split("-")[4];
     //check is parameter is unique:
     if (nullProcessInOut === "i") {
-        var nodes = getValues({ p: "getInputsPP", "process_id": nullProcessId })
+        var nodes = JSON.parse(window.pipeObj["pro_para_inputs_" + nullProcessId]);
     } else if (nullProcessInOut === "o") {
-        var nodes = getValues({ p: "getOutputsPP", "process_id": nullProcessId })
+        var nodes = JSON.parse(window.pipeObj["pro_para_outputs_" + nullProcessId]);
     }
     if (nodes) {
         var paraData = nodes.filter(function (el) { return el.parameter_id == nullProcessParId });
@@ -332,7 +325,7 @@ function openSubPipeline(piID, pObj) {
                 window[newMainGnum].piID = newPiID;
                 window[newMainGnum].MainGNum = MainGNum + "_" + pObj.gNum;
                 window[newMainGnum].lastGnum = pObj.gNum;
-                window[newMainGnum].sData = getValues({ p: "loadPipeline", id: newPiID })
+                window[newMainGnum].sData = [window.pipeObj["pipeline_module_" + newPiID]]
                 window[newMainGnum].lastPipeName = pObj.name;
                 // create new SVG workplace inside panel, if not added before
                 openSubPipeline(newPiID, window[newMainGnum]);
@@ -402,10 +395,8 @@ function translateSVG(mG, pObj) {
 
 function openPipeline(id) {
     createSVG()
-    sData = getValues({
-        p: "loadPipeline",
-        id: id
-    }) //all data from biocorepipe_save table
+    window.pipeObj = getValues({ p: "exportPipeline", id: id }); //all data regarding to pipeline
+    sData = [window.pipeObj["main_pipeline_" + id]]
     if (sData) {
         if (Object.keys(sData).length > 0) {
             nodes = sData[0].nodes
@@ -428,7 +419,7 @@ function openPipeline(id) {
                     window[newMainGnum].piID = piID;
                     window[newMainGnum].MainGNum = gNum;
                     window[newMainGnum].lastGnum = gNum;
-                    window[newMainGnum].sData = getValues({ p: "loadPipeline", id: piID })
+                    window[newMainGnum].sData = [window.pipeObj["pipeline_module_" + piID]]
                     window[newMainGnum].lastPipeName = name;
                     // create new SVG workplace inside panel
                     openSubPipeline(piID, window[newMainGnum]);
@@ -617,7 +608,9 @@ function insertProRowTable(process_id, procName, procDesc, procRev) {
 
 //--Pipeline details table --
 function addProPipeTab(id) {
-    var procData = processData.filter(function (el) { return el.id == id });
+    //    var procData = processData.filter(function (el) { return el.id == id });
+    var procData = JSON.parse(window.pipeObj["process_" + id]);
+
     if (procData && procData[0]) {
         var procName = procData[0].name;
         var procDesc = truncateName(decodeHtml(procData[0].summary), 'processTable');
@@ -1297,7 +1290,7 @@ function remove(delID) {
         d3.select("#" + g).remove()
         delete processList[g]
         delete processListNoOutput[g]
-        if (processListMain[g]){
+        if (processListMain[g]) {
             delete processListMain[g]
         }
         removeLines(g)
@@ -2476,8 +2469,8 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     } else {
         addProPipeTab(id)
         //--Pipeline details table ends---
-        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_" + id]);
-        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_" + id]);
+        pObj.inputs = JSON.parse(window.pipeObj["pro_para_inputs_" + id]);
+        pObj.outputs = JSON.parse(window.pipeObj["pro_para_outputs_" + id]);
         //gnum uniqe, id same id (Written in class) in same type process
         pObj.g = d3.select("#mainG" + MainGNum).append("g")
             .attr("id", "g" + MainGNum + "-" + pObj.gNum)
