@@ -50,16 +50,9 @@ function dragging(event) {
 function allowDrop(event) {
     event.preventDefault();
 }
-refreshDataset()
 
-function refreshDataset() {
-    parametersData = getValues({
-        p: "getAllParameters"
-    })
-    processData = getValues({
-        p: "getProcessData"
-    })
-}
+parametersData = getValues({p: "getAllParameters"})
+
 var sData = "";
 var svg = "";
 var mainG = "";
@@ -84,7 +77,7 @@ function createSVG() {
     selectedg = ""
     diffx = 0
     diffy = 0
-
+    
     processList = {}
     processListMain = {}
     ccIDList = {} //pipeline module match id list
@@ -158,9 +151,9 @@ function getNewNodeId(edges, nullId) {
     var nullProcessGnum = nullId.split("-")[4];
     //check is parameter is unique:
     if (nullProcessInOut === "i") {
-        var nodes = getValues({ p: "getInputsPP", "process_id": nullProcessId })
+        var nodes = JSON.parse(window.pipeObj["pro_para_inputs_" + nullProcessId]);
     } else if (nullProcessInOut === "o") {
-        var nodes = getValues({ p: "getOutputsPP", "process_id": nullProcessId })
+        var nodes = JSON.parse(window.pipeObj["pro_para_outputs_" + nullProcessId]);
     }
     if (nodes) {
         var paraData = nodes.filter(function (el) { return el.parameter_id == nullProcessParId });
@@ -268,7 +261,7 @@ function openSubPipeline(piID, pObj) {
                 window[newMainGnum].piID = newPiID;
                 window[newMainGnum].MainGNum = MainGNum + "_" + pObj.gNum;
                 window[newMainGnum].lastGnum = pObj.gNum;
-                window[newMainGnum].sData = getValues({ p: "loadPipeline", id: newPiID })
+                window[newMainGnum].sData = [window.pipeObj["pipeline_module_" + newPiID]]
                 window[newMainGnum].lastPipeName = pObj.name;
                 // create new SVG workplace inside panel, if not added before
                 openSubPipeline(newPiID, window[newMainGnum]);
@@ -309,11 +302,7 @@ function openSubPipeline(piID, pObj) {
 
 function openPipeline(id) {
     createSVG()
-    sData = getValues({
-        p: "loadPipeline",
-        id: id
-    }) //all data from biocorepipe_save table
-
+    sData = [window.pipeObj["main_pipeline_" + id]]
     if (Object.keys(sData).length > 0) {
         nodes = sData[0].nodes
         nodes = JSON.parse(nodes.replace(/'/gi, "\""))
@@ -335,7 +324,7 @@ function openPipeline(id) {
                 window[newMainGnum].piID = piID;
                 window[newMainGnum].MainGNum = gNum;
                 window[newMainGnum].lastGnum = gNum;
-                window[newMainGnum].sData = getValues({ p: "loadPipeline", id: piID })
+                window[newMainGnum].sData = [window.pipeObj["pipeline_module_" + piID]]
                 window[newMainGnum].lastPipeName = name;
                 // create new SVG workplace inside panel, if not added before
                 openSubPipeline(piID, window[newMainGnum]);
@@ -2710,7 +2699,8 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
     if (pObj !== window) {
         name = pObj.lastPipeName + "_" + name;
     }
-    var processData = getValues({ p: "getProcessData", "process_id": process_id });
+//    var processData = getValues({ p: "getProcessData", "process_id": process_id });
+    var processData = JSON.parse(window.pipeObj["process_" + process_id]);
     if (processData) {
         if (processData[0].script_header !== "" && processData[0].script_header !== null) {
             var pro_script_header = decodeHtml(processData[0].script_header);
@@ -2849,8 +2839,8 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         //--ProcessPanel (where process options defined)
         createProcessPanelAutoFill(id, pObj, name, process_id);
         //create process circle
-        pObj.inputs = JSON.parse(pObj.sData[0]["pro_para_inputs_" + id]);
-        pObj.outputs = JSON.parse(pObj.sData[0]["pro_para_outputs_" + id]);
+        pObj.inputs = JSON.parse(window.pipeObj["pro_para_inputs_" + id]);
+        pObj.outputs = JSON.parse(window.pipeObj["pro_para_outputs_" + id]);
 
         //gnum uniqe, id same id (Written in class) in same type process
         pObj.g = d3.select("#mainG" + MainGNum).append("g")
@@ -2985,25 +2975,30 @@ function addCandidates2DictForLoad(fir, pObj) {
 
 
 function loadPipelineDetails(pipeline_id) {
+    window.pipeObj = {};
     var getPipelineD = [];
     getPipelineD.push({ name: "id", value: pipeline_id });
-    getPipelineD.push({ name: "p", value: 'loadPipeline' });
+    getPipelineD.push({ name: "p", value: 'exportPipeline' });
+    
     $.ajax({
         type: "POST",
         url: "ajax/ajaxquery.php",
         data: getPipelineD,
         async: true,
         success: function (s) {
-            window.ajaxData.pipelineData = s;
-            $('#pipeline-title').text(s[0].name);
+            window.pipeObj = s
+            window.ajaxData.pipelineData = [window.pipeObj["main_pipeline_"+pipeline_id]];
+            var pData = window.ajaxData.pipelineData
+            console.log(pData)
+            $('#pipeline-title').text(pData[0].name);
             $('#pipeline-title').attr('href', 'index.php?np=1&id=' + pipeline_id);
-            $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: ' + s[0].name);
+            $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: ' + pData[0].name);
             $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
-            $('#pipelineSum').val(decodeHtml(s[0].summary));
-            if (s[0].script_pipe_header !== null) {
+            $('#pipelineSum').val(decodeHtml(pData[0].summary));
+            if (pData[0].script_pipe_header !== null) {
                 pipeGnum = 0;
-                script_pipe_header = decodeHtml(s[0].script_pipe_header);
+                script_pipe_header = decodeHtml(pData[0].script_pipe_header);
                 //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
                 //insertInputRowParams will add inputs rows within insertProPipePanel
                 insertProPipePanel(script_pipe_header, "pipe", "Pipeline", window);
@@ -3019,6 +3014,8 @@ function loadPipelineDetails(pipeline_id) {
                 if (autoFillJSON !== undefined && autoFillJSON !== null) {
                     autofillEmptyInputs(autoFillJSON)
                 }
+                //hide system inputs
+                $("#systemInputs").trigger("click");
                 cleanDepProPipeInputs();
             }, 100);
 
@@ -3159,8 +3156,7 @@ function loadProjectPipeline(pipeData) {
     } else {
         selectAmzKey();
     }
-    //hide system inputs
-    setTimeout(function () { $("#systemInputs").trigger("click"); }, 10);
+    
     //load user groups
     var allUserGrp = getValues({ p: "getUserGroups" });
     if (allUserGrp && allUserGrp != "") {
@@ -3205,7 +3201,7 @@ function loadProjectPipeline(pipeData) {
     } else {
         $('#jobSettingsDiv').css('display', 'none');
     }
-    setTimeout(function () { checkReadytoRun(); }, 1000);
+    setTimeout(function () { console.log("1"); checkReadytoRun(); }, 1000);
     $('#ownUserNamePip').text(pipeData[0].username);
     $('#datecreatedPip').text(pipeData[0].date_created);
     $('.lasteditedPip').text(pipeData[0].date_modified);
@@ -3393,13 +3389,12 @@ function saveFileSetValModal(data, sType, inputID, collection) {
     } else if (sType === 'val') {
         var rowID = $('#mIdVal').attr('rowID'); //the id of table-row to be updated #inputTa-3
     }
-    console.log(sType)
-    console.log(rowID)
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
     //check database if file is exist, if not exist then insert
     checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection);
+    console.log("2")
     checkReadytoRun();
 }
 
@@ -3416,11 +3411,13 @@ function editFileSetValModal(data, sType, inputID, collection) {
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
     //check database if file is exist, if not exist then insert
     checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection);
+    console.log("3")
     checkReadytoRun();
 }
 checkType = "";
 //checkType become "rerun" or "resumerun" when rerun or resume button is clicked.
 function checkReadytoRun(type) {
+    console.log("checkReady")
     if (checkType === "") {
         checkType = type || "";
     }
@@ -5661,7 +5658,7 @@ $(document).ready(function () {
         //check database if file is exist, if not exist then insert
         checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
         button.css("display", "none");
-        checkReadytoRun();
+        autoCheck()
     });
     //change on exec settings
     $(function () {
@@ -5705,6 +5702,7 @@ $(document).ready(function () {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
                 removeSelectFile(rowID, qualifier);
             }
+            console.log("6")
             checkReadytoRun();
         });
     });
@@ -5737,6 +5735,7 @@ $(document).ready(function () {
             $('#jobSettingsDiv').css('display', 'inline');
             fillForm('#allProcessSettTable', 'input', allProSett);
             selectAmzKey();
+            console.log("7")
             checkReadytoRun();
         });
     });
@@ -6133,6 +6132,7 @@ $(document).ready(function () {
         var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
         var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
         removeSelectFile(rowID, qualifier);
+        console.log("8")
         checkReadytoRun();
     });
 
