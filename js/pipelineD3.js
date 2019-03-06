@@ -86,6 +86,7 @@ function drop(event) {
         window[newMainGnum].lastGnum = gNum;
         var newPipeObj = getValues({ p: "exportPipeline", id: piID });
         $.extend(window.pipeObj, newPipeObj);
+        console.log(window.pipeObj)
         window[newMainGnum].sData = [window.pipeObj["main_pipeline_" + piID]]
         var proName = cleanProcessName(window[newMainGnum].sData[0].name);
         window[newMainGnum].lastPipeName = proName;
@@ -101,7 +102,11 @@ function drop(event) {
     return false;
 }
 
-parametersData = getValues({ p: "getAllParameters" })
+refreshDataset();
+function refreshDataset(){
+   parametersData = getValues({ p: "getAllParameters" }) 
+}
+
 
 
 var sData = "";
@@ -126,7 +131,6 @@ function createSVG() {
     selectedg = ""
     diffx = 0
     diffy = 0
-    window.pipeObj = {};
     processList = {}
     processListMain = {}
     ccIDList = {} //pipeline module match id list
@@ -395,7 +399,6 @@ function translateSVG(mG, pObj) {
 
 function openPipeline(id) {
     createSVG()
-    window.pipeObj = getValues({ p: "exportPipeline", id: id }); //all data regarding to pipeline
     sData = [window.pipeObj["main_pipeline_" + id]]
     if (sData) {
         if (Object.keys(sData).length > 0) {
@@ -608,8 +611,11 @@ function insertProRowTable(process_id, procName, procDesc, procRev) {
 
 //--Pipeline details table --
 function addProPipeTab(id) {
-    //    var procData = processData.filter(function (el) { return el.id == id });
-    var procData = JSON.parse(window.pipeObj["process_" + id]);
+    if (window.pipeObj["process_" + id]){
+        var procData = JSON.parse(window.pipeObj["process_" + id]);
+    } else {
+        var procData = getValues({ p: "getProcessData", "process_id": id });
+    }
 
     if (procData && procData[0]) {
         var procName = procData[0].name;

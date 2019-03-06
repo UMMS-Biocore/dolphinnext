@@ -532,7 +532,6 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
                 }
             }
         }
-        console.log(dataToProcessParam)
         if (dataToProcessParam.length > 0) {
             $.ajax({
                 type: "POST",
@@ -1166,7 +1165,7 @@ function createRevision() {
                         //update process link into sidebar menu
                         sMenuProIdFinal = proName + '@' + newProcess_id;
                         updateSideBar(sMenuProIdFirst, sMenuProIdFinal, sMenuProGroupIdFirst, sMenuProGroupIdFinal);
-//                        refreshDataset();
+                        //                        refreshDataset();
                         $('#addProcessModal').modal('hide');
                     },
                     error: function (errorThrown) {
@@ -1192,23 +1191,26 @@ function prepareInfoModal() {
 
 //xxxx
 function loadPipelineDetails(pipeline_id, usRole) {
+    window.pipeObj = {};
     var getPipelineD = [];
     getPipelineD.push({ name: "id", value: pipeline_id });
-    getPipelineD.push({ name: "p", value: 'loadPipeline' });
+    getPipelineD.push({ name: "p", value: 'exportPipeline' });
     $.ajax({
         type: "POST",
         url: "ajax/ajaxquery.php",
         data: getPipelineD,
         async: true,
         success: function (s) {
-            if (s[0]) {
+            if (s) {
+                window.pipeObj = s
+                var pData = [window.pipeObj["main_pipeline_"+pipeline_id]];
                 loadPipeMenuGroup(false);
                 $('#creatorInfoPip').css('display', "block");
-                $('#pipeline-title').changeVal(s[0].name);
-                $('#ownUserNamePip').text(s[0].username);
-                $('#pipelineSum').val(decodeHtml(s[0].summary));
-                pipelineOwn = s[0].own;
-                pipelinePerm = s[0].perms;
+                $('#pipeline-title').changeVal(pData[0].name);
+                $('#ownUserNamePip').text(pData[0].username);
+                $('#pipelineSum').val(decodeHtml(pData[0].summary));
+                pipelineOwn = pData[0].own;
+                pipelinePerm = pData[0].perms;
                 // if user not own it, cannot change or delete pipeline
                 if (pipelineOwn === "0") {
                     $('#delPipeline').remove();
@@ -1235,20 +1237,20 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     $("#permsPipe option[value='63']").attr("disabled", false);
                 }
                 // fill Script_modes
-                if (s[0].script_mode_header) {
-                    $('#script_mode_pipe_header').val(s[0].script_mode_header);
+                if (pData[0].script_mode_header) {
+                    $('#script_mode_pipe_header').val(pData[0].script_mode_header);
                 }
-                if (s[0].script_mode_footer) {
-                    $('#script_mode_pipe_footer').val(s[0].script_mode_footer);
+                if (pData[0].script_mode_footer) {
+                    $('#script_mode_pipe_footer').val(pData[0].script_mode_footer);
                 }
                 //load header and foother script
-                if (s[0].script_pipe_header !== "" && s[0].script_pipe_header !== null) {
-                    var editorScriptPipeHeader = removeDoubleQuote(decodeHtml(s[0].script_pipe_header));
+                if (pData[0].script_pipe_header !== "" && pData[0].script_pipe_header !== null) {
+                    var editorScriptPipeHeader = removeDoubleQuote(decodeHtml(pData[0].script_pipe_header));
                     editorPipeHeader.setValue(editorScriptPipeHeader);
                     editorPipeHeader.clearSelection();
                 }
-                if (s[0].script_pipe_footer !== "" && s[0].script_pipe_footer !== null) {
-                    var editorScriptPipeFooter = removeDoubleQuote(decodeHtml(s[0].script_pipe_footer));
+                if (pData[0].script_pipe_footer !== "" && pData[0].script_pipe_footer !== null) {
+                    var editorScriptPipeFooter = removeDoubleQuote(decodeHtml(pData[0].script_pipe_footer));
                     editorPipeFooter.setValue(editorScriptPipeFooter);
                     editorPipeFooter.clearSelection();
                 }
@@ -1259,32 +1261,32 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     var optionGroup = new Option(param.name, param.id);
                     $("#groupSelPipe").append(optionGroup);
                 }
-                if (s[0].group_id !== "0") {
-                    $('#groupSelPipe').val(s[0].group_id);
+                if (pData[0].group_id !== "0") {
+                    $('#groupSelPipe').val(pData[0].group_id);
                 }
-                $('#publishPipe').val(s[0].publish);
+                $('#publishPipe').val(pData[0].publish);
                 // permissions
-                $('#permsPipe').val(s[0].perms);
-                if (s[0].perms === "63" && usRole !== "admin") {
+                $('#permsPipe').val(pData[0].perms);
+                if (pData[0].perms === "63" && usRole !== "admin") {
                     $("#permsPipe").attr('disabled', "disabled");
                     $("#publishPipe").attr('disabled', "disabled");
                     $('#pipeGroupAll')[0].selectize.disable();
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
                 }
-                if (s[0].pin === 'true') {
+                if (pData[0].pin === 'true') {
                     $('#pin').attr('checked', true);
-                } else if (s[0].pin === "false") {
+                } else if (pData[0].pin === "false") {
                     $('#pin').removeAttr('checked');
                 }
-                if (s[0].pin_order !== "0") {
-                    $('#pin_order').val(s[0].pin_order);
+                if (pData[0].pin_order !== "0") {
+                    $('#pin_order').val(pData[0].pin_order);
                 }
-                $('#datecreatedPip').text(s[0].date_created);
-                $('.lasteditedPip').text(s[0].date_modified);
-                if (s[0].pipeline_group_id !== "" && s[0].pipeline_group_id !== null) {
-                    $('#pipeGroupAll')[0].selectize.setValue(s[0].pipeline_group_id, false);
-                    $('#pipeGroupAll').attr("pipe_group_id", s[0].pipeline_group_id);
+                $('#datecreatedPip').text(pData[0].date_created);
+                $('.lasteditedPip').text(pData[0].date_modified);
+                if (pData[0].pipeline_group_id !== "" && pData[0].pipeline_group_id !== null) {
+                    $('#pipeGroupAll')[0].selectize.setValue(pData[0].pipeline_group_id, false);
+                    $('#pipeGroupAll').attr("pipe_group_id", pData[0].pipeline_group_id);
                 }
                 $('#pipeGroupAll').change(function () {
                     var id = $("#pipeline-title").attr('pipelineid');
@@ -1393,7 +1395,6 @@ function downloadPdf() {
 function exportPipeline() {
     var pipeline_id = $('#pipeline-title').attr('pipelineid');
     var text = getValues({ p: "exportPipeline", id: pipeline_id });
-    console.log(text)
     if (text) {
         text = JSON.stringify(text)
         text = CryptoJS.AES.encrypt(text, "");
@@ -1501,7 +1502,9 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         window[newMainGnum].piID = piID;
         window[newMainGnum].MainGNum = gNum;
         window[newMainGnum].lastGnum = gNum;
-        window[newMainGnum].sData = getValues({ p: "loadPipeline", id: piID })
+        var newPipeObj = getValues({ p: "exportPipeline", id: piID });
+        $.extend(window.pipeObj, newPipeObj);
+        window[newMainGnum].sData = [window.pipeObj["main_pipeline_" + piID]]
         window[newMainGnum].lastPipeName = pName;
         // create new SVG workplace inside panel, if not added before
         openSubPipeline(piID, window[newMainGnum]);
@@ -1947,7 +1950,6 @@ $(document).ready(function () {
         if (!savetype.length) {
             var formValues = $('#addProcessModal').find('input, select, textarea');
             var data = formValues.serializeArray();
-            console.log(data)
             data[1].value = cleanProcessName(data[1].value);
             var dataToProcess = []; //dataToProcess to save in process table
             var proName = data[1].value;
@@ -2004,7 +2006,6 @@ $(document).ready(function () {
             var formValues = $('#addProcessModal').find('input, select, textarea');
             var data = formValues.serializeArray();
             data[2].value = cleanProcessName(data[2].value);
-            console.log(data)
             $('#mName').attr('disabled', "disabled");
 
             var proID = data[1].value;
@@ -2680,16 +2681,15 @@ $(document).ready(function () {
     function toggleCheckBox(checkboxId, inputId) {
         $(function () {
             $(document).on('change', checkboxId, function (event) {
-                console.log(checkboxId)
                 var checkdropDownOpt = $(checkboxId).is(":checked").toString();
                 if (checkdropDownOpt === "true") {
-                    if ($(inputId).data().multiselect){
+                    if ($(inputId).data().multiselect) {
                         $(inputId).multiselect("enable")
                     } else {
                         $(inputId).removeAttr('disabled')
                     }
                 } else if (checkdropDownOpt === "false") {
-                    if ($(inputId).data().multiselect){
+                    if ($(inputId).data().multiselect) {
                         $(inputId).multiselect("disable")
                     } else {
                         $(inputId).attr('disabled', 'disabled')
@@ -2701,8 +2701,6 @@ $(document).ready(function () {
     // "change name" modal for input parameters
     function fillRenameModal(renameTextDefVal, checkID, inputID) {
         if (renameTextDefVal) {
-            
-            console.log(renameTextDefVal !== "")
             if (renameTextDefVal !== "") {
                 if ($(inputID).data().multiselect) {
                     $(inputID).multiselect('enable')
@@ -2749,11 +2747,11 @@ $(document).ready(function () {
         buttonText: function (options, select) {
             if (options.length == 0) {
                 return "Choose data visualization method";
-            } else if (options.length > 3){
+            } else if (options.length > 3) {
                 return options.length + ' selected';
             } else {
                 var labels = [];
-                options.each(function() {
+                options.each(function () {
                     labels.push($(this).text());
                 });
                 return labels.join(', ') + '';
