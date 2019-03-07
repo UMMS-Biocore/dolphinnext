@@ -59,6 +59,9 @@ function allowDrop(event) {
 
 
 function drop(event) {
+    if (!window.pipeObj){
+        window.pipeObj = {};
+    }
     event.preventDefault();
     var processDat = event.dataTransfer.getData("Text");
     var posX = 0;

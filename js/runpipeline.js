@@ -51,7 +51,7 @@ function allowDrop(event) {
     event.preventDefault();
 }
 
-parametersData = getValues({p: "getAllParameters"})
+parametersData = getValues({ p: "getAllParameters" })
 
 var sData = "";
 var svg = "";
@@ -70,14 +70,14 @@ function createSVG() {
     var dat = [{
         x: 0,
         y: 0
-	      }]
+    }]
     gNum = 0
     MainGNum = "";
     selectedgID = ""
     selectedg = ""
     diffx = 0
     diffy = 0
-    
+
     processList = {}
     processListMain = {}
     ccIDList = {} //pipeline module match id list
@@ -370,10 +370,10 @@ function openPipeline(id) {
 d3.select("#container").style("background-image", "url(css/workplace_image.png)").style("background-repeat", "repeat").on("keydown", cancel).on("mousedown", cancel)
 
 var zoom = d3.behavior.zoom()
-    .translate([0, 0])
-    .scale(1)
-    .scaleExtent([0.15, 2])
-    .on("zoom", zoomed);
+.translate([0, 0])
+.scale(1)
+.scaleExtent([0.15, 2])
+.on("zoom", zoomed);
 
 createSVG()
 
@@ -414,7 +414,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         .datum([{
             cx: 0,
             cy: 0
-                }])
+        }])
         .attr("id", "sc" + MainGNum + "-" + pObj.gNum)
         .attr("class", "sc" + MainGNum + "-" + id)
         .attr("type", "sc")
@@ -454,7 +454,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
             cx: 0,
             cy: 20,
             "name": name
-                }])
+        }])
         .attr('font-family', "FontAwesome, sans-serif")
         .attr('font-size', '1em')
         .attr('name', name)
@@ -1116,7 +1116,7 @@ function autoFillButton(buttonText, value, keepExist) {
     var given_name = "";
     var qualifier = "";
     var sType = "";
-		[rowID, gNumParam, given_name, qualifier, sType] = getInputVariables(button);
+    [rowID, gNumParam, given_name, qualifier, sType] = getInputVariables(button);
     var proPipeInputID = $('#' + rowID).attr('propipeinputid');
     var inputID = null;
 
@@ -1378,7 +1378,7 @@ function parseAutofill(script) {
                         if (cond) {
                             var condsplit = cond.split("&&");
                             $.each(condsplit, function (el) {
-									[varName, defaultVal] = parseVarPart(condsplit[el], "condition");
+                                [varName, defaultVal] = parseVarPart(condsplit[el], "condition");
                                 if (varName && defaultVal) {
                                     conds[varName] = defaultVal;
                                 } else if (varName && !defaultVal) {
@@ -1407,7 +1407,7 @@ function parseAutofill(script) {
                         states = {};
                         //lines of statements 
                     } else {
-	  					[varName, defaultVal] = parseVarPart(lines[i]);
+                        [varName, defaultVal] = parseVarPart(lines[i]);
                         if (varName && defaultVal) {
                             if (varName.match(/^_.*$/)) {
                                 library[varName] = defaultVal;
@@ -1677,7 +1677,7 @@ function parseProPipePanelScript(script) {
             [varName, defaultVal] = parseVarPart(varPart);
         }
         if (regPart) {
-	  	    [type, desc, tool, opt, multiCol, arr, cond, title, autoform] = parseRegPart(regPart);
+            [type, desc, tool, opt, multiCol, arr, cond, title, autoform] = parseRegPart(regPart);
         }
         if (type && varName) {
             panelObj.schema.push({
@@ -1858,7 +1858,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .datum([{
             cx: 0,
             cy: 0
-                }])
+        }])
         .attr("id", "sc-" + MainGNum + "-" + pObjOrigin.gNum)
         .attr("class", "sc" + MainGNum + "-" + id)
         .attr("type", "sc")
@@ -1873,7 +1873,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .datum([{
             cx: 0,
             cy: 0
-                }])
+        }])
         .attr('font-family', "FontAwesome, sans-serif")
         .attr('font-size', '1em')
         .attr('name', name)
@@ -2066,12 +2066,12 @@ function mouseOutG() {
 }
 
 var drag = d3.behavior.drag()
-    .origin(function (d) {
-        return d;
-    })
-    .on("dragstart", dragstarted)
-    .on("drag", dragged)
-    .on("dragend", dragended);
+.origin(function (d) {
+    return d;
+})
+.on("dragstart", dragstarted)
+.on("drag", dragged)
+.on("dragend", dragended);
 
 function dragstarted(d) {
 
@@ -2172,15 +2172,15 @@ function removeDelCircle(lineid) {
     d3.select("#c--" + lineid).remove()
 }
 var tooltip = d3.select("body")
-    .append("div").attr("class", "tooltip-svg")
-    .style("position", "absolute")
-    .style("max-width", "400px")
-    .style("max-height", "100px")
-    .style("opacity", .9)
-    .style("z-index", "10")
-    .style("visibility", "hidden")
-    .text("Something")
-    .style("color", "black");
+.append("div").attr("class", "tooltip-svg")
+.style("position", "absolute")
+.style("max-width", "400px")
+.style("max-height", "100px")
+.style("opacity", .9)
+.style("z-index", "10")
+.style("visibility", "hidden")
+.text("Something")
+.style("color", "black");
 
 
 function IOmouseOver() {
@@ -2359,9 +2359,9 @@ function showOptions() {
     d3.selectAll("circle[status ='posCandidate']").attr("r", ior * 1.4).style("stroke", "#ff9999").style("stroke-width", 4).style("stroke-opacity", .5)
 }
 var link = d3.svg.diagonal()
-    .projection(function (d) {
-        return [d.y, d.x];
-    });
+.projection(function (d) {
+    return [d.y, d.x];
+});
 
 function showEdges() {
     d3.selectAll("line[status = 'standard']").style("stroke", "#B0B0B0").style("stroke-width", 4).attr("opacity", 1);
@@ -2445,9 +2445,9 @@ function replaceNextVar(outName, inputName) {
 function updateSecClassName(second, inputParamLocF) {
     if (inputParamLocF === 0) {
         var candi = "output"
-    } else {
-        var candi = "input"
-    }
+        } else {
+            var candi = "input"
+            }
     secClassName = document.getElementById(second).className.baseVal.split("-")[0].split(" ")[0] + " " + candi
     return secClassName
 }
@@ -2699,7 +2699,7 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
     if (pObj !== window) {
         name = pObj.lastPipeName + "_" + name;
     }
-//    var processData = getValues({ p: "getProcessData", "process_id": process_id });
+    //    var processData = getValues({ p: "getProcessData", "process_id": process_id });
     var processData = JSON.parse(window.pipeObj["process_" + process_id]);
     if (processData) {
         if (processData[0].script_header !== "" && processData[0].script_header !== null) {
@@ -2717,7 +2717,7 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
                             //add process id to each statement after @ sign (eg.$CPU@52) -> will effect only process specific execution parameters.
                             if (old_key !== new_key) {
                                 Object.defineProperty(stateObj, new_key,
-                                    Object.getOwnPropertyDescriptor(stateObj, old_key));
+                                                      Object.getOwnPropertyDescriptor(stateObj, old_key));
                                 delete stateObj[old_key];
                             }
                         });
@@ -2866,7 +2866,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             .datum([{
                 cx: 0,
                 cy: 0
-			        }])
+            }])
             .attr("id", "sc" + MainGNum + "-" + pObj.gNum)
             .attr("class", "sc" + MainGNum + "-" + id)
             .attr("type", "sc")
@@ -2879,7 +2879,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             .datum([{
                 cx: 0,
                 cy: 0
-			        }])
+            }])
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '1em')
             .attr('name', name)
@@ -2979,7 +2979,7 @@ function loadPipelineDetails(pipeline_id) {
     var getPipelineD = [];
     getPipelineD.push({ name: "id", value: pipeline_id });
     getPipelineD.push({ name: "p", value: 'exportPipeline' });
-    
+
     $.ajax({
         type: "POST",
         url: "ajax/ajaxquery.php",
@@ -2987,7 +2987,7 @@ function loadPipelineDetails(pipeline_id) {
         async: true,
         success: function (s) {
             window.pipeObj = s
-            window.ajaxData.pipelineData = [window.pipeObj["main_pipeline_"+pipeline_id]];
+            window.ajaxData.pipelineData = [window.pipeObj["main_pipeline_" + pipeline_id]];
             var pData = window.ajaxData.pipelineData
             console.log(pData)
             $('#pipeline-title').text(pData[0].name);
@@ -3156,7 +3156,7 @@ function loadProjectPipeline(pipeData) {
     } else {
         selectAmzKey();
     }
-    
+
     //load user groups
     var allUserGrp = getValues({ p: "getUserGroups" });
     if (allUserGrp && allUserGrp != "") {
@@ -3201,7 +3201,8 @@ function loadProjectPipeline(pipeData) {
     } else {
         $('#jobSettingsDiv').css('display', 'none');
     }
-    setTimeout(function () { console.log("1"); checkReadytoRun(); }, 1000);
+    setTimeout(function () { console.log("1");
+                            checkReadytoRun(); }, 1000);
     $('#ownUserNamePip').text(pipeData[0].username);
     $('#datecreatedPip').text(pipeData[0].date_created);
     $('.lasteditedPip').text(pipeData[0].date_modified);
@@ -3411,7 +3412,6 @@ function editFileSetValModal(data, sType, inputID, collection) {
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
     //check database if file is exist, if not exist then insert
     checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection);
-    console.log("3")
     checkReadytoRun();
 }
 checkType = "";
@@ -3543,9 +3543,12 @@ $("#publish_dir").keyup(function () {
 $("#publish_dir_check").click(function () {
     autoCheck();
 });
+//file import modal
+$("#file_dir").keyup(function () {
+    autoCheckS3();
+});
 
 var timeoutCheck = 0;
-
 function autoCheck(type) {
     var autoCheckType = type || "";
     if (timeoutCheck) clearTimeout(timeoutCheck);
@@ -3557,8 +3560,33 @@ function autoCheck(type) {
     } else {
         timeoutCheck = setTimeout(function () { checkReadytoRun() }, 2000);
     }
-
 }
+
+var timeoutCheckS3 = 0;
+function autoCheckS3(type) {
+    var autoCheckType = type || "";
+    if (timeoutCheckS3) {
+        clearTimeout(timeoutCheckS3);
+    }
+    timeoutCheckS3 = setTimeout(function () { checkS3filePath() }, 2000);
+}
+
+//check if file import path contains s3:// pattern and shows aws menu
+function checkS3filePath() {
+    var file_path = $("#file_dir").val();
+    var s3pattern = 's3:';
+    var pathCheck = false;
+    if (file_path !== '') {
+        if (file_path.indexOf(s3pattern) > -1) {
+            $("#mRunAmzKeyS3Div").css('display', "block");
+            pathCheck = true;
+        } 
+    } 
+    if (pathCheck === false) {
+        $("#mRunAmzKeyS3Div").css('display', "none");
+    } 
+}
+
 
 //check if path contains s3:// pattern and shows aws menu
 function checkS3(path, getProPipeInputs) {
@@ -3601,6 +3629,7 @@ function loadAmzKeys() {
             var param = data[i];
             var optionGroup = new Option(param.name, param.id);
             $("#mRunAmzKey").append(optionGroup);
+            $("#mRunAmzKeyS3").append(optionGroup);
         }
     }
 }
@@ -3609,8 +3638,11 @@ function selectAmzKey() {
     var amzKeyId = $("#chooseEnv").find(":selected").attr('amz_key')
     if (amzKeyId) {
         $("#mRunAmzKey").val(parseInt(amzKeyId));
+        console.log(parseInt(amzKeyId))
+        $("#mRunAmzKeyS3").val(parseInt(amzKeyId));
         $("#mRunAmzKey").trigger("change");
-    }
+        $("#mRunAmzKeyS3").trigger("change");
+    } 
 }
 
 function configTextAllProcess(exec_all_settings, type, proName, executor_job) {
@@ -3783,9 +3815,9 @@ function autofillMountPath() {
     //turn into lsf command (use -E to define scripts which will be executed just before the main job)
     if (pathArray.length > 0) {
         var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"'
-    } else {
-        var execOtherOpt = '';
-    }
+        } else {
+            var execOtherOpt = '';
+        }
 
     //check if exec_all or exec_each checkboxes are clicked.
     if ($('#exec_all').is(":checked") === true) {
@@ -4666,9 +4698,9 @@ $(function () {
             //to support outdated log directory system 
             if (run_log_uuid.match(/^run/)) {
                 var path = ""
-            } else {
-                var path = "run"
-            }
+                } else {
+                    var path = "run"
+                    }
             var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
             console.log(fileList);
             var fileListAr = Object.values(fileList);
@@ -4929,25 +4961,25 @@ $(document).ready(function () {
             $("#sampleTable_filter").css("display", "inline-block")
             $("#searchBarST").append('<div style="margin-bottom:20px; padding-left:8px; display:inline-block;" id="filter-' + columnsToSearch[i] + '"></div>')
             var select = $('<select id="select-' + columnsToSearch[i] + '" name="' + columnsToSearch[i] + '" multiple="multiple"></select>')
-                .appendTo($('#filter-' + columnsToSearch[i]).empty())
-                .attr('data-col', i)
-                .on('change', function () {
-                    var vals = $(this).val();
-                    var valReg = "";
-                    for (var k = 0; k < vals.length; k++) {
-                        var val = $.fn.dataTable.util.escapeRegex(vals[k]);
-                        if (val) {
-                            if (k + 1 !== vals.length) {
-                                valReg += val + "|"
-                            } else {
-                                valReg += val
-                            }
+            .appendTo($('#filter-' + columnsToSearch[i]).empty())
+            .attr('data-col', i)
+            .on('change', function () {
+                var vals = $(this).val();
+                var valReg = "";
+                for (var k = 0; k < vals.length; k++) {
+                    var val = $.fn.dataTable.util.escapeRegex(vals[k]);
+                    if (val) {
+                        if (k + 1 !== vals.length) {
+                            valReg += val + "|"
+                        } else {
+                            valReg += val
                         }
                     }
-                    api.column($(this).attr('data-col'))
-                        .search(valReg ? '(^|,)' + valReg + '(,|$)' : '', true, false)
-                        .draw();
-                });
+                }
+                api.column($(this).attr('data-col'))
+                    .search(valReg ? '(^|,)' + valReg + '(,|$)' : '', true, false)
+                    .draw();
+            });
             var collectionList = []
             api.column(i).data().unique().sort().each(function (d, j) {
                 var multiCol = d.split(",");
@@ -5005,6 +5037,7 @@ $(document).ready(function () {
             clearSelection()
             selectedGeoSamplesTable.fnClearTable();
             searchedGeoSamplesTable.fnClearTable();
+            selectAmzKey()
             $('.forwardpatternDiv').css("display", "none")
             $('.reversepatternDiv').css("display", "none")
             $('.singlepatternDiv').css("display", "none")
@@ -5013,6 +5046,7 @@ $(document).ready(function () {
             $("#viewDir").css("display", "none")
             $("#seaGeoSamplesDiv").css("display", "none")
             $("#selGeoSamplesDiv").css("display", "none")
+            $('#mRunAmzKeyS3Div').css("display", "none")
             var renderMenu = {
                 option: function (data, escape) {
                     return '<div class="option">' +
@@ -5040,25 +5074,62 @@ $(document).ready(function () {
         });
 
         $('#viewDirBut').click(function () {
-            var dir = $('#file_dir').val()
+            var dir = $('#file_dir').val();
+            var amazon_cre_id = "";
+            var warnUser = false;
             if (dir) {
-                var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow });
-                if (dirList) {
-                    dirList = $.trim(dirList)
-                    var fileArr = dirList.split('\n');
-                    var errorAr = fileArr.filter(line => line.match(/ls:/));
-                    fileArr = fileArr.filter(line => !line.match(/:/));
-                    if (fileArr.length > 0) {
-                        fillArray2Select(fileArr, "#viewDir", true)
-                        $("#viewDir").data("fileArr", fileArr)
-                        $('#collection_type').trigger("change");
-                    } else {
-                        if (errorAr.length > 0) {
-                            fillArray2Select(errorAr, "#viewDir", true)
-                            resetPatternList()
+                if (dir.match(/s3:/)){
+                    amazon_cre_id = $('#mRunAmzKeyS3').val()
+                    if (!amazon_cre_id){
+                        showInfoModal("#infoModal", "#infoModalText", "Please select Amazon Keys to search files in your S3 storage.");
+                        warnUser = true;
+                    } 
+                }
+                if (!warnUser){
+                    var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
+                    if (dirList) {
+                        dirList = $.trim(dirList)
+                        console.log(dirList)
+                        var fileArr = [];
+                        var errorAr = [];
+                        if (dir.match(/s3:/)){
+                            var raw = dirList.split('\n');
+                            for (var i = 0; i < raw.length; i++) {
+                                var filePath = raw[i].split(" ").pop();
+                                console.log(filePath)
+                                if (filePath){
+                                    if (filePath.match(/s3:/)){
+                                        var allBlock = filePath.split("/");
+                                        if (filePath.substr(-1) == "/"){
+                                            var lastBlock = allBlock[allBlock.length-2]
+                                        } else {
+                                            var lastBlock = allBlock[allBlock.length-1]
+                                        }
+                                        fileArr.push(lastBlock)
+                                    } else {
+                                        errorAr.push(raw[i])
+                                    }
+                                } else {
+                                    errorAr.push(raw[i])
+                                }
+                            }
                         } else {
-                            fillArray2Select(["Files Not Found."], "#viewDir", true)
-                            resetPatternList()
+                            fileArr = dirList.split('\n');
+                            errorAr = fileArr.filter(line => line.match(/ls:/));
+                            fileArr = fileArr.filter(line => !line.match(/:/));
+                        }
+                        if (fileArr.length > 0) {
+                            fillArray2Select(fileArr, "#viewDir", true)
+                            $("#viewDir").data("fileArr", fileArr)
+                            $('#collection_type').trigger("change");
+                        } else {
+                            if (errorAr.length > 0) {
+                                fillArray2Select(errorAr, "#viewDir", true)
+                                resetPatternList()
+                            } else {
+                                fillArray2Select(["Files Not Found."], "#viewDir", true)
+                                resetPatternList()
+                            }
                         }
                     }
                 } else {
@@ -5092,11 +5163,11 @@ $(document).ready(function () {
             searchedGeoSamplesTable.fnDraw();
             $("#selGeoSamplesDiv").css("display", "block");
             selectedGeoSamplesTable.fnAddData([
-		          '<input type="text" id="' + name + '" size="70" class="col-mid-12" onchange="updateNameTable(this)" value="' + name + '">',
-		          srr_id,
-		          collection_type,
-		          '<button class="btn btn-danger pull-right" id="' + srr_id + '_remove" onclick="removeSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Remove</button>'
-	       ])
+                '<input type="text" id="' + name + '" size="70" class="col-mid-12" onchange="updateNameTable(this)" value="' + name + '">',
+                srr_id,
+                collection_type,
+                '<button class="btn btn-danger pull-right" id="' + srr_id + '_remove" onclick="removeSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Remove</button>'
+            ])
         }
 
         selectAllSRA = function () {
@@ -5199,6 +5270,12 @@ $(document).ready(function () {
                             formObj.collection_id = collection_data.id
                         }
                     }
+                    var file_dir  = $.trim($("#file_dir").val());
+                    if (file_dir.match("s3:")){
+                        var amzKey  = $("#mRunAmzKeyS3").val();
+                        formObj.file_dir = file_dir+"\t"+amzKey
+                    }
+                    console.log(formObj)
                     formObj.file_array = ret.file_array
                     formObj.p = "saveFile"
                     $.ajax({
@@ -5318,13 +5395,13 @@ $(document).ready(function () {
                 'targets': 0,
                 'selectRow': true
             }
-            }, {
+        }, {
             "data": "name"
-            }, {
+        }, {
             "data": "collection_name"
-            }, {
+        }, {
             "data": "date_created"
-            }],
+        }],
         'select': {
             'style': 'multi'
         },
@@ -5574,10 +5651,10 @@ $(document).ready(function () {
             button_div.appendChild(remove_button);
 
             selectedSamplesTable.fnAddData([
-				input.outerHTML,
-				file_string,
-				button_div.outerHTML
-			]);
+                input.outerHTML,
+                file_string,
+                button_div.outerHTML
+            ]);
         }
     }
 
@@ -5627,10 +5704,10 @@ $(document).ready(function () {
                 remove_button.appendChild(icon);
                 button_div.appendChild(remove_button);
                 selectedSamplesTable.fnAddData([
-                input.outerHTML,
-                file_string,
-                button_div.outerHTML
-            ]);
+                    input.outerHTML,
+                    file_string,
+                    button_div.outerHTML
+                ]);
             }
         }
 
@@ -5649,7 +5726,7 @@ $(document).ready(function () {
         var given_name = "";
         var qualifier = "";
         var sType = "";
-			[rowID, gNumParam, given_name, qualifier, sType] = getInputVariables(button);
+        [rowID, gNumParam, given_name, qualifier, sType] = getInputVariables(button);
         var value = $(button).attr('defVal');
         var data = [];
         data.push({ name: "id", value: "" });
@@ -5685,7 +5762,7 @@ $(document).ready(function () {
             var given_name = "";
             var qualifier = "";
             var sType = "";
-				[rowID, gNumParam, given_name, qualifier, sType] = getInputVariables(button);
+            [rowID, gNumParam, given_name, qualifier, sType] = getInputVariables(button);
             var proPipeInputID = $('#' + rowID).attr('propipeinputid');
             // if proPipeInputID exist, then first remove proPipeInputID.
             if (proPipeInputID) {
@@ -5982,7 +6059,7 @@ $(document).ready(function () {
         } else if (activatedTab === "#manualTabV") {
             var projectRows = $('#projectListTableVal > tbody >');
             console.log(projectRows)
-            
+
             // if project is exist click on the first one to show files
             if (projectRows && projectRows.length > 0) {
                 $('#projectListTableVal > tbody > tr > td ').find('[projectid="' + project_id + '"]').trigger("click")
@@ -6026,7 +6103,7 @@ $(document).ready(function () {
 
     function createFileTable(table_id, ajax) {
         window[table_id] = $('#' + table_id).DataTable({
-//            scrollY: '42vh',
+            //            scrollY: '42vh',
             "dom": '<"top"i>rt<"pull-left"f><"bottom"p><"clear">',
             "bInfo": false,
             "ajax": {
@@ -6041,12 +6118,12 @@ $(document).ready(function () {
                     'targets': 0,
                     'selectRow': true
                 }
-                }, {
+            }, {
                 "data": "name"
-                }, {
+            }, {
                 "data": "date_modified",
                 "width": "130px"
-                }],
+            }],
             'select': {
                 'style': 'single'
             },
@@ -6192,9 +6269,9 @@ $(document).ready(function () {
                     $('#inputValmodal').loading("stop");
                     $('#inputValmodal').modal('hide');
                 } else {
-                        $('#inputValmodal').loading("stop");
-                        showInfoModal("#infoModal", "#infoModalText", "Please enter or select values from table to fill 'Value' box.")
-                    }
+                    $('#inputValmodal').loading("stop");
+                    showInfoModal("#infoModal", "#infoModalText", "Please enter or select values from table to fill 'Value' box.")
+                }
             } else if (checkdata === 'publicValTab') {
                 var rows_selected = publicValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
@@ -6215,10 +6292,10 @@ $(document).ready(function () {
                     $('#inputValmodal').loading("stop");
                     $('#inputValmodal').modal('hide');
                 } else {
-                        $('#inputValmodal').loading("stop");
-                        showInfoModal("#infoModal", "#infoModalText", "Please enter or select values from table to fill 'Value' box.")
-                    }
-            }  else if (checkdata === 'publicValTab') {
+                    $('#inputValmodal').loading("stop");
+                    showInfoModal("#infoModal", "#infoModalText", "Please enter or select values from table to fill 'Value' box.")
+                }
+            } else if (checkdata === 'publicValTab') {
                 var rows_selected = publicValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
                     var input_id = rows_selected[0];
@@ -6345,15 +6422,15 @@ $(document).ready(function () {
                     }
                     if (visType !== "debrowser") {
                         downloadIcon = `<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                                <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
-                                <ul class="dropdown-menu dropdown-menu-right">
-                                    <li><a fileid="` + fileid + `" id="downUrl-` + fileid + `" href="#">Download</a></li>
-                                </ul>
-                            </li>`;
+<i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
+<ul class="dropdown-menu dropdown-menu-right">
+<li><a fileid="` + fileid + `" id="downUrl-` + fileid + `" href="#">Download</a></li>
+</ul>
+</li>`;
                     }
                     var content = `<ul style="float:inherit"  class="nav nav-pills panelheader">
-                            ` + blankUrlIcon + `
-                            <li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>` +
+` + blankUrlIcon + `
+<li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>` +
                         downloadIcon +
                         `</ul>`
                     var wrapDiv = '<div id="' + fileid + '-HeaderIconDiv" style="float:right; height:35px; width:100%;">' + content + '</div>';
@@ -6454,110 +6531,110 @@ $(document).ready(function () {
             var elemsID = $(this).attr("id");
             var getEditorIconDiv = function () {
                 return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">
-                            <li role="presentation"><a class="rmarkeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>
-                            <li role="presentation"><a class="rmarkeditorsaveas" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As">
-                            <span class="glyphicon-stack">
-                                <i class="fa fa-pencil glyphicon-stack-3x"></i>
-                                <i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i>
-                            </span>
-                            </a></li>
-                            <li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>
-                            <li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>
-                        </ul>`
+<li role="presentation"><a class="rmarkeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>
+<li role="presentation"><a class="rmarkeditorsaveas" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As">
+<span class="glyphicon-stack">
+<i class="fa fa-pencil glyphicon-stack-3x"></i>
+<i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i>
+</span>
+</a></li>
+<li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>
+<li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>
+</ul>`
             }
             var getReportIconDiv = function () {
                 return `<ul style="float:inherit"  class="nav nav-pills rmarkeditor">
-                            <li role="presentation"><a class="rmarkeditorlink" data-toggle="tooltip" data-placement="bottom" data-original-title="Open Report in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>
-                            <li role="presentation"><a class="rmarkeditorfull" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
-                            <li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                                <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
-                                <ul class="dropdown-menu dropdown-menu-right">
-                                    <li><a class="rmarkreportdownpdf" href="#">Download PDF</a></li>
-                                    <li><a class="rmarkeditordownrmd" href="#">Download RMD</a></li>
-                                </ul>
-                            </li>
-                        </ul>`
+<li role="presentation"><a class="rmarkeditorlink" data-toggle="tooltip" data-placement="bottom" data-original-title="Open Report in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>
+<li role="presentation"><a class="rmarkeditorfull" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
+<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+<i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
+<ul class="dropdown-menu dropdown-menu-right">
+<li><a class="rmarkreportdownpdf" href="#">Download PDF</a></li>
+<li><a class="rmarkeditordownrmd" href="#">Download RMD</a></li>
+</ul>
+</li>
+</ul>`
 
             }
             var renameModal = `
-                <div id="rMarkRename" class="modal fade" tabindex="-1" role="dialog">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                <h4 class="modal-title">Save</h4>
-                            </div>
-                            <div class="modal-body">
-                                <form style="padding-right:10px;" class="form-horizontal">
-                                    <div class="form-group">
-                                        <label class="col-sm-3 control-label">File Name</label>
-                                        <div class="col-sm-9">
-                                        <input type="text" class="form-control rmarkfilename">
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary save" data-dismiss="modal">Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+<div id="rMarkRename" class="modal fade" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<h4 class="modal-title">Save</h4>
+</div>
+<div class="modal-body">
+<form style="padding-right:10px;" class="form-horizontal">
+<div class="form-group">
+<label class="col-sm-3 control-label">File Name</label>
+<div class="col-sm-9">
+<input type="text" class="form-control rmarkfilename">
+</div>
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+<button type="button" class="btn btn-primary save" data-dismiss="modal">Save</button>
+</div>
+</div>
+</div>
+</div>`;
 
             var infoModal = `
-                <div id="rMarkInfo" class="modal fade" tabindex="-1" role="dialog">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                <h4 class="modal-title">Info</h4>
-                            </div>
-                            <div class="modal-body">
-                                <p id="rMarkInfoText"></p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+<div id="rMarkInfo" class="modal fade" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<h4 class="modal-title">Info</h4>
+</div>
+<div class="modal-body">
+<p id="rMarkInfoText"></p>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+</div>
+</div>
+</div>
+</div>`;
             var settingsModal = ` 
-                <div id="rMarkSett" class="modal fade" tabindex="-1" role="dialog">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                                <h4 class="modal-title" >Settings</h4>
-                            </div>
-                            <div class="modal-body">
-                                <form style="padding-right:10px;" class="form-horizontal">
-                                    <div class="form-group">
-                                        <label class="col-sm-5 control-label">Auto updating output <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="If enabled, the preview panel updates automatically as you code. If disabled, use the 'Run Script' button to update."><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
-                                        <div class="col-sm-7">
-                                            <label class="switch">
-                                                <input class="aUpdateOut" type="checkbox">
-                                                <span class="slider round"></span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="col-sm-5 control-label">Autosave <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="If active, DolphinNext will autosave the file content every 30 seconds."><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
-                                        <div class="col-sm-7">
-                                            <label class="switch">
-                                                <input class="aSave" type="checkbox">
-                                                <span class="slider round"></span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-primary" data-dismiss="modal" >close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+<div id="rMarkSett" class="modal fade" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<h4 class="modal-title" >Settings</h4>
+</div>
+<div class="modal-body">
+<form style="padding-right:10px;" class="form-horizontal">
+<div class="form-group">
+<label class="col-sm-5 control-label">Auto updating output <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="If enabled, the preview panel updates automatically as you code. If disabled, use the 'Run Script' button to update."><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
+<div class="col-sm-7">
+<label class="switch">
+<input class="aUpdateOut" type="checkbox">
+<span class="slider round"></span>
+</label>
+</div>
+</div>
+<div class="form-group">
+<label class="col-sm-5 control-label">Autosave <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="If active, DolphinNext will autosave the file content every 30 seconds."><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
+<div class="col-sm-7">
+<label class="switch">
+<input class="aSave" type="checkbox">
+<span class="slider round"></span>
+</label>
+</div>
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-primary" data-dismiss="modal" >close</button>
+</div>
+</div>
+</div>
+</div>`;
 
 
             var getDiv = function (settings, outputHtml) {
@@ -7318,7 +7395,7 @@ $(document).ready(function () {
             return res
         }
 
-    }(jQuery));
+        }(jQuery));
 
 
     $(function () {
@@ -7398,7 +7475,7 @@ $(document).ready(function () {
                                 }
                                 $(nTd).html('<ul class="nav nav-pills nav-stacked">' + liText + '</ul>');
                             },
-        }, {
+                        }, {
                             //file content
                             data: null,
                             colPercent: "85",
@@ -7430,14 +7507,14 @@ $(document).ready(function () {
                                     });
                                 }
                             },
-        }],
+                        }],
                         columnsHeader: [{
                             data: null,
                             colPercent: "4",
                             fnCreatedCell: function (nTd, oData) {
                                 $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
                             },
-        }, {
+                        }, {
                             data: null,
                             fnCreatedCell: function (nTd, oData) {
                                 var gNum = oData.id.split("_")[0].split("-")[1];
@@ -7447,13 +7524,13 @@ $(document).ready(function () {
                                 $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + createLabel(processName) + '</span>');
                             },
                             colPercent: "37"
-        }, {
+                        }, {
                             data: null,
                             colPercent: "39",
                             fnCreatedCell: function (nTd, oData) {
                                 $(nTd).html('<span>' + createLabel(oData.name) + '</span>');
                             }
-        }, {
+                        }, {
                             data: null,
                             colPercent: "20",
                             fnCreatedCell: function (nTd, oData) {
@@ -7481,30 +7558,30 @@ $(document).ready(function () {
                                 }
                                 $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
                             }
-        }],
+                        }],
                         columnsTitle: [{
                             data: null,
                             colPercent: "4"
 
-        }, {
+                        }, {
                             data: null,
                             fnCreatedCell: function (nTd, oData) {
                                 $(nTd).html('<span>PROCESS</span>');
                             },
                             colPercent: "37"
-        }, {
+                        }, {
                             data: "name",
                             colPercent: "39",
                             fnCreatedCell: function (nTd, oData) {
                                 $(nTd).html('<span>PUBLISHED DIRECTORY</span>');
                             },
-        }, {
+                        }, {
                             data: null,
                             colPercent: "20",
                             fnCreatedCell: function (nTd, oData) {
                                 $(nTd).html('<span>VIEW FORMAT</span>');
                             }
-        }],
+                        }],
                         backgroundcolorenter: "#ced9e3",
                         backgroundcolorleave: "#ECF0F4",
                         heightHeader: "60px"
