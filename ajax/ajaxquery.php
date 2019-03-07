@@ -178,7 +178,8 @@ else if ($p=="getLsDir"){
     $dir = $_REQUEST['dir'];
     $profileType = $_REQUEST['profileType'];
 	$profileId = $_REQUEST['profileId'];
-    $data = $db -> getLsDir($dir, $profileType, $profileId, $ownerID);
+    $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
+    $data = $db -> getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $ownerID);
 }
 else if ($p=="getGeoData"){
     $geo_id = $_REQUEST['geo_id'];

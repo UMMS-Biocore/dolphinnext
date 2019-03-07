@@ -5,6 +5,7 @@ ini_set('report_errors','on');
 require_once(__DIR__."/../ajax/dbfuncs.php");
 $query=new dbfuncs();
 function checkLDAP($email, $password){
+    error_log($email);
   $ldapserver = LDAP_SERVER;
   $dn_string = DN_STRING;
   $binduser = BIND_USER;
@@ -18,6 +19,7 @@ function checkLDAP($email, $password){
 	  if($bind){
 		$filter="mail=".$email."*";
 		$result = ldap_search($connection,$dn_string,$filter) or die ("Search error.");
+          error_log($result);
 		$data = ldap_get_entries($connection, $result);
 		if (!isset($data[0]["dn"]))
 		  return 0;
@@ -102,11 +104,10 @@ if(isset($_POST['login'])){
         $res=1;
     } else if (LDAP_SERVER != 'none' || LDAP_SERVER != '' || LDAP_SERVER != 'N'){
 	  //	LDAP check
-	  $res=checkLDAP(strtolower(str_replace("'","''",$_POST['email'])), $_POST['password']);
+	  $res=checkLDAP(strtolower($_POST['email']), $_POST['password']);
 	}
     if ($res == 0){
         //	Database password
-        error_log(strtolower(str_replace("'","''",$_POST['email'])));
 		$pass_hash = $query->queryAVal("SELECT pass_hash FROM users WHERE email = '" .strtolower(str_replace("'","''",$_POST['email']))."'");
 		if($pass_hash == $post_pass && $active_user == true){
             $res=1;
@@ -121,8 +122,9 @@ if(isset($_POST['login'])){
   
 	if($login_ok){ 
         $s="Successfull";
-        $_SESSION['email'] = strtolower(str_replace("'","''",$_POST['email']));
-        $checkUserData = json_decode($query->getUserByEmail($_SESSION['email']));
+        $_SESSION['email'] = strtolower($_POST['email']);
+        $queryEmail = strtolower(str_replace("'","''",$_POST['email']));
+        $checkUserData = json_decode($query->getUserByEmail($queryEmail));
         //check if user exits
         $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
         if (!empty($id)){

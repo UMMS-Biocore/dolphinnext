@@ -674,29 +674,29 @@
                                     </div>
                                 </form>
                                 <div class="row">
-                                <div class="col-sm-3" style="border-right:1px solid lightgrey; padding-top:6px;">
-                                    <table id="projectListTableVal" class="table  table-striped display" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Project Name</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
+                                    <div class="col-sm-3" style="border-right:1px solid lightgrey; padding-top:6px;">
+                                        <table id="projectListTableVal" class="table  table-striped display" cellspacing="0" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Project Name</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-sm-9" style="overflow:auto">
+                                        <table id="projectValTable" class="table  table-striped  display" cellspacing="0" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Check</th>
+                                                    <th scope="col">File/Values</th>
+                                                    <th scope="col">Modified On</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody style="word-break: break-all; "></tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                                <div class="col-sm-9" style="overflow:auto">
-                                    <table id="projectValTable" class="table  table-striped  display" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Check</th>
-                                                <th scope="col">File/Values</th>
-                                                <th scope="col">Modified On</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody style="word-break: break-all; "></tbody>
-                                    </table>
-                                </div>
-                            </div>
                             </div>
                         </div>
                         <div id="publicValTab" class="tab-pane ">
@@ -752,6 +752,14 @@
                         <div role="tabpanel" class="tab-pane active" id="hostFiles">
                             </br>
                             <form class="form-horizontal">
+                                <div class="form-group" id="mRunAmzKeyS3Div" style="display:none; ">
+                                    <label class="col-sm-3 control-label text-left" style="padding-left:45px; color:#a7a218;">Select Amazon Keys (for S3) <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon Keys to access your S3 storage"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
+                                    <div class="col-sm-7">
+                                        <select id="mRunAmzKeyS3" class="fbtn btn-default form-control" name="amazon_cre_id">
+                                            <option value="" disabled selected>Select Amazon Keys </option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:45px;">1. File Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-7">
