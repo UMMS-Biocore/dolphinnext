@@ -268,6 +268,7 @@ session_write_close();
             .modal {
                 overflow: auto; 
             }
+
             .form-horizontal .control-label.text-left{
                 text-align: left;
             }

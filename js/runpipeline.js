@@ -3017,6 +3017,36 @@ function loadPipelineDetails(pipeline_id) {
                 //hide system inputs
                 $("#systemInputs").trigger("click");
                 cleanDepProPipeInputs();
+                // executor settings:
+                if (pipeData[0].profile !== "" && chooseEnv && chooseEnv !== "") {
+                    var [allProSett, profileData] = getJobData("both");
+                    var executor_job = profileData[0].executor_job;
+                    if (executor_job === 'ignite') {
+                        showHideColumnRunSett([1, 4, 5], "show")
+                        showHideColumnRunSett([1, 4], "hide")
+                    } else if (executor_job === 'local') {
+                        showHideColumnRunSett([1, 4, 5], "hide")
+                    } else {
+                        showHideColumnRunSett([1, 4, 5], "show")
+                    }
+                    $('#jobSettingsDiv').css('display', 'inline');
+                    //insert exec_all_settings data into allProcessSettTable table
+                    if (IsJsonString(decodeHtml(pipeData[0].exec_all_settings))) {
+                        var exec_all_settings = JSON.parse(decodeHtml(pipeData[0].exec_all_settings));
+                        fillForm('#allProcessSettTable', 'input', exec_all_settings);
+                    }
+                    //insert exec_each_settings data into #processtable
+                    if (IsJsonString(decodeHtml(pipeData[0].exec_each_settings))) {
+                        var exec_each_settings = JSON.parse(decodeHtml(pipeData[0].exec_each_settings));
+                        $.each(exec_each_settings, function (el) {
+                            var each_settings = exec_each_settings[el];
+                            //wait for the table to load
+                            setTimeout(function () { fillForm('#' + el, 'input', each_settings); }, 1000);
+                        });
+                    }
+                } else {
+                    $('#jobSettingsDiv').css('display', 'none');
+                }
             }, 100);
 
             // activate collapse icon for process options
@@ -3172,37 +3202,8 @@ function loadProjectPipeline(pipeData) {
 
     var chooseEnv = $('#chooseEnv option:selected').val();
 
-    if (pipeData[0].profile !== "" && chooseEnv && chooseEnv !== "") {
-        var [allProSett, profileData] = getJobData("both");
-        var executor_job = profileData[0].executor_job;
-        if (executor_job === 'ignite') {
-            showHideColumnRunSett([1, 4, 5], "show")
-            showHideColumnRunSett([1, 4], "hide")
-        } else if (executor_job === 'local') {
-            showHideColumnRunSett([1, 4, 5], "hide")
-        } else {
-            showHideColumnRunSett([1, 4, 5], "show")
-        }
-        $('#jobSettingsDiv').css('display', 'inline');
-        //insert exec_all_settings data into allProcessSettTable table
-        if (IsJsonString(decodeHtml(pipeData[0].exec_all_settings))) {
-            var exec_all_settings = JSON.parse(decodeHtml(pipeData[0].exec_all_settings));
-            fillForm('#allProcessSettTable', 'input', exec_all_settings);
-        }
-        //insert exec_each_settings data into #processtable
-        if (IsJsonString(decodeHtml(pipeData[0].exec_each_settings))) {
-            var exec_each_settings = JSON.parse(decodeHtml(pipeData[0].exec_each_settings));
-            $.each(exec_each_settings, function (el) {
-                var each_settings = exec_each_settings[el];
-                //wait for the table to load
-                setTimeout(function () { fillForm('#' + el, 'input', each_settings); }, 1000);
-            });
-        }
-    } else {
-        $('#jobSettingsDiv').css('display', 'none');
-    }
-    setTimeout(function () { console.log("1");
-                            checkReadytoRun(); }, 1000);
+
+    setTimeout(function () { checkReadytoRun(); }, 1000);
     $('#ownUserNamePip').text(pipeData[0].username);
     $('#datecreatedPip').text(pipeData[0].date_created);
     $('.lasteditedPip').text(pipeData[0].date_modified);
@@ -5009,15 +5010,14 @@ $(document).ready(function () {
                 initCompleteFunction(settings, json);
             });
         });
-        //fullscreen modal
-        //        $('#sampleModal').on('show.bs.modal', function () {
-        //            $('body').css('overflow', 'hidden');
-        //            $('body').css('position', 'fixed');
-        //        }).on('hidden.bs.modal', function () {
-        //            $('body').css('overflow', 'hidden auto');
-        //            $('body').css('position', 'static');
-        //        })
-
+        //Prevent BODY from scrolling when a modal is opened
+        $('#inputFilemodal').on('show.bs.modal', function () {
+            $('body').css('overflow', 'hidden');
+            $('body').css('position', 'fixed');
+        }).on('hidden.bs.modal', function () {
+            $('body').css('overflow', 'hidden auto');
+            $('body').css('position', 'static');
+        })
 
         $('#inputFilemodal').on('click', '#addSample', function (event) {
             event.preventDefault();
@@ -5102,9 +5102,9 @@ $(document).ready(function () {
                                         var allBlock = filePath.split("/");
                                         if (filePath.substr(-1) == "/"){
                                             var lastBlock = allBlock[allBlock.length-2]
-                                        } else {
-                                            var lastBlock = allBlock[allBlock.length-1]
-                                        }
+                                            } else {
+                                                var lastBlock = allBlock[allBlock.length-1]
+                                                }
                                         fileArr.push(lastBlock)
                                     } else {
                                         errorAr.push(raw[i])
@@ -5611,18 +5611,18 @@ $(document).ready(function () {
         } else {
             var files_select = document.getElementById('forwardList').options;
             var files_selectRev = document.getElementById('reverseList').options;
-            var regex = $('#forward_pattern').val();
+            var regex1 = $('#forward_pattern').val();
+            var regex2 = $('#reverse_pattern').val();
         }
         while (files_select.length != 0) {
             var file_string = '';
-            //	use regex to find the values before the pivot
-            var regex_string = files_select[0].value.split(regex)[0];
-            var file_regex = new RegExp(regex_string);
-
-
+            //  var file_regex = new RegExp(regex_string);
             if (collection_type == "single") {
+                //	use regex to find the values before the pivot
+                var regex_string = files_select[0].value.split(regex)[0];
                 for (var x = 0; x < files_select.length; x++) {
-                    if (file_regex.test(files_select[x].value)) {
+                    var prefix = files_select[x].value.split(regex)[0];
+                    if (regex_string === prefix) {
                         file_string += files_select[x].value + ' | '
                         recordDelList("#singleList", files_select[x].value, "del")
                         $('#singleList option[value="' + files_select[x].value + '"]')[0].remove();
@@ -5630,8 +5630,17 @@ $(document).ready(function () {
                     }
                 }
             } else {
+                var regex_string = files_select[0].value.split(regex1)[0];
+                var regex_string2 = files_selectRev[0].value.split(regex2)[0];
                 for (var x = 0; x < files_select.length; x++) {
-                    if (file_regex.test(files_select[x].value) && file_regex.test(files_selectRev[x].value)) {
+                    var prefix1 = files_select[x].value.split(regex1)[0];
+                    var prefix2 = files_selectRev[x].value.split(regex2)[0];
+
+                    console.log(prefix1)
+                    console.log(prefix2)
+                    console.log(regex_string)
+                    console.log(regex_string2)
+                    if (regex_string === prefix1 && regex_string2 === prefix2) {
                         file_string += files_select[x].value + ',' + files_selectRev[x].value + ' | '
                         recordDelList("#forwardList", files_select[x].value, "del")
                         recordDelList("#reverseList", files_selectRev[x].value, "del")
@@ -5739,7 +5748,7 @@ $(document).ready(function () {
     });
     //change on exec settings
     $(function () {
-        $('.form-control.execSetting').keyup(function () {
+        $(document).on('keyup', '.form-control.execSetting', function () {
             var rowDiv = $(this).parent().parent();
             if (rowDiv) {
                 var rowId = rowDiv.attr("id")
@@ -5812,8 +5821,9 @@ $(document).ready(function () {
             $('#jobSettingsDiv').css('display', 'inline');
             fillForm('#allProcessSettTable', 'input', allProSett);
             selectAmzKey();
-            console.log("7")
+            checkShub()
             checkReadytoRun();
+            saveRun();
         });
     });
 
@@ -5827,7 +5837,6 @@ $(document).ready(function () {
         sampleTable.rows().deselect();
         var clickedRow = button.closest('tr');
         var rowID = clickedRow[0].id; //#inputTa-3
-        console.log(rowID)
         var gNumParam = rowID.split("Ta-")[1];
         if (button.attr('id') === 'inputFileEnter') {
             $('#filemodaltitle').html('Select/Add Input File');
@@ -5836,16 +5845,13 @@ $(document).ready(function () {
             $('#filemodaltitle').html('Change Input File');
             $('#mIdFile').attr('rowID', rowID);
             var proPipeInputID = $('#' + rowID).attr('propipeinputid');
-            console.log(proPipeInputID)
             $('#mIdFile').val(proPipeInputID);
             // Get the input id of proPipeInput;
             var proInputGet = getValues({ "p": "getProjectPipelineInputs", "id": proPipeInputID });
             if (proInputGet) {
-                console.log(proInputGet)
                 var input_id = proInputGet[0].input_id;
                 var collection_id = proInputGet[0].collection_id;
                 var collection_name = proInputGet[0].collection_name;
-                console.log(collection_name)
                 if (collection_id && collection_id != "0" && collection_name) {
                     selectMultiselect("#select-collection", [collection_name]);
                     sampleTable.rows({ search: 'applied' }).select();
