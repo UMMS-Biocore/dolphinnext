@@ -171,6 +171,20 @@ class dbfuncs {
         }
         return implode($pass); //turn the array into a string
     }
+    
+    function getS3config ($project_pipeline_id, $attempt, $ownerID){
+        $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+        $file_dir = array();
+        foreach ($allinputs as $inputitem):
+        $collection_id = $inputitem->{'collection_id'};
+        if (!empty($collection_id)){
+            $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
+            foreach ($allfiles as $fileData):
+            $file_dir[] = $fileData->{'file_dir'};
+            endforeach;
+        }
+        endforeach;
+    }
 
     function initialRunScript ($project_pipeline_id, $attempt, $ownerID){
         $script="";
@@ -1043,7 +1057,7 @@ class dbfuncs {
             $exec_initial_next = "";
             if (!empty($initialRunScript)){
                 $exec_initial_next .= $this->getExecNextAll($executor, "$dolphin_path_real/initialrun", $next_path_real, "", $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "initial.log", $ownerID);
-                $exec_initial_next .= " && while [ true ]; do sleep 60; if grep -s \\\"##Success: failed\\\" $dolphin_path_real/initialrun/initial.log; then exit 128;elif grep -s \\\"##Success: PASSED\\\" $dolphin_path_real/initialrun/initial.log; then break; fi done && ";
+                $exec_initial_next .= " && while [ : ]; do sleep 60; date +\\\"0 %H.%M.%S\\\" >> $dolphin_path_real/initialrun/count.txt; if grep -s \\\"##Success: failed\\\" $dolphin_path_real/initialrun/initial.log; then date +\\\"1 %H.%M.%S\\\" >> $dolphin_path_real/initialrun/count.txt; exit 128;elif grep -s \\\"##Success: PASSED\\\" $dolphin_path_real/initialrun/initial.log; then date +\\\"2 %H.%M.%S\\\" >> $dolphin_path_real/initialrun/count.txt; break; fi done && ";
             }
             $cmd="ssh {$this->ssh_settings}  -i $userpky $connect \"$renameLog $preCmd $exec_initial_next $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
             $next_submit_pid= shell_exec($cmd); //"Job <203477> is submitted to queue <long>.\n"
