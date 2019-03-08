@@ -5014,6 +5014,7 @@ $(document).ready(function () {
         $('#inputFilemodal').on('show.bs.modal', function () {
             $('body').css('overflow', 'hidden');
             $('body').css('position', 'fixed');
+            $('body').css('width', '100%');
         }).on('hidden.bs.modal', function () {
             $('body').css('overflow', 'hidden auto');
             $('body').css('position', 'static');
