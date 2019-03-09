@@ -4713,7 +4713,7 @@ $(function () {
             var tabDiv = [];
             var fileName = [];
             for (var j = 0; j < order.length; j++) {
-                if (fileListAr.includes(order[j])) {
+                if (fileListAr.includes(order[j]) || order[j] == "log.txt") {
                     var exist = 'style="display:block;"';
                 } else {
                     var exist = 'style="display:none;"';

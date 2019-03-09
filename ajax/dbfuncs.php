@@ -102,7 +102,7 @@ class dbfuncs {
     function imageCmd($img, $singu_save, $type, $profileType,$profileId,$ownerID){
         if ($type == 'singularity'){
             preg_match("/shub:\/\/(.*)/", $img, $matches);
-            if ($matches[1] != ''){
+            if (!empty($matches[1])){
                 $singuPath = '~';
                 if ($profileType == "amazon"){
                     $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
@@ -151,9 +151,12 @@ class dbfuncs {
 
     //full path for file
     function readFile($path){
+        $content = "";
         if (file_exists($path)){
             $handle = fopen($path, 'r');
-            $content = fread($handle, filesize($path));
+            if (filesize($path) > 0){
+                $content = fread($handle, filesize($path));
+            }
             fclose($handle);
             return $content;
         } else {
@@ -171,7 +174,7 @@ class dbfuncs {
         }
         return implode($pass); //turn the array into a string
     }
-    
+
     function getS3config ($project_pipeline_id, $attempt, $ownerID){
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $file_dir = array();
@@ -850,20 +853,27 @@ class dbfuncs {
     }
 
     //get all nextflow executor text
-    function getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $logName, $ownerID) {
+    function getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $logName, $initialRunScript, $ownerID) {
         if ($runType == "resumerun"){
             $runType = "-resume";
         } else {
             $runType = "";
         }
+        $initialRunCmd = "";
+        $igniteCmd = "";
+        if ($executor == "local" && $executor_job == 'ignite'){
+            $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite";
+        }
+        if (!empty($initialRunScript)){
+            $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $igniteCmd $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
+        }
+        $mainNextCmd = "$initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $igniteCmd $next_inputs $runType $reportOptions > $dolphin_path_real/$logName";
+
+
 
         //for lsf "bsub -q short -n 1  -W 100 -R rusage[mem=32024]";
         if ($executor == "local"){
-            if ($executor_job == 'ignite'){
-                $exec_next_all = "cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf -w $dolphin_path_real/work -process.executor ignite $next_inputs $runType $reportOptions > $dolphin_path_real/$logName ";
-            }else {
-                $exec_next_all = "cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/$logName ";
-            }
+            $exec_next_all = "$mainNextCmd ";
         } else if ($executor == "lsf"){
             //convert gb to mb
             settype($next_memory, 'integer');
@@ -871,7 +881,7 @@ class dbfuncs {
             //-J $jobname
             $jobname = $this->cleanName($jobname);
             $exec_string = "bsub -e err.log $next_clu_opt -q $next_queue -J $jobname -n $next_cpu -W $next_time -R rusage[mem=$next_memory]";
-            $exec_next_all = "cd $dolphin_path_real && $exec_string \\\"$next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/$logName\\\"";
+            $exec_next_all = "$exec_string \\\"$mainNextCmd\\\"";
         } else if ($executor == "sge"){
             $jobnameText = $this->getJobName($jobname, $executor);
             $memoryText = $this->getMemory($next_memory, $executor);
@@ -880,7 +890,7 @@ class dbfuncs {
             $clu_optText = $this->getNextCluOpt($next_clu_opt, $executor);
             $cpuText = $this->getCPU($next_cpu, $executor);
             //-j y ->Specifies whether or not the standard error stream of the job is merged into the standard output stream.
-            $sgeRunFile= "printf '#!/bin/bash \\n#$ -j y\\n#$ -V\\n#$ -notify\\n#$ -wd $dolphin_path_real\\n#$ -o $dolphin_path_real/.dolphinnext.log\\n".$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$next_path_real $dolphin_path_real/nextflow.nf $next_inputs $runType $reportOptions > $dolphin_path_real/$logName"."'> $dolphin_path_real/.dolphinnext.run";
+            $sgeRunFile= "printf '#!/bin/bash \\n#$ -j y\\n#$ -V\\n#$ -notify\\n#$ -wd $dolphin_path_real\\n#$ -o $dolphin_path_real/.dolphinnext.log\\n".$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
 
             $exec_string = "qsub -e err.log $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $sgeRunFile && $exec_string";
@@ -955,9 +965,9 @@ class dbfuncs {
         if (!file_exists("{$this->run_path}/$uuid/run")) {
             mkdir("{$this->run_path}/$uuid/run", 0755, true);
         }
-        $file = fopen("{$this->run_path}/$uuid/run/log.txt", 'w');//creates new file
-        fclose($file);
-        chmod("{$this->run_path}/$uuid/run/log.txt", 0755);
+//        $file = fopen("{$this->run_path}/$uuid/run/log.txt", 'w');//creates new file
+//        fclose($file);
+//        chmod("{$this->run_path}/$uuid/run/log.txt", 0755);
         $file = fopen("{$this->run_path}/$uuid/run/nextflow.nf", 'w');//creates new file
         fwrite($file, $nextText);
         fclose($file);
@@ -1052,14 +1062,8 @@ class dbfuncs {
         preg_match("/(.*)Nextflow file(.*)exists(.*)/", $next_exist, $matches);
         $log_array['next_exist'] = $next_exist;
         if ($matches[2] == " ") {
-            $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "log.txt", $ownerID);
-            // command for initial run
-            $exec_initial_next = "";
-            if (!empty($initialRunScript)){
-                $exec_initial_next .= $this->getExecNextAll($executor, "$dolphin_path_real/initialrun", $next_path_real, "", $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "initial.log", $ownerID);
-                $exec_initial_next .= " && while [ : ]; do sleep 60; date +\\\"0 %H.%M.%S\\\" >> $dolphin_path_real/initialrun/count.txt; if grep -s \\\"##Success: failed\\\" $dolphin_path_real/initialrun/initial.log; then date +\\\"1 %H.%M.%S\\\" >> $dolphin_path_real/initialrun/count.txt; exit 128;elif grep -s \\\"##Success: PASSED\\\" $dolphin_path_real/initialrun/initial.log; then date +\\\"2 %H.%M.%S\\\" >> $dolphin_path_real/initialrun/count.txt; break; fi done && ";
-            }
-            $cmd="ssh {$this->ssh_settings}  -i $userpky $connect \"$renameLog $preCmd $exec_initial_next $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
+            $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "log.txt", $initialRunScript, $ownerID);
+            $cmd="ssh {$this->ssh_settings}  -i $userpky $connect \"$renameLog $preCmd $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
             $next_submit_pid= shell_exec($cmd); //"Job <203477> is submitted to queue <long>.\n"
             $this->writeLog($uuid,$cmd,'a','serverlog.txt');
             if (!$next_submit_pid) {
@@ -1259,7 +1263,6 @@ class dbfuncs {
         }
         //start amazon cluster
         $cmd = "cd {$this->amz_path}/pro_{$profileName} && yes | nextflow cloud create $profileName $nodeText > logAmzStart.txt 2>&1 & echo $! &";
-        error_log("cd {$this->amz_path}/pro_{$profileName} && yes | nextflow cloud create $profileName $nodeText");
         $log_array = $this->runCommand ($cmd, 'start_cloud', '');
         $log_array['start_cloud_cmd'] = $cmd;
         //xxx save pid of nextflow cloud create cluster job
@@ -2352,12 +2355,9 @@ class dbfuncs {
             $resText = shell_exec("$command 2>&1 & echo $! &");
             if (!empty($resText)){
                 $resText = trim($resText);
-                error_log($resText);
                 $lines = explode("\n", $resText);
-                error_log(count($lines));
                 for ($i = 0; $i < count($lines); $i++) {
                     $cols = explode("\t", $lines[$i]);
-                    error_log(count($cols));
                     if (count($cols) == 2){
                         $obj = $this->getSRRData($cols[1], $ownerID);
                         $obj->name = trim(str_replace(" ","_",$cols[0]));
