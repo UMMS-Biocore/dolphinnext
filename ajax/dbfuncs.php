@@ -491,13 +491,13 @@ class dbfuncs {
                 if ( scalar @fullfileAr != 0 && \$collection_type[\$i] eq \"single\" ) {
                   my \$filestr = join( ' ', @fullfileAr );
                   \$cat = \"zcat\" if ( \$filestr =~ /\\\.gz/ );
-                  runCommand(\"\$cat \$filestr > \$inputFile\");
+                  runCommand(\"\$cat -f \$filestr > \$inputFile\");
                 } elsif ( scalar @fullfileArR1 != 0 && \$collection_type[\$i] eq \"pair\" ) {
                   my \$filestrR1 = join( ' ', @fullfileArR1 );
                   my \$filestrR2 = join( ' ', @fullfileArR2 );
                   \$cat = \"zcat\" if ( \$filestrR1 =~ /\\\.gz/ );
-                  runCommand(\"\$cat \$filestrR1 > \$inputFile1\");
-                  runCommand(\"\$cat \$filestrR2 > \$inputFile2\");
+                  runCommand(\"\$cat -f \$filestrR1 > \$inputFile1\");
+                  runCommand(\"\$cat -f \$filestrR2 > \$inputFile2\");
                 } else {
                   ##Run fastqdump without --gzip for GEO files
                   fasterqDump(\"\", \$input_dir, \$fileAr[0], \$file_name[\$i], \$collection_type[\$i]);
