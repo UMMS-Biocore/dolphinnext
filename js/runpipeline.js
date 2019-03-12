@@ -3807,7 +3807,6 @@ function autofillMountPath() {
             var collection_id = $(inputPaths[el]).attr("collection_id");
             if (collection_id){
                 var colFiles = getValues({ "id": collection_id, "p": "getCollectionFiles" })
-                console.log(colFiles)
                 for (var i = 0; i < colFiles.length; i++) {
                     if (colFiles[i].file_dir){
                         if (!colFiles[i].file_dir.match(/s3:/)){
@@ -3834,7 +3833,6 @@ function autofillMountPath() {
 
         });
     }
-    console.log(pathArray)
     //turn into lsf command (use -E to define scripts which will be executed just before the main job)
     if (pathArray.length > 0) {
         var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"'

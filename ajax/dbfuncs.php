@@ -452,12 +452,12 @@ class dbfuncs {
                 ##Don't run mergeGzip for GEO files
                 if (scalar @fullfileAr != 0 && \$collection_type[\$i] eq \"single\"){
                   my \$filestr = join( ' ', @fullfileAr );
-                  \$cat = \"zcat\" if ( \$filestr =~ /\\\.gz/ );
+                  \$cat = \"zcat -f\" if ( \$filestr =~ /\\\.gz/ );
                   mergeGzipCountMd5sum( \$cat, \$filestr, \$archFile );
                 } elsif ( scalar @fullfileArR1 != 0 && \$collection_type[\$i] eq \"pair\" ) {
                   my \$filestrR1 = join( ' ', @fullfileArR1 );
                   my \$filestrR2 = join( ' ', @fullfileArR2 );
-                  \$cat = \"zcat\" if ( \$filestrR1 =~ /\\\.gz/ );
+                  \$cat = \"zcat -f\" if ( \$filestrR1 =~ /\\\.gz/ );
                   mergeGzipCountMd5sum( \$cat, \$filestrR1, \$archFile1 );
                   mergeGzipCountMd5sum( \$cat, \$filestrR2, \$archFile2 );
                 } else {
@@ -490,12 +490,12 @@ class dbfuncs {
                 ##Don't run merge for GEO files
                 if ( scalar @fullfileAr != 0 && \$collection_type[\$i] eq \"single\" ) {
                   my \$filestr = join( ' ', @fullfileAr );
-                  \$cat = \"zcat\" if ( \$filestr =~ /\\\.gz/ );
+                  \$cat = \"zcat -f\" if ( \$filestr =~ /\\\.gz/ );
                   runCommand(\"\$cat \$filestr > \$inputFile\");
                 } elsif ( scalar @fullfileArR1 != 0 && \$collection_type[\$i] eq \"pair\" ) {
                   my \$filestrR1 = join( ' ', @fullfileArR1 );
                   my \$filestrR2 = join( ' ', @fullfileArR2 );
-                  \$cat = \"zcat\" if ( \$filestrR1 =~ /\\\.gz/ );
+                  \$cat = \"zcat -f \" if ( \$filestrR1 =~ /\\\.gz/ );
                   runCommand(\"\$cat \$filestrR1 > \$inputFile1\");
                   runCommand(\"\$cat \$filestrR2 > \$inputFile2\");
                 } else {
