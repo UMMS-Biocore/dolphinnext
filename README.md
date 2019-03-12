@@ -3,6 +3,8 @@
 
 [![Build Status](https://api.travis-ci.com/UMMS-Biocore/dolphinnext.svg?branch=master)](https://api.travis-ci.com/UMMS-Biocore/dolphinnext)
 
+Commercially supported: UMMS Biocore, provides support for installations as well as commercial support for DolphinNext. Please contact researchsales@dolphinnext.com
+
 ## Release 1.
 
 ## Alper Kucukural, Onur Yukselen
