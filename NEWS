@@ -1,3 +1,6 @@
+12.03.2019 Version 0.2.97
+Autofill feature updated for ghpcc06 cluster to mount all directories of collection before run executed.
+
 10.03.2019 Version 0.2.96
 Table header issues fixed.
 s3 import feature added.
