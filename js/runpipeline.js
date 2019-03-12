@@ -3804,15 +3804,37 @@ function autofillMountPath() {
     var inputPaths = $('#inputsTab > table > tbody >tr').find("span[id*='filePath']");
     if (inputPaths && inputPaths != null) {
         $.each(inputPaths, function (el) {
-            var inputPath = $(inputPaths[el]).text();
-            var parsedPath = parseMountPath(inputPath);
-            if (parsedPath) {
-                if (pathArray.indexOf(parsedPath) === -1) {
-                    pathArray.push(parsedPath)
+            var collection_id = $(inputPaths[el]).attr("collection_id");
+            if (collection_id){
+                var colFiles = getValues({ "id": collection_id, "p": "getCollectionFiles" })
+                console.log(colFiles)
+                for (var i = 0; i < colFiles.length; i++) {
+                    if (colFiles[i].file_dir){
+                        if (!colFiles[i].file_dir.match(/s3:/)){
+                            var inputPath = colFiles[i].file_dir;
+                            var parsedPath = parseMountPath(inputPath);
+                            if (parsedPath) {
+                                if (pathArray.indexOf(parsedPath) === -1) {
+                                    pathArray.push(parsedPath)
+                                }
+                            }
+                        }
+                    }
+                }
+
+            } else {
+                var inputPath = $(inputPaths[el]).text();
+                var parsedPath = parseMountPath(inputPath);
+                if (parsedPath) {
+                    if (pathArray.indexOf(parsedPath) === -1) {
+                        pathArray.push(parsedPath)
+                    }
                 }
             }
+
         });
     }
+    console.log(pathArray)
     //turn into lsf command (use -E to define scripts which will be executed just before the main job)
     if (pathArray.length > 0) {
         var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"'
