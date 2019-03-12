@@ -177,16 +177,44 @@ class dbfuncs {
 
     function getS3config ($project_pipeline_id, $attempt, $ownerID){
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
-        $file_dir = array();
+        $s3configFileDir = "";
         foreach ($allinputs as $inputitem):
         $collection_id = $inputitem->{'collection_id'};
         if (!empty($collection_id)){
             $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
             foreach ($allfiles as $fileData):
-            $file_dir[] = $fileData->{'file_dir'};
+            $file_dir = $fileData->{'file_dir'};
+            if (preg_match("/s3:/",$file_dir)){
+                $s3Data = explode("\t", $file_dir);
+                $s3Path = trim($s3Data[0]);
+                $amazon_cre_id = trim($s3Data[1]);
+                if (!empty($amazon_cre_id)){
+                    $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
+                    foreach($amz_data as $d){
+                        $access = $d->amz_acc_key;
+                        $d->amz_acc_key = trim($this->amazonDecode($access));
+                        $secret = $d->amz_suc_key;
+                        $d->amz_suc_key = trim($this->amazonDecode($secret));
+                    }
+                    $access_key = $amz_data[0]->{'amz_acc_key'};
+                    $secret_key = $amz_data[0]->{'amz_suc_key'};
+                    $confText = "access_key=$access_key\nsecret_key=$secret_key\n";
+                    $s3configDir = "{$this->amz_path}/config/run{$project_pipeline_id}/initialrun";
+                    $s3configFileDir = $s3configDir;
+                    $s3tmpFile = "$s3configDir/.conf.$amazon_cre_id";
+                    if (!file_exists($s3configDir)) {
+                        mkdir($s3configDir, 0700, true);
+                    }
+                    $file = fopen($s3tmpFile, 'w');//creates new file
+                    fwrite($file, $confText);
+                    fclose($file);
+                    chmod($s3tmpFile, 0700);
+                }
+            }
             endforeach;
         }
         endforeach;
+        return $s3configFileDir;
     }
 
     function initialRunScript ($project_pipeline_id, $attempt, $ownerID){
@@ -194,7 +222,7 @@ class dbfuncs {
         $parallel = true;
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
-        $input_dir = "$outdir/run{$project_pipeline_id}/inputs";
+        $run_dir = "$outdir/run{$project_pipeline_id}";
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $file_name = array();
         $file_dir = array();
@@ -278,7 +306,9 @@ class dbfuncs {
           use File::Copy;
           use File::Path qw( make_path );
 
-          my \$input_dir = \"$input_dir\";
+          my \$run_dir = \"$run_dir\";
+          my \$input_dir = \"\$run_dir/inputs\";
+          my \$s3tmp_dir = \"\$input_dir/.tmp\";
           my @file_name = (!{file_name});
           my @file_dir = (!{file_dir});
           my @file_type = (!{file_type});
@@ -392,13 +422,24 @@ class dbfuncs {
               ##Keep full path of files that needs to merge
               for ( my \$k = 0 ; \$k <= \$#fileAr ; \$k++ ) {
                 if ( \$collection_type[\$i] eq \"single\" ) {
-                  if (trim( \$file_dir[\$i] ne \"\")){
+                  ## for GEO files: file_dir will be empty so @fullfileAr will be empty.
+                  if (\$file_dir[\$i] =~ m/s3:/i ){
+                    my \$s3tmp_dir_sufx = s3down(\$file_dir[\$i], \$fileAr[\$k]);
+                    push @fullfileAr, \$s3tmp_dir_sufx . \"/\" . \$fileAr[\$k];
+                  } elsif (trim( \$file_dir[\$i] ne \"\")){
                     push @fullfileAr, \$file_dir[\$i] . \"/\" . \$fileAr[\$k];
                   }
 
                 }
                 elsif ( \$collection_type[\$i] eq \"pair\" ) {
-                  if (trim( \$file_dir[\$i] ne \"\")){
+                  if (\$file_dir[\$i] =~ m/s3:/i ){
+                    my @pair = split( /,/, \$fileAr[\$k], -1 );
+                    my \$s3tmp_dir_sufx1 = s3down(\$file_dir[\$i], \$pair[0]);
+                    my \$s3tmp_dir_sufx2 = s3down(\$file_dir[\$i], \$pair[1]);
+                    print \$s3tmp_dir_sufx1;
+                    push @fullfileArR1, \$s3tmp_dir_sufx1 . \"/\" . \$pair[0];
+                    push @fullfileArR2, \$s3tmp_dir_sufx2 . \"/\" . \$pair[1];
+                  } elsif (trim( \$file_dir[\$i] ne \"\")){
                     my @pair = split( /,/, \$fileAr[\$k], -1 );
                     push @fullfileArR1, \$file_dir[\$i] . \"/\" . \$pair[0];
                     push @fullfileArR2, \$file_dir[\$i] . \"/\" . \$pair[1];
@@ -520,7 +561,21 @@ class dbfuncs {
             runCommand(\"\$cat \$filestr > \$inputFile && gzip \$inputFile\");
             countMd5sum(\$inputFile);
           }
-
+          
+          sub s3down {
+            my ( \$s3PathConf, \$file_name ) = @_;
+            ##first remove tmp files?
+            my @data = split( /\t/, \$s3PathConf);
+            my \$s3Path = \$data[0];
+            my \$tmpSufx = \$s3Path;
+            \$tmpSufx =~ s/[^A-Za-z0-9]/_/g; 
+            my \$confID = \$data[1];
+            my \$down_path = \${s3tmp_dir}.\${tmpSufx};
+            runCommand(\"mkdir -p \$down_path && cd \$down_path && s3cmd get --continue --config=\$run_dir/initialrun/.conf.\$confID \$s3Path/\$file_name\");
+            print \"down_path: \$down_path\n\";
+            return \$down_path;
+          }
+          
           sub fasterqDump {
             my ( \$gzip, \$outDir, \$srrID, \$file_name,  \$collection_type) = @_;
             runCommand(\"rm -f \$outDir/\${file_name}_1.fastq \$outDir/\${file_name}_2.fastq \$outDir/\${file_name} && mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra -o \$file_name \$srrID\");
@@ -563,7 +618,8 @@ class dbfuncs {
           use Pod::Usage;
           use Data::Dumper;
 
-          my \$input_dir = \"$input_dir\";
+          my \$run_dir = \"$run_dir\";
+          my \$input_dir = \"\$run_dir/inputs\";
           my @file_name_all = (!{file_name_all});
           my @file_type_all = (!{file_type_all});
           my @collection_type_all = (!{collection_type_all});
@@ -595,6 +651,9 @@ class dbfuncs {
               runCommand(\"rm -rf \$file\");
             }
           }
+          ## rm s3 related files
+          runCommand(\"rm -rf \$input_dir/.tmp*\");
+          runCommand(\"rm -rf \$run_dir/initialrun/.conf*\");
           system('touch success.$attempt');
 
           sub runCommand {
@@ -942,7 +1001,7 @@ class dbfuncs {
         return $renameLog;
     }
 
-    function initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $initialrun_img, $ownerID){
+    function initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $initialrun_img, $s3configFileDir, $ownerID){
         //if  $amazon_cre_id is defined append the aws credentials into nextflow.config
         if ($amazon_cre_id != "" ){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
@@ -965,9 +1024,6 @@ class dbfuncs {
         if (!file_exists("{$this->run_path}/$uuid/run")) {
             mkdir("{$this->run_path}/$uuid/run", 0755, true);
         }
-//        $file = fopen("{$this->run_path}/$uuid/run/log.txt", 'w');//creates new file
-//        fclose($file);
-//        chmod("{$this->run_path}/$uuid/run/log.txt", 0755);
         $file = fopen("{$this->run_path}/$uuid/run/nextflow.nf", 'w');//creates new file
         fwrite($file, $nextText);
         fclose($file);
@@ -1024,7 +1080,8 @@ class dbfuncs {
         }
         $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
         //mkdir and copy nextflow file to run directory in cluster
-        $cmd = "ssh {$this->ssh_settings}  -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} -i $userpky $initialRunText $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
+        $cmd = "ssh {$this->ssh_settings}  -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} -i $userpky $s3configFileDir $initialRunText $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
+        error_log($cmd);
         $mkdir_copynext_pid =shell_exec($cmd);
         $this->writeLog($uuid,$cmd,'a','serverlog.txt');
         $log_array = array('mkdir_copynext_pid' => $mkdir_copynext_pid);

@@ -40,10 +40,11 @@ if (isset($_REQUEST['id'])) {
         $attempt = "0";
     }
     //create initialrun script
-    $initialrun_img = "shub://onuryukselen/initialrun";
+    $initialrun_img = "shub://onuryukselen/initialrun:latest";
     $initialRunScript = $db->initialRunScript($project_pipeline_id, $attempt, $ownerID);
+    $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
-    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $initialrun_img, $ownerID);
+    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $initialrun_img, $s3configFileDir, $ownerID);
     //run the script
     $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $initialrun_img, $ownerID);
 }
