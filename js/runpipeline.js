@@ -6444,7 +6444,14 @@ $(document).ready(function () {
                     return wrapDiv;
                 }
                 if (visType == "table" || visType == "table-percent") {
-                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; width:calc(100% - 35px);" class="table-responsive"><table style="border:none; table-layout:fixed; width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"><thead style="white-space: nowrap; "></thead></table></div>';
+                    var headerStyle = "";
+                    var tableStyle = "";
+                    if (visType == "table-percent"){
+                        headerStyle = "white-space: nowrap;";
+                    } else {
+                        tableStyle = "white-space: nowrap; table-layout:fixed;";
+                    }
+                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; overflow-x:auto; width:calc(100% - 35px);" class="table-responsive"><table style="'+headerStyle+' border:none;  width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"><thead style="'+tableStyle+'" "></thead></table></div>';
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
                     if (visType == "table-percent") {
@@ -6458,6 +6465,7 @@ $(document).ready(function () {
                     dataTableObj.scrollCollapse = true
                     dataTableObj.scrollY = 395
                     dataTableObj.scrollX = true
+                    dataTableObj.sScrollX = true
                     $("#" + fileid).DataTable(dataTableObj);
                     bindEveHandlerIcon(fileid)
                 } else if (visType == "rmarkdown") {
