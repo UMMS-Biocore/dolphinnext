@@ -729,7 +729,7 @@ class dbfuncs {
             $imageCmd = $this->imageCmd($singu_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
         }
         if (!empty($initialRunScript)){
-            $initImageCmd = $this->imageCmd($initialrun_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
+            $initImageCmd = $this->imageCmd($initialrun_img, "", 'singularity', $profileType,$profileId,$ownerID);
         }
         //get report options
         $reportOptions = "";

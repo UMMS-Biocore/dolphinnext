@@ -40,7 +40,7 @@ if (isset($_REQUEST['id'])) {
         $attempt = "0";
     }
     //create initialrun script
-    $initialrun_img = "shub://onuryukselen/initialrun:latest";
+    $initialrun_img = "shub://onuryukselen/initialrun@6b73c11001b71a6fce71f854b254e6e6ca065380";
     $initialRunScript = $db->initialRunScript($project_pipeline_id, $attempt, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
