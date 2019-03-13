@@ -346,18 +346,19 @@ class dbfuncs {
             ## first check input folder then archive dir for expected files
             if ( \$collection_type[\$i] eq \"single\" ) {
               \$inputFile = \"\$input_dir/\$file_name[\$i].\$fileType\";
-              if ( checkFile(\$inputFile) ) {
+              if ( checkFile(\$inputFile) && checkFile(\"\$input_dir/.success_\$file_name[\$i]\")) {
                 \$inputDirCheck = \"true\";
+              } else {
+                runCommand(\"rm -f \$inputFile \$input_dir/.success_\$file_name[\$i]\");
               }
             }
             elsif ( \$collection_type[\$i] eq \"pair\" ) {
               \$inputFile1                  = \"\$input_dir/\$file_name[\$i].R1.\$fileType\";
               \$inputFile2                  = \"\$input_dir/\$file_name[\$i].R2.\$fileType\";
-              if ( checkFile(\$inputFile1) && checkFile(\$inputFile2) ) {
+              if ( checkFile(\$inputFile1) && checkFile(\$inputFile2) && checkFile(\"\$input_dir/.success_\$file_name[\$i]\")) {
                 \$inputDirCheck = \"true\";
-              } elsif ( checkFile(\$inputFile1) || checkFile(\$inputFile2) ) {
-                ## if only one of them exist then remove files
-                runCommand(\"rm -f \$inputFile1 \$inputFile2\");
+              } else {
+                runCommand(\"rm -f \$inputFile1 \$inputFile2 \$input_dir/.success_\$file_name[\$i]\");
               }
             }
 
@@ -415,6 +416,7 @@ class dbfuncs {
                 runCommand(\"gunzip \$inputFile1.gz\");
                 runCommand(\"gunzip \$inputFile2.gz\");
               }
+              runCommand(\"touch \$input_dir/.success_\$file_name[\$i]\");
               \$passHash{ \$file_name[\$i] } = \"passed\";
             }
             elsif ( \$inputDirCheck eq \"false\" && \$archiveDirCheck eq \"false\" ) {
@@ -503,7 +505,7 @@ class dbfuncs {
                   fasterqDump(\"\", \$input_dir, \$fileAr[0], \$file_name[\$i], \$collection_type[\$i]);
                 }
               }
-
+              runCommand(\"touch \$input_dir/.success_\$file_name[\$i]\");
               \$passHash{ \$file_name[\$i] } = \"passed\";
             }
             elsif (\$inputDirCheck eq \"true\"
