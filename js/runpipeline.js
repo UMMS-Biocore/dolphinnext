@@ -6478,7 +6478,8 @@ $(document).ready(function () {
                         //by default based on second column data, calculate percentages for each row
                         data = tsvPercent(data)
                     }
-                    var dataTableObj = tsvConvert(data, "json2")
+                    var fixHeader = true;
+                    var dataTableObj = tsvConvert(data, "json2", fixHeader)
                     //speed up the table loading
                     dataTableObj.deferRender = true
                     dataTableObj.scroller = true
@@ -6486,6 +6487,7 @@ $(document).ready(function () {
                     dataTableObj.scrollY = 395
                     dataTableObj.scrollX = true
                     dataTableObj.sScrollX = true
+                    dataTableObj.columnDefs = [{"defaultContent": "-","targets": "_all"}]; //hides undefined error
                     $("#" + fileid).DataTable(dataTableObj);
                     bindEveHandlerIcon(fileid)
                 } else if (visType == "rmarkdown") {
