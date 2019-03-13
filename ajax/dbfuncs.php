@@ -112,9 +112,9 @@ class dbfuncs {
                 $imageName = str_replace("/","-",$matches[1]);
                 $image = $singuPath.'/.dolphinnext/singularity/'.$imageName;
                 if ($singu_save == "true"){
-                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && [ -e ".$imageName.".simg ] && rm ".$imageName.".simg && singularity pull --force --name ".$imageName.".simg ".$img;
+                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && [ -e ".$imageName.".simg ] && rm ".$imageName.".simg && singularity pull --name ".$imageName.".simg ".$img;
                 } else {
-                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && singularity pull --force --name ".$imageName.".simg ".$img;
+                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && singularity pull --name ".$imageName.".simg ".$img;
                 }
                 return $cmd;
             }
@@ -723,7 +723,7 @@ class dbfuncs {
         $initImageCmd = "";
         $imageCmd = "";
         if (!empty($initialRunScript)){
-            $initImageCmd = $this->imageCmd($initialrun_img, "", 'singularity', $profileType,$profileId,$ownerID);
+            $initImageCmd = $this->imageCmd($initialrun_img, "true", 'singularity', $profileType,$profileId,$ownerID);
         }
         if ($singu_check == "true"){
             $singu_img = $proPipeAll[0]->{'singu_img'};
