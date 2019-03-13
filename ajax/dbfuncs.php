@@ -722,13 +722,14 @@ class dbfuncs {
         $singu_check = $proPipeAll[0]->{'singu_check'};
         $initImageCmd = "";
         $imageCmd = "";
-        if (!empty($initialRunScript)){
-            $initImageCmd = $this->imageCmd($initialrun_img, "true", 'singularity', $profileType,$profileId,$ownerID);
-        }
+        $singu_save = "";
         if ($singu_check == "true"){
             $singu_img = $proPipeAll[0]->{'singu_img'};
             $singu_save = $proPipeAll[0]->{'singu_save'};
             $imageCmd = $this->imageCmd($singu_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
+        }
+        if (!empty($initialRunScript)){
+            $initImageCmd = $this->imageCmd($initialrun_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
         }
         //get report options
         $reportOptions = "";
