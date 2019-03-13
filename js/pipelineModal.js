@@ -2733,7 +2733,7 @@ $(document).ready(function () {
     // "change name" modal for input parameters
     function saveValue(checkId, valueId, attr) {
         var value = $(valueId).val();
-        if (value.length) {
+        if (Array.isArray(value)) {
             value = value.join(",")
         }
         var checkValue = $(checkId).is(":checked").toString();
