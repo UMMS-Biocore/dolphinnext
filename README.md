@@ -6,7 +6,7 @@
 
 -----
 
-[DolphinNext](https://dolphinnext.umassmed.edu/) An intuitive web interface designed for users with limited bioinformatics experience to analyze and manage large numbers of samples on High Performance Computing (HPC) environments, cloud services or on a personal workstation. 
+[DolphinNext](https://dolphinnext.umassmed.edu/), an intuitive web interface designed for users with limited bioinformatics experience to analyze and manage large numbers of samples on High Performance Computing (HPC) environments, cloud services or on a personal workstation. 
 
 * A platform to manage processing pipelines for large projects that require a scalable solution with automatic monitoring of large number of concurrent jobs
 * A drag and drop user interface to create NextFlow pipelines.
@@ -14,15 +14,15 @@
 
 ## Benefits of the design:
 
-* *Build:* Easily create new pipelines using a drag and drop interface. No need to write commands from scratch, instead reuse existing processes/modules to create new pipelines
+* **Build:** Easily create new pipelines using a drag and drop interface. No need to write commands from scratch, instead reuse existing processes/modules to create new pipelines
 
-* *Run:* Execute pipelines in any host environment. Seamless Amazon Cloud integration to create a cluster (EC2), execute the pipeline and transfer the results to the storage service (S3).
+* **Run:** Execute pipelines in any host environment. Seamless Amazon Cloud integration to create a cluster (EC2), execute the pipeline and transfer the results to the storage service (S3).
 
-* *Resume:* A continuous checkpoint mechanism keeps track of each step of the running pipeline. Partially completed pipelines can be resumed at any stage even after parameter changes.
+* **Resume:** A continuous checkpoint mechanism keeps track of each step of the running pipeline. Partially completed pipelines can be resumed at any stage even after parameter changes.
 
-* *Improve:* Revisioning system keeps track of pipelines and processes versions as well as their parameters. Edit, improve shared pipelines and customize them according to your needs.
+* **Improve:** Revisioning system keeps track of pipelines and processes versions as well as their parameters. Edit, improve shared pipelines and customize them according to your needs.
 
-* *Share:* Share pipelines across different platforms. Isolate pipeline-specific dependencies in a container and easily replicate the methods in other clusters
+* **Share:** Share pipelines across different platforms. Isolate pipeline-specific dependencies in a container and easily replicate the methods in other clusters
 
 
 ## Public Pipelines: 
@@ -46,11 +46,11 @@
 
 ## Highlights:
 
-### Workflow design with UI:
+##### Workflow design with UI:
 
 # ![RSEM](https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dolphinnext_images/pipeline_rsem.png)
 
-### Modular System (Nested Workflows):
+##### Modular System (Nested Workflows):
 
 # ![RSEM](https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dolphinnext_images/pipeline_rsem_nested.png)
 
