@@ -112,7 +112,7 @@ class dbfuncs {
                 $imageName = str_replace("/","-",$matches[1]);
                 $image = $singuPath.'/.dolphinnext/singularity/'.$imageName;
                 if ($singu_save == "true"){
-                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && [ -e ".$imageName.".simg ] && rm ".$imageName.".simg && singularity pull --name ".$imageName.".simg ".$img;
+                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && rm -f ".$imageName.".simg && singularity pull --name ".$imageName.".simg ".$img;
                 } else {
                     $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && singularity pull --name ".$imageName.".simg ".$img;
                 }
@@ -346,18 +346,19 @@ class dbfuncs {
             ## first check input folder then archive dir for expected files
             if ( \$collection_type[\$i] eq \"single\" ) {
               \$inputFile = \"\$input_dir/\$file_name[\$i].\$fileType\";
-              if ( checkFile(\$inputFile) ) {
+              if ( checkFile(\$inputFile) && checkFile(\"\$input_dir/.success_\$file_name[\$i]\")) {
                 \$inputDirCheck = \"true\";
+              } else {
+                runCommand(\"rm -f \$inputFile \$input_dir/.success_\$file_name[\$i]\");
               }
             }
             elsif ( \$collection_type[\$i] eq \"pair\" ) {
               \$inputFile1                  = \"\$input_dir/\$file_name[\$i].R1.\$fileType\";
               \$inputFile2                  = \"\$input_dir/\$file_name[\$i].R2.\$fileType\";
-              if ( checkFile(\$inputFile1) && checkFile(\$inputFile2) ) {
+              if ( checkFile(\$inputFile1) && checkFile(\$inputFile2) && checkFile(\"\$input_dir/.success_\$file_name[\$i]\")) {
                 \$inputDirCheck = \"true\";
-              } elsif ( checkFile(\$inputFile1) || checkFile(\$inputFile2) ) {
-                ## if only one of them exist then remove files
-                runCommand(\"rm -f \$inputFile1 \$inputFile2\");
+              } else {
+                runCommand(\"rm -f \$inputFile1 \$inputFile2 \$input_dir/.success_\$file_name[\$i]\");
               }
             }
 
@@ -415,6 +416,7 @@ class dbfuncs {
                 runCommand(\"gunzip \$inputFile1.gz\");
                 runCommand(\"gunzip \$inputFile2.gz\");
               }
+              runCommand(\"touch \$input_dir/.success_\$file_name[\$i]\");
               \$passHash{ \$file_name[\$i] } = \"passed\";
             }
             elsif ( \$inputDirCheck eq \"false\" && \$archiveDirCheck eq \"false\" ) {
@@ -503,7 +505,7 @@ class dbfuncs {
                   fasterqDump(\"\", \$input_dir, \$fileAr[0], \$file_name[\$i], \$collection_type[\$i]);
                 }
               }
-
+              runCommand(\"touch \$input_dir/.success_\$file_name[\$i]\");
               \$passHash{ \$file_name[\$i] } = \"passed\";
             }
             elsif (\$inputDirCheck eq \"true\"
@@ -571,7 +573,7 @@ class dbfuncs {
             \$tmpSufx =~ s/[^A-Za-z0-9]/_/g; 
             my \$confID = \$data[1];
             my \$down_path = \${s3tmp_dir}.\${tmpSufx};
-            runCommand(\"mkdir -p \$down_path && cd \$down_path && s3cmd get --continue --config=\$run_dir/initialrun/.conf.\$confID \$s3Path/\$file_name\");
+            runCommand(\"mkdir -p \$down_path && cd \$down_path && s3cmd get --force --config=\$run_dir/initialrun/.conf.\$confID \$s3Path/\$file_name\");
             print \"down_path: \$down_path\n\";
             return \$down_path;
           }
@@ -720,13 +722,14 @@ class dbfuncs {
         $singu_check = $proPipeAll[0]->{'singu_check'};
         $initImageCmd = "";
         $imageCmd = "";
-        if (!empty($initialRunScript)){
-            $initImageCmd = $this->imageCmd($initialrun_img, "", 'singularity', $profileType,$profileId,$ownerID);
-        }
+        $singu_save = "";
         if ($singu_check == "true"){
             $singu_img = $proPipeAll[0]->{'singu_img'};
             $singu_save = $proPipeAll[0]->{'singu_save'};
             $imageCmd = $this->imageCmd($singu_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
+        }
+        if (!empty($initialRunScript)){
+            $initImageCmd = $this->imageCmd($initialrun_img, "", 'singularity', $profileType,$profileId,$ownerID);
         }
         //get report options
         $reportOptions = "";
@@ -1081,7 +1084,6 @@ class dbfuncs {
         $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
         //mkdir and copy nextflow file to run directory in cluster
         $cmd = "ssh {$this->ssh_settings}  -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} -i $userpky $s3configFileDir $initialRunText $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
-        error_log($cmd);
         $mkdir_copynext_pid =shell_exec($cmd);
         $this->writeLog($uuid,$cmd,'a','serverlog.txt');
         $log_array = array('mkdir_copynext_pid' => $mkdir_copynext_pid);

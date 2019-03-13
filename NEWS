@@ -1,3 +1,7 @@
+13.03.2019 Version 0.3.01
+Import feature upgraded (by creating success files after cat/zcat) 
+Singularity pull feature upgraded for initialrun image by giving github commit hash.
+
 13.03.2019 Version 0.3.00
 Issues regarding to report table fixed.
 
