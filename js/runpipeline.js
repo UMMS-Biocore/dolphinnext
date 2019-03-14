@@ -4865,7 +4865,7 @@ function updateRunVerNavBar() {
         if (fileListAr.length > 0) {
             for (var j = 0; j < fileListAr.length; j++) {
                 var tabID = cleanProcessName(fileListAr[j]) + 'Tab';
-                $('a[href="#' + tabID + '"').css("display", "block")
+                $('a[href="#' + tabID + '"]').css("display", "block")
             }
         }
         if (!activeID) {
