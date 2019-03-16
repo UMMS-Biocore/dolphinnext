@@ -1,3 +1,8 @@
+16.03.2019 Version 0.3.02
+object.values function replaced by getObjectValues to support older browsers.
+Warnings added for workdir, when path doesn't start with slash or contains white space.
+Show_settings feature added to inputs of processes which adds button to inputs table and show process options in modal.
+
 13.03.2019 Version 0.3.01
 Import feature upgraded (by creating success files after cat/zcat) 
 Singularity pull feature upgraded for initialrun image by giving github commit hash.
