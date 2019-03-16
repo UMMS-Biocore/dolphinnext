@@ -55,7 +55,7 @@
                     <span class="caret"></span>
                     <span class="sr-only">Toggle Dropdown</span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#mRun" data-toggle="modal">Create New Run</a></li>
                     <li><a href="#mExistRun" data-toggle="modal">Existing Runs</a></li>
                 </ul>

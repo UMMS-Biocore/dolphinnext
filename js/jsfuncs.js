@@ -1009,6 +1009,16 @@ function getMultipleRegex(txt, regex) {
     return matches;
 }
 
+// get object values
+function getObjectValues(obj) {
+    var vals = Object.keys(obj).map(function(key) {
+    return obj[key];
+});
+    return vals;
+}
+
+
+
 //creates ajax object and change color of requiredFields
 function createFormObj(formValues, requiredFields) {
     var formObj = {}
