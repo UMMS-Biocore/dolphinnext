@@ -1,3 +1,6 @@
+17.03.2019 Version 0.3.03
+Show_settings feature upgraded.
+
 16.03.2019 Version 0.3.02
 object.values function replaced by getObjectValues to support older browsers.
 Warnings added for workdir, when path doesn't start with slash or contains white space.

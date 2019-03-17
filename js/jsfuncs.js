@@ -572,7 +572,7 @@ function getButtonsDef(name, buttons, defVal) {
     return button;
 }
 //Default type of dropdown. 
-function getDropdownDef(name, optionArr, defText) {
+function getDropdownDef(id, attr, optionArr, defText) {
     if (defText && defText != "") {
         var firstOpt = '<option value="" selected="">Choose Value </option>';
     } else {
@@ -583,7 +583,7 @@ function getDropdownDef(name, optionArr, defText) {
         var opt = $.trim(optionArr[el]);
         optText += '<option value="' + opt + '">' + opt + '</option>';
     });
-    var dropdownMenu = '<select style="width:92px; height:30px; margin-right:5px;" class="btn  btn-primary btn-sm"  id="' + name + '">' + firstOpt + optText + '</select>';;
+    var dropdownMenu = '<select style="width:92px; height:30px; margin-right:5px;" class="btn  btn-primary btn-sm"  '+attr+'="'+attr+'" id="' + id + '">' + firstOpt + optText + '</select>';;
     return dropdownMenu;
 }
 

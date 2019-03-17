@@ -1126,11 +1126,32 @@ function getInputVariables(button) {
     return [rowID, gNumParam, given_name, qualifier, sType]
 }
 
+showHideSett = function (rowId){
+    var dropdownID = $("#"+rowId).find("td[given_name] > select").attr("id");
+    var buttons = $("#"+rowId).find("td[given_name] > button[id^=show_sett_]")
+    if (buttons.length > 0){
+        for (var i = 0; i < buttons.length; i++) {
+            var buttonId = $(buttons[i]).attr("id");
+            var yesCheck  = $("#"+dropdownID).val()
+            if (yesCheck){
+                if (yesCheck.toLowerCase() == "yes"){
+                    $("#"+buttonId).css("display","inline")
+                } else {
+                    $("#"+buttonId).css("display","none")
+                }
+            } else {
+                $("#"+buttonId).css("display","none")
+            }
+        }
+    }
+}
+
 function hideProcessOptionsAsIcons (){
     var showSettingInputsAr = $('#inputsTable > tbody > tr[show_setting]')
     if (showSettingInputsAr.length >0){
         for (var i = 0; i < showSettingInputsAr.length; i++) {
-            var drowdown = $(showSettingInputsAr[i]).find("td[given_name] > select");
+            var rowId = $(showSettingInputsAr[i]).attr("id");
+            var dropdownID = $(showSettingInputsAr[i]).find("td[given_name] > select").attr("id");
             var show_setting = $(showSettingInputsAr[i]).attr("show_setting")
             var show_settingArr = show_setting.split(',');
             for (var t = 0; t < show_settingArr.length; t++) {
@@ -1153,25 +1174,15 @@ function hideProcessOptionsAsIcons (){
                         var buttonId = 'show_sett_'+allname;
                         var button = '<button style="display:none; margin-left:7px;" show_sett_but="'+allname+'" type="button" class="btn btn-primary btn-sm"  id="'+buttonId+'"><a data-toggle="tooltip" data-placement="bottom" data-original-title="'+tooltip+'"><span><i class="fa fa-wrench"></i></span></a></button>';
                         $(showSettingInputsAr[i]).children().eq(5).append(button);
-                        var doCall = function (panel, panelContent, label, drowdown, buttonId) {
+                        var doCall = function (panel, panelContent, label, dropdownID, buttonId, rowId) {
                             panel.css("display","none");
-                            if (drowdown.length){
+                            if (rowId){
+                                showHideSett(rowId)
                                 $(function () {
-                                    $(document).on('change', drowdown, function (event) {
-                                        var yesCheck  = drowdown.val()
-                                        if (yesCheck){
-                                            if (yesCheck.toLowerCase() == "yes"){
-                                                $("#"+buttonId).css("display","inline")
-                                            } else {
-                                                $("#"+buttonId).css("display","none")
-                                            }
-                                        } else {
-                                            $("#"+buttonId).css("display","none")
-                                        }
-
+                                    $(document).on('change', "#"+dropdownID, function (event) {
+                                        showHideSett(rowId)
                                     });
                                 });
-                                $("#"+buttonId).trigger("change")
                             }
 
                             $(panelContent).dialog({
@@ -1206,7 +1217,7 @@ function hideProcessOptionsAsIcons (){
                                 });
                             });
                         }
-                        doCall(panel, panelContent, label, drowdown, buttonId);
+                        doCall(panel, panelContent, label, dropdownID, buttonId, rowId);
                     }
                 }
             }
@@ -1419,7 +1430,7 @@ function bindEveHandler(autoFillJSON) {
                         if (checkVarName) {
                             var varNameButAr = $(checkVarName).children();
                             if (varNameButAr && varNameButAr[0]) {
-                                //bind eventhandler to #dropdown button
+                                //bind eventhandler to indropdown button
                                 $(varNameButAr[0]).change(function () {
                                     var statusCond = checkConds(conds);
                                     if (statusCond === true) {
@@ -1674,7 +1685,7 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
     }
     // dropdown is added if dropdown attr is defined.
     if (type == "dropdown" && opt && opt != "") {
-        var dropDownMenu = getDropdownDef('dropDown', opt, "Choose Value");
+        var dropDownMenu = getDropdownDef('indropdown'+firGnum, "indropdown", opt, "Choose Value");
         dropDownQual = true;
     } else {
         var dropDownMenu = "";
@@ -1721,13 +1732,11 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
 
 
 function clickUseDefault(rowID, defaultVal) {
-    setTimeout(function () {
-        var checkDropDown = $('#' + rowID).find('#dropDown')[0]
-        var checkDefVal = $('#' + rowID).find('#defValUse').css('display')
-        if (defaultVal && defaultVal != "" && checkDropDown && checkDefVal !== "none") {
-            $('#' + rowID).find('#defValUse').trigger("click")
-        }
-    }, 10);
+    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
+    var checkDefVal = $('#' + rowID).find('#defValUse').css('display')
+    if (defaultVal && defaultVal != "" && checkDropDown && checkDefVal !== "none") {
+        $('#' + rowID).find('#defValUse').trigger("click")
+    }
 }
 
 
@@ -2635,7 +2644,7 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
     if (paramDropDown && paramDropDown != "") {
         var paramDropDownArray = paramDropDown.split(",");
         if (paramDropDownArray) {
-            var dropDownMenu = getDropdownDef('dropDown', paramDropDownArray, "Choose Value");
+            var dropDownMenu = getDropdownDef('indropdown'+firGnum, 'indropdown', paramDropDownArray, "Choose Value");
             //select defVal
             dropDownQual = true;
         }
@@ -3371,9 +3380,9 @@ function loadRunOptions() {
 }
 //insert selected input to inputs table
 function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection) {
-    var checkDropDown = $('#' + rowID).find('#dropDown')[0];
+    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
     if (checkDropDown) {
-        $(checkDropDown).val(filePath);
+        $(checkDropDown).val(filePath)
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
         $('#' + rowID).find('#defValUse').css('display', 'none');
     } else {
@@ -3402,7 +3411,7 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
 }
 //remove for both dropdown and file/val options
 function removeSelectFile(rowID, sType) {
-    var checkDropDown = $('#' + rowID).find('#dropDown')[0];
+    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
     if (checkDropDown) {
         $('#' + rowID).find('#defValUse').css('display', 'inline');
         $('#' + rowID).removeAttr('propipeinputid');
@@ -5915,6 +5924,7 @@ $(document).ready(function () {
         //check database if file is exist, if not exist then insert
         checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
         button.css("display", "none");
+        showHideSett(rowID)
         autoCheck()
     });
     //change on exec settings
@@ -5933,8 +5943,9 @@ $(document).ready(function () {
         });
     })
     //change on dropDown button
+    //xxxxxx
     $(function () {
-        $(document).on('change', '#dropDown', function () {
+        $(document).on('change', 'select[indropdown]', function () {
             var button = $(this);
             var value = $(this).val();
             var rowID = "";
