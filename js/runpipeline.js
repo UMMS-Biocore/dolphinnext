@@ -936,7 +936,6 @@ function addProcessPanelAutoform(gNum, name, varName, type, autoform) {
     if (autoform) {
         allAutoForm = createDynFillArr(autoform)
         //bind event handlers
-        setTimeout(function () {
             $.each(allAutoForm, function (el) {
                 var dataGroup = $.extend(true, {}, allAutoForm[el]);
                 dataGroup.type = type;
@@ -977,14 +976,13 @@ function addProcessPanelAutoform(gNum, name, varName, type, autoform) {
                         }
                     });
                     $(condDiv[eachArrayForm]).trigger("change")
-                    //trigger one more time to effectively change according to last value
-                    if (el == allAutoForm.length - 1) {
-                        $(condDiv[eachArrayForm]).trigger("change")
-                    }
+//                    trigger one more time to effectively change according to last value
+//                    if (el == allAutoForm.length - 1) {
+//                        $(condDiv[eachArrayForm]).trigger("change")
+//                    }
                 });
 
             });
-        }, 1000);
     }
 }
 
