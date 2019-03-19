@@ -1,3 +1,21 @@
+19.03.2019 Version 0.3.05
+Outputs table hid in run page.
+Amazon keys showed as asterisks in profile page.
+Display of run page log tabs in defined in .sec file as follows:
+
+[UICONFIG]
+; User Preferences for log tab in run page
+; Note: Set SHOW_RUN_NEXTFLOWLOG as false to hide amazon keys.
+SHOW_RUN_LOG=true
+SHOW_RUN_TIMELINE=true
+SHOW_RUN_REPORT=true
+SHOW_RUN_DAG=true
+SHOW_RUN_TRACE=true
+SHOW_RUN_NEXTFLOWLOG=true  
+SHOW_RUN_NEXTFLOWNF=true
+SHOW_RUN_NEXTFLOWCONFIG=true
+
+
 17.03.2019 Version 0.3.04
 Minor fix regarding to autoform feature.
 

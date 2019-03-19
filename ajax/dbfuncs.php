@@ -1261,6 +1261,12 @@ class dbfuncs {
         $decrypted_string=openssl_decrypt($a_key,"AES-128-ECB",$this->amazon);
         return $decrypted_string;
     }
+    function keyAsterisk($key){
+        if (strlen($key) >3){
+            $key=str_repeat('*', strlen($key) - 4) . substr($key, -4);
+        } 
+        return $key;
+    }
     function startProAmazon($id,$ownerID, $username){
         $profileName = "{$username}_{$id}";
         $data = json_decode($this->getProfileAmazonbyID($id, $ownerID));
@@ -1746,7 +1752,7 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     public function getAmz($ownerID) {
-        $sql = "SELECT * FROM amazon_credentials WHERE owner_id = '$ownerID'";
+        $sql = "SELECT id, name, owner_id, group_id, perms, date_created, date_modified, last_modified_user FROM amazon_credentials WHERE owner_id = '$ownerID'";
         return self::queryTable($sql);
     }
     public function getAmzbyID($id,$ownerID) {
