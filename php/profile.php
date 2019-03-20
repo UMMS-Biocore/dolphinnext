@@ -12,9 +12,6 @@
     $SHOW_AMAZON_KEYS= SHOW_AMAZON_KEYS;
     $SHOW_SSH_KEYS=SHOW_SSH_KEYS;
     $SHOW_GROUPS=SHOW_GROUPS;
-    $SHOW_AMAZON_KEYS = isset($SHOW_AMAZON_KEYS) ? $SHOW_AMAZON_KEYS : "notset";
-    $SHOW_SSH_KEYS = isset($SHOW_SSH_KEYS) ? $SHOW_SSH_KEYS : "notset";
-    $SHOW_GROUPS = isset($SHOW_GROUPS) ? $SHOW_GROUPS : "notset";
 ?>
 
 <section class="content" style="max-width: 1500px; ">
@@ -668,13 +665,13 @@
                     <div class="form-group">
                         <label for="mAmzAccKey" class="col-sm-3 control-label">Access Key</label>
                         <div class="col-sm-9">
-                            <input type="text" class="form-control" id="mAmzAccKey" name="amz_acc_key">
+                            <input type="password" class="form-control" id="mAmzAccKey" name="amz_acc_key">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="mAmzSucKey" class="col-sm-3 control-label">Secret Key</label>
                         <div class="col-sm-9">
-                            <input type="text" class="form-control" id="mAmzSucKey" name="amz_suc_key">
+                            <input type="password" class="form-control" id="mAmzSucKey" name="amz_suc_key">
                         </div>
                     </div>
                 </form>

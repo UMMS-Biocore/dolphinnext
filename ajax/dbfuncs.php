@@ -942,7 +942,7 @@ class dbfuncs {
             $next_memory = $next_memory*1000;
             //-J $jobname
             $jobname = $this->cleanName($jobname);
-            $exec_string = "bsub -e err.log $next_clu_opt -q $next_queue -J $jobname -n $next_cpu -W $next_time -R rusage[mem=$next_memory]";
+            $exec_string = "bsub -e $dolphin_path_real/err.log $next_clu_opt -q $next_queue -J $jobname -n $next_cpu -W $next_time -R rusage[mem=$next_memory]";
             $exec_next_all = "$exec_string \\\"$mainNextCmd\\\"";
         } else if ($executor == "sge"){
             $jobnameText = $this->getJobName($jobname, $executor);
@@ -954,7 +954,7 @@ class dbfuncs {
             //-j y ->Specifies whether or not the standard error stream of the job is merged into the standard output stream.
             $sgeRunFile= "printf '#!/bin/bash \\n#$ -j y\\n#$ -V\\n#$ -notify\\n#$ -wd $dolphin_path_real\\n#$ -o $dolphin_path_real/.dolphinnext.log\\n".$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
 
-            $exec_string = "qsub -e err.log $dolphin_path_real/.dolphinnext.run";
+            $exec_string = "qsub -e $dolphin_path_real/err.log $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $sgeRunFile && $exec_string";
         } else if ($executor == "slurm"){
         } else if ($executor == "ignite"){
@@ -1260,6 +1260,12 @@ class dbfuncs {
     function amazonDecode($a_key){
         $decrypted_string=openssl_decrypt($a_key,"AES-128-ECB",$this->amazon);
         return $decrypted_string;
+    }
+    function keyAsterisk($key){
+        if (strlen($key) >3){
+            $key=str_repeat('*', strlen($key) - 4) . substr($key, -4);
+        } 
+        return $key;
     }
     function startProAmazon($id,$ownerID, $username){
         $profileName = "{$username}_{$id}";
@@ -1746,7 +1752,7 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     public function getAmz($ownerID) {
-        $sql = "SELECT * FROM amazon_credentials WHERE owner_id = '$ownerID'";
+        $sql = "SELECT id, name, owner_id, group_id, perms, date_created, date_modified, last_modified_user FROM amazon_credentials WHERE owner_id = '$ownerID'";
         return self::queryTable($sql);
     }
     public function getAmzbyID($id,$ownerID) {

@@ -936,53 +936,53 @@ function addProcessPanelAutoform(gNum, name, varName, type, autoform) {
     if (autoform) {
         allAutoForm = createDynFillArr(autoform)
         //bind event handlers
-            $.each(allAutoForm, function (el) {
-                var dataGroup = $.extend(true, {}, allAutoForm[el]);
-                dataGroup.type = type;
-                var varNameCond = dataGroup.varNameCond;
-                //find dropdown/checkbox where condition based changes are created.
-                //in order to grep all array rows which has same id, following jquery pattern is used.
-                var condDiv = $('[id="var_' + gNum + "-" + varNameCond + '"]');
-                //bind change event to dropdown
-                $.each(condDiv, function (eachArrayForm) {
-                    $(condDiv[eachArrayForm]).change(dataGroup, function () {
-                        var lastdataGroup = $.extend(true, {}, dataGroup);
-                        var autoVal = lastdataGroup.autoVal[0];
-                        var varNameCond = lastdataGroup.varNameCond;
-                        var selOpt = lastdataGroup.selOpt;
-                        var type = lastdataGroup.type;
-                        var selectedVal = "";
-                        if (type == "checkbox") {
-                            selectedVal = $(this).is(":checked").toString();
+        $.each(allAutoForm, function (el) {
+            var dataGroup = $.extend(true, {}, allAutoForm[el]);
+            dataGroup.type = type;
+            var varNameCond = dataGroup.varNameCond;
+            //find dropdown/checkbox where condition based changes are created.
+            //in order to grep all array rows which has same id, following jquery pattern is used.
+            var condDiv = $('[id="var_' + gNum + "-" + varNameCond + '"]');
+            //bind change event to dropdown
+            $.each(condDiv, function (eachArrayForm) {
+                $(condDiv[eachArrayForm]).change(dataGroup, function () {
+                    var lastdataGroup = $.extend(true, {}, dataGroup);
+                    var autoVal = lastdataGroup.autoVal[0];
+                    var varNameCond = lastdataGroup.varNameCond;
+                    var selOpt = lastdataGroup.selOpt;
+                    var type = lastdataGroup.type;
+                    var selectedVal = "";
+                    if (type == "checkbox") {
+                        selectedVal = $(this).is(":checked").toString();
+                    } else {
+                        selectedVal = this.value;
+                    }
+                    var parentDiv = $(this).parent().parent();
+                    if (selectedVal === selOpt) {
+                        //if autoval contains "+" operator
+                        if (autoVal.match(/\+/)) {
+                            var autoValAr = autoVal.split("+");
+                            for (var n = 0; n < autoValAr.length; n++) {
+                                autoValAr[n] = checkDynamicVar(autoValAr[n], autoFillJSON, parentDiv, gNum)
+                            }
+                            autoVal = autoValAr.join("");
                         } else {
-                            selectedVal = this.value;
+                            //check if dynamic variables (_var) exist in autoVal
+                            autoVal = checkDynamicVar(autoVal, autoFillJSON, parentDiv, gNum)
                         }
-                        var parentDiv = $(this).parent().parent();
-                        if (selectedVal === selOpt) {
-                            //if autoval contains "+" operator
-                            if (autoVal.match(/\+/)) {
-                                var autoValAr = autoVal.split("+");
-                                for (var n = 0; n < autoValAr.length; n++) {
-                                    autoValAr[n] = checkDynamicVar(autoValAr[n], autoFillJSON, parentDiv, gNum)
-                                }
-                                autoVal = autoValAr.join("");
-                            } else {
-                                //check if dynamic variables (_var) exist in autoVal
-                                autoVal = checkDynamicVar(autoVal, autoFillJSON, parentDiv, gNum)
-                            }
-                            if (autoVal) {
-                                parentDiv.find("#var_" + gNum + "-" + varName).val(autoVal)
-                            }
+                        if (autoVal) {
+                            parentDiv.find("#var_" + gNum + "-" + varName).val(autoVal)
                         }
-                    });
-                    $(condDiv[eachArrayForm]).trigger("change")
-//                    trigger one more time to effectively change according to last value
-//                    if (el == allAutoForm.length - 1) {
-//                        $(condDiv[eachArrayForm]).trigger("change")
-//                    }
+                    }
                 });
-
+                $(condDiv[eachArrayForm]).trigger("change")
+                //                    trigger one more time to effectively change according to last value
+                //                    if (el == allAutoForm.length - 1) {
+                //                        $(condDiv[eachArrayForm]).trigger("change")
+                //                    }
             });
+
+        });
     }
 }
 
@@ -4884,6 +4884,7 @@ $(function () {
             console.log(fileList);
             var fileListAr = getObjectValues(fileList);
             var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
+            var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
             //hide serverlog.txt
             var pubWebPath = $("#basepathinfo").attr("pubweb")
             var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
@@ -4891,7 +4892,7 @@ $(function () {
             var tabDiv = [];
             var fileName = [];
             for (var j = 0; j < order.length; j++) {
-                if (fileListAr.includes(order[j]) || order[j] == "log.txt") {
+                if ($("#logContentDiv").attr(logContentDivAttr[j]) == "true" && (fileListAr.includes(order[j]) || order[j] == "log.txt")) {
                     var exist = 'style="display:block;"';
                 } else {
                     var exist = 'style="display:none;"';
@@ -5020,10 +5021,19 @@ function updateRunVerNavBar() {
         var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: "run" })
         var fileListAr = getObjectValues(fileList);
         fileListAr.splice($.inArray("serverlog.txt", fileListAr), 1);
+        var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
+        var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
+
         if (fileListAr.length > 0) {
             for (var j = 0; j < fileListAr.length; j++) {
-                var tabID = cleanProcessName(fileListAr[j]) + 'Tab';
-                $('a[href="#' + tabID + '"]').css("display", "block")
+                var orderInd = order.indexOf(fileListAr[j]);
+                if (orderInd > -1){
+                    if ($("#logContentDiv").attr(logContentDivAttr[orderInd]) == "true"){
+                        var tabID = cleanProcessName(fileListAr[j]) + 'Tab';
+                        $('a[href="#' + tabID + '"]').css("display", "block")
+                    }
+                }
+
             }
         }
         if (!activeID) {
