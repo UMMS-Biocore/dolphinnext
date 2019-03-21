@@ -3697,7 +3697,14 @@ $("#publish_dir_check").click(function () {
 });
 //file import modal
 $("#file_dir").keyup(function () {
-    autoCheckS3();
+    autoCheckS3("#file_dir", "#mRunAmzKeyS3Div");
+});
+$("#s3_archive_dir_geo").keyup(function () {
+    autoCheckS3("#s3_archive_dir_geo", "#mArchAmzKeyS3Div_GEO");
+});
+
+$("#s3_archive_dir").keyup(function () {
+    autoCheckS3("#s3_archive_dir", "#mArchAmzKeyS3Div");
 });
 
 var timeoutCheck = 0;
@@ -3715,11 +3722,11 @@ function autoCheck(type) {
 }
 
 var timeoutCheckS3 = 0;
-function autoCheckS3() {
+function autoCheckS3(inputID,showDivId) {
     if (timeoutCheckS3) {
         clearTimeout(timeoutCheckS3);
     }
-    timeoutCheckS3 = setTimeout(function () { checkS3filePath() }, 2000);
+    timeoutCheckS3 = setTimeout(function () { checkS3filePath(inputID,showDivId) }, 2000);
 }
 
 var timeoutCheckWorkDir = 0;
@@ -3731,18 +3738,18 @@ function autoCheckWorkDir() {
 }
 
 //check if file import path contains s3:// pattern and shows aws menu
-function checkS3filePath() {
-    var file_path = $("#file_dir").val();
+function checkS3filePath(inputID,showDivId) {
+    var file_path = $(inputID).val();
     var s3pattern = 's3:';
     var pathCheck = false;
     if (file_path !== '') {
         if (file_path.indexOf(s3pattern) > -1) {
-            $("#mRunAmzKeyS3Div").css('display', "block");
+            $(showDivId).css('display', "block");
             pathCheck = true;
         } 
     } 
     if (pathCheck === false) {
-        $("#mRunAmzKeyS3Div").css('display', "none");
+        $(showDivId).css('display', "none");
     } 
 }
 
@@ -3784,12 +3791,12 @@ function checkS3(path, getProPipeInputs) {
 function loadAmzKeys() {
     var data = getValues({ p: "getAmz" });
     if (data && data != "") {
-        for (var i = 0; i < data.length; i++) {
-            var param = data[i];
-            var optionGroup = new Option(param.name, param.id);
-            $("#mRunAmzKey").append(optionGroup);
-            $("#mRunAmzKeyS3").append(optionGroup);
-        }
+        $.each(data, function (i, item) {
+            $('#mRunAmzKey').append($('<option>', { value: item.id, text : item.name }));
+            $('#mRunAmzKeyS3').append($('<option>', { value: item.id, text : item.name }));
+            $('#mArchAmzKeyS3').append($('<option>', { value: item.id, text : item.name }));
+            $('#mArchAmzKeyS3_GEO').append($('<option>', { value: item.id, text : item.name }));
+        });
     }
 }
 //autoselect mRunAmzKey based on selected profile
@@ -3797,10 +3804,13 @@ function selectAmzKey() {
     var amzKeyId = $("#chooseEnv").find(":selected").attr('amz_key')
     if (amzKeyId) {
         $("#mRunAmzKey").val(parseInt(amzKeyId));
-        console.log(parseInt(amzKeyId))
         $("#mRunAmzKeyS3").val(parseInt(amzKeyId));
+        $("#mArchAmzKeyS3").val(parseInt(amzKeyId));
+        $("#mArchAmzKeyS3_GEO").val(parseInt(amzKeyId));
         $("#mRunAmzKey").trigger("change");
         $("#mRunAmzKeyS3").trigger("change");
+        $("#mArchAmzKeyS3").trigger("change");
+        $("#mArchAmzKeyS3_GEO").trigger("change");
     } 
 }
 
@@ -5235,6 +5245,8 @@ $(document).ready(function () {
             $("#seaGeoSamplesDiv").css("display", "none")
             $("#selGeoSamplesDiv").css("display", "none")
             $('#mRunAmzKeyS3Div').css("display", "none")
+            $('#mArchAmzKeyS3Div_GEO').css("display", "none")
+            $('#mArchAmzKeyS3Div').css("display", "none")
             var renderMenu = {
                 option: function (data, escape) {
                     return '<div class="option">' +
@@ -5435,21 +5447,43 @@ $(document).ready(function () {
         $('#addFileModal').on('click', '#mSaveFiles', function (event) {
             event.preventDefault();
             var checkTab = $('#addFileModal').find('.active.tab-pane')[0].getAttribute('id');
+            var warnUser = false;
             if (checkTab === 'hostFiles') {
                 var formValues = $('#hostFiles').find('input, select');
                 var requiredFields = ["file_dir", "collection_type", "collection_id"];
                 var ret = {};
+                var infoModalText = ""
                 ret = getTableSamples("selectedSamplesTable")
                 if (ret.warnUser) {
-                    showInfoModal("#infoModal", "#infoModalText", ret.warnUser)
-                }
+                    infoModalText += ret.warnUser;
+                } 
                 if (!ret.file_array.length) {
-                    showInfoModal("#infoModal", "#infoModalText", "Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.")
+                    infoModalText += " * Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons."
+                } 
+                var file_dir  = $.trim($("#file_dir").val());
+                var amzKey  = $("#mRunAmzKeyS3").val();
+                var s3_archive_dir  = $.trim($("#s3_archive_dir").val());
+                var amzArchKey  = $("#mArchAmzKeyS3").val();
+                if (file_dir.match(/s3:/)){
+                    if (!amzKey){
+                        infoModalText += " * Please select Amazon Keys to search files into your S3 storage.";
+                        warnUser = true;
+                    } 
+                } 
+                if (!warnUser && s3_archive_dir.match(/s3:/)){
+                    if (!amzArchKey){
+                        infoModalText += " * Please select Amazon Archive Keys to save files into your S3 storage.";
+                        warnUser = true;
+                    } 
                 }
+                if (infoModalText){
+                        showInfoModal("#infoModal", "#infoModalText", infoModalText);
+                }
+
                 var formObj = {};
                 var stop = "";
                 [formObj, stop] = createFormObj(formValues, requiredFields)
-                if (stop === false && !ret.warnUser && ret.file_array.length) {
+                if (stop === false && !ret.warnUser && ret.file_array.length && !warnUser) {
                     //new items come with prefix: _newItm_
                     var collection_name = $("#collection_id")[0].selectize.getItem(formObj.collection_id)[0].innerHTML;
                     if (formObj.collection_id.match(/^_newItm_(.*)/)) {
@@ -5458,10 +5492,12 @@ $(document).ready(function () {
                             formObj.collection_id = collection_data.id
                         }
                     }
-                    var file_dir  = $.trim($("#file_dir").val());
                     if (file_dir.match("s3:")){
-                        var amzKey  = $("#mRunAmzKeyS3").val();
                         formObj.file_dir = file_dir+"\t"+amzKey
+                    }
+
+                    if (s3_archive_dir.match("s3:")){
+                        formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
                     }
                     console.log(formObj)
                     formObj.file_array = ret.file_array
@@ -5487,17 +5523,30 @@ $(document).ready(function () {
                 var formValues = $('#geoFiles').find('input, select');
                 var requiredFields = ["collection_id"];
                 var ret = {};
+                var infoModalText = ""
                 ret = getTableSamples("selectedGeoSamplesTable")
                 if (ret.warnUser) {
-                    showInfoModal("#infoModal", "#infoModalText", ret.warnUser)
+                    infoModalText += ret.warnUser;
                 }
                 if (!ret.file_array.length) {
-                    showInfoModal("#infoModal", "#infoModalText", "Please fill 'Selected GEO Files' table by clicking 'Select' buttons in the 'Searched GEO Files' table.")
+                    infoModalText += " * Please fill 'Selected GEO Files' table by clicking 'Select' buttons in the 'Searched GEO Files' table."
                 }
+                var s3_archive_dir_geo  = $.trim($("#archive_dir_geo").val());
+                var amzArchKey  = $("#mArchAmzKeyS3_GEO").val();
+                if (s3_archive_dir_geo.match(/s3:/)){
+                    if (!amzArchKey){
+                        infoModalText += " * Please select Amazon Keys to save files into your S3 storage.";
+                        warnUser = true;
+                    } 
+                }
+                if (infoModalText){
+                        showInfoModal("#infoModal", "#infoModalText", infoModalText);
+                }
+
                 var formObj = {};
                 var stop = "";
                 [formObj, stop] = createFormObj(formValues, requiredFields)
-                if (stop === false && !ret.warnUser && ret.file_array.length) {
+                if (stop === false && !ret.warnUser && ret.file_array.length && !warnUser) {
                     //new items come with prefix: _newItm_
                     var collection_name = $("#collection_id_geo")[0].selectize.getItem(formObj.collection_id)[0].innerHTML;
                     if (formObj.collection_id.match(/^_newItm_(.*)/)) {
@@ -5512,6 +5561,9 @@ $(document).ready(function () {
                         formObj.collection_type = "pair";
                     } else if (collection_type[0][2] == "Single") {
                         formObj.collection_type = "single";
+                    }
+                    if (s3_archive_dir_geo.match("s3:")){
+                        formObj.s3_archive_dir = s3_archive_dir_geo+"\t"+amzArchKey
                     }
                     formObj.file_array = ret.file_array
                     formObj.p = "saveFile"

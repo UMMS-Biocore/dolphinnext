@@ -787,7 +787,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label text-left" style="padding-left:45px;">1. File Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <label class="col-sm-3 control-label text-left" style="padding-left:30px;">1. File Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                             <div class="col-sm-7">
                                 <input type="text" class="form-control" id="file_dir" name="file_dir" value="">
                             </div>
@@ -802,7 +802,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label text-left" style="padding-left:45px;">2. File Type <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose your file type"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <label class="col-sm-3 control-label text-left" style="padding-left:30px;">2. File Type <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose your file type"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                             <div class="col-sm-7">
                                 <select id="file_type" class="fbtn btn-default form-control" name="file_type">
                                     <option value="fastq" selected>Fastq</option>
@@ -814,7 +814,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="collection_type" class="col-sm-3 control-label text-left" style="padding-left:45px;">3. Collection Type <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please choose 'paired list' and for single-end reads or any list of files choose 'single/list' option."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <label for="collection_type" class="col-sm-3 control-label text-left" style="padding-left:30px;">3. Collection Type <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please choose 'paired list' and for single-end reads or any list of files choose 'single/list' option."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                             <div class="col-sm-7">
                                 <select id="collection_type" class="fbtn btn-default form-control" name="collection_type">
                                     <option value="" disabled selected>Choose Collection Type</option>
@@ -824,7 +824,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label text-left" style="padding-left:45px;">4. File Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please enter forward and reverse read pattern to match file pairs."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <label class="col-sm-3 control-label text-left" style="padding-left:30px;">4. File Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="For paired-end reads please enter forward and reverse read pattern to match file pairs."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                         </div>
                         <div class="form-group">
                             <div class="col-sm-12">
@@ -879,7 +879,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </div>
                         </div>
                         <div class="form-group patternTable" style="display:none;">
-                            <div class="col-sm-12" style="padding:45px;">
+                            <div class="col-sm-12" style="padding:30px;">
                                 <table id="selectedSamples" class="table table-striped compact table-bordered display" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
@@ -893,7 +893,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label text-left" style="padding-left:45px;">5. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered files later"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <label class="col-sm-3 control-label text-left" style="padding-left:30px;">5. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered files later"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                             <div class="col-sm-7">
                                 <select id="collection_id" class="fbtn btn-default form-control" name="collection_id">
                                     <option value="" disabled selected>Choose or Type New Collection Name</option>
@@ -901,9 +901,23 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="col-sm-3 control-label text-left" style="padding-left:45px;">6. Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <label class="col-sm-3 control-label text-left" style="padding-left:30px;">6. Local Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                             <div class="col-sm-7">
                                 <input type="text" class="form-control" id="archive_dir" name="archive_dir">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label text-left" style="padding-left:30px;">7. Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                            <div class="col-sm-7">
+                                <input type="text" class="form-control" id="s3_archive_dir" name="s3_archive_dir">
+                            </div>
+                        </div>
+                        <div class="form-group" id="mArchAmzKeyS3Div" style="display:none; ">
+                            <label class="col-sm-3 control-label text-left" style="padding-left:45px; color:#a7a218;">Select Amazon Keys(S3 Archive) <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon Keys to access your S3 archive directory"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
+                            <div class="col-sm-7">
+                                <select id="mArchAmzKeyS3" class="fbtn btn-default form-control" name="amazon_cre_id">
+                                    <option value="" disabled selected>Select Amazon Keys </option>
+                                </select>
                             </div>
                         </div>
                     </form>
@@ -913,7 +927,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     </br>
                 <form class="form-horizontal">
                     <div class="form-group" id="viewGeoButDiv">
-                        <label class="col-sm-3 control-label text-left" style="padding-left:45px;">1. GSE/GSM/SRR ID <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter GSE, GSM or SRR id "><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        <label class="col-sm-3 control-label text-left" style="padding-left:30px;">1. GSE/GSM/SRR ID <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter GSE, GSM or SRR id "><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                         <div class="col-sm-7">
                             <input type="text" class="form-control" id="geo_id" name="geo_id" value="">
                         </div>
@@ -922,10 +936,10 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label text-left" style="padding-left:45px;">2. Searched GEO Files <span><a data-toggle="tooltip" data-placement="bottom" title="Click 'select' or 'select all' button to add files to a collection"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        <label class="col-sm-3 control-label text-left" style="padding-left:30px;">2. Searched GEO Files <span><a data-toggle="tooltip" data-placement="bottom" title="Click 'select' or 'select all' button to add files to a collection"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                     </div>
                     <div class="form-group" id="seaGeoSamplesDiv">
-                        <div class="col-sm-12" style="padding-left:45px; padding-left:45px; margin-bottom:25px;">
+                        <div class="col-sm-12" style="padding-left:30px; margin-bottom:25px;">
                             <table id="searchedGeoSamples" class="table table-striped compact table-bordered display" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
@@ -947,10 +961,10 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     </div>
 
                     <div class="form-group">
-                        <label class="col-sm-3 control-label text-left" style="padding-left:45px;">3. Selected GEO Files <span><a data-toggle="tooltip" data-placement="bottom" title="These files will be added into collection" class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        <label class="col-sm-3 control-label text-left" style="padding-left:30px;">3. Selected GEO Files <span><a data-toggle="tooltip" data-placement="bottom" title="These files will be added into collection" class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                     </div>
                 <div class="form-group" id="selGeoSamplesDiv">
-                    <div class="col-sm-12" style="padding-left:45px; padding-left:45px;">
+                    <div class="col-sm-12" style="padding-left:30px;">
                         <table id="selectedGeoSamples" class="table table-striped compact table-bordered display" cellspacing="0" width="100%">
                             <thead>
                                 <tr>
@@ -966,7 +980,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 </div>
 
                 <div class="form-group">
-                    <label class="col-sm-3 control-label text-left" style="padding-left:45px;">4. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered files later"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">4. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered files later"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                     <div class="col-sm-7">
                         <select id="collection_id_geo" class="fbtn btn-default form-control" name="collection_id">
                             <option value="" disabled selected>Choose or Type New Collection Name</option>
@@ -974,9 +988,23 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-sm-3 control-label text-left" style="padding-left:45px;">5. Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">5. Local Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                     <div class="col-sm-7">
                         <input type="text" class="form-control" id="archive_dir_geo" name="archive_dir">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">6. Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                    <div class="col-sm-7">
+                        <input type="text" class="form-control" id="s3_archive_dir_geo" name="s3_archive_dir">
+                    </div>
+                </div>
+                <div class="form-group" id="mArchAmzKeyS3Div_GEO" style="display:none; ">
+                    <label class="col-sm-3 control-label text-left" style="padding-left:30px; color:#a7a218;">Select Amazon Keys(S3 Archive) <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon Keys to access your S3 archive directory"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
+                    <div class="col-sm-7">
+                        <select id="mArchAmzKeyS3_GEO" class="fbtn btn-default form-control" name="amazon_cre_id">
+                            <option value="" disabled selected>Select Amazon Keys </option>
+                        </select>
                     </div>
                 </div>
                 </form>

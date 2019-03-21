@@ -178,42 +178,56 @@ class dbfuncs {
     function getS3config ($project_pipeline_id, $attempt, $ownerID){
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $s3configFileDir = "";
+        $amazon_cre_id_Ar = array();
         foreach ($allinputs as $inputitem):
         $collection_id = $inputitem->{'collection_id'};
         if (!empty($collection_id)){
             $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
             foreach ($allfiles as $fileData):
             $file_dir = $fileData->{'file_dir'};
+            $s3_archive_dir = $fileData->{'s3_archive_dir'};
             if (preg_match("/s3:/",$file_dir)){
                 $s3Data = explode("\t", $file_dir);
                 $s3Path = trim($s3Data[0]);
                 $amazon_cre_id = trim($s3Data[1]);
-                if (!empty($amazon_cre_id)){
-                    $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
-                    foreach($amz_data as $d){
-                        $access = $d->amz_acc_key;
-                        $d->amz_acc_key = trim($this->amazonDecode($access));
-                        $secret = $d->amz_suc_key;
-                        $d->amz_suc_key = trim($this->amazonDecode($secret));
-                    }
-                    $access_key = $amz_data[0]->{'amz_acc_key'};
-                    $secret_key = $amz_data[0]->{'amz_suc_key'};
-                    $confText = "access_key=$access_key\nsecret_key=$secret_key\n";
-                    $s3configDir = "{$this->amz_path}/config/run{$project_pipeline_id}/initialrun";
-                    $s3configFileDir = $s3configDir;
-                    $s3tmpFile = "$s3configDir/.conf.$amazon_cre_id";
-                    if (!file_exists($s3configDir)) {
-                        mkdir($s3configDir, 0700, true);
-                    }
-                    $file = fopen($s3tmpFile, 'w');//creates new file
-                    fwrite($file, $confText);
-                    fclose($file);
-                    chmod($s3tmpFile, 0700);
-                }
+                if (!in_array($amazon_cre_id, $amazon_cre_id_Ar)){ $amazon_cre_id_Ar[] = $amazon_cre_id; }
+            } 
+            if (preg_match("/s3:/",$s3_archive_dir)){
+                $s3Data = explode("\t", $s3_archive_dir);
+                $s3Path = trim($s3Data[0]);
+                $amazon_cre_id = trim($s3Data[1]);
+                if (!in_array($amazon_cre_id, $amazon_cre_id_Ar)){ $amazon_cre_id_Ar[] = $amazon_cre_id; }
             }
             endforeach;
         }
         endforeach;
+
+        foreach ($amazon_cre_id_Ar as $amazon_cre_id):
+        if (!empty($amazon_cre_id)){
+            error_log($amazon_cre_id);
+            $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
+            foreach($amz_data as $d){
+                $access = $d->amz_acc_key;
+                $d->amz_acc_key = trim($this->amazonDecode($access));
+                $secret = $d->amz_suc_key;
+                $d->amz_suc_key = trim($this->amazonDecode($secret));
+            }
+            $access_key = $amz_data[0]->{'amz_acc_key'};
+            $secret_key = $amz_data[0]->{'amz_suc_key'};
+            $confText = "access_key=$access_key\nsecret_key=$secret_key\n";
+            $s3configDir = "{$this->amz_path}/config/run{$project_pipeline_id}/initialrun";
+            $s3configFileDir = $s3configDir;
+            $s3tmpFile = "$s3configDir/.conf.$amazon_cre_id";
+            if (!file_exists($s3configDir)) {
+                mkdir($s3configDir, 0700, true);
+            }
+            $file = fopen($s3tmpFile, 'w');//creates new file
+            fwrite($file, $confText);
+            fclose($file);
+            chmod($s3tmpFile, 0700);
+        }
+        endforeach;
+
         return $s3configFileDir;
     }
 
@@ -222,6 +236,11 @@ class dbfuncs {
         $parallel = true;
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
+        $profile= $proPipeAll[0]->{'profile'};
+        if (!empty($profile)){
+            //if $profile eq "amazon" then allow s3 backupdir download.
+            $profile = substr($profile, 0, strpos($profile, "-")); //cluster or amazon
+        }
         $run_dir = "$outdir/run{$project_pipeline_id}";
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $file_name = array();
@@ -229,6 +248,7 @@ class dbfuncs {
         $file_type = array();
         $files_used = array();
         $archive_dir = array();
+        $s3_archive_dir = array();
         $collection_type = array();
         foreach ($allinputs as $inputitem):
         $collection_id = $inputitem->{'collection_id'};
@@ -240,6 +260,7 @@ class dbfuncs {
             $file_type[] = $fileData->{'file_type'};
             $files_used[] = $fileData->{'files_used'};
             $archive_dir[] = $fileData->{'archive_dir'};
+            $s3_archive_dir[] = $fileData->{'s3_archive_dir'};
             $collection_type[] = $fileData->{'collection_type'};
             endforeach;
         }
@@ -247,11 +268,11 @@ class dbfuncs {
         if (!empty($file_name)) {
             if ($parallel == true){
                 $file_nameS = "Channel.from(\"'" . implode ( "'\", \"'", $file_name ) . "'\")";
-
                 $file_dirS = "Channel.from(\"'" . implode ( "'\", \"'", $file_dir ) . "'\")";
                 $file_typeS = "Channel.from(\"'" . implode ( "'\", \"'", $file_type ) . "'\")";
                 $files_usedS = "Channel.from(\"'" . implode ( "'\", \"'", $files_used ) . "'\")";
                 $archive_dirS = "Channel.from(\"'" . implode ( "'\", \"'", $archive_dir ) . "'\")";
+                $s3_archive_dirS = "Channel.from(\"'" . implode ( "'\", \"'", $s3_archive_dir ) . "'\")";
                 $collection_typeS = "Channel.from(\"'" . implode ( "'\", \"'", $collection_type ) . "'\")";
                 //for all file control
                 $file_name_allS = "Channel.value(\"'" . implode ( "', '", $file_name ) . "'\")";
@@ -263,6 +284,7 @@ class dbfuncs {
                 $file_typeS = "Channel.value(\"'" . implode ( "', '", $file_type ) . "'\")";
                 $files_usedS = "Channel.value(\"'" . implode ( "', '", $files_used ) . "'\")";
                 $archive_dirS = "Channel.value(\"'" . implode ( "', '", $archive_dir ) . "'\")";
+                $s3_archive_dirS = "Channel.value(\"'" . implode ( "', '", $s3_archive_dir ) . "'\")";
                 $collection_typeS = "Channel.value(\"'" . implode ( "', '", $collection_type ) . "'\")";
                 //for all file control
                 $file_name_allS = $file_nameS;
@@ -275,6 +297,7 @@ class dbfuncs {
         file_type = $file_typeS;
         files_used = $files_usedS;
         archive_dir = $archive_dirS;
+        s3_archive_dir = $s3_archive_dirS;
         collection_type = $collection_typeS;
         file_name_all = $file_name_allS;
         file_type_all = $file_type_allS;
@@ -288,6 +311,7 @@ class dbfuncs {
           val file_type from file_type
           val files_used from files_used
           val archive_dir from archive_dir
+          val s3_archive_dir from s3_archive_dir
           val collection_type from collection_type
           val file_name_all from file_name_all
           val file_type_all from file_type_all
@@ -307,13 +331,16 @@ class dbfuncs {
           use File::Path qw( make_path );
 
           my \$run_dir = \"$run_dir\";
+          my \$profile = \"$profile\";
           my \$input_dir = \"\$run_dir/inputs\";
-          my \$s3tmp_dir = \"\$input_dir/.tmp\";
+          my \$s3down_dir_prefix = \"\$input_dir/.tmp\";
+          my \$s3upload_dir = \"\$input_dir/.s3up\";
           my @file_name = (!{file_name});
           my @file_dir = (!{file_dir});
           my @file_type = (!{file_type});
           my @files_used = (!{files_used});
           my @archive_dir = (!{archive_dir});
+          my @s3_archive_dir = (!{s3_archive_dir});
           my @collection_type = (!{collection_type});
           my @file_name_all = (!{file_name_all});
           my @file_type_all = (!{file_type_all});
@@ -330,12 +357,14 @@ class dbfuncs {
           for ( my \$i = 0 ; \$i <= \$#file_name ; \$i++ ) {
             my \$fileType        = \$file_type[\$i];
             my \$archiveDir      = trim( \$archive_dir[\$i] );
+            my \$s3_archiveDir      = trim( \$s3_archive_dir[\$i] );
             my @fileAr          = split( / \\\| /, \$files_used[\$i], -1 );
             my @fullfileAr      = ();
             my @fullfileArR1    = ();
             my @fullfileArR2    = ();
             my \$inputDirCheck   = \"false\";
             my \$archiveDirCheck = \"false\";
+            my \$s3_archiveDirCheck = \"\";
             my \$inputFile       = \"\";
             my \$inputFile1      = \"\";
             my \$inputFile2      = \"\";
@@ -343,7 +372,7 @@ class dbfuncs {
             my \$archFile1       = \"\";
             my \$archFile2       = \"\";
 
-            ## first check input folder then archive dir for expected files
+            ## first check input folder, archive_dir and s3_archivedir for expected files
             if ( \$collection_type[\$i] eq \"single\" ) {
               \$inputFile = \"\$input_dir/\$file_name[\$i].\$fileType\";
               if ( checkFile(\$inputFile) && checkFile(\"\$input_dir/.success_\$file_name[\$i]\")) {
@@ -360,6 +389,15 @@ class dbfuncs {
               } else {
                 runCommand(\"rm -f \$inputFile1 \$inputFile2 \$input_dir/.success_\$file_name[\$i]\");
               }
+            }
+            if ( \$s3_archiveDir ne \"\" ) {
+                \$s3_archiveDirCheck = \"false\";
+
+            }
+            
+            ## if s3_archiveDirCheck is false (not \"\") and \$archiveDir eq \"\" then act as if \$archiveDir defined as s3upload_dir
+            if ( \$archiveDir eq \"\" && \$s3_archiveDirCheck eq \"false\") {
+                \$archiveDir = \"\$s3upload_dir\";
             }
 
             if ( \$archiveDir ne \"\" ) {
@@ -386,14 +424,13 @@ class dbfuncs {
                 }
               }
             }
+            
 
             print \"inputDirCheck for \$file_name[\$i]: \$inputDirCheck\\\\n\";
             print \"archiveDirCheck for \$file_name[\$i]: \$archiveDirCheck\\\\n\";
+            print \"s3_archiveDirCheck for \$file_name[\$i]: \$s3_archiveDirCheck\\\\n\";
 
-            if (   \$inputDirCheck eq \"true\"
-            && \$archiveDirCheck eq \"false\"
-            && \$archiveDir ne \"\" )
-            {
+            if (   \$inputDirCheck eq \"true\" && \$archiveDirCheck eq \"false\" && \$archiveDir ne \"\" ){
               ## remove inputDir files and cleanstart
               if ( \$collection_type[\$i] eq \"single\" ) {
                 runCommand(\"rm \$inputFile\");
@@ -406,18 +443,14 @@ class dbfuncs {
             }
 
             if ( \$inputDirCheck eq \"false\" && \$archiveDirCheck eq \"true\" ) {
-              if ( \$collection_type[\$i] eq \"single\" ) {
-                copyFile( \"\$archFile.gz\", \"\$inputFile.gz\" );
-                runCommand(\"gunzip \$inputFile.gz\");
-              }
-              elsif ( \$collection_type[\$i] eq \"pair\" ) {
-                copyFile( \"\$archFile1.gz\", \"\$inputFile1.gz\" );
-                copyFile( \"\$archFile2.gz\", \"\$inputFile2.gz\" );
-                runCommand(\"gunzip \$inputFile1.gz\");
-                runCommand(\"gunzip \$inputFile2.gz\");
-              }
-              runCommand(\"touch \$input_dir/.success_\$file_name[\$i]\");
-              \$passHash{ \$file_name[\$i] } = \"passed\";
+                if ( \$collection_type[\$i] eq \"single\" ) {
+                    arch2Input (\"\$archFile.gz\", \"\$inputFile.gz\", \$s3_archiveDirCheck, \$s3_archiveDir);
+                } elsif ( \$collection_type[\$i] eq \"pair\" ) {
+                    arch2Input (\"\$archFile1.gz\", \"\$inputFile1.gz\", \$s3_archiveDirCheck, \$s3_archiveDir);
+                    arch2Input (\"\$archFile2.gz\", \"\$inputFile2.gz\", \$s3_archiveDirCheck, \$s3_archiveDir);
+                }
+                runCommand(\"touch \$input_dir/.success_\$file_name[\$i]\");
+                \$passHash{ \$file_name[\$i] } = \"passed\";
             }
             elsif ( \$inputDirCheck eq \"false\" && \$archiveDirCheck eq \"false\" ) {
               ##create new collection files
@@ -448,7 +481,7 @@ class dbfuncs {
                   }
                 }
               }
-              if ( \$archiveDir ne \"\" ) {
+              if ( \$archiveDir ne \"\") {
                 ##merge files in archive dir then copy to inputdir
                 my \$cat = \"cat\";
                 ##Don't run mergeGzip for GEO files
@@ -476,14 +509,11 @@ class dbfuncs {
                   }
                 }
                 if ( \$collection_type[\$i] eq \"single\" ) {
-                  copyFile( \"\$archFile.gz\", \"\$inputFile.gz\" );
-                  runCommand(\"gunzip \$inputFile.gz\");
+                    arch2Input (\"\$archFile.gz\", \"\$inputFile.gz\", \$s3_archiveDirCheck, \$s3_archiveDir);
                 }
                 elsif ( \$collection_type[\$i] eq \"pair\" ) {
-                  copyFile( \"\$archFile1.gz\", \"\$inputFile1.gz\" );
-                  copyFile( \"\$archFile2.gz\", \"\$inputFile2.gz\" );
-                  runCommand(\"gunzip \$inputFile1.gz\");
-                  runCommand(\"gunzip \$inputFile2.gz\");
+                    arch2Input (\"\$archFile1.gz\", \"\$inputFile1.gz\", \$s3_archiveDirCheck, \$s3_archiveDir);
+                    arch2Input (\"\$archFile2.gz\", \"\$inputFile2.gz\", \$s3_archiveDirCheck, \$s3_archiveDir);
                 }
               }
               else {
@@ -564,6 +594,26 @@ class dbfuncs {
             countMd5sum(\$inputFile);
           }
           
+          sub prepS3Upload{
+          my ( \$archFile, \$archFileCount, \$archFileMd5sum, \$s3_archiveDir ) = @_;
+            my @data = split( /\t/, \$s3_archiveDir);
+            my \$s3Path = \$data[0]; 
+            my \$confID = \$data[1];
+            my \$upload_path = \${s3upload_dir};
+            runCommand(\"mkdir -p \$upload_path && cd \$upload_path && cp \$archFile . && cp \$run_dir/initialrun/.conf.\$confID . && echo \\\\\"s3cmd get --force --config=.conf.\$confID \$s3Path/\\\\\" > runcommand.sh\");
+            print \"down_path: \$upload_path\n\";
+          }
+          
+          ## copy files from achive directory to input directory and extract them in input_dir
+          sub arch2Input {
+            my ( \$archFile, \$inputFile, \$s3_archiveDirCheck, \$s3_archiveDir ) = @_;
+            copyFile( \"\$archFile\", \"\$inputFile\" );
+            runCommand(\"gunzip \$inputFile\");
+            if (\$s3_archiveDirCheck eq \"false\"){
+                prepS3Upload(\"\$archFile\", \"\$archFile.count\", \"\$archFile.md5sum\", \$s3_archiveDir);
+            }
+          }
+
           sub s3down {
             my ( \$s3PathConf, \$file_name ) = @_;
             ##first remove tmp files?
@@ -572,12 +622,12 @@ class dbfuncs {
             my \$tmpSufx = \$s3Path;
             \$tmpSufx =~ s/[^A-Za-z0-9]/_/g; 
             my \$confID = \$data[1];
-            my \$down_path = \${s3tmp_dir}.\${tmpSufx};
+            my \$down_path = \${s3down_dir_prefix}.\${tmpSufx};
             runCommand(\"mkdir -p \$down_path && cd \$down_path && s3cmd get --force --config=\$run_dir/initialrun/.conf.\$confID \$s3Path/\$file_name\");
             print \"down_path: \$down_path\n\";
             return \$down_path;
           }
-          
+
           sub fasterqDump {
             my ( \$gzip, \$outDir, \$srrID, \$file_name,  \$collection_type) = @_;
             runCommand(\"rm -f \$outDir/\${file_name}_1.fastq \$outDir/\${file_name}_2.fastq \$outDir/\${file_name} && mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra -o \$file_name \$srrID\");
@@ -1105,7 +1155,7 @@ class dbfuncs {
         //get userpky
         $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
         if (!file_exists($userpky)) {
-            $this->writeLog($uuid,'Private key is not found!','a','serverlog.txt');
+            $this -> writeLog($uuid,'Private key is not found!','a','serverlog.txt');
             $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
             $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
             die(json_encode('Private key is not found!'));
@@ -1127,8 +1177,8 @@ class dbfuncs {
             $this->writeLog($uuid,$cmd,'a','serverlog.txt');
             if (!$next_submit_pid) {
                 $this->writeLog($uuid,'ERROR: Connection failed! Please check your connection profile or internet connection','a','serverlog.txt');
-                $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
+                $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+                $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
                 die(json_encode('ERROR: Connection failed. Please check your connection profile or internet connection'));
             }
             $log_array['next_submit_pid'] = $next_submit_pid;
@@ -1143,15 +1193,15 @@ class dbfuncs {
                     $next_submit_pid= shell_exec($cmd); //"Job <203477> is submitted to queue <long>.\n"
                     if (!$next_submit_pid) {
                         $this->writeLog($uuid,'ERROR: Connection failed. Please check your connection profile or internet connection','a','serverlog.txt');
-                        $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                        $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
+                        $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+                        $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
                         die(json_encode('ERROR: Connection failed. Please check your connection profile or internet connection'));
                     }
                     $log_array['next_submit_pid'] = $next_submit_pid;
                     return json_encode($log_array);
                 }
             }
-            $this->writeLog($uuid,'ERROR: Connection failed. Please check your connection profile or internet connection','a','serverlog.txt');
+            $this -> writeLog($uuid,'ERROR: Connection failed. Please check your connection profile or internet connection','a','serverlog.txt');
             $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
             $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
             die(json_encode('ERROR: Connection failed. Please check your connection profile or internet connection'));
@@ -1784,14 +1834,14 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function getFiles($ownerID) {
-        $sql = "SELECT DISTINCT f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type,
+        $sql = "SELECT DISTINCT f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.s3_archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type,
               GROUP_CONCAT( c.name order by c.name) as collection_name,
               GROUP_CONCAT( c.id order by c.id) as collection_id
               FROM file f
               LEFT JOIN file_collection fc  ON f.id = fc.f_id
               LEFT JOIN collection c on fc.c_id = c.id
               WHERE f.owner_id = '$ownerID'
-              GROUP BY f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type";
+              GROUP BY f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.s3_archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type";
         return self::queryTable($sql);
     }
     public function getPublicProfileCluster($ownerID) {
@@ -2544,9 +2594,9 @@ class dbfuncs {
                   ('$project_id', '$input_id', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $ownerID) {
-        $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_type, archive_dir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
-                  ('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $ownerID) {
+        $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_type, archive_dir, s3_archive_dir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
+                  ('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$s3_archive_dir', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
     public function insertCollection($name, $ownerID) {
