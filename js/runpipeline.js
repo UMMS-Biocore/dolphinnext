@@ -1203,8 +1203,8 @@ function hideProcessOptionsAsIcons (){
                                     $("html").css({ overflow: 'hidden' })
                                 },
                                 beforeClose: function(event, ui) {
-                                    $("html").css({ overflow: 'hidden auto' })
-                                    $("body").css({ overflow: 'hidden auto' })
+                                    $("html").css({ overflow: 'auto' })
+                                    $("body").css({ overflow: 'auto' })
                                 }
                             });
 
