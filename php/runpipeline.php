@@ -896,7 +896,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             <label class="col-sm-3 control-label text-left" style="padding-left:30px;">5. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered files later"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                             <div class="col-sm-7">
                                 <select id="collection_id" class="fbtn btn-default form-control" name="collection_id">
-                                    <option value="" disabled selected>Choose or Type New Collection Name</option>
+                                    <option value="" disabled selected>Type New Collection Name or Choose to Add into Existing Collection</option>
                                 </select>
                             </div>
                         </div>
@@ -983,7 +983,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">4. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered files later"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                     <div class="col-sm-7">
                         <select id="collection_id_geo" class="fbtn btn-default form-control" name="collection_id">
-                            <option value="" disabled selected>Choose or Type New Collection Name</option>
+                            <option value="" disabled selected>Type New Collection Name or Choose to Add into Existing Collection</option>
                         </select>
                     </div>
                 </div>
