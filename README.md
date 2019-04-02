@@ -68,5 +68,5 @@ UMMS Biocore, provides support for installations as well as commercial support f
 
 ## Licensing
 
-DolphinNext released under GNU General Public License and free for nonprofit academic use.
+DolphinNext released under GNU General Public License 3.0.
 
