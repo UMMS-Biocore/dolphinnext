@@ -6727,9 +6727,9 @@ $(document).ready(function () {
                         height: "565px",
                         theme: "monokai" //tomorrow
                     });
-                } else if (visType == "html" || visType == "pdf") {
+                } else if (visType == "html" || visType == "pdf" || visType == "text") {
                     var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
-                    if (visType == "html") {
+                    if (visType == "html" || visType == "text") {
                         var iframe = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>';
                     } else if (visType == "pdf") {
                         var iframe = '<object style="width:100%; height:100%;"  data="' + link + '" type="application/pdf"><embed src="' + link + '" type="application/pdf" /></object>';
@@ -7791,7 +7791,7 @@ $(document).ready(function () {
                             colPercent: "20",
                             fnCreatedCell: function (nTd, oData) {
                                 var visType = oData.pubWeb
-                                var icon = "fa-file-text-o";
+                                var icon = "fa fa-file-text-o";
                                 var text = visType;
                                 if (visType === "table" || visType === "table-percent") {
                                     icon = "fa fa-table";
