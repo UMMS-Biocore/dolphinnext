@@ -3402,7 +3402,7 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
                 filePath = '<i class="fa fa-database"></i> ' + collection.collection_name
             }
         }
-        $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + filePath + '</span>' + editIcon + deleteIcon);
+        $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + escapeHtml(filePath) + '</span>' + editIcon + deleteIcon);
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
 
     }
