@@ -11,10 +11,19 @@ First off, you need to enter dolphinNext web page: https://dolphinnext.umassmed.
 
 .. image:: dolphinnext_images/sign_in.png
 	:align: center
-	:width: 70%
+	:width: 50%
 
 Creating Profile
 ================
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/7wH2NjXSebA" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+    </br>
+
+
 
 To run existing pipelines, you need to create **run environment** in **profile** section. To do so, click on the profile button at the top right of the screen, then you'll notice several tabs as shown below.
 
@@ -27,6 +36,14 @@ Follow through the steps `in profile page <profile.html>`_ to create SSH Key (op
 
 Running Pipelines
 =================
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/gaq_LwewFPA" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+    </br>
+
 
 The easiest way to run pipeline is going to use main page by clicking the **Biocore DolphinNext** button at the top left of the screen. Now, you can investigate publicly available pipelines as shown at below and select the pipeline you want run by clicking **Learn More** button.
 
@@ -65,6 +82,16 @@ Run status is monitored at the right part of the header. Initially, orange ``Wai
  .. image:: dolphinnext_images/run_params.png
 	:align: center
 	:width: 99%
+    
+For detailed information about adding files, you can check our tutorial video:
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/3QaAqdyB11w" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+    </br>
+ 
  
  
  Once all requirements are satisfied, ``Waiting`` button will turn in to green ``ready to run`` button as shown below. 
