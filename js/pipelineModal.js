@@ -1212,6 +1212,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 pipelineOwn = pData[0].own;
                 pipelinePerm = pData[0].perms;
                 // if user not own it, cannot change or delete pipeline
+                console.log(pipelineOwn)
                 if (pipelineOwn === "0") {
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
