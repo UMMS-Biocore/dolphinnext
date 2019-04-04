@@ -3379,7 +3379,7 @@ function loadRunOptions() {
 //insert selected input to inputs table
 function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection) {
     var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
-    filePath = escapeHtml(filePath);
+    
     if (checkDropDown) {
         $(checkDropDown).val(filePath)
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
@@ -3396,6 +3396,7 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
             $('#' + rowID).find('#inputValEnter').css('display', 'none');
             $('#' + rowID).find('#defValUse').css('display', 'none');
         }
+        filePath = escapeHtml(filePath);
         var collectionAttr = ' collection_id="" ';
         if (collection) {
             if (collection.collection_id && collection.collection_name) {
