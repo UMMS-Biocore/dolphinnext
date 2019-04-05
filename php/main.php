@@ -428,6 +428,7 @@ session_write_close();
                             echo '<li><a href="index.php?np=4">Profiles </a></li>';
                         }
                         ?>
+                        <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Tutorial</a></li>
                         <li><a href="http://dolphinnext.readthedocs.io/" target="_blank"><i class="fa fa-mortar-board"></i></a></li>
                         <li> <a><b style="color:#7c1842;"> ALPHA VERSION </b> </a></li>
                     </ul>

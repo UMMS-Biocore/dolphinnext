@@ -843,6 +843,7 @@ else if ($p=="saveFile"){
     $collection_type = $_REQUEST['collection_type'];
     $archive_dir = isset($_REQUEST['archive_dir']) ? $_REQUEST['archive_dir'] : "";
     $file_dir = isset($_REQUEST['file_dir']) ? $_REQUEST['file_dir'] : "";
+    $s3_archive_dir = isset($_REQUEST['s3_archive_dir']) ? $_REQUEST['s3_archive_dir'] : "";
     $file_type = $_REQUEST['file_type'];
     $file_array = $_REQUEST['file_array'];
     
@@ -851,7 +852,7 @@ else if ($p=="saveFile"){
         $name = $p[0];
         unset($p[0]);
         $files_used = join(' ', $p);
-        $insert = $db->insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $ownerID);
+        $insert = $db->insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $ownerID);
         $fileData = json_decode($insert,true);
         $file_id = $fileData["id"];
         settype($file_id, 'integer');

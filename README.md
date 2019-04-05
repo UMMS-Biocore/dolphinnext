@@ -44,6 +44,10 @@
     * Picard
     * IGV and UCSC genome browser file conversion
 
+## Overview:
+
+[![IMAGE ALT TEXT HERE](https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dolphinnext_images/youtube-overview.png)](https://www.youtube.com/watch?v=1ak1m5pvkw4&t=13s)
+
 ## Highlights:
 
 ##### Workflow design with UI:
@@ -68,5 +72,5 @@ UMMS Biocore, provides support for installations as well as commercial support f
 
 ## Licensing
 
-DolphinNext is free software and released under GNU General Public License for nonprofit academic use.
+DolphinNext released under GNU General Public License 3.0.
 
