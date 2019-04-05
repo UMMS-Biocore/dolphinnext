@@ -44,6 +44,10 @@
     * Picard
     * IGV and UCSC genome browser file conversion
 
+## Overview:
+
+[![Overview Video](https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dolphinnext_images/youtube-overview.png)](https://www.youtube.com/watch?v=1ak1m5pvkw4&t=13s)
+
 ## Highlights:
 
 ##### Workflow design with UI:

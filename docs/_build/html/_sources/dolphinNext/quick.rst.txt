@@ -4,6 +4,17 @@ Quick Start Guide
 
 This guide will walk you through how to start using dolphinNext pipelines and creating new pipelines.
 
+Short Overview
+==============
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/1ak1m5pvkw4" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+    </br>
+
+
 Getting Started
 ===============
 
@@ -118,7 +129,17 @@ Once you copied the pipeline/process, you will own all the  permissions of your 
 
 Creating New Pipelines/Processes
 ================================
-Please follow through the `Pipeline Guide <pipeline.html>`_ to create new pipelines and `Process Guide <process.html>`_ for processes.
+
+Please follow through the `Pipeline Guide <pipeline.html>`_ to create new pipelines and `Process Guide <process.html>`_ for processes. You can also check our developer guide video to start:
+
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/d6jkg1l7FgA" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+    </br>
+    
+    
 
 
 
