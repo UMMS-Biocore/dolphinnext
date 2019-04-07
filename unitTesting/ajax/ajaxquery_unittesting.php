@@ -5,7 +5,7 @@ $_SESSION['username'] = 'admin';
 session_write_close();
 $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : "";
-chdir('ajax/');
+chdir('public/ajax/');
 use PHPUnit\Framework\TestCase;
 
 
