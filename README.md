@@ -46,7 +46,7 @@
 
 ## Overview:
 
-[![IMAGE ALT TEXT HERE](https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dolphinnext_images/youtube-overview.png)](https://www.youtube.com/watch?v=1ak1m5pvkw4&t=13s)
+[![Overview Video](https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dolphinnext_images/youtube-overview.png)](https://www.youtube.com/watch?v=1ak1m5pvkw4&t)
 
 ## Highlights:
 
