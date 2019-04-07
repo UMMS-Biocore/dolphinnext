@@ -5,7 +5,6 @@ ini_set('report_errors','on');
 require_once(__DIR__."/../ajax/dbfuncs.php");
 $query=new dbfuncs();
 function checkLDAP($email, $password){
-    error_log($email);
   $ldapserver = LDAP_SERVER;
   $dn_string = DN_STRING;
   $binduser = BIND_USER;
@@ -19,7 +18,6 @@ function checkLDAP($email, $password){
 	  if($bind){
 		$filter="mail=".$email."*";
 		$result = ldap_search($connection,$dn_string,$filter) or die ("Search error.");
-          error_log($result);
 		$data = ldap_get_entries($connection, $result);
 		if (!isset($data[0]["dn"]))
 		  return 0;

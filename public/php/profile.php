@@ -8,7 +8,7 @@
     else { $login = 0;}
     session_write_close();
 
-    require_once(__DIR__."/../config/config.php");
+    require_once(__DIR__."/../../config/config.php");
     $SHOW_AMAZON_KEYS= SHOW_AMAZON_KEYS;
     $SHOW_SSH_KEYS=SHOW_SSH_KEYS;
     $SHOW_GROUPS=SHOW_GROUPS;
