@@ -4,7 +4,7 @@ $admin_id = isset($_SESSION['admin_id']) ? $_SESSION['admin_id'] : "";
 $role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
 session_write_close();    
 
-require_once(__DIR__."/../config/config.php");
+require_once(__DIR__."/../../config/config.php");
 $SHOW_RUN_LOG= SHOW_RUN_LOG;
 $SHOW_RUN_TIMELINE= SHOW_RUN_TIMELINE;
 $SHOW_RUN_REPORT= SHOW_RUN_REPORT;

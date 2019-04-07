@@ -2,7 +2,7 @@
 error_reporting(E_ERROR);
 error_reporting(E_ALL);
 ini_set('report_errors','on');
-require_once(__DIR__."/../config/config.php");
+require_once(__DIR__."/../../config/config.php");
 
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";

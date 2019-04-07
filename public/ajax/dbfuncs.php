@@ -1,6 +1,6 @@
 <?php
 require_once(__DIR__."/../api/funcs.php");
-require_once(__DIR__."/../config/config.php");
+require_once(__DIR__."/../../config/config.php");
 class dbfuncs {
     private $dbhost = DBHOST;
     private $db = DB;
@@ -204,7 +204,6 @@ class dbfuncs {
 
         foreach ($amazon_cre_id_Ar as $amazon_cre_id):
         if (!empty($amazon_cre_id)){
-            error_log($amazon_cre_id);
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
             foreach($amz_data as $d){
                 $access = $d->amz_acc_key;
