@@ -1,7 +1,4 @@
 public/tmp/*
 !public/tmp/index.html
-!public/tmp/pub
-public/tmp/pub/*
-!public/tmp/pub/index.html
 config/.sec
 .DS_Store
