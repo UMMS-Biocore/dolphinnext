@@ -1257,11 +1257,10 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 }
                 //load user groups
                 var allUserGrp = getValues({ p: "getUserGroups" });
-                for (var i = 0; i < allUserGrp.length; i++) {
-                    var param = allUserGrp[i];
-                    var optionGroup = new Option(param.name, param.id);
-                    $("#groupSelPipe").append(optionGroup);
-                }
+                $.each(allUserGrp, function (i, item) {
+                    $('#groupSelPipe').append($('<option>', { value: item.id, text : item.name }));
+                    $('#groupSelPro').append($('<option>', { value: item.id, text : item.name }));
+                });
                 if (pData[0].group_id !== "0") {
                     $('#groupSelPipe').val(pData[0].group_id);
                 }
@@ -1423,9 +1422,9 @@ function loadSelectedPipeline(pipeline_id) {
                     if (pDataTable[i].process_id.match(/p/)) {
                         var pipeModId = pDataTable[i].process_id.match(/p(.*)/)[1]
                         var proData = getValues({ p: "loadPipeline", id: pipeModId })
-                    } else {
-                        var proData = getValues({ p: "getProcessData", "process_id": pDataTable[i].process_id });
-                    }
+                        } else {
+                            var proData = getValues({ p: "getProcessData", "process_id": pDataTable[i].process_id });
+                        }
                     if (proData) {
                         pDataTable[i]["rev_id"] = proData[0].rev_id;
                         pDataTable[i]["rev_comment"] = proData[0].rev_comment;
@@ -1446,13 +1445,13 @@ function loadSelectedPipeline(pipeline_id) {
                             $(nTd).html("<a data-toggle='modal' data-target='#addProcessModal' data-backdrop='false' href='' pipeMode='true' id='" + oData.process_name + "@" + oData.process_id + "'>" + '<span class="txtlink">' + oData.process_name + "</span>" + "</a>");
                         }
                     }
-            }, {
+                }, {
                     "data": "rev_id"
-            }, {
+                }, {
                     "data": "rev_comment"
-            }, {
+                }, {
                     "data": "date_modified"
-            }]
+                }]
             });
         }
     }
@@ -1540,12 +1539,12 @@ $(document).ready(function () {
 
         //load user groups
         var allUserGrp = getValues({ p: "getUserGroups" });
-        for (var i = 0; i < allUserGrp.length; i++) {
-            var param = allUserGrp[i];
-            var optionGroup = new Option(param.name, param.id);
-            $("#groupSelPipe").append(optionGroup);
-            $("#groupSelPro").append(optionGroup);
-        }
+        $.each(allUserGrp, function (i, item) {
+            $('#groupSelPipe').append($('<option>', { value: item.id, text : item.name }));
+            $('#groupSelPro').append($('<option>', { value: item.id, text : item.name }));
+        });
+
+
         loadPipeMenuGroup(true);
     }
 
@@ -1913,7 +1912,7 @@ $(document).ready(function () {
                 for (var k = 0; k < removedRev.length; k++) {
                     if (removedRev[k].rev_id === max) {
                         var revMaxId = removedRev[k].id
-                    }
+                        }
                 }
                 var PattPro = /(.*)@(.*)/; //Map_Tophat2@11
                 var delProName = delProMenuID.replace(PattPro, '$1');
@@ -2134,7 +2133,7 @@ $(document).ready(function () {
                                 var ppIDoutputList;
                                 var inputsBefore = getValues({ p: "getInputsPP", "process_id": proID });
                                 var outputsBefore = getValues({ p: "getOutputsPP", "process_id": proID });
-                            [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID, perms, group);
+                                [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID, perms, group);
                                 updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList, proID);
                                 refreshDataset();
                                 $('#confirmRevision').modal('hide');
@@ -2939,7 +2938,7 @@ $(document).ready(function () {
         var warnUser = false;
         var infoText = '';
         if (selectProGro !== '') {
-        [warnUser, infoText] = checkMenuGrDeletion(selectProGro);
+            [warnUser, infoText] = checkMenuGrDeletion(selectProGro);
             if (warnUser === true) {
                 $('#warnDelete').off();
                 $('#warnDelete').on('show.bs.modal', function (event) {
@@ -3266,7 +3265,7 @@ $(document).ready(function () {
         var warnUser = false;
         var infoText = '';
         if (selectPipeGro !== '') {
-        [warnUser, infoText] = checkPipeMenuGrDeletion(selectPipeGro);
+            [warnUser, infoText] = checkPipeMenuGrDeletion(selectPipeGro);
             if (warnUser === true) {
                 $('#warnDelete').off();
                 $('#warnDelete').on('show.bs.modal', function (event) {

@@ -347,6 +347,16 @@
                             <input type="text" class="form-control" id="mSubnetId" name="subnet_id">
                         </div>
                     </div>
+                    <div id="mSecurityGroupDiv" class="form-group" style="display:none">
+                        <label for="mSecurityGroup" class="col-sm-3 control-label">Security Group (opt.)<span><a data-toggle="tooltip" data-placement="bottom" title="Identifier of the security group to be applied e.g. sg-df72b9ba."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mSecurityGroup" name="security_group">
+                        </div>
+                        
+                        
+                        
+                    </div>
                     <div id="mSharedStorageIdDiv" class="form-group" style="display:none">
                         <label for="mSharedStorageId" class="col-sm-3 control-label">Shared Storage Id</label>
                         <div class="col-sm-9">

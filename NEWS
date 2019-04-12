@@ -1,3 +1,11 @@
+07.04.2019 Version 0.3.12
+Bug fixed regarding to loading process groups in process modal.
+Bug fixed regarding rmarkdown tmp file check.
+SecurityGroup feature added to amazon profile.
+Support for default hostname parameters added. 
+Impersonate user feature updated.
+Pipeline column added to run status page.
+
 07.04.2019 Version 0.3.11
 Config folder moved from public folder to improve security.
 

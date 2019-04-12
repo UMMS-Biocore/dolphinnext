@@ -1518,6 +1518,7 @@ class dbfuncs {
         $image_id = $data[0]->{'image_id'};
         $instance_type = $data[0]->{'instance_type'};
         $subnet_id = $data[0]->{'subnet_id'};
+        $security_group = $data[0]->{'security_group'};
         $shared_storage_id = $data[0]->{'shared_storage_id'};
         $shared_storage_mnt = $data[0]->{'shared_storage_mnt'};
         $keyFile = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pub.pky";
@@ -1530,9 +1531,14 @@ class dbfuncs {
         $text.= "   userName = '$username'\n";
         $text.= "   imageId = '$image_id'\n";
         $text.= "   instanceType = '$instance_type'\n";
-        $text.= "   subnetId = '$subnet_id'\n";
-        $text.= "   sharedStorageId = '$shared_storage_id'\n";
-        $text.= "   sharedStorageMount = '$shared_storage_mnt'\n";
+//      Don't allow to use subnetId, if securityGroup is defined.
+        if (!empty($security_group)){ 
+            $text.= "   securityGroup = '$security_group'\n"; 
+        } else if (!empty($subnet_id)){ 
+            $text.= "   subnetId = '$subnet_id'\n"; 
+        }
+        if (!empty($shared_storage_id)){ $text.= "   sharedStorageId = '$shared_storage_id'\n"; }
+        if (!empty($shared_storage_mnt)){ $text.= "   sharedStorageMount = '$shared_storage_mnt'\n"; }
         $text.= "   keyFile = '$keyFile'\n";
         if ($autoscale_check == "true"){
             $text.= "   autoscale {\n";
@@ -2061,12 +2067,12 @@ class dbfuncs {
         $sql = "UPDATE profile_cluster SET name='$name', executor='$executor', next_path='$next_path', username='$username', hostname='$hostname', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', job_clu_opt='$job_clu_opt', next_clu_opt='$next_clu_opt', ssh_id='$ssh_id', public='$public', last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function insertProfileAmazon($name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $ownerID) {
-        $sql = "INSERT INTO profile_amazon(name, executor, next_path, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, subnet_id, shared_storage_id, shared_storage_mnt, ssh_id, amazon_cre_id, next_clu_opt, job_clu_opt, public, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$subnet_id','$shared_storage_id','$shared_storage_mnt','$ssh_id','$amazon_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertProfileAmazon($name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID) {
+        $sql = "INSERT INTO profile_amazon(name, executor, next_path, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, subnet_id, shared_storage_id, shared_storage_mnt, ssh_id, amazon_cre_id, next_clu_opt, job_clu_opt, public, security_group, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$subnet_id','$shared_storage_id','$shared_storage_mnt','$ssh_id','$amazon_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$security_group', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function updateProfileAmazon($id, $name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id, $shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $ownerID) {
-        $sql = "UPDATE profile_amazon SET name='$name', executor='$executor', next_path='$next_path', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', last_modified_user ='$ownerID'  WHERE id = '$id'";
+    public function updateProfileAmazon($id, $name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id, $shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID) {
+        $sql = "UPDATE profile_amazon SET name='$name', executor='$executor', next_path='$next_path', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', security_group='$security_group', last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
     public function updateProfileAmazonNode($id, $nodes, $autoscale_check, $autoscale_maxIns, $autoscale_minIns, $ownerID) {
@@ -2861,7 +2867,7 @@ class dbfuncs {
                 } else {
                     $where = " WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
                 }
-                $sql = "SELECT DISTINCT r.id, r.project_pipeline_id, pp.name, u.email, u.username, pp.summary, pp.date_modified, pp.output_dir, r.run_status, r.date_created,  r.date_ended, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
+                $sql = "SELECT DISTINCT r.id, r.project_pipeline_id, pip.name as pipeline_name, pip.id as pipeline_id, pp.name, u.email, u.username, pp.summary, pp.date_modified, pp.output_dir, r.run_status, r.date_created,  r.date_ended, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM run_log r
                       INNER JOIN (
                         SELECT project_pipeline_id, MAX(id) id
@@ -2869,6 +2875,7 @@ class dbfuncs {
                         GROUP BY project_pipeline_id
                       ) b ON r.project_pipeline_id = b.project_pipeline_id AND r.id=b.id
                       INNER JOIN project_pipeline pp ON r.project_pipeline_id = pp.id
+                      INNER JOIN biocorepipe_save pip ON pip.id = pp.pipeline_id
                       INNER JOIN users u ON pp.owner_id = u.id
                       LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                       $where";
@@ -3438,6 +3445,7 @@ class dbfuncs {
         if (file_exists($from)) {
             $res = rename($from, $to);
         }
+        
         return json_encode($res);
     }
 

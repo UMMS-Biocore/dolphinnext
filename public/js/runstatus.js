@@ -131,8 +131,13 @@ $(document).ready(function () {
                 $(nTd).html('<a ' + href + ' class="runLink">' + oData.name + "</a>");
             }
             }, {
-            "data": "output_dir"
+            "data": null,
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                $(nTd).html('<a href="index.php?np=1&amp;id=' + oData.pipeline_id + '" >' + oData.pipeline_name + "</a>")
+            }
             }, {
+            "data": "output_dir"
+            },  {
             "data": null,
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(truncateName(oData.summary, 'newTable'))

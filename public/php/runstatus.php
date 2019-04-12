@@ -11,9 +11,10 @@
                 <tr>
                     <th style="width:5%;">ID</th>
                     <th style="display:none;">Date</th>
-                    <th style="width:20%;">Run Name</th>
-                    <th style="width:20%;">Work Directory</th>
-                    <th style="width:20%;">Description</th>
+                    <th style="width:15%;">Run Name</th>
+                    <th style="width:15%;">Pipeline</th>
+                    <th style="width:15%;">Work Directory</th>
+                    <th style="width:15%;">Description</th>
                     <th style="width:8%;">Status</th>
                     <th style="width:12%;">Date Created</th>
                     <th style="width:10%;">Owner</th>
