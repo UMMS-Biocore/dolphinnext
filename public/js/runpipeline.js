@@ -1072,7 +1072,8 @@ function addProcessPanelCondi(gNum, name, varName, type, condi) {
 
 
 // check if all conditions match	
-function checkConds(conds) {
+//type="default" will pass for $HOSTNAME == default
+function checkConds(conds, type) {
     var checkConditionsFalse = [];
     var checkConditionsTrue = [];
     $.each(conds, function (co) {
@@ -1083,7 +1084,11 @@ function checkConds(conds) {
             if (hostname && chooseEnvHost && hostname === chooseEnvHost) {
                 checkConditionsTrue.push(true);
             } else {
-                checkConditionsFalse.push(false);
+                if (type=="default" && hostname && chooseEnvHost && hostname == "default"){
+                    checkConditionsTrue.push(true);
+                } else {
+                    checkConditionsFalse.push(false);
+                }
             }
         } else {
             var varName = co.match(/params\.(.*)/)[1]; //variable Name
@@ -1297,7 +1302,6 @@ function autofillEmptyInputs(autoFillJSON) {
         var conds = autoFillJSON[el].condition;
         var states = autoFillJSON[el].statement;
         if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
-            //bind eventhandler to #chooseEnv
             if (conds.$HOSTNAME) {
                 var statusCond = checkConds(conds);
                 if (statusCond === true) {
@@ -1404,20 +1408,39 @@ function fillStates(states) {
 }
 // to execute autofill function, binds event handlers
 function bindEveHandler(autoFillJSON) {
+    $("#chooseEnv").change(autoFillJSON, function () {
+        var triggeredFillStates = false;
+        var fillHostFunc = function(autoFillJSON, type) {
+            var triggeredFillStates = false;
+            $.each(autoFillJSON, function (el) {
+                var conds = autoFillJSON[el].condition;
+                var states = autoFillJSON[el].statement;
+                if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
+                    //bind eventhandler to #chooseEnv
+                    if (conds.$HOSTNAME) {   
+                        var statusCond = checkConds(conds, type);
+                        if (statusCond === true) {
+                            fillStates(states)
+                            triggeredFillStates = true;
+                            autoCheck("fillstates")
+                        }
+                    }
+                };
+            }); 
+            return triggeredFillStates
+        }
+        triggeredFillStates = fillHostFunc(autoFillJSON)
+        // fill $HOSTNAME ="default" states if not triggered before
+        if (!triggeredFillStates){
+            fillHostFunc(autoFillJSON, "default")
+        }
+    });
+
+
     $.each(autoFillJSON, function (el) {
         var conds = autoFillJSON[el].condition;
         var states = autoFillJSON[el].statement;
         if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
-            //bind eventhandler to #chooseEnv
-            if (conds.$HOSTNAME) {
-                $("#chooseEnv").change(function () {
-                    var statusCond = checkConds(conds);
-                    if (statusCond === true) {
-                        fillStates(states)
-                        autoCheck("fillstates")
-                    }
-                });
-            }
             //if condition exist other than $HOSTNAME then bind eventhandler to #params. button (eg. dropdown or inputValEnter)
             $.each(conds, function (el) {
                 if (el !== "$HOSTNAME") {
@@ -1431,7 +1454,11 @@ function bindEveHandler(autoFillJSON) {
                                 //bind eventhandler to indropdown button
                                 $(varNameButAr[0]).change(function () {
                                     var statusCond = checkConds(conds);
+                                    var statusCondDefault = checkConds(conds, "default");
                                     if (statusCond === true) {
+                                        fillStates(states);
+                                        autoCheck("fillstates")
+                                    } else if (statusCondDefault === true){
                                         fillStates(states);
                                         autoCheck("fillstates")
                                     }
@@ -3379,7 +3406,7 @@ function loadRunOptions() {
 //insert selected input to inputs table
 function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection) {
     var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
-    
+
     if (checkDropDown) {
         $(checkDropDown).val(filePath)
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
@@ -5479,7 +5506,7 @@ $(document).ready(function () {
                     } 
                 }
                 if (infoModalText){
-                        showInfoModal("#infoModal", "#infoModalText", infoModalText);
+                    showInfoModal("#infoModal", "#infoModalText", infoModalText);
                 }
 
                 var formObj = {};
@@ -5542,7 +5569,7 @@ $(document).ready(function () {
                     } 
                 }
                 if (infoModalText){
-                        showInfoModal("#infoModal", "#infoModalText", infoModalText);
+                    showInfoModal("#infoModal", "#infoModalText", infoModalText);
                 }
 
                 var formObj = {};
@@ -6629,6 +6656,7 @@ $(document).ready(function () {
                     filename = split[split.length - 1];
                     dir = filePath.substring(0, filePath.indexOf(filename));
                 }
+                console.log(dir )
                 var fileid = $(this).attr("fileid");
                 var pubWebPath = $("#basepathinfo").attr("pubweb");
                 var debrowserUrl = $("#basepathinfo").attr("debrowser");
