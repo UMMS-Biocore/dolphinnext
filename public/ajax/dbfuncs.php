@@ -13,7 +13,7 @@ class dbfuncs {
     private $ssh_settings = "-oStrictHostKeyChecking=no -q -oChallengeResponseAuthentication=no -oBatchMode=yes -oPasswordAuthentication=no -oConnectTimeout=3";
     private $amz_path = AMZPATH;
     private $amazon = AMAZON;
-    private $nextflow_verison = NEXTFLOW_VERSION;
+    private $next_ver = NEXTFLOW_VERSION;
     private static $link;
 
     function __construct() {
@@ -303,7 +303,9 @@ class dbfuncs {
         collection_type_all = $collection_type_allS;
 
         process initialRun {
-
+          errorStrategy 'retry'
+          maxRetries 2
+          
           input:
           val file_name from file_name
           val file_dir from file_dir
@@ -1013,13 +1015,13 @@ class dbfuncs {
         if ($profileType == "amazon"){
             $profile_def = "source /etc/profile && source ~/.bash_profile";
         }
-        $nextVer = isset($this->nextflow_verison) ? $this->nextflow_verison : "";
+        $nextVer = isset($this->next_ver) ? $this->next_ver : "";
         $nextVerText = "";
         if (!empty($nextVer)){
             $nextVerText = "export NXF_VER=$nextVer";
         }
-        //combine pre-run cm
-        $arr = array($nextVerText, $profile_def, $profileCmd, $proPipeCmd, $imageCmd , $initImageCmd);
+        //combine pre-run cmd
+        $arr = array($profile_def, $profileCmd, $proPipeCmd, $imageCmd , $initImageCmd, $nextVerText);
         $preCmd="";
         for ($i=0; $i<count($arr); $i++) {
             if (!empty($arr[$i]) && !empty($preCmd)){
@@ -1526,7 +1528,7 @@ class dbfuncs {
         settype($nodes, "integer");
         $autoscale_check = $data[0]->{'autoscale_check'};
         $autoscale_maxIns = $data[0]->{'autoscale_maxIns'};
-        $autoscale_minIns = $nodes;
+//        $autoscale_minIns = $nodes;
         $text= "cloud { \n";
         $text.= "   userName = '$username'\n";
         $text.= "   imageId = '$image_id'\n";
@@ -1544,9 +1546,9 @@ class dbfuncs {
             $text.= "   autoscale {\n";
             $text.= "       enabled = true \n";
             $text.= "       terminateWhenIdle = true\n";
-            if (!empty($autoscale_minIns)){
-                $text.= "       minInstances = $autoscale_minIns\n";
-            }
+//            if (!empty($autoscale_minIns)){
+//                $text.= "       minInstances = $autoscale_minIns\n";
+//            }
             if (!empty($autoscale_maxIns)){
                 $text.= "       maxInstances = $autoscale_maxIns\n";
             }
