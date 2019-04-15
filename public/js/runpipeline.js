@@ -4391,71 +4391,94 @@ function readNextLog(proType, proId, type) {
                 displayButton('completeProPipe');
                 showOutputPath();
 
-            } else if (nextflowLog.match(/error/gi) || nextflowLog.match(/failed/i)) {
+            }  else if (nextflowLog.match(/error/gi) || nextflowLog.match(/failed/i)) {
                 // status completed with error
-                if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
-                    var setStatus = getValues({ p: "updateRunStatus", run_status: "NextErr", project_pipeline_id: project_pipeline_id });
+                var confirmErr=true;
+                if (nextflowLog.match(/-- Execution is retried/gi) ){
+                    //process retried, there is no error. 
+                    confirmErr = false;
+                    var txt = $.trim(nextflowLog);
+                    var lines = txt.split("\n");
+                    for (var i = 0; i < lines.length; i++) {
+                        if (lines[i].match(/error/gi) && !lines[i].match(/-- Execution is retried/gi) ){
+                            confirmErr = true;
+                            break;
+                        } 
+                    }
                 }
-                if (type !== "reload") {
-                    clearIntNextLog(proType, proId);
-                    clearIntPubWeb(proType, proId);
 
-                }
-                displayButton('errorProPipe');
+                if (confirmErr == true){
+                    if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
+                        var setStatus = getValues({ p: "updateRunStatus", run_status: "NextErr", project_pipeline_id: project_pipeline_id });
+                    }
+                    if (type !== "reload") {
+                        clearIntNextLog(proType, proId);
+                        clearIntPubWeb(proType, proId);
 
-            } else {
-                //update status as running
-                if (type === "reload") {
-                    readNextflowLogTimer(proType, proId, type);
+                    }
+                    displayButton('errorProPipe');
+                } else {
+                    if (type === "reload") {
+                        readNextflowLogTimer(proType, proId, type);
+                    }
+                    if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
+                        var setStatus = getValues({ p: "updateRunStatus", run_status: "NextRun", project_pipeline_id: project_pipeline_id });
+                    }
+                    displayButton('runningProPipe');
                 }
-                if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
-                    var setStatus = getValues({ p: "updateRunStatus", run_status: "NextRun", project_pipeline_id: project_pipeline_id });
-                }
-                displayButton('runningProPipe');
-            }
-        }
-        //Nextflow log file exist but /N E X T F L O W/ not printed yet
-        else {
-            console.log("Nextflow not started");
-            //	  			pidStatus = checkRunPid(runPid, proType, proId);
-            //	  			if (pidStatus) { // if true, then it is exist in queue
-            //	  				console.log("pid exist1")
-            //	  			} else { //pid not exist
-            //	  				console.log("give error1")
-            //	  			}
-            // below is need to be updated according tho pidStatus
-            var setStatus = getValues({ p: "updateRunStatus", run_status: "Waiting", project_pipeline_id: project_pipeline_id });
-            displayButton('waitingProPipe');
+        } else {
+            //update status as running
             if (type === "reload") {
                 readNextflowLogTimer(proType, proId, type);
             }
+            if (runStatus !== "NextErr" || runStatus !== "NextSuc" || runStatus !== "Error" || runStatus !== "Terminated") {
+                var setStatus = getValues({ p: "updateRunStatus", run_status: "NextRun", project_pipeline_id: project_pipeline_id });
+            }
+            displayButton('runningProPipe');
         }
-    } else {
-        console.log("Nextflow log is not exist yet.")
-        console.log("Waiting");
+    }
+    //Nextflow log file exist but /N E X T F L O W/ not printed yet
+    else {
+        console.log("Nextflow not started");
+        //	  			pidStatus = checkRunPid(runPid, proType, proId);
+        //	  			if (pidStatus) { // if true, then it is exist in queue
+        //	  				console.log("pid exist1")
+        //	  			} else { //pid not exist
+        //	  				console.log("give error1")
+        //	  			}
+        // below is need to be updated according tho pidStatus
+        var setStatus = getValues({ p: "updateRunStatus", run_status: "Waiting", project_pipeline_id: project_pipeline_id });
+        displayButton('waitingProPipe');
         if (type === "reload") {
             readNextflowLogTimer(proType, proId, type);
         }
-        var setStatus = getValues({ p: "updateRunStatus", run_status: "Waiting", project_pipeline_id: project_pipeline_id });
-        displayButton('waitingProPipe');
-        if (runPid && proType === "cluster") {
-            pidStatus = checkRunPid(runPid, proType, proId);
-            if (pidStatus) { // if true, then it is exist in queue
-                console.log("pid exist2")
-            } else { //pid not exist
-                console.log("give error2")
-            }
+    }
+} else {
+    console.log("Nextflow log is not exist yet.")
+    console.log("Waiting");
+    if (type === "reload") {
+        readNextflowLogTimer(proType, proId, type);
+    }
+    var setStatus = getValues({ p: "updateRunStatus", run_status: "Waiting", project_pipeline_id: project_pipeline_id });
+    displayButton('waitingProPipe');
+    if (runPid && proType === "cluster") {
+        pidStatus = checkRunPid(runPid, proType, proId);
+        if (pidStatus) { // if true, then it is exist in queue
+            console.log("pid exist2")
+        } else { //pid not exist
+            console.log("give error2")
         }
-
-    }
-    var lastrun = $('#runLogArea').attr('lastrun');
-    if (lastrun) {
-        $('#runLogArea').val(serverLog + "\n" + nextflowLog);
-        autoScrollLogArea()
     }
 
-    // save nextflow log file
-    setTimeout(function () { saveNexLg(proType, proId) }, 100);
+}
+var lastrun = $('#runLogArea').attr('lastrun');
+if (lastrun) {
+    $('#runLogArea').val(serverLog + "\n" + nextflowLog);
+    autoScrollLogArea()
+}
+
+// save nextflow log file
+setTimeout(function () { saveNexLg(proType, proId) }, 100);
 }
 
 
