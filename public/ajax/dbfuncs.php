@@ -1533,12 +1533,9 @@ class dbfuncs {
         $text.= "   userName = '$username'\n";
         $text.= "   imageId = '$image_id'\n";
         $text.= "   instanceType = '$instance_type'\n";
-//      Don't allow to use subnetId, if securityGroup is defined.
-        if (!empty($security_group)){ 
-            $text.= "   securityGroup = '$security_group'\n"; 
-        } else if (!empty($subnet_id)){ 
-            $text.= "   subnetId = '$subnet_id'\n"; 
-        }
+        $text.= "   securityGroup = '$security_group'\n"; 
+        $text.= "   subnetId = '$subnet_id'\n"; 
+
         if (!empty($shared_storage_id)){ $text.= "   sharedStorageId = '$shared_storage_id'\n"; }
         if (!empty($shared_storage_mnt)){ $text.= "   sharedStorageMount = '$shared_storage_mnt'\n"; }
         $text.= "   keyFile = '$keyFile'\n";
