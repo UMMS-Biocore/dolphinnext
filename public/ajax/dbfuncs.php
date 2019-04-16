@@ -1013,7 +1013,7 @@ class dbfuncs {
     function getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd){
         $profile_def = "";
         if ($profileType == "amazon"){
-            $profile_def = "source /etc/profile && source ~/.bash_profile";
+            $profile_def = "' /etc/profile && source ~/.bash_profile";
         }
         $nextVer = isset($this->next_ver) ? $this->next_ver : "";
         $nextVerText = "";
@@ -2620,7 +2620,7 @@ class dbfuncs {
     //installed edirect(esearch,efetch) path should be added into .bashrc
     public function getSRRData($srr_id, $ownerID) {
         $obj = new stdClass();
-        $command = "source ~/.bashrc && esearch -db sra -query $srr_id |efetch -format runinfo";
+        $command = "esearch -db sra -query $srr_id |efetch -format runinfo";
         $resText = shell_exec("$command 2>&1 & echo $! &");
         if (!empty($resText)){
             $resText = trim($resText);
@@ -2652,7 +2652,7 @@ class dbfuncs {
             $obj = $this->getSRRData($geo_id, $ownerID);
             $data[] = $obj;
         } else if (preg_match("/GSE/", $geo_id)){
-            $command = "source ~/.bashrc && esearch -db gds -query $geo_id | esummary | xtract -pattern DocumentSummary -element title Accession";
+            $command = "esearch -db gds -query $geo_id | esummary | xtract -pattern DocumentSummary -element title Accession";
             $resText = shell_exec("$command 2>&1 & echo $! &");
             if (!empty($resText)){
                 $resText = trim($resText);
