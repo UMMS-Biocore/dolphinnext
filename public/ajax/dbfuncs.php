@@ -1013,7 +1013,7 @@ class dbfuncs {
     function getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd){
         $profile_def = "";
         if ($profileType == "amazon"){
-            $profile_def = "' /etc/profile && source ~/.bash_profile";
+            $profile_def = "source /etc/profile && source ~/.bash_profile";
         }
         $nextVer = isset($this->next_ver) ? $this->next_ver : "";
         $nextVerText = "";
