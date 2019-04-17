@@ -813,7 +813,7 @@ class dbfuncs {
 
           sub fasterqDump {
             my ( \$gzip, \$outDir, \$srrID, \$file_name,  \$collection_type) = @_;
-            runCommand(\"rm -f \$outDir/\${file_name}_1.fastq \$outDir/\${file_name}_2.fastq \$outDir/\${file_name} && mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra --split-3 --skip-technical -o \$srrID \$srrID\");
+            runCommand(\"rm -f \$outDir/\${file_name}.R1.fastq \$outDir/\${file_name}.R2.fastq \$outDir/\${file_name}.fastq \$outDir/\${srrID}_1.fastq \$outDir/\${srrID}_2.fastq \$outDir/\${srrID} \$outDir/\${srrID}.fastq && mkdir -p \\\\\\\$HOME/.ncbi && mkdir -p \${outDir}/sra && echo '/repository/user/main/public/root = \\\\\"\$outDir/sra\\\\\"' > \\\\\\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O \$outDir -t \${outDir}/sra --split-3 --skip-technical -o \$srrID \$srrID\");
             if (\$collection_type eq \"pair\"){
               runCommand(\"mv \$outDir/\${srrID}_1.fastq  \$outDir/\${file_name}.R1.fastq \");
               runCommand(\"mv \$outDir/\${srrID}_2.fastq  \$outDir/\${file_name}.R2.fastq \");
