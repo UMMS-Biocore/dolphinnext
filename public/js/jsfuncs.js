@@ -695,7 +695,6 @@ function tsvConvert(tsv, format, fixHeader) {
     if (format == "json") {
         return data;
     }
-    console.log(data)
     if (format == "json2") {
         var result = { columns: [], data: data };
         for (var j = 0; j < headers.length; j++) {
@@ -704,8 +703,6 @@ function tsvConvert(tsv, format, fixHeader) {
             obj.data = headers[j]
             result.columns.push(obj);
         }
-    console.log(result)
-
         return result;
     }
 }

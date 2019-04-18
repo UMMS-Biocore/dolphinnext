@@ -98,8 +98,8 @@ B. Defining Amazon Profile:
 * **Subnet Id/Security Group/Shared Storage Id/Shared Storage Mount:**
 
     The filesystem needs to be created at https://console.aws.amazon.com/efs/ and these  informations will be obtained upon creation of shared file system. 
-        * *Subnet Id:* Identifier of the VPC subnet to be applied e.g. subnet-05222a43. If you've already entered *Security Group*, this field is not required.
-        * *Security Group:* Identifier of the security group to be applied e.g. sg-df72b9ba. If you've already set *Subnet Id*, this field is not required.
+        * *Subnet Id:* Identifier of the VPC subnet to be applied e.g. subnet-05222a43. 
+        * *Security Group:* Identifier of the security group to be applied e.g. sg-df72b9ba, default. 
         * *Shared Storage Id:* Identifier of the shared file system instance e.g. fs-1803efd1.
         * *Shared Storage Mount:* Mount path of the shared file system e.g. /mnt/efs.
 
