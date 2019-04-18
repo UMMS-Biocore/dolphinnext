@@ -1358,6 +1358,13 @@ class dbfuncs {
         $next_exist_cmd= "ssh {$this->ssh_settings} -i $userpky $connect test  -f \"$dolphin_path_real/nextflow.nf\"  && echo \"Nextflow file exists\" || echo \"Nextflow file not exists\" 2>&1 & echo $! &";
         $next_exist = shell_exec($next_exist_cmd);
         $this->writeLog($uuid,$next_exist_cmd,'a','serverlog.txt');
+        $serverlog = $this->readFile("$run_path_real/serverlog.txt");
+        if (preg_match("/cannot create directory(.*)Permission denied/", $serverlog)){
+            $this->writeLog($uuid,'ERROR: Run directory could not created. Please make sure your work directory has valid permissions.','a','serverlog.txt');
+            $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+            $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
+            die(json_encode('ERROR: Run directory could not created. Please make sure your work directory has valid permissions.'));
+        }
         preg_match("/(.*)Nextflow file(.*)exists(.*)/", $next_exist, $matches);
         $log_array['next_exist'] = $next_exist;
         if ($matches[2] == " ") {
