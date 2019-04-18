@@ -1021,7 +1021,7 @@ class dbfuncs {
             $nextVerText = "export NXF_VER=$nextVer";
         }
         //combine pre-run cmd
-        $arr = array($profile_def, $profileCmd, $proPipeCmd, $imageCmd , $initImageCmd, $nextVerText);
+        $arr = array($profile_def, $nextVerText, $profileCmd, $proPipeCmd, $imageCmd , $initImageCmd);
         $preCmd="";
         for ($i=0; $i<count($arr); $i++) {
             if (!empty($arr[$i]) && !empty($preCmd)){
@@ -1319,6 +1319,13 @@ class dbfuncs {
         $cmd = "ssh {$this->ssh_settings}  -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} -i $userpky $s3configFileDir $initialRunText $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
         $mkdir_copynext_pid =shell_exec($cmd);
         $this->writeLog($uuid,$cmd,'a','serverlog.txt');
+        $serverlog = $this->readFile("$run_path_real/serverlog.txt");
+        if (preg_match("/cannot create directory(.*)Permission denied/", $serverlog)){
+            $this->writeLog($uuid,'ERROR: Run directory could not created. Please make sure your work directory has valid permissions.','a','serverlog.txt');
+            $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+            $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
+            die(json_encode('ERROR: Run directory could not created. Please make sure your work directory has valid permissions.'));
+        }
         $log_array = array('mkdir_copynext_pid' => $mkdir_copynext_pid);
         return $log_array;
     }
@@ -1368,6 +1375,7 @@ class dbfuncs {
             return json_encode($log_array);
         } else if ($matches[2] == " not "){
             for( $i= 0 ; $i < 3 ; $i++ ){
+                $this->writeLog($uuid,'WARN: Run directory is not found in run environment.','a','serverlog.txt');
                 sleep(3);
                 $next_exist = shell_exec($next_exist_cmd);
                 preg_match("/(.*)Nextflow file(.*)exists(.*)/", $next_exist, $matches);
