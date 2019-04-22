@@ -34,8 +34,8 @@ You will be prompted to supply a filename and a password. In order to accept the
 
 * **B. Create new keys:** You will proceed by clicking generate keys button where new pair of ssh keys will be specifically produced for you. You should keep these keys in your default .ssh directory (``~/.ssh/id_rsa`` for private and ``~/.ssh/id_rsa.pub`` for public key). It is required to be adjust your public key permissions to 644 (-rw-r--r--) and private key permissions to 600 (-rw-------) by entering following commands::
 
-    chmod -R 644 ~/.ssh/id_rsa
-    chmod -R 600 ~/.ssh/id_rsa_pub
+    chmod -R 600 ~/.ssh/id_rsa
+    chmod -R 644 ~/.ssh/id_rsa_pub
 
 
 .. warning:: In both of the cases, private key will be used for submiting jobs in the host. Therefore, public key required to be added into ``~/.ssh/authorized_keys`` in the host by user. 
@@ -95,13 +95,21 @@ B. Defining Amazon Profile:
 * **Amazon Keys:** AWS credentials that are saved in Amazon keys tab and will allow to start/stop Amazon EC2 instances.
 * **Instance Type:** `Amazon EC2 instance types <https://aws.amazon.com/ec2/instance-types>`_ that comprise varying combinations of CPU, memory, storage, and networking capacity (eg. ``m3.xlarge``).
 * **Image Id:** Virtual machine ID (eg. ``ami-032a33ebe57465518``). If you want to create your own image, it should support `singularity <http://singularity.lbl.gov>`_, `docker engine <https://www.docker.com/>`_ (version 1.11 or higher), Apache Ignite, Cloud-init package, and Java runtime (version 8).
-* **Subnet Id/Shared Storage Id/Shared Storage Mount:** The filesystem needs to be created at https://console.aws.amazon.com/efs/ and these three information will be obtained upon creation of shared file system. Make sure following criterias are satisfied:
-    1) Image has the directory to mount this storage.
-    2) The output directory needs to be under this mount location.
-    3) The storage system needs to be created in selected region and necessary rights need to be given in the console.
-    4) Add EC2FullAccess and S3FullAccess permissions.
-    
-.. warning::  Both EFS and images should be located in same location (eg. N. Virginia, Ohio etc.)
+* **Subnet Id/Security Group/Shared Storage Id/Shared Storage Mount:**
+
+    The filesystem needs to be created at https://console.aws.amazon.com/efs/ and these  informations will be obtained upon creation of shared file system. 
+        * *Subnet Id:* Identifier of the VPC subnet to be applied e.g. subnet-05222a43. 
+        * *Security Group:* Identifier of the security group to be applied e.g. sg-df72b9ba, default. 
+        * *Shared Storage Id:* Identifier of the shared file system instance e.g. fs-1803efd1.
+        * *Shared Storage Mount:* Mount path of the shared file system e.g. /mnt/efs.
+
+    Please make sure following criterias are satisfied:
+        1) Image has the directory to mount this storage.
+        2) The output directory needs to be under this mount location.
+        3) The storage system needs to be created in selected region and necessary rights need to be given in the console.
+        4) EC2FullAccess and S3FullAccess permissions have added.
+
+    .. warning::  Both EFS and images should be located in same location (eg. N. Virginia, Ohio etc.)
 
 * **Run Command (optional):** You may run the command or commands (by seperating each command with ``&&`` sign) before the nextflow job starts. eg. ``source /etc/bashrc && module load java/1.8.0_31 && module load bowtie2/2.3.2``
 * **Nextflow Path (optional):** If nextflow path is not added to ``$PATH`` environment, you can define the path in this block. eg. ``/project/umw_biocore/bin``

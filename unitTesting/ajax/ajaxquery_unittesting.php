@@ -681,6 +681,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['instance_type'] = "";
 		$_REQUEST['image_id'] = "";
 		$_REQUEST['subnet_id'] = "";
+		$_REQUEST['security_group'] = "";
 		$_REQUEST['shared_storage_id'] = "";
 		$_REQUEST['shared_storage_mnt'] = "";
 		$_REQUEST['next_path'] = "";
@@ -726,6 +727,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['instance_type'] = "";
 		$_REQUEST['image_id'] = "";
 		$_REQUEST['subnet_id'] = "";
+        $_REQUEST['security_group'] = "";
 		$_REQUEST['shared_storage_id'] = "";
 		$_REQUEST['shared_storage_mnt'] = "";
 		$_REQUEST['next_path'] = "";

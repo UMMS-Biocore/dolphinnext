@@ -1,3 +1,30 @@
+21.04.2019 Version 0.3.17
+Auto shutdown Amazon EC2 instance feature added.
+Auto update run status feature added.
+Nextflow cloud commands will be executed according to nextflow version defined in .sec file.
+
+18.04.2019 Version 0.3.16
+Error reporting updated. (Run directory could not created) 
+
+17.04.2019 Version 0.3.15
+fasterq-dump fix.
+
+17.04.2019 Version 0.3.14
+Fixed minor syntax.
+
+14.04.2019 Version 0.3.13
+Nexflow version feature updated for amazon.
+Run status algorithm is updated to cover process retry.
+Error strategy 'retry' added for initial run.
+
+07.04.2019 Version 0.3.12
+Bug fixed regarding to loading process groups in process modal.
+Bug fixed regarding rmarkdown tmp file check.
+SecurityGroup feature added to amazon profile.
+Support for default hostname parameters added. 
+Impersonate user feature updated.
+Pipeline column added to run status page.
+
 07.04.2019 Version 0.3.11
 Config folder moved from public folder to improve security.
 
