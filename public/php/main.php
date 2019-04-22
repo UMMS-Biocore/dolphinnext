@@ -21,7 +21,7 @@ session_write_close();
     <!--   app’s client ID prodcued in the Google Developers Console-->
     <meta name="google-signin-client_id" content="1051324819082-6mjdouf9dhmhv9ov5vvdkdknqrb8tont.apps.googleusercontent.com">
     <!-- Bootstrap 3.3.7 -->
-    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.min.css">
     <!-- Ionicons -->
@@ -559,7 +559,7 @@ session_write_close();
 
         <!-- Add Amazon Modal Starts-->
         <div id="amzModal" class="modal fade" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -575,6 +575,7 @@ session_write_close();
                                             <tr>
                                                 <th scope="col">Profile Name</th>
                                                 <th scope="col">Details</th>
+                                                <th scope="col">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></th>
                                                 <th style="width:250px;" scope="col">Status</th>
                                                 <th scope="col">Actions</th>
                                             </tr>
@@ -595,7 +596,7 @@ session_write_close();
 
         <!-- Add Amazon Node Modal Starts-->
         <div id="addAmzNodeModal" class="modal fade" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -626,6 +627,12 @@ session_write_close();
                                     <div class="col-sm-9">
                                         <input type="text" class="form-control" id="autoscale_maxIns" value="4" name="autoscale_maxIns" placeholder="Enter the number of maximum instances">
                                     </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="numNodes" class="col-sm-3 control-label">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></label> 
+                                <div class="col-sm-9">
+                                    <input id="autoshut_check"type="checkbox"  name="autoshutdown_check" >
                                 </div>
                             </div>
                         </form>

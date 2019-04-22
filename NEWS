@@ -1,3 +1,8 @@
+21.04.2019 Version 0.3.17
+Auto shutdown Amazon EC2 instance feature added.
+Auto update run status feature added.
+Nextflow cloud commands will be executed according to nextflow version defined in .sec file.
+
 18.04.2019 Version 0.3.16
 Error reporting updated. (Run directory could not created) 
 

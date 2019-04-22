@@ -7,13 +7,13 @@ class funcs
     public $db = "";
     public $dbuser = "";
     public $dbpass = "";
-    
+
     function readINI()
     {
-            $this->dbhost     = DBHOST;
-            $this->db         = DB;
-            $this->dbpass     = DBPASS;
-            $this->dbuser     = DBUSER;
+        $this->dbhost     = DBHOST;
+        $this->db         = DB;
+        $this->dbpass     = DBPASS;
+        $this->dbuser     = DBUSER;
     }
     function getINI()
     {
@@ -33,7 +33,7 @@ class funcs
         $i = 0;
         while ($i < 3) {
             $result = $link->query($sql);
-            
+
             if ($result) {
                 $link->close();
                 return $result;
@@ -56,55 +56,7 @@ class funcs
         return $data;
     }
 
-//    function startWorkflow( $params )
-//    {
-//        $inputparam=$params['inputparam'];
-//        $defaultparam=$params['defaultparam'];
-//        $workflowname=$params['workflow'];
-//        $username=$params['username'];
-//        $status =$params['status'];
-//        $outdir = $params['outdir'];
-//        $services= $params['services'];
-//        $status = "exist";
-//        $wkey=$params['wkey'];
-//        if($wkey=='' || $wkey=='start')
-//        {
-//            $wkey = $this->getKey();
-//            $status = "new";
-//        }
-//        if ($status == "new") {
-//            $workflow_id = $this->getId("workflow", $username, $workflowname, $wkey, $defaultparam);
-//            // sql query for INSERT INTO workflowrun
-//            $sql = "INSERT INTO `workflow_run` ( `workflow_id`, `username`, `wkey`, `inputparam`, `outdir`, `result`, `start_time`, `services`) VALUES ('$workflow_id', '$username', '$wkey', '$inputparam', '$outdir', '0', now(), $services)";
-//            if ($workflowname != "")
-//            {
-//              $this->updateDefaultParam($workflowname, $username, $defaultparam);
-//            }
-//            if ($result = $this->runSQL($sql)) {
-//                $ret = $result;
-//            }
-//        } else {
-//            $inputparam = $this->updateInputParam($wkey, $username, $inputparam);
-//            $ret =  $inputparam;
-//            $this->deleteLastServiceJobs($wkey);
-//        }
-//        if(preg_match('/^ERROR/', $ret))
-//        {
-//           return $ret;
-//        }
-//        return $wkey;
-//    }
-//    
-//    function checkNewRun($params){
-//        $directory = $params['outdir'];
-//        $this->readINI();
-//        $sql = "SELECT id FROM ngs_runparams WHERE outdir = '$directory/initial_run' OR outdir = '$directory//initial_run' OR outdir = '".$directory."initial_run' OR outdir = '$directory' OR outdir = '$directory/'";
-//        $res=$this->queryTable($sql);
-//        if (count($res) > 0){
-//            return "{\"ERROR\": \"Run already exists: ".$params['outdir']."\"}";
-//        }
-//        return "{\"Result\":\"Ok\"}";
-//    }
+    
     //http://localhost:8080/dolphinnext/api/service.php?func=getUUID&type=process
     function getUUID($params){
         $type = $params['type'];
@@ -142,7 +94,7 @@ class funcs
         }
         return $ret;
     }
-    
+
     function getKey($type)
     {
         $characters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -179,6 +131,6 @@ class funcs
         }
         return $id;
     }
-    
+
 }
 ?>
