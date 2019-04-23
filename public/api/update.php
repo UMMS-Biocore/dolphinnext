@@ -94,7 +94,7 @@ class updates
         $time = date("M-d-Y H:i:s");
         $ret = "";
         if (!count($data) > 0){ 
-            $ret = "$time There is no instance to trigger autoshutdown.\n"; 
+            $ret = "$time There is no instance to trigger autoshutdown."; 
         } else {
             $dbfun = new dbfuncs();
             foreach ($data as $profileData):
@@ -120,7 +120,7 @@ class updates
         $time = date("M-d-Y H:i:s");
         $ret = "";
         if (!count($data) > 0){ 
-            $ret = "$time Active run is not found.\n"; 
+            $ret = "$time Active run is not found."; 
         } else {
             $dbfun = new dbfuncs();
             foreach ($data as $runData):

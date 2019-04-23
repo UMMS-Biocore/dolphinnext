@@ -2,8 +2,6 @@
 
 from optparse import OptionParser
 import ConfigParser, os, sys
-from binascii import hexlify, unhexlify
-from simplecrypt import encrypt, decrypt
 import urllib, json
 import re
 import cgi
