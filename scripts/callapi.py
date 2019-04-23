@@ -8,28 +8,29 @@ import urllib, json
 import re
 import cgi
 
-def callApi(url):
+def callApi(url, file):
     response = urllib.urlopen(url);
     data = json.loads(response.read())
     print data
+    text_file = open(file, "a")
+    text_file.write(data)
+    text_file.close()
     return data
 
  
 def getBasePath():
     config = ConfigParser.ConfigParser()
     config.readfp(open('../config/.sec'))
-    basePath = config.get('CONFIG', 'BASE_PATH')
+    basePath = config.get('CONFIG', 'API_PATH')
     return basePath
 
 
 def main():
     basePath=getBasePath()
-    print basePath
     url = basePath + "/api/service.php?upd=updateAmzInst"
-    results=callApi(url)
-    url = basePath + "/api/service.php?upd=updateStatus"
-    results=callApi(url)
-    print url
+    resAmz=callApi(url, "../public/tmp/api/updateAmzInst.txt")
+    url = basePath + "/api/service.php?upd=updateRunStat"
+    resRun=callApi(url, "../public/tmp/api/updateRunStat.txt")
 
 if __name__ == "__main__":
     main()
