@@ -3854,7 +3854,7 @@ class dbfuncs {
             mkdir($targetDir, 0777, true);
         }
         $uuidPath = "{$targetDir}/{$type}{$id}.txt";
-        $request = API_PATH."/api/service.php?func=getUUID&type=$type";
+        $request = CENTRAL_API_URL."/api/service.php?func=getUUID&type=$type";
         exec("curl '$request' -o $uuidPath > /dev/null 2>&1 &", $res, $exit);
         for( $i= 0 ; $i < 4 ; $i++ ){
             sleep(5);

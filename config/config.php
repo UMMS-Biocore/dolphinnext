@@ -28,11 +28,13 @@ if (!empty($secConf)){
     $BIND_PASS= isset($secConf['BIND_PASS']) ? $secConf['BIND_PASS'] : "";
     $EMAIL_SENDER= isset($secConf['EMAIL_SENDER']) ? $secConf['EMAIL_SENDER'] : "";
     $EMAIL_ADMIN= isset($secConf['EMAIL_ADMIN']) ? $secConf['EMAIL_ADMIN'] : "";
-    
+    $CENTRAL_API_URL = isset($secConf['CENTRAL_API_URL']) ? $secConf['CENTRAL_API_URL'] : "";
     date_default_timezone_set($secConf['TIMEZONE']);
+    
     define('RUNPATH', $secConf['RUNPATH']);
     define('TEMPPATH', $secConf['TEMPPATH']);
-    define('API_PATH', $secConf['API_PATH']);
+    define('API_URL', $secConf['API_URL']);
+    define('CENTRAL_API_URL', $CENTRAL_API_URL);
     define('BASE_PATH', $secConf['BASE_PATH']);
     define('OCPU_URL', $OCPU_URL);
     define('DEBROWSER_URL', $DEBROWSER_URL);
