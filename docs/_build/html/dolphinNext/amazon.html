@@ -188,8 +188,8 @@
 <h2>Amazon Management Console<a class="headerlink" href="#amazon-management-console" title="Permalink to this headline">¶</a></h2>
 <p>Starting and stoping AWS cloud is conducted in Amazon management console. There are two ways to open console. First option is clicking following buttons: <code class="docutils literal notranslate"><span class="pre">profile</span> <span class="pre">&gt;</span> <span class="pre">run</span> <span class="pre">environments</span> <span class="pre">&gt;</span> <span class="pre">Start/Stop</span></code>. Altervatively, you can quickly reach Amazon console by clicking “Amazon” button at the top of the screen. The number of active profile is displayed with green tag at the top of the amazon button.</p>
 <a class="reference internal image-reference" href="../_images/amazon_quick.png"><img alt="../_images/amazon_quick.png" class="align-center" src="../_images/amazon_quick.png" style="width: 25%;" /></a>
-<p>When first created, state of your profile will be inactive as shown at below:</p>
-<img alt="../_images/amazon_inactive.png" class="align-center" src="../_images/amazon_inactive.png" />
+<p>State of your profiles will be shown as below:</p>
+<img alt="../_images/amazon_console.png" class="align-center" src="../_images/amazon_console.png" />
 </div>
 <div class="section" id="starting-cluster">
 <h2>Starting Cluster<a class="headerlink" href="#starting-cluster" title="Permalink to this headline">¶</a></h2>
@@ -197,6 +197,7 @@
 <ul class="simple">
 <li><strong>Nodes:</strong> Enter the number of instances, you want to initiate. First node is created as <code class="docutils literal notranslate"><span class="pre">master</span></code>, and the remaining as <code class="docutils literal notranslate"><span class="pre">workers</span></code>.</li>
 <li><strong>Use autoscale:</strong>  This is Nextflow’s critical feature which allows the cluster to adapt dynamically to the workload by changing computing recources. After clicking this option and entering number of <strong>Maximum Instances</strong>, new instances will be automatically added to the cluster when tasks remain too long in wait status. The upper limit should be entered by <strong>Maximum Instances</strong> to control the size of cluster. By default unused instances are removed when they are not utilised.</li>
+<li><strong>Auto Shutdown:</strong> Amazon instance will be automaticaly shutdown when there is no ongoing run for 10 minutes. Note that this feature will be activated after you initiate your first run.</li>
 </ul>
 <p>Profile status will be updated as <code class="docutils literal notranslate"><span class="pre">Waiting</span> <span class="pre">for</span> <span class="pre">reply</span></code> as soon as you click the “Activate Cluster” button. If your credentials and profile are correct, profile status will change to <code class="docutils literal notranslate"><span class="pre">Initializing</span></code> and <code class="docutils literal notranslate"><span class="pre">Running</span></code>, respectively. However, in case of missing or wrong profile information, status will turn into <code class="docutils literal notranslate"><span class="pre">Terminated</span></code> and reason of the error will appear next to the status. All available states of the profile are listed in table below:</p>
 <table border="1" class="docutils">

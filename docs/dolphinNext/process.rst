@@ -132,17 +132,37 @@ Main process scripts are defined in this region. Three type of mode are availabl
 
 **A. Script:**
 
-For simplicity, DolphinNext uses script format by default, and accepts each line as a command. It is same as using three double quotes ``"""`` at the start and the end of the command block. If you use three double quotes, DolphinNext will take that particular area as command block. Therefore, following two strings will be executed as same::
-    
-    """ tophat2 -o . ${indexPath} $reads """
-    
-    tophat2 -o . ${indexPath} $reads
-   
+For simplicity, DolphinNext uses `script` format by default. So defined commands will be executed as BASH script in the host. It is same as using three double quotes ``"""`` at the start and the end of the command block. If you use three double quotes, DolphinNext will take that particular area as command block. Therefore, following two blocks will be executed as same::
 
-Each line is executed as a BASH script in the host. It can be any command or script that is typically used in terminal shell or BASH script.
+    script:
+    """ 
+    tophat2 -o . ${indexPath} ${reads} 
+    """
+    
+    OR 
+    
+    tophat2 -o . ${indexPath} ${reads}
+
+
+These blocks can contain any command or script that is typically used in terminal shell or BASH script.
 
 .. image:: dolphinnext_images/process_script.png
 	:align: center
+
+Let's analyze more complicated version of script block. Here nextflow variable ``name`` is defined in between ``script:`` keyword and three double quotes ``"""``::
+
+    script:
+    name =  reads.toString() - '.fastq'  //local scope for nextflow variables
+    
+    """ 
+    newPath="/mypath"   // inside of """ block is used for define bash variables in local scope
+    tophat2 -o . \${newPath} ${name}  
+    """
+
+
+.. note:: 
+    *   ``newPath`` variable is defined in bash script and used in tophat command as ``\${newPath}``. (Note that bash variables need to be escaped by backslash)
+    *   ``name`` variable is defined in scope of groovy as nextflow variable and used in tophat command as ``${name}``.
     
 * **Conditional Scripts:**
 
@@ -173,6 +193,22 @@ Alternatively, you can use ``shell`` block where Nextflow variables are declared
     '''
     echo $PATH and !{new_path}
     '''
+
+Here is the use case of a perl script block::
+
+    shell:
+    name =  reads.toString() - '.fastq'  //local scope for nextflow variables
+    
+    ''' 
+    #!/usr/bin/env perl // inside of ''' block you can define perl (or other language) variables in local scope
+    $newPath="/mypath";
+    system("tophat2 -o . ${newPath} !{name}");
+    '''
+
+.. note:: 
+    *   ``$newPath`` variable is defined in perl script and used in tophat command as ``${newPath}``. (Note that variables don't need to be escaped by backslash if ``shell:`` keyword is used.)
+    *   ``name`` variable is defined in scope of groovy as nextflow variable and used in tophat command as ``!{name}``.
+
 
 **C. Exec:**
 

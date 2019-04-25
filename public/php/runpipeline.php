@@ -1034,12 +1034,12 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
             <div class="modal-body">
                 <span id="infoModalText">Text</span>
                 </br>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
         </div>
     </div>
-</div>
 </div>
 <!--Info Modal ENDs-->
 

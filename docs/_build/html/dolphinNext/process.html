@@ -366,14 +366,36 @@
 <h2>Scripts<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <p>Main process scripts are defined in this region. Three type of mode are available in Nextflow: A. Script B. Shell C. Exec. These statements defines how the command going to be executed by the process.</p>
 <p><strong>A. Script:</strong></p>
-<p>For simplicity, DolphinNext uses script format by default, and accepts each line as a command. It is same as using three double quotes <code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code> at the start and the end of the command block. If you use three double quotes, DolphinNext will take that particular area as command block. Therefore, following two strings will be executed as same:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&quot;&quot;&quot; tophat2 -o . ${indexPath} $reads &quot;&quot;&quot;
+<p>For simplicity, DolphinNext uses <cite>script</cite> format by default. So defined commands will be executed as BASH script in the host. It is same as using three double quotes <code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code> at the start and the end of the command block. If you use three double quotes, DolphinNext will take that particular area as command block. Therefore, following two blocks will be executed as same:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>script:
+&quot;&quot;&quot;
+tophat2 -o . ${indexPath} ${reads}
+&quot;&quot;&quot;
 
-tophat2 -o . ${indexPath} $reads
+OR
+
+tophat2 -o . ${indexPath} ${reads}
 </pre></div>
 </div>
-<p>Each line is executed as a BASH script in the host. It can be any command or script that is typically used in terminal shell or BASH script.</p>
+<p>These blocks can contain any command or script that is typically used in terminal shell or BASH script.</p>
 <img alt="../_images/process_script.png" class="align-center" src="../_images/process_script.png" />
+<p>Let’s analyze more complicated version of script block. Here nextflow variable <code class="docutils literal notranslate"><span class="pre">name</span></code> is defined in between <code class="docutils literal notranslate"><span class="pre">script:</span></code> keyword and three double quotes <code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>script:
+name =  reads.toString() - &#39;.fastq&#39;  //local scope for nextflow variables
+
+&quot;&quot;&quot;
+newPath=&quot;/mypath&quot;   // inside of &quot;&quot;&quot; block is used for define bash variables in local scope
+tophat2 -o . \${newPath} ${name}
+&quot;&quot;&quot;
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li><code class="docutils literal notranslate"><span class="pre">newPath</span></code> variable is defined in bash script and used in tophat command as <code class="docutils literal notranslate"><span class="pre">\${newPath}</span></code>. (Note that bash variables need to be escaped by backslash)</li>
+<li><code class="docutils literal notranslate"><span class="pre">name</span></code> variable is defined in scope of groovy as nextflow variable and used in tophat command as <code class="docutils literal notranslate"><span class="pre">${name}</span></code>.</li>
+</ul>
+</div>
 <ul class="simple">
 <li><strong>Conditional Scripts:</strong></li>
 </ul>
@@ -404,6 +426,24 @@ tophat2 -o . ${indexPath} $reads
 <span class="sd">echo $PATH and !{new_path}</span>
 <span class="sd">&#39;&#39;&#39;</span>
 </pre></div>
+</div>
+<p>Here is the use case of a perl script block:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>shell:
+name =  reads.toString() - &#39;.fastq&#39;  //local scope for nextflow variables
+
+&#39;&#39;&#39;
+#!/usr/bin/env perl // inside of &#39;&#39;&#39; block you can define perl (or other language) variables in local scope
+$newPath=&quot;/mypath&quot;;
+system(&quot;tophat2 -o . ${newPath} !{name}&quot;);
+&#39;&#39;&#39;
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li><code class="docutils literal notranslate"><span class="pre">$newPath</span></code> variable is defined in perl script and used in tophat command as <code class="docutils literal notranslate"><span class="pre">${newPath}</span></code>. (Note that variables don’t need to be escaped by backslash if <code class="docutils literal notranslate"><span class="pre">shell:</span></code> keyword is used.)</li>
+<li><code class="docutils literal notranslate"><span class="pre">name</span></code> variable is defined in scope of groovy as nextflow variable and used in tophat command as <code class="docutils literal notranslate"><span class="pre">!{name}</span></code>.</li>
+</ul>
 </div>
 <p><strong>C. Exec:</strong></p>
 <p>Nextflow processes allows you to execute native code other than system commands. This way you may easily follow local Nextflow variables. To start exec mode, you can add <code class="docutils literal notranslate"><span class="pre">exec:</span></code> block at the beggining of the script:</p>

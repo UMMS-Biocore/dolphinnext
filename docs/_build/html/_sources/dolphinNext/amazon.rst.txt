@@ -25,9 +25,10 @@ Starting and stoping AWS cloud is conducted in Amazon management console. There 
     :width: 25%
 
 
-When first created, state of your profile will be inactive as shown at below:
+State of your profiles will be shown as below:
 
-.. image:: dolphinnext_images/amazon_inactive.png
+
+.. image:: dolphinnext_images/amazon_console.png
     :align: center
 
 Starting Cluster
@@ -36,6 +37,7 @@ In order to active AWS cluster, click on "start" button of the profile you wante
 
 * **Nodes:** Enter the number of instances, you want to initiate. First node is created as ``master``, and the remaining as ``workers``.
 * **Use autoscale:**  This is Nextflow's critical feature which allows the cluster to adapt dynamically to the workload by changing computing recources. After clicking this option and entering number of **Maximum Instances**, new instances will be automatically added to the cluster when tasks remain too long in wait status. The upper limit should be entered by **Maximum Instances** to control the size of cluster. By default unused instances are removed when they are not utilised.
+* **Auto Shutdown:** Amazon instance will be automaticaly shutdown when there is no ongoing run for 10 minutes. Note that this feature will be activated after you initiate your first run.
 
 Profile status will be updated as ``Waiting for reply`` as soon as you click the "Activate Cluster" button. If your credentials and profile are correct, profile status will change to ``Initializing`` and ``Running``, respectively. However, in case of missing or wrong profile information, status will turn into ``Terminated`` and reason of the error will appear next to the status. All available states of the profile are listed in table below:
 

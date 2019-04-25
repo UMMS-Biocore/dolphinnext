@@ -1,3 +1,12 @@
+21.04.2019 Version 0.3.17
+Auto shutdown Amazon EC2 instance feature added.
+Auto update run status feature added.
+Nextflow cloud commands will be executed according to nextflow version defined in .sec file.
+API_URL variable added to .sec file. (API_URL=http://localhost/dolphinnext)
+API_PATH variable replaced with CENTRAL_API_URL in .sec file. (CENTRAL_API_URL=https://www.dolphinnext.com)
+Logs and cloud list added to amazon management console.
+Documentation updated.
+
 18.04.2019 Version 0.3.16
 Error reporting updated. (Run directory could not created) 
 

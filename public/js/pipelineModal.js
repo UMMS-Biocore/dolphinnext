@@ -2,7 +2,7 @@
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
 templateperl = '#perl example: \n\n#!/usr/bin/perl \n print \'Hi there!\' . \'\\n\';';
 templatepython = '#python example: \n\n#!/usr/bin/python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
-templatesh = '#shell example: \n\n#!/bin/sh \nmy_variable="Hello World" \necho $my_variable';
+templatesh = '#shell example: \n\n#!/bin/sh \nmy_variable="Hello World" \necho \\$my_variable';
 
 createAceEditors("editor", "#script_mode"); //ace process main editor
 createAceEditors("editorProHeader", "#script_mode_header") //ace process header editor

@@ -305,7 +305,7 @@ class dbfuncs {
         process initialRun {
           errorStrategy 'retry'
           maxRetries 2
-          
+
           input:
           val file_name from file_name
           val file_dir from file_dir
@@ -1015,13 +1015,14 @@ class dbfuncs {
         if ($profileType == "amazon"){
             $profile_def = "source /etc/profile && source ~/.bash_profile";
         }
-        $nextVer = isset($this->next_ver) ? $this->next_ver : "";
+        $nextVer = $this->next_ver;
         $nextVerText = "";
         if (!empty($nextVer)){
             $nextVerText = "export NXF_VER=$nextVer";
         }
+        $nextANSILog = "export NXF_ANSI_LOG=false";
         //combine pre-run cmd
-        $arr = array($profile_def, $nextVerText, $profileCmd, $proPipeCmd, $imageCmd , $initImageCmd);
+        $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $imageCmd , $initImageCmd);
         $preCmd="";
         for ($i=0; $i<count($arr); $i++) {
             if (!empty($arr[$i]) && !empty($preCmd)){
@@ -1379,6 +1380,8 @@ class dbfuncs {
                 die(json_encode('ERROR: Connection failed. Please check your connection profile or internet connection'));
             }
             $log_array['next_submit_pid'] = $next_submit_pid;
+            $this->updateRunLog($project_pipeline_id, "Waiting", "", $ownerID);
+            $this->updateRunStatus($project_pipeline_id, "Waiting", $ownerID);
             return json_encode($log_array);
         } else if ($matches[2] == " not "){
             for( $i= 0 ; $i < 3 ; $i++ ){
@@ -1396,6 +1399,8 @@ class dbfuncs {
                         die(json_encode('ERROR: Connection failed. Please check your connection profile or internet connection'));
                     }
                     $log_array['next_submit_pid'] = $next_submit_pid;
+                    $this->updateRunLog($project_pipeline_id, "Waiting", "", $ownerID);
+                    $this->updateRunStatus($project_pipeline_id, "Waiting", $ownerID);
                     return json_encode($log_array);
                 }
             }
@@ -1543,7 +1548,7 @@ class dbfuncs {
         settype($nodes, "integer");
         $autoscale_check = $data[0]->{'autoscale_check'};
         $autoscale_maxIns = $data[0]->{'autoscale_maxIns'};
-//        $autoscale_minIns = $nodes;
+        //        $autoscale_minIns = $nodes;
         $text= "cloud { \n";
         $text.= "   userName = '$username'\n";
         $text.= "   imageId = '$image_id'\n";
@@ -1558,9 +1563,9 @@ class dbfuncs {
             $text.= "   autoscale {\n";
             $text.= "       enabled = true \n";
             $text.= "       terminateWhenIdle = true\n";
-//            if (!empty($autoscale_minIns)){
-//                $text.= "       minInstances = $autoscale_minIns\n";
-//            }
+            //            if (!empty($autoscale_minIns)){
+            //                $text.= "       minInstances = $autoscale_minIns\n";
+            //            }
             if (!empty($autoscale_maxIns)){
                 $text.= "       maxInstances = $autoscale_maxIns\n";
             }
@@ -1577,8 +1582,13 @@ class dbfuncs {
         if ($nodes >1){
             $nodeText = "-c $nodes";
         }
+        $nextVer = $this->next_ver;
+        $nextVerText = "";
+        if (!empty($nextVer)){
+            $nextVerText = "export NXF_VER=$nextVer &&";
+        }
         //start amazon cluster
-        $cmd = "cd {$this->amz_path}/pro_{$profileName} && yes | nextflow cloud create $profileName $nodeText > logAmzStart.txt 2>&1 & echo $! &";
+        $cmd = "cd {$this->amz_path}/pro_{$profileName} && $nextVerText yes | nextflow cloud create $profileName $nodeText > logAmzStart.txt 2>&1 & echo $! &";
         $log_array = $this->runCommand ($cmd, 'start_cloud', '');
         $log_array['start_cloud_cmd'] = $cmd;
         //xxx save pid of nextflow cloud create cluster job
@@ -1592,10 +1602,64 @@ class dbfuncs {
 
     function stopProAmazon($id,$ownerID,$username){
         $profileName = "{$username}_{$id}";
+        $nextVer = $this->next_ver;
+        $nextVerText = "";
+        if (!empty($nextVer)){
+            $nextVerText = "export NXF_VER=$nextVer &&";
+        }
         //stop amazon cluster
-        $cmd = "cd {$this->amz_path}/pro_{$profileName} && yes | nextflow cloud shutdown $profileName > logAmzStop.txt 2>&1 & echo $! &";
+        $cmd = "cd {$this->amz_path}/pro_{$profileName} && $nextVerText yes | nextflow cloud shutdown $profileName > logAmzStop.txt 2>&1 & echo $! &";
         $log_array = $this->runCommand ($cmd, 'stop_cloud', '');
         return json_encode($log_array);
+    }
+    function triggerShutdown ($id,$ownerID, $type){
+        $amzDataJS=$this->getProfileAmazonbyID($id, $ownerID);
+        $amzData=json_decode($amzDataJS,true)[0];
+        $username = $amzData["username"];
+        if (!empty($username)){
+            $usernameCl = str_replace(".","__",$username);   
+        }
+        $autoshutdown_date = $amzData["autoshutdown_date"];
+        $autoshutdown_active = $amzData["autoshutdown_active"];
+        $autoshutdown_check = $amzData["autoshutdown_check"];
+        // get list of active runs using this profile 
+        $activeRun=json_decode($this->getActiveRunbyProID($id, $ownerID),true);
+        if (count($activeRun) > 0){ return "Active run is found"; }
+        //if process comes to this checkpoint it has to be activated
+        if ($autoshutdown_check == "true" && $autoshutdown_active == "true"){
+            //if timer not set then set timer
+            if (empty($autoshutdown_date)){
+                $autoshutdown_date = strtotime("+10 minutes");
+                $mysqltime = date ("Y-m-d H:i:s", $autoshutdown_date);
+                $this->updateAmzShutdownDate($id, $mysqltime, $ownerID);
+                return "Timer set to: $mysqltime";
+            } else {
+                //if timer is set the check if time elapsed -> stopProAmazon
+                $expected_date = strtotime($autoshutdown_date);
+                $remaining = $expected_date - time();
+                error_log($remaining);
+                if ($remaining < 1){
+                    $stopProAmazon = $this->stopProAmazon($id,$ownerID,$usernameCl);
+                    //track termination of instance
+                    if ($type == "slow"){
+                        for ($i = 0; $i < 10; $i++) {
+                            $runAmzCloudCheck = $this->runAmazonCloudCheck($id,$ownerID, $usernameCl);
+                            sleep(15);
+                            $checkAmazonStatus = $this->checkAmazonStatus($id,$ownerID,$usernameCl);
+                            $newStatus = json_decode($checkAmazonStatus)->{'status'};
+                            if ($newStatus == "terminated"){
+                                break;
+                            }
+                        }
+                    }
+                    return json_encode($stopProAmazon);
+                } else {
+                    return "$remaining seconds left to shutdown.";
+                }
+            }
+        } else {
+            return "Shutdown feature has not been activated.";
+        }
     }
 
     function checkAmzStopLog($id,$ownerID,$username){
@@ -1619,6 +1683,7 @@ class dbfuncs {
         $log_array['logAmzStart'] = $logAmzStart;
         return $log_array;
     }
+    //available status: waiting, initiated, terminated, running
     public function checkAmazonStatus($id,$ownerID,$username) {
         $profileName = "{$username}_{$id}";
         //check status
@@ -1697,10 +1762,6 @@ class dbfuncs {
                 $sshTextArr = json_decode($this->getAmazonProSSH($id, $ownerID));
                 $sshText = $sshTextArr[0]->{'ssh'};
                 $log_array['sshText'] = $sshText;
-
-
-
-
                 return json_encode($log_array);
             } else if (!preg_match("/running/",$log_array['logAmzCloudList']) && preg_match("/STATUS/",$log_array['logAmzCloudList'])){
                 $this->updateAmazonProStatus($id, "terminated", $ownerID);
@@ -1727,10 +1788,170 @@ class dbfuncs {
     //check cloud list
     public function runAmazonCloudCheck($id,$ownerID,$username){
         $profileName = "{$username}_{$id}";
-        $cmd = "cd {$this->amz_path}/pro_$profileName && rm -f logAmzCloudList.txt && nextflow cloud list $profileName >> logAmzCloudList.txt 2>&1 & echo $! &";
+        $nextVer = $this->next_ver;
+        $nextVerText = "";
+        if (!empty($nextVer)){
+            $nextVerText = "export NXF_VER=$nextVer &&";
+        }
+        $cmd = "cd {$this->amz_path}/pro_$profileName && rm -f logAmzCloudList.txt && $nextVerText nextflow cloud list $profileName >> logAmzCloudList.txt 2>&1 & echo $! &";
         $log_array = $this->runCommand ($cmd, 'cloudlist', '');
         return json_encode($log_array);
     }
+
+    //this function is not finalized.
+//    public function tagAmazonInst($id,$ownerID){
+//        $amzDataJS=$this->getProfileAmazonbyID($id, $ownerID);
+//        $amzData=json_decode($amzDataJS,true)[0];
+//        $username = $amzData["username"];
+//        if (!empty($username)){
+//            $usernameCl = str_replace(".","__",$username);   
+//        }
+//        $runAmzCloudCheck = $this->runAmazonCloudCheck($id,$ownerID,$usernameCl);
+//        sleep(15);
+//        $checkAmazonStatus = $this->checkAmazonStatus($id,$ownerID,$usernameCl);
+//        $status = json_decode($checkAmazonStatus)->{'status'};
+//        $logAmzCloudList = json_decode($checkAmazonStatus)->{'logAmzCloudList'};
+//        error_log($logAmzCloudList);
+//        //INSTANCE ID         ADDRESS                                    STATUS  ROLE  
+//        //i-0c9b9bca326881c15 ec2-54-234-221-109.compute-1.amazonaws.com running worker
+//        //i-0bdc64c4196e1f956 ec2-3-84-86-146.compute-1.amazonaws.com    running master
+//        $lines = explode("\n", $logAmzCloudList);
+//        $inst = array();
+//        for ($i = 1; $i < count($lines); $i++) {
+//            $obj = new stdClass();
+//            $currentline = explode(" ", $lines[$i]);
+//            if (!empty($currentline)){
+//                if (preg_match("/i-/",$currentline[0])){
+//                    $inst[] = trim($currentline[0]);
+//                    "export AWS_ACCESS_KEY_ID= && export AWS_SECRET_ACCESS_KEY= && aws ec2 create-tags --resources $currentline[0] --tags Key=username,Value=test && unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY";
+//                }
+//            }
+//        }
+//        error_log("inst:".print_r($inst, TRUE));
+//        
+//        return json_encode($logAmzCloudList);
+//    }
+
+    public function getLastRunData($project_pipeline_id, $ownerID){
+        $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
+            FROM project_pipeline pp
+            INNER JOIN run_log r
+            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.id='$project_pipeline_id' AND pp.owner_id='$ownerID'";
+        return self::queryTable($sql);
+    }
+
+    public function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
+        // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+        // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
+        $out = array();
+        $duration = ""; //run duration
+        $newRunStatus = "";
+        $saveNextLog = "";
+        $runDataJS = $this->getLastRunData($project_pipeline_id,$ownerID);
+        $runData = json_decode($runDataJS,true)[0];
+        $ownerID = $runData["owner_id"];
+        $runStatus = $runData["run_status"];
+        $project_pipeline_id = $runData["id"];
+        $last_run_uuid = $runData["last_run_uuid"];
+        $output_dir = $runData["output_dir"];
+        $profile = $runData["profile"];
+        $profileAr = explode("-", $profile);
+        $profileType = $profileAr[0];
+        $profileId = $profileAr[1];
+        if (!empty($last_run_uuid)){
+            $run_path_real = "$output_dir/run{$project_pipeline_id}";
+            $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
+            foreach ($down_file_list as &$value) {
+                $value = $run_path_real."/".$value;
+            }
+            unset($value);
+            //wait for the downloading logs
+            if ($loadtype == "slow"){
+                $saveNextLog = $this -> saveNextflowLog($down_file_list, $last_run_uuid, "run", $profileType, $profileId, $ownerID);
+                sleep(5);
+                $out["saveNextLog"] = $saveNextLog;
+            }
+            $serverLog = json_decode($this -> getFileContent($last_run_uuid, "run/serverlog.txt", $ownerID));
+            $errorLog = json_decode($this -> getFileContent($last_run_uuid, "run/err.log", $ownerID));
+            $initialLog = json_decode($this -> getFileContent($last_run_uuid, "run/initial.log", $ownerID));
+            $nextflowLog = json_decode($this -> getFileContent($last_run_uuid, "run/log.txt", $ownerID));
+            $serverLog = isset($serverLog) ? trim($serverLog) : "";
+            $errorLog = isset($errorLog) ? trim($errorLog) : "";
+            $initialLog = isset($initialLog) ? trim($initialLog) : "";
+            $nextflowLog = isset($nextflowLog) ? trim($nextflowLog) : "";
+            if (!empty($errorLog)) { $serverLog = $serverLog . "\n" . $errorLog; }
+            if (!empty($initialLog)) { $nextflowLog = $initialLog . "\n" . $nextflowLog; }
+            $out["serverLog"] = $serverLog;
+            $out["nextflowLog"] = $nextflowLog;
+
+            if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr") {
+                // when run hasn't finished yet and connection is down
+            } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
+                //log file might be deleted or couldn't read the log file
+                $newRunStatus = "Aborted";
+            } else if (preg_match("/error/i",$serverLog) || preg_match("/command not found/i",$serverLog)) {
+                $newRunStatus = "Error";
+                // otherwise parse nextflow file to get status
+            } else if (!empty($nextflowLog)){
+                if (preg_match("/N E X T F L O W/",$nextflowLog)){
+                    //run completed with error
+                    if (preg_match("/##Success: failed/",$nextflowLog)){
+                        preg_match("/##Duration:(.*)\n/",$nextflowLog, $matchDur);
+                        $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
+                        $newRunStatus = "NextErr";
+                        //run completed with success
+                    } else if (preg_match("/##Success: OK/",$nextflowLog)){
+                        preg_match("/##Duration:(.*)/",$nextflowLog, $matchDur);
+                        $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
+                        $newRunStatus = "NextSuc";
+                        // run error
+                    } else if (preg_match("/error/i",$nextflowLog) || preg_match("/failed/i",$nextflowLog)){
+                        $confirmErr=true;
+                        if (preg_match("/-- Execution is retried/i",$nextflowLog)){
+                            //if only process retried, there shouldn't be an error.
+                            $confirmErr = false;
+                            $txt = trim($nextflowLog);
+                            $lines = explode("\n", $txt);
+                            for ($i = 0; $i < count($lines); $i++) {
+                                if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i])){
+                                    $confirmErr = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if ($confirmErr == true){
+                            $newRunStatus = "NextErr";
+                        } else {
+                            $newRunStatus = "NextRun";
+                        }
+                    } else {
+                        //update status as running  
+                        $newRunStatus = "NextRun";
+                    }
+                    //Nextflow log file exist but /N E X T F L O W/ not printed yet
+                } else {
+                    $newRunStatus = "Waiting";
+                }
+            } else{
+                //"Nextflow log is not exist yet."
+                $newRunStatus = "Waiting";
+            }
+            if (!empty($newRunStatus)){
+                $setStatus = $this -> updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
+                $setLog = $this -> updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID); 
+                $out["runStatus"] = $newRunStatus;
+                if ($newRunStatus == "NextErr" || $newRunStatus == "NextSuc" || $newRunStatus == "Error"){
+                    $triggerShutdown = $this -> triggerShutdown($profileId,$ownerID, "fast");
+                }
+            } else {
+                $out["runStatus"] = $runStatus;
+            }
+        }
+        return json_encode($out);
+    }
+
+
+
     //------------- SideBar Funcs --------
     public function getParentSideBar($ownerID){
         if ($ownerID != ''){
@@ -2064,6 +2285,13 @@ class dbfuncs {
               WHERE p.owner_id = '$ownerID' and p.id = '$id'";
         return self::queryTable($sql);
     }
+    public function getActiveRunbyProID($id, $ownerID) {
+        $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
+            FROM project_pipeline pp
+            INNER JOIN run_log r
+            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.owner_id = '$ownerID' AND pp.profile = 'amazon-$id' AND (r.run_status = 'init' OR r.run_status = 'Waiting' OR r.run_status = 'NextRun')";
+        return self::queryTable($sql);
+    }
     public function insertProfileLocal($name, $executor,$next_path, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ownerID) {
         $sql = "INSERT INTO profile_local (name, executor, next_path, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$name', '$executor','$next_path', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
@@ -2089,8 +2317,20 @@ class dbfuncs {
         $sql = "UPDATE profile_amazon SET name='$name', executor='$executor', next_path='$next_path', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', security_group='$security_group', last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function updateProfileAmazonNode($id, $nodes, $autoscale_check, $autoscale_maxIns, $autoscale_minIns, $ownerID) {
-        $sql = "UPDATE profile_amazon SET nodes='$nodes', autoscale_check='$autoscale_check', autoscale_maxIns='$autoscale_maxIns', autoscale_minIns='$autoscale_minIns', last_modified_user ='$ownerID'  WHERE id = '$id'";
+    public function updateProfileAmazonOnStart($id, $nodes, $autoscale_check, $autoscale_maxIns, $autoscale_minIns, $autoshutdown_date, $autoshutdown_active, $autoshutdown_check, $ownerID) {
+        $sql = "UPDATE profile_amazon SET nodes='$nodes', autoscale_check='$autoscale_check', autoscale_maxIns='$autoscale_maxIns', autoscale_minIns='$autoscale_minIns',  autoshutdown_date=".($autoshutdown_date==NULL ? "NULL" : "'$autoshutdown_date'").", autoshutdown_active='$autoshutdown_active', autoshutdown_check='$autoshutdown_check', last_modified_user ='$ownerID'  WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function updateAmzShutdownDate($id, $autoshutdown_date, $ownerID) {
+        $sql = "UPDATE profile_amazon SET autoshutdown_date=".($autoshutdown_date==NULL ? "NULL" : "'$autoshutdown_date'").", last_modified_user ='$ownerID'  WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function updateAmzShutdownActive($id, $autoshutdown_active, $ownerID) {
+        $sql = "UPDATE profile_amazon SET autoshutdown_active='$autoshutdown_active', last_modified_user ='$ownerID'  WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function updateAmzShutdownCheck($id, $autoshutdown_check, $ownerID) {
+        $sql = "UPDATE profile_amazon SET autoshutdown_check='$autoshutdown_check', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
     public function updateAmazonProStatus($id, $status, $ownerID) {
@@ -2586,7 +2826,7 @@ class dbfuncs {
         if (!is_null($nextflow_log) && isset($nextflow_log) && $nextflow_log != "" && !empty($nextflow_log)){
             return json_encode("nextflow log saved");
         } else {
-            return json_encode("nextflow log not found");
+            return json_encode("logNotFound");
         }
     }
 
@@ -3459,7 +3699,7 @@ class dbfuncs {
         if (file_exists($from)) {
             $res = rename($from, $to);
         }
-        
+
         return json_encode($res);
     }
 
@@ -3614,7 +3854,7 @@ class dbfuncs {
             mkdir($targetDir, 0777, true);
         }
         $uuidPath = "{$targetDir}/{$type}{$id}.txt";
-        $request = API_PATH."/api/service.php?func=getUUID&type=$type";
+        $request = CENTRAL_API_URL."/api/service.php?func=getUUID&type=$type";
         exec("curl '$request' -o $uuidPath > /dev/null 2>&1 &", $res, $exit);
         for( $i= 0 ; $i < 4 ; $i++ ){
             sleep(5);

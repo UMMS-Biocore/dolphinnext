@@ -104,12 +104,12 @@ function hideLoadingDiv(parentId) {
 
 //eg showInfoModal('#warnDelete','#warnDeleteText', text)
 function showInfoModal(modalId, textID, text) {
-        $(modalId).off();
-        $(modalId).on('show.bs.modal', function (event) {
-            $(this).find('form').trigger('reset');
-            $(textID).html(text);
-        });
-        $(modalId).modal('show');
+    $(modalId).off();
+    $(modalId).on('show.bs.modal', function (event) {
+        $(this).find('form').trigger('reset');
+        $(textID).html(text);
+    });
+    $(modalId).modal('show');
 }
 
 
@@ -182,36 +182,46 @@ retryTimer = 5000;
 function checkAmazonStatus(proId) {
     var checkAmazonStatusLog = getValues({ p: "checkAmazonStatus", profileId: proId });
     console.log(checkAmazonStatusLog)
+    var logAmzStart = "";
+    var logAmzCloudList = "";
+    if (checkAmazonStatusLog.logAmzStart){
+        logAmzStart = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" data="amzLogStart" id="amzLogStart-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Log"><span><i class="fa fa-file-text-o"></i></span></a></button>'
+    }
+    if (checkAmazonStatusLog.logAmzCloudList){
+        logAmzCloudList = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" data="AmzCloudListLog" id="AmzCloudListLog-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Cloud List"><span><i class="fa fa-file-text-o"></i></span></a></button>'
+    }
+
+
     if (stopAmz && checkAmazonStatusLog.status !== "terminated") {
         window.modalRec['last_status_log_' + proId] = "Waiting for termination..";
-        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
+        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, 5500);
     } else if (checkAmazonStatusLog.status === "waiting") {
         window.modalRec['last_status_log_' + proId] = "Waiting for reply..";
-        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
+        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, 20000);
     } else if (checkAmazonStatusLog.status === "initiated") {
         window.modalRec['last_status_log_' + proId] = "Initializing..";
         window.modalRec['last_status_' + proId] = checkAmazonStatusLog.status;
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> Initializing..');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
+        $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> Initializing..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, 20000);
     } else if (checkAmazonStatusLog.status === "retry") { //could not read the log file
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'none');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'none');
         var tempLog = window.modalRec['last_status_log_' + proId]
         if (tempLog) {
-            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + tempLog);
+            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + tempLog + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         } else {
-            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ');
+            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         }
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, retryTimer);
@@ -220,8 +230,8 @@ function checkAmazonStatus(proId) {
         }
         var lastStat = window.modalRec['last_status_' + proId];
         if (lastStat === "running" || lastStat === "initiated") {
-            $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-            $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
+            $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
+            $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
         }
 
 
@@ -243,18 +253,18 @@ function checkAmazonStatus(proId) {
         } else {
             var sshText = "";
         }
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#status-' + proId).html('Running <br/>' + sshText);
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
+        $('#status-' + proId).html('Running <br/>' + sshText + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         window.modalRec['last_status_log_' + proId] = 'Running <br/>' + sshText;
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
 
     } else if (checkAmazonStatusLog.status === "inactive") {
         clearInterval(window['interval_amzStatus_' + proId]);
         $('#status-' + proId).text('Inactive');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'inline');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'inline');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
     } else if (checkAmazonStatusLog.status === "terminated") {
         stopAmz = false;
         clearInterval(window['interval_amzStatus_' + proId]);
@@ -279,29 +289,167 @@ function checkAmazonStatus(proId) {
             if ((logTextStart.match(/error/i) && !logTextStart.match(/WARN: One or more errors/i)) || logTextStart.match(/denied/i) || logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
                 errorText = "(" + logTextStart + ")";
         }
-        $('#status-' + proId).html('Terminated <br/>' + errorText);
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'inline');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
+        $('#status-' + proId).html('Terminated <br/>' + errorText );
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'inline');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
     } else {
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
+        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
+    }
+    $('[data-toggle="tooltip"]').tooltip();
+    if (checkAmazonStatusLog.logAmzStart){
+        $('#amzLogStart-'+proId).data("logData", checkAmazonStatusLog.logAmzStart)
+    }
+    if (checkAmazonStatusLog.logAmzCloudList){
+        $('#AmzCloudListLog-'+proId).data("logData", checkAmazonStatusLog.logAmzCloudList)
+    }
+
+    // set autoshutdown counter
+    var proAmzData = getValues({ p: "getProfileAmazon", id:proId });
+    var autoshutdown_check = proAmzData[0].autoshutdown_check;
+    var autoshutdown_active = proAmzData[0].autoshutdown_active;
+    var autoshutdown_date = proAmzData[0].autoshutdown_date;
+    var pro_status = proAmzData[0].status;
+
+    if (autoshutdown_check == "true" && autoshutdown_active == "true" && autoshutdown_date && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")){
+        if (!window['countdown_' + proId]){
+            window['elapsed_' + proId]  = 0;
+            //            $('#amzModal').modal('show');
+            window['countdown_' + proId] = setInterval(function () {
+                window['elapsed_' + proId] ++;
+                var remaining = autoshutdown_date-window['elapsed_' + proId];
+                var autoshutdown_check = $('#autoshutdown-' + proId).is(":checked").toString();
+                if (autoshutdown_check == "true"){
+                    if (remaining < 1) {
+                        clearInterval(window['countdown_' + proId]);
+                        window['countdown_' + proId] = null;
+                        window['elapsed_' + proId] = 0;
+                        stopAmzByAjax(proId)
+                        $('#shutdownTimer-' + proId).text("Terminated")
+                    } else {
+                        $('#shutdownTimer-' + proId).text(remaining+" sec.")
+                    }
+                } else {
+                    $('#shutdownTimer-' + proId).text("");
+                    clearInterval(window['countdown_' + proId]);
+                    window['countdown_' + proId] = null;
+                    window['elapsed_' + proId] = 0;
+                }
+            }, 1000); 
+        }
     }
 
 }
 
 
 
-$(document).ready(function () {
-    function addAmzRow(id, name, executor, instance_type, image_id, subnet_id) {
-        $('#amzTable > thead').append('<tr id="amazon-' + id + '"> <td>' + name + '</td><td>Instance_type: ' + instance_type + '<br>  Image id: ' + image_id + '<br>  Subnet Id: ' + subnet_id + '<br> Executor: ' + executor + '<br>  </td><td id="status-' + id + '"><i class="fa fa-hourglass-half"></i></td><td>' + getButtonsDef('amz', 'Start') + getButtonsDef('amz', 'Stop') + '</td></tr>');
+
+function stopAmzByAjax(proId){
+    var data = { "id": proId, "p": "stopProAmazon" };
+    $.ajax({
+        type: "POST",
+        url: "ajax/ajaxquery.php",
+        data: data,
+        async: true,
+        success: function (s) {
+            if (s.stop_cloud) {
+                stopAmz = true;
+                $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
+                //clear previous interval and set new one(with faster check interval).
+                clearInterval(window['interval_amzStatus_' + proId]);
+                setTimeout(function () { checkAmazonTimer(proId, 5500); }, 1000);
+            }
+        }
+    });
+}
+
+function updAmzActive(proId, proAmzData) {
+    if (!proAmzData){
+        proAmzData = getValues({ p: "getProfileAmazon", id:proId });
+        if (proAmzData){
+            proAmzData = proAmzData[0];
+        }
     }
+    var autoshutdown_check = proAmzData.autoshutdown_check;
+    var autoshutdown_active = proAmzData.autoshutdown_active;
+    var autoshutdown_date = proAmzData.autoshutdown_date;
+    var pro_status = proAmzData.status;
+    if (autoshutdown_check == null){ autoshutdown_check = ""; }
+    if (autoshutdown_active == null){ autoshutdown_active = ""; }
+    if (autoshutdown_date == null){ autoshutdown_date = ""; }
+    var activeTxt = "";
+    if (autoshutdown_check == "true" && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")){
+        if (autoshutdown_active == "true"){
+            if (autoshutdown_date !== ""){
+                activeTxt = "Countdown for shutdown: ";
+            } else {
+                activeTxt = "Activated - Waiting for the termination of active run";
+            }
+        } else {
+            activeTxt = "Idle - Waiting for the initial run";
+        }
+    }
+    $('#shutdownLog-'+proId).text(activeTxt);
+}
+
+
+$(document).ready(function () {
+
+    $(function () {
+        $(document).on('change', '.autoShutCheck', function (event) {
+            var autoShutCheck = $(this).is(":checked").toString();
+            var amzProfileId = $(this).attr("id").split("-")[1];
+            var proAmzData = getValuesErr({ p: "updateAmzShutdownCheck", autoshutdown_check:autoShutCheck, id: amzProfileId });
+            if (autoShutCheck == "false"){
+                $('#shutdownLog-'+amzProfileId).empty();
+                $('#shutdownTimer-'+amzProfileId).empty();
+            } else {
+                updAmzActive(amzProfileId, "")
+                checkAmazonStatus(amzProfileId);
+            }
+        });
+        $(document).on('click', 'button[data=amzLogStart]', function (e) {
+            e.preventDefault();
+            var amzProfileId = $(this).attr("id").split("-")[1];
+            var logData = $('#amzLogStart-'+amzProfileId).data("logData")
+            if (logData.match(/Downloading nextflow dependencies(.*)Fetching EC2 prices/)){
+                logData = logData.replace(/Downloading nextflow dependencies(.*)Fetching EC2 prices/,'')
+            }
+            logData = logData.replace(/\n/g, '<br/>');
+            showInfoModal("#infoMod","#infoModText", logData)
+        });
+        $(document).on('click', 'button[data=AmzCloudListLog]', function (e) {
+            e.preventDefault();
+            var amzProfileId = $(this).attr("id").split("-")[1];
+            var logData = $('#AmzCloudListLog-'+amzProfileId).data("logData")
+            logData = logData.replace(/\n/g, '<br/>');
+            showInfoModal("#infoMod","#infoModText", logData)
+        });
+
+
+    });
+    function addAmzRow(id, name, executor, instance_type, image_id, subnet_id, autoshutdown_check, autoshutdown_active, autoshutdown_date, status, proAmzData) {
+        if (autoshutdown_check == null){ autoshutdown_check = ""; }
+        var checked = "";
+        if (autoshutdown_check == "true"){
+            checked = "checked";
+        }
+        var checkBox = '<input id="autoshutdown-' + id + '" class="autoShutCheck" type="checkbox"  name="autoshutdown_check" '+checked+'><p id="shutdownLog-' + id + '"></p><p id="shutdownTimer-' + id + '"></p>';
+
+        $('#amzTable > tbody').append('<tr id="amazon-' + id + '"> <td>' + name + '</td><td>Instance_type: ' + instance_type + '<br>  Image id: ' + image_id + '<br>  Subnet Id: ' + subnet_id + '<br> Executor: ' + executor + '<br>  </td><td>'+checkBox+'</td><td id="status-' + id + '"><i class="fa fa-hourglass-half"></i></td><td>' + getButtonsDef('amz', 'Start') + getButtonsDef('amz', 'Stop') + '</td></tr>');
+        updAmzActive(id, proAmzData)
+
+    }
+
+
 
     $('#amzModal').on('show.bs.modal', function (event) {
         $(this).find('form').trigger('reset');
         var proAmzData = getValues({ p: "getProfileAmazon" });
+        $('#amzTable > tbody').empty();
         $.each(proAmzData, function (el) {
-            addAmzRow(proAmzData[el].id, proAmzData[el].name, proAmzData[el].executor, proAmzData[el].instance_type, proAmzData[el].image_id, proAmzData[el].subnet_id);
+            addAmzRow(proAmzData[el].id, proAmzData[el].name, proAmzData[el].executor, proAmzData[el].instance_type, proAmzData[el].image_id, proAmzData[el].subnet_id, proAmzData[el].autoshutdown_check, proAmzData[el].autoshutdown_active, proAmzData[el].autoshutdown_date, proAmzData[el].status, proAmzData[el]);
             checkAmazonStatus(proAmzData[el].id);
         });
     });
@@ -317,10 +465,14 @@ $(document).ready(function () {
         var clickedRowId = $(this).closest('tr').attr('id'); //local-20
         var patt = /(.*)-(.*)/;
         var proId = clickedRowId.replace(patt, '$2');
+
         //enter amazon details modal
         $('#addAmzNodeModal').off();
         $('#addAmzNodeModal').on('show.bs.modal', function (event) {
             $(this).find('form').trigger('reset');
+            if ($('#autoshutdown-'+proId).is(":checked").toString() == "true"){
+                $('#autoshut_check').prop('checked', true)
+            }
         });
         //close addAmzNodeModal
         $('#addAmzNodeModal').on('hide.bs.modal', function (event) {
@@ -330,12 +482,22 @@ $(document).ready(function () {
             event.preventDefault();
             var data = {};
             var numNodes = $('#numNodes').val();
+            var autoshutdown_check = $('#autoshut_check').is(":checked").toString();
+            $('#shutdownLog-'+proId).empty();
+            $('#shutdownTimer-'+proId).empty();
+            if (autoshutdown_check == "true"){
+                $('#autoshutdown-'+proId).prop('checked', true);
+                updAmzActive(proId, "")
+            } else {
+                $('#autoshutdown-'+proId).prop('checked', false);
+            }
             var autoscale_check = $('#autoscale_check').is(":checked").toString();
             var autoscale_maxIns = $('#autoscale_maxIns').val();
             if (numNodes !== '') {
                 data = {
                     "id": proId,
                     "nodes": numNodes,
+                    "autoshutdown_check": autoshutdown_check,
                     "autoscale_check": autoscale_check,
                     "autoscale_maxIns": autoscale_maxIns,
                     "p": "startProAmazon"
@@ -349,8 +511,8 @@ $(document).ready(function () {
                         if (s.start_cloud) {
                             // check the amazon profiles activity each minute.
                             $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..');
-                            $('#amzTable > thead > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-                            $('#amzTable > thead > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
+                            $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
+                            $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
                             $('#addAmzNodeModal').modal('hide');
                             clearInterval(window['interval_amzStatus_' + proId]);
                             checkAmazonTimer(proId, 20000);
@@ -368,21 +530,7 @@ $(document).ready(function () {
         var patt = /(.*)-(.*)/;
         var proId = clickedRowId.replace(patt, '$2');
         var data = { "id": proId, "p": "stopProAmazon" };
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: data,
-            async: true,
-            success: function (s) {
-                if (s.stop_cloud) {
-                    stopAmz = true;
-                    $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
-                    //clear previous interval and set new one(with faster check interval).
-                    clearInterval(window['interval_amzStatus_' + proId]);
-                    setTimeout(function () { checkAmazonTimer(proId, 5500); }, 1000);
-                }
-            }
-        });
+        stopAmzByAjax(proId);
     });
 });
 
@@ -745,6 +893,44 @@ function getValues(data, async) {
     return result;
 }
 
+function getValuesErr(data, async) {
+    async = async ||false; //default false
+    var result = null;
+    $.ajax({
+        url: "ajax/ajaxquery.php",
+        data: data,
+        async: async,
+        cache: false,
+        type: "POST",
+        success: function (data) {
+            result = data;
+        },
+        error: function (jqXHR, exception) {
+            var msg = '';
+            if (jqXHR.status === 0) {
+                msg = 'Not connect.\n Verify Network.';
+            } else if (jqXHR.status == 404) {
+                msg = 'Requested page not found. [404]';
+            } else if (jqXHR.status == 500) {
+                msg = 'Internal Server Error [500].';
+            } else if (exception === 'parsererror') {
+                msg = 'Requested JSON parse failed.';
+            } else if (exception === 'timeout') {
+                msg = 'Time out error.';
+            } else if (exception === 'abort') {
+                msg = 'Ajax request aborted.';
+            } else {
+                if (jqXHR.responseText) {
+                    msg = 'Uncaught Error.\n' + jqXHR.responseText;
+                }
+            }
+            alert("#Ajax Error: "+msg);
+        }
+    });
+    return result;
+}
+
+
 function callMarkDownApp(text) {
     text = JSON.stringify(text)
     var result = null;
@@ -1010,8 +1196,8 @@ function getMultipleRegex(txt, regex) {
 // get object values
 function getObjectValues(obj) {
     var vals = Object.keys(obj).map(function(key) {
-    return obj[key];
-});
+        return obj[key];
+    });
     return vals;
 }
 
