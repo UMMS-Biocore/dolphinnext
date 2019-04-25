@@ -5,6 +5,11 @@ import ConfigParser, os, sys
 import urllib, json
 import re
 import cgi
+from binascii import hexlify, unhexlify
+from simplecrypt import encrypt, decrypt
+from datetime import datetime
+
+
 
 def callApi(url):
     response = urllib.urlopen(url);
@@ -12,7 +17,7 @@ def callApi(url):
     print data
     return data
 
- 
+
 def getBasePath():
     config = ConfigParser.ConfigParser()
     config.readfp(open('../config/.sec'))
@@ -20,12 +25,23 @@ def getBasePath():
     return basePath
 
 
+
+def getToken():
+    config = ConfigParser.ConfigParser()
+    config.readfp(open('../config/.sec'))
+    password = config.get('Dolphinnext', 'VERIFY')
+    encrypted = hexlify(encrypt(password, 'OK'))
+    print encrypted
+    return encrypted
+
+
 def main():
     basePath=getBasePath()
-    url = basePath + "/api/service.php?upd=updateAmzInst"
+    token=getToken()
+    url = basePath + "/api/service.php?upd=updateAmzInst&token=" + token
     print url
     resAmz=callApi(url)
-    url = basePath + "/api/service.php?upd=updateRunStat"
+    url = basePath + "/api/service.php?upd=updateRunStat&token=" + token
     print url
     resRun=callApi(url)
 

@@ -40,10 +40,18 @@ class Pipeline{
         }
         if (isset($params['upd'])){
             $updClass = new updates();
-            $upd=$params['upd'];
-            if ($upd){
-                $result=$updClass->$upd($params);
-                return json_encode($result);
+            if (isset($params['token'])){
+                $token=$params['token'];
+                $verify=$updClass->verifyToken($token);
+                error_log($verify);
+                if ($verify == "true"){
+                    $upd=$params['upd'];
+                    if ($upd){
+                        $result=$updClass->$upd($params);
+                        return json_encode($result);
+                    }
+                }
+
             }
         }
     }

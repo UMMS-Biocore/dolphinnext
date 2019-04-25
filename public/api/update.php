@@ -52,29 +52,19 @@ class updates
         return $data;
     }
 
-    //http://localhost:8080/dolphinnext/api/service.php?upd=tagAmzInst
-    //this feature is not finalized
-    //    function tagAmzInst(){
-    //        $sql = "SELECT DISTINCT a.id, a.owner_id, a.status
-    //            FROM profile_amazon a
-    //            WHERE (a.status = 'initiated' OR a.status = 'running')";
-    //        $data=$this->queryTable($sql);
-    //        $time = date("M-d-Y H:i:s");
-    //        if (!count($data) > 0){ 
-    //            //replace return with write log to file.
-    //            return "$time There is no instance to tag."; 
-    //        } else {
-    //            $dbfun = new dbfuncs();
-    //            foreach ($data as $profileData):
-    //            $ownerID = $profileData["owner_id"];
-    //            $profileId = $profileData["id"];
-    //            $profileStatus = $profileData["status"];
-    //            $tagAmazonInst = $dbfun -> tagAmazonInst($profileId,$ownerID);
-    //            //replace return with write log to file.
-    //            return "$time profileId:$profileId status:$profileStatus tagAmzLog:$tagAmazonInst\n";
-    //            endforeach;
-    //        }
-    //    }
+    function verifyToken($token){
+        $cmd = "cd ../../scripts && python decode.py VERIFY $token";
+        $ret = popen( $cmd, "r" );
+        $ok=fread($ret, 2096);
+        pclose($ret);
+        error_log($ok);
+        error_log(trim($ok));
+        if (trim($ok) == "OK"){
+            return "true";
+        } else {
+            return "false";
+        }
+    }
 
     //http://localhost:8080/dolphinnext/api/service.php?upd=updateAmzInst
     function updateAmzInst(){
@@ -135,6 +125,31 @@ class updates
         }
         return $ret;
     }
+
+    //http://localhost:8080/dolphinnext/api/service.php?upd=tagAmzInst
+    //this feature is not finalized
+    //    function tagAmzInst(){
+    //        $sql = "SELECT DISTINCT a.id, a.owner_id, a.status
+    //            FROM profile_amazon a
+    //            WHERE (a.status = 'initiated' OR a.status = 'running')";
+    //        $data=$this->queryTable($sql);
+    //        $time = date("M-d-Y H:i:s");
+    //        if (!count($data) > 0){ 
+    //            //replace return with write log to file.
+    //            return "$time There is no instance to tag."; 
+    //        } else {
+    //            $dbfun = new dbfuncs();
+    //            foreach ($data as $profileData):
+    //            $ownerID = $profileData["owner_id"];
+    //            $profileId = $profileData["id"];
+    //            $profileStatus = $profileData["status"];
+    //            $tagAmazonInst = $dbfun -> tagAmazonInst($profileId,$ownerID);
+    //            //replace return with write log to file.
+    //            return "$time profileId:$profileId status:$profileStatus tagAmzLog:$tagAmazonInst\n";
+    //            endforeach;
+    //        }
+    //    }
+
 }
 
 ?>
