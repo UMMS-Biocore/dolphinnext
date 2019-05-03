@@ -57,8 +57,6 @@ class updates
         $ret = popen( $cmd, "r" );
         $ok=fread($ret, 2096);
         pclose($ret);
-        error_log($ok);
-        error_log(trim($ok));
         if (trim($ok) == "OK"){
             return "true";
         } else {
