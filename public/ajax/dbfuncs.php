@@ -1905,10 +1905,12 @@ class dbfuncs {
                         $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
                         $newRunStatus = "NextSuc";
                         // run error
-                    } else if (preg_match("/error/i",$nextflowLog) || preg_match("/failed/i",$nextflowLog)){
+                        //"WARN: Failed to publish file" gives error
+                        //|| preg_match("/failed/i",$nextflowLog) removed 
+                    } else if (preg_match("/error/i",$nextflowLog)){
                         $confirmErr=true;
                         if (preg_match("/-- Execution is retried/i",$nextflowLog)){
-                            //if only process retried, there shouldn't be an error.
+                            //if only process retried, status shouldn't set as error.
                             $confirmErr = false;
                             $txt = trim($nextflowLog);
                             $lines = explode("\n", $txt);
@@ -3748,11 +3750,13 @@ class dbfuncs {
                 $format = "pdf";
             }
             $pUUID = uniqid();
+            $log = "{$targetDir}/{$filename}.log{$pUUID}";
             $response = "{$targetDir}/{$filename}.curl{$pUUID}";
             $file = "{$targetDir}/{$filename}.{$format}{$pUUID}";
             $err = "{$targetDir}/{$filename}.{$format}.err{$pUUID}";
             $url =  OCPU_URL."/ocpu/library/markdownapp/R/".$type;
-            $pid = exec("(curl '$url' -H \"Content-Type: application/json\" -d '{\"text\":$text}' -o $response > /dev/null 2>/dev/null) & echo \$!");
+            $cmd = "(curl '$url' -H \"Content-Type: application/json\" -k -d '{\"text\":$text}' -o $response > $log 2>&1) & echo \$!";
+            $pid = exec($cmd);
             $data = json_encode($pUUID);
             if (!headers_sent()) {
                 header('Cache-Control: no-cache, must-revalidate');

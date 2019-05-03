@@ -43,7 +43,6 @@ class Pipeline{
             if (isset($params['token'])){
                 $token=$params['token'];
                 $verify=$updClass->verifyToken($token);
-                error_log($verify);
                 if ($verify == "true"){
                     $upd=$params['upd'];
                     if ($upd){
