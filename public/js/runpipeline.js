@@ -3254,8 +3254,8 @@ function showHideColumnRunSett(colList, type) {
 function loadProjectPipeline(pipeData) {
     loadRunOptions();
     $('#creatorInfoPip').css('display', "block");
-    $('#project-title').text(pipeData[0].project_name);
-    $('#run-title').changeVal(pipeData[0].pp_name);
+    $('#project-title').text(decodeHtml(pipeData[0].project_name));
+    $('#run-title').changeVal(decodeHtml(pipeData[0].pp_name));
     $('#runSum').val(decodeHtml(pipeData[0].summary));
     $('#rOut_dir').val(pipeData[0].output_dir);
     $('#publish_dir').val(pipeData[0].publish_dir);
@@ -3743,7 +3743,8 @@ function autoCheck(type) {
     if (autoCheckType == "fillstates") {
         timeoutCheck = setTimeout(function () {
             $("#inputsTab").loading('stop');
-            checkReadytoRun()
+            checkReadytoRun();
+            saveRun();
         }, 2000);
     } else {
         timeoutCheck = setTimeout(function () { checkReadytoRun() }, 2000);
@@ -4990,43 +4991,10 @@ $(document).ready(function () {
         $('#pipeRunDiv').remove();
         $("#run-title").prop("disabled", true);
     }
-    runStatus = "";
-    if (projectpipelineOwn === "1") {
-        runStatus = getRunStatus(project_pipeline_id);
-    }
-    var profileTypeId = pipeData[0].profile //local-32
-    console.log(profileTypeId)
-    proTypeWindow = "";
-    proIdWindow = "";
-    if (profileTypeId) {
-        if (profileTypeId.match(/-/)) {
-            var patt = /(.*)-(.*)/;
-            proTypeWindow = profileTypeId.replace(patt, '$1');
-            proIdWindow = profileTypeId.replace(patt, '$2');
-        }
-    }
-
-    if (runStatus !== "") {
-        //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
-        readNextLog(proTypeWindow, proIdWindow, "reload");
-        readPubWeb(proTypeWindow, proIdWindow, "reload");
-    } else {
-        $('#statusProPipe').css('display', 'inline');
-    }
-
-    $('#pipeline-title').attr('pipeline_id', pipeline_id);
-    if (project_pipeline_id !== '' && pipeline_id !== '') {
-        projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
-        loadPipelineDetails(pipeline_id, pipeData);
-
-    }
-    //after loading pipeline disable all the inputs
-    if (projectpipelineOwn === "0") {
-        setTimeout(function () {
-            $("#configTab :input").prop("disabled", true);
-            $("#advancedTab :input").prop("disabled", true);
-        }, 1000);
-    }
+    ///fixCollapseMenu checkboxes
+    fixCollapseMenu('#allProcessDiv', '#exec_all');
+    fixCollapseMenu('#eachProcessDiv', '#exec_each');
+    fixCollapseMenu('#publishDirDiv', '#publish_dir_check');
     //not allow to check both docker and singularity
     $('#docker_imgDiv').on('show.bs.collapse', function () {
         if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
@@ -5064,10 +5032,47 @@ $(document).ready(function () {
     $('#singu_imgDiv').on('hidden.bs.collapse', function () {
         $('#singu_check').removeAttr('onclick');
     });
-    ///fixCollapseMenu checkboxes
-    fixCollapseMenu('#allProcessDiv', '#exec_all');
-    fixCollapseMenu('#eachProcessDiv', '#exec_each');
-    fixCollapseMenu('#publishDirDiv', '#publish_dir_check');
+    
+    //runStatus
+    runStatus = "";
+    if (projectpipelineOwn === "1") {
+        runStatus = getRunStatus(project_pipeline_id);
+    }
+    var profileTypeId = pipeData[0].profile //local-32
+    console.log(profileTypeId)
+    proTypeWindow = "";
+    proIdWindow = "";
+    if (profileTypeId) {
+        if (profileTypeId.match(/-/)) {
+            var patt = /(.*)-(.*)/;
+            proTypeWindow = profileTypeId.replace(patt, '$1');
+            proIdWindow = profileTypeId.replace(patt, '$2');
+        }
+    }
+
+    if (runStatus !== "") {
+        //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
+        readNextLog(proTypeWindow, proIdWindow, "reload");
+        readPubWeb(proTypeWindow, proIdWindow, "reload");
+    } else {
+        $('#statusProPipe').css('display', 'inline');
+    }
+
+    $('#pipeline-title').attr('pipeline_id', pipeline_id);
+    if (project_pipeline_id !== '' && pipeline_id !== '') {
+        projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
+        loadPipelineDetails(pipeline_id, pipeData);
+
+    }
+    //after loading pipeline disable all the inputs
+    if (projectpipelineOwn === "0") {
+        setTimeout(function () {
+            $("#configTab :input").prop("disabled", true);
+            $("#advancedTab :input").prop("disabled", true);
+        }, 1000);
+    }
+    
+    
 
 
     //##################

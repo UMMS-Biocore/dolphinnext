@@ -32,13 +32,13 @@
             data: getProjectD,
             async: true,
             success: function (s) {
-                $('#project-title').val(s[0].name);
+                $('#project-title').val(decodeHtml(s[0].name));
                 $('#ownUserName').text(s[0].username);
                 $('#projectSum').val(decodeHtml(s[0].summary));
 
                 $('#datecreatedPj').text(s[0].date_created);
                 $('#lasteditedPj').text(s[0].date_modified);
-                resizeForText.call($inputText, s[0].name);
+                resizeForText.call($inputText, decodeHtml(s[0].name));
             },
             error: function (errorThrown) {
                 alert("Error: " + errorThrown);
