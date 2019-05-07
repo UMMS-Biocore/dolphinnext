@@ -951,7 +951,7 @@ class dbfuncs {
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         $proPipeCmd = $proPipeAll[0]->{'cmd'};
-        $jobname = $proPipeAll[0]->{'pp_name'};
+        $jobname = html_entity_decode($proPipeAll[0]->{'pp_name'},ENT_QUOTES);
         $singu_check = $proPipeAll[0]->{'singu_check'};
         $initImageCmd = "";
         $imageCmd = "";
@@ -1637,7 +1637,6 @@ class dbfuncs {
                 //if timer is set the check if time elapsed -> stopProAmazon
                 $expected_date = strtotime($autoshutdown_date);
                 $remaining = $expected_date - time();
-                error_log($remaining);
                 if ($remaining < 1){
                     $stopProAmazon = $this->stopProAmazon($id,$ownerID,$usernameCl);
                     //track termination of instance
@@ -1867,7 +1866,7 @@ class dbfuncs {
             unset($value);
             //wait for the downloading logs
             if ($loadtype == "slow"){
-                $saveNextLog = $this -> saveNextflowLog($down_file_list, $last_run_uuid, "run", $profileType, $profileId, $ownerID);
+                $saveNextLog = $this -> saveNextflowLog($down_file_list, $last_run_uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
                 sleep(5);
                 $out["saveNextLog"] = $saveNextLog;
             }
@@ -1942,7 +1941,7 @@ class dbfuncs {
                 $setStatus = $this -> updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
                 $setLog = $this -> updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID); 
                 $out["runStatus"] = $newRunStatus;
-                if ($newRunStatus == "NextErr" || $newRunStatus == "NextSuc" || $newRunStatus == "Error"){
+                if (($newRunStatus == "NextErr" || $newRunStatus == "NextSuc" || $newRunStatus == "Error") && $profileType == "amazon"){
                     $triggerShutdown = $this -> triggerShutdown($profileId,$ownerID, "fast");
                 }
             } else {
@@ -2802,7 +2801,7 @@ class dbfuncs {
     }
 
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
-    public function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$ownerID) {
+    public function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$project_pipeline_id,$ownerID) {
         if ($profileType == 'cluster'){
             $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
             $cluDataArr=json_decode($cluData,true);
@@ -2818,11 +2817,32 @@ class dbfuncs {
         if (!file_exists("{$this->run_path}/$uuid/$last_server_dir")) {
             mkdir("{$this->run_path}/$uuid/$last_server_dir", 0755, true);
         }
-        $fileList="";
-        foreach ($files as $item):
-        $fileList.="$connect:$item ";
-        endforeach;
-        $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+        if (preg_match("/s3:/i", $files[0])){
+            $fileList="";
+            foreach ($files as $item):
+            $fileList.="$item ";
+            endforeach;
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+            $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
+            if (!empty($amazon_cre_id)){
+                $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
+                foreach($amz_data as $d){
+                    $access = $d->amz_acc_key;
+                    $d->amz_acc_key = trim($this->amazonDecode($access));
+                    $secret = $d->amz_suc_key;
+                    $d->amz_suc_key = trim($this->amazonDecode($secret));
+                }
+                $access_key = $amz_data[0]->{'amz_acc_key'};
+                $secret_key = $amz_data[0]->{'amz_suc_key'};
+                $cmd="s3cmd sync --access_key $access_key  --secret_key $secret_key $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+            }
+        } else {
+            $fileList="";
+            foreach ($files as $item):
+            $fileList.="$connect:$item ";
+            endforeach;
+            $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &"; 
+        }
         $nextflow_log = shell_exec($cmd);
         // save $nextflow_log to a file
         if (!is_null($nextflow_log) && isset($nextflow_log) && $nextflow_log != "" && !empty($nextflow_log)){

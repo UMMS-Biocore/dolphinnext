@@ -159,12 +159,17 @@ else if ($p=="savePubWeb"){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
+        $publish_dir = isset($proPipeAll[0]->{'publish_dir'}) ? $proPipeAll[0]->{'publish_dir'} : "";
+        $publish_dir_check = isset($proPipeAll[0]->{'publish_dir_check'}) ? $proPipeAll[0]->{'publish_dir_check'} : "";
+        if ($publish_dir_check == "true" && !empty($publish_dir)){
+            $outdir = $publish_dir;
+        }
         $down_file_list = explode(',', $pubWebDir);
         foreach ($down_file_list as &$value) {
             $value = $outdir."/".$value;
         }
         unset($value);
-        $data = $db -> saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $ownerID);
+        $data = $db -> saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $ownerID);
     } else {
         $data = json_encode("pubweb is not defined");
     }
@@ -184,7 +189,7 @@ else if ($p=="saveNextflowLog"){
         $value = $run_path_real."/".$value;
     }
     unset($value);
-    $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $ownerID);
+    $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
 }
 else if ($p=="getLsDir"){
     $dir = $_REQUEST['dir'];
@@ -1129,7 +1134,7 @@ else if ($p=="moveFile"){
     $data = $db->moveFile($type, $from, $to, $ownerID);
 }
 else if ($p=="saveProject"){
-    $name = urldecode($_REQUEST['name']);
+    $name = addslashes(htmlspecialchars(urldecode($_REQUEST['name']), ENT_QUOTES));
     $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
     if (!empty($id)) {
         $data = $db->updateProject($id, $name, $summary, $ownerID);
@@ -1189,7 +1194,7 @@ else if ($p=="createProcessRev"){
 else if ($p=="saveProjectPipeline"){
     $pipeline_id = $_REQUEST['pipeline_id'];
     $project_id = $_REQUEST['project_id'];
-    $name = $_REQUEST['name'];
+    $name = isset($_REQUEST['name']) ?  addslashes(htmlspecialchars(urldecode($_REQUEST['name']), ENT_QUOTES)) : "";
     $summary = isset($_REQUEST['summary']) ?  addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES)) : "";
     $output_dir = isset($_REQUEST['output_dir']) ? $_REQUEST['output_dir'] : "";
     $publish_dir = isset($_REQUEST['publish_dir']) ? $_REQUEST['publish_dir'] : "";

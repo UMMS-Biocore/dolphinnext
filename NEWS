@@ -1,3 +1,9 @@
+06.05.2019 Version 0.3.19
+Saving pubweb functionality added into auto update run status feature.
+Saving pubweb functionality upgraded to support published s3 files.
+Executor settings bug fixed by autosaving run page when run environment is changed.
+Bug fixed to allow quote usage in project and pipeline name.
+
 02.05.2019 Version 0.3.18
 Status update based on the "failed" keyword removed.
 
