@@ -30,7 +30,7 @@ if (!empty($secConf)){
     $EMAIL_ADMIN= isset($secConf['EMAIL_ADMIN']) ? $secConf['EMAIL_ADMIN'] : "";
     $CENTRAL_API_URL = isset($secConf['CENTRAL_API_URL']) ? $secConf['CENTRAL_API_URL'] : "";
     date_default_timezone_set($secConf['TIMEZONE']);
-    
+
     define('RUNPATH', $secConf['RUNPATH']);
     define('TEMPPATH', $secConf['TEMPPATH']);
     define('API_URL', $secConf['API_URL']);
@@ -78,7 +78,23 @@ if (!empty($secUiconfig)){
     define('SHOW_RUN_NEXTFLOWLOG', $SHOW_RUN_NEXTFLOWLOG);
     define('SHOW_RUN_NEXTFLOWNF', $SHOW_RUN_NEXTFLOWNF);
     define('SHOW_RUN_NEXTFLOWCONFIG', $SHOW_RUN_NEXTFLOWCONFIG);
-    
+
 }
+
+$line = fgets(fopen(__DIR__."/../NEWS", 'r'));
+if (!empty($line)){
+    $line = trim($line);
+    $lines = explode(" ",$line);
+    $DN_VERSION = end($lines);
+    if (!empty($DN_VERSION)){
+        define('DN_VERSION', $DN_VERSION);
+    } else {
+        define('DN_VERSION', "");
+    }
+} else {
+    define('DN_VERSION', "");
+}
+
+
 
 ?>

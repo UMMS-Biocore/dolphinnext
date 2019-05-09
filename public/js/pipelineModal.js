@@ -3,6 +3,7 @@ templategroovy = '//groovy example: \n\n println "Hello, World!"';
 templateperl = '#perl example: \n\n#!/usr/bin/perl \n print \'Hi there!\' . \'\\n\';';
 templatepython = '#python example: \n\n#!/usr/bin/python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
 templatesh = '#shell example: \n\n#!/bin/sh \nmy_variable="Hello World" \necho \\$my_variable';
+templater = '';
 
 createAceEditors("editor", "#script_mode"); //ace process main editor
 createAceEditors("editorProHeader", "#script_mode_header") //ace process header editor
@@ -279,9 +280,11 @@ function loadSelectedProcess(selProcessId) {
     }
     if (showProcess.script_mode !== "" && showProcess.script_mode !== null) {
         $('#script_mode').val(showProcess.script_mode);
+        $("#script_mode").trigger("change");
     }
     if (showProcess.script_mode_header !== "" && showProcess.script_mode_header !== null) {
         $('#script_mode_header').val(showProcess.script_mode_header);
+        $("#script_mode_header").trigger("change");
     }
     if (showProcess.script !== null) {
         editorScript = removeDoubleQuote(decodeHtml(showProcess.script));
@@ -1240,9 +1243,11 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 // fill Script_modes
                 if (pData[0].script_mode_header) {
                     $('#script_mode_pipe_header').val(pData[0].script_mode_header);
+                    $("#script_mode_pipe_header").trigger("change");
                 }
                 if (pData[0].script_mode_footer) {
                     $('#script_mode_pipe_footer').val(pData[0].script_mode_footer);
+                    $("#script_mode_pipe_footer").trigger("change");
                 }
                 //load header and foother script
                 if (pData[0].script_pipe_header !== "" && pData[0].script_pipe_header !== null) {

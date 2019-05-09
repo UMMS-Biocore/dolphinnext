@@ -544,7 +544,7 @@ else if ($p=="getCollectionFiles"){
 }
 else if ($p=="getFile"){
     if (!empty($id)) {
-        $data = $db->getFileById($id,$ownerID);
+//        $data = $db->getFileById($id,$ownerID);
     } else {
         $data = $db->getFiles($ownerID);
     }
@@ -601,6 +601,14 @@ else if ($p=="removeProjectInput"){
 }
 else if ($p=="removeInput"){   
     $data = $db -> removeInput($id);
+}
+else if ($p=="removeFile"){
+    $file_array = $_REQUEST['file_array'];
+    foreach ($file_array as $file_id):
+    $removeFileCollection = $db -> removeFileCollection($file_id, $ownerID);
+    $removeFileProject = $db -> removeFileProject($file_id, $ownerID);
+    $data = $db -> removeFile($file_id, $ownerID);
+    endforeach;
 }
 else if ($p=="removeProLocal"){   
     $data = $db -> removeProLocal($id);
@@ -883,7 +891,7 @@ else if ($p=="saveCollection"){
         }
     }
 }
-else if ($p=="saveFileByID"){
+else if ($p=="insertFileCollection"){
     $collection_id = $_REQUEST['collection_id'];
     settype($collection_id, 'integer');
     $file_array = $_REQUEST['file_array'];
@@ -898,6 +906,29 @@ else if ($p=="saveFileByID"){
     endforeach;
     $data = $insertFileCollection;
 }
+else if ($p=="insertFileProject"){
+    $collection_id = $_REQUEST['collection_id'];
+    $project_id = $_REQUEST['project_id'];
+    settype($collection_id, 'integer');
+    $file_arr = $db->getCollectionFiles($collection_id,$ownerID);
+    $file_array = json_decode($file_arr,true);
+    foreach ($file_array as $file_item):
+    $file_id = $file_item["id"];
+    settype($file_id, 'integer');
+    //    check if project input is exist
+    $checkPro = $db->checkFileProject($project_id, $file_id);
+    $checkProData = json_decode($checkPro,true);
+    if (isset($checkProData[0])){
+        $projectFileID = $checkProData[0]["id"];
+    } else {
+        //insert into file project table
+        $insertFileProject = $db->insertFileProject($file_id, $project_id, $ownerID);
+        $insertProData = json_decode($insertFileProject,true);
+        $projectFileID = $insertProData["id"];
+    }
+    endforeach;
+    $data = $projectFileID;
+}
 else if ($p=="saveFile"){
     $collection_id = $_REQUEST['collection_id'];
     settype($collection_id, 'integer');
@@ -907,19 +938,36 @@ else if ($p=="saveFile"){
     $s3_archive_dir = isset($_REQUEST['s3_archive_dir']) ? $_REQUEST['s3_archive_dir'] : "";
     $file_type = $_REQUEST['file_type'];
     $file_array = $_REQUEST['file_array'];
+    $project_id = $_REQUEST['project_id'];
+    $run_env = $_REQUEST['run_env'];
+    $profileAr = explode("-", $run_env);
+    $profileType = $profileAr[0];
+    $profileId = $profileAr[1];
+    if ($profileType == "amazon"){
+        $run_env = "amazon";
+    } else if ($profileType == "cluster"){
+        if (!empty($profileId)) {
+            $proData = $db->getProfileClusterbyID($profileId, $ownerID);
+            $proDataAll = json_decode($proData,true);
+            $username = $proDataAll[0]["username"];
+            $hostname = $proDataAll[0]["hostname"];
+            $run_env = $username."@".$hostname;
+        }
+    } 
 
     foreach ($file_array as $item):
     $p = explode(" ", $item);
     $name = $p[0];
     unset($p[0]);
     $files_used = join(' ', $p);
-    $insert = $db->insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $ownerID);
+    $insert = $db->insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $run_env, $ownerID);
     $fileData = json_decode($insert,true);
     $file_id = $fileData["id"];
     settype($file_id, 'integer');
     if (empty($file_id)) {
         break;
     } else {
+        $insertFileProject = $db->insertFileProject($file_id, $project_id, $ownerID);
         $insertFileCollection = $db->insertFileCollection($file_id, $collection_id, $ownerID);
         $file_col_data = json_decode($insertFileCollection,true);
         $file_col_id = $file_col_data["id"];

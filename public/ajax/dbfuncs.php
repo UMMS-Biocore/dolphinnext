@@ -2257,14 +2257,18 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function getFiles($ownerID) {
-        $sql = "SELECT DISTINCT f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.s3_archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type,
-              GROUP_CONCAT( c.name order by c.name) as collection_name,
-              GROUP_CONCAT( c.id order by c.id) as collection_id
+        $sql = "SELECT DISTINCT f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.s3_archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type, f.run_env, 
+              GROUP_CONCAT( DISTINCT fp.p_id order by fp.p_id) as p_id,
+              GROUP_CONCAT( DISTINCT p.name order by p.name) as project_name,
+              GROUP_CONCAT( DISTINCT c.name order by c.name) as collection_name,
+              GROUP_CONCAT( DISTINCT c.id order by c.id) as collection_id
               FROM file f
               LEFT JOIN file_collection fc  ON f.id = fc.f_id
+              LEFT JOIN file_project fp ON f.id = fp.f_id
               LEFT JOIN collection c on fc.c_id = c.id
-              WHERE f.owner_id = '$ownerID'
-              GROUP BY f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.s3_archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type";
+              LEFT JOIN project p on fp.p_id = p.id
+              WHERE f.owner_id = '$ownerID' AND f.deleted = 0 AND (fc.deleted = 0 OR fc.deleted IS NULL) AND (fp.deleted = 0 OR fp.deleted IS NULL) AND (p.deleted = 0 OR p.deleted IS NULL)
+              GROUP BY f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.s3_archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type, f.run_env";
         return self::queryTable($sql);
     }
     public function getPublicProfileCluster($ownerID) {
@@ -2527,6 +2531,18 @@ class dbfuncs {
     }
     public function removeInput($id) {
         $sql = "DELETE FROM input WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function removeFile($id, $ownerID) {
+        $sql = "UPDATE file SET deleted = 1, date_modified = now() WHERE id = '$id' AND owner_id='$ownerID'";
+        return self::runSQL($sql);
+    }
+    public function removeFileProject($id, $ownerID) {
+        $sql = "UPDATE file_project SET deleted = 1, date_modified = now() WHERE f_id = '$id' AND owner_id='$ownerID'";
+        return self::runSQL($sql);
+    }
+    public function removeFileCollection($id, $ownerID) {
+        $sql = "UPDATE file_collection SET deleted = 1, date_modified = now() WHERE f_id = '$id' AND owner_id='$ownerID'";
         return self::runSQL($sql);
     }
     public function removeProjectPipelineInput($id) {
@@ -3057,9 +3073,9 @@ class dbfuncs {
                   ('$project_id', '$input_id', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $ownerID) {
-        $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_type, archive_dir, s3_archive_dir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
-                  ('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$s3_archive_dir', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $run_env, $ownerID) {
+        $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_type, archive_dir, s3_archive_dir, run_env, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
+                  ('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$s3_archive_dir', '$run_env', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
     public function insertCollection($name, $ownerID) {
@@ -3073,6 +3089,10 @@ class dbfuncs {
     }
     public function insertFileCollection($f_id, $c_id, $ownerID) {
         $sql = "INSERT INTO file_collection (f_id, c_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$c_id', '$ownerID', now(), now(), '$ownerID', 3)";
+        return self::insTable($sql);
+    }
+    public function insertFileProject($f_id, $p_id, $ownerID) {
+        $sql = "INSERT INTO file_project (f_id, p_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$p_id', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
 
@@ -3207,7 +3227,7 @@ class dbfuncs {
         return self::insTable($sql);
     }
     public function getCollectionFiles($collection_id,$ownerID) {
-        $where = " where fc.c_id = '$collection_id' AND (f.owner_id = '$ownerID' OR f.perms = 63 OR (ug.u_id ='$ownerID' and f.perms = 15))";
+        $where = " where f.deleted=0 AND fc.deleted=0 AND fc.c_id = '$collection_id' AND (f.owner_id = '$ownerID' OR f.perms = 63 OR (ug.u_id ='$ownerID' and f.perms = 15))";
         $sql = "SELECT DISTINCT f.*
                       FROM file f
                       INNER JOIN file_collection fc ON f.id=fc.f_id
@@ -3487,6 +3507,10 @@ class dbfuncs {
     }
     public function checkProjectInput($project_id, $input_id) {
         $sql = "SELECT id FROM project_input WHERE input_id = '$input_id' AND project_id = '$project_id'";
+        return self::queryTable($sql);
+    }
+    public function checkFileProject($project_id, $file_id) {
+        $sql = "SELECT id FROM file_project WHERE deleted=0 AND f_id = '$file_id' AND p_id = '$project_id'";
         return self::queryTable($sql);
     }
     public function checkProPipeInput($project_id, $input_id, $pipeline_id, $project_pipeline_id) {
