@@ -557,7 +557,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 <div class="panel-body">
                                     <div class="pull-right">
                                         <button type="button" class="btn btn-success btn-sm" id="addSample" data-toggle="modal" data-backdrop="static" data-keyboard="false"><i class="fa fa-plus"></i> Add File</button>
-                                        <button type="button" class="btn btn-danger btn-sm" id="deleteSample" data-toggle="modal" href="#confirmModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-trash"></i> Delete File</button>
+                                        <button type="button" class="btn btn-danger btn-sm" style="display:none;" id="deleteSample" data-toggle="modal" href="#confirmModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-trash"></i> Delete File</button>
                                     </div>
                                     <table id="sampleTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                         <thead>
@@ -573,7 +573,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                     </table>
                                 </div>
                             </div>
-                            <div class="panel panel-default" id="detailsOfFileDiv">
+                            <div class="panel panel-default" id="detailsOfFileDiv" style="display:none;">
                                 <div class="panel-body">
                                     <div class="pull-left">
                                         <h4>Details</h4>

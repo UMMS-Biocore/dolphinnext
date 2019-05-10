@@ -3163,7 +3163,7 @@ class dbfuncs {
                 } else {
                     $where = " WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
                 }
-                $sql = "SELECT DISTINCT r.id, r.project_pipeline_id, pip.name as pipeline_name, pip.id as pipeline_id, pp.name, u.email, u.username, pp.summary, pp.date_modified, pp.output_dir, r.run_status, r.date_created,  r.date_ended, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
+                $sql = "SELECT DISTINCT r.id, r.project_pipeline_id, pip.name as pipeline_name, pip.id as pipeline_id, pp.name, u.email, u.username, pp.summary, r.date_modified, pp.output_dir, r.run_status, r.date_created,  r.date_ended, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM run_log r
                       INNER JOIN (
                         SELECT project_pipeline_id, MAX(id) id

@@ -1197,7 +1197,7 @@ function hideProcessOptionsAsIcons (){
                                 width: '70%',
                                 modal: true,
                                 minHeight: 0,
-                                maxHeight: 750,
+                                maxHeight: 650,
                                 buttons: {
                                     "Ok": function () {
                                         $(this).dialog("close");
@@ -3744,7 +3744,13 @@ function autoCheck(type) {
         timeoutCheck = setTimeout(function () {
             $("#inputsTab").loading('stop');
             checkReadytoRun();
-            saveRun();
+            if (changeOnchooseEnv != undefined){
+                if (changeOnchooseEnv == true){
+                    //save run after all parameters loaded on change of chooseEnv
+                    saveRun();
+                } 
+            }
+
         }, 2000);
     } else {
         timeoutCheck = setTimeout(function () { checkReadytoRun() }, 2000);
@@ -4983,6 +4989,7 @@ $(document).ready(function () {
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
     runPid = "";
+    changeOnchooseEnv = false;
     // if user not own it, cannot change or delete run
     if (projectpipelineOwn === "0") {
         $('#deleteRun').remove();
@@ -5443,7 +5450,6 @@ $(document).ready(function () {
                     if (s3_archive_dir.match("s3:")){
                         formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
                     }
-                    console.log(formObj)
                     formObj.file_array = ret.file_array;
                     formObj.run_env = $('#chooseEnv').find(":selected").val();
                     formObj.project_id = project_id;
@@ -5637,7 +5643,7 @@ $(document).ready(function () {
         }
         var insertDetailsTable = function (data){
             var tableRows = "";
-            
+
             if (data.file_dir){
                 tableRows += getHeaderRow("Input File(s) Directory:")
                 tableRows += getBodyRow(s3Clean(data.file_dir))
@@ -5672,8 +5678,7 @@ $(document).ready(function () {
             $("#details_of_file_table").append(tableRows)
         }
         var selectedRows = sampleTable.rows({ selected: true }).data();
-        console.log(selectedRows.length)
-        
+        console.log(selectedRows)
         if (selectedRows.length ===1 ){
             //prepare details table.
             insertDetailsTable(selectedRows[0])
@@ -5908,11 +5913,6 @@ $(document).ready(function () {
                 for (var x = 0; x < files_select.length; x++) {
                     var prefix1 = files_select[x].value.split(regex1)[0];
                     var prefix2 = files_selectRev[x].value.split(regex2)[0];
-
-                    console.log(prefix1)
-                    console.log(prefix2)
-                    console.log(regex_string)
-                    console.log(regex_string2)
                     if (regex_string === prefix1 && regex_string2 === prefix2) {
                         file_string += files_select[x].value + ',' + files_selectRev[x].value + ' | '
                         recordDelList("#forwardList", files_select[x].value, "del")
@@ -6074,6 +6074,7 @@ $(document).ready(function () {
     $(function () {
         $(document).on('change', '#chooseEnv', function () {
             //reset before autofill feature actived for #runCmd
+            changeOnchooseEnv = true;
             $('#runCmd').val("");
             var [allProSett, profileData] = getJobData("both");
             var executor_job = profileData[0].executor_job;
@@ -6096,7 +6097,9 @@ $(document).ready(function () {
             selectAmzKey();
             checkShub()
             checkReadytoRun();
+            //save run in change 
             saveRun();
+            
         });
     });
 
@@ -6158,7 +6161,6 @@ $(document).ready(function () {
         var table_nodes = window[tableId].fnGetNodes();
         for (var y = 0; y < table_data.length; y++) {
             var name = $.trim(table_nodes[y].children[0].children[0].id)
-            console.log(name)
             name = name.replace(/:/g, "_").replace(/,/g, "_").replace(/\$/g, "_").replace(/\!/g, "_").replace(/\</g, "_").replace(/\>/g, "_").replace(/\?/g, "_").replace(/\(/g, "-").replace(/\)/g, "-").replace(/\"/g, "_").replace(/\'/g, "_").replace(/\//g, "_").replace(/\\/g, "_");
             if (!name) {
                 warnUser = 'Please fill all the filenames in the table.'
@@ -6172,7 +6174,6 @@ $(document).ready(function () {
     }
 
     checkOneCollection = function (selectedRows) {
-        console.log(selectedRows)
         //get collection_id of first item. it can be space separated multiple ids
         var pushFeatureIntoArray = function (ar, column) {
             var vals = [];
@@ -6182,15 +6183,12 @@ $(document).ready(function () {
             return vals
         }
         var collectionIdAr = selectedRows[0].collection_id.split(",")
-        console.log(collectionIdAr)
         var selRowsfileIdAr = [];
         selRowsfileIdAr = pushFeatureIntoArray(selectedRows, "id")
         for (var n = 0; n < collectionIdAr.length; n++) {
             var selColData = getValues({ "id": collectionIdAr[n], "p": "getCollectionFiles" })
 
             var selColfileIdAr = pushFeatureIntoArray(selColData, "id")
-            console.log(selColfileIdAr.sort())
-            console.log(selRowsfileIdAr.sort())
             var checkEq = checkArraysEqual(selColfileIdAr.sort(), selRowsfileIdAr.sort())
             if (checkEq === true) {
                 return [collectionIdAr[n], selRowsfileIdAr]
@@ -6228,8 +6226,6 @@ $(document).ready(function () {
                 var selRowsfileIdAr = [];
                 var checkOneCol = "";
                 [checkOneCol, selRowsfileIdAr] = checkOneCollection(selectedRows)
-                console.log(checkOneCol)
-                console.log(selRowsfileIdAr)
                 //if new collection required, ask for name
                 if (!checkOneCol) {
                     $("#newCollectionModal").off();
@@ -6279,7 +6275,6 @@ $(document).ready(function () {
                     var data = formValues.serializeArray(); // convert form to array
                     // check if name is entered
                     data[1].value = $.trim(data[1].value);
-                    console.log(data)
                     if (data[1].value !== '') {
                         saveFileSetValModal(data, 'file', null, null);
                         $('#inputFilemodal').loading("stop");
