@@ -614,6 +614,7 @@
                                         <option value="groovy">groovy</option>
                                         <option value="perl">perl</option>
                                         <option value="python">python</option>
+                                        <option value="r">R</option>
                                     </select>
                                 </div>
                             </div>

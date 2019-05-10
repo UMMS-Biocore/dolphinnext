@@ -107,7 +107,7 @@ The output nodes are defined in this section. Similar to adding inputs, by click
 .. image:: dolphinnext_images/process_outputs.png
 	:align: center
 
-Output files, created by the process, are grabbed by "output name" box. By entering the pattern of the output files eg. ``genome.index*`` would grab the files that are starts with ``genome.index``. Besides you can use nextflow variables which are defined in `inputs <process.html#inputs>`_ or `scripts <process.html#id4>`_ section. As an example, if you enter input name as ``genome``, in the outputs section you can recall this variable as ``'${genome}_out.txt'``. Other examples are listed in the following table:
+Output files, created by the process, are grabbed by "output name" box. By entering the pattern of the output files eg. ``"genome.index*"`` would grab the files that are starts with ``genome.index``. Besides you can use nextflow variables which are defined in `inputs <process.html#inputs>`_ or `scripts <process.html#id4>`_ section. As an example, if you enter input name as ``genome``, in the outputs section you can recall this variable as ``"${genome}_out.txt"``. Other examples are listed in the following table:
 
 =============== ========================== ================ ====================================
 Input Qualifier Input name                 Output Qualifier Output name

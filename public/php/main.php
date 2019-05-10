@@ -378,11 +378,9 @@ folder instead of downloading all of them to reduce the load. -->
                 background: rgba( 255, 255, 255, .8 );
             }
 
-
-
-
-
-
+            .disp_none{
+                display: none !important;
+             }
 
         </style>
 
@@ -430,7 +428,7 @@ folder instead of downloading all of them to reduce the load. -->
                             ?>
                             <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Tutorial</a></li>
                             <li><a href="http://dolphinnext.readthedocs.io/" target="_blank"><i class="fa fa-mortar-board"></i></a></li>
-                            <li> <a><b style="color:#7c1842;"> ALPHA VERSION </b> </a></li>
+                            <li> <a><b style="color:#7c1842;"> VERSION <?php echo DN_VERSION?> </b> </a></li>
                         </ul>
                     </div>
                 </nav>
