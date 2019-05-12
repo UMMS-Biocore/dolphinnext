@@ -1,3 +1,7 @@
+10.05.2019 Version 0.3.22
+Bug fixed to support old file format in run logs.
+Bug fixed on file selection modal.
+
 10.05.2019 Version 0.3.21
 Datatable show percent table upgraded to support non-integers in report section.
 Saving run feature upgraded to execute only run environment is changed.

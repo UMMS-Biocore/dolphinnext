@@ -1798,38 +1798,38 @@ class dbfuncs {
     }
 
     //this function is not finalized.
-//    public function tagAmazonInst($id,$ownerID){
-//        $amzDataJS=$this->getProfileAmazonbyID($id, $ownerID);
-//        $amzData=json_decode($amzDataJS,true)[0];
-//        $username = $amzData["username"];
-//        if (!empty($username)){
-//            $usernameCl = str_replace(".","__",$username);   
-//        }
-//        $runAmzCloudCheck = $this->runAmazonCloudCheck($id,$ownerID,$usernameCl);
-//        sleep(15);
-//        $checkAmazonStatus = $this->checkAmazonStatus($id,$ownerID,$usernameCl);
-//        $status = json_decode($checkAmazonStatus)->{'status'};
-//        $logAmzCloudList = json_decode($checkAmazonStatus)->{'logAmzCloudList'};
-//        error_log($logAmzCloudList);
-//        //INSTANCE ID         ADDRESS                                    STATUS  ROLE  
-//        //i-0c9b9bca326881c15 ec2-54-234-221-109.compute-1.amazonaws.com running worker
-//        //i-0bdc64c4196e1f956 ec2-3-84-86-146.compute-1.amazonaws.com    running master
-//        $lines = explode("\n", $logAmzCloudList);
-//        $inst = array();
-//        for ($i = 1; $i < count($lines); $i++) {
-//            $obj = new stdClass();
-//            $currentline = explode(" ", $lines[$i]);
-//            if (!empty($currentline)){
-//                if (preg_match("/i-/",$currentline[0])){
-//                    $inst[] = trim($currentline[0]);
-//                    "export AWS_ACCESS_KEY_ID= && export AWS_SECRET_ACCESS_KEY= && aws ec2 create-tags --resources $currentline[0] --tags Key=username,Value=test && unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY";
-//                }
-//            }
-//        }
-//        error_log("inst:".print_r($inst, TRUE));
-//        
-//        return json_encode($logAmzCloudList);
-//    }
+    //    public function tagAmazonInst($id,$ownerID){
+    //        $amzDataJS=$this->getProfileAmazonbyID($id, $ownerID);
+    //        $amzData=json_decode($amzDataJS,true)[0];
+    //        $username = $amzData["username"];
+    //        if (!empty($username)){
+    //            $usernameCl = str_replace(".","__",$username);   
+    //        }
+    //        $runAmzCloudCheck = $this->runAmazonCloudCheck($id,$ownerID,$usernameCl);
+    //        sleep(15);
+    //        $checkAmazonStatus = $this->checkAmazonStatus($id,$ownerID,$usernameCl);
+    //        $status = json_decode($checkAmazonStatus)->{'status'};
+    //        $logAmzCloudList = json_decode($checkAmazonStatus)->{'logAmzCloudList'};
+    //        error_log($logAmzCloudList);
+    //        //INSTANCE ID         ADDRESS                                    STATUS  ROLE  
+    //        //i-0c9b9bca326881c15 ec2-54-234-221-109.compute-1.amazonaws.com running worker
+    //        //i-0bdc64c4196e1f956 ec2-3-84-86-146.compute-1.amazonaws.com    running master
+    //        $lines = explode("\n", $logAmzCloudList);
+    //        $inst = array();
+    //        for ($i = 1; $i < count($lines); $i++) {
+    //            $obj = new stdClass();
+    //            $currentline = explode(" ", $lines[$i]);
+    //            if (!empty($currentline)){
+    //                if (preg_match("/i-/",$currentline[0])){
+    //                    $inst[] = trim($currentline[0]);
+    //                    "export AWS_ACCESS_KEY_ID= && export AWS_SECRET_ACCESS_KEY= && aws ec2 create-tags --resources $currentline[0] --tags Key=username,Value=test && unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY";
+    //                }
+    //            }
+    //        }
+    //        error_log("inst:".print_r($inst, TRUE));
+    //        
+    //        return json_encode($logAmzCloudList);
+    //    }
 
     public function getLastRunData($project_pipeline_id, $ownerID){
         $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
@@ -1847,13 +1847,25 @@ class dbfuncs {
         $newRunStatus = "";
         $saveNextLog = "";
         $runDataJS = $this->getLastRunData($project_pipeline_id,$ownerID);
-        $runData = json_decode($runDataJS,true)[0];
-        $ownerID = $runData["owner_id"];
-        $runStatus = $runData["run_status"];
-        $project_pipeline_id = $runData["id"];
-        $last_run_uuid = $runData["last_run_uuid"];
-        $output_dir = $runData["output_dir"];
-        $profile = $runData["profile"];
+        if (empty(json_decode($runDataJS,true))){
+            //old run folder format may exist (runID)
+            $runStat = json_decode($this -> getRunStatus($project_pipeline_id, $ownerID));
+            $runStatus = $runStat[0]->{"run_status"};
+            $last_run_uuid = "run".$project_pipeline_id;
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+            $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
+            $output_dir = $proPipeAll[0]->{'output_dir'};
+            $profile = $proPipeAll[0]->{'profile'};
+            $subRunLogDir = "";
+        } else if (!empty(json_decode($runDataJS,true))){
+            // latest last_uuid format exist
+            $runData = json_decode($runDataJS,true)[0];
+            $runStatus = $runData["run_status"];
+            $last_run_uuid = $runData["last_run_uuid"];
+            $output_dir = $runData["output_dir"];
+            $profile = $runData["profile"];
+            $subRunLogDir = "run";
+        }
         $profileAr = explode("-", $profile);
         $profileType = $profileAr[0];
         $profileId = $profileAr[1];
@@ -1871,9 +1883,10 @@ class dbfuncs {
                 $out["saveNextLog"] = $saveNextLog;
             }
             $serverLog = json_decode($this -> getFileContent($last_run_uuid, "run/serverlog.txt", $ownerID));
-            $errorLog = json_decode($this -> getFileContent($last_run_uuid, "run/err.log", $ownerID));
-            $initialLog = json_decode($this -> getFileContent($last_run_uuid, "run/initial.log", $ownerID));
-            $nextflowLog = json_decode($this -> getFileContent($last_run_uuid, "run/log.txt", $ownerID));
+            
+            $errorLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/err.log", $ownerID));
+            $initialLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/initial.log", $ownerID));
+            $nextflowLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/log.txt", $ownerID));
             $serverLog = isset($serverLog) ? trim($serverLog) : "";
             $errorLog = isset($errorLog) ? trim($errorLog) : "";
             $initialLog = isset($initialLog) ? trim($initialLog) : "";

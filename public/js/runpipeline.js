@@ -5678,7 +5678,6 @@ $(document).ready(function () {
             $("#details_of_file_table").append(tableRows)
         }
         var selectedRows = sampleTable.rows({ selected: true }).data();
-        console.log(selectedRows)
         if (selectedRows.length ===1 ){
             //prepare details table.
             insertDetailsTable(selectedRows[0])
@@ -6205,7 +6204,10 @@ $(document).ready(function () {
         });
         e.preventDefault();
         var savetype = $('#mIdFile').val();
-        var checkdata = $('#inputFilemodal').find('.active.tab-pane')[0].getAttribute('id');
+        var checkdata = $('#inputFilemodal').find("[searchTab='true'].active.tab-pane")[0].getAttribute('id');
+        console.log(checkdata)
+        console.log(savetype)
+        console.log("ddd")
         if (checkdata === 'importedFilesTab') {
             $('#inputFilemodal').loading("stop");
             var fillCollection = function (savetype, collection) {
@@ -6623,13 +6625,11 @@ $(document).ready(function () {
                 }
             });  
         } else if (buttonID === 'deleteSample') {
-            console.log(buttonID)
             var selRows = sampleTable.rows({ selected: true }).data();
             var selRowsId =[];
             for (var i = 0; i < selRows.length; i++) {
                 selRowsId.push(selRows[i].id);
             }
-            console.log(selRowsId)
             if (selRowsId.length >0){
                 $.ajax({
                     type: "POST",

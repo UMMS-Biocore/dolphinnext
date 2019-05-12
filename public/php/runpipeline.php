@@ -484,13 +484,6 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 
 
 
-
-
-
-
-
-
-
 <!--Confirm d3 Modal-->
 <div id="confirmD3Modal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -551,7 +544,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     </ul>
                     <!-- Tab panes -->
                     <div id="fileContent" class="tab-content">
-                        <div role="tabpanel" class="tab-pane active" id="importedFilesTab">
+                        <div role="tabpanel" class="tab-pane active" searchTab="true" id="importedFilesTab">
                             <div class="panel panel-default">
                                 </br>
                                 <div class="panel-body">
@@ -585,7 +578,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 </div>
                             </div>
                         </div>
-                        <div role="tabpanel" class="tab-pane" id="manualTab">
+                        <div role="tabpanel" class="tab-pane" id="manualTab" searchTab="true">
                             <div class="panel panel-default">
                                 </br>
                                 <form style="padding-top:30px; padding-right:10px; padding-bottom:50px; border-bottom:1px solid lightgrey; " class="form-horizontal">
@@ -629,7 +622,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 </div>
                             </div>
                         </div>
-                        <div id="publicFileTab" class="tab-pane ">
+                        <div role="tabpanel" id="publicFileTab" class="tab-pane" searchTab="true">
                             <div class="row">
                                 <div class="col-sm-12" style="padding-top:6px;">
                                     <p id="publicFileTabWarn"></p>
