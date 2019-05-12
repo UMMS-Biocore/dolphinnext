@@ -180,16 +180,19 @@ else if ($p=="saveNextflowLog"){
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
-    // get outputdir
-    $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-    $outdir = $proPipeAll[0]->{'output_dir'};
-    $run_path_real = "$outdir/run{$project_pipeline_id}";
-    $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
-    foreach ($down_file_list as &$value) {
-        $value = $run_path_real."/".$value;
+    $data = "";
+    if (!empty($uuid)){
+        // get outputdir
+        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        $outdir = $proPipeAll[0]->{'output_dir'};
+        $run_path_real = "$outdir/run{$project_pipeline_id}";
+        $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
+        foreach ($down_file_list as &$value) {
+            $value = $run_path_real."/".$value;
+        }
+        unset($value);
+        $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
     }
-    unset($value);
-    $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
 }
 else if ($p=="getLsDir"){
     $dir = $_REQUEST['dir'];
@@ -544,7 +547,7 @@ else if ($p=="getCollectionFiles"){
 }
 else if ($p=="getFile"){
     if (!empty($id)) {
-//        $data = $db->getFileById($id,$ownerID);
+        //        $data = $db->getFileById($id,$ownerID);
     } else {
         $data = $db->getFiles($ownerID);
     }
@@ -770,8 +773,8 @@ else if ($p=="updateAmzShutdownCheck"){
 }
 else if ($p=="saveSSHKeys"){
     $name = $_REQUEST['name'];
-    $check_userkey = $_REQUEST['check_userkey'];
-    $check_ourkey = $_REQUEST['check_ourkey'];
+    $check_userkey = isset($_REQUEST['check_userkey']) ? $_REQUEST['check_userkey'] : "";
+    $check_ourkey = isset($_REQUEST['check_ourkey']) ? $_REQUEST['check_ourkey'] : "";
     $prikeyRaw = $_REQUEST['prikey'];
     $pubkeyRaw = $_REQUEST['pubkey'];
     $prikey = urldecode($prikeyRaw);
