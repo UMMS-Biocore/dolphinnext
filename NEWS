@@ -1,3 +1,8 @@
+10.05.2019 Version 0.3.21
+Datatable show percent table upgraded to support non-integers in report section.
+Saving run feature upgraded to execute only run environment is changed.
+Run Status ordering is updated based on the date_modified column of run table.
+
 08.05.2019 Version 0.3.20
 DolphinNext version added to top of the main page.
 Minor fix in user verification.
@@ -5,6 +10,7 @@ Language mode added for R scripts.
 "Select File Modal" updated. (host and project dropdowns added)
 Dropdowns of "Select File Modal" upgraded to deselect rows that are filtered out.
 Delete file button added into Select File Modal.
+
 
 06.05.2019 Version 0.3.19
 Saving pubweb functionality added into auto update run status feature.

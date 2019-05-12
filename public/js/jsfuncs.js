@@ -812,7 +812,11 @@ function tsvPercent(tsv) {
         var divider = currentline[1];
         tsvPercent += currentline[0] + "\t" + numberWithCommas(currentline[1]);
         for (var j = 2; j < currentline.length; j++) {
-            tsvPercent += "\t" + numberWithCommas(currentline[j]) + " (" + parseFloat(Math.round(currentline[j] / divider * 100 * 100) / 100).toFixed(2) + "%)";
+            if ($.isNumeric(divider) && $.isNumeric(currentline[j] / divider)){
+                tsvPercent += "\t" + numberWithCommas(currentline[j]) + " (" + parseFloat(Math.round(currentline[j] / divider * 100 * 100) / 100).toFixed(2) + "%)";
+            } else {
+                tsvPercent += "\t" + numberWithCommas(currentline[j]);
+            }
             if (currentline.length - 1 == j) {
                 tsvPercent += "\n"
             }
