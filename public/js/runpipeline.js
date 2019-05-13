@@ -5643,7 +5643,7 @@ $(document).ready(function () {
         }
         var insertDetailsTable = function (data){
             var tableRows = "";
-
+            $("#details_of_file_table").empty()
             if (data.file_dir){
                 tableRows += getHeaderRow("Input File(s) Directory:")
                 tableRows += getBodyRow(s3Clean(data.file_dir))
