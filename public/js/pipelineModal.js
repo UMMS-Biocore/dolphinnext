@@ -23,17 +23,19 @@ function createAceEditors(editorId, script_modeId) {
         window[editorId].session.setMode("ace/mode/" + mode);
     }
     // If template text is not changed or it is blank : set the template text on change
-    $(function () {
-        $(document).on('change', script_modeId, function () {
-            var newMode = $(script_modeId).val();
-            window[editorId].session.setMode("ace/mode/" + newMode);
-            var editorText = window[editorId].getValue();
-            if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templatesh || editorText === '') {
-                var newTempText = 'template' + newMode;
-                window[editorId].setValue(window[newTempText]);
-            }
-        })
-    });
+    if (script_modeId == "#script_mode"){
+        $(function () {
+            $(document).on('change', script_modeId, function () {
+                var newMode = $(script_modeId).val();
+                window[editorId].session.setMode("ace/mode/" + newMode);
+                var editorText = window[editorId].getValue();
+                if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templatesh || editorText === '') {
+                    var newTempText = 'template' + newMode;
+                    window[editorId].setValue(window[newTempText]);
+                }
+            })
+        });
+    }
 }
 // To refresh the content of ace editors. Otherwise it doesn't show the text
 $('#advOptPro').on('show.bs.collapse', function () {
