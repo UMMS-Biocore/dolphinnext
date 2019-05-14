@@ -40,7 +40,7 @@ if ($p=="saveRun"){
         $attempt = "0";
     }
     //create initialrun script
-    $initialrun_img = "shub://onuryukselen/initialrun@6b73c11001b71a6fce71f854b254e6e6ca065380";
+    $initialrun_img = "shub://UMMS-Biocore/initialrun@7d2aace88efd7dd4475594000d9ac7962bd53fe4";
     $initialRunScript = $db->initialRunScript($project_pipeline_id, $attempt, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
@@ -825,12 +825,14 @@ else if ($p=="saveProfileCluster"){
     $username = $_REQUEST['username'];
     $hostname = $_REQUEST['hostname'];
     $next_path = $_REQUEST['next_path'];
+    $port = $_REQUEST['port'];
+    $singu_cache = $_REQUEST['singu_cache'];
     $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
     settype($ssh_id, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID);
+        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID);
     } else {
-        $data = $db->insertProfileCluster($name, $executor,$next_path, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID);
+        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID);
     }
 }
 else if ($p=="saveProfileAmazon"){
@@ -856,15 +858,17 @@ else if ($p=="saveProfileAmazon"){
     $shared_storage_id = $_REQUEST['shared_storage_id'];
     $shared_storage_mnt = $_REQUEST['shared_storage_mnt'];
     $next_path = $_REQUEST['next_path'];
+    $port = $_REQUEST['port'];
+    $singu_cache = $_REQUEST['singu_cache'];
     $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
     settype($ssh_id, 'integer');
     $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
     $security_group = $_REQUEST['security_group'];
     settype($amazon_cre_id, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID);
+        $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID);
     } else {
-        $data = $db->insertProfileAmazon($name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID);
+        $data = $db->insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID);
     }
 }
 else if ($p=="saveInput"){
