@@ -1,3 +1,7 @@
+15.05.2019 Version 0.3.25
+Channel.fromPath updated to support both files and directories as input.
+Minor bug fixed in profile table.
+
 14.05.2019 Version 0.3.24
 SSH port and singularity cache directory fields added to profile.
 

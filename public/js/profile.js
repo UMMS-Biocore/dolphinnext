@@ -41,7 +41,7 @@ $(document).ready(function () {
         },
         "columns": [{
             "data": "name"
-            }, {
+        }, {
             "data": null,
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                 if (oData.hostname != undefined) {
@@ -50,7 +50,7 @@ $(document).ready(function () {
                     $(nTd).html("Amazon");
                 }
             }
-            }, {
+        }, {
             "data": null,
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                 if (oData.hostname != undefined) {
@@ -59,7 +59,7 @@ $(document).ready(function () {
                     $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Instance_type:" + oData.instance_type + "<br/>Image_id:" + oData.image_id);
                 }
             }
-            }, {
+        }, {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
@@ -69,7 +69,7 @@ $(document).ready(function () {
                     $(nTd).html(getProfileButton('amazon'));
                 }
             }
-            }],
+        }],
         'order': [[2, 'desc']]
     });
 
@@ -401,9 +401,9 @@ $(document).ready(function () {
                 success: function (s) {
                     if (savetype.length) { //edit
                         var proId = savetype
-                    } else {
-                        var proId = s.id;
-                    }
+                        } else {
+                            var proId = s.id;
+                        }
                     if (selEnvType === "cluster") {
                         var newProfileData = getValues({ p: "getProfileCluster", id: proId });
                     } else if (selEnvType === "amazon") {
@@ -411,18 +411,10 @@ $(document).ready(function () {
                     }
                     if (newProfileData[0]) {
                         if (title.match(/Public/)) {
-                            if (savetype.length) { //edit
-                                publicProfileTable.row(clickedRow).remove().draw();
-                                publicProfileTable.row.add(newProfileData[0]).draw();
-                            } else { //insert
-                                publicProfileTable.row.add(newProfileData[0]).draw();
-                            }
+                            publicProfileTable.ajax.reload(null, false);
                         } else {
-                            if (savetype.length) { //edit
-                                profileTable.row(clickedRow).remove().draw();
-                                profileTable.row.add(newProfileData[0]).draw();
-                            } else { //insert
-                                profileTable.row.add(newProfileData[0]).draw();
+                            profileTable.ajax.reload(null, false);
+                            if (!savetype.length) { //insert
                                 if (selEnvType === "amazon") {
                                     checkAmazonTimer(s.id, 40000);
                                 }
@@ -544,17 +536,17 @@ $(document).ready(function () {
         },
         "columns": [{
             "data": "name"
-            }, {
+        }, {
             "data": "username"
-            }, {
+        }, {
             "data": "date_created"
-            }, {
+        }, {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getGroupTableOptions(oData.owner_id, oData.u_id));
             }
-            }]
+        }]
     });
 
 
@@ -844,15 +836,15 @@ $(document).ready(function () {
         },
         "columns": [{
             "data": "name"
-            }, {
+        }, {
             "data": "date_modified"
-            }, {
+        }, {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getSSHTableOptions());
             }
-            }]
+        }]
     });
 
     // confirm Delete ssh modal 
@@ -1065,15 +1057,15 @@ $(document).ready(function () {
         },
         "columns": [{
             "data": "name"
-            }, {
+        }, {
             "data": "date_modified"
-            }, {
+        }, {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getAmzTableOptions());
             }
-            }]
+        }]
     });
     //
     // confirm Delete amz modal 
@@ -1468,7 +1460,7 @@ $(document).ready(function () {
             var clickedRow = $('#savemUser').data('clickedrow')
             var formObj = {};
             var stop = "";
-        [formObj, stop] = createFormObj(formValues, requiredFields)
+            [formObj, stop] = createFormObj(formValues, requiredFields)
             var savetype = $('#mUserID').val();
             if (stop === false) {
                 formObj.p = "saveUserManual"

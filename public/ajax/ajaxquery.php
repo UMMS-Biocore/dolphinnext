@@ -617,12 +617,9 @@ else if ($p=="removeProLocal"){
     $data = $db -> removeProLocal($id);
 }
 else if ($p=="removeProCluster"){  
-    $db->delKey($id, "clu", $ownerID);
     $data = $db -> removeProCluster($id);
 }
 else if ($p=="removeProAmazon"){   
-    $db->delKey($id, "amz_pri", $ownerID);
-    $db->delKey($id, "amz_pub", $ownerID);
     $data = $db -> removeProAmazon($id);
 }
 else if ($p=="removeProjectPipelineInput"){   

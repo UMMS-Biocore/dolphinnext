@@ -571,7 +571,7 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                             }
 
                         } else if (checkRegex === true) {
-                            secPartTemp = "Channel.fromPath(params." + inputParamName + ")" + channelSetInto + "\n";
+                            secPartTemp = "Channel.fromPath(params." + inputParamName + ", type: 'any')" + channelSetInto + "\n";
                         }
                         //if mate defined in process use fromFilePairs
                     } else if (qual === "set" && inputParMate > 0) {
@@ -580,9 +580,9 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                     //if mate not defined in process use fromPath
                     else if (qual === "set" && inputParMate === 0) {
                         if (connectedNodeName.match(/.*val\(.*\).*file\(.*\).*/)) {
-                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ").map{ file -> tuple(file.baseName, file) } \n"
+                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ", type: 'any').map{ file -> tuple(file.baseName, file) } \n"
                         } else {
-                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ").toSortedList() \n"
+                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ", type: 'any').toSortedList() \n"
                         }
                     } else if (qual === "val") {
                         secPartTemp = "Channel.value(params." + inputParamName + ")" + channelSetInto + "\n"
