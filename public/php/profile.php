@@ -311,6 +311,14 @@
                             <input type="text" class="form-control" id="mEnvHostname" name="hostname">
                         </div>
                     </div>
+                    <div id="mEnvPortDiv" class="form-group" style="display:none">
+                        <label for="mEnvPort" class="col-sm-3 control-label">SSH Port (optional)
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="By default TCP port 22 is used for SSH connection. You can change this default by entering port number."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                        </label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mEnvPort" name="port">
+                        </div>
+                    </div>
                     <div id="mEnvSSHKeyDiv" class="form-group" style="display:none">
                         <label for="mEnvSSHKey" class="col-sm-3 control-label">SSH Keys
                             <span><a data-toggle="tooltip" data-placement="bottom" title="Keys that are saved in SSH keys tab and to be used while connecting to host"><i class='glyphicon glyphicon-info-sign'></i></a></span>
@@ -353,9 +361,6 @@
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSecurityGroup" name="security_group">
                         </div>
-                        
-                        
-                        
                     </div>
                     <div id="mSharedStorageIdDiv" class="form-group" style="display:none">
                         <label for="mSharedStorageId" class="col-sm-3 control-label">Shared Storage Id</label>
@@ -383,6 +388,14 @@
                         </label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mEnvNextPath" name="next_path">
+                        </div>
+                    </div>
+                    <div id="mEnvSinguCacheDiv" class="form-group" style="display:none">
+                        <label for="mEnvSinguCache" class="col-sm-3 control-label">Singularity Cache Folder
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="Directory where remote Singularity images are stored. By default home directory is used. Note: When using a computing cluster it must be a shared folder accessible from all computing nodes."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                        </label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mEnvSinguCache" name="singu_cache">
                         </div>
                     </div>
                     <div id="mExecDiv" class="form-group" style="display:none">

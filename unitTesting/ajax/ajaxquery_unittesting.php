@@ -595,6 +595,8 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['hostname'] = "localhost";
 		$_REQUEST['next_path'] = "";
 		$_REQUEST['ssh_id'] = "1";
+		$_REQUEST['port'] = "22";
+		$_REQUEST['singu_cache'] = "";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'2');
 		ob_end_clean();
@@ -637,6 +639,8 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['hostname'] = "localhost";
 		$_REQUEST['next_path'] = "";
 		$_REQUEST['ssh_id'] = "1";
+		$_REQUEST['port'] = "22";
+		$_REQUEST['singu_cache'] = "";
 		include('ajaxquery.php');
         $_REQUEST['p'] = 'getProfileCluster';
 		$_REQUEST['id'] = '2';
@@ -686,6 +690,8 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['shared_storage_mnt'] = "";
 		$_REQUEST['next_path'] = "";
 		$_REQUEST['ssh_id'] = "1";
+        $_REQUEST['port'] = "22";
+		$_REQUEST['singu_cache'] = "";
 		$_REQUEST['amazon_cre_id'] = "1";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'1');
@@ -733,6 +739,8 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['next_path'] = "";
 		$_REQUEST['ssh_id'] = "1";
 		$_REQUEST['amazon_cre_id'] = "1";
+        $_REQUEST['port'] = "22";
+		$_REQUEST['singu_cache'] = "";
 		include('ajaxquery.php');
         $_REQUEST['p'] = 'getProfileAmazon';
 		$_REQUEST['id'] = '1';

@@ -4138,6 +4138,9 @@ function runProPipeCall(checkType, uuid) {
             } else {
                 mntPath = "//$HOME";
             }
+            if (profileData[0].singu_cache) {
+                mntPath = profileData[0].singu_cache;
+            }
             var downSingu_img = mntPath + '/.dolphinnext/singularity/' + singuPath + '.simg';
         } else {
             var downSingu_img = singu_img;
@@ -6098,7 +6101,7 @@ $(document).ready(function () {
             checkReadytoRun();
             //save run in change 
             saveRun();
-            
+
         });
     });
 

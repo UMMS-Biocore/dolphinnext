@@ -99,7 +99,8 @@ class dbfuncs {
         fclose($file);
     }
     //$img: path of image
-    function imageCmd($img, $singu_save, $type, $profileType,$profileId,$ownerID){
+    //$singu_save=true to overwrite on image
+    function imageCmd($singu_cache, $img, $singu_save, $type, $profileType,$profileId,$ownerID){
         if ($type == 'singularity'){
             preg_match("/shub:\/\/(.*)/", $img, $matches);
             if (!empty($matches[1])){
@@ -108,6 +109,9 @@ class dbfuncs {
                     $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
                     $amzDataArr=json_decode($amzData,true);
                     $singuPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
+                }
+                if (!empty($singu_cache)){
+                    $singuPath = $singu_cache;
                 }
                 $imageName = str_replace("/","-",$matches[1]);
                 $image = $singuPath.'/.dolphinnext/singularity/'.$imageName;
@@ -228,6 +232,22 @@ class dbfuncs {
         endforeach;
 
         return $s3configFileDir;
+    }
+    
+    
+    function getCluAmzData($profileId, $profileType, $ownerID) {
+        if ($profileType == 'cluster'){
+            $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
+            $cluDataArr=json_decode($cluData,true);
+            $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
+        } else if ($profileType == 'amazon'){
+            $cluData=$this->getProfileAmazonbyID($profileId, $ownerID);
+            $cluDataArr=json_decode($cluData,true);
+            $connect = $cluDataArr[0]["ssh"];
+        }
+        $ssh_port = !empty($cluDataArr[0]["port"]) ? " -p ".$cluDataArr[0]["port"] : "";
+        $scp_port = !empty($cluDataArr[0]["port"]) ? " -P ".$cluDataArr[0]["port"] : "";
+        return array($connect, $ssh_port, $scp_port, $cluDataArr);
     }
 
     function initialRunScript ($project_pipeline_id, $attempt, $ownerID){
@@ -948,6 +968,8 @@ class dbfuncs {
 
     //get nextflow executor parameters
     function getNextExecParam($project_pipeline_id,$profileType,$profileId, $initialRunScript, $initialrun_img, $ownerID){
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $singu_cache = $cluDataArr[0]["singu_cache"];
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         $proPipeCmd = $proPipeAll[0]->{'cmd'};
@@ -959,10 +981,10 @@ class dbfuncs {
         if ($singu_check == "true"){
             $singu_img = $proPipeAll[0]->{'singu_img'};
             $singu_save = $proPipeAll[0]->{'singu_save'};
-            $imageCmd = $this->imageCmd($singu_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
+            $imageCmd = $this->imageCmd($singu_cache, $singu_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
         }
         if (!empty($initialRunScript)){
-            $initImageCmd = $this->imageCmd($initialrun_img, "", 'singularity', $profileType,$profileId,$ownerID);
+            $initImageCmd = $this->imageCmd($singu_cache, $initialrun_img, "", 'singularity', $profileType,$profileId,$ownerID);
         }
         //get report options
         $reportOptions = "";
@@ -988,15 +1010,7 @@ class dbfuncs {
 
     //get username and hostname and exec info for connection
     function getNextConnectExec($profileId,$ownerID, $profileType){
-        if ($profileType == "cluster"){
-            $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
-            $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
-        } else if ($profileType == "amazon"){
-            $cluData=$this->getProfileAmazonbyID($profileId, $ownerID);
-            $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["ssh"];
-        }
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $ssh_id = $cluDataArr[0]["ssh_id"];
         $next_path = $cluDataArr[0]["next_path"];
         $profileCmd = $cluDataArr[0]["cmd"];
@@ -1007,7 +1021,7 @@ class dbfuncs {
         $next_cpu = $cluDataArr[0]['next_cpu'];
         $next_clu_opt = $cluDataArr[0]['next_clu_opt'];
         $executor_job = $cluDataArr[0]['executor_job'];
-        return array($connect, $next_path, $profileCmd, $executor,$next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job,$ssh_id);
+        return array($connect, $next_path, $profileCmd, $executor,$next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job,$ssh_id, $ssh_port);
     }
 
     function getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd){
@@ -1205,11 +1219,16 @@ class dbfuncs {
                 $configTextClean .= $configTextLines[$i]."\n";
             }
         }
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $singu_cache = $cluDataArr[0]["singu_cache"];
         $singuPath = '//$HOME';
         if ($profileType == "amazon"){
             $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
             $amzDataArr=json_decode($amzData,true);
             $singuPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
+        }
+        if (!empty($singu_cache)){
+            $singuPath = $singu_cache;
         }
         preg_match("/shub:\/\/(.*)/", $initialrun_img, $matches);
         $imageName = str_replace("/","-",$matches[1]);
@@ -1282,17 +1301,8 @@ class dbfuncs {
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         // get username and hostname for connection
-        if ($profileType == "cluster") {
-            $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
-            $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
-            $ssh_id = $cluDataArr[0]["ssh_id"];
-        } else if ($profileType == "amazon") {
-            $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
-            $amzDataArr=json_decode($amzData,true);
-            $connect = $amzDataArr[0]["ssh"];
-            $ssh_id = $amzDataArr[0]["ssh_id"];
-        }
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $ssh_id = $cluDataArr[0]["ssh_id"];
         //get userpky
         $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
         //check $userpky file exist
@@ -1317,7 +1327,7 @@ class dbfuncs {
         }
         $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
         //mkdir and copy nextflow file to run directory in cluster
-        $cmd = "ssh {$this->ssh_settings}  -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} -i $userpky $s3configFileDir $initialRunText $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
+        $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} $scp_port -i $userpky $s3configFileDir $initialRunText $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
         $mkdir_copynext_pid =shell_exec($cmd);
         $this->writeLog($uuid,$cmd,'a','serverlog.txt');
         $serverlog = $this->readFile("$run_path_real/serverlog.txt");
@@ -1336,7 +1346,7 @@ class dbfuncs {
         //get nextflow executor parameters
         list($outdir, $proPipeCmd, $jobname, $singu_check, $singu_img, $imageCmd, $initImageCmd, $reportOptions) = $this->getNextExecParam($project_pipeline_id,$profileType, $profileId, $initialRunScript, $initialrun_img, $ownerID);
         //get username and hostname and exec info for connection
-        list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id)=$this->getNextConnectExec($profileId,$ownerID, $profileType);
+        list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port)=$this->getNextConnectExec($profileId,$ownerID, $profileType);
         //get nextflow input parameters
         $next_inputs = $this->getNextInputs($executor, $project_pipeline_id, $outdir, $ownerID);
         //get cmd before run
@@ -1356,7 +1366,7 @@ class dbfuncs {
         //get command for renaming previous log file
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt, $initialRunScript);
         //check if files are exist
-        $next_exist_cmd= "ssh {$this->ssh_settings} -i $userpky $connect test  -f \"$dolphin_path_real/nextflow.nf\"  && echo \"Nextflow file exists\" || echo \"Nextflow file not exists\" 2>&1 & echo $! &";
+        $next_exist_cmd= "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect test  -f \"$dolphin_path_real/nextflow.nf\"  && echo \"Nextflow file exists\" || echo \"Nextflow file not exists\" 2>&1 & echo $! &";
         $next_exist = shell_exec($next_exist_cmd);
         $this->writeLog($uuid,$next_exist_cmd,'a','serverlog.txt');
         $serverlog = $this->readFile("$run_path_real/serverlog.txt");
@@ -1370,7 +1380,7 @@ class dbfuncs {
         $log_array['next_exist'] = $next_exist;
         if ($matches[2] == " ") {
             $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "log.txt", $initialRunScript, $ownerID);
-            $cmd="ssh {$this->ssh_settings}  -i $userpky $connect \"$renameLog $preCmd $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
+            $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$renameLog $preCmd $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
             $next_submit_pid= shell_exec($cmd); //"Job <203477> is submitted to queue <long>.\n"
             $this->writeLog($uuid,$cmd,'a','serverlog.txt');
             if (!$next_submit_pid) {
@@ -2319,20 +2329,20 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-    public function insertProfileCluster($name, $executor,$next_path, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID) {
-        $sql = "INSERT INTO profile_cluster(name, executor, next_path, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$username', '$hostname', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$next_clu_opt','$job_clu_opt', '$public','$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertProfileCluster($name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID) {
+        $sql = "INSERT INTO profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$username', '$hostname', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$next_clu_opt','$job_clu_opt', '$public','$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function updateProfileCluster($id, $name, $executor,$next_path, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID) {
-        $sql = "UPDATE profile_cluster SET name='$name', executor='$executor', next_path='$next_path', username='$username', hostname='$hostname', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', job_clu_opt='$job_clu_opt', next_clu_opt='$next_clu_opt', ssh_id='$ssh_id', public='$public', last_modified_user ='$ownerID'  WHERE id = '$id'";
+    public function updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $ownerID) {
+        $sql = "UPDATE profile_cluster SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', username='$username', hostname='$hostname', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', job_clu_opt='$job_clu_opt', next_clu_opt='$next_clu_opt', ssh_id='$ssh_id', public='$public', last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function insertProfileAmazon($name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID) {
-        $sql = "INSERT INTO profile_amazon(name, executor, next_path, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, subnet_id, shared_storage_id, shared_storage_mnt, ssh_id, amazon_cre_id, next_clu_opt, job_clu_opt, public, security_group, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$subnet_id','$shared_storage_id','$shared_storage_mnt','$ssh_id','$amazon_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$security_group', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID) {
+        $sql = "INSERT INTO profile_amazon(name, executor, next_path, port, singu_cache, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, subnet_id, shared_storage_id, shared_storage_mnt, ssh_id, amazon_cre_id, next_clu_opt, job_clu_opt, public, security_group, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$subnet_id','$shared_storage_id','$shared_storage_mnt','$ssh_id','$amazon_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$security_group', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function updateProfileAmazon($id, $name, $executor, $next_path, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id, $shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID) {
-        $sql = "UPDATE profile_amazon SET name='$name', executor='$executor', next_path='$next_path', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', security_group='$security_group', last_modified_user ='$ownerID'  WHERE id = '$id'";
+    public function updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id, $shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $ownerID) {
+        $sql = "UPDATE profile_amazon SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', security_group='$security_group', last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
     public function updateProfileAmazonOnStart($id, $nodes, $autoscale_check, $autoscale_maxIns, $autoscale_minIns, $autoshutdown_date, $autoshutdown_active, $autoshutdown_check, $ownerID) {
@@ -2758,15 +2768,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID) {
-        if ($profileType == 'cluster'){
-            $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
-            $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
-        } else if ($profileType == 'amazon'){
-            $cluData=$this->getProfileAmazonbyID($profileId, $ownerID);
-            $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["ssh"];
-        }
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $ssh_id = $cluDataArr[0]["ssh_id"];
         $executor = $cluDataArr[0]['executor'];
         $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
@@ -2779,14 +2781,14 @@ class dbfuncs {
         $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, "");
 
         if ($executor == "lsf" && $commandType == "checkRunPid"){
-            $check_run = shell_exec("ssh {$this->ssh_settings} -i $userpky $connect \"$preCmd bjobs\" 2>&1 &");
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd bjobs\" 2>&1 &");
             if (preg_match("/$pid/",$check_run)){
                 return json_encode('running');
             } else {
                 return json_encode('done');
             }
         } else if ($executor == "sge" && $commandType == "checkRunPid"){
-            $check_run = shell_exec("ssh {$this->ssh_settings} -i $userpky $connect \"$preCmd qstat -j $pid\" 2>&1 &");
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd qstat -j $pid\" 2>&1 &");
             if (preg_match("/job_number:/",$check_run)){
                 return json_encode('running');
             } else {
@@ -2794,13 +2796,13 @@ class dbfuncs {
                 return json_encode('done');
             }
         } else if ($executor == "sge" && $commandType == "terminateRun"){
-            $terminate_run = shell_exec("ssh {$this->ssh_settings} -i $userpky $connect \"$preCmd qdel $pid\" 2>&1 &");
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd qdel $pid\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "lsf" && $commandType == "terminateRun"){
-            $terminate_run = shell_exec("ssh {$this->ssh_settings} -i $userpky $connect \"$preCmd bkill $pid\" 2>&1 &");
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd bkill $pid\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "local" && $commandType == "terminateRun"){
-            $cmd = "ssh {$this->ssh_settings} -i $userpky $connect \"$preCmd ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash \" 2>&1 &";
+            $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash \" 2>&1 &";
             $terminate_run = shell_exec($cmd);
             return json_encode('terminateCommandExecuted');
         }
@@ -2831,15 +2833,7 @@ class dbfuncs {
 
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
     public function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$project_pipeline_id,$ownerID) {
-        if ($profileType == 'cluster'){
-            $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
-            $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
-        } else if ($profileType == 'amazon'){
-            $cluData=$this->getProfileAmazonbyID($profileId, $ownerID);
-            $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["ssh"];
-        }
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $ssh_id = $cluDataArr[0]["ssh_id"];
         $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
         if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
@@ -2870,7 +2864,7 @@ class dbfuncs {
             foreach ($files as $item):
             $fileList.="$connect:$item ";
             endforeach;
-            $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &"; 
+            $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &"; 
         }
         $nextflow_log = shell_exec($cmd);
         // save $nextflow_log to a file
@@ -2901,19 +2895,11 @@ class dbfuncs {
             }
             $cmd="s3cmd ls --access_key $access_key  --secret_key $secret_key $dir 2>&1 &";
         } else {
-            if ($profileType == 'cluster'){
-                $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
-                $cluDataArr=json_decode($cluData,true);
-                $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
-            } else if ($profileType == 'amazon'){
-                $cluData=$this->getProfileAmazonbyID($profileId, $ownerID);
-                $cluDataArr=json_decode($cluData,true);
-                $connect = $cluDataArr[0]["ssh"];
-            }
+            list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
             $ssh_id = $cluDataArr[0]["ssh_id"];
             $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
-            $cmd="ssh {$this->ssh_settings} -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
+            $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
         }
         $log = shell_exec($cmd);
         if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
