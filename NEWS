@@ -1,3 +1,6 @@
+15.05.2019 Version 0.3.26
+Input channels are fixed to support multiple channels in set format.
+
 15.05.2019 Version 0.3.25
 Channel.fromPath updated to support both files and directories as input.
 Minor bug fixed in profile table.

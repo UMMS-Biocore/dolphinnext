@@ -567,7 +567,7 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                         if (checkRegex === false) {
                             var chanList = channelNameAll.split(";");
                             for (var e = 0; e < chanList.length; e++) {
-                                secPartTemp += chanList[e] + " = " + "file(params." + inputParamName + ") \n";
+                                secPartTemp += chanList[e] + " = " + "file(params." + inputParamName + ", type: 'any') \n";
                             }
 
                         } else if (checkRegex === true) {
@@ -579,10 +579,12 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                     }
                     //if mate not defined in process use fromPath
                     else if (qual === "set" && inputParMate === 0) {
+                        //if val(name), file(read) format -> turn into set input
                         if (connectedNodeName.match(/.*val\(.*\).*file\(.*\).*/)) {
-                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ", type: 'any').map{ file -> tuple(file.baseName, file) } \n"
+                            secPartTemp = "Channel.fromPath(params." + inputParamName + ", type: 'any').map{ file -> tuple(file.baseName, file) }"+channelSetInto+"\n"
+                        //or other formats eg. file(fastq1), file(fastq2), file(fastq3)    
                         } else {
-                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ", type: 'any').toSortedList() \n"
+                            secPartTemp = "Channel.fromPath(params." + inputParamName + ", type: 'any').toSortedList()"+channelSetInto+"\n";
                         }
                     } else if (qual === "val") {
                         secPartTemp = "Channel.value(params." + inputParamName + ")" + channelSetInto + "\n"
@@ -755,7 +757,7 @@ function getOptionalInText(optionalInAr, optionalInNameAr) {
             inputNameOptional = $.trim(inputName);
         }
         console.log(inputNameOptional)
-        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(file('" + inputNameOptional + "')) \n";
+        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(file('" + inputNameOptional + "', type: 'any')) \n";
     }
     return optText
 }
