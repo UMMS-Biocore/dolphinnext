@@ -562,6 +562,7 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                         var inputParAll = getValues({ p: "getInputsPP", "process_id": sNodeProId });
                         var inputParMate = inputParAll.filter(function (el) { return el.sname == "mate" }).length
                     }
+                    
                     firstPartTemp = 'if (!params.' + inputParamName + '){params.' + inputParamName + ' = ""} \n'
                     if (qual === "file") {
                         if (checkRegex === false) {

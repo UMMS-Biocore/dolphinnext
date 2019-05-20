@@ -318,7 +318,31 @@ In order to create these form, you need to use following syntax in the **process
 
     params_tophat = "-N 4" //* @input @title:"Alignment Section" @description:"Tophat parameters"
 
-* **@options:** When you define @dropdown as a formType, you should define available options by using ``@options`` tag. Please check the example dropdown at above.
+* **@options:** When you define @dropdown as a formType, you should define available options by using ``@options`` tag. Please check the simpliest version of dropdown::
+
+    genomeType = "" //* @dropdown @options:"hg19","mm10","custom"
+    
+* **Conditional Options - Version 1 (Advanced Usage):** Same process can be seen different in different pipelines. In order to control the dropdown options that are visible, you can define variables in the pipeline header which starts with underscore. For instance::
+    
+    _nucleicAcidType = "rna" //In RNA-seq pipeline header
+    _nucleicAcidType = "dna" //In ChIP-seq pipeline header
+        
+    
+and you can control which options will be visible by using following format::    
+    
+    param = "" //* @dropdown @options:{_nucleicAcidType="rna","rRNA","miRNA","snRNA"},{_nucleicAcidType="dna", "ercc","rmsk"}
+    
+Now, ``param`` dropdown will have 3 options ("rRNA","miRNA","snRNA") in RNA-seq pipeline and 2 options ("ercc","rmsk") in ChIP-seq pipeline. Similarly you can define default options by not assigning any value as seen at the example below::
+    
+    param = "" //* @dropdown @options:{"rRNA","miRNA","snRNA"},{_nucleicAcidType="dna","ercc","rmsk"}
+    
+Here, by default 3 options("rRNA","miRNA","snRNA") will be visible unless in the pipeline header ``_nucleicAcidType="dna"`` is defined.
+    
+* **Conditional Options - Version 2 (Advanced Usage):** You can control the dropdown options that are visible, based on the selected parameter in other dropdown. Please check the example below, where dropdown called ``sequence`` controls the visible options of the dropdown ``aligner``::
+    
+    aligner = "" //* @dropdown @options:{sequence=("rRNA","miRNA","snRNA"),"bowtie","bowtie2"},{sequence="genome", "star"}
+    
+When ``sequence`` is selected as one of the following options:"rRNA","miRNA","snRNA", ``aligner`` will have "bowtie and bowtie2" options. Similarly, "star" will be seen, if ``sequence`` selected as "genome".     
 
 Styles for Process Options
 ==========================
@@ -388,7 +412,7 @@ In this example, var1 value is binded to other form fields. When var1 is selecte
 
 .. tip::
     
-    Similar to previous tip, you can combine all style options on same variable. For example ``//* @style @condition:{var1="yes", var2}, {var1="no", var3, var4} @array:{var1, var2, var3, var4} @multicolumn:{var1, var2, var3, var4}`` will combine features as shown below:
+    Similar to previous tip, you can combine all style options on same variable. For example //* @style @condition:{var1="yes", var2}, {var1="no", var3, var4} @array:{var1, var2, var3, var4} @multicolumn:{var1, var2, var3, var4} will combine features as shown below:
     
 .. image:: dolphinnext_images/process_array_multi_condi.png
     :align: center

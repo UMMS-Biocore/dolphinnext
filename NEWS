@@ -1,3 +1,9 @@
+20.05.2019 Version 0.3.27
+Settings icon of the process in the run page enabled when its shared with others.
+Dropdown options upgraded to dynamically show dropdown options. 
+Copy run feature upgraded to allow choosing project.
+Move run feature added.
+
 15.05.2019 Version 0.3.26
 Input channels are fixed to support multiple channels in set format.
 

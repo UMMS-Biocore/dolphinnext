@@ -710,27 +710,35 @@ function findDynamicArr(optArr, gNum) {
     var opt = null;
     for (var t = 0; t < optArr.length; t++) {
         if (optArr[t].varNameCond && optArr[t].selOpt && optArr[t].autoVal) {
-            optArr[t].varNameCond = checkDynamicVar(optArr[t].varNameCond, autoFillJSON, null, gNum)
-            if (optArr[t].varNameCond == optArr[t].selOpt) {
-                opt = optArr[t].autoVal;
-                return opt
+            var checkVal = checkDynamicVar(optArr[t].varNameCond, autoFillJSON, null, gNum)
+            if (checkVal){
+                optArr[t].varNameCond = checkVal
+                if (optArr[t].varNameCond == optArr[t].selOpt) {
+                    opt = optArr[t].autoVal;
+                    return opt
+                }
             }
         }
     }
     return opt
 }
 
+// at this position we know that default option will be shown (other options are not valid or conditionally seen options are available -> keep these option in hiddenOpt)
 function findDefaultArr(optArr) {
     var defaultOpt = null;
+    var hiddenOpt = [];
+    var allOpt = [];
     for (var t = 0; t < optArr.length; t++) {
+        $.extend(allOpt,optArr[t].autoVal)
         if (!optArr[t].varNameCond && !optArr[t].selOpt && optArr[t].autoVal) {
             var mergedOpt = optArr[t].autoVal.join("")
             if (!mergedOpt.match(/=/)) {
                 defaultOpt = optArr[t].autoVal;
             }
-        }
+        } 
     }
-    return defaultOpt
+    hiddenOpt = $(allOpt).not(defaultOpt).get();
+    return [defaultOpt,hiddenOpt,allOpt]
 }
 
 
@@ -738,10 +746,14 @@ function findDefaultArr(optArr) {
 
 //insert form fields into panels of process options 
 function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title) {
+
     var checkInsert = $('#addProcessRow-' + gNum).find('[id]').filter(function () {
         return $(this).attr('id') === 'var_' + gNum + '-' + varName
     });
     if (!checkInsert.length) {
+        var hiddenOpt = null; // if conditional dropdown options are defined
+        var allOpt = null; // if conditional dropdown options are defined
+        var optArr = []; // for dropdown options
         var arrayCheck = false; //is it belong to array
         var clearFix = ""; //if its the first element of multicol
         var arrayId = "";
@@ -813,13 +825,13 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
             var optionDiv = "";
             var defaultOpt = null;
             var dynamicOpt = null;
+            var optOrg = opt;
             if (opt) {
                 if (opt.length) {
                     //check if conditional options are defined.
                     var condOptCheck = $.isArray(opt[0])
                     if (condOptCheck) {
                         //conditional options
-                        var optArr = [];
                         optArr = createDynFillArr([opt])
                         //check if dynamic variables (_var) exist in varNameCond
                         dynamicOpt = findDynamicArr(optArr, gNum)
@@ -827,19 +839,24 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                             opt = dynamicOpt;
                         } else {
                             // check if default option is defined(without =)
-                            opt = findDefaultArr(optArr)
+                            // check if conditional options are defined and keep them in hiddenOpt 
+                            [opt,hiddenOpt,allOpt] = findDefaultArr(optArr)
                         }
                     }
                     if (opt) {
                         for (var k = 0; k < opt.length; k++) {
                             if (defaultVal === opt[k]) {
-                                optionDiv += '<option selected>' + opt[k] + ' </option>';
+                                optionDiv += '<option value="'+opt[k]+'" selected>' + opt[k] + ' </option>';
                             } else {
-                                optionDiv += '<option>' + opt[k] + ' </option>';
+                                optionDiv += '<option value="'+opt[k]+'">' + opt[k] + ' </option>';
                             }
                         }
                     }
-
+                    if (hiddenOpt) {
+                        for (var k = 0; k < hiddenOpt.length; k++) {
+                            optionDiv += '<option style="display:none;" value="'+hiddenOpt[k]+'">' + hiddenOpt[k] + ' </option>';
+                        }
+                    }
                 }
             }
             processParamDiv += label + inputDiv + optionDiv + '</select>' + descText + '</div>';
@@ -851,6 +868,53 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
             // if array defined then append each element into that arraydiv.
             $('#addProcessRow-' + gNum + "> #" + arrayId + '_ind0').append(processParamDiv);
             $('#addProcessRow-' + gNum + "> #" + arrayId + '_ind0 > #delDiv').insertAfter($('#addProcessRow-' + gNum + "> #" + arrayId + '_ind0 div:last')); //keep remove button at last
+        }
+        //bind event handler to dynamically show dropdown options  
+        if (hiddenOpt && optArr && allOpt) {
+            $.each(optArr, function (el) {
+                if (optArr[el].selOpt){
+                    if (!optArr[el].selOpt.match(/\|/)){
+                        var dataGroup = $.extend(true, {}, optArr[el]);
+                        dataGroup.type = type;
+                        var varNameCond = dataGroup.varNameCond;
+                        //find dropdown based condition changes are created.
+                        //in order to grep all array rows which has same id, following jquery pattern is used.
+                        var condDiv = $('[id="var_' + gNum + "-" + varNameCond + '"]');
+                        //bind change event to dropdown
+                        $.each(condDiv, function (eachArrayForm) {
+                            $(condDiv[eachArrayForm]).change(dataGroup, function () {
+                                var lastdataGroup = $.extend(true, {}, dataGroup);
+                                var autoVal = lastdataGroup.autoVal;
+                                var varNameCond = lastdataGroup.varNameCond;
+                                var selOpt = lastdataGroup.selOpt;
+                                var type = lastdataGroup.type;
+                                var selectedVal = "";
+                                if (type == "dropdown") {
+                                    selectedVal = $(this).val();
+                                } 
+                                var parentDiv = $(this).parent().parent();
+                                if (selectedVal === selOpt) {
+                                    //show only valid options
+                                    for (var k = 0; k < autoVal.length; k++) {
+                                        parentDiv.find("#var_" + gNum + "-" + varName).children("option[value=" + autoVal[k] + "]").css("display","block")
+                                    }
+                                    //hide option if they are not valid 
+                                    var hideOpt = $(allOpt).not(autoVal).get();
+                                    for (var k = 0; k < hideOpt.length; k++) {
+                                        var oldOpt= parentDiv.find("#var_" + gNum + "-" + varName).children("option[value=" + hideOpt[k] + "]")
+                                        oldOpt.css("display","none");
+                                        // if option selected that select first opt of dropdown
+                                        if (oldOpt.is(':selected')){
+                                            parentDiv.find("#var_" + gNum + "-" + varName).prop("selectedIndex", 0);;
+                                        }
+                                    }
+                                } 
+                            });
+                            $(condDiv[eachArrayForm]).trigger("change")
+                        });
+                    }
+                }
+            });
         }
     }
 }
@@ -891,7 +955,8 @@ function createDynFillArr(autoform) {
     $.each(autoform, function (elem) {
         var condArr = autoform[elem];
         for (var n = 0; n < condArr.length; n++) {
-            if (condArr[n].length > 1) {
+            // it was > 1 before, why?
+            if (condArr[n].length > 0) {
                 var autoObj = { varNameCond: null, selOpt: null, autoVal: [] };
                 for (var k = 0; k < condArr[n].length; k++) {
                     // check if condArr has element like "var1=yes" where varName=var1 or "var1=(yes|no)"
@@ -976,12 +1041,7 @@ function addProcessPanelAutoform(gNum, name, varName, type, autoform) {
                     }
                 });
                 $(condDiv[eachArrayForm]).trigger("change")
-                //                    trigger one more time to effectively change according to last value
-                //                    if (el == allAutoForm.length - 1) {
-                //                        $(condDiv[eachArrayForm]).trigger("change")
-                //                    }
             });
-
         });
     }
 }
@@ -4616,6 +4676,7 @@ function saveRun() {
     } else if (dupliProPipe === true) {
         old_project_pipeline_id = project_pipeline_id;
         project_pipeline_id = '';
+        project_id = $('#userProject').val();
         run_name = run_name + '-copy'
         if (confirmNewRev) {
             newpipelineID = highestRevPipeId;
@@ -4778,16 +4839,63 @@ function checkNewRevision() {
     return [highestRevPipeId, askNewRev]
 }
 
-function duplicateProPipe() {
-    dupliProPipe = true;
-    confirmNewRev = false;
-    [highestRevPipeId, askNewRev] = checkNewRevision();
-    if (askNewRev === true) {
-        $('#confirmDuplicate').modal("show");
-    } else {
-        saveRun();
-    }
+function refreshProjectDropDown(id){
+    $.ajax({
+        type: "GET",
+        url: "ajax/ajaxquery.php",
+        data: {
+            p: "getProjects"
+        },
+        async: false,
+        success: function (s) {
+            $(id).empty();
+            for (var i = 0; i < s.length; i++) {
+                var param = s[i];
+                var optionGroup = new Option(decodeHtml(param.name), param.id);
+                $(id).append(optionGroup);
+            }
+            $(id).val(project_id)
+        },
+        error: function (errorThrown) {
+            alert("Error: " + errorThrown);
+        }
+    });
 }
+
+function duplicateProPipe(type) {
+    refreshProjectDropDown("#userProject");
+
+    if (type == "copy"){
+        dupliProPipe = true;
+        confirmNewRev = false;
+        [highestRevPipeId, askNewRev] = checkNewRevision();
+        $('#copyRunBut').css("display","none");
+        $('#moveRunBut').css("display","none");
+        $('#duplicateKeepBtn').css("display","none");
+        $('#duplicateNewBtn').css("display","none");
+        if (askNewRev === true) {
+            $('#duplicateKeepBtn').css("display","inline-block");
+            $('#duplicateNewBtn').css("display","inline-block");
+            $("#confirmDuplicateText").text('New revision of this pipeline is available. If you want to create a new run and keep your revision of pipeline, please click "Keep Existing Revision" button. If you wish to use same input parameters in new revision of pipeline then click "Use New Revision" button.');
+        } else {
+            $('#copyRunBut').css("display","inline-block");
+            $("#confirmDuplicateText").text('Please select target project to copy your run.');
+        }
+        $("#confirmDuplicateTitle").text('Copy Run');
+        $('#confirmDuplicate').modal("show");  
+    } else if (type == "move"){
+        dupliProPipe = false;
+        saveRun();
+        $('#copyRunBut').css("display","none");
+        $('#duplicateKeepBtn').css("display","none");
+        $('#duplicateNewBtn').css("display","none");
+        $('#moveRunBut').css("display","inline-block");
+        $("#confirmDuplicateText").text('Please select target project to move your run.');
+        $("#confirmDuplicateTitle").text('Move Run');
+    }
+    $('#confirmDuplicate').modal("show");
+}
+
 $(function () {
     $(document).on('change', '#runVerLog', function (event) {
         var run_log_uuid = $(this).val();
@@ -4822,7 +4930,6 @@ $(function () {
                     var path = "run"
                     }
             var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
-            console.log(fileList);
             var fileListAr = getObjectValues(fileList);
             var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
             var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
@@ -4996,6 +5103,7 @@ $(document).ready(function () {
     // if user not own it, cannot change or delete run
     if (projectpipelineOwn === "0") {
         $('#deleteRun').remove();
+        $('#moveRun').remove();
         $('#delRun').remove();
         $('#saveRunIcon').remove();
         $('#pipeRunDiv').remove();
@@ -5077,8 +5185,9 @@ $(document).ready(function () {
     //after loading pipeline disable all the inputs
     if (projectpipelineOwn === "0") {
         setTimeout(function () {
-            $("#configTab :input").prop("disabled", true);
+            $("#configTab :input").not( ":button[show_sett_but]" ).prop("disabled", true);
             $("#advancedTab :input").prop("disabled", true);
+            $('.ui-dialog :input').prop("disabled", true);
         }, 1000);
     }
 
@@ -5088,10 +5197,10 @@ $(document).ready(function () {
     //##################
     //Sample Modal
     initCompleteFunction = function (settings, json) {
+        console.log("initCompleteFunction")
         var columnsToSearch = { 2: 'Collection', 3:"Host", 4:"Project" };
         for (var i in columnsToSearch) {
             var api = new $.fn.dataTable.Api(settings);
-            console.log("initCompleteFunction")
             $("#sampleTable_filter").css("display", "inline-block")
             $("#searchBarST").append('<div style="margin-bottom:20px; padding-left:8px; display:inline-block;" id="filter-' + columnsToSearch[i] + '"></div>')
             var select = $('<select id="select-' + columnsToSearch[i] + '" name="' + columnsToSearch[i] + '" multiple="multiple"></select>')
@@ -6656,6 +6765,31 @@ $(document).ready(function () {
 
     });
 
+    //######### copy/move runs
+    $('#confirmDuplicate').on('click', '#moveRunBut', function (e) {
+        var new_project_id = $('#userProject').val();
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {
+                old_project_id: project_id,
+                new_project_id: new_project_id,
+                project_pipeline_id: project_pipeline_id,
+                p: "moveRun"
+            },
+            async: true,
+            success: function (s) {
+                setTimeout(function () { window.location.replace("index.php?np=3&id=" + project_pipeline_id); }, 0);
+            },
+            error: function (errorThrown) {
+                alert("Error: " + errorThrown);
+            }
+        });
+    });
+    $('#confirmDuplicate').on('click', '#copyRunBut', function (e) {
+        confirmNewRev = false;
+        saveRun();
+    });
     $('#confirmDuplicate').on('click', '#duplicateKeepBtn', function (e) {
         confirmNewRev = false;
         saveRun();
@@ -6664,6 +6798,32 @@ $(document).ready(function () {
         confirmNewRev = true;
         saveRun();
     });
+
+
+    $('#projectmodal').on('show.bs.modal', function (event) {
+        $(this).find('form').trigger('reset');
+    });
+
+    $('#projectmodal').on('click', '#saveproject', function (event) {
+        event.preventDefault();
+        var projectName = $('#mProjectName').val();
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {name:projectName, summary:"", p:"saveProject"},
+            async: true,
+            success: function (s) {
+                refreshProjectDropDown("#userProject");
+                $("#userProject").val(s.id);
+                $('#projectmodal').modal('hide');
+            },
+            error: function (errorThrown) {
+                alert("Error: " + errorThrown);
+            }
+        });
+    });
+
+    //######### copy/move runs end
 
     $(function () {
         $(document).on('click', '.updateIframe', function (event) {
