@@ -1187,7 +1187,7 @@ else if ($p=="moveFile"){
 }
 else if ($p=="saveProject"){
     $name = addslashes(htmlspecialchars(urldecode($_REQUEST['name']), ENT_QUOTES));
-    $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
+    $summary = isset($_REQUEST['summary']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES)) : "";
     if (!empty($id)) {
         $data = $db->updateProject($id, $name, $summary, $ownerID);
     } else {
@@ -1220,6 +1220,47 @@ else if ($p=="duplicateProjectPipelineInput"){
     $new_id = $_REQUEST['new_id'];
     $old_id = $_REQUEST['old_id'];
     $data = $db->duplicateProjectPipelineInput($new_id, $old_id, $ownerID);
+}
+else if ($p=="moveRun"){
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $new_project_id = $_REQUEST['new_project_id'];
+    $old_project_id = $_REQUEST['old_project_id'];
+    $data = $db->updateProPipe_ProjectID($project_pipeline_id, $new_project_id, $ownerID);
+    $db->updateProPipeInput_ProjectID($project_pipeline_id, $new_project_id, $ownerID);
+    //get project_pipeline_inputs belong to project_pipeline and add one by one
+    $allinputs = json_decode($db->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+    foreach ($allinputs as $inputitem):
+    $input_id = $inputitem->{'input_id'};
+    $collection_id = $inputitem->{'collection_id'};
+    $input_id = (string)$input_id;
+    //insert into ProjectInput :
+    if (!empty($input_id) && $input_id != "0" && $input_id != 0){
+        //check if project input is exist
+        $checkPro = $db->checkProjectInput($new_project_id, $input_id);
+        $checkProData = json_decode($checkPro,true);
+        //insert into project_input table
+        if (!isset($checkProData[0])){
+            $insertPro = $db->insertProjectInput($new_project_id, $input_id, $ownerID);
+        } 
+    }
+    //insert into FileProject :
+    if (!empty($collection_id)){
+        settype($collection_id, 'integer');
+        $file_arr = $db->getCollectionFiles($collection_id,$ownerID);
+        $file_array = json_decode($file_arr,true);
+        foreach ($file_array as $file_item):
+        $file_id = $file_item["id"];
+        settype($file_id, 'integer');
+        // check if project input is exist
+        $checkFilePro = $db->checkFileProject($new_project_id, $file_id);
+        $checkFileProData = json_decode($checkFilePro,true);
+        //insert into file project table
+        if (!isset($checkFileProData[0])){
+            $insertFileProject = $db->insertFileProject($file_id, $new_project_id, $ownerID);
+        }
+        endforeach;
+    }
+    endforeach;
 }
 else if ($p=="duplicateProcess"){
     $new_process_gid = $_REQUEST['process_gid'];

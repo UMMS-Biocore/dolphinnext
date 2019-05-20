@@ -2439,6 +2439,22 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
+    public function updateProPipe_ProjectID($project_pipeline_id, $new_project_id, $ownerID) {
+        $sql = "UPDATE project_pipeline SET project_id='$new_project_id', last_modified_user ='$ownerID', date_modified=now()  WHERE id = '$project_pipeline_id'";
+        return self::runSQL($sql);
+    }
+    public function updateProPipeInput_ProjectID($project_pipeline_id, $new_project_id, $ownerID) {
+        $sql = "UPDATE project_pipeline_input SET project_id='$new_project_id', last_modified_user ='$ownerID', date_modified=now()  WHERE project_pipeline_id = '$project_pipeline_id'";
+        return self::runSQL($sql);
+    }
+    public function updateProjectInput_ProjectID($project_pipeline_id, $new_project_id, $ownerID) {
+        $sql = "UPDATE project_pipeline_input SET project_id='$new_project_id', last_modified_user ='$ownerID', date_modified=now()  WHERE project_pipeline_id = '$project_pipeline_id'";
+        return self::runSQL($sql);
+    }
+    
+    
+    
+    
     public function insertProcessGroup($group_name, $ownerID) {
         $sql = "INSERT INTO process_group (owner_id, group_name, date_created, date_modified, last_modified_user, perms) VALUES ('$ownerID', '$group_name', now(), now(), '$ownerID', 63)";
         return self::insTable($sql);

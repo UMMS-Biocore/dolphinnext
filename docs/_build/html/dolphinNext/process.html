@@ -580,9 +580,35 @@ system(&quot;tophat2 -o . ${newPath} !{name}&quot;);
 </pre></div>
 </div>
 </li>
-<li><p class="first"><strong>&#64;options:</strong> When you define &#64;dropdown as a formType, you should define available options by using <code class="docutils literal notranslate"><span class="pre">&#64;options</span></code> tag. Please check the example dropdown at above.</p>
+<li><p class="first"><strong>&#64;options:</strong> When you define &#64;dropdown as a formType, you should define available options by using <code class="docutils literal notranslate"><span class="pre">&#64;options</span></code> tag. Please check the simpliest version of dropdown:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">genomeType</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;hg19&quot;</span><span class="p">,</span><span class="s2">&quot;mm10&quot;</span><span class="p">,</span><span class="s2">&quot;custom&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Conditional Options - Version 1 (Advanced Usage):</strong> Same process can be seen different in different pipelines. In order to control the dropdown options that are visible, you can define variables in the pipeline header which starts with underscore. For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_nucleicAcidType</span> <span class="o">=</span> <span class="s2">&quot;rna&quot;</span> <span class="o">//</span><span class="n">In</span> <span class="n">RNA</span><span class="o">-</span><span class="n">seq</span> <span class="n">pipeline</span> <span class="n">header</span>
+<span class="n">_nucleicAcidType</span> <span class="o">=</span> <span class="s2">&quot;dna&quot;</span> <span class="o">//</span><span class="n">In</span> <span class="n">ChIP</span><span class="o">-</span><span class="n">seq</span> <span class="n">pipeline</span> <span class="n">header</span>
+</pre></div>
+</div>
 </li>
 </ul>
+<p>and you can control which options will be visible by using following format:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">param</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:{</span><span class="n">_nucleicAcidType</span><span class="o">=</span><span class="s2">&quot;rna&quot;</span><span class="p">,</span><span class="s2">&quot;rRNA&quot;</span><span class="p">,</span><span class="s2">&quot;miRNA&quot;</span><span class="p">,</span><span class="s2">&quot;snRNA&quot;</span><span class="p">},{</span><span class="n">_nucleicAcidType</span><span class="o">=</span><span class="s2">&quot;dna&quot;</span><span class="p">,</span> <span class="s2">&quot;ercc&quot;</span><span class="p">,</span><span class="s2">&quot;rmsk&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Now, <code class="docutils literal notranslate"><span class="pre">param</span></code> dropdown will have 3 options (“rRNA”,”miRNA”,”snRNA”) in RNA-seq pipeline and 2 options (“ercc”,”rmsk”) in ChIP-seq pipeline. Similarly you can define default options by not assigning any value as seen at the example below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">param</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:{</span><span class="s2">&quot;rRNA&quot;</span><span class="p">,</span><span class="s2">&quot;miRNA&quot;</span><span class="p">,</span><span class="s2">&quot;snRNA&quot;</span><span class="p">},{</span><span class="n">_nucleicAcidType</span><span class="o">=</span><span class="s2">&quot;dna&quot;</span><span class="p">,</span><span class="s2">&quot;ercc&quot;</span><span class="p">,</span><span class="s2">&quot;rmsk&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Here, by default 3 options(“rRNA”,”miRNA”,”snRNA”) will be visible unless in the pipeline header <code class="docutils literal notranslate"><span class="pre">_nucleicAcidType=&quot;dna&quot;</span></code> is defined.</p>
+<ul>
+<li><p class="first"><strong>Conditional Options - Version 2 (Advanced Usage):</strong> You can control the dropdown options that are visible, based on the selected parameter in other dropdown. Please check the example below, where dropdown called <code class="docutils literal notranslate"><span class="pre">sequence</span></code> controls the visible options of the dropdown <code class="docutils literal notranslate"><span class="pre">aligner</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">aligner</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:{</span><span class="n">sequence</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;rRNA&quot;</span><span class="p">,</span><span class="s2">&quot;miRNA&quot;</span><span class="p">,</span><span class="s2">&quot;snRNA&quot;</span><span class="p">),</span><span class="s2">&quot;bowtie&quot;</span><span class="p">,</span><span class="s2">&quot;bowtie2&quot;</span><span class="p">},{</span><span class="n">sequence</span><span class="o">=</span><span class="s2">&quot;genome&quot;</span><span class="p">,</span> <span class="s2">&quot;star&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>When <code class="docutils literal notranslate"><span class="pre">sequence</span></code> is selected as one of the following options:”rRNA”,”miRNA”,”snRNA”, <code class="docutils literal notranslate"><span class="pre">aligner</span></code> will have “bowtie and bowtie2” options. Similarly, “star” will be seen, if <code class="docutils literal notranslate"><span class="pre">sequence</span></code> selected as “genome”.</p>
 </div>
 <div class="section" id="styles-for-process-options">
 <h2>Styles for Process Options<a class="headerlink" href="#styles-for-process-options" title="Permalink to this headline">¶</a></h2>
@@ -630,7 +656,7 @@ system(&quot;tophat2 -o . ${newPath} !{name}&quot;);
 <a class="reference internal image-reference" href="../_images/process_condi.png"><img alt="../_images/process_condi.png" class="align-center" src="../_images/process_condi.png" style="width: 75%;" /></a>
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
-<p class="last">Similar to previous tip, you can combine all style options on same variable. For example <code class="docutils literal notranslate"><span class="pre">//*</span> <span class="pre">&#64;style</span> <span class="pre">&#64;condition:{var1=&quot;yes&quot;,</span> <span class="pre">var2},</span> <span class="pre">{var1=&quot;no&quot;,</span> <span class="pre">var3,</span> <span class="pre">var4}</span> <span class="pre">&#64;array:{var1,</span> <span class="pre">var2,</span> <span class="pre">var3,</span> <span class="pre">var4}</span> <span class="pre">&#64;multicolumn:{var1,</span> <span class="pre">var2,</span> <span class="pre">var3,</span> <span class="pre">var4}</span></code> will combine features as shown below:</p>
+<p class="last">Similar to previous tip, you can combine all style options on same variable. For example //* &#64;style &#64;condition:{var1=”yes”, var2}, {var1=”no”, var3, var4} &#64;array:{var1, var2, var3, var4} &#64;multicolumn:{var1, var2, var3, var4} will combine features as shown below:</p>
 </div>
 <a class="reference internal image-reference" href="../_images/process_array_multi_condi.png"><img alt="../_images/process_array_multi_condi.png" class="align-center" src="../_images/process_array_multi_condi.png" style="width: 85%;" /></a>
 </div>
