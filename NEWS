@@ -1,3 +1,7 @@
+22.05.2019 Version 0.3.28
+Pipeline revision are consolidated as dropdown in the project details page.
+Confirmation modal added for removing run in the project details page.
+
 20.05.2019 Version 0.3.27
 Settings icon of the process in the run page enabled when its shared with others.
 Dropdown options upgraded to dynamically show dropdown options. 

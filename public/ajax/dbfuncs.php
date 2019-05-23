@@ -2014,6 +2014,8 @@ class dbfuncs {
         return self::queryTable($sql);
     }
 
+    
+    
     public function getPipelineSideBar($ownerID){
         if ($ownerID != ''){
             $userRoleArr = json_decode($this->getUserRole($ownerID));
@@ -2023,23 +2025,27 @@ class dbfuncs {
             } else {
                 $where = " WHERE p.deleted = 0 AND (p.owner_id='$ownerID' OR (p.perms = 63 AND p.pin = 'true') OR (ug.u_id ='$ownerID' and p.perms = 15)) ";
             }
-            $sql= "SELECT DISTINCT pip.id, pip.name, pip.perms, pip.group_id, pip.pin
+            $sql= "SELECT DISTINCT pip.id, pip.name, pip.perms, pip.group_id, pip.pin, pip.rev_id, pip.summary, pip.date_modified, u.username, pip.pipeline_group_id, pip.pipeline_gid
                 FROM biocorepipe_save pip
+                INNER JOIN users u ON pip.owner_id = u.id
                 LEFT JOIN user_group ug ON  pip.group_id=ug.g_id
                 INNER JOIN (
                   SELECT p.pipeline_gid, MAX(p.rev_id) rev_id
                   FROM biocorepipe_save p
+                  INNER JOIN users u ON p.owner_id = u.id
                   LEFT JOIN user_group ug ON p.group_id=ug.g_id
                   $where
                   GROUP BY p.pipeline_gid
                 ) b ON pip.rev_id = b.rev_id AND pip.deleted = 0 AND pip.pipeline_gid=b.pipeline_gid";
 
         } else {
-            $sql= "SELECT DISTINCT pip.id, pip.name, pip.perms, pip.group_id, pip.pin
+            $sql= "SELECT DISTINCT pip.id, pip.name, pip.perms, pip.group_id, pip.pin, pip.rev_id,  pip.summary, pip.date_modified, u.username, pip.pipeline_group_id, pip.pipeline_gid
                 FROM biocorepipe_save pip
+                INNER JOIN users u ON pip.owner_id = u.id
                 INNER JOIN (
                   SELECT p.pipeline_gid, MAX(p.rev_id) rev_id
                   FROM biocorepipe_save p
+                  INNER JOIN users u ON pip.owner_id = u.id
                   WHERE p.perms = 63 AND p.deleted=0
                   GROUP BY p.pipeline_gid
                 ) b ON pip.rev_id = b.rev_id AND pip.pipeline_gid=b.pipeline_gid AND pip.pin = 'true' AND pip.deleted = 0";
@@ -4032,7 +4038,7 @@ class dbfuncs {
             if (isset(json_decode($userRoleCheck)[0])){
                 $userRole = json_decode($userRoleCheck)[0]->{'role'};
                 if ($userRole == "admin"){
-                    $sql = "select DISTINCT pip.id, pip.rev_id, pip.name, pip.summary, pip.date_modified, u.username, pip.script_pipe_header, pip.script_pipe_footer, pip.script_mode_header, pip.script_mode_footer, pip.pipeline_group_id
+                    $sql = "select DISTINCT pip.id, pip.rev_id, pip.name, pip.summary, pip.date_modified, u.username, pip.script_pipe_header, pip.script_pipe_footer, pip.script_mode_header, pip.script_mode_footer, pip.pipeline_group_id, pip.pipeline_gid
                                   FROM biocorepipe_save pip
                                   INNER JOIN users u ON pip.deleted=0 AND pip.owner_id = u.id";
                     return self::queryTable($sql);
@@ -4040,7 +4046,7 @@ class dbfuncs {
             }
         }
         $where = " where pip.deleted=0 AND pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15)";
-        $sql = "select DISTINCT pip.id, pip.rev_id, pip.name, pip.summary, pip.date_modified, u.username, pip.script_pipe_header, pip.script_pipe_footer, pip.script_mode_header, pip.script_mode_footer, pip.pipeline_group_id
+        $sql = "select DISTINCT pip.id, pip.rev_id, pip.name, pip.summary, pip.date_modified, u.username, pip.script_pipe_header, pip.script_pipe_footer, pip.script_mode_header, pip.script_mode_footer, pip.pipeline_group_id, pip.pipeline_gid
                             FROM biocorepipe_save pip
                             INNER JOIN users u ON pip.owner_id = u.id
                             LEFT JOIN user_group ug ON pip.group_id=ug.g_id
