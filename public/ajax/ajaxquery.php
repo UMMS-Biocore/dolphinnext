@@ -1561,9 +1561,11 @@ else if ($p=="savePipelineDetails")
         $db->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
     }
 }
-else if ($p=="getSavedPipelines")
-{
+else if ($p=="getSavedPipelines") {
     $data = $db->getSavedPipelines($ownerID);
+}
+else if ($p=="getPipelineSideBar") {
+    $data = $db->getPipelineSideBar($ownerID);
 }
 else if ($p=="exportPipeline"){
     $data = $db->exportPipeline($id,$ownerID, "main", 0);
