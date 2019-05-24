@@ -1,3 +1,7 @@
+24.05.2019 Version 0.3.29
+Minor bug fixed to replace empty form options on nextflow file.
+Minor bug fixed by changing object key filtering method.
+
 22.05.2019 Version 0.3.28
 Pipeline revision are consolidated as dropdown in the project details page.
 Confirmation modal added for removing run in the project details page.
