@@ -4480,6 +4480,7 @@ function filterKeys(obj, filter) {
         if (obj.hasOwnProperty(key) && key.match(filter)) {
             keys.push(key);
         } 
+    }
     return keys;
 }
 
