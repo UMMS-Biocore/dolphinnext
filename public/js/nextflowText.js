@@ -332,10 +332,14 @@ function getNewScriptHeader(script_header, process_opt, gNum) {
                 newScriptHeader += newLine;
                 checkArrFill = true;
             }
-            //fill original format in not filled as array format
+            //fill original format when not filled as array format
             if (!checkArrFill) {
-                if (process_opt[gNum][varName]) {
+                if (process_opt[gNum][varName] != undefined) {
                     var fillVal = process_opt[gNum][varName];
+                    //if integer is entered blank, make it empty string
+                    if (fillVal === "" && quoteType === ""){
+                        quoteType = '"';
+                    }
                     fillVal = fillVal.replace(/(\r\n|\n|\r)/gm, "\\n");
                     var newLine = lines[i].replace(pattern, '$1' + ' = ' + quoteType + fillVal + quoteType + ' //*' + '$3' + '\n');
                     newScriptHeader += newLine;
@@ -757,7 +761,6 @@ function getOptionalInText(optionalInAr, optionalInNameAr) {
         } else {
             inputNameOptional = $.trim(inputName);
         }
-        console.log(inputNameOptional)
         optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(file('" + inputNameOptional + "', type: 'any')) \n";
     }
     return optText

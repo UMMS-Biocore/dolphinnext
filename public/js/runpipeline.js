@@ -4477,9 +4477,9 @@ function getServerLog(project_pipeline_id, name) {
 function filterKeys(obj, filter) {
     var key, keys = [];
     for (key in obj) {
-        if (obj.hasOwnProperty(key) && filter.test(key)) {
+        if (obj.hasOwnProperty(key) && key.match(filter)) {
             keys.push(key);
-        }
+        } 
     }
     return keys;
 }
@@ -4496,7 +4496,7 @@ function formToJson(rawFormData, stringify) {
         return formDataArr;
     }
 }
-//xxxx
+
 //prepare JSON to save db
 function getProcessOpt() {
     var processOptAll = {};
