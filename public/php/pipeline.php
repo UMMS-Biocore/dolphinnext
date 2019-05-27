@@ -729,34 +729,35 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="mParamList" class="col-sm-3 control-label">Parameters</label>
+                        <label for="mParamList" class="col-sm-4 control-label">Parameters</label>
                         <div id="mParamsDynamic" class="col-sm-1" style=" display:none; width: auto;  ">
                             <button type="button" class="btn btn-default form-control" id="mParamOpen"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Show Parameters"><i class="fa fa-eye"></i></a></button>
                         </div>
-                        <div id="mParamList" class="col-sm-9" style=" ">
+                        <div id="mParamList" class="col-sm-8" style=" ">
                             <select id="mParamListIn" class="fbtn btn-default form-control" name="ParamAllIn"></select>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="mName" class="col-sm-3 control-label">Identifier <span><a id="mNameTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores (&quot;_&quot;)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                        <div class="col-sm-9">
+                        <label for="mName" class="col-sm-4 control-label">Identifier <span><a id="mNameTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        <div class="col-sm-8">
                             <input type="text" class="form-control" id="modalName" name="name">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="mQualifier" class="col-sm-3 control-label">Qualifier</label>
-                        <div class="col-sm-9">
+                        <label  for="mQualifier" class="col-sm-4 control-label">Qualifier</label>
+                        <div class="col-sm-8">
                             <select class="form-control" id="modalQualifier" name="qualifier">
                                 <option value="file">file</option>
                                 <option value="set">set</option>
                                 <option value="val">val</option>
+                                <option value="each">each</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group" id="mFileTypeDiv">
-                        <label for="mFileType" class="col-sm-3 control-label">File Type <span><a id="mFileTypeTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores (&quot;_&quot;)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                        <div class="col-sm-9">
+                        <label for="mFileType" id="mFileTypeLabel" class="col-sm-4 control-label">File Type <span><a id="mFileTypeTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores. If qualifier is set to each, you may enter both file type (if you're planing to connect with file nodes) or identifier(in case of connecting to val nodes.)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        <div class="col-sm-8">
                             <input type="text" class="form-control" id="mFileType" name="file_type">
                         </div>
                     </div>

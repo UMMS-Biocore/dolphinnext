@@ -1,3 +1,9 @@
+27.05.2019 Version 0.3.30
+Array rows upgraded to support default values in form fields. (eg. varname = ["a","b"] //* @input)
+Process script upgraded to support form fields.
+Each parameter type added to support repetitive processes.
+Documentation updated to cover point at above.
+
 24.05.2019 Version 0.3.29
 Minor bug fixed to replace empty form options on nextflow file.
 Minor bug fixed by changing object key filtering method.

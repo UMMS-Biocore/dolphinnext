@@ -310,10 +310,12 @@ function getNewScriptHeader(script_header, process_opt, gNum) {
             var newLine = "";
             var varName = $.trim(checkParam[1]);
             var oldDefVal = $.trim(checkParam[2]);
-            var quoteType = "";
+            var quoteType = '';
             if (oldDefVal[0] === "'") {
                 quoteType = "'";
             } else if (oldDefVal[0] === '"') {
+                quoteType = '"';
+            } else if (oldDefVal[0] === '[') {
                 quoteType = '"';
             }
             //check if varName_indx is defined in eachProcessOpt for form arrays
@@ -465,6 +467,9 @@ function createNextflowFile(nxf_runmode, uuid) {
                 //check if parameter comment  //* and process_opt[gNum] are exist:
                 if (script_header.match(/\/\/\*/) && process_opt[gNum]) {
                     script_header = getNewScriptHeader(script_header, process_opt, gNum);
+                }
+                if (body.match(/\/\/\*/) && process_opt[gNum]) {
+                    body = getNewScriptHeader(body, process_opt, gNum);
                 }
             }
             var mergedProcessList = getMergedProcessList();
