@@ -479,6 +479,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
 //inputText = "example" //* @textbox @description:"One inputbox is invented"
 //selectText = "sel1" //* @dropdown @options:"none","sel1","sel2" @description:"One text is invented"
 //checkBox = "true" //* @checkbox @description:"One checkbox is created"
+//arr = ["name1","name2"] //* @input 
 
 function parseVarPart(varPart, type) {
     var splitType = type || "";
@@ -496,6 +497,11 @@ function parseVarPart(varPart, type) {
             // if defaultVal starts and ends with single or double quote, remove these. (keep other quotes)
             if ((defaultVal.charAt(0) === '"' || defaultVal.charAt(0) === "'") && (defaultVal.charAt(defaultVal.length - 1) === '"' || defaultVal.charAt(defaultVal.length - 1) === "'")) {
                 defaultVal = defaultVal.substr(1, defaultVal.length - 2);
+            } else if (defaultVal.charAt(0) === '[' || defaultVal.charAt(defaultVal.length - 1) === "]"){
+                var content = defaultVal.substr(1, defaultVal.length - 2);
+                content = content.replace(/\"/g, '');
+                content = content.replace(/\'/g, '');
+                defaultVal = content.split(",")
             }
         }
     } // if /=/ not exist then genericCond is defined   
@@ -746,7 +752,9 @@ function findDefaultArr(optArr) {
 
 //insert form fields into panels of process options 
 function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title) {
-
+    if ($.isArray(defaultVal)){
+        defaultVal = "";
+    }
     var checkInsert = $('#addProcessRow-' + gNum).find('[id]').filter(function () {
         return $(this).attr('id') === 'var_' + gNum + '-' + varName
     });
@@ -790,6 +798,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                         $('#addProcessRow-' + gNum + "> #" + arrayId + '_ind0 + #addDiv > button').attr("onclick", "javascript:appendBeforeDiv(this)")
                     }
                 }
+                //xxxxxxxxx
             });
         }
         if (tool && tool != "") {
@@ -1956,7 +1965,50 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                         addProcessPanelRow(prefix + gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title);
                     }
                     if (autoform) {
+                        // if @autofill exists, then create event binders
                         addProcessPanelAutoform(prefix + gNum, name, varName, type, autoform);
+                    }
+                }
+            }
+            if (array){
+                //if defVal is array than insert array rows and fill them
+                for (var a = 0; a < array.length; a++) {
+                    for (var i = 0; i < panelObj.schema.length; i++) {
+                        var varName = panelObj.schema[i].varName;
+                        var defaultVal = panelObj.schema[i].defaultVal;
+                        if ($.isArray(defaultVal)){
+                            var insertObj = {}
+                            insertObj[gNum] = {}
+                            $.each(array, function (el) {
+                                if (array[el].indexOf(varName) > -1) {
+                                    var arrayId = array[el].join('_');
+                                    for (var k = 0; k < defaultVal.length; k++) {
+                                        var ind = k+1
+                                        //check if div inserted or not
+                                        if (!$('#addProcessRow-' + gNum + "> #" + arrayId + '_ind'+ind).length){
+                                            insertObj[gNum][varName+"_ind"+ind]= defaultVal[k]
+                                        }
+                                    }
+                                    addArrForms(insertObj)
+                                }
+                            });
+                            //fill rows with with default values
+                            $.each(array, function (el) {
+                                if (array[el].indexOf(varName) > -1) {
+                                    var arrayId = array[el].join('_');
+                                    for (var k = 0; k < defaultVal.length; k++) {
+                                        var ind = k+1
+                                        if ($('#addProcessRow-' + gNum + "> #" + arrayId + '_ind'+ind).length){
+                                            var fillObj = {}
+                                            fillObj[varName+"_ind"+ind]= defaultVal[k]
+                                            var inputDiv = $('#addProcessRow-' + gNum + "> #" + arrayId + '_ind'+ind).find("#var_"+gNum+"-"+varName);
+                                            var inputDivType = $(inputDiv).attr("type");
+                                            fillEachProcessOpt(fillObj, varName+"_ind"+ind, inputDiv, inputDivType);
+                                        }
+                                    }
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -2912,10 +2964,14 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
     var processData = JSON.parse(window.pipeObj["process_" + process_id]);
     if (processData) {
         if (processData[0].script_header !== "" && processData[0].script_header !== null) {
-            var pro_script_header = decodeHtml(processData[0].script_header);
-            insertProPipePanel(pro_script_header, pObj.gNum, name, pObj, processData);
+            var allProScript = decodeHtml(processData[0].script_header);
+            if (processData[0].script !== "" && processData[0].script !== null){
+                var script = decodeHtml(processData[0].script);
+                allProScript += "\n"+script;
+            }
+            insertProPipePanel(allProScript, pObj.gNum, name, pObj, processData);
             //generate json for autofill by using script of process header
-            var pro_autoFillJSON = parseAutofill(pro_script_header);
+            var pro_autoFillJSON = parseAutofill(allProScript);
             // bind event handlers for autofill
             setTimeout(function () {
                 if (pro_autoFillJSON !== null && pro_autoFillJSON !== undefined) {
@@ -4584,7 +4640,7 @@ function addArrForms(allProcessOpt) {
                     //trigger click on add button if numAddedForm>0 and added div is not exist
                     if (numAddedForm && numAddedForm != 0) {
                         if (!$('#addProcessRow-' + proGnum + " > #" + outerDivVarname + "_ind" + numAddedForm)[0]) {
-                            var addButton = $(outerDiv.next().find("button[defval*='" + outerDivVarname + "']")[0]);
+                            var addButton = $(outerDiv.next().find("button[id*='Add'][defval*='" + outerDivVarname + "']")[0]);
                             for (var i = 0; i < numAddedForm; i++) {
                                 addButton.trigger("click");
                             }
@@ -4596,13 +4652,36 @@ function addArrForms(allProcessOpt) {
     });
 }
 
+// add array forms before fill the data
+function delArrForms(allProcessOpt) {
+    $.each(allProcessOpt, function (proGnum) {
+        var eachProcessOpt = allProcessOpt[proGnum];
+        // find all form-groups for each process by proGnum
+        var formGroupArray = $('#addProcessRow-' + proGnum).find('.form-group').toArray();
+        $.each(formGroupArray, function (elem) {
+            var outerDiv = $(formGroupArray[elem]).parent();
+            var outerDivId = outerDiv.attr("id");
+            //check if visible arrayDiv is exist
+            if (outerDivId) {
+                if (outerDivId.match(/(.*)_ind(.*)/)) {
+                    var outerDivIndId = outerDivId.match(/(.*)_ind(.*)$/)[2];
+                    if (outerDivIndId >0){
+                        if ($('#addProcessRow-' + proGnum + " > #" + outerDivId ).length){
+                            $('#addProcessRow-' + proGnum + " > #" + outerDivId).remove();
+                        }
+                    }
+                }
+            }
+        });
+    });
+}
 
-
-//xxxxxxx
 //get JSON from db and fill the process options
 function loadProcessOpt(allProcessOpt) {
     if (allProcessOpt) {
         allProcessOpt = JSON.parse(allProcessOpt);
+        // clean array rows before adding new ones (consider added rows by default value["a","b"])
+        delArrForms(allProcessOpt);
         // add array forms before fill the data
         addArrForms(allProcessOpt);
         $.each(allProcessOpt, function (el) {

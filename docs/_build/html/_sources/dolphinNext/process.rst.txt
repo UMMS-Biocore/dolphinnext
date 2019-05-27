@@ -33,8 +33,6 @@ This section is used to create parameters which will be used while defining *inp
 
 * **Identifier:** Identifier is simply parameter name and allows you to call same parameters in other processes.
 
-.. note:: When qualifier set to ``val``, ``identifier`` is used to filter available nodes while connecting each nodes. However, when ``file`` or ``set`` is selected as qualifier, ``file type`` is used for filtering available nodes.
-
 * **Qualifier:** Three main type of qualifiers (``file``, ``set`` and ``val``) are exist in DolphinNext:  
     1) **File:** Uses the received value as a file. Example usage in nextflow file::
     
@@ -50,10 +48,15 @@ This section is used to create parameters which will be used while defining *inp
     
         val script_path
     
+    4) **Each:** Lets you execute the process for each entry in the input collection. Example usage::
+    
+        each bed_list
     
 * **File type:** If qualifier is set to ``file`` or ``set``, file type option will appear. This option will be used to filter available nodes while generating pipelines. 
 
-.. tip:: For instance, you may create ``genome`` parameter by entering identifier as:``genome``, qualifier: ``file`` and file type: ``fasta``. Similarly for creating ``script_path`` parameter you can define identifier as:``script_path`` and qualifier: ``val``.  
+.. tip:: For instance, you may create ``genome`` parameter by entering identifier as:``genome``, qualifier: ``file`` and file type: ``fasta``. Similarly for creating ``script_path`` parameter you can define identifier as:``script_path`` and qualifier: ``val``. 
+
+.. note:: When qualifier set to ``val``, **identifier** is used to filter available nodes while connecting each nodes. If ``file`` or ``set`` is selected as qualifier, **file type** is used for filtering available nodes. When qualifier is set to ``each``, you may enter both **file type** (if you're planing to connect with file nodes) or **identifier** (in case of connecting to val nodes.)
 
 Inputs
 ======
@@ -69,6 +72,7 @@ Input name box used to define nextflow variables which will be used in the `scri
 Qualifier   Input name                 Recall in the Script
 =========== ========================== ====================
 val         script_path                ${script_path}
+each        bed_list                   ${bed_list}
 file        genome                     ${genome}
 set         val(name), file(genome)    ${genome}
 set         val(name), file(genome)    ${name}
@@ -261,64 +265,88 @@ You may separate your main process inputs and optional parameters by using **Pro
 .. image:: dolphinnext_images/process_processopt.png
 	:align: center
 
-In order to create these form, you need to use following syntax in the **process header**::
+In order to create these forms, you need to use following syntax in the **script** or **process header** section::
     
     variableName = defaultValue //* @formType @description:"..." @tooltip:"..." @options:"..."
 
-.. note:: You can define defaultValue with single/double quotes (for strings) or without any quotes (for numbers).
+.. note:: You can define defaultValue with single/double quotes (for strings) or without any quotes (for numbers). If you define your variable as an array by using @style tag, you may enter more than one default value by using following array format: ``variableName = ["defaultValue1","defaultValue2"]``
 
 
 * **@formType:** Four type of form fields are available in DolphinNext (``@input``, ``@textbox``, ``@checkbox``, ``@dropdown``):  
     
-    1) **@input:** It creates single-line text field. Example usage and created form field in run page::
+@input
+******
     
-        readsPerFile = 5000000 //* @input @description:"The number of reads per file"
+It creates single-line text field. Example usage and created form field in run page::
+    
+    readsPerFile = 5000000 //* @input @description:"The number of reads per file"
         params_tophat = "-N 4" //* @input @description:"Tophat parameters" @tooltip:"parameters for Tophat2 version 2.6"
     
-    .. image:: dolphinnext_images/process_input.png
+.. image:: dolphinnext_images/process_input.png
 	:align: center
     
 |
 
-    2) **@textbox:** It creates multi-line text field. Example usage and created form field in run page::
+@textbox
+********
+
+It creates multi-line text field. Example usage and created form field in run page::
     
-        Adapter_Sequence = "" //* @textbox @description:"You can enter a single sequence or multiple sequences in different lines." 
+    Adapter_Sequence = "" //* @textbox @description:"You can enter a single sequence or multiple sequences in different lines." 
     
-    .. image:: dolphinnext_images/process_textbox.png
+.. image:: dolphinnext_images/process_textbox.png
 	:align: center
 
 |
     
-    3) **@checkbox:** It creates checkbox for the user and their available options are defined as ``true`` or ``false`` by default. Example usage and created form field in run page::
+@checkbox
+*********
+
+It creates checkbox for the user and their available options are defined as ``true`` or ``false`` by default. Example usage and created form field in run page::
     
-        run_rRNA_Mapping = "false" //* @checkbox @description:"Check the box to activate rRNA mapping."
-        rRNA_filtering = "true" //* @checkbox @description:"Check the box to filter rRNA reads."
+    run_rRNA_Mapping = "false" //* @checkbox @description:"Check the box to activate rRNA mapping."
+    rRNA_filtering = "true" //* @checkbox @description:"Check the box to filter rRNA reads."
     
-    .. image:: dolphinnext_images/process_checkbox.png
+.. image:: dolphinnext_images/process_checkbox.png
 	:align: center
 
 |
     
-    4) **@dropdown:** It create dropdown menu and their options can be specified by entering ``@options`` feature. Example usage and created form field in run page::
+@dropdown
+*********
+
+It create dropdown menu and their options can be specified by entering ``@options`` feature. Example usage and created form field in run page::
     
-        genomeType = "" //* @dropdown @description:"Genome type for pipeline" @options:"hg19","mm10", "custom"
+    genomeType = "" //* @dropdown @description:"Genome type for pipeline" @options:"hg19","mm10", "custom"
         
-    .. image:: dolphinnext_images/process_dropdown.png
+.. image:: dolphinnext_images/process_dropdown.png
 	:align: center
 
 |
     
-* **@description:** You can describe inputs by using ``@description`` tag. Please check the examples at above.
+@description
+************
+
+You can describe inputs by using ``@description`` tag. Please check the examples at above.
         
-* **@tooltip:** You can also create tooltip to add detailed explanation by using ``@tooltip`` tag. See the example at below::
+@tooltip
+********
+
+You can also create tooltip to add detailed explanation by using ``@tooltip`` tag. See the example at below::
 
     params_tophat = "-N 4" //* @input @tooltip:"parameters for Tophat2 version 2.6" @description:"Tophat parameters"
 
-* **@title:** You can also create header on top of the variable by using ``@title`` tag. This way you can easily organize the complicated form structures. See the example at below::
+@title
+******
+
+You can also create header on top of the variable by using ``@title`` tag. This way you can easily organize the complicated form structures. See the example at below::
 
     params_tophat = "-N 4" //* @input @title:"Alignment Section" @description:"Tophat parameters"
 
-* **@options:** When you define @dropdown as a formType, you should define available options by using ``@options`` tag. Please check the simpliest version of dropdown::
+@options
+********
+
+When you define @dropdown as a formType, you should define available options by using ``@options`` tag. Please check the simpliest version of dropdown::
 
     genomeType = "" //* @dropdown @options:"hg19","mm10","custom"
     
@@ -349,7 +377,8 @@ Styles for Process Options
 
 You might use additional tags to give specific shapes to form fields: A. ``@multicolumn`` B. ``@array`` C. ``condition``. 
 
-**A. @multicolumn:**
+A. @multicolumn
+***************
 
 Example::
 
@@ -367,7 +396,8 @@ In this example, var1, var2 and var3 will be located in the same row, by default
 	:align: center
 	:width: 85%
 
-**B. @array:**
+B. @array
+*********
 
 Example::
 
@@ -391,9 +421,16 @@ In this example, var1, var2 are grouped together and linked to add/remove button
 .. image:: dolphinnext_images/process_array_multi.png
     :align: center
     :width: 85%
+
+You can define multiple default values by using following syntax::
+
+    var1 = ["defVal1", "defVal2"] //* @input @description:"description of var1" 
+    
+Here, run page will open with two rows and these default values  will be defVal1 and  defVal2.
     
 
-**C. @condition:**
+C. @condition
+*************
 
 Example::
 
@@ -421,7 +458,8 @@ In this example, var1 value is binded to other form fields. When var1 is selecte
 Autofill Feature for Process
 ============================
 
-**Hostname Independent Autofill :**
+Hostname Independent Autofill:
+******************************
 
 If you want to define executor properties that are going to be automatically filled by default, you can use following syntax::
 
@@ -429,7 +467,8 @@ If you want to define executor properties that are going to be automatically fil
     <executor properties>
     //* autofill
 
-**Hostname Dependent Autofill :**
+Hostname Dependent Autofill:
+****************************
 
 Additionally, you might overwrite default executor properties by using **hostname dependent executor properties**. Please check the following syntax::
 
@@ -442,7 +481,8 @@ Additionally, you might overwrite default executor properties by using **hostnam
 
 Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname which is selected in the run as **Run Environment**. Therefore, in this example, all ``<executor properties>`` will be automatically filled in case of pipeline is going to run on **ghpcc06.umassrc.org**.
 
-**Executor Properties:**
+Executor Properties:
+********************
 
 Five type of executor properties are available to autofill **Executor Settings for Each Process**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue and Other Options. See the example below::
     
@@ -463,7 +503,8 @@ Five type of executor properties are available to autofill **Executor Settings f
 
 In the example, since run environment is selected as ghpcc06.umassrc.org, autofill feature overwrited the default ``$TIME`` value (1000) and filled with 3000.
 
-**Platform Tag :**
+Platform Tag:
+*************
 
 Optionally, you can isolate platform dependent paramaters by using **platform** tag. This way, exported process won't have the platform dependent parameters and similarly when process is imported, exisiting platform dependent parameters won't be overwritten. Please check the the example usage at below::
 
