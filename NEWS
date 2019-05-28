@@ -1,5 +1,5 @@
 27.05.2019 Version 0.3.31
-Minor update on from field default load.
+Minor update on related to default load of form fields.
 
 27.05.2019 Version 0.3.30
 Array rows upgraded to support default values in form fields. (eg. varname = ["a","b"] //* @input)
