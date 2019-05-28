@@ -1911,11 +1911,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
         onlyModuleName = pObj.lastPipeName
         onlyProcessName = pObj.name
         separator = ": "
-        //        console.log(onlyModuleName)
-        //        console.log(onlyProcessName)
         prefix = MainGNum + "_";
-        //        console.log('proPanelID="proPanel-' + prefix + gNum + '"');
-
     }
     if (processData){
         if (processData[0]){
@@ -1978,15 +1974,15 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                         var defaultVal = panelObj.schema[i].defaultVal;
                         if ($.isArray(defaultVal)){
                             var insertObj = {}
-                            insertObj[gNum] = {}
+                            insertObj[prefix + gNum] = {}
                             $.each(array, function (el) {
                                 if (array[el].indexOf(varName) > -1) {
                                     var arrayId = array[el].join('_');
                                     for (var k = 0; k < defaultVal.length; k++) {
                                         var ind = k+1
                                         //check if div inserted or not
-                                        if (!$('#addProcessRow-' + gNum + "> #" + arrayId + '_ind'+ind).length){
-                                            insertObj[gNum][varName+"_ind"+ind]= defaultVal[k]
+                                        if (!$('#addProcessRow-' + prefix + gNum + "> #" + arrayId + '_ind'+ind).length){
+                                            insertObj[prefix + gNum][varName+"_ind"+ind]= defaultVal[k]
                                         }
                                     }
                                     addArrForms(insertObj)
@@ -1998,10 +1994,10 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                                     var arrayId = array[el].join('_');
                                     for (var k = 0; k < defaultVal.length; k++) {
                                         var ind = k+1
-                                        if ($('#addProcessRow-' + gNum + "> #" + arrayId + '_ind'+ind).length){
+                                        if ($('#addProcessRow-' + prefix + gNum + "> #" + arrayId + '_ind'+ind).length){
                                             var fillObj = {}
                                             fillObj[varName+"_ind"+ind]= defaultVal[k]
-                                            var inputDiv = $('#addProcessRow-' + gNum + "> #" + arrayId + '_ind'+ind).find("#var_"+gNum+"-"+varName);
+                                            var inputDiv = $('#addProcessRow-' + prefix + gNum + "> #" + arrayId + '_ind'+ind).find("#var_"+prefix + gNum+"-"+varName);
                                             var inputDivType = $(inputDiv).attr("type");
                                             fillEachProcessOpt(fillObj, varName+"_ind"+ind, inputDiv, inputDivType);
                                         }
