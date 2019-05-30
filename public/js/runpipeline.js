@@ -383,7 +383,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -470,6 +470,9 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
     }
     if (dropDown) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('dropDown', dropDown)
+    }
+    if (showSett != null) {
+        $("#text" + MainGNum + "-" + pObj.gNum).attr('showSett', showSett)
     }
     if (pubWeb) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('pubWeb', pubWeb)
@@ -1228,7 +1231,7 @@ function hideProcessOptionsAsIcons (){
             var show_settingArr = show_setting.split(',');
             for (var t = 0; t < show_settingArr.length; t++) {
                 show_setting = show_settingArr[t];
-                var show_settingProcessPanel = $('#ProcessPanel > div[processorgname="'+show_setting+'"]')
+                var show_settingProcessPanel = $('#ProcessPanel > div[processorgname="'+show_setting+'"],div[allname="'+show_setting+'"]')
                 for (var k = 0; k < show_settingProcessPanel.length; k++) {
                     var panel = $(show_settingProcessPanel[k]);
                     var panelContent = $(show_settingProcessPanel[k]).children().children().eq(1);
@@ -1241,7 +1244,7 @@ function hideProcessOptionsAsIcons (){
                     if (show_settingArr.length > 1 || show_settingProcessPanel.length >1){
                         tooltip = "Edit: " + label
                     }
-                    if (processorgname == show_setting){
+                    if (processorgname == show_setting || allname == show_setting){
                         //insert button
                         var buttonId = 'show_sett_'+allname;
                         var button = '<button style="display:none; margin-left:7px;" show_sett_but="'+allname+'" type="button" class="btn btn-primary btn-sm"  id="'+buttonId+'"><a data-toggle="tooltip" data-placement="bottom" data-original-title="'+tooltip+'"><span><i class="fa fa-wrench"></i></span></a></button>';
@@ -1757,8 +1760,8 @@ function decodeGenericCond(autoFillJSON) {
     return autoFillJSON
 }
 
-//***
-// if variable start with "params." then insert into inputs table
+//*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
+//*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, showsett) {
     var dropDownQual = false;
     var paraQualifier = "val"
@@ -2751,17 +2754,49 @@ function insertInRow(inRow, paramGivenName, rowType, insertType) {
     }
 }
 
-//insert input table row based on edges of input parameters.
+//*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
+//*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix, second) {
     var paramGivenName = document.getElementById('text' + MainGNum + "-" + firGnum).getAttribute("name");
     var paraData = parametersData.filter(function (el) { return el.id == pObj.secPI });
     var paraFileType = "";
     var paraQualifier = "";
     var paraIdentifier = "";
+    var show_setting = "";
     var dropDownQual = false;
     var paramDefVal = $('#text-' + firGnum).attr("defVal");
     var paramDropDown = $('#text-' + firGnum).attr("dropDown");
-
+    var paramShowSett = $('#text-' + firGnum).attr("showSett");
+    var processName = $('#text-' + secGnum).attr('name');
+    if (paramShowSett != undefined){
+        if (paramShowSett === ""){
+            //check ccID for nested pipelines
+            var ccID = $("#"+second).attr("ccID")
+            if (ccID){
+                var parentG = $("#"+ccID).attr("parentG")
+                var textID = parentG.replace("g", "text"); //text73-4
+                var childProcessName = $("#" + textID).attr("name");
+                if (childProcessName){
+                    processName = processName + "_" + childProcessName;
+                }
+            }
+            show_setting = processName;
+        } else {
+            show_setting = paramShowSett;
+        }
+        show_setting = show_setting.split(',');
+        if (show_setting.length) {
+            for (var k = 0; k < show_setting.length; k++) {
+                show_setting[k] = $.trim(show_setting[k]);
+                show_setting[k] = show_setting[k].replace(/\"/g, '');
+                show_setting[k] = show_setting[k].replace(/\'/g, '');
+            }
+        }
+        if (Array.isArray(show_setting)){
+            show_setting = show_setting.join(",");
+        }
+    }
+    console.log(show_setting)
     if (paraData && paraData != '') {
         var paraFileType = paraData[0].file_type;
         var paraQualifier = paraData[0].qualifier;
@@ -2784,7 +2819,6 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
     } else {
         var dropDownMenu = "";
     }
-    var processName = $('#text-' + secGnum).attr('name');
     var rowExist = ''
     rowExist = document.getElementById(rowType + 'Ta-' + firGnum);
     if (rowExist) {
@@ -2793,7 +2827,6 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
         $('#' + rowType + 'Ta-' + firGnum + '> :nth-child(5)').append('<span id=proGName-' + secGnum + '>' + processName + '</span>');
     } else {
         //fill inputsTable
-        var show_setting = "";
         if (rowType === 'input') {
             var selectFileButton = getSelectFileButton(paraQualifier, dropDownQual, dropDownMenu, defValButton)
             //insert both system and user inputs
@@ -3011,12 +3044,16 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var defVal = null;
     var dropDown = null;
     var pubWeb = null;
+    var showSett = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
             defVal = processModules.defVal;
         }
         if (processModules.dropDown) {
             dropDown = processModules.dropDown;
+        }
+        if (processModules.showSett != undefined) {
+            showSett = processModules.showSett;
         }
         if (processModules.pubWeb) {
             pubWeb = processModules.pubWeb;
@@ -3055,7 +3092,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             }
         }
 
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
@@ -3090,7 +3127,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 

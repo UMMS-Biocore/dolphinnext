@@ -47,7 +47,21 @@ Input files or values which will be used in the process, need to be added by **I
 .. image:: dolphinnext_images/pipeline_buildindex.png
 	:align: center
 
-By using the **Pencil icon** which is located at the left side of the circle, you can edit name of the input parameters. These names will be used while creating variables in the nextflow file, therefore these names should be unique in overall pipeline.
+By using the **Pencil icon** which is located at the left side of the circle, you can edit name, define dropdown option, default value or enable show settings feature for run page.
+
+    * **Name:** will be used while creating variables in the nextflow file, therefore these names should be unique in overall pipeline.
+    * **Default value:** will assing a default value for the input which will be autofilled in the run page. eg. yes
+    * **Dropdown options:** Run page input will be shown as dropdown whose options entered in comma separated format. eg. yes, no
+    * **Show Settings :** Show Settings: Clicking checkbox will show settings of the connected process as a wrench button in the run page. You may specify alternative processes by entering their process name. eg. map_STAR, map_RSEM
+    
+.. image:: dolphinnext_images/pipeline_input_rename.png
+	:align: center  
+    
+Please check the example input row in run page which is designed as above. 
+
+.. image:: dolphinnext_images/pipeline_input_inrun.png
+	:align: center     
+
 
 Output Parameters
 =================

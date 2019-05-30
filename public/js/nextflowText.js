@@ -848,7 +848,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         script = script.substring(1, script.length - 1); //remove first and last duble quote
     }
     //insert """ for script if not exist
-    if (script.search('"""') === -1 && script.search('\'\'\'') === -1) {
+    if (script.search('"""') === -1 && script.search('\'\'\'') === -1 && script.search('when:') === -1 && script.search('script:') === -1 && script.search('shell:') === -1 && script.search('exec:') === -1) {
         script = '"""\n' + script + '\n"""'
     }
     bodyInput = ""
