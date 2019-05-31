@@ -1175,6 +1175,9 @@ class dbfuncs {
             $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite";
         }
         if (!empty($initialRunScript)){
+            if ($executor == "local" && $executor_job == 'ignite'){
+                $igniteCmd = "-w $dolphin_path_real/initialrun/work -process.executor ignite";
+            }
             $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $igniteCmd $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
         $mainNextCmd = "$initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $igniteCmd $next_inputs $runType $reportOptions > $dolphin_path_real/$logName";
