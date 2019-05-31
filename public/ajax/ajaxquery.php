@@ -40,7 +40,7 @@ if ($p=="saveRun"){
         $attempt = "0";
     }
     //create initialrun script
-    $initialrun_img = "shub://UMMS-Biocore/initialrun@7d2aace88efd7dd4475594000d9ac7962bd53fe4";
+    $initialrun_img = "shub://UMMS-Biocore/initialrun@08e8feb9cbef6797292bf59171ad985617c1d7cb";
     $initialRunScript = $db->initialRunScript($project_pipeline_id, $attempt, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
