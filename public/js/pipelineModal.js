@@ -1217,7 +1217,6 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 pipelineOwn = pData[0].own;
                 pipelinePerm = pData[0].perms;
                 // if user not own it, cannot change or delete pipeline
-                console.log(pipelineOwn)
                 if (pipelineOwn === "0") {
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
@@ -2688,6 +2687,7 @@ $(document).ready(function () {
     });
     // "change name" modal for input parameters: remove attr:disabled by click
     toggleCheckBox('#checkDropDown', '#dropDownOpt');
+    toggleCheckBox('#checkShowSett', '#showSettOpt');
     toggleCheckBox('#checkDefVal', '#defVal');
     toggleCheckBox('#checkPubWeb', '#pubWebOpt');
 
@@ -2713,7 +2713,7 @@ $(document).ready(function () {
     }
     // "change name" modal for input parameters
     function fillRenameModal(renameTextDefVal, checkID, inputID) {
-        if (renameTextDefVal) {
+        if (renameTextDefVal != null) {
             if (renameTextDefVal !== "") {
                 if ($(inputID).data().multiselect) {
                     $(inputID).multiselect('enable')
@@ -2724,6 +2724,9 @@ $(document).ready(function () {
                     $(inputID).removeAttr('disabled')
                     $(inputID).val(renameTextDefVal)
                 }
+                $(checkID).attr('checked', true);
+            } else if (inputID == "#showSettOpt" && renameTextDefVal === ""){
+                $(inputID).removeAttr('disabled')
                 $(checkID).attr('checked', true);
             } else {
                 if ($(inputID).data().multiselect) {
@@ -2750,7 +2753,9 @@ $(document).ready(function () {
             value = value.join(",")
         }
         var checkValue = $(checkId).is(":checked").toString();
-        if (checkValue === "true" && value !== "") {
+        if (checkValue === "true" && attr == "showSett"){
+            $("#" + renameTextID).attr(attr, value)
+        } else if (checkValue === "true" && value !== "") {
             $("#" + renameTextID).attr(attr, value)
         } else {
             $("#" + renameTextID).removeAttr(attr);
@@ -2778,19 +2783,23 @@ $(document).ready(function () {
         if (renameTextClassType === null) {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")
+            $('#showSettDiv').css("display", "none")
             $('#pubWebDiv').css("display", "none")
         } else if (renameTextClassType === "input") {
             $('#defValDiv').css("display", "block")
             $('#dropdownDiv').css("display", "block")
+            $('#showSettDiv').css("display", "block")
             $('#pubWebDiv').css("display", "none")
         } else if (renameTextClassType === "output") {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")
+            $('#showSettDiv').css("display", "none")
             $('#pubWebDiv').css("display", "block")
         }
 
         fillRenameModal(renameTextDefVal, "#checkDefVal", '#defVal');
         fillRenameModal(renameTextDropDown, '#checkDropDown', '#dropDownOpt');
+        fillRenameModal(renameTextShowSett, '#checkShowSett', '#showSettOpt');
         fillRenameModal(renameTextPubWeb, '#checkPubWeb', '#pubWebOpt');
         $('#renameModaltitle').html('Change Name');
         $('#mRenName').val(renameText);
@@ -2799,6 +2808,7 @@ $(document).ready(function () {
         saveValue('#checkDefVal', '#defVal', "defVal");
         saveValue('#checkDropDown', '#dropDownOpt', "dropDown");
         saveValue('#checkPubWeb', '#pubWebOpt', "pubWeb");
+        saveValue('#checkShowSett', '#showSettOpt', "showSett");
         changeName();
         autosave();
         $('#renameModal').modal("hide");

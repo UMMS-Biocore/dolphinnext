@@ -969,6 +969,14 @@
                             <input type="text" class="form-control" id="dropDownOpt" name="dropDownOpt" disabled>
                         </div>
                     </div>
+                    <div id="showSettDiv" class="form-group">
+                        <div class="col-sm-4 control-label">
+                            <label> <input type="checkbox" id="checkShowSett" name="checkShowSett"> Show Settings <span><a data-toggle="tooltip" data-placement="bottom" placeholder="Optional process name" title="Please click checkbox to show settings of the connected process as a button in the inputs section of the run pipeline page. You may specify alternative processes by entering their process name. eg. map_STAR"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        </div>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="showSettOpt" name="showSettOpt" disabled>
+                        </div>
+                    </div>
                     <div id="pubWebDiv" class="form-group">
                         <div class="col-sm-5 control-label">
                             <label><input type="checkbox" id="checkPubWeb" name="pubWeb" style="margin-right:3px;"> Publish to Web Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to publish connected output files to web publish directory."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
