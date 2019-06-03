@@ -1135,17 +1135,7 @@ function downloadText(text, filename) {
     document.body.removeChild(element);
 }
 
-//use array of item to fill select element
-function fillArray2Select(arr, id, clean) {
-    if (clean === true) {
-        $(id).empty();
-    }
-    for (var i = 0; i < arr.length; i++) {
-        var param = arr[i];
-        var optionGroup = new Option(param, param);
-        $(id).append(optionGroup);
-    }
-}
+
 
 
 $('.collapseIcon').on('click', function (e) {

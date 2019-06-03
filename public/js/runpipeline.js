@@ -2796,7 +2796,6 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
             show_setting = show_setting.join(",");
         }
     }
-    console.log(show_setting)
     if (paraData && paraData != '') {
         var paraFileType = paraData[0].file_type;
         var paraQualifier = paraData[0].qualifier;
@@ -4145,7 +4144,25 @@ function getNewExecOpt(oldExecOpt, newPaths) {
     }
     return newExecAll
 }
+function removeCollectionFromInputs(col_id){
+    //get all input paths
+    var inputPaths = $('#inputsTab > table > tbody >tr').find("span[id*='filePath']");
+    if (inputPaths && inputPaths != null) {
+        $.each(inputPaths, function (el) {
+            var collection_id = $(inputPaths[el]).attr("collection_id");
+            if (collection_id){
+                if (collection_id == col_id){
+                    var delButton = $(inputPaths[el]).parent().find("button[id*='inputDelDelete']")
+                    console.log(delButton)
+                    $(delButton).trigger("click")
+                }
+            }
+        });
+    }
+}
 
+
+//autofill for ghpcc06 cluster to mount all directories before run executed.
 function autofillMountPath() {
     var pathArray = [];
     var workDir = $('#rOut_dir').val();
@@ -5202,7 +5219,17 @@ function updateRunVerNavBar() {
     }
 }
 
-
+//use array of item to fill select element
+function fillArray2Select(arr, id, clean) {
+    if (clean === true) {
+        $(id).empty();
+    }
+    for (var i = 0; i < arr.length; i++) {
+        var param = arr[i];
+        var optionGroup = new Option(param, param);
+        $(id).append(optionGroup);
+    }
+}
 
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
@@ -5269,7 +5296,6 @@ $(document).ready(function () {
         runStatus = getRunStatus(project_pipeline_id);
     }
     var profileTypeId = pipeData[0].profile //local-32
-    console.log(profileTypeId)
     proTypeWindow = "";
     proIdWindow = "";
     if (profileTypeId) {
@@ -5405,6 +5431,8 @@ $(document).ready(function () {
             $('#addFileModal').find('form').trigger('reset');
             $('.nav-tabs a[href="#hostFiles"]').tab('show');
             $("#viewDir").removeData("fileArr");
+            $("#viewDir").removeData("fileDir");
+            $("#viewDir").removeData("amzKey");
             fillArray2Select([], "#viewDir", true)
             resetPatternList()
             clearSelection()
@@ -5454,11 +5482,20 @@ $(document).ready(function () {
             var warnUser = false;
             if (dir) {
                 if (dir.match(/s3:/)){
+                    var lastChr = dir.slice(-1);
+                    if (lastChr == "/"){
+                        dir = dir.substring(0, dir.length - 1);
+                    }
                     amazon_cre_id = $('#mRunAmzKeyS3').val()
                     if (!amazon_cre_id){
                         showInfoModal("#infoModal", "#infoModalText", "Please select Amazon Keys to search files in your S3 storage.");
                         warnUser = true;
                     } 
+                } else if (dir.match(/:\/\//)){
+                    var lastChr = dir.slice(-1);
+                    if (lastChr == "/"){
+                        dir = dir.substring(0, dir.length - 1);
+                    }  
                 }
                 if (!warnUser){
                     var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
@@ -5471,7 +5508,6 @@ $(document).ready(function () {
                             var raw = dirList.split('\n');
                             for (var i = 0; i < raw.length; i++) {
                                 var filePath = raw[i].split(" ").pop();
-                                console.log(filePath)
                                 if (filePath){
                                     if (filePath.match(/s3:/)){
                                         var allBlock = filePath.split("/");
@@ -5488,18 +5524,32 @@ $(document).ready(function () {
                                     errorAr.push(raw[i])
                                 }
                             }
+                        } else if (dir.match(/:\/\//)){
+                            fileArr = dirList.split('\n');
+                            errorAr = fileArr.filter(line => line.match(/:/));
+                            fileArr = fileArr.filter(line => !line.match(/:/));
                         } else {
                             fileArr = dirList.split('\n');
                             errorAr = fileArr.filter(line => line.match(/ls:/));
                             fileArr = fileArr.filter(line => !line.match(/:/));
                         }
+                        console.log(fileArr)
+                        console.log(errorAr)
                         if (fileArr.length > 0) {
                             fillArray2Select(fileArr, "#viewDir", true)
                             $("#viewDir").data("fileArr", fileArr)
+                            $("#viewDir").data("fileDir", dir)
+                            var amzKey = ""
+                            if (dir.match(/s3:/i)){
+                                amzKey= $("#mRunAmzKeyS3").val()
+                            }
+                            $("#viewDir").data("amzKey", amzKey)
+
                             $('#collection_type').trigger("change");
                         } else {
                             if (errorAr.length > 0) {
-                                fillArray2Select(errorAr, "#viewDir", true)
+                                var errTxt = errorAr.join(' ')
+                                showInfoModal("#infoModal", "#infoModalText", errTxt)
                                 resetPatternList()
                             } else {
                                 fillArray2Select(["Files Not Found."], "#viewDir", true)
@@ -5629,22 +5679,26 @@ $(document).ready(function () {
                 var ret = {};
                 var infoModalText = ""
                 ret = getTableSamples("selectedSamplesTable")
+                var rowData = selectedSamplesTable.fnGetData();
+                var fileDirArr = []
+                for (var i = 0; i < rowData.length; i++) {
+                    var file_dir = rowData[i][2];
+                    var amzKey = rowData[i][4];
+                    if (file_dir.match("s3:")){
+                        file_dir = file_dir+"\t"+amzKey
+                    }
+                    fileDirArr.push(file_dir);
+                }
+
                 if (ret.warnUser) {
                     infoModalText += ret.warnUser;
                 } 
                 if (!ret.file_array.length) {
                     infoModalText += " * Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons."
                 } 
-                var file_dir  = $.trim($("#file_dir").val());
-                var amzKey  = $("#mRunAmzKeyS3").val();
                 var s3_archive_dir  = $.trim($("#s3_archive_dir").val());
                 var amzArchKey  = $("#mArchAmzKeyS3").val();
-                if (file_dir.match(/s3:/)){
-                    if (!amzKey){
-                        infoModalText += " * Please select Amazon Keys to search files into your S3 storage.";
-                        warnUser = true;
-                    } 
-                } 
+
                 if (!warnUser && s3_archive_dir.match(/s3:/)){
                     if (!amzArchKey){
                         infoModalText += " * Please select Amazon Archive Keys to save files into your S3 storage.";
@@ -5667,9 +5721,8 @@ $(document).ready(function () {
                             formObj.collection_id = collection_data.id
                         }
                     }
-                    if (file_dir.match("s3:")){
-                        formObj.file_dir = file_dir+"\t"+amzKey
-                    }
+
+                    formObj.file_dir = fileDirArr;
 
                     if (s3_archive_dir.match("s3:")){
                         formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
@@ -5678,6 +5731,7 @@ $(document).ready(function () {
                     formObj.run_env = $('#chooseEnv').find(":selected").val();
                     formObj.project_id = project_id;
                     formObj.p = "saveFile"
+                    console.log(formObj)
                     $.ajax({
                         type: "POST",
                         url: "ajax/ajaxquery.php",
@@ -5836,7 +5890,14 @@ $(document).ready(function () {
         initComplete: initCompleteFunction
     });
 
-    selectedSamplesTable = $('#selectedSamples').dataTable();
+    selectedSamplesTable = $('#selectedSamples').dataTable({
+        "columnDefs": [
+            {
+                'targets': [4],
+                visible: false
+            },
+        ]
+    });
     selectedGeoSamplesTable = $('#selectedGeoSamples').dataTable();
     searchedGeoSamplesTable = $('#searchedGeoSamples').dataTable();
 
@@ -6120,6 +6181,9 @@ $(document).ready(function () {
             //  var file_regex = new RegExp(regex_string);
             if (collection_type == "single") {
                 //	use regex to find the values before the pivot
+                if (regex === "") {
+                    regex = '.';
+                }
                 var regex_string = files_select[0].value.split(regex)[0];
                 for (var x = 0; x < files_select.length; x++) {
                     var prefix = files_select[x].value.split(regex)[0];
@@ -6147,18 +6211,30 @@ $(document).ready(function () {
                 }
             }
             file_string = file_string.substring(0, file_string.length - 3);
-            var name = regex_string.split(' | ')[0].split('.')[0];
+            if (regex === "") {
+                var name = file_string;
+            } else {
+                var name = file_string.split(regex)[0];
+            }
+            var name = name.split(' | ')[0].split('.')[0];
             var input = createElement('input', ['id', 'type', 'class', 'value', 'onChange'], [name, 'text', '', name, 'updateNameTable(this)'])
             var button_div = createElement('div', ['class'], ['text-center'])
             var remove_button = createElement('button', ['class', 'type', 'onclick'], ['btn-sm btn-danger text-center', 'button', 'removeRowSelTable(this,\'' + collection_type + '\')']);
             var icon = createElement('i', ['class'], ['fa fa-times']);
             remove_button.appendChild(icon);
             button_div.appendChild(remove_button);
+            var fileDir = $("#viewDir").data("fileDir")
+            var mRunAmzKeyS3 = "";
+            if (fileDir.match(/s3:/)){
+                mRunAmzKeyS3 = $("#viewDir").data("amzKey")
+            }
 
             selectedSamplesTable.fnAddData([
                 input.outerHTML,
                 file_string,
-                button_div.outerHTML
+                fileDir,
+                button_div.outerHTML,
+                mRunAmzKeyS3
             ]);
         }
     }
@@ -6208,10 +6284,18 @@ $(document).ready(function () {
                 var icon = createElement('i', ['class'], ['fa fa-times']);
                 remove_button.appendChild(icon);
                 button_div.appendChild(remove_button);
+                var fileDir = $("#viewDir").data("fileDir")
+                var mRunAmzKeyS3 = "";
+                if (fileDir.match(/s3:/)){
+                    mRunAmzKeyS3 = $("#viewDir").data("amzKey")
+                }
+
                 selectedSamplesTable.fnAddData([
                     input.outerHTML,
                     file_string,
-                    button_div.outerHTML
+                    fileDir,
+                    button_div.outerHTML,
+                    mRunAmzKeyS3
                 ]);
             }
         }
@@ -6864,6 +6948,12 @@ $(document).ready(function () {
                     },
                     async: true,
                     success: function (s) {
+                        if (s.length >0){
+                            var removedCollection = s;
+                            for (var i = 0; i < removedCollection.length; i++) {
+                                removeCollectionFromInputs(removedCollection[i]);
+                            }
+                        }
                         $("#sampleTable").DataTable().ajax.reload(null, false);
                     },
                     error: function (errorThrown) {

@@ -923,7 +923,9 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                         <tr>
                                             <th scope="col">Name</th>
                                             <th scope="col">Files Used</th>
+                                            <th scope="col">Directory</th>
                                             <th scope="col" style="width:20px;">Remove</th>
+                                            <th scope="col">Amz_key</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>

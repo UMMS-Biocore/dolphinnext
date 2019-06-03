@@ -233,8 +233,8 @@ class dbfuncs {
 
         return $s3configFileDir;
     }
-    
-    
+
+
     function getCluAmzData($profileId, $profileType, $ownerID) {
         if ($profileType == 'cluster'){
             $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
@@ -1896,7 +1896,7 @@ class dbfuncs {
                 $out["saveNextLog"] = $saveNextLog;
             }
             $serverLog = json_decode($this -> getFileContent($last_run_uuid, "run/serverlog.txt", $ownerID));
-            
+
             $errorLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/err.log", $ownerID));
             $initialLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/initial.log", $ownerID));
             $nextflowLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/log.txt", $ownerID));
@@ -2017,8 +2017,8 @@ class dbfuncs {
         return self::queryTable($sql);
     }
 
-    
-    
+
+
     public function getPipelineSideBar($ownerID){
         if ($ownerID != ''){
             $userRoleArr = json_decode($this->getUserRole($ownerID));
@@ -2281,11 +2281,11 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function getCollections($ownerID) {
-        $sql = "SELECT id, name FROM collection WHERE owner_id = '$ownerID'";
+        $sql = "SELECT id, name FROM collection WHERE owner_id = '$ownerID' AND deleted = 0";
         return self::queryTable($sql);
     }
     public function getCollectionById($id,$ownerID) {
-        $sql = "SELECT id, name FROM collection WHERE id = '$id' AND owner_id = '$ownerID'";
+        $sql = "SELECT id, name FROM collection WHERE id = '$id' AND owner_id = '$ownerID' AND deleted = 0";
         return self::queryTable($sql);
     }
     public function getFiles($ownerID) {
@@ -2299,7 +2299,7 @@ class dbfuncs {
               LEFT JOIN file_project fp ON f.id = fp.f_id
               LEFT JOIN collection c on fc.c_id = c.id
               LEFT JOIN project p on fp.p_id = p.id
-              WHERE f.owner_id = '$ownerID' AND f.deleted = 0 AND (fc.deleted = 0 OR fc.deleted IS NULL) AND (fp.deleted = 0 OR fp.deleted IS NULL) AND (p.deleted = 0 OR p.deleted IS NULL)
+              WHERE f.owner_id = '$ownerID' AND f.deleted = 0 AND (fc.deleted = 0 OR fc.deleted IS NULL) AND (fp.deleted = 0 OR fp.deleted IS NULL) AND (p.deleted = 0 OR p.deleted IS NULL) AND (c.deleted = 0 OR c.deleted IS NULL)
               GROUP BY f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.s3_archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type, f.run_env";
         return self::queryTable($sql);
     }
@@ -2460,10 +2460,10 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline_input SET project_id='$new_project_id', last_modified_user ='$ownerID', date_modified=now()  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
-    
-    
-    
-    
+
+
+
+
     public function insertProcessGroup($group_name, $ownerID) {
         $sql = "INSERT INTO process_group (owner_id, group_name, date_created, date_modified, last_modified_user, perms) VALUES ('$ownerID', '$group_name', now(), now(), '$ownerID', 63)";
         return self::insTable($sql);
@@ -2523,7 +2523,7 @@ class dbfuncs {
     public function getCollectionByName($col_name, $owner_id) {
         $sql = "SELECT DISTINCT c.id
               FROM collection c
-              WHERE c.name = '$col_name' AND owner_id='$owner_id'";
+              WHERE c.deleted = 0 AND c.name = '$col_name' AND owner_id='$owner_id'";
         return self::queryTable($sql);
     }
     public function getPipelineGroupByName($group_name) {
@@ -2585,6 +2585,10 @@ class dbfuncs {
         $sql = "UPDATE file SET deleted = 1, date_modified = now() WHERE id = '$id' AND owner_id='$ownerID'";
         return self::runSQL($sql);
     }
+    public function removeCollection($id, $ownerID) {
+        $sql = "UPDATE collection SET deleted = 1, date_modified = now() WHERE id = '$id' AND owner_id='$ownerID'";
+        return self::runSQL($sql);
+    }
     public function removeFileProject($id, $ownerID) {
         $sql = "UPDATE file_project SET deleted = 1, date_modified = now() WHERE f_id = '$id' AND owner_id='$ownerID'";
         return self::runSQL($sql);
@@ -2599,6 +2603,10 @@ class dbfuncs {
     }
     public function removeProjectPipelineInputByPipe($id) {
         $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function removeProjectPipelineInputByCollection($id) {
+        $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE collection_id = '$id'";
         return self::runSQL($sql);
     }
     public function removeProjectInput($id) {
@@ -2900,8 +2908,24 @@ class dbfuncs {
         }
     }
 
+
+    function retrieve_remote_file_size($url){
+        $ch = curl_init($url);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        curl_setopt($ch, CURLOPT_HEADER, TRUE);
+        curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+
+        $data = curl_exec($ch);
+        $size = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+
+        curl_close($ch);
+        return $size;
+    }
+
     public function getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $ownerID) {
         $dir = trim($dir);
+        $log = "";
         if (preg_match("/s3:/i", $dir)){
             if (!empty($amazon_cre_id)){
                 $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
@@ -2919,18 +2943,52 @@ class dbfuncs {
                 $dir = $dir."/";
             }
             $cmd="s3cmd ls --access_key $access_key  --secret_key $secret_key $dir 2>&1 &";
+            $log = shell_exec($cmd);
+            // For https http ftp queries
+        } else if (preg_match("/:\/\//i", $dir)){
+            $log = $this->retrieve_remote_file_size($dir);
+            // if $log > -1 then file has been searched, it should be directory
+            if ($log > 100){
+                $subs = substr($dir, 0,strrpos($dir, '/')+1);
+                $log = "Query failed! Please search directory: $subs instead of the file: $dir";
+            } else {
+                $lastChar = substr($dir, -1);
+                if ($lastChar != "/"){
+                    $dir = $dir."/";
+                }
+                $html = shell_exec("curl -s -k $dir 2>&1 &");
+                $log = "";
+                //ftp connection:
+                if (preg_match("/ftp:\/\//i", $dir)){
+                    $count = explode("\n", $html);
+                    for ($i = 0; $i < count($count); ++$i) {
+                        $block = explode(" ", $count[$i]);
+                        $last = end($block);
+                        $log .= $last."\n";
+                    }
+                    //http connection:
+                } else {
+                    //<a href="control_rep3.2.gz">control_rep3.2.gz</a>
+                    $count = preg_match_all('/<a.*href="(.*)">.*<\/a>/i', $html, $files);
+                    for ($i = 0; $i < $count; ++$i) {
+                        if (!preg_match("/\//i", $files[1][$i]) && !preg_match("/;/i", $files[1][$i])){
+                            $log .= $files[1][$i]."\n";
+                        }
+                    }
+                }
+            }
         } else {
             list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
             $ssh_id = $cluDataArr[0]["ssh_id"];
             $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
             $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
+            $log = shell_exec($cmd);
         }
-        $log = shell_exec($cmd);
         if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
             return json_encode($log);
         } else {
-            return json_encode("Connection failed! Please check your connection profile or internet connection");
+            return json_encode("Query failed! Please check your query, connection profile or internet connection");
         }
     }
 
@@ -3259,8 +3317,18 @@ class dbfuncs {
                       $where";
         return self::queryTable($sql);
     }
+    public function getCollectionsOfFile($file_id,$ownerID) {
+        $where = " where f.deleted=0 AND fc.deleted=0 AND fc.f_id = '$file_id' AND (f.owner_id = '$ownerID' OR f.perms = 63 OR (ug.u_id ='$ownerID' and f.perms = 15))";
+        $sql = "SELECT DISTINCT fc.c_id
+                      FROM file f
+                      INNER JOIN file_collection fc ON f.id=fc.f_id
+                      LEFT JOIN user_group ug ON f.group_id=ug.g_id
+                      $where";
+        return self::queryTable($sql);
+    }
+
     public function getProjectPipelineInputs($project_pipeline_id,$ownerID) {
-        $where = " where ppi.deleted=0 AND ppi.project_pipeline_id = '$project_pipeline_id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63 OR (ug.u_id ='$ownerID' and ppi.perms = 15))";
+        $where = " where (c.deleted = 0 OR c.deleted IS NULL) AND ppi.deleted=0 AND ppi.project_pipeline_id = '$project_pipeline_id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63 OR (ug.u_id ='$ownerID' and ppi.perms = 15))";
         $sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num, ppi.collection_id, c.name as collection_name
                       FROM project_pipeline_input ppi
                       LEFT JOIN input i ON i.id = ppi.input_id
@@ -3270,7 +3338,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function getProjectPipelineInputsById($id,$ownerID) {
-        $where = " where ppi.deleted=0 AND ppi.id= '$id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63)" ;
+        $where = " where (c.deleted = 0 OR c.deleted IS NULL) AND ppi.deleted=0 AND ppi.id= '$id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63)" ;
         $sql = "SELECT ppi.id, ppi.qualifier, i.id as input_id, i.name, ppi.collection_id, c.name as collection_name
                       FROM project_pipeline_input ppi
                       LEFT JOIN input i ON i.id = ppi.input_id

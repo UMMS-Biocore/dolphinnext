@@ -607,11 +607,32 @@ else if ($p=="removeInput"){
 }
 else if ($p=="removeFile"){
     $file_array = $_REQUEST['file_array'];
+    $collection_arr = array();
     foreach ($file_array as $file_id):
+    //   Get all collections into array
+    $colsOfFile= json_decode($db->getCollectionsOfFile($file_id, $ownerID));
+    for ($i = 0; $i < count($colsOfFile); $i++) {
+        $c_id = $colsOfFile[$i]->{'c_id'};
+        if (!in_array($c_id, $collection_arr))
+        {
+            $collection_arr[] = $c_id; 
+        }
+    }
     $removeFileCollection = $db -> removeFileCollection($file_id, $ownerID);
     $removeFileProject = $db -> removeFileProject($file_id, $ownerID);
-    $data = $db -> removeFile($file_id, $ownerID);
+    $db -> removeFile($file_id, $ownerID);
     endforeach;
+    //check if these collections have any files, if not delete collection
+    $removedCollection = array();
+    for ($i = 0; $i < count($collection_arr); $i++) {
+        $allfiles= json_decode($db->getCollectionFiles($collection_arr[$i], $ownerID));
+        if (empty($allfiles[0])){
+            $db -> removeCollection($collection_arr[$i], $ownerID);
+            $db -> removeProjectPipelineInputByCollection($collection_arr[$i]);
+            $removedCollection[] = $collection_arr[$i]; 
+        } 
+    }
+    $data = json_encode($removedCollection);
 }
 else if ($p=="removeProLocal"){   
     $data = $db -> removeProLocal($id);
@@ -959,27 +980,29 @@ else if ($p=="saveFile"){
         }
     } 
 
-    foreach ($file_array as $item):
-    $p = explode(" ", $item);
-    $name = $p[0];
-    unset($p[0]);
-    $files_used = join(' ', $p);
-    $insert = $db->insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $run_env, $ownerID);
-    $fileData = json_decode($insert,true);
-    $file_id = $fileData["id"];
-    settype($file_id, 'integer');
-    if (empty($file_id)) {
-        break;
-    } else {
-        $insertFileProject = $db->insertFileProject($file_id, $project_id, $ownerID);
-        $insertFileCollection = $db->insertFileCollection($file_id, $collection_id, $ownerID);
-        $file_col_data = json_decode($insertFileCollection,true);
-        $file_col_id = $file_col_data["id"];
-        if (empty($file_col_id)) {
+    for ($i = 0; $i < count($file_array); $i++) {
+        $item = $file_array[$i];
+        $item_file_dir = $file_dir[$i];
+        $p = explode(" ", $item);
+        $name = $p[0];
+        unset($p[0]);
+        $files_used = join(' ', $p);
+        $insert = $db->insertFile($name, $item_file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $run_env, $ownerID);
+        $fileData = json_decode($insert,true);
+        $file_id = $fileData["id"];
+        settype($file_id, 'integer');
+        if (empty($file_id)) {
             break;
+        } else {
+            $insertFileProject = $db->insertFileProject($file_id, $project_id, $ownerID);
+            $insertFileCollection = $db->insertFileCollection($file_id, $collection_id, $ownerID);
+            $file_col_data = json_decode($insertFileCollection,true);
+            $file_col_id = $file_col_data["id"];
+            if (empty($file_col_id)) {
+                break;
+            }
         }
     }
-    endforeach;
     $data = $insert;
 }
 else if ($p=="saveProPipeInput"){
