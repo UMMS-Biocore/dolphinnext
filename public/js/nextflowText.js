@@ -684,7 +684,7 @@ function publishDir(id, currgid, mainPipeEdges) {
                         outputName = "/" + getPublishDirRegex(outputName) + "/";
 
                     }
-                    oText = "publishDir params.outdir, mode: 'copy',\n\tsaveAs: {filename ->\n"
+                    oText = "publishDir params.outdir, overwrite: true, mode: 'copy',\n\tsaveAs: {filename ->\n"
                     tempText = "\tif \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
                     // if (filename =~ /^path.8.fastq$/) filename
                     oText = oText + tempText
@@ -717,7 +717,7 @@ function publishDir(id, currgid, mainPipeEdges) {
     if (closePar === true) {
         oText = oText + "}\n\n";
         if (outputName === '' && reg_ex === "") {
-            oText = "publishDir \"${params.outdir}/" + outParUserEntry + "\", mode: 'copy'\n\n";
+            oText = "publishDir \"${params.outdir}/" + outParUserEntry + "\", overwrite: true, mode: 'copy'\n\n";
         }
         closePar = false
     }
