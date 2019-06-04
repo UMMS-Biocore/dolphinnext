@@ -4449,64 +4449,66 @@ function clearIntNextLog(proType, proId) {
 }
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
-    var updateProPipeStatus = getValues({ p: "updateProPipeStatus", project_pipeline_id: project_pipeline_id });
-    window.serverLog = updateProPipeStatus.serverLog;
-    window.nextflowLog = updateProPipeStatus.nextflowLog;
-    window.runStatus = updateProPipeStatus.runStatus;
-    var pidStatus = "";
-    if (serverLog && serverLog !== null && serverLog !== false) {
-        var runPid = parseRunPid(serverLog);
-    } 
-    // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
-    // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
-    if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
-        if (type !== "reload") {
-            clearIntNextLog(proType, proId);
-            clearIntPubWeb(proType, proId);
+    if (projectpipelineOwn === "1") {
+        var updateProPipeStatus = getValues({ p: "updateProPipeStatus", project_pipeline_id: project_pipeline_id });
+        window.serverLog = updateProPipeStatus.serverLog;
+        window.nextflowLog = updateProPipeStatus.nextflowLog;
+        window.runStatus = updateProPipeStatus.runStatus;
+        var pidStatus = "";
+        if (serverLog && serverLog !== null && serverLog !== false) {
+            var runPid = parseRunPid(serverLog);
+        } 
+        // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+        // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
+        if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
+            if (type !== "reload") {
+                clearIntNextLog(proType, proId);
+                clearIntPubWeb(proType, proId);
+            }
+            if (runStatus === "NextSuc") {
+                displayButton('completeProPipe');
+                //            showOutputPath();
+            } else if (runStatus === "Error" || runStatus === "NextErr") {
+                displayButton('errorProPipe');
+            } else if (runStatus === "Terminated") {
+                displayButton('terminatedProPipe');
+            }
         }
-        if (runStatus === "NextSuc") {
-            displayButton('completeProPipe');
-            //            showOutputPath();
-        } else if (runStatus === "Error" || runStatus === "NextErr") {
-            displayButton('errorProPipe');
-        } else if (runStatus === "Terminated") {
-            displayButton('terminatedProPipe');
+        // when run hasn't finished yet and page reloads then show connecting button
+        else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
+            displayButton('connectingProPipe');
+            if (type === "reload") {
+                readNextflowLogTimer(proType, proId, type);
+            }
         }
-    }
-    // when run hasn't finished yet and page reloads then show connecting button
-    else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
-        displayButton('connectingProPipe');
-        if (type === "reload") {
-            readNextflowLogTimer(proType, proId, type);
+        // when run hasn't finished yet and connection is down
+        else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
+            displayButton('abortedProPipe');
+            //log file might be deleted or couldn't read the log file
+            var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
+            if (nextflowLog !== null && nextflowLog !== undefined) {
+                nextflowLog += "\nConnection is lost.";
+            } else {
+                serverLog += "\nConnection is lost.";
+            }
+        } 
+        // otherwise parse nextflow file to get status
+        else if (runStatus === "Waiting" || runStatus === "init" || runStatus === "NextRun") {
+            if (runStatus === "Waiting" || runStatus === "init") {
+                displayButton('waitingProPipe');
+            } else if (runStatus === "NextRun") {
+                displayButton('runningProPipe');
+            }
         }
-    }
-    // when run hasn't finished yet and connection is down
-    else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
-        displayButton('abortedProPipe');
-        //log file might be deleted or couldn't read the log file
-        var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
-        if (nextflowLog !== null && nextflowLog !== undefined) {
-            nextflowLog += "\nConnection is lost.";
-        } else {
-            serverLog += "\nConnection is lost.";
-        }
-    } 
-    // otherwise parse nextflow file to get status
-    else if (runStatus === "Waiting" || runStatus === "init" || runStatus === "NextRun") {
-        if (runStatus === "Waiting" || runStatus === "init") {
-            displayButton('waitingProPipe');
-        } else if (runStatus === "NextRun") {
-            displayButton('runningProPipe');
-        }
-    }
 
-    var lastrun = $('#runLogArea').attr('lastrun');
-    if (lastrun) {
-        $('#runLogArea').val(serverLog + "\n" + nextflowLog);
-        autoScrollLogArea()
-    }
+        var lastrun = $('#runLogArea').attr('lastrun');
+        if (lastrun) {
+            $('#runLogArea').val(serverLog + "\n" + nextflowLog);
+            autoScrollLogArea()
+        }
 
-    setTimeout(function () { saveNexLg(proType, proId) }, 100);
+        setTimeout(function () { saveNexLg(proType, proId) }, 100);
+    }
 }
 
 

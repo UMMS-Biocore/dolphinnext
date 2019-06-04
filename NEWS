@@ -1,5 +1,8 @@
+03.06.2019 Version 0.3.35
+Bug fixed regarding to impersonating user and updating their run status.
+
 03.06.2019 Version 0.3.34
-Overwrite the publish files when resumed. 
+Overwrite the published files when resumed. 
 
 31.05.2019 Version 0.3.33
 Initial run image update.
