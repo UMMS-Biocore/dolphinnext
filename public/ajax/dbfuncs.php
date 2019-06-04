@@ -1859,124 +1859,132 @@ class dbfuncs {
         $duration = ""; //run duration
         $newRunStatus = "";
         $saveNextLog = "";
-        $runDataJS = $this->getLastRunData($project_pipeline_id,$ownerID);
-        if (empty(json_decode($runDataJS,true))){
+        $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
+        //fix for old runs 
+        if (empty($uuid)){
             //old run folder format may exist (runID)
-            $runStat = json_decode($this -> getRunStatus($project_pipeline_id, $ownerID));
-            $runStatus = $runStat[0]->{"run_status"};
-            $last_run_uuid = "run".$project_pipeline_id;
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-            $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
-            $output_dir = $proPipeAll[0]->{'output_dir'};
-            $profile = $proPipeAll[0]->{'profile'};
-            $subRunLogDir = "";
-        } else if (!empty(json_decode($runDataJS,true))){
+            $runStat = json_decode($this->getRunStatus($project_pipeline_id, $ownerID));
+            if (!empty($runStat)){
+                $runStatus = $runStat[0]->{"run_status"};
+                $last_run_uuid = "run".$project_pipeline_id;
+                $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+                $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
+                $output_dir = $proPipeAll[0]->{'output_dir'};
+                $profile = $proPipeAll[0]->{'profile'};
+                $subRunLogDir = "";
+            }
+        } else {
             // latest last_uuid format exist
-            $runData = json_decode($runDataJS,true)[0];
-            $runStatus = $runData["run_status"];
-            $last_run_uuid = $runData["last_run_uuid"];
-            $output_dir = $runData["output_dir"];
-            $profile = $runData["profile"];
-            $subRunLogDir = "run";
+            $runDataJS = $this->getLastRunData($project_pipeline_id,$ownerID);
+            if (!empty(json_decode($runDataJS,true))){
+                $runData = json_decode($runDataJS,true)[0];
+                $runStatus = $runData["run_status"];
+                $last_run_uuid = $runData["last_run_uuid"];
+                $output_dir = $runData["output_dir"];
+                $profile = $runData["profile"];
+                $subRunLogDir = "run";
+            }
+
         }
-        $profileAr = explode("-", $profile);
-        $profileType = $profileAr[0];
-        $profileId = $profileAr[1];
-        if (!empty($last_run_uuid)){
-            $run_path_real = "$output_dir/run{$project_pipeline_id}";
-            $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
-            foreach ($down_file_list as &$value) {
-                $value = $run_path_real."/".$value;
-            }
-            unset($value);
-            //wait for the downloading logs
-            if ($loadtype == "slow"){
-                $saveNextLog = $this -> saveNextflowLog($down_file_list, $last_run_uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
-                sleep(5);
-                $out["saveNextLog"] = $saveNextLog;
-            }
-            $serverLog = json_decode($this -> getFileContent($last_run_uuid, "run/serverlog.txt", $ownerID));
+        if (!empty($profile)){
+            $profileAr = explode("-", $profile);
+            $profileType = $profileAr[0];
+            $profileId = $profileAr[1];
+            if (!empty($last_run_uuid)){
+                $run_path_real = "$output_dir/run{$project_pipeline_id}";
+                $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
+                foreach ($down_file_list as &$value) {
+                    $value = $run_path_real."/".$value;
+                }
+                unset($value);
+                //wait for the downloading logs
+                if ($loadtype == "slow"){
+                    $saveNextLog = $this -> saveNextflowLog($down_file_list, $last_run_uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
+                    sleep(5);
+                    $out["saveNextLog"] = $saveNextLog;
+                }
+                $serverLog = json_decode($this -> getFileContent($last_run_uuid, "run/serverlog.txt", $ownerID));
 
-            $errorLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/err.log", $ownerID));
-            $initialLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/initial.log", $ownerID));
-            $nextflowLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/log.txt", $ownerID));
-            $serverLog = isset($serverLog) ? trim($serverLog) : "";
-            $errorLog = isset($errorLog) ? trim($errorLog) : "";
-            $initialLog = isset($initialLog) ? trim($initialLog) : "";
-            $nextflowLog = isset($nextflowLog) ? trim($nextflowLog) : "";
-            if (!empty($errorLog)) { $serverLog = $serverLog . "\n" . $errorLog; }
-            if (!empty($initialLog)) { $nextflowLog = $initialLog . "\n" . $nextflowLog; }
-            $out["serverLog"] = $serverLog;
-            $out["nextflowLog"] = $nextflowLog;
+                $errorLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/err.log", $ownerID));
+                $initialLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/initial.log", $ownerID));
+                $nextflowLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/log.txt", $ownerID));
+                $serverLog = isset($serverLog) ? trim($serverLog) : "";
+                $errorLog = isset($errorLog) ? trim($errorLog) : "";
+                $initialLog = isset($initialLog) ? trim($initialLog) : "";
+                $nextflowLog = isset($nextflowLog) ? trim($nextflowLog) : "";
+                if (!empty($errorLog)) { $serverLog = $serverLog . "\n" . $errorLog; }
+                if (!empty($initialLog)) { $nextflowLog = $initialLog . "\n" . $nextflowLog; }
+                $out["serverLog"] = $serverLog;
+                $out["nextflowLog"] = $nextflowLog;
 
-            if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr") {
-                // when run hasn't finished yet and connection is down
-            } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
-                //log file might be deleted or couldn't read the log file
-                $newRunStatus = "Aborted";
-            } else if (preg_match("/error/i",$serverLog) || preg_match("/command not found/i",$serverLog)) {
-                $newRunStatus = "Error";
-                // otherwise parse nextflow file to get status
-            } else if (!empty($nextflowLog)){
-                if (preg_match("/N E X T F L O W/",$nextflowLog)){
-                    //run completed with error
-                    if (preg_match("/##Success: failed/",$nextflowLog)){
-                        preg_match("/##Duration:(.*)\n/",$nextflowLog, $matchDur);
-                        $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
-                        $newRunStatus = "NextErr";
-                        //run completed with success
-                    } else if (preg_match("/##Success: OK/",$nextflowLog)){
-                        preg_match("/##Duration:(.*)/",$nextflowLog, $matchDur);
-                        $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
-                        $newRunStatus = "NextSuc";
-                        // run error
-                        //"WARN: Failed to publish file" gives error
-                        //|| preg_match("/failed/i",$nextflowLog) removed 
-                    } else if (preg_match("/error/i",$nextflowLog)){
-                        $confirmErr=true;
-                        if (preg_match("/-- Execution is retried/i",$nextflowLog)){
-                            //if only process retried, status shouldn't set as error.
-                            $confirmErr = false;
-                            $txt = trim($nextflowLog);
-                            $lines = explode("\n", $txt);
-                            for ($i = 0; $i < count($lines); $i++) {
-                                if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i])){
-                                    $confirmErr = true;
-                                    break;
+                if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr") {
+                    // when run hasn't finished yet and connection is down
+                } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
+                    //log file might be deleted or couldn't read the log file
+                    $newRunStatus = "Aborted";
+                } else if (preg_match("/error/i",$serverLog) || preg_match("/command not found/i",$serverLog)) {
+                    $newRunStatus = "Error";
+                    // otherwise parse nextflow file to get status
+                } else if (!empty($nextflowLog)){
+                    if (preg_match("/N E X T F L O W/",$nextflowLog)){
+                        //run completed with error
+                        if (preg_match("/##Success: failed/",$nextflowLog)){
+                            preg_match("/##Duration:(.*)\n/",$nextflowLog, $matchDur);
+                            $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
+                            $newRunStatus = "NextErr";
+                            //run completed with success
+                        } else if (preg_match("/##Success: OK/",$nextflowLog)){
+                            preg_match("/##Duration:(.*)/",$nextflowLog, $matchDur);
+                            $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
+                            $newRunStatus = "NextSuc";
+                            // run error
+                            //"WARN: Failed to publish file" gives error
+                            //|| preg_match("/failed/i",$nextflowLog) removed 
+                        } else if (preg_match("/error/i",$nextflowLog)){
+                            $confirmErr=true;
+                            if (preg_match("/-- Execution is retried/i",$nextflowLog)){
+                                //if only process retried, status shouldn't set as error.
+                                $confirmErr = false;
+                                $txt = trim($nextflowLog);
+                                $lines = explode("\n", $txt);
+                                for ($i = 0; $i < count($lines); $i++) {
+                                    if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i])){
+                                        $confirmErr = true;
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                        if ($confirmErr == true){
-                            $newRunStatus = "NextErr";
+                            if ($confirmErr == true){
+                                $newRunStatus = "NextErr";
+                            } else {
+                                $newRunStatus = "NextRun";
+                            }
                         } else {
+                            //update status as running  
                             $newRunStatus = "NextRun";
                         }
+                        //Nextflow log file exist but /N E X T F L O W/ not printed yet
                     } else {
-                        //update status as running  
-                        $newRunStatus = "NextRun";
+                        $newRunStatus = "Waiting";
                     }
-                    //Nextflow log file exist but /N E X T F L O W/ not printed yet
-                } else {
+                } else{
+                    //"Nextflow log is not exist yet."
                     $newRunStatus = "Waiting";
                 }
-            } else{
-                //"Nextflow log is not exist yet."
-                $newRunStatus = "Waiting";
-            }
-            if (!empty($newRunStatus)){
-                $setStatus = $this -> updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
-                $setLog = $this -> updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID); 
-                $out["runStatus"] = $newRunStatus;
-                if (($newRunStatus == "NextErr" || $newRunStatus == "NextSuc" || $newRunStatus == "Error") && $profileType == "amazon"){
-                    $triggerShutdown = $this -> triggerShutdown($profileId,$ownerID, "fast");
+                if (!empty($newRunStatus)){
+                    $setStatus = $this -> updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
+                    $setLog = $this -> updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID); 
+                    $out["runStatus"] = $newRunStatus;
+                    if (($newRunStatus == "NextErr" || $newRunStatus == "NextSuc" || $newRunStatus == "Error") && $profileType == "amazon"){
+                        $triggerShutdown = $this -> triggerShutdown($profileId,$ownerID, "fast");
+                    }
+                } else {
+                    $out["runStatus"] = $runStatus;
                 }
-            } else {
-                $out["runStatus"] = $runStatus;
             }
+            return json_encode($out);
         }
-        return json_encode($out);
     }
-
 
 
     //------------- SideBar Funcs --------
@@ -2867,44 +2875,46 @@ class dbfuncs {
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
     public function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$project_pipeline_id,$ownerID) {
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
-        $ssh_id = $cluDataArr[0]["ssh_id"];
-        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
-        if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
-        if (!file_exists("{$this->run_path}/$uuid/$last_server_dir")) {
-            mkdir("{$this->run_path}/$uuid/$last_server_dir", 0755, true);
-        }
-        if (preg_match("/s3:/i", $files[0])){
-            $fileList="";
-            foreach ($files as $item):
-            $fileList.="$item ";
-            endforeach;
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-            $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
-            if (!empty($amazon_cre_id)){
-                $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
-                foreach($amz_data as $d){
-                    $access = $d->amz_acc_key;
-                    $d->amz_acc_key = trim($this->amazonDecode($access));
-                    $secret = $d->amz_suc_key;
-                    $d->amz_suc_key = trim($this->amazonDecode($secret));
-                }
-                $access_key = $amz_data[0]->{'amz_acc_key'};
-                $secret_key = $amz_data[0]->{'amz_suc_key'};
-                $cmd="s3cmd sync --access_key $access_key  --secret_key $secret_key $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+        if (!empty($cluDataArr)){
+            $ssh_id = $cluDataArr[0]["ssh_id"];
+            $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+            if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
+            if (!file_exists("{$this->run_path}/$uuid/$last_server_dir")) {
+                mkdir("{$this->run_path}/$uuid/$last_server_dir", 0755, true);
             }
-        } else {
-            $fileList="";
-            foreach ($files as $item):
-            $fileList.="$connect:$item ";
-            endforeach;
-            $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &"; 
-        }
-        $nextflow_log = shell_exec($cmd);
-        // save $nextflow_log to a file
-        if (!is_null($nextflow_log) && isset($nextflow_log) && $nextflow_log != "" && !empty($nextflow_log)){
-            return json_encode("nextflow log saved");
-        } else {
-            return json_encode("logNotFound");
+            if (preg_match("/s3:/i", $files[0])){
+                $fileList="";
+                foreach ($files as $item):
+                $fileList.="$item ";
+                endforeach;
+                $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+                $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
+                if (!empty($amazon_cre_id)){
+                    $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
+                    foreach($amz_data as $d){
+                        $access = $d->amz_acc_key;
+                        $d->amz_acc_key = trim($this->amazonDecode($access));
+                        $secret = $d->amz_suc_key;
+                        $d->amz_suc_key = trim($this->amazonDecode($secret));
+                    }
+                    $access_key = $amz_data[0]->{'amz_acc_key'};
+                    $secret_key = $amz_data[0]->{'amz_suc_key'};
+                    $cmd="s3cmd sync --access_key $access_key  --secret_key $secret_key $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                }
+            } else {
+                $fileList="";
+                foreach ($files as $item):
+                $fileList.="$connect:$item ";
+                endforeach;
+                $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &"; 
+            }
+            $nextflow_log = shell_exec($cmd);
+            // save $nextflow_log to a file
+            if (!is_null($nextflow_log) && isset($nextflow_log) && $nextflow_log != "" && !empty($nextflow_log)){
+                return json_encode("nextflow log saved");
+            } else {
+                return json_encode("logNotFound");
+            }
         }
     }
 
