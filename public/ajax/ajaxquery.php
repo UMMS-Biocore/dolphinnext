@@ -764,7 +764,7 @@ else if ($p=="getProfileAmazon")
     $new_obj = json_decode($data,true);
     if (!empty($new_obj)){
         for ($i = 0; $i < count($new_obj); $i++) {
-            $autoshutdown_date = $new_obj[$i]["autoshutdown_date"];
+            $autoshutdown_date = isset($new_obj[$i]["autoshutdown_date"]) ? $new_obj[$i]["autoshutdown_date"] : "";
             if (!empty($autoshutdown_date)){
                 $expected_date = strtotime($autoshutdown_date);
                 $remaining = $expected_date - time();
