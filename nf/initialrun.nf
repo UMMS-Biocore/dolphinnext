@@ -1,16 +1,24 @@
+// initial run for preparing files in the inputs directory.
+
+// convert quoted string into list "a","b,c" -> ["a","b,c"]
+def quo2Lst (str){
+    list =str.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*\$)");
+    return list
+}
+
 params.attempt = ""
 params.run_dir = ""
 params.profile = ""
-file_name = Channel.from(params.file_name.split(','));
-file_dir = Channel.from(params.file_dir.split(','));
-file_type = Channel.from(params.file_type.split(','));
-files_used = Channel.from(params.files_used.split(','));
-archive_dir = Channel.from(params.archive_dir.split(','));
-s3_archive_dir = Channel.from(params.s3_archive_dir.split(','));
-collection_type = Channel.from(params.collection_type.split(','));
-file_name_all = Channel.from(params.file_name_all.split(','));
-file_type_all = Channel.from(params.file_type_all.split(','));
-collection_type_all = Channel.from(params.collection_type_all.split(','));
+file_name = Channel.from(quo2Lst(params.file_name));
+file_dir = Channel.from(quo2Lst(params.file_dir));
+file_type = Channel.from(quo2Lst(params.file_type));
+files_used = Channel.from(quo2Lst(params.files_used));
+archive_dir = Channel.from(quo2Lst(params.archive_dir));
+s3_archive_dir = Channel.from(quo2Lst(params.s3_archive_dir));
+collection_type = Channel.from(quo2Lst(params.collection_type));
+file_name_all = Channel.from(params.file_name_all);
+file_type_all = Channel.from(params.file_type_all);
+collection_type_all = Channel.from(params.collection_type_all);
 
 
 process initialRun {
@@ -18,16 +26,13 @@ process initialRun {
     maxRetries 2
 
     input:
-    val file_name from file_name
-    val file_dir from file_dir
-    val file_type from file_type
-    val files_used from files_used
-    val archive_dir from archive_dir
-    val s3_archive_dir from s3_archive_dir
-    val collection_type from collection_type
-    val file_name_all from file_name_all
-    val file_type_all from file_type_all
-    val collection_type_all from collection_type_all
+        val file_name from file_name
+        val file_dir from file_dir
+        val file_type from file_type
+        val files_used from files_used
+        val archive_dir from archive_dir
+        val s3_archive_dir from s3_archive_dir
+        val collection_type from collection_type
 
     output:
         val('success.${params.attempt}')  into success
@@ -43,8 +48,8 @@ process initialRun {
           use File::Path qw( make_path );
           use File::Compare;
 
-          my $run_dir = "/home/oy28w/nextflowruns/rsemNew250/run289";
-          my $profile = "cluster";
+          my $run_dir = "!{params.run_dir}";
+          my $profile = "!{params.profile}";
           my $input_dir = "$run_dir/inputs";
           my $s3down_dir_prefix = "$input_dir/.tmp";
           my $s3upload_dir = "$input_dir/.s3up";
@@ -55,10 +60,6 @@ process initialRun {
           my @archive_dir = (!{archive_dir});
           my @s3_archive_dir = (!{s3_archive_dir});
           my @collection_type = (!{collection_type});
-          my @file_name_all = (!{file_name_all});
-          my @file_type_all = (!{file_type_all});
-          my @collection_type_all = (!{collection_type_all});
-
 
           if ( !-d $input_dir ) {
             runCommand("mkdir -p $input_dir");
@@ -483,8 +484,7 @@ process initialRun {
             my $confID = $data[1];
             my $down_path = ${s3down_dir_prefix}.${tmpSufx};
             runCommand("mkdir -p $down_path && cd $down_path && s3cmd get --force --config=$run_dir/initialrun/.conf.$confID $s3Path/$file_name");
-            print "down_path: $down_path
-";
+            print "down_path: $down_path\\n";
             return $down_path;
           }
 
@@ -497,8 +497,7 @@ process initialRun {
             my $s3Path = $data[0];
             my $confID = $data[1];
             for ( my $c = 1 ; $c <= 3 ; $c++ ) {
-                print "##s3downCheck $c started: $down_path
-";
+                print "##s3downCheck $c started: $down_path\\n";
                 my $err = system ("s3cmd info --config=$run_dir/initialrun/.conf.$confID $s3Path/$file_name.md5sum 2>&1 ");
                 ## if error occurs, md5sum file is not found in s3. So md5sum-check will be skipped.
                 if ($err){
@@ -506,10 +505,8 @@ process initialRun {
                 } else {
                     ## if error not occurs, md5sum file is found in s3. So download and check md5sum.
                     my $down_path_md5 = s3down($s3PathConf, "$file_name.md5sum");
-                    print "##s3downCheck down_path: $down_path
-";
-                    print "##s3downCheck down_path_md5: $down_path_md5
-";
+                    print "##s3downCheck down_path: $down_path\\n";
+                    print "##s3downCheck down_path_md5: $down_path_md5\\n";
                     runCommand("md5sum $down_path/$file_name > $down_path/$file_name.md5sum.checkup  ");
                     if (md5sumCompare("$down_path_md5/$file_name.md5sum", "$down_path/$file_name.md5sum.checkup") eq 'true') {
                         $downCheck = 'true';
@@ -553,12 +550,12 @@ process cleanUp {
 
     input:
         val file_name_all from file_name_all
-    val file_type_all from file_type_all
-    val collection_type_all from collection_type_all
-    val successList from success.toList()
+        val file_type_all from file_type_all
+        val collection_type_all from collection_type_all
+        val successList from success.toList()
 
     output:
-        file('success.${params.attempt}')  into successCleanUp
+        file("success.${params.attempt}")  into successCleanUp
     shell:
         '''
           #!/usr/bin/env perl
@@ -568,7 +565,7 @@ process cleanUp {
           use Pod::Usage;
           use Data::Dumper;
 
-          my $run_dir = "/home/oy28w/nextflowruns/rsemNew250/run289";
+          my $run_dir = "!{params.run_dir}";
           my $input_dir = "$run_dir/inputs";
           my @file_name_all = (!{file_name_all});
           my @file_type_all = (!{file_type_all});
@@ -604,7 +601,7 @@ process cleanUp {
           ## rm s3 related files
           runCommand("rm -rf $input_dir/.tmp*");
           runCommand("rm -rf $run_dir/initialrun/.conf*");
-          system('touch success.13');
+          system('touch success.!{params.attempt}');
 
           sub runCommand {
             my ($com) = @_;

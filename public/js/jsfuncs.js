@@ -244,7 +244,7 @@ function checkAmazonStatus(proId) {
             var status = $('#chooseEnv').find(":selected").attr("status");
             if (status) {
                 if (chooseEnv === "amazon-" + proId && status !== "running") {
-                    loadRunOptions(); //used from runpipeline.js
+                    loadRunOptions("silent"); //used from runpipeline.js
                 }
             }
 

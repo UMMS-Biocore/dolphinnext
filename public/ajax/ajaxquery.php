@@ -41,12 +41,12 @@ if ($p=="saveRun"){
     }
     //create initialrun script
     $initialrun_img = "shub://UMMS-Biocore/initialrun@08e8feb9cbef6797292bf59171ad985617c1d7cb";
-    $initialRunScript = $db->initialRunScript($project_pipeline_id, $attempt, $ownerID);
+    $initialRunParams = $db->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
-    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $initialrun_img, $s3configFileDir, $ownerID);
+    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $initialrun_img, $s3configFileDir, $ownerID);
     //run the script
-    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $initialrun_img, $ownerID);
+    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunParams, $attempt, $initialrun_img, $ownerID);
     //activate autoshutdown feature for amazon
     if  ($profileType == "amazon"){
         $autoshutdown_active = "true";

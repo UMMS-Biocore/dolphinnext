@@ -3400,7 +3400,7 @@ function showHideColumnRunSett(colList, type) {
 
 
 function loadProjectPipeline(pipeData) {
-    loadRunOptions();
+    loadRunOptions("change");
     $('#creatorInfoPip').css('display', "block");
     $('#project-title').text(decodeHtml(pipeData[0].project_name));
     $('#run-title').changeVal(decodeHtml(pipeData[0].pp_name));
@@ -3519,10 +3519,11 @@ $('#inputsTable').on('click', '#systemInputs', function (e) {
 });
 
 function refreshEnv() {
-    loadRunOptions();
+    loadRunOptions("change");
 }
 
-function loadRunOptions() {
+//type="change","silent"
+function loadRunOptions(type) {
     var selectedOpt = $('#chooseEnv').find(":selected").val();
     $('#chooseEnv').find('option').not(':disabled').remove();
     //get profiles for user
@@ -3547,7 +3548,11 @@ function loadRunOptions() {
     if (selectedOpt) {
         if (selectedOpt != "") {
             $('#chooseEnv').val(selectedOpt);
-            $('#chooseEnv').trigger("change");
+            if (type == "silent"){
+                checkReadytoRun();
+            } else {
+                $('#chooseEnv').trigger("change");
+            }
         }
     }
 }
