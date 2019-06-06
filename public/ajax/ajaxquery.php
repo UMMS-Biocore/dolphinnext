@@ -41,12 +41,12 @@ if ($p=="saveRun"){
     }
     //create initialrun script
     $initialrun_img = "shub://UMMS-Biocore/initialrun@08e8feb9cbef6797292bf59171ad985617c1d7cb";
-    $initialRunScript = $db->initialRunScript($project_pipeline_id, $attempt, $ownerID);
+    $initialRunParams = $db->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
-    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunScript, $initialrun_img, $s3configFileDir, $ownerID);
+    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $initialrun_img, $s3configFileDir, $ownerID);
     //run the script
-    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunScript, $attempt, $initialrun_img, $ownerID);
+    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunParams, $attempt, $initialrun_img, $ownerID);
     //activate autoshutdown feature for amazon
     if  ($profileType == "amazon"){
         $autoshutdown_active = "true";
@@ -607,11 +607,32 @@ else if ($p=="removeInput"){
 }
 else if ($p=="removeFile"){
     $file_array = $_REQUEST['file_array'];
+    $collection_arr = array();
     foreach ($file_array as $file_id):
+    //   Get all collections into array
+    $colsOfFile= json_decode($db->getCollectionsOfFile($file_id, $ownerID));
+    for ($i = 0; $i < count($colsOfFile); $i++) {
+        $c_id = $colsOfFile[$i]->{'c_id'};
+        if (!in_array($c_id, $collection_arr))
+        {
+            $collection_arr[] = $c_id; 
+        }
+    }
     $removeFileCollection = $db -> removeFileCollection($file_id, $ownerID);
     $removeFileProject = $db -> removeFileProject($file_id, $ownerID);
-    $data = $db -> removeFile($file_id, $ownerID);
+    $db -> removeFile($file_id, $ownerID);
     endforeach;
+    //check if these collections have any files, if not delete collection
+    $removedCollection = array();
+    for ($i = 0; $i < count($collection_arr); $i++) {
+        $allfiles= json_decode($db->getCollectionFiles($collection_arr[$i], $ownerID));
+        if (empty($allfiles[0])){
+            $db -> removeCollection($collection_arr[$i], $ownerID);
+            $db -> removeProjectPipelineInputByCollection($collection_arr[$i]);
+            $removedCollection[] = $collection_arr[$i]; 
+        } 
+    }
+    $data = json_encode($removedCollection);
 }
 else if ($p=="removeProLocal"){   
     $data = $db -> removeProLocal($id);
@@ -743,7 +764,7 @@ else if ($p=="getProfileAmazon")
     $new_obj = json_decode($data,true);
     if (!empty($new_obj)){
         for ($i = 0; $i < count($new_obj); $i++) {
-            $autoshutdown_date = $new_obj[$i]["autoshutdown_date"];
+            $autoshutdown_date = isset($new_obj[$i]["autoshutdown_date"]) ? $new_obj[$i]["autoshutdown_date"] : "";
             if (!empty($autoshutdown_date)){
                 $expected_date = strtotime($autoshutdown_date);
                 $remaining = $expected_date - time();
@@ -959,27 +980,29 @@ else if ($p=="saveFile"){
         }
     } 
 
-    foreach ($file_array as $item):
-    $p = explode(" ", $item);
-    $name = $p[0];
-    unset($p[0]);
-    $files_used = join(' ', $p);
-    $insert = $db->insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $run_env, $ownerID);
-    $fileData = json_decode($insert,true);
-    $file_id = $fileData["id"];
-    settype($file_id, 'integer');
-    if (empty($file_id)) {
-        break;
-    } else {
-        $insertFileProject = $db->insertFileProject($file_id, $project_id, $ownerID);
-        $insertFileCollection = $db->insertFileCollection($file_id, $collection_id, $ownerID);
-        $file_col_data = json_decode($insertFileCollection,true);
-        $file_col_id = $file_col_data["id"];
-        if (empty($file_col_id)) {
+    for ($i = 0; $i < count($file_array); $i++) {
+        $item = $file_array[$i];
+        $item_file_dir = $file_dir[$i];
+        $p = explode(" ", $item);
+        $name = $p[0];
+        unset($p[0]);
+        $files_used = join(' ', $p);
+        $insert = $db->insertFile($name, $item_file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $run_env, $ownerID);
+        $fileData = json_decode($insert,true);
+        $file_id = $fileData["id"];
+        settype($file_id, 'integer');
+        if (empty($file_id)) {
             break;
+        } else {
+            $insertFileProject = $db->insertFileProject($file_id, $project_id, $ownerID);
+            $insertFileCollection = $db->insertFileCollection($file_id, $collection_id, $ownerID);
+            $file_col_data = json_decode($insertFileCollection,true);
+            $file_col_id = $file_col_data["id"];
+            if (empty($file_col_id)) {
+                break;
+            }
         }
     }
-    endforeach;
     $data = $insert;
 }
 else if ($p=="saveProPipeInput"){

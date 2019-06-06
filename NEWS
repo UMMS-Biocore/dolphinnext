@@ -1,3 +1,8 @@
+06.06.2019 Version 0.3.36
+Bug fixed when s3 path entered with backslash.
+Adding files upgraded to support multiple directories.
+Initial run script copied from nf folder and their inputs entered from outside in ssh command.
+
 03.06.2019 Version 0.3.35
 Bug fixed regarding to impersonating user and updating their run status.
 

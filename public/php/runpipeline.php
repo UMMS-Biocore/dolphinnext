@@ -843,11 +843,13 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             <label class="col-sm-3 control-label text-left" style="padding-left:30px;">2. File Type <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose your file type"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                             <div class="col-sm-7">
                                 <select id="file_type" class="fbtn btn-default form-control" name="file_type">
-                                    <option value="fastq" selected>Fastq</option>
-                                    <option value="bam">Bam</option>
-                                    <option value="bai">Bai</option>
-                                    <option value="bed">Bed</option>
-                                    <option value="txt">Txt</option>
+                                    <option value="fastq" selected>FASTQ</option>
+                                    <option value="bam">BAM</option>
+                                    <option value="bai">BAI</option>
+                                    <option value="bed">BED</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="tsv">TSV</option>
+                                    <option value="txt">TXT</option>
                                 </select>
                             </div>
                         </div>
@@ -923,7 +925,9 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                         <tr>
                                             <th scope="col">Name</th>
                                             <th scope="col">Files Used</th>
+                                            <th scope="col">Directory</th>
                                             <th scope="col" style="width:20px;">Remove</th>
+                                            <th scope="col">Amz_key</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>

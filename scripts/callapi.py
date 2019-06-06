@@ -2,6 +2,7 @@
 
 from optparse import OptionParser
 import ConfigParser, os, sys
+os.environ['http_proxy']=''
 import urllib, json
 import re
 import cgi
@@ -31,7 +32,6 @@ def getToken():
     config.readfp(open('../config/.sec'))
     password = config.get('Dolphinnext', 'VERIFY')
     encrypted = hexlify(encrypt(password, 'OK'))
-    print encrypted
     return encrypted
 
 
