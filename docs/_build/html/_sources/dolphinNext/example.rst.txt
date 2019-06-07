@@ -13,8 +13,8 @@ RNA-Seq Pipeline
 .. image:: dolphinnext_images/rna-seq.jpg
 	:align: center
     
-* `Download executable RNA-Seq NF File <nf/RNA-seqPipeline.nf>`_. 
-* `Download importable RNA-Seq DN File <dn/RNA-seqPipeline.dn>`_.
+* `Download executable RNA-Seq NF File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/RNA-seqPipeline.nf>`_. 
+* `Download importable RNA-Seq DN File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/RNA-seqPipeline.dn>`_.
 
 RNA-seq pipeline includes Quality Control, rRNA filtering, Genome Alignment using HISAT2, STAR and Tophat2, and estimating gene and isoform expression levels by RSEM and featureCounts.  
   
@@ -41,10 +41,10 @@ ATAC-Seq and ChIP-Seq pipeline
 .. image:: dolphinnext_images/chip.jpg
 	:align: center
 
-* `Download executable ATAC-Seq NF File <nf/ATAC-seqPipeline.nf>`_. 
-* `Download importable ATAC-Seq DN File <dn/ATAC-seqPipeline.dn>`_.
-* `Download executable ChIP-Seq NF File <nf/ChIP-seqPipeline.nf>`_. 
-* `Download importable ChIP-Seq DN File <dn/ChIP-seqPipeline.dn>`_.
+* `Download executable ATAC-Seq NF File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/ATAC-seqPipeline.nf>`_. 
+* `Download importable ATAC-Seq DN File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/ATAC-seqPipeline.dn>`_.
+* `Download executable ChIP-Seq NF File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/ChIP-seqPipeline.nf>`_. 
+* `Download importable ChIP-Seq DN File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/ChIP-seqPipeline.dn>`_.
 
 
 DolphinNext offers pipelines to process libraries for the processing of ChIP-Seq and ATAC-Seq data. These two pipelines share most processes and only differ at very specific points. They also share all data preparation steps with the RNA-Seq pipeline and indeed both rely on the very same processes for read filtering, read quality reporting and alignment to desired genomic locations.
@@ -64,8 +64,8 @@ DolphinNext offers pipelines to process libraries for the processing of ChIP-Seq
 .. image:: dolphinnext_images/scrna.png
 	:align: center
 
-*   `Download scRNA executable NF File <nf/singleCell-10XGenomics.nf>`_.
-*   `Download scRNA importable DN File <dn/SingleCell-10XGenomics.dn>`_.
+*   `Download scRNA executable NF File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/SingleCell-10XGenomics.nf>`_.
+*   `Download scRNA importable DN File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/SingleCell-10XGenomics.dn>`_.
 
 The 10x scRNA-Seq pipeline involves demultiplexing, alignment, filtering, and UMI counting. 
 

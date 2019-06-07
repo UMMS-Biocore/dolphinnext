@@ -401,7 +401,7 @@ folder instead of downloading all of them to reduce the load. -->
 
                 <!-- Header Navbar: style can be found in header.less -->
                 <nav class="navbar navbar-static-top">
-                    <div class="collapse navbar-collapse pull-left">
+                    <div class="navbar-custom-menu pull-left">
                         <ul class="nav navbar-nav">
                             <li><a href="index.php?np=1">Pipelines </a></li>
                             <li><a href="index.php?np=2">Projects </a></li>
@@ -414,7 +414,7 @@ folder instead of downloading all of them to reduce the load. -->
                             ?>
                         </ul>
                     </div>
-                    <div class="navbar-custom-menu">
+                    <div class="navbar-custom-menu pull-right">
                         <ul class="nav navbar-nav">
                             <li id="manageAmz" style="display:none">
                                 <a href="#amzModal" data-toggle="modal">Amazon
