@@ -179,6 +179,7 @@
 <img alt="../_images/examples_public.png" class="align-center" src="../_images/examples_public.png" />
 <div class="section" id="rna-seq-pipeline">
 <h2>RNA-Seq Pipeline<a class="headerlink" href="#rna-seq-pipeline" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/rna-seq.jpg" class="align-center" src="../_images/rna-seq.jpg" />
 <ul class="simple">
 <li><a class="reference external" href="nf/RNA-seqPipeline.nf">Download executable RNA-Seq NF File</a>.</li>
 <li><a class="reference external" href="dn/RNA-seqPipeline.dn">Download importable RNA-Seq DN File</a>.</li>
@@ -200,6 +201,8 @@
 </div>
 <div class="section" id="atac-seq-and-chip-seq-pipeline">
 <h2>ATAC-Seq and ChIP-Seq pipeline<a class="headerlink" href="#atac-seq-and-chip-seq-pipeline" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/atac.jpg" class="align-center" src="../_images/atac.jpg" />
+<img alt="../_images/chip.jpg" class="align-center" src="../_images/chip.jpg" />
 <ul class="simple">
 <li><a class="reference external" href="nf/ATAC-seqPipeline.nf">Download executable ATAC-Seq NF File</a>.</li>
 <li><a class="reference external" href="dn/ATAC-seqPipeline.dn">Download importable ATAC-Seq DN File</a>.</li>
@@ -221,15 +224,16 @@
 </div>
 <div class="section" id="x-scrna-seq-pipeline">
 <h2>10X scRNA-Seq Pipeline<a class="headerlink" href="#x-scrna-seq-pipeline" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/scrna.png" class="align-center" src="../_images/scrna.png" />
 <ul class="simple">
 <li><a class="reference external" href="nf/singleCell-10XGenomics.nf">Download scRNA executable NF File</a>.</li>
 <li><a class="reference external" href="dn/SingleCell-10XGenomics.dn">Download scRNA importable DN File</a>.</li>
 </ul>
 <p>The 10x scRNA-Seq pipeline involves demultiplexing, alignment, filtering, and UMI counting.</p>
+<p>Steps:</p>
 <blockquote>
 <div><ol class="arabic simple">
-<li>It starts with demultiplexing using Illumina bcl2fastq which converts BCL files from a sequencer into FASTQs files.</li>
-<li>Next, Umitools (<a class="reference external" href="https://github.com/CGATOxford/UMI-tools">https://github.com/CGATOxford/UMI-tools</a>) is used to extract valid reads by checking cell barcode list. By default, input sequence, is found on only the R2 side of the reads are sent to split process.</li>
+<li>Umitools (<a class="reference external" href="https://github.com/CGATOxford/UMI-tools">https://github.com/CGATOxford/UMI-tools</a>) is used to extract valid reads by checking cell barcode list. By default, input sequence, is found on only the R2 side of the reads are sent to split process.</li>
 <li>Fastq files are then splitted by the desired number of reads in each chunk (eg. 2000000) in order to enhance the speed of the alignment. Splitted fastq files are then aligned by STAR and merged by samtools.</li>
 <li>Next, a python script (countUniqueAlignedBarcodes_fromFile.py) counts the number of aligned reads from each cell barcode and saves the counts to a file.</li>
 <li>In the next step, a Python script (filter_lowCountBC_bam_print.py) uses the file produced in the previous step to remove the reads in the bam files from cell barcodes with fewer than a predefined cutoff value of alignments (eg. 3000) to reduce both memory requirements and output file sizes in the remaining steps.</li>
@@ -237,6 +241,44 @@
 <li>Finally, the summary metrics to describe sequencing quality and various characteristics of the detected cells are reported such as the number of cells, the mean reads per cell, and the median genes detected per cell.</li>
 </ol>
 </div></blockquote>
+<p>Outputs:</p>
+<blockquote>
+<div><ul class="simple">
+<li>UMI table: The output file (<cite>*_umiClean.txt</cite>) is tab separated Gene/Transcript vs Cell Barcode matrix filled with count data as shown at below.</li>
+</ul>
+</div></blockquote>
+<table border="1" class="docutils">
+<colgroup>
+<col width="9%" />
+<col width="30%" />
+<col width="30%" />
+<col width="30%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">gene</th>
+<th class="head">ATCAATCGCGAACCGA</th>
+<th class="head">ACCCTCAACTCAAACA</th>
+<th class="head">ACTCATACCCGGAAAT</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>RNF14</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="row-odd"><td>MZT2B</td>
+<td>0</td>
+<td>2</td>
+<td>8</td>
+</tr>
+<tr class="row-even"><td>SPN</td>
+<td>12</td>
+<td>3</td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="pipipes">
 <h2>piPipes<a class="headerlink" href="#pipipes" title="Permalink to this headline">¶</a></h2>
