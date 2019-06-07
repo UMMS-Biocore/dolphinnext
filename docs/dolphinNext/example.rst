@@ -9,6 +9,10 @@ There are numerous publicly available pipelines and processes exist in `DolphinN
 
 RNA-Seq Pipeline
 ================
+
+.. image:: dolphinnext_images/rna-seq.jpg
+	:align: center
+    
 * `Download executable RNA-Seq NF File <nf/RNA-seqPipeline.nf>`_. 
 * `Download importable RNA-Seq DN File <dn/RNA-seqPipeline.dn>`_.
 
@@ -30,6 +34,13 @@ Steps:
 
 ATAC-Seq and ChIP-Seq pipeline
 ==============================
+
+.. image:: dolphinnext_images/atac.jpg
+	:align: center
+    
+.. image:: dolphinnext_images/chip.jpg
+	:align: center
+
 * `Download executable ATAC-Seq NF File <nf/ATAC-seqPipeline.nf>`_. 
 * `Download importable ATAC-Seq DN File <dn/ATAC-seqPipeline.dn>`_.
 * `Download executable ChIP-Seq NF File <nf/ChIP-seqPipeline.nf>`_. 
@@ -49,19 +60,35 @@ DolphinNext offers pipelines to process libraries for the processing of ChIP-Seq
 
 10X scRNA-Seq Pipeline
 ======================
+
+.. image:: dolphinnext_images/scrna.png
+	:align: center
+
 *   `Download scRNA executable NF File <nf/singleCell-10XGenomics.nf>`_.
 *   `Download scRNA importable DN File <dn/SingleCell-10XGenomics.dn>`_.
 
 The 10x scRNA-Seq pipeline involves demultiplexing, alignment, filtering, and UMI counting. 
 
-    1) It starts with demultiplexing using Illumina bcl2fastq which converts BCL files from a sequencer into FASTQs files. 
-    2) Next, Umitools (https://github.com/CGATOxford/UMI-tools) is used to extract valid reads by checking cell barcode list. By default, input sequence, is found on only the R2 side of the reads are sent to split process. 
-    3) Fastq files are then splitted by the desired number of reads in each chunk (eg. 2000000) in order to enhance the speed of the alignment. Splitted fastq files are then aligned by STAR and merged by samtools. 
-    4) Next, a python script (countUniqueAlignedBarcodes_fromFile.py) counts the number of aligned reads from each cell barcode and saves the counts to a file. 
-    5) In the next step, a Python script (filter_lowCountBC_bam_print.py) uses the file produced in the previous step to remove the reads in the bam files from cell barcodes with fewer than a predefined cutoff value of alignments (eg. 3000) to reduce both memory requirements and output file sizes in the remaining steps. 
-    6) ESAT then aligns exonic reads to annotated transcripts, uses the UMIs to remove PCR duplicates and creates a UMI distributions table containing the number of reads aligned to each transcript for each cell for each UMI. Then, a python script (cleanLowEndUmis.py) identifies singletons (UMIs from a transcript in a cell with only a single alignment) and merges them with multi-count UMIs if they differ by only a single base in order to reduce overcounting transcripts in high-expression genes and reduce noise in low-expression genes. This step produces the final output matrix of genes x cells used for downstream analysis and visualization. 
-    7) Finally, the summary metrics to describe sequencing quality and various characteristics of the detected cells are reported such as the number of cells, the mean reads per cell, and the median genes detected per cell.
+Steps:
 
+    1) Umitools (https://github.com/CGATOxford/UMI-tools) is used to extract valid reads by checking cell barcode list. By default, input sequence, is found on only the R2 side of the reads are sent to split process. 
+    2) Fastq files are then splitted by the desired number of reads in each chunk (eg. 2000000) in order to enhance the speed of the alignment. Splitted fastq files are then aligned by STAR and merged by samtools. 
+    3) Next, a python script (countUniqueAlignedBarcodes_fromFile.py) counts the number of aligned reads from each cell barcode and saves the counts to a file. 
+    4) In the next step, a Python script (filter_lowCountBC_bam_print.py) uses the file produced in the previous step to remove the reads in the bam files from cell barcodes with fewer than a predefined cutoff value of alignments (eg. 3000) to reduce both memory requirements and output file sizes in the remaining steps. 
+    5) ESAT then aligns exonic reads to annotated transcripts, uses the UMIs to remove PCR duplicates and creates a UMI distributions table containing the number of reads aligned to each transcript for each cell for each UMI. Then, a python script (cleanLowEndUmis.py) identifies singletons (UMIs from a transcript in a cell with only a single alignment) and merges them with multi-count UMIs if they differ by only a single base in order to reduce overcounting transcripts in high-expression genes and reduce noise in low-expression genes. This step produces the final output matrix of genes x cells used for downstream analysis and visualization. 
+    6) Finally, the summary metrics to describe sequencing quality and various characteristics of the detected cells are reported such as the number of cells, the mean reads per cell, and the median genes detected per cell.
+    
+Outputs:
+
+    - UMI table: The output file (`*_umiClean.txt`) is tab separated Gene/Transcript vs Cell Barcode matrix filled with count data as shown at below.
+
+===== ================ ================ ================
+gene  ATCAATCGCGAACCGA ACCCTCAACTCAAACA ACTCATACCCGGAAAT             
+===== ================ ================ ================
+RNF14 0                0                0
+MZT2B 0                2                8  
+SPN   12               3                4
+===== ================ ================ ================
 
 
 piPipes
