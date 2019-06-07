@@ -194,7 +194,8 @@ $(document).ready(function () {
             } else if (st == "init" || st == "Waiting" || st == "NextRun") {
                 $(row).css("background-color", "#D8EDF6");
             }
-        }
+        },
+        sScrollX: "100%"
     });
 
     //reload the table each 30 secs
