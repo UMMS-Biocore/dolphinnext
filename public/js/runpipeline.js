@@ -4476,18 +4476,14 @@ function readNextLog(proType, proId, type) {
         window.serverLog = "";
         window.nextflowLog = "";
         window.runStatus = "";
-        if (updateProPipeStatus.serverLog != null){
+        if (updateProPipeStatus){
             window.serverLog = updateProPipeStatus.serverLog;
-            if (serverLog && serverLog !== null && serverLog !== false) {
+            window.nextflowLog = updateProPipeStatus.nextflowLog;
+            window.runStatus = updateProPipeStatus.runStatus;
+        } 
+        if (serverLog && serverLog !== null && serverLog !== false) {
                 var runPid = parseRunPid(serverLog);
             }
-        } 
-        if (updateProPipeStatus.nextflowLog != null){
-            window.nextflowLog = updateProPipeStatus.nextflowLog;
-        }
-        if (updateProPipeStatus.runStatus != null){
-            window.runStatus = updateProPipeStatus.runStatus;
-        }
         var pidStatus = "";
 
         // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
