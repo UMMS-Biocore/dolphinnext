@@ -1,3 +1,6 @@
+06.06.2019 Version 0.3.37
+Bug fixed for null server log retrieved.
+
 06.06.2019 Version 0.3.36
 Bug fixed when s3 path entered with backslash.
 Adding files upgraded to support multiple directories.

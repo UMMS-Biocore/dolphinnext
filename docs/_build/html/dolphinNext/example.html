@@ -100,6 +100,9 @@
 <li class="toctree-l2"><a class="reference internal" href="profile.html">Profile Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Pipeline Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rna-seq-pipeline">RNA-Seq Pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#atac-seq-and-chip-seq-pipeline">ATAC-Seq and ChIP-Seq pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#x-scrna-seq-pipeline">10X scRNA-Seq Pipeline</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#pipipes">piPipes</a></li>
 </ul>
 </li>
@@ -174,6 +177,67 @@
 <h1>Pipeline Examples<a class="headerlink" href="#pipeline-examples" title="Permalink to this headline">¶</a></h1>
 <p>There are numerous publicly available pipelines and processes exist in <a class="reference external" href="https://dolphinnext.umassmed.edu">DolphinNext website</a>. In the main page, you may click on <strong>Learn More</strong> button and investigate the pipelines you interested. In order to reach process details just click settings button at the top of the process circles.</p>
 <img alt="../_images/examples_public.png" class="align-center" src="../_images/examples_public.png" />
+<div class="section" id="rna-seq-pipeline">
+<h2>RNA-Seq Pipeline<a class="headerlink" href="#rna-seq-pipeline" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="nf/RNA-seqPipeline.nf">Download executable RNA-Seq NF File</a>.</li>
+<li><a class="reference external" href="dn/RNA-seqPipeline.dn">Download importable RNA-Seq DN File</a>.</li>
+</ul>
+<p>RNA-seq pipeline includes Quality Control, rRNA filtering, Genome Alignment using HISAT2, STAR and Tophat2, and estimating gene and isoform expression levels by RSEM and featureCounts.</p>
+<dl class="docutils">
+<dt>Steps:</dt>
+<dd><ol class="first last arabic simple">
+<li>For Quality Control, we use FastQC to create qc outputs. There are optional read quality filtering (trimmomatic), read quality trimming (trimmomatic), adapter removal (cutadapt) processes available.</li>
+<li>Bowtie2/Bowtie/STAR is used to count or filter out and estimate the abundance of both standard and predefined sets of genomic loci (e.g. rRNAs, miRNAs, tRNAs, piRNAs, snoRNAs, ERCC ).</li>
+<li>RSEM is used to align RNA-Seq reads to a reference transcripts and estimates gene and isoform expression levels.</li>
+<li>HISAT2, STAR and Tophat2 is used to align RNA-Seq reads to a genome. Optional estimation of gene and isoform expression levels could be done by featureCount.</li>
+<li>If the user opted to perform genomic alignments the pipeline reports overall quality metrics such as coverage and the number of mapped reads to different genomic and transcriptomic regions  These reports rely on Picard’s CollectRNASeqMetrics program (Broad Institute, n.d.) and the  RSeQC (Wang, Wang, and Li 2012) program.</li>
+<li>Optionally you can create Integrative Genomics Viewer (IGV)  and Genome Browser Files (TDF and Bigwig, respectively)</li>
+<li>The RNA-Seq pipeline returns a quantification matrix that includes the estimated counts, and transcript per million (TPM) for each gene and for each annotated isoform. These matrices are the input to differential gene expression analysis and can be uploaded directly to an embedded instance of our DEBrowser software which allows interactive exploration of the resulting data (Kucukural et al. 2019).</li>
+</ol>
+</dd>
+</dl>
+</div>
+<div class="section" id="atac-seq-and-chip-seq-pipeline">
+<h2>ATAC-Seq and ChIP-Seq pipeline<a class="headerlink" href="#atac-seq-and-chip-seq-pipeline" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="nf/ATAC-seqPipeline.nf">Download executable ATAC-Seq NF File</a>.</li>
+<li><a class="reference external" href="dn/ATAC-seqPipeline.dn">Download importable ATAC-Seq DN File</a>.</li>
+<li><a class="reference external" href="nf/ChIP-seqPipeline.nf">Download executable ChIP-Seq NF File</a>.</li>
+<li><a class="reference external" href="dn/ChIP-seqPipeline.dn">Download importable ChIP-Seq DN File</a>.</li>
+</ul>
+<p>DolphinNext offers pipelines to process libraries for the processing of ChIP-Seq and ATAC-Seq data. These two pipelines share most processes and only differ at very specific points. They also share all data preparation steps with the RNA-Seq pipeline and indeed both rely on the very same processes for read filtering, read quality reporting and alignment to desired genomic locations.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>For Quality Control, we use FastQC to create qc outputs. There are optional read quality filtering (trimmomatic), read quality trimming (trimmomatic), adapter removal (cutadapt) processes available.</li>
+<li>Bowtie2/Bowtie/STAR is used to count or filter out and estimate the abundance of both standard and predefined sets of genomic loci (e.g. rRNAs, miRNAs, tRNAs, piRNAs, snoRNAs, ERCC ).</li>
+<li>A short read aligner Bowtie2 is used to align reads to a genome. (Langmead and Salzberg 2012). For large input files such as those typically obtained from ATAC-Seq, alignments are speed up by splitting the files into smaller chunks followed by parallel alignments of them.</li>
+<li>The pipeline then allows users to estimate and remove PCR duplicates using Picard mark duplicates (Broad Institute, n.d.) function and Samtools (H. Li et al. 2009) using merged alignments.</li>
+<li>For ATAC-Seq specifically the pipeline calls accessible chromatin regions by estimating the the Tn5 transposase cut site by first positioning on the 9-th base upstream of the 5’ read end then extending by 29-bases downstream. This extension process has been shown to more accurate reflect the exact position that was accessible to transposase (Donnard et al. 2018; Buenrostro et al. 2013). Once each read has been shortened, Peaks are called identically in both the ChIP-Seq and ATAC-Seq using MACS2 (Zhang et al. 2008).</li>
+<li>When processing several samples together, the ATAC and ChIP pipelines provide consensus peak calls by merging all peaks individually called in each samples using Bedtools (Quinlan and Hall 2010). The number of reads in each peak location are then quantified using Bedtools (Quinlan and Hall 2010) coverage function.</li>
+<li>As a result, ATAC-Seq and ChIP-Seq pipelines also generates a matrix that has the count values for each peak region and samples. This matrix can be uploaded directly to the embedded version of DEBrowser (Kucukural et al. 2019) to perform differential analysis or downloaded to perform other analysis.</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="x-scrna-seq-pipeline">
+<h2>10X scRNA-Seq Pipeline<a class="headerlink" href="#x-scrna-seq-pipeline" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="nf/singleCell-10XGenomics.nf">Download scRNA executable NF File</a>.</li>
+<li><a class="reference external" href="dn/SingleCell-10XGenomics.dn">Download scRNA importable DN File</a>.</li>
+</ul>
+<p>The 10x scRNA-Seq pipeline involves demultiplexing, alignment, filtering, and UMI counting.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>It starts with demultiplexing using Illumina bcl2fastq which converts BCL files from a sequencer into FASTQs files.</li>
+<li>Next, Umitools (<a class="reference external" href="https://github.com/CGATOxford/UMI-tools">https://github.com/CGATOxford/UMI-tools</a>) is used to extract valid reads by checking cell barcode list. By default, input sequence, is found on only the R2 side of the reads are sent to split process.</li>
+<li>Fastq files are then splitted by the desired number of reads in each chunk (eg. 2000000) in order to enhance the speed of the alignment. Splitted fastq files are then aligned by STAR and merged by samtools.</li>
+<li>Next, a python script (countUniqueAlignedBarcodes_fromFile.py) counts the number of aligned reads from each cell barcode and saves the counts to a file.</li>
+<li>In the next step, a Python script (filter_lowCountBC_bam_print.py) uses the file produced in the previous step to remove the reads in the bam files from cell barcodes with fewer than a predefined cutoff value of alignments (eg. 3000) to reduce both memory requirements and output file sizes in the remaining steps.</li>
+<li>ESAT then aligns exonic reads to annotated transcripts, uses the UMIs to remove PCR duplicates and creates a UMI distributions table containing the number of reads aligned to each transcript for each cell for each UMI. Then, a python script (cleanLowEndUmis.py) identifies singletons (UMIs from a transcript in a cell with only a single alignment) and merges them with multi-count UMIs if they differ by only a single base in order to reduce overcounting transcripts in high-expression genes and reduce noise in low-expression genes. This step produces the final output matrix of genes x cells used for downstream analysis and visualization.</li>
+<li>Finally, the summary metrics to describe sequencing quality and various characteristics of the detected cells are reported such as the number of cells, the mean reads per cell, and the median genes detected per cell.</li>
+</ol>
+</div></blockquote>
+</div>
 <div class="section" id="pipipes">
 <h2>piPipes<a class="headerlink" href="#pipipes" title="Permalink to this headline">¶</a></h2>
 <p>piPipes is a set of pipelines developed in the Zamore Lab and ZLab to analyze piRNA/transposon from different Next Generation Sequencing libraries such as small RNA-seq, RNA-seq, Genome-seq, ChIP-seq, CAGE/Degradome-Seq. Please see their Wiki pages (<a class="reference external" href="https://github.com/bowhan/piPipes/wiki">https://github.com/bowhan/piPipes/wiki</a>) for the original content.</p>
