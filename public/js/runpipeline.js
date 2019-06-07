@@ -4473,13 +4473,23 @@ function clearIntNextLog(proType, proId) {
 function readNextLog(proType, proId, type) {
     if (projectpipelineOwn === "1") {
         var updateProPipeStatus = getValues({ p: "updateProPipeStatus", project_pipeline_id: project_pipeline_id });
-        window.serverLog = updateProPipeStatus.serverLog;
-        window.nextflowLog = updateProPipeStatus.nextflowLog;
-        window.runStatus = updateProPipeStatus.runStatus;
-        var pidStatus = "";
-        if (serverLog && serverLog !== null && serverLog !== false) {
-            var runPid = parseRunPid(serverLog);
+        window.serverLog = "";
+        window.nextflowLog = "";
+        window.runStatus = "";
+        if (updateProPipeStatus.serverLog != null){
+            window.serverLog = updateProPipeStatus.serverLog;
+            if (serverLog && serverLog !== null && serverLog !== false) {
+                var runPid = parseRunPid(serverLog);
+            }
         } 
+        if (updateProPipeStatus.nextflowLog != null){
+            window.nextflowLog = updateProPipeStatus.nextflowLog;
+        }
+        if (updateProPipeStatus.runStatus != null){
+            window.runStatus = updateProPipeStatus.runStatus;
+        }
+        var pidStatus = "";
+
         // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
         if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
