@@ -255,8 +255,6 @@ class dbfuncs {
     function initialRunParams ($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID){
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $executor = $cluDataArr[0]['executor'];
-
-
         $params="";
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
@@ -1221,6 +1219,31 @@ class dbfuncs {
             INNER JOIN run_log r
             WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.id='$project_pipeline_id' AND pp.owner_id='$ownerID'";
         return self::queryTable($sql);
+    }
+    public function cleanTempDir ($uploadDir){
+        //clean upload directories if not modified in 30 minutes.
+        $ret = "";
+        if ($uploadDir == "true"){
+            $uploads= "{$this->tmp_path}/uploads/";
+            $cmd = "find $uploads -mindepth 1 -type d -mmin +30 2>&1 & ";
+            $dirlist = array();
+            exec($cmd, $dirlist, $exit);
+            if (!empty($dirlist)){
+                error_log(print_r($dirlist, TRUE));
+                for ($i = 0; $i < count($dirlist); $i++) {
+                    $dir = trim($dirlist[$i]);
+                    if (!empty($dir) && file_exists($dir) && $dir != "{$this->tmp_path}" && $dir != "{$this->tmp_path}/uploads/" && $dir != "{$this->tmp_path}/uploads" ){
+                        system('rm -rf ' . escapeshellarg($dir), $retval);
+                        if ($retval == 0){
+                            $ret.=$dir." ";
+                        } else {
+                            $ret.=$dir." not deleted->$retval";
+                        }
+                    }
+                }
+            }
+        }
+        return $ret;
     }
 
     public function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
@@ -2217,6 +2240,11 @@ class dbfuncs {
             $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash \" 2>&1 &";
             $terminate_run = shell_exec($cmd);
             return json_encode('terminateCommandExecuted');
+        } else if ($commandType == "getRemoteFileList"){
+            $target_dir = $pid;
+            $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd ls $target_dir \" 2>&1 & echo $! &";
+            $file_list = shell_exec($cmd);
+            return json_encode($file_list);
         }
 
     }
@@ -2287,6 +2315,54 @@ class dbfuncs {
                 return json_encode("logNotFound");
             }
         }
+    }
+
+    function rsyncTransfer($localFile,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID){
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $cmd_log = "";
+        if (!empty($cluDataArr)){
+            $fileName = str_replace(" ", "\\ ", $fileName);
+            $localFile = str_replace(" ", "\\ ", $localFile);
+            error_log($fileName);
+            $ssh_id = $cluDataArr[0]["ssh_id"];
+            $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+            if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
+            $cmd="rsync --info=progress2 -avzu --rsync-path='mkdir -p $target_dir && rsync' -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $localFile $connect:$target_dir/ > $upload_dir/.$fileName 2>&1 & echo $! &"; 
+            $cmd_log = shell_exec($cmd);
+            if (!empty($cmd_log)){
+                $cmd_log = trim($cmd_log);
+                $pidFile = $upload_dir."/.".$fileName.".rsyncPid";
+                file_put_contents($pidFile, $cmd_log);
+            }
+        }
+        return $cmd_log;
+    }
+
+    function getRsyncStatus($fileName, $email, $ownerID){
+        $log = "";
+        $tmp_path = $this->tmp_path;
+        $upload_dir = "$tmp_path/uploads/{$email}";
+        $logfile = $upload_dir."/.".$fileName;
+        if (file_exists($logfile)){
+            $log = $this->readFile($logfile);
+        }
+        return json_encode($log);
+    }
+    
+    function resetUpload($fileName, $email, $ownerID){
+        $tmp_path = $this->tmp_path;
+        $upload_dir = "$tmp_path/uploads/{$email}";
+        $rsyncPidFile = $upload_dir."/.".$fileName.".rsyncPid";
+        if (file_exists($rsyncPidFile)){
+            $rsyncPid = $this->readFile($rsyncPidFile);
+            if (!empty($rsyncPid)){
+                $rsyncPid = trim($rsyncPid);
+                exec("kill $rsyncPid",$res,$err);
+                return json_encode($res);
+            }
+        }
+        $res = "";
+        return json_encode($res);
     }
 
 
@@ -2366,6 +2442,23 @@ class dbfuncs {
             $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
             $log = shell_exec($cmd);
         }
+        if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
+            return json_encode($log);
+        } else {
+            return json_encode("Query failed! Please check your query, connection profile or internet connection");
+        }
+    }
+
+    function chkRmDirWritable($dir, $profileType, $profileId, $ownerID) {
+        $dir = trim($dir);
+        $log = "";
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $ssh_id = $cluDataArr[0]["ssh_id"];
+        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+        if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
+        $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"[ -w $dir ] && echo 'writeable' || echo 'write permission denied'\" 2>&1 &";
+        $log = shell_exec($cmd);
+        //writeable\n will be successful $log
         if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
             return json_encode($log);
         } else {
@@ -2461,9 +2554,6 @@ class dbfuncs {
         }
         return json_encode($scanned_directory);
     }
-
-
-
 
     //    ----------- Inputs, Project Inputs   ---------
     public function getInputs($id,$ownerID) {

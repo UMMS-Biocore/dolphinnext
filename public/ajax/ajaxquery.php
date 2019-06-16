@@ -90,14 +90,20 @@ else if ($p=="saveFileContent"){
     $data = $db -> saveFileContent($text,$uuid,$filename,$ownerID);
 }
 
-else if ($p=="getFileList")
-{
+else if ($p=="getFileList"){
     $uuid  = $_REQUEST['uuid'];
     $path = $_REQUEST['path'];
     $data = $db->getFileList($uuid, $path, "filedir");
 }
-else if ($p=="getReportData")
-{
+else if ($p=="getRsyncStatus"){
+    $filename  = $_REQUEST['filename'];
+    $data = $db->getRsyncStatus($filename, $email, $ownerID);
+}
+else if ($p=="resetUpload"){
+    $filename  = $_REQUEST['filename'];
+    $data = $db->resetUpload($filename, $email, $ownerID);
+}
+else if ($p=="getReportData"){
     $uuid  = $_REQUEST['uuid'];
     $path = $_REQUEST['path']; //pubweb, run
     $pipeline_id = $_REQUEST['pipeline_id'];
@@ -201,6 +207,15 @@ else if ($p=="getLsDir"){
     $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
     $data = $db -> getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $ownerID);
 }
+else if ($p=="chkRmDirWritable"){
+    $dir = $_REQUEST['dir'];
+    $run_env = $_REQUEST['run_env'];
+    $profileAr = explode("-", $run_env);
+    $profileType = $profileAr[0];
+    $profileId = $profileAr[1];
+    $data = $db -> chkRmDirWritable($dir, $profileType, $profileId, $ownerID);
+}
+
 else if ($p=="getGeoData"){
     $geo_id = $_REQUEST['geo_id'];
     $data = $db -> getGeoData($geo_id, $ownerID);

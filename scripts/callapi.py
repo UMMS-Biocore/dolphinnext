@@ -44,6 +44,9 @@ def main():
     url = basePath + "/api/service.php?upd=updateRunStat&token=" + token
     print url
     resRun=callApi(url)
+    url = basePath + "/api/service.php?upd=cleanTempDir&token=" + token
+    print url
+    resClean=callApi(url)
 
 if __name__ == "__main__":
     main()
