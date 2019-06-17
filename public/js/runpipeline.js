@@ -7027,7 +7027,6 @@ $(document).ready(function () {
                     str += arg + " ";
                 }
             });
-            console.log(str)
             var log = $('#pluploaderLog');
             log.append(str + "\n");
             log.scrollTop(log[0].scrollHeight);
@@ -7078,18 +7077,11 @@ $(document).ready(function () {
         }
 
         function upd_plupload_transfer_obj(fileId,status,transfer,rsyncPid){
-            console.log("upd_plupload_transfer_obj");
-            console.log(fileId);
-            console.log(status);
-            console.log(rsyncPid);
-
             if (typeof window["plupload_transfer_obj"] == "undefined"){
                 window["plupload_transfer_obj"] = {}
-                console.log(window["plupload_transfer_obj"]);
             }
             if (typeof window["plupload_transfer_obj"][fileId] == "undefined"){
                 window["plupload_transfer_obj"][fileId] = {}
-                console.log(window["plupload_transfer_obj"][fileId]);
             }
             if (status){
                 window["plupload_transfer_obj"][fileId]["status"]=status
@@ -7304,8 +7296,6 @@ $(document).ready(function () {
                         var fileName = file.name
                         var fileId = file.id
                         var fileState = file.state //5==done
-                        console.log(fileState)
-                        console.log(fileName)
                         if (fileState == 5 && fileName){
                             if (info){
                                 console.log(info)
@@ -7317,7 +7307,6 @@ $(document).ready(function () {
                                         if (json) {
                                             if (json.rsync_log){
                                                 var pid = $.trim(json.rsync_log)
-                                                console.log(pid)
                                                 upd_plupload_transfer_obj(fileId,"","",pid);
                                             }
                                             if (!json.error) {
@@ -7385,14 +7374,12 @@ $(document).ready(function () {
                 var fileName  = files[i].name
                 if (window["plupload_transfer_obj"]){
                     if (window["plupload_transfer_obj"][fileID]){
+                        if (window['interval_rsyncStatus_' + fileID]){
+                            clearInterval(window['interval_rsyncStatus_' + fileID]);
+                        }
                         if (window["plupload_transfer_obj"][fileID]["status"] && window["plupload_transfer_obj"][fileID]["rsync"]){
                             if (window["plupload_transfer_obj"][fileID]["status"] != "done"){
                                 var killRsync =  getValues({ p: "resetUpload", filename: fileName });
-                                console.log(fileName)
-                                if (window['interval_rsyncStatus_' + fileID]){
-                                    clearInterval(window['interval_rsyncStatus_' + fileID]);
-                                }
-                                console.log(killRsync)
                             }
                         }
                     }
