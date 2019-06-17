@@ -53,6 +53,9 @@ folder instead of downloading all of them to reduce the load. -->
         <link href="bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css" rel="stylesheet" />
         <!-- dropzone -->
         <link type="text/css" rel="stylesheet" href="bower_components/dropzone/dropzone.min.css" />
+        <!-- plupload -->
+        <link rel="stylesheet" href="bower_components/plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
+        <link rel="stylesheet" href="bower_components/plupload/js/jquery.plupload.queue/css/jquery.plupload.queue.css" type="text/css" />
         <!-- to fix favicon.ico not found error-->
         <link rel="shortcut icon" href="#">
         <style>
@@ -700,6 +703,10 @@ immediately after the control sidebar -->
     <script src="bower_components/crypto-js/aes.js"></script>
     <!-- dropzone -->
     <script src="bower_components/dropzone/dropzone.js"></script>
+    <!-- plupload -->
+    <script src="bower_components/plupload/js/plupload.full.min.js"></script>
+    <script src="bower_components/plupload/js/jquery.ui.plupload/jquery.ui.plupload.min.js"></script>
+    <script src="bower_components/plupload/js/jquery.plupload.queue/jquery.plupload.queue.js"></script>
     <script type="text/javascript" src="dist/js/dataTables.checkboxes.js"></script>
     <?php print getJS($np, $login, $id); ?>
 

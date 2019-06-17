@@ -1259,14 +1259,14 @@ function hideProcessOptionsAsIcons (){
                                     });
                                 });
                             }
-
+                            //ui-dialog
                             $(panelContent).dialog({
                                 title: label,
                                 resizable: false,
                                 draggable: true,
                                 autoOpen: false,
                                 position:['middle',100],
-                                width: '70%',
+                                width: '90%',
                                 modal: true,
                                 minHeight: 0,
                                 maxHeight: 650,
@@ -4482,8 +4482,8 @@ function readNextLog(proType, proId, type) {
             window.runStatus = updateProPipeStatus.runStatus;
         } 
         if (serverLog && serverLog !== null && serverLog !== false) {
-                var runPid = parseRunPid(serverLog);
-            }
+            var runPid = parseRunPid(serverLog);
+        }
         var pidStatus = "";
 
         // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
@@ -5486,6 +5486,11 @@ $(document).ready(function () {
                     }
                 });
                 $(selectizeIDs[i])[0].selectize.clear()
+            }
+            //#uploadFiles tab:
+            var workDir = $("#rOut_dir").val();
+            if (workDir){
+                $("#target_dir").val(workDir+"/run"+project_pipeline_id+"/upload")
             }
         });
 
@@ -6979,6 +6984,452 @@ $(document).ready(function () {
         }
 
     });
+
+    //### pluplouder start
+
+    $(function() {
+        function log() {
+            var str = "";
+            plupload.each(arguments, function(arg) {
+                var row = "";
+
+                if (typeof(arg) != "string") {
+                    plupload.each(arg, function(value, key) {
+                        // Convert items in File objects to human readable form
+                        if (arg instanceof plupload.File) {
+                            // Convert status to human readable
+                            switch (value) {
+                                case plupload.QUEUED:
+                                    value = 'QUEUED';
+                                    break;
+
+                                case plupload.UPLOADING:
+                                    value = 'UPLOADING';
+                                    break;
+
+                                case plupload.FAILED:
+                                    value = 'FAILED';
+                                    break;
+
+                                case plupload.DONE:
+                                    value = 'DONE';
+                                    break;
+                            }
+                        }
+
+                        if (typeof(value) != "function") {
+                            row += (row ? ', ' : '') + key + '=' + value;
+                        }
+                    });
+
+                    str += row + " ";
+                } else {
+                    str += arg + " ";
+                }
+            });
+            var log = $('#pluploaderLog');
+            log.append(str + "\n");
+            log.scrollTop(log[0].scrollHeight);
+        }
+
+        function getTransferedFiles(){
+            var done = 0
+            if (window["plupload_transfer_obj"]){
+                var obj = window["plupload_transfer_obj"];
+                if (!jQuery.isEmptyObject(obj)){
+                    $.each(obj, function (el) {
+                        if (window["plupload_transfer_obj"][el]["status"]){
+                            if (window["plupload_transfer_obj"][el]["status"] == "done"){
+                                done ++
+                            }
+                        }
+                    });
+                }
+            }
+            return done;
+        }
+        function updateTransferedFiles(){
+            var uploader = $("#pluploader").pluploadQueue()
+            var totalFile=0;
+            var transferedFile=0;
+            var totalFile=uploader.files.length;
+            var transferedFile=getTransferedFiles();
+            console.log(totalFile)
+            console.log(totalFile > 0)
+            console.log(transferedFile)
+            console.log(transferedFile == totalFile)
+            if (transferedFile && totalFile){
+                if (totalFile > 0 && transferedFile == totalFile){
+                    $("#uploadSucDiv").css("display","inline");
+                } 
+            }
+            if (totalFile){
+                $('span.plupload_transfer_status').html('  Transfered '+transferedFile+'/'+totalFile+' files');
+
+            }
+
+        }
+        //interval will decide the check period
+        function checkRsyncTimer(up,fileName, fileId, interval) {
+            window['interval_rsyncStatus_' + fileId] = setInterval(function () {
+                runRsyncCheck(up, fileName, fileId);
+            }, interval);
+        }
+
+        function upd_plupload_transfer_obj(fileId,status,transfer,rsyncPid){
+            if (typeof window["plupload_transfer_obj"] == "undefined"){
+                window["plupload_transfer_obj"] = {}
+            }
+            if (typeof window["plupload_transfer_obj"][fileId] == "undefined"){
+                window["plupload_transfer_obj"][fileId] = {}
+            }
+            if (status){
+                window["plupload_transfer_obj"][fileId]["status"]=status
+                if (status == "error"){
+                    $("#" + fileId).attr('class', "plupload_failed").find('a').css('display', 'block');
+                } else if (status == "uploading"){
+                    $("#" + fileId).attr('class', "plupload_uploading").find('a').css('display', 'block');
+                } else if (status == "done"){
+                    $("#" + fileId).attr('class', "plupload_done").find('a').css('display', 'block');
+                }  
+            }   
+            if (transfer){
+                window["plupload_transfer_obj"][fileId]["transfer"]=transfer
+                $("#" + fileId +" > .plupload_file_transfer").text(transfer)
+            }
+            if (rsyncPid){
+                window["plupload_transfer_obj"][fileId]["rsync"]=rsyncPid
+            }
+        }
+        function runRsyncCheck(up, fileName, fileId) {
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    filename: fileName,
+                    p: "getRsyncStatus"
+                },
+                async: true,
+                success: function (s) {
+                    if (s){
+                        console.log(s)
+                        log('[TransferFile]', s);
+                        if (s.match(/cannot create directory/)){
+                            upd_plupload_transfer_obj(fileId,"error","Error","");
+                            clearInterval(window['interval_rsyncStatus_' + fileId]);
+                        } else {
+                            if (s.match(/\d+\%/)) {
+                                var list = s.match(/\d+\%/g);
+                                console.log(list)
+                                if (list.length >0){
+                                    var percent = list[list.length-1];
+                                    upd_plupload_transfer_obj(fileId,"uploading",percent,"");
+                                    if (percent.match(/100%/)) {
+                                        upd_plupload_transfer_obj(fileId,"done",percent,"");
+                                        clearInterval(window['interval_rsyncStatus_' + fileId]);
+                                        log('[TransferFile]', "Done");
+                                    }
+                                } 
+                            } 
+                        }
+                        updateTransferedFiles()
+                    }
+                },
+                error: function (errorThrown) {
+                    console.log("Error: " + errorThrown);
+                }
+            });
+        }
+
+        var initPlupload = function (){
+
+            $("#pluploader").pluploadQueue({
+                runtimes : 'html5,html4', //flash,silverlight
+                url : "ajax/upload.php",
+                chunk_size : '3mb', 
+                // to enable chunk_size larger than 2mb: "ajax/.htaccess file should have "php_value post_max_size 12M", "php_value upload_max_filesize 12M"
+                // test for 320mb file : 
+                // chunk_size=10mb :take 130sec
+                // chunk_size=3-4-5mb :take 80sec
+                // chunk_size=1-2mb :take 110sec
+                max_retries: 3,
+                unique_names : true,
+                multiple_queues : true,
+                rename : true,
+                dragdrop: true,
+                multipart : true,
+                //multipart_params : {'target_dir': "old"},
+                filters : {
+                    // Maximum file size
+                    max_file_size : '2gb'
+                },
+                // PreInit events, bound before any internal events
+                preinit : {
+                    Init: function(up, info) {
+                        log('[Init]', 'Info:', info, 'Features:', up.features);
+                    },
+                    UploadFile: function(up, file) {
+                        log('[UploadFile]', file);
+                        //                        up.stop();
+                        // You can override settings before the file is uploaded
+                        // up.setOption('url', 'upload.php?id=' + file.id);
+                    }
+                },
+                // Post init events, bound after the internal events
+                init : {
+                    PostInit: function(up) {
+                        // Called after initialization is finished and internal event handlers bound
+                        log('[PostInit]');
+                    },
+                    Browse: function(up) {
+                        // Called when file picker is clicked
+                        log('[Browse]');
+                    },
+                    Refresh: function(up) {
+                        // Called when the position or dimensions of the picker change
+                        log('[Refresh]');
+                        updateTransferedFiles()
+                    },
+                    StateChanged: function(up) {
+                        // Called when the state of the queue is changed
+                        log('[StateChanged]', up.state == plupload.STARTED ? "STARTED" : "STOPPED");
+                    },
+                    QueueChanged: function(up) {
+                        // Called when queue is changed by adding or removing files
+                        log('[QueueChanged]');
+                    },
+                    OptionChanged: function(up, name, value, oldValue) {
+                        // Called when one of the configuration options is changed
+                        log('[OptionChanged]', 'Option Name: ', name, 'Value: ', value, 'Old Value: ', oldValue);
+                    },
+                    BeforeUpload: function(up, file) {
+                        //Called right before the upload for a given file starts, can be used to cancel it if required
+                        log('[BeforeUpload]', 'File: ', file);
+                        updateTransferedFiles()
+                        var target_dir = $("#target_dir").val();
+                        var run_env = $('#chooseEnv').find(":selected").val();
+                        if (target_dir && run_env){
+                            up.settings.multipart_params.target_dir = target_dir;
+                            up.settings.multipart_params.run_env = run_env;
+                        } 
+                    },
+                    UploadProgress: function(up, file) {
+                        // Called while file is being uploaded
+                        log('[UploadProgress]', 'File:', file, "Total:", up.total);
+                    },
+                    FileFiltered: function(up, file) {
+                        // Called when file successfully files all the filters
+                        log('[FileFiltered]', 'File:', file);
+                    },
+                    FilesAdded: function(up, files) {
+                        // Called when files are added to queue
+                        log('[FilesAdded]');
+                        //get files in the target directory
+                        var target_dir = $("#target_dir").val();
+                        var amazon_cre_id = "";
+                        var dirList = getValues({ "p": "getLsDir", dir: target_dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
+                        console.log(dirList)
+                        var fileArr = [];
+                        var errorAr = [];
+                        if (dirList) {
+                            dirList = $.trim(dirList)
+                            fileArr = dirList.split('\n');
+                            errorAr = fileArr.filter(line => line.match(/ls:/));
+                            fileArr = fileArr.filter(line => !line.match(/:/));
+                        }
+                        var removedFiles = [];
+                        var dupFiles = [];
+                        var emptyFiles = [];
+                        console.log(fileArr)
+                        //check if file is found in the targetdir -> remove file and give warning
+                        plupload.each(files, function(file) {
+                            //remove files that has no size
+                            if (file.size == 0){
+                                emptyFiles.push(file.name)
+                                up.removeFile(file); 
+                            }
+                            //remove duplicate file
+                            var upfile = $.grep(up.files, function(v) { return v.name === file.name });
+                            if (upfile.length > 0){
+                                if (upfile[0] != file){
+                                    dupFiles.push(file.name)
+                                    up.removeFile(file);
+                                }
+                            }
+                            //remove file found in the remote host
+                            if ($.inArray(file.name, fileArr) !== -1){
+                                removedFiles.push(file.name)
+                                up.removeFile(file);
+                            }
+                            log('  File:', file);
+                        });
+
+                        var delRowsTxt = ""
+                        var dupFilesTxt = ""
+                        var emptyFilesTxt = ""
+                        if (removedFiles.length>0){
+                            var delRowsTxt = "Following file(s) already found in the target directory. Therefore, they removed from download queue.<br/><br/>File List:<br/>" + removedFiles.join("<br/>") + "<br/><br/>";
+                        }
+                        if (dupFiles.length >0){
+                            var dupFilesTxt = "Following file(s) already found in the queue list. <br/><br/>File List:<br/>" + dupFiles.join("<br/>") + "<br/><br/>";
+                        }
+                        if (emptyFiles.length >0){
+                            var emptyFilesTxt = "Following file(s) are empty and removed from the download queue. <br/><br/>File List:<br/>" + emptyFiles.join("<br/>") + "<br/><br/>";
+                        }
+                        if (removedFiles.length>0 || dupFiles.length >0 || emptyFiles.length >0){
+                            showInfoModal("#infoModal", "#infoModalText",  delRowsTxt + dupFilesTxt + emptyFilesTxt)
+                        }
+                    },
+                    FilesRemoved: function(up, files) {
+                        // Called when files are removed from queue
+                        log('[FilesRemoved]');
+                        plupload.each(files, function(file) {
+                            log('  File:', file);
+                        });
+                    },
+                    FileUploaded: function(up, file, info) {
+                        // Called when file has finished uploading
+                        log('[FileUploaded] File:', file, "Info:", info);
+                        console.log(file)
+                        console.log(info)
+                        console.log(up)
+                        var fileName = file.name
+                        var fileId = file.id
+                        var fileState = file.state //5==done
+                        if (fileState == 5 && fileName){
+                            if (info){
+                                console.log(info)
+                                if (info.response){
+                                    console.log(info.response)
+                                    if (IsJsonString(info.response)) {
+                                        var json = JSON.parse(info.response)
+                                        console.log(json)
+                                        if (json) {
+                                            if (json.rsync_log){
+                                                var pid = $.trim(json.rsync_log)
+                                                upd_plupload_transfer_obj(fileId,"","",pid);
+                                            }
+                                            if (!json.error) {
+                                                //start reading log from rsync each 10 sec.
+                                                checkRsyncTimer(up,fileName,fileId, 10000);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+                    },
+                    ChunkUploaded: function(up, file, info) {
+                        // Called when file chunk has finished uploading
+                        log('[ChunkUploaded] File:', file, "Info:", info);
+                    },
+                    UploadComplete: function(up, files) {
+                        // Called when all files are either uploaded or failed
+                        log('[UploadComplete]');
+                    },
+                    Destroy: function(up) {
+                        // Called when uploader is destroyed
+                        log('[Destroy] ');
+                    },
+                    Error: function(up, args) {
+                        // Called when error occurs
+                        log('[Error] ', args);
+                    }
+                }
+            });
+        }
+        initPlupload();
+
+        $('#addFileModal').on('click', '.plupload_start_dummy', function (e) {
+            var target_dir = $("#target_dir").val();
+            var run_env = $('#chooseEnv').find(":selected").val();
+            var warning = ""
+            if (target_dir && run_env){
+                var  chkRmDirWritable = getValues({ p: "chkRmDirWritable", dir: target_dir, run_env:run_env  });
+                if (chkRmDirWritable == "writeable\n"){
+                    $('.plupload_start').trigger("click");
+                } else {
+                    warning += "Write permission denied for your target directory." 
+                    showInfoModal("#infoModal", "#infoModalText", warning)
+                }
+            } else {
+                if (!target_dir && !run_env){
+                    warning += "Please choose your run environment and enter target directory and try again." 
+                } else if (!target_dir){
+                    warning += "Please enter target directory and try again." 
+                } else if (!run_env){
+                    warning += "Please choose your run environment and try again." 
+                }
+                showInfoModal("#infoModal", "#infoModalText", warning)
+            }
+
+
+        });
+        $('#addFileModal').on('click', '#pluploaderReset', function (e) {
+            var uploader = $("#pluploader").pluploadQueue();
+            var files = uploader.files;
+            for (var i = 0; i < files.length; i++) {
+                var fileID  = files[i].uid
+                var fileName  = files[i].name
+                if (window["plupload_transfer_obj"]){
+                    if (window["plupload_transfer_obj"][fileID]){
+                        if (window['interval_rsyncStatus_' + fileID]){
+                            clearInterval(window['interval_rsyncStatus_' + fileID]);
+                        }
+                        if (window["plupload_transfer_obj"][fileID]["status"] && window["plupload_transfer_obj"][fileID]["rsync"]){
+                            if (window["plupload_transfer_obj"][fileID]["status"] != "done"){
+                                var killRsync =  getValues({ p: "resetUpload", filename: fileName });
+                            }
+                        }
+                    }
+                }
+            }
+            uploader.splice(0);
+            uploader.destroy();
+            window["plupload_transfer_obj"]={}
+            initPlupload();
+        });
+
+        //        $('#addFileModal').on('click', '#pluploaderStop', function (e) {
+        ////            var uploader = $("#pluploader").pluploadQueue();
+        ////            uploader.stop()
+        ////            var uploader = $("#pluploader").pluploadQueue();
+        ////            var copiedObj = $.extend(true, {}, uploader);
+        ////            console.log(copiedObj)
+        ////            var fileList = []
+        ////            var files = copiedObj.files;
+        ////            for (var i = 0; i < files.length; i++) {
+        ////                var fileObj  = files[i].getSource()
+        ////                fileList.push(fileObj)
+        ////            }
+        ////            uploader.splice(0);
+        ////            uploader.destroy();
+        ////            initPlupload();
+        //            //** objectler icin:
+        ////            var copiedObj = $.extend(true, {}, orObj);
+        //            
+        ////            var uploaderNew = $("#pluploader").pluploadQueue();
+        ////            for (var i = 0; i < fileList.length; i++) {
+        ////                uploaderNew.addFile(fileList[i])
+        ////            }
+        ////            $(".plupload_buttons,.plupload_upload_status,.plupload_transfer_status").css("display", "inline");
+        //        });
+
+
+    });
+
+
+    $('#addFileModal').on('click', '#showHostFiles', function (e) {
+        var target_dir = $('#target_dir').val();
+        $('#file_dir').val(target_dir);
+        $('#viewDirBut').trigger("click");
+        $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
+    });
+
+
+    //### pluplouder ends
+
 
     //######### copy/move runs
     $('#confirmDuplicate').on('click', '#moveRunBut', function (e) {

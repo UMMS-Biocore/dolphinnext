@@ -150,6 +150,22 @@ class updates
         }
         return $ret;
     }
+    
+    //http://localhost:8080/dolphinnext/api/service.php?upd=cleanTempDir&&token=..
+    function cleanTempDir (){
+        $time = date("M-d-Y H:i:s");
+        $uploadDir = "true";
+        $dbfun = new dbfuncs();
+        $data = $dbfun -> cleanTempDir($uploadDir);
+        if (!empty($data)){
+            $data = str_replace("\n", " ", $data);
+            $ret = "$time Temp directory cleanup: $data"; 
+        } else {
+            $ret = "$time No temp directory found to clean."; 
+        }
+        return $ret;
+    }
+    
 
     //http://localhost:8080/dolphinnext/api/service.php?upd=tagAmzInst
     //this feature is not finalized
