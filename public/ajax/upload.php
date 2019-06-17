@@ -45,7 +45,6 @@ if (isset($_REQUEST["name"])) {
     $fileName = uniqid("file_");
 }
 
-error_log($fileName);
 $filePath = $upload_dir . DIRECTORY_SEPARATOR . $fileName;
 $logFile = $upload_dir . DIRECTORY_SEPARATOR . "." . $fileName;
 $pidFile = $upload_dir . DIRECTORY_SEPARATOR . "." . $fileName. ".rsyncPid";
@@ -57,19 +56,15 @@ $chunks = isset($_REQUEST["chunks"]) ? intval($_REQUEST["chunks"]) : 0;
 if ($chunk === 0){
     $tmpFile = $filePath. ".part";
     if (file_exists($tmpFile)) {
-        error_log("unlink:".$tmpFile);
         @unlink($tmpFile);
     }
     if (file_exists($filePath)) {
-        error_log("unlink:".$filePath);
         @unlink($filePath);
     }
     if (file_exists($logFile)) {
-        error_log("unlink:".$logFile);
         @unlink($logFile);
     }
     if (file_exists($pidFile)) {
-        error_log("unlink:".$pidFile);
         @unlink($pidFile);
     }
 }

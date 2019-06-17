@@ -1229,7 +1229,6 @@ class dbfuncs {
             $dirlist = array();
             exec($cmd, $dirlist, $exit);
             if (!empty($dirlist)){
-                error_log(print_r($dirlist, TRUE));
                 for ($i = 0; $i < count($dirlist); $i++) {
                     $dir = trim($dirlist[$i]);
                     if (!empty($dir) && file_exists($dir) && $dir != "{$this->tmp_path}" && $dir != "{$this->tmp_path}/uploads/" && $dir != "{$this->tmp_path}/uploads" ){
@@ -2323,7 +2322,6 @@ class dbfuncs {
         if (!empty($cluDataArr)){
             $fileName = str_replace(" ", "\\ ", $fileName);
             $localFile = str_replace(" ", "\\ ", $localFile);
-            error_log($fileName);
             $ssh_id = $cluDataArr[0]["ssh_id"];
             $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
@@ -2456,7 +2454,7 @@ class dbfuncs {
         $ssh_id = $cluDataArr[0]["ssh_id"];
         $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
         if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
-        $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"[ -w $dir ] && echo 'writeable' || echo 'write permission denied'\" 2>&1 &";
+        $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dir && [ -w $dir ] && echo 'writeable' || echo 'write permission denied'\" 2>&1 &";
         $log = shell_exec($cmd);
         //writeable\n will be successful $log
         if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
