@@ -184,8 +184,6 @@ used as it is.
                             }
                         }
                     }
-                    console.log(transferState)
-
                     if (transferState == "done") {
                         actionClass = 'plupload_done';
                     }
@@ -246,14 +244,9 @@ used as it is.
                                 }
                             }
                         } 
-                        console.log(file.id)
-                        console.log(transferPercent)
                         if (!transferPercent){
                             transferPercent = '0%';
                         }
-                        console.log(transferPercent)
-
-
                         fileList.append(
                             '<li id="' + file.id + '">' +
                             '<div class="plupload_file_name"><span>' + file.name + '</span></div>' +

@@ -102,15 +102,22 @@ function hideLoadingDiv(parentId) {
     $('#loading-image-' + parentId).remove();
 }
 
-
 //eg showInfoModal('#warnDelete','#warnDeleteText', text)
 function showInfoModal(modalId, textID, text) {
-    $(modalId).off();
-    $(modalId).on('show.bs.modal', function (event) {
-        $(this).find('form').trigger('reset');
-        $(textID).html(text);
-    });
-    $(modalId).modal('show');
+    //true if modal is open
+    if (($("#infoModal").data('bs.modal') || {}).isShown ){
+        var oldText = $(textID).html();
+        var newText = oldText + "<br/><br/>" +text;
+        $(textID).html(newText);
+    } else {
+        $(modalId).off();
+        $(modalId).on('show.bs.modal', function (event) {
+            $(this).find('form').trigger('reset');
+            $(textID).html(text);
+        });
+        $(modalId).modal('show'); 
+    }
+
 }
 
 
@@ -315,8 +322,8 @@ function checkAmazonStatus(proId) {
 
     if (autoshutdown_check == "true" && autoshutdown_active == "true" && autoshutdown_date && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")){
         if (!window['countdown_' + proId]){
+            console.log("countdown_"+proId+"setInterval")
             window['elapsed_' + proId]  = 0;
-            //            $('#amzModal').modal('show');
             window['countdown_' + proId] = setInterval(function () {
                 window['elapsed_' + proId] ++;
                 var remaining = autoshutdown_date-window['elapsed_' + proId];
@@ -466,7 +473,9 @@ $(document).ready(function () {
         var clickedRowId = $(this).closest('tr').attr('id'); //local-20
         var patt = /(.*)-(.*)/;
         var proId = clickedRowId.replace(patt, '$2');
-
+        if (window['countdown_' + proId]){
+            window['countdown_' + proId] = null;
+        }
         //enter amazon details modal
         $('#addAmzNodeModal').off();
         $('#addAmzNodeModal').on('show.bs.modal', function (event) {
@@ -484,6 +493,8 @@ $(document).ready(function () {
             var data = {};
             var numNodes = $('#numNodes').val();
             var autoshutdown_check = $('#autoshut_check').is(":checked").toString();
+
+
             $('#shutdownLog-'+proId).empty();
             $('#shutdownTimer-'+proId).empty();
             if (autoshutdown_check == "true"){
@@ -532,6 +543,14 @@ $(document).ready(function () {
         var proId = clickedRowId.replace(patt, '$2');
         var data = { "id": proId, "p": "stopProAmazon" };
         stopAmzByAjax(proId);
+        if (window['countdown_' + proId]){
+            clearInterval(window['countdown_' + proId]);
+        }
+        $('#shutdownTimer-' + proId).text("");
+        //        window['countdown_' + proId] = null;
+        window['elapsed_' + proId] = 0;
+        $('#shutdownLog-'+proId).empty();
+        $('#shutdownTimer-'+proId).empty();
     });
 });
 

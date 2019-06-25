@@ -1,3 +1,8 @@
+25.06.2019 Version 0.3.40
+Empty folder warning fixed in view directory.
+ShowInfoModal freeze fixed. 
+Bug fixed on autoshutdown feature of amazon instances. 
+
 16.06.2019 Version 0.3.39
 Upload module added.
 

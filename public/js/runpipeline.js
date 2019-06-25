@@ -5574,6 +5574,9 @@ $(document).ready(function () {
                                 resetPatternList()
                             }
                         }
+                    } else {
+                        fillArray2Select(["Files Not Found."], "#viewDir", true)
+                        resetPatternList()
                     }
                 } else {
                     fillArray2Select(["Files Not Found."], "#viewDir", true)
@@ -7347,7 +7350,8 @@ $(document).ready(function () {
             var warning = ""
             if (target_dir && run_env){
                 var  chkRmDirWritable = getValues({ p: "chkRmDirWritable", dir: target_dir, run_env:run_env  });
-                if (chkRmDirWritable == "writeable\n"){
+                console.log(chkRmDirWritable)
+                if (chkRmDirWritable.match(/writeable/)){
                     $('.plupload_start').trigger("click");
                 } else {
                     warning += "Write permission denied for your target directory." 
