@@ -45,6 +45,7 @@ if (isset($_REQUEST["name"])) {
     $fileName = uniqid("file_");
 }
 
+
 $filePath = $upload_dir . DIRECTORY_SEPARATOR . $fileName;
 $logFile = $upload_dir . DIRECTORY_SEPARATOR . "." . $fileName;
 $pidFile = $upload_dir . DIRECTORY_SEPARATOR . "." . $fileName. ".rsyncPid";

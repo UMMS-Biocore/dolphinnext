@@ -547,10 +547,11 @@ class dbfuncs {
             $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite";
         }
         if (!empty($initialRunParams)){
+            $igniteCmdInit = "";
             if ($executor == "local" && $executor_job == 'ignite'){
-                $igniteCmd = "-w $dolphin_path_real/initialrun/work -process.executor ignite";
+                $igniteCmdInit = "-w $dolphin_path_real/initialrun/work -process.executor ignite";
             }
-            $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $igniteCmd $initialRunParams $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
+            $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $igniteCmdInit $initialRunParams $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
         $mainNextCmd = "$initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $igniteCmd $next_inputs $runType $reportOptions > $dolphin_path_real/$logName";
 
@@ -1007,6 +1008,7 @@ class dbfuncs {
         // get list of active runs using this profile 
         $activeRun=json_decode($this->getActiveRunbyProID($id, $ownerID),true);
         if (count($activeRun) > 0){ return "Active run is found"; }
+        error_log("Active run not found->will trigger autoshutdown.");
         //if process comes to this checkpoint it has to be activated
         if ($autoshutdown_check == "true" && $autoshutdown_active == "true"){
             //if timer not set then set timer
@@ -1016,9 +1018,12 @@ class dbfuncs {
                 $this->updateAmzShutdownDate($id, $mysqltime, $ownerID);
                 return "Timer set to: $mysqltime";
             } else {
-                //if timer is set the check if time elapsed -> stopProAmazon
+                //if timer is set then check if time elapsed -> stopProAmazon
                 $expected_date = strtotime($autoshutdown_date);
                 $remaining = $expected_date - time();
+                error_log("expected_date:".$expected_date);
+                error_log("time:".time());
+                error_log("remaining:".$remaining);
                 if ($remaining < 1){
                     $stopProAmazon = $this->stopProAmazon($id,$ownerID,$usernameCl);
                     //track termination of instance
@@ -1033,7 +1038,7 @@ class dbfuncs {
                             }
                         }
                     }
-                    return json_encode($stopProAmazon);
+                    return json_encode("Shutdown Triggered:".$stopProAmazon." New Status:".$newStatus);
                 } else {
                     return "$remaining seconds left to shutdown.";
                 }
@@ -1727,7 +1732,7 @@ class dbfuncs {
         $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
             FROM project_pipeline pp
             INNER JOIN run_log r
-            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.owner_id = '$ownerID' AND pp.profile = 'amazon-$id' AND (r.run_status = 'init' OR r.run_status = 'Waiting' OR r.run_status = 'NextRun')";
+            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.owner_id = '$ownerID' AND pp.profile = 'amazon-$id' AND (r.run_status = 'init' OR r.run_status = 'Waiting' OR r.run_status = 'NextRun' OR r.run_status = 'Aborted')";
         return self::queryTable($sql);
     }
     public function insertProfileLocal($name, $executor,$next_path, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ownerID) {
@@ -2440,7 +2445,7 @@ class dbfuncs {
             $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
             $log = shell_exec($cmd);
         }
-        if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
+        if (!is_null($log) && isset($log)){
             return json_encode($log);
         } else {
             return json_encode("Query failed! Please check your query, connection profile or internet connection");
@@ -2457,7 +2462,7 @@ class dbfuncs {
         $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dir && [ -w $dir ] && echo 'writeable' || echo 'write permission denied'\" 2>&1 &";
         $log = shell_exec($cmd);
         //writeable\n will be successful $log
-        if (!is_null($log) && isset($log) && $log != "" && !empty($log)){
+        if (!is_null($log) && isset($log)){
             return json_encode($log);
         } else {
             return json_encode("Query failed! Please check your query, connection profile or internet connection");

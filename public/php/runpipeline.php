@@ -115,8 +115,8 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 </ul>
             </div>
             <div id="abortedProPipe" style="display:none; float:right; " class="btn-group">
-                <button class="btn btn-danger" type="button" id="abortedProPipeBut">Aborted</button>
-                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                <button class="btn btn-info" type="button" id="abortedProPipeBut">Reconnecting..</button>
+                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu">
@@ -1064,7 +1064,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-sm-12 control-label text-left" style="padding-left:30px;">2. Add files to the upload and click the 'Start Upload' button. First, all files will be uploaded and then transfered to target directory in your run environment.</label>
+                                    <label class="col-sm-12 control-label text-left" style="padding-left:30px;">2. Add files to upload and click the 'Start Upload' button. First, all files will be uploaded and then transfered to target directory in your run environment.</label>
                                 </div>
                             </form>
                             <div id="pluploader">

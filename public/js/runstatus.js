@@ -161,7 +161,7 @@ $(document).ready(function () {
                 } else if (st == "NextRun") {
                     $(nTd).html('<a ' + href + ' class="runLink">Running</a>');
                 } else if (st == "Aborted") {
-                    $(nTd).html('<a ' + href + ' class="runLink">Aborted</a>');
+                    $(nTd).html('<a ' + href + ' class="runLink">Reconnecting</a>');
                 }
             }
             }, {
