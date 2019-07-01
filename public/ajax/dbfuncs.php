@@ -435,9 +435,6 @@ class dbfuncs {
     function convertToHoursMins($time) {
         $format = '%d:%s';
         settype($time, 'integer');
-        if ($time >= 1440) {
-            $time = 1440;
-        }
         $hours = floor($time/60);
         $minutes = $time%60;
         if ($minutes < 10) {
@@ -465,71 +462,75 @@ class dbfuncs {
     }
 
     function getMemory($next_memory, $executor){
-        if ($executor == "sge"){
-            if (!empty($next_memory)){
+        $memoryText = "";
+        if (!empty($next_memory)){
+            if ($executor == "sge"){
                 $memoryText = "#$ -l h_vmem=".$next_memory."G\\n";
-            } else {
-                $memoryText = "";
+            } else if ($executor == "slurm") {
+                //#SBATCH --mem 100 # memory pool for all cores default GB
+                $memoryText = "#SBATCH --mem=".$next_memory."G\\n";
             }
-        } else if ($executor == "lsf"){
-        }
+        } 
         return $memoryText;
     }
     function getJobName($jobname, $executor){
         $jobname = $this->cleanName($jobname);
-        if ($executor == "sge"){
-            if (!empty($jobname)){
+        $jobNameText = "";
+        if (!empty($jobname)){
+            if ($executor == "sge"){
                 $jobNameText = "#$ -N $jobname\\n";
-            } else {
-                $jobNameText = "";
+            } else if ($executor == "slurm"){
+                $jobNameText = "#SBATCH --job-name=$jobname\\n";
             }
-        } else if ($executor == "lsf"){
-        }
+        } 
         return $jobNameText;
     }
     function getTime($next_time, $executor){
-        if ($executor == "sge"){
-            if (!empty($next_time)){
+        $timeText = "";
+        if (!empty($next_time)){
+            if ($executor == "sge"){
                 //$next_time is in minutes convert into hours and minutes.
                 $next_time = $this->convertToHoursMins($next_time);
                 $timeText = "#$ -l h_rt=$next_time:00\\n";
-            } else {
-                $timeText = "";
+            } else if ($executor == "slurm"){
+                //#SBATCH -t hours:minutes:seconds
+                $next_time = $this->convertToHoursMins($next_time);
+                $timeText = "#SBATCH -t $next_time:00\\n";
             }
-        } else if ($executor == "lsf"){
         }
         return $timeText;
     }
     function getQueue($next_queue, $executor){
-        if ($executor == "sge"){
-            if (!empty($next_queue)){
+        $queueText = "";
+        if (!empty($next_queue)){
+            if ($executor == "sge"){
                 $queueText = "#$ -q $next_queue\\n";
-            } else {
-                $queueText = "";
+            }  else if ($executor == "slurm"){
+                //#SBATCH --partition=defq
+                $queueText = "#SBATCH --partition=$next_queue\\n";
             }
-        } else if ($executor == "lsf"){
-        }
+        } 
         return $queueText;
     }
     function getNextCluOpt($next_clu_opt, $executor){
-        if ($executor == "sge"){
-            if (!empty($next_clu_opt)){
+        $next_clu_optText = "";
+        if (!empty($next_clu_opt)){
+            if ($executor == "sge"){
                 $next_clu_optText = "#$ $next_clu_opt\\n";
-            } else {
-                $next_clu_optText = "";
+            } else if ($executor == "slurm"){
+                $next_clu_optText = "#SBATCH $next_clu_opt\\n";
             }
-        } else if ($executor == "lsf"){
         }
         return $next_clu_optText;
     }
     function getCPU($next_cpu, $executor){
-        if ($executor == "sge"){
-            if (!empty($next_cpu)){
+        $cpuText = "";
+        if (!empty($next_cpu)){
+            if ($executor == "sge"){
                 $cpuText = "#$ -l slots=$next_cpu\\n";
-            } else {
-                $cpuText = "";
+            } else if ($executor == "slurm"){
+                $cpuText = "#SBATCH --nodes=$next_cpu\\n#SBATCH --ntasks=$next_cpu\\n";
             }
-        } else if ($executor == "lsf"){
         }
         return $cpuText;
     }
@@ -579,8 +580,19 @@ class dbfuncs {
             $exec_string = "qsub -e $dolphin_path_real/err.log $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $sgeRunFile && $exec_string";
         } else if ($executor == "slurm"){
-        } else if ($executor == "ignite"){
-        }
+            $jobnameText = $this->getJobName($jobname, $executor);
+            $memoryText = $this->getMemory($next_memory, $executor);
+            $timeText = $this->getTime($next_time, $executor);
+            $queueText = $this->getQueue($next_queue, $executor);
+            $clu_optText = $this->getNextCluOpt($next_clu_opt, $executor);
+            $cpuText = $this->getCPU($next_cpu, $executor);
+            $errText = "#SBATCH -e $dolphin_path_real/err.log\\n";
+            $outText = "#SBATCH -o $dolphin_path_real/.dolphinnext.log\\n";
+            
+            $runFile= "printf '#!/bin/bash \\n".$outText.$errText.$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
+            $exec_string = "sbatch $dolphin_path_real/.dolphinnext.run";
+            $exec_next_all = "cd $dolphin_path_real && $runFile && $exec_string";
+        } 
         return $exec_next_all;
     }
 
@@ -814,16 +826,8 @@ class dbfuncs {
     }
 
     public function generateKeys($ownerID) {
-        $cmd = "rm -rf {$this->ssh_path}/.tmp$ownerID && mkdir -p {$this->ssh_path}/.tmp$ownerID && cd {$this->ssh_path}/.tmp$ownerID && ssh-keygen -C @dolphinnext -f tkey -t rsa -N '' > logTemp.txt 2>&1 & echo $! &";
-        $log_array = $this->runCommand ($cmd, 'create_key', '');
-        if (preg_match("/([0-9]+)(.*)/", $log_array['create_key'])){
-            $log_array['create_key_status'] = "active";
-        }else {
-            $log_array['create_key_status'] = "error";
-        }
-        return json_encode($log_array);
-    }
-    public function readGenerateKeys($ownerID) {
+        $cmd = "rm -rf {$this->ssh_path}/.tmp$ownerID && mkdir -p {$this->ssh_path}/.tmp$ownerID && cd {$this->ssh_path}/.tmp$ownerID && ssh-keygen -C @dolphinnext -f tkey -t rsa -N '' > logTemp.txt";
+        $resText = shell_exec("$cmd");
         $keyPubPath ="{$this->ssh_path}/.tmp$ownerID/tkey.pub";
         $keyPriPath ="{$this->ssh_path}/.tmp$ownerID/tkey";
         $keyPub = $this->readFile($keyPubPath);
@@ -835,15 +839,18 @@ class dbfuncs {
         $log_remove = $this->runCommand ($cmd, 'remove_key', '');
         return json_encode($log_array);
     }
+   
     function insertKey($id, $key, $type, $ownerID){
-        mkdir("{$this->ssh_path}", 0700, true);
+        if (!file_exists("{$this->ssh_path}")) {
+            mkdir("{$this->ssh_path}", 0700, true);
+        }
         if ($type == 'clu'){
-            $file = fopen("{$this->ssh_path}/{$ownerID}_{$id}.pky", 'w');//creates new file
+            $file = fopen("{$this->ssh_path}/{$ownerID}_{$id}.pky", 'w');//new file
             fwrite($file, $key);
             fclose($file);
             chmod("{$this->ssh_path}/{$ownerID}_{$id}.pky", 0600);
         } else if ($type == 'amz_pri'){
-            $file = fopen("{$this->ssh_path}/{$ownerID}_{$id}_{$type}.pky", 'w');//creates new file
+            $file = fopen("{$this->ssh_path}/{$ownerID}_{$id}_{$type}.pky", 'w'); //new file
             fwrite($file, $key);
             fclose($file);
             chmod("{$this->ssh_path}/{$ownerID}_{$id}_{$type}.pky", 0600);
@@ -1557,16 +1564,16 @@ class dbfuncs {
 
     //    ---------------  Users ---------------
     public function getUserByGoogleId($google_id) {
-        $sql = "SELECT * FROM users WHERE google_id = '$google_id'";
+        $sql = "SELECT * FROM users WHERE google_id = '$google_id' AND deleted=0";
         return self::queryTable($sql);
     }
     public function getUserById($id) {
-        $sql = "SELECT * FROM users WHERE id = '$id'";
+        $sql = "SELECT * FROM users WHERE id = '$id' AND deleted=0";
         return self::queryTable($sql);
     }
     public function getUserByEmail($email) {
         $email = str_replace("'", "''", $email);
-        $sql = "SELECT * FROM users WHERE email = '$email'";
+        $sql = "SELECT * FROM users WHERE email = '$email' AND deleted=0";
         return self::queryTable($sql);
     }
     public function insertGoogleUser($google_id, $email, $google_image) {
@@ -1609,14 +1616,14 @@ class dbfuncs {
             $usernameDB = $userData->{'username'};
             $emailDB = $userData->{'email'};
             if ($usernameDB != $username){
-                $checkUsername = $this->queryAVal("SELECT id FROM users WHERE username = LCASE('" .$username. "')");
+                $checkUsername = $this->queryAVal("SELECT id FROM users WHERE deleted=0 AND username = LCASE('" .$username. "')");
             }
             if ($emailDB != $email){
-                $checkEmail = $this->queryAVal("SELECT id FROM users WHERE email = LCASE('" .$email. "')");
+                $checkEmail = $this->queryAVal("SELECT id FROM users WHERE deleted=0 AND email = LCASE('" .$email. "')");
             }
         } else { //insert
-            $checkUsername = $this->queryAVal("SELECT id FROM users WHERE username = LCASE('" .$username. "')");
-            $checkEmail = $this->queryAVal("SELECT id FROM users WHERE email = LCASE('" .$email. "')");
+            $checkUsername = $this->queryAVal("SELECT id FROM users WHERE deleted=0 AND username = LCASE('" .$username. "')");
+            $checkEmail = $this->queryAVal("SELECT id FROM users WHERE deleted=0 AND email = LCASE('" .$email. "')");
         }
         if (!empty($checkUsername)){
             $error['username'] ="This username already exists.";
@@ -1644,13 +1651,13 @@ class dbfuncs {
     }
 
     //    ------------- Profiles   ------------
-    public function insertSSH($name, $check_userkey, $check_ourkey, $ownerID) {
-        $sql = "INSERT INTO ssh(name, check_userkey, check_ourkey, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
-              ('$name', '$check_userkey', '$check_ourkey', now() , now(), '$ownerID', '3', '$ownerID')";
+    public function insertSSH($name, $hide, $check_userkey, $check_ourkey, $ownerID) {
+        $sql = "INSERT INTO ssh(name, hide, check_userkey, check_ourkey, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
+              ('$name', '$hide', '$check_userkey', '$check_ourkey', now() , now(), '$ownerID', '3', '$ownerID')";
         return self::insTable($sql);
     }
-    public function updateSSH($id, $name, $check_userkey, $check_ourkey, $ownerID) {
-        $sql = "UPDATE ssh SET name='$name', check_userkey='$check_userkey', check_ourkey='$check_ourkey', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+    public function updateSSH($id, $name, $hide, $check_userkey, $check_ourkey, $ownerID) {
+        $sql = "UPDATE ssh SET name='$name', hide='$hide', check_userkey='$check_userkey', check_ourkey='$check_ourkey', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
     public function insertAmz($name, $amz_def_reg, $amz_acc_key, $amz_suc_key, $ownerID) {
@@ -1670,12 +1677,20 @@ class dbfuncs {
         $sql = "SELECT * FROM amazon_credentials WHERE owner_id = '$ownerID' and id = '$id'";
         return self::queryTable($sql);
     }
-    public function getSSH($ownerID) {
-        $sql = "SELECT * FROM ssh WHERE owner_id = '$ownerID'";
+    public function getSSH($userRole, $admin_id, $type, $ownerID) {
+        $hide = " hide = 'false' AND";
+        if ($userRole == "admin" || !empty($admin_id) || $type == "hidden"){
+            $hide="";
+        }
+        $sql = "SELECT * FROM ssh WHERE $hide owner_id = '$ownerID'";
         return self::queryTable($sql);
     }
-    public function getSSHbyID($id,$ownerID) {
-        $sql = "SELECT * FROM ssh WHERE owner_id = '$ownerID' and id = '$id'";
+    public function getSSHbyID($id, $userRole, $admin_id, $ownerID) {
+        $hide = " hide = 'false' AND";
+        if ($userRole == "admin" || !empty($admin_id)){
+            $hide="";
+        }
+        $sql = "SELECT * FROM ssh WHERE $hide owner_id = '$ownerID' AND id = '$id'";
         return self::queryTable($sql);
     }
     public function getProfileClusterbyID($id, $ownerID) {
@@ -1975,6 +1990,10 @@ class dbfuncs {
         $sql = "DELETE FROM user_group WHERE g_id = '$id'";
         return self::runSQL($sql);
     }
+    public function removeUser($id, $ownerID) {
+        $sql = "UPDATE users SET deleted = 1, date_modified = now() WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
     public function removeProjectPipeline($id) {
         $sql = "UPDATE project_pipeline SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
@@ -2047,9 +2066,9 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function getGroups($id,$ownerID) {
-        $where = "";
+        $where = " where u.deleted = 0";
         if ($id != ""){
-            $where = " where g.id = '$id'";
+            $where = " where u.deleted = 0 AND g.id = '$id'";
         }
         $sql = "SELECT g.id, g.name, g.date_created, u.username, g.date_modified
               FROM groups g
@@ -2059,7 +2078,7 @@ class dbfuncs {
     public function viewGroupMembers($g_id) {
         $sql = "SELECT id, username, email
               FROM users
-              WHERE id in (
+              WHERE deleted = 0 AND id in (
                 SELECT u_id
                 FROM user_group
                 WHERE g_id = '$g_id')";
@@ -2068,7 +2087,7 @@ class dbfuncs {
     public function getMemberAdd($g_id) {
         $sql = "SELECT id, username, email
                 FROM users
-                WHERE id NOT IN (
+                WHERE deleted = 0 AND id NOT IN (
                   SELECT u_id
                   FROM user_group
                   WHERE g_id = '$g_id')";
@@ -2081,7 +2100,7 @@ class dbfuncs {
             if ($userRole == "admin"){
                 $sql = "SELECT *
                       FROM users
-                      WHERE id <> '$ownerID'";
+                      WHERE id <> '$ownerID' AND deleted=0";
                 return self::queryTable($sql);
             }
         }
@@ -2092,13 +2111,13 @@ class dbfuncs {
                   FROM groups g
                   INNER JOIN user_group ug ON  ug.g_id =g.id
                   INNER JOIN users u ON u.id = g.owner_id
-                  where ug.u_id = '$ownerID'";
+                  where u.deleted = 0 AND ug.u_id = '$ownerID'";
         return self::queryTable($sql);
     }
     public function getUserRole($ownerID) {
         $sql = "SELECT role
                   FROM users
-                  where id = '$ownerID'";
+                  where id = '$ownerID' AND deleted=0";
         return self::queryTable($sql);
     }
     public function insertGroup($name, $ownerID) {
@@ -2115,9 +2134,9 @@ class dbfuncs {
     }
     //    ----------- Projects   ---------
     public function getProjects($id,$ownerID) {
-        $where = " where p.deleted=0 AND p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)";
+        $where = " where u.deleted=0 AND p.deleted=0 AND p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)";
         if ($id != ""){
-            $where = " where p.deleted=0 AND p.id = '$id' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
+            $where = " where u.deleted=0 AND p.deleted=0 AND p.id = '$id' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
         }
         $sql = "SELECT DISTINCT p.id, p.name, p.summary, p.date_created, u.username, p.date_modified, IF(p.owner_id='$ownerID',1,0) as own
                   FROM project p
@@ -2234,11 +2253,22 @@ class dbfuncs {
                 $this->updateRunPid($project_pipeline_id, "0", $ownerID);
                 return json_encode('done');
             }
+        } else if ($executor == "slurm" && $commandType == "checkRunPid"){
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd squeue --job $pid\" 2>&1 &");
+            if (preg_match("/$pid/",$check_run)){
+                return json_encode('running');
+            } else {
+                $this->updateRunPid($project_pipeline_id, "0", $ownerID);
+                return json_encode('done');
+            }
         } else if ($executor == "sge" && $commandType == "terminateRun"){
             $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd qdel $pid\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "lsf" && $commandType == "terminateRun"){
             $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd bkill $pid\" 2>&1 &");
+            return json_encode('terminateCommandExecuted');
+        } else if ($executor == "slurm" && $commandType == "terminateRun"){
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd scancel $pid\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "local" && $commandType == "terminateRun"){
             $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash \" 2>&1 &";

@@ -46,7 +46,7 @@ if (isset($_POST['request'])){
 	$err_username = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
   }else{
 	   $username_val = str_replace("'", "", $_POST['username']);
-	   $username_check = $query->queryAVal("SELECT id FROM users WHERE username = LCASE('" . $_POST['username'] . "')");
+	   $username_check = $query->queryAVal("SELECT id FROM users WHERE deleted = 0 AND username = LCASE('" . $_POST['username'] . "')");
 	if($username_check != "0"){
 	  $err_username = '<font class="text-center" color="crimson">This Username already exists.</font>';
 	}
@@ -63,7 +63,7 @@ if (isset($_POST['request'])){
             $err_email = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
         } else{
             $email_val = str_replace("'", "", $_POST['email']);
-            $email_check = $query->queryAVal("SELECT id FROM users WHERE email = LCASE('" . $_POST['email'] . "')");
+            $email_check = $query->queryAVal("SELECT id FROM users WHERE deleted = 0 AND email = LCASE('" . $_POST['email'] . "')");
             if($email_check != "0"){
                 $err_email = '<font class="text-center" color="crimson">This Email already exists.</font>';
             }
@@ -89,7 +89,18 @@ if (isset($_POST['request'])){
     }
   }
   
+    error_log(!isset($_SESSION['google_login']));
+    error_log(!isset($err_lastname));
+    error_log(!isset($err_firstname));
+    error_log(!isset($err_username));
+    error_log(!isset($err_email));
+    error_log(!isset($err_password));
+    error_log(!isset($err_verifypassword));
+    error_log(!isset($err_lab));
+    error_log(!isset($err_institute));
+    
   if(!isset($_SESSION['google_login']) && !isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_email) && !isset($err_password) && !isset($err_verifypassword) && !isset($err_lab) && !isset($err_institute)){
+      error_log("kkkoooo1");
 	//	Calc pass hash
 	$pass_hash=hash('md5', $password_val . SALT) . hash('sha256', $password_val . PEPPER);
 	$verify=hash('md5', $email_val . VERIFY);
@@ -97,15 +108,17 @@ if (isset($_POST['request'])){
 	$insert_user = $query->runSQL("
     INSERT INTO users
 	( `username`, `name`, `email`, `institute`, `lab`, `pass_hash`, `verification`, `memberdate`,
-    `owner_id`, `group_id`, `perms`, `date_created`, `date_modified`, `last_modified_user` )
+    `owner_id`, `group_id`, `perms`, `date_created`, `date_modified`, `last_modified_user`,  `role`)
 	VALUES
 	( '$username_val', '$fullname_space', '".strtolower($email_val)."', '$institute_val',
-    '$lab_val', '$pass_hash', '".$verify."', NOW(), 1, 1, 3, NOW(), NOW(), 1 )");
+    '$lab_val', '$pass_hash', '".$verify."', NOW(), 1, 1, 3, NOW(), NOW(), 1, 'user' )");
     sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email_val, $lab_val, $verify, $query);  
 	session_destroy();
 	require_once("newuserverification.php");
 	exit;
   } else if (isset($_SESSION['google_login']) && $_SESSION['google_login'] == true && isset($_SESSION['email']) && $_SESSION['email'] != ""  && !isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_lab) && !isset($err_institute)){
+      error_log("kkkoooo2");
+      
     $email = $_SESSION['email'];
     $checkUserData = json_decode($query->getUserByEmail($email));
     $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
@@ -116,6 +129,8 @@ if (isset($_POST['request'])){
 	require_once("newuserverification.php");
 	exit;  
   } else {
+      error_log("kkkoooo3");
+      
       $google_login = isset($_SESSION['google_login']) ? $_SESSION['google_login'] : "";
       $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
       session_destroy();
@@ -123,9 +138,7 @@ if (isset($_POST['request'])){
       if ($google_login == true && $email != ""){
           $_SESSION['google_login'] = true;
           $_SESSION['email'] = $email;
-      } else {
-          $_SESSION['google_login'] = false;
-      }
+      } 
       session_write_close();
       require_once("newuserform.php");
       $e="Login Failed.";

@@ -11,6 +11,7 @@ $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : "";
 $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
 $userRole = isset($_SESSION['role']) ? $_SESSION['role'] : "";
+$admin_id = isset($_SESSION['admin_id']) ? $_SESSION['admin_id'] : "";
 if (!empty($username)){
     $usernameCl = str_replace(".","__",$username);   
 }
@@ -424,6 +425,7 @@ else if ($p=="saveUserManual"){
             $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID);  
         } else {
             $data = $db->insertUserManual($name, $email, $username, $institute, $lab, $logintype); 
+            $ownerIDarr = json_decode($data,true); 
         }
     }
 }
@@ -457,6 +459,12 @@ else if ($p=="saveGoogleUser"){
         $ownerIDarr = json_decode($data,true); 
         $_SESSION['ownerID'] = $ownerIDarr['id'];
         $_SESSION['role'] = "";
+        //first user will be admin
+        if ($ownerIDarr['id'] == "1"){
+            $db->changeRoleUser($ownerIDarr['id'], "admin");
+        } else {
+            $db->changeRoleUser($ownerIDarr['id'], "user");
+        }
     }
     session_write_close();
 } else if ($p=="impersonUser"){
@@ -706,15 +714,16 @@ else if ($p=="getAmz")
 }
 else if ($p=="getSSH")
 {
+    $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     if (!empty($id)) {
-        $data = json_decode($db->getSSHbyID($id, $ownerID));
+        $data = json_decode($db->getSSHbyID($id, $userRole, $admin_id, $ownerID));
         foreach($data as $d){
             $d->prikey = $db->readKey($id, 'ssh_pri', $ownerID);
             $d->pubkey = $db->readKey($id, 'ssh_pub', $ownerID);
         }
         $data=json_encode($data);
     } else {
-        $data = $db->getSSH($ownerID);
+        $data = $db->getSSH($userRole, $admin_id, $type, $ownerID);
     }
 }
 else if ($p=="removeSSH")
@@ -727,13 +736,13 @@ else if ($p=="removeAmz")
 {
     $data = $db->removeAmz($id);
 }
+else if ($p=="removeUser")
+{
+    $data = $db->removeUser($id,$ownerID);
+}
 else if ($p=="generateKeys")
 {
     $data = $db->generateKeys($ownerID);
-}
-else if ($p=="readGenerateKeys")
-{
-    $data = $db->readGenerateKeys($ownerID);
 }
 else if ($p=="getProfiles")
 {
@@ -806,6 +815,7 @@ else if ($p=="updateAmzShutdownCheck"){
 }
 else if ($p=="saveSSHKeys"){
     $name = $_REQUEST['name'];
+    $hide = $_REQUEST['hide'];
     $check_userkey = isset($_REQUEST['check_userkey']) ? $_REQUEST['check_userkey'] : "";
     $check_ourkey = isset($_REQUEST['check_ourkey']) ? $_REQUEST['check_ourkey'] : "";
     $prikeyRaw = $_REQUEST['prikey'];
@@ -814,11 +824,11 @@ else if ($p=="saveSSHKeys"){
     $pubkey = urldecode($pubkeyRaw);
 
     if (!empty($id)) {
-        $data = $db->updateSSH($id, $name, $check_userkey,$check_ourkey, $ownerID);
+        $data = $db->updateSSH($id, $name, $hide, $check_userkey,$check_ourkey, $ownerID);
         $db->insertKey($id, $prikey, "ssh_pri", $ownerID);
         $db->insertKey($id, $pubkey, "ssh_pub", $ownerID);
     } else {
-        $data = $db->insertSSH($name, $check_userkey,$check_ourkey, $ownerID);
+        $data = $db->insertSSH($name, $hide, $check_userkey,$check_ourkey, $ownerID);
         $idArray = json_decode($data,true);
         $id = $idArray["id"];
         $db->insertKey($id, $prikey, "ssh_pri", $ownerID);

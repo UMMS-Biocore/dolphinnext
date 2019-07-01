@@ -1,24 +1,9 @@
 function generateKeys() {
     var genKeys = getValues({ p: "generateKeys" });
     if (genKeys) {
-        if (genKeys.create_key_status === "active") {
-            setTimeout(function () { readGenerateKeys() }, 500);
-        } else {
-            $('#mOurPriKey').val("");
-            $('#mOurPubKey').val("");
-            $('#mOurPriKeyDiv').css('display', 'none');
-            $('#mOurPubKeyDiv').css('display', 'none');
-        }
-    }
-
-}
-
-function readGenerateKeys() {
-    var genKeysLog = getValues({ p: "readGenerateKeys" });
-    if (genKeysLog) {
-        if (genKeysLog.$keyPri !== "" && genKeysLog.$keyPub !== "" && genKeysLog.$keyPri !== false && genKeysLog.$keyPub !== false) {
-            $('#mOurPriKey').val($.trim(genKeysLog.$keyPri));
-            $('#mOurPubKey').val($.trim(genKeysLog.$keyPub));
+        if (genKeys.$keyPri && genKeys.$keyPub) {
+            $('#mOurPriKey').val($.trim(genKeys.$keyPri));
+            $('#mOurPubKey').val($.trim(genKeys.$keyPub));
             $('#mOurPriKeyDiv').css('display', 'inline');
             $('#mOurPubKeyDiv').css('display', 'inline');
         } else {
@@ -28,12 +13,12 @@ function readGenerateKeys() {
             $('#mOurPubKeyDiv').css('display', 'none');
         }
     }
-
 }
 
 
 $(document).ready(function () {
     var profileTable = $('#profilesTable').DataTable({
+        sScrollX: "100%",
         "ajax": {
             url: "ajax/ajaxquery.php",
             data: { "p": "getProfiles" },
@@ -90,7 +75,7 @@ $(document).ready(function () {
 
     function loadOptions(type) {
         if (type === "ssh") {
-            var data = getValues({ p: "getSSH" });
+            var data = getValues({ p: "getSSH", type:"hidden" });
             for (var i = 0; i < data.length; i++) {
                 var param = data[i];
                 var optionGroup = new Option(param.name, param.id);
@@ -319,6 +304,13 @@ $(document).ready(function () {
                 $('#execNextDiv').css('display', 'block');
                 $('#mExecJobDiv').css('display', 'block');
             }
+            if (mExecType === "slurm"){
+                $('#execJobQueue').text('Partition');
+                $('#execNextQueue').text('Partition');
+            }else {
+                $('#execJobQueue').text('Queue');
+                $('#execNextQueue').text('Queue');
+            }
         })
     });
 
@@ -332,6 +324,11 @@ $(document).ready(function () {
                 showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'hide');
             } else {
                 showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
+            }
+            if (mExecJobType === "slurm"){
+                $('#execJobQueue').text('Partition');
+            }else {
+                $('#execJobQueue').text('Queue');
             }
             $('#execJobSetDiv').css('display', 'block');
         })
@@ -671,8 +668,10 @@ $(document).ready(function () {
                 success: function (s) {
                     for (var i = 0; i < s.length; i++) {
                         var param = s[i];
-                        var optionGroup = new Option(param.username, param.id);
-                        $("#mGroupList").append(optionGroup);
+                        if (param.username){
+                            var optionGroup = new Option(param.username, param.id);
+                            $("#mGroupList").append(optionGroup);  
+                        }
                     }
                 },
                 error: function (errorThrown) {
@@ -851,20 +850,30 @@ $(document).ready(function () {
     $('#confirmDelModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var clickedRow = button.closest('tr');
-        var rowData = sshTable.row(clickedRow).data();
-        var remove_id = rowData.id;
+        $('#mDelBtn').data('clickedrow', clickedRow);
         if (button.attr('class') === 'deleteSSHKeys') {
-            $('#mDelBtn').data('clickedrow', clickedRow);
+            var rowData = sshTable.row(clickedRow).data();
+            var remove_id = rowData.id;
             $('#mDelBtn').attr('remove_id', remove_id);
+
             $('#mDelBtn').attr('class', 'btn btn-primary deleteSSHKeys');
             $('#confirmDelModalText').html('Are you sure you want to delete?');
+        } else if (button.attr('class') === 'delUser'){
+            var AdmUserTable = $('#AdminUserTable').DataTable();
+            var rowData = AdmUserTable.row(clickedRow).data();
+            var remove_id = rowData.id;
+            $('#mDelBtn').attr('remove_id', remove_id);
+
+            var email = rowData.email;
+            var name = rowData.name;
+            $('#mDelBtn').attr('class', 'btn btn-primary delUser');
+            $('#confirmDelModalText').html('Are you sure you want to delete following user?</br></br>Name: '+name+'</br>E-mail: '+email);
         }
     });
 
     $('#confirmDelModal').on('click', '.deleteSSHKeys', function (event) {
         var remove_id = $('#mDelBtn').attr('remove_id');
         var clickedRow = $('#mDelBtn').data('clickedrow');
-
         if (remove_id !== '') {
             var warnUser = false;
             var warnText = '';
@@ -900,6 +909,32 @@ $(document).ready(function () {
         }
     });
 
+    $('#confirmDelModal').on('click', '.delUser', function (event) {
+        var remove_id = $('#mDelBtn').attr('remove_id');
+        var clickedRow = $('#mDelBtn').data('clickedrow');
+        console.log(remove_id)
+        console.log(clickedRow)
+        if (remove_id) {
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    id: remove_id,
+                    p: "removeUser"
+                },
+                async: true,
+                success: function (s) {
+                    var AdmUserTable = $('#AdminUserTable').DataTable();
+                    AdmUserTable.row(clickedRow).remove().draw();
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+            $('#confirmDelModal').modal('hide');
+        }
+    });
+
     $('#sshKeyModal').on('hide.bs.modal', function (event) {
         $('#ourKeyCheck').prop('disabled', false);
         $('#userKeyCheck').prop('disabled', false);
@@ -930,6 +965,11 @@ $(document).ready(function () {
             var data = getValues({ p: "getSSH", id: rowData.id })[0];
             $(formValues[0]).val(rowData.id);
             $(formValues[1]).val(rowData.name);
+            if (rowData.hide == "true"){
+                $('#hideKeys').prop('checked', true);
+            } else {
+                $('#hideKeys').prop('checked', false);
+            }
             if (data.check_userkey === 'on') {
                 $('#userKeyCheck').trigger('click');
                 $('#mUserPriKey').val(data.prikey)
@@ -956,6 +996,7 @@ $(document).ready(function () {
         var data = [];
         var sshName = $('#mSSHName').val();
         var savetype = $('#mSSHKeysID').val();
+        var hideKeys = $('#hideKeys').is(":checked").toString();
         if (sshName !== '' && ($('#userKeyCheck').is(":checked") || $('#ourKeyCheck').is(":checked"))) {
             if ($('#userKeyCheck').is(":checked")) {
                 if ($('#mUserPriKey').val() !== "" && $('#mUserPubKey').val() !== "") {
@@ -972,8 +1013,9 @@ $(document).ready(function () {
             }
             data.push({ name: "id", value: savetype });
             data.push({ name: "name", value: sshName });
+            data.push({ name: "hide", value: hideKeys });
             data.push({ name: "p", value: "saveSSHKeys" });
-            if (data.length > 3) {
+            if (data.length > 4) {
                 $.ajax({
                     type: "POST",
                     url: "ajax/ajaxquery.php",
@@ -991,16 +1033,11 @@ $(document).ready(function () {
                                 data: getsshData,
                                 async: true,
                                 success: function (sc) {
-                                    var rowData = {};
-                                    var keys = sshTable.settings().init().columns;
-                                    for (var i = 0; i < keys.length; i++) {
-                                        var key = keys[i].data;
-                                        rowData[key] = sc[0][key];
+                                    var newData = getValues({ p: "getSSH", id: savetype })
+                                    if (newData[0]){
+                                        sshTable.row(clickedRow).remove().draw();
+                                        sshTable.row.add(newData[0]).draw(); 
                                     }
-                                    rowData.id = sc[0].id;
-                                    sshTable.row(clickedRow).remove().draw();
-                                    sshTable.row.add(rowData).draw();
-
                                 },
                                 error: function (errorThrown) {
                                     alert("Error: " + errorThrown);
@@ -1017,14 +1054,10 @@ $(document).ready(function () {
                                 data: getSSHData,
                                 async: true,
                                 success: function (sc) {
-                                    var addData = {};
-                                    var keys = sshTable.settings().init().columns;
-                                    for (var i = 0; i < keys.length; i++) {
-                                        var key = keys[i].data;
-                                        addData[key] = sc[0][key];
+                                    var newData = getValues({ p: "getSSH", id: sc[0].id })
+                                    if (newData[0]){
+                                        sshTable.row.add(newData[0]).draw();
                                     }
-                                    addData.id = sc[0].id;
-                                    sshTable.row.add(addData).draw();
                                 },
                                 error: function (errorThrown) {
                                     alert("Error: " + errorThrown);
@@ -1236,7 +1269,7 @@ $(document).ready(function () {
         } else {
             var roleItem = '<li><a name="admin" class="changeRoleUser">Assign admin role</a></li>';
         }
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + '</ul></div>';
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + '<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
         return button;
 
     }
