@@ -53,8 +53,8 @@ function checkActive($check_active){
 
 if(isset($_SESSION['google_login'])){
    if ($_SESSION['google_login'] == true && isset($_SESSION['email']) && $_SESSION['email'] !=""){
-    $check_active = $query->queryAVal("SELECT active FROM users WHERE email = '" . $_SESSION['email']."'");
-    $check_verification = $query->queryAVal("SELECT verification FROM users WHERE email = '" . $_SESSION['email']."'");
+    $check_active = $query->queryAVal("SELECT active FROM users WHERE deleted=0 AND email = '" . $_SESSION['email']."'");
+    $check_verification = $query->queryAVal("SELECT verification FROM users WHERE deleted=0 AND email = '" . $_SESSION['email']."'");
        list($active_user,$loginfail) = checkActive($check_active);
        if ($active_user == false || !empty($check_verification)){
             $loginfail = '<font class="text-center"  color="crimson">Sorry, account is not active.</font>';
@@ -83,7 +83,7 @@ if(isset($_POST['login'])){
     // check if user is active?
     if(!empty($_POST) && isset($_POST['email']) && $_POST['email'] !=""){
         
-    $check_active = $query->queryAVal("SELECT active FROM users WHERE email = '" .strtolower(str_replace("'","''",$_POST['email']))."'");
+    $check_active = $query->queryAVal("SELECT active FROM users WHERE deleted =0 AND email = '" .strtolower(str_replace("'","''",$_POST['email']))."'");
         list($active_user,$loginfail) = checkActive($check_active);
         if (is_null($loginfail) && $active_user == false){
            session_destroy();
@@ -106,7 +106,7 @@ if(isset($_POST['login'])){
 	}
     if ($res == 0){
         //	Database password
-		$pass_hash = $query->queryAVal("SELECT pass_hash FROM users WHERE email = '" .strtolower(str_replace("'","''",$_POST['email']))."'");
+		$pass_hash = $query->queryAVal("SELECT pass_hash FROM users WHERE deleted = 0 AND email = '" .strtolower(str_replace("'","''",$_POST['email']))."'");
 		if($pass_hash == $post_pass && $active_user == true){
             $res=1;
 		} else{

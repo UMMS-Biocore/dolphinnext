@@ -327,7 +327,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             <table id="allProcessSettTable" class="table">
                                 <thead>
                                     <tr>
-                                        <th scope="col">Queue</th>
+                                        <th scope="col" id="allProcessQueue">Queue</th>
                                         <th scope="col">Memory(GB)</th>
                                         <th scope="col">CPUs</th>
                                         <th scope="col">Time(min.)</th>
@@ -356,7 +356,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                     <tr>
                                         <th scope="col">Select</th>
                                         <th scope="col">Process Name</th>
-                                        <th scope="col">Queue</th>
+                                        <th scope="col" id="eachProcessQueue">Queue</th>
                                         <th scope="col">Memory(GB)</th>
                                         <th scope="col">CPUs</th>
                                         <th scope="col">Time(min.)</th>

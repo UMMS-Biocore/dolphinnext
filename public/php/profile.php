@@ -182,12 +182,12 @@
                                     <p>Use the form below to change your password.</p>
                                     <form method="post" id="passwordForm">
                                         <div class="form-group">
-                                           <div>
-                                            <input type="password" class="input form-control" name="password0" id="password0" placeholder="Old Password" autocomplete="off">
-                                        </div>
+                                            <div>
+                                                <input type="password" class="input form-control" name="password0" id="password0" placeholder="Old Password" autocomplete="off">
+                                            </div>
                                         </div>
                                         <div class="form-group">
-                                            <div >
+                                            <div>
                                                 <input type="password" class="input form-control" name="password1" id="password1" placeholder="New Password" autocomplete="off">
                                                 <div class="row" id="8charDiv" style="display:none;">
                                                     <div class="col-sm-6">
@@ -197,7 +197,7 @@
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <div >
+                                            <div>
                                                 <input type="password" class="input form-control" name="password2" id="password2" placeholder="Repeat New Password" autocomplete="off">
                                                 <div class="row">
                                                     <div class="col-sm-12" id="pwmatchDiv" style="display:none;">
@@ -357,7 +357,7 @@
                     </div>
                     <div id="mSecurityGroupDiv" class="form-group" style="display:none">
                         <label for="mSecurityGroup" class="col-sm-3 control-label">Security Group (opt.)<span><a data-toggle="tooltip" data-placement="bottom" title="Identifier of the security group to be applied e.g. sg-df72b9ba."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                        
+
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSecurityGroup" name="security_group">
                         </div>
@@ -402,17 +402,16 @@
                         <label for="mExec" class="col-sm-3 control-label">Executor of Nextflow</label>
                         <div class="col-sm-9">
                             <select style=" width:150px" id="mExec" class="fbtn btn-default form-control" name="executor">
-                                <!--                                  <option value="none">None </option>-->
                                 <option class="hideClu" value="local">Local</option>
                                 <option value="sge">SGE</option>
                                 <option value="lsf">LSF</option>
-                                <!--                                  <option value="slurm">SLURM</option>-->
-                                <!--                                  <option value="ignite">IGNITE</option>-->
-                                <!--                                  <option value="pbs">PBS/Torque</option>-->
-                                <!--                                  <option value="nqsii">NQSII</option>-->
-                                <!--                                  <option value="condor">HTCondor</option>-->
-                                <!--                                  <option value="k8s">Kubernetes</option>-->
-                                <!--                                  <option value="awsbatch">AWS Batch</option>-->
+                                <option value="slurm">SLURM</option>
+                                <!--<option value="ignite">IGNITE</option>-->
+                                <!--<option value="pbs">PBS/Torque</option>-->
+                                <!--<option value="nqsii">NQSII</option>-->
+                                <!--<option value="condor">HTCondor</option>-->
+                                <!--<option value="k8s">Kubernetes</option>-->
+                                <!--<option value="awsbatch">AWS Batch</option>-->
                             </select>
                         </div>
                     </div>
@@ -423,7 +422,7 @@
                                 <table id="execNextSettTable" class="table">
                                     <thead>
                                         <tr>
-                                            <th scope="col">Queue</th>
+                                            <th scope="col" id="execNextQueue">Queue</th>
                                             <th scope="col">Memory(GB)</th>
                                             <th scope="col">CPUs</th>
                                             <th scope="col">Time(min.)</th>
@@ -468,7 +467,7 @@
                                 <table id="execJobSetTable" class="table">
                                     <thead>
                                         <tr>
-                                            <th scope="col">Queue</th>
+                                            <th scope="col" id="execJobQueue">Queue</th>
                                             <th scope="col">Memory(GB)</th>
                                             <th scope="col">CPUs</th>
                                             <th scope="col">Time(min.)</th>
@@ -628,6 +627,14 @@
                             </div>
                         </div>
                     </div>
+                    <?php
+                        if ($login == 1 && (!empty($admin_id) || $role == "admin")){
+                            echo '<div id="hideKeysDiv" class="form-group">
+                        <label class="col-sm-4 control-label">
+                        <input type="checkbox" id="hideKeys"> Hide Keys from User </input></label>
+                    </div>';
+                        }
+                    ?>
                 </form>
             </div>
             <div class="modal-footer">

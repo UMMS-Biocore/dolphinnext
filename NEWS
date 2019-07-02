@@ -1,3 +1,9 @@
+30.06.2019 Version 0.3.41
+Slurm executor supported added.
+Admin delete user feature added.
+Hide ssh keys from user feature added.
+Default parameters will be autofilled for initial opening of the run page.
+
 25.06.2019 Version 0.3.40
 Empty folder warning fixed in view directory.
 ShowInfoModal freeze fixed. 

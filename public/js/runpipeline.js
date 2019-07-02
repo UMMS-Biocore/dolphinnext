@@ -1820,8 +1820,7 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
         }
     }
     //check if run saved before
-    var checkSaveBefore = pipeData[0].docker_check; //"" without save
-    if (checkSaveBefore != "false" && checkSaveBefore != "true") {
+    if (pipeData[0].date_created == pipeData[0].date_modified) {
         //after filling, if "use default" button is exist, then click default option.
         clickUseDefault(rowID, defaultVal);
     }
@@ -1829,9 +1828,10 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
 
 
 function clickUseDefault(rowID, defaultVal) {
-    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
+//    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
+//    var checkinputValEnter = $('#' + rowID).find('#inputValEnter')[0]
     var checkDefVal = $('#' + rowID).find('#defValUse').css('display')
-    if (defaultVal && defaultVal != "" && checkDropDown && checkDefVal !== "none") {
+    if (defaultVal && defaultVal != "" && checkDefVal !== "none") {
         $('#' + rowID).find('#defValUse').trigger("click")
     }
 }
@@ -2851,8 +2851,7 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
                 }
             }
             //check if run saved before
-            var checkSaveBefore = pipeData[0].docker_check; //"" without save
-            if (checkSaveBefore != "false" && checkSaveBefore != "true") {
+            if (pipeData[0].date_created == pipeData[0].date_modified) {
                 //after filling, if "use default" button is exist, then click default option.
                 clickUseDefault(rowID, paramDefVal);
             }
@@ -3489,6 +3488,13 @@ function loadProjectPipeline(pipeData) {
         } else {
             showHideColumnRunSett([1, 4, 5], "show")
         }
+        if (executor_job === "slurm"){
+            $('#eachProcessQueue').text('Partition');
+            $('#allProcessQueue').text('Partition');
+        }else {
+            $('#eachProcessQueue').text('Queue');
+            $('#allProcessQueue').text('Queue');
+        }
         $('#jobSettingsDiv').css('display', 'inline');
         //insert exec_all_settings data into allProcessSettTable table
         if (IsJsonString(decodeHtml(pipeData[0].exec_all_settings))) {
@@ -4079,8 +4085,15 @@ function parseRunPid(serverLog) {
     runPid = "";
     //for lsf: Job <203477> is submitted to queue <long>.\n"
     //for sge: Your job 2259 ("run_bowtie2") has been submitted
-    if (serverLog.match(/Job <(.*)> is submitted/)) {
-        var regEx = /Job <(.*)> is submitted/g;
+    //for slurm: Submitted batch job 8748700
+    if (serverLog.match(/Job <(.*)> is submitted/) || serverLog.match(/job (.*) \(.*\) .* submitted/) || serverLog.match(/Submitted batch job (.*)/)) {
+        if (serverLog.match(/Job <(.*)> is submitted/)) {
+            var regEx = /Job <(.*)> is submitted/g;
+        } else if (serverLog.match(/job (.*) \(.*\) .* submitted/)) {
+            var regEx = /job (.*) \(.*\) .* submitted/g;
+        } else if (serverLog.match(/Submitted batch job (.*)/)) {
+            var regEx = /Submitted batch job (.*)/g;
+        }
         var runPidAr = getMultipleRegex(serverLog, regEx);
         if (runPidAr.length) {
             runPid = runPidAr[runPidAr.length - 1];
@@ -4091,19 +4104,7 @@ function parseRunPid(serverLog) {
         } else {
             runPid = null;
         }
-    } else if (serverLog.match(/job (.*) \(.*\) .* submitted/)) {
-        var regEx = /job (.*) \(.*\) .* submitted/g;
-        var runPidAr = getMultipleRegex(serverLog, regEx);
-        if (runPidAr.length) {
-            runPid = runPidAr[runPidAr.length - 1];
-            runPid = $.trim(runPid);
-        }
-        if (runPid && runPid != "") {
-            var updateRunPidComp = getValues({ p: "updateRunPid", pid: runPid, project_pipeline_id: project_pipeline_id });
-        } else {
-            runPid = null;
-        }
-    } else {
+    }else {
         runPid = null;
     }
     return runPid
@@ -4394,14 +4395,14 @@ function readNextflowLogTimer(proType, proId, type) {
     }
     interval_readNextlog = setInterval(function () {
         readNextLog(proType, proId, "no_reload")
-    }, 10000);
+    }, 13000);
     interval_readPubWeb = setInterval(function () {
         readPubWeb(proType, proId, "no_reload")
     }, 60000);
 }
 
 autoScrollLog = true;
-$('#runLogArea').on('click', function (e) {
+$(document).on('click', '#runLogArea', function () {
     autoScrollLog = false;
 });
 
@@ -4489,6 +4490,7 @@ function readNextLog(proType, proId, type) {
         // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
         if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
+            window["countFailRead"]=0;
             if (type !== "reload") {
                 clearIntNextLog(proType, proId);
                 clearIntPubWeb(proType, proId);
@@ -4504,6 +4506,7 @@ function readNextLog(proType, proId, type) {
         }
         // when run hasn't finished yet and page reloads then show connecting button
         else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
+            window["countFailRead"]=0;
             displayButton('connectingProPipe');
             if (type === "reload") {
                 readNextflowLogTimer(proType, proId, type);
@@ -4511,17 +4514,23 @@ function readNextLog(proType, proId, type) {
         }
         // when run hasn't finished yet and connection is down
         else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
-            displayButton('abortedProPipe');
-            //log file might be deleted or couldn't read the log file
-            var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
-            if (nextflowLog !== null && nextflowLog !== undefined) {
-                nextflowLog += "\nConnection is lost.";
+            if (window["countFailRead"] >3){
+                displayButton('abortedProPipe');
+                //log file might be deleted or couldn't read the log file
+                var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
+                if (nextflowLog !== null && nextflowLog !== undefined) {
+                    nextflowLog += "\nConnection is lost.";
+                } else {
+                    serverLog += "\nConnection is lost.";
+                } 
             } else {
-                serverLog += "\nConnection is lost.";
+                window["countFailRead"]++
             }
+
         } 
         // otherwise parse nextflow file to get status
         else if (runStatus === "Waiting" || runStatus === "init" || runStatus === "NextRun") {
+            window["countFailRead"]=0;
             if (runStatus === "Waiting" || runStatus === "init") {
                 displayButton('waitingProPipe');
             } else if (runStatus === "NextRun") {
@@ -4535,7 +4544,7 @@ function readNextLog(proType, proId, type) {
             autoScrollLogArea()
         }
 
-        setTimeout(function () { saveNexLg(proType, proId) }, 100);
+        setTimeout(function () { saveNexLg(proType, proId) }, 8000);
     }
 }
 
@@ -5040,6 +5049,7 @@ function duplicateProPipe(type) {
 
 $(function () {
     $(document).on('change', '#runVerLog', function (event) {
+        console.log("runVerLog")
         var run_log_uuid = $(this).val();
         if (run_log_uuid) {
             var version = $('option:selected', this).attr('ver');
@@ -5251,6 +5261,7 @@ $(document).ready(function () {
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
     runPid = "";
+    countFailRead = 0; //count failed read amount if it reaches 5, show connection lost 
     changeOnchooseEnv = false;
     // if user not own it, cannot change or delete run
     if (projectpipelineOwn === "0") {
@@ -6413,6 +6424,13 @@ $(document).ready(function () {
                 showHideColumnRunSett([1, 4, 5], "hide")
             } else {
                 showHideColumnRunSett([1, 4, 5], "show")
+            }
+            if (executor_job === "slurm"){
+                $('#eachProcessQueue').text('Partition');
+                $('#allProcessQueue').text('Partition');
+            }else {
+                $('#eachProcessQueue').text('Queue');
+                $('#allProcessQueue').text('Queue');
             }
             var profileTypeId = $('#chooseEnv').find(":selected").val();
             var patt = /(.*)-(.*)/;

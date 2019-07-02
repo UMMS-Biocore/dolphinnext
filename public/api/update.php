@@ -99,7 +99,6 @@ class updates
                 $closeProfile[] = $shutDat;
             }
         endforeach;
-        error_log("shutDownProfile".print_r($closeProfile, TRUE));
         
         $time = date("M-d-Y H:i:s");
         $ret = "";
