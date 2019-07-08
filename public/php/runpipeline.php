@@ -611,6 +611,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                                 <th>Run Environment</th>
                                                 <th>Project</th>
                                                 <th>Added on</th>
+                                                <th>View</th>
                                             </tr>
                                         </thead>
                                     </table>

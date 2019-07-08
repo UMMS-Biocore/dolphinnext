@@ -41,7 +41,7 @@ if ($p=="saveRun"){
         $attempt = "0";
     }
     //create initialrun script
-    $initialrun_img = "shub://UMMS-Biocore/initialrun@08e8feb9cbef6797292bf59171ad985617c1d7cb";
+    $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun@08e8feb9cbef6797292bf59171ad985617c1d7cb.simg";
     $initialRunParams = $db->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
