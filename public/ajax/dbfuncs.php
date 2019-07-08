@@ -102,7 +102,26 @@ class dbfuncs {
     //$img: path of image
     //$singu_save=true to overwrite on image
     function imageCmd($singu_cache, $img, $singu_save, $type, $profileType,$profileId,$ownerID){
-        if ($type == 'singularity'){
+        if (preg_match("/http:/i",$img) || preg_match("/https:/i",$img) || preg_match("/ftp:/i",$img)){
+            $downPath = '~';
+            if ($profileType == "amazon"){
+                $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
+                $amzDataArr=json_decode($amzData,true);
+                $downPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
+            }
+            if (!empty($singu_cache)){
+                $downPath = $singu_cache;
+            }
+            $imageNameAr = explode('/',$img);
+            $imageName=$imageNameAr[count($imageNameAr)-1];
+            $wgetCmd = "if [ ! -f $downPath/.dolphinnext/singularity/$imageName ]; then wget $img; fi";
+            if ($singu_save == "true"){
+                $cmd = "mkdir -p $downPath/.dolphinnext/singularity && cd $downPath/.dolphinnext/singularity && rm -f ".$imageName." && $wgetCmd";
+            } else {
+                $cmd = "mkdir -p $downPath/.dolphinnext/singularity && cd $downPath/.dolphinnext/singularity && $wgetCmd";
+            }
+            return $cmd;
+        } else if ($type == 'singularity'){
             preg_match("/shub:\/\/(.*)/", $img, $matches);
             if (!empty($matches[1])){
                 $singuPath = '~';
@@ -115,11 +134,11 @@ class dbfuncs {
                     $singuPath = $singu_cache;
                 }
                 $imageName = str_replace("/","-",$matches[1]);
-                $image = $singuPath.'/.dolphinnext/singularity/'.$imageName;
+                $shubCmd = "if [ ! -f $singuPath/.dolphinnext/singularity/{$imageName}.simg ]; then singularity pull --name {$imageName}.simg $img; fi";
                 if ($singu_save == "true"){
-                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && rm -f ".$imageName.".simg && singularity pull --name ".$imageName.".simg ".$img;
+                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && rm -f {$imageName}.simg && $shubCmd";
                 } else {
-                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && singularity pull --name ".$imageName.".simg ".$img;
+                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && $shubCmd";
                 }
                 return $cmd;
             }
@@ -588,7 +607,7 @@ class dbfuncs {
             $cpuText = $this->getCPU($next_cpu, $executor);
             $errText = "#SBATCH -e $dolphin_path_real/err.log\\n";
             $outText = "#SBATCH -o $dolphin_path_real/.dolphinnext.log\\n";
-            
+
             $runFile= "printf '#!/bin/bash \\n".$outText.$errText.$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
             $exec_string = "sbatch $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $runFile && $exec_string";
@@ -617,8 +636,14 @@ class dbfuncs {
             $singuPath = $singu_cache;
         }
         preg_match("/shub:\/\/(.*)/", $initialrun_img, $matches);
-        $imageName = str_replace("/","-",$matches[1]);
-        $image = $singuPath.'/.dolphinnext/singularity/'.$imageName.'.simg';
+        if (!empty($matches[1])){
+            $imageName = str_replace("/","-",$matches[1]);
+            $image = $singuPath.'/.dolphinnext/singularity/'.$imageName.'.simg';
+        } else if (preg_match("/http:/i",$initialrun_img) || preg_match("/https:/i",$initialrun_img) || preg_match("/ftp:/i",$initialrun_img)){
+            $imageNameAr = explode('/',$initialrun_img);
+            $imageName=$imageNameAr[count($imageNameAr)-1];
+            $image = $singuPath.'/.dolphinnext/singularity/'.$imageName;
+        }
         $configText = "process.container = '$image'\n"."singularity.enabled = true\n".$configTextClean;
         return $configText;
     }
@@ -839,7 +864,7 @@ class dbfuncs {
         $log_remove = $this->runCommand ($cmd, 'remove_key', '');
         return json_encode($log_array);
     }
-   
+
     function insertKey($id, $key, $type, $ownerID){
         if (!file_exists("{$this->ssh_path}")) {
             mkdir("{$this->ssh_path}", 0700, true);
@@ -1015,9 +1040,9 @@ class dbfuncs {
         // get list of active runs using this profile 
         $activeRun=json_decode($this->getActiveRunbyProID($id, $ownerID),true);
         if (count($activeRun) > 0){ return "Active run is found"; }
-        error_log("Active run not found->will trigger autoshutdown.");
         //if process comes to this checkpoint it has to be activated
         if ($autoshutdown_check == "true" && $autoshutdown_active == "true"){
+        error_log("Active run not found->might trigger autoshutdown.");
             //if timer not set then set timer
             if (empty($autoshutdown_date)){
                 $autoshutdown_date = strtotime("+10 minutes");
@@ -2381,7 +2406,7 @@ class dbfuncs {
         }
         return json_encode($log);
     }
-    
+
     function resetUpload($fileName, $email, $ownerID){
         $tmp_path = $this->tmp_path;
         $upload_dir = "$tmp_path/uploads/{$email}";

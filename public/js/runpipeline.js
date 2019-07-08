@@ -1828,8 +1828,8 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
 
 
 function clickUseDefault(rowID, defaultVal) {
-//    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
-//    var checkinputValEnter = $('#' + rowID).find('#inputValEnter')[0]
+    //    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
+    //    var checkinputValEnter = $('#' + rowID).find('#inputValEnter')[0]
     var checkDefVal = $('#' + rowID).find('#defValUse').css('display')
     if (defaultVal && defaultVal != "" && checkDefVal !== "none") {
         $('#' + rowID).find('#defValUse').trigger("click")
@@ -3838,7 +3838,7 @@ function checkShub() {
     var shubpattern = 'shub://';
     var pathCheck = false;
     if (singuPath !== '') {
-        if (singuPath.indexOf(shubpattern) > -1) {
+        if (singuPath.indexOf(shubpattern) > -1 || singuPath.indexOf('ftp:') > -1 || singuPath.indexOf('http:') > -1 || singuPath.indexOf('https:') > -1) {
             $("#singu_save_div").css('display', "block");
         } else {
             $("#singu_save_div").css('display', "none");
@@ -4159,8 +4159,8 @@ function removeCollectionFromInputs(col_id){
             if (collection_id){
                 if (collection_id == col_id){
                     var delButton = $(inputPaths[el]).parent().find("button[id*='inputDelDelete']")
-                    console.log(delButton)
                     $(delButton).trigger("click")
+                    $('#mIdFile').val(""); //reset modal for insert new collection
                 }
             }
         });
@@ -4299,21 +4299,25 @@ function runProPipeCall(checkType, uuid) {
     }
     if ($('#singu_check').is(":checked") === true) {
         var singu_img = $('#singu_img').val();
-        var patt = /^docker:\/\/(.*)/g;
         var patt = /^shub:\/\/(.*)/g;
         var singuPath = singu_img.replace(patt, '$1');
         var mntPath = "";
+        if (profileData[0].shared_storage_mnt) {
+            mntPath = profileData[0].shared_storage_mnt;
+        } else {
+            mntPath = "//$HOME";
+        }
+        if (profileData[0].singu_cache) {
+            mntPath = profileData[0].singu_cache;
+        }
+
         if (patt.test(singu_img)) {
             singuPath = singuPath.replace(/\//g, '-')
-            if (profileData[0].shared_storage_mnt) {
-                mntPath = profileData[0].shared_storage_mnt;
-            } else {
-                mntPath = "//$HOME";
-            }
-            if (profileData[0].singu_cache) {
-                mntPath = profileData[0].singu_cache;
-            }
             var downSingu_img = mntPath + '/.dolphinnext/singularity/' + singuPath + '.simg';
+        } else if (singu_img.match(/http:/) || singu_img.match(/https:/) || singu_img.match(/ftp:/)){
+            var singuPathAr = singuPath.split('/')
+            singuPath = singuPathAr[singuPathAr.length-1]
+            var downSingu_img = mntPath + '/.dolphinnext/singularity/' + singuPath;
         } else {
             var downSingu_img = singu_img;
         }
@@ -5908,15 +5912,25 @@ $(document).ready(function () {
             "data": "project_name"
         }, {
             "data": "date_created"
+        },{
+            "data": null,
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                $(nTd).html('<button type="button" class="btn btn-default btn-sm showDetailSample"> Details</button>');
+            }
         }],
         'select': {
-            'style': 'multi'
+            'style': 'multi',
+            selector: 'td:not(.no_select_row)'
         },
         'order': [[3, 'desc']],
         "columnDefs": [
             {
                 'targets': [3,4],
                 className: "disp_none"
+            },
+            {
+                'targets': [6],
+                className: "no_select_row"
             },
         ],
         initComplete: initCompleteFunction
@@ -5933,8 +5947,9 @@ $(document).ready(function () {
     selectedGeoSamplesTable = $('#selectedGeoSamples').dataTable();
     searchedGeoSamplesTable = $('#searchedGeoSamples').dataTable();
 
-    // show file details if one file is selected 
-    $('#sampleTable').on( 'select.dt deselect.dt', function ( e, dt, type, indexes ) {
+    //xxx
+    $(document).on('click', '.showDetailSample', function (e) {
+
         var getHeaderRow = function (text){
             if (!text){
                 text = "";
@@ -5961,6 +5976,8 @@ $(document).ready(function () {
         var insertDetailsTable = function (data){
             var tableRows = "";
             $("#details_of_file_table").empty()
+            tableRows += getHeaderRow("Name:");
+            tableRows += getBodyRow(data.name);
             if (data.file_dir){
                 tableRows += getHeaderRow("Input File(s) Directory:")
                 tableRows += getBodyRow(s3Clean(data.file_dir))
@@ -5994,15 +6011,18 @@ $(document).ready(function () {
             }
             $("#details_of_file_table").append(tableRows)
         }
-        var selectedRows = sampleTable.rows({ selected: true }).data();
-        if (selectedRows.length ===1 ){
-            //prepare details table.
-            insertDetailsTable(selectedRows[0])
+        if ($("#detailsOfFileDiv").css("display") == "none"){
             $("#detailsOfFileDiv").css("display","block")
-        } else {
-            $("#detailsOfFileDiv").css("display","none")
-            $("#details_of_file_table").empty()
-        }
+        } 
+        var clickedRow = $(e.target).closest('tr');
+        var rowData = sampleTable.row(clickedRow).data();
+        insertDetailsTable(rowData)
+
+    });
+
+    // show file details if one file is selected 
+    $('#sampleTable').on( 'select.dt deselect.dt', function ( e, dt, type, indexes ) {
+        var selectedRows = sampleTable.rows({ selected: true }).data();
         if (selectedRows.length >0 ){
             $("#deleteSample").css("display","inline-block")
         } else {
@@ -6552,12 +6572,12 @@ $(document).ready(function () {
         e.preventDefault();
         var savetype = $('#mIdFile').val();
         var checkdata = $('#inputFilemodal').find("[searchTab='true'].active.tab-pane")[0].getAttribute('id');
-        console.log(checkdata)
-        console.log(savetype)
-        console.log("ddd")
         if (checkdata === 'importedFilesTab') {
             $('#inputFilemodal').loading("stop");
             var fillCollection = function (savetype, collection) {
+                console.log(savetype)
+                console.log(!savetype.length)
+                console.log(collection)
                 if (!savetype.length) { //add item
                     saveFileSetValModal(null, 'file', null, collection);
                 } else {
@@ -6994,6 +7014,7 @@ $(document).ready(function () {
                             }
                         }
                         $("#sampleTable").DataTable().ajax.reload(null, false);
+                        $("#detailsOfFileDiv").css("display","none")
                     },
                     error: function (errorThrown) {
                         alert("Error: " + errorThrown);
