@@ -79,11 +79,11 @@ Advanced Options
 
 * **Publish Directory:** Work directory is default publish directory for DolphinNext. If you want to enter new publish directory, just click this item and enter the full path of publish directory. Both local paths (eg. ``/home/user/test``) or amazon s3 paths (eg. ``s3://yourbucket/test``) are accepted.
 
-* **Executor Settings for All Processes:** If any option other than local and ignite is selected as **nextflow executor** in the profile, it is allowed to override and adjust these settings by clicking this item. Following settings will be prompted: ``Queue``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``.
+* **Executor Settings for All Processes:** If any option other than local and ignite is selected as **nextflow executor** in the profile, it is allowed to override and adjust these settings by clicking this item. Following settings will be prompted: ``Queue/Partition``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``.
 
 	.. note::  In case of non-standart resources or settings is required for executor, then you can specify these parameters by using **Other options** box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter ``-pe orte 3`` (to use MPI for distributed-memory machines) or ``-pe smp 3`` (to use OpenMP for shared-memory machines) in the **Other options** box and **just leave the CPU box empty!** 
 
-* **Executor Settings for Each Process:** You may change executor settings for each process and override to **executor settings for all processes** by clicking this item and clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest. Similarly, following settings will be prompted for checked process: ``Queue``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``.
+* **Executor Settings for Each Process:** You may change executor settings for each process and override to **executor settings for all processes** by clicking this item and clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest. Similarly, following settings will be prompted for checked process: ``Queue/Partition``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``.
 
 * **Delete intermadiate files after run:** This is default settings for DolphinNext to keep only selected output files in the work/publish directory and removing the rest of the files. Here the main goal is to minimize the required space for each project.
 

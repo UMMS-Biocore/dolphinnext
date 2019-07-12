@@ -20,6 +20,14 @@ First tab is the **run environments**. This is your main segment for creating co
 SSH Keys
 ========
 
+.. raw:: html
+
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+        <iframe src="https://www.youtube.com/embed/7wH2NjXSebA" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+    </div>
+    </br>
+
+
 .. image:: dolphinnext_images/ssh_keys.png
 	:align: center
 
@@ -49,6 +57,11 @@ After inserting public key, connect to the host and make sure file permissions o
 
 	chmod 700 ~/.ssh
 	chmod 600 ~/.ssh/authorized_keys
+    
+.. warning:: Please check your permission of your home directory, if there is a connection problem. It shouldn't be 777, because of the security reasons. You can set the permission of home directory to more secure options (eg. 755, 744, 750):
+    
+    ``chmod 750 ~``
+    
 
 Amazon Keys
 ===========
