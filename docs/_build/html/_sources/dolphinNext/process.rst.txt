@@ -484,7 +484,7 @@ Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname w
 Executor Properties:
 ********************
 
-Five type of executor properties are available to autofill **Executor Settings for Each Process**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue and Other Options. See the example below::
+Five type of executor properties are available to autofill **Executor Settings for Each Process**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue/Partition and Other Options. See the example below::
     
     //* autofill
     $TIME = 1000

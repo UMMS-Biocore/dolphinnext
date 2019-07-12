@@ -192,7 +192,10 @@
 </div>
 <div class="section" id="ssh-keys">
 <h2>SSH Keys<a class="headerlink" href="#ssh-keys" title="Permalink to this headline">¶</a></h2>
-<img alt="../_images/ssh_keys.png" class="align-center" src="../_images/ssh_keys.png" />
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+    <iframe src="https://www.youtube.com/embed/7wH2NjXSebA" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+</div>
+</br><img alt="../_images/ssh_keys.png" class="align-center" src="../_images/ssh_keys.png" />
 <p>In the SSH keys tab, you can create new or enter existing SSH key pairs by clicking on “Add SSH Key” button. By using Add SSH Keys window, enter the name of your keys and select the method you want to proceed: <code class="docutils literal notranslate"><span class="pre">A.</span> <span class="pre">Use</span> <span class="pre">your</span> <span class="pre">own</span> <span class="pre">keys</span></code> or <code class="docutils literal notranslate"><span class="pre">B.</span> <span class="pre">Create</span> <span class="pre">new</span> <span class="pre">keys</span></code>.</p>
 <ul>
 <li><p class="first"><strong>A. Use your own keys:</strong> If you choose “use your own keys”, your private and public key pairs will be asked. You can reach your key pairs in your computer at default location: <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa</span></code> for private and <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa.pub</span></code> for public key. If these files are not exist or you want to create new ones, then on the command line, enter:</p>
@@ -223,6 +226,11 @@
 <span class="n">chmod</span> <span class="mi">600</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">authorized_keys</span>
 </pre></div>
 </div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>Please check your permission of your home directory, if there is a connection problem. It shouldn’t be 777, because of the security reasons. You can set the permission of home directory to more secure options (eg. 755, 744, 750):</p>
+<p class="last"><code class="docutils literal notranslate"><span class="pre">chmod</span> <span class="pre">750</span> <span class="pre">~</span></code></p>
+</div>
 </div>
 <div class="section" id="amazon-keys">
 <h2>Amazon Keys<a class="headerlink" href="#amazon-keys" title="Permalink to this headline">¶</a></h2>
@@ -252,7 +260,7 @@
 <li><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</li>
 <li><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></li>
 <li><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg.``/project/umw_biocore/bin``</li>
-<li><strong>Executor of Nextflow/Executor of Nextflow Jobs:</strong> You can determine the system where nextflow itself is initiated. Currently local, sge and lsf executors are supported by DolphinNext to initiate nextflow. Apart from the executor of nextflow, you may change the executor of each job by using “Executor of Nextflow Jobs” option. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>. Adjustment of these parameters are allowed for both options.</li>
+<li><strong>Executor of Nextflow/Executor of Nextflow Jobs:</strong> You can determine the system where nextflow itself is initiated. Currently local, sge and lsf executors are supported by DolphinNext to initiate nextflow. Apart from the executor of nextflow, you may change the executor of each job by using “Executor of Nextflow Jobs” option. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>. Adjustment of these parameters are allowed for both options.</li>
 </ul>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>

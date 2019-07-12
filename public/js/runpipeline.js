@@ -345,7 +345,7 @@ function openPipeline(id) {
                 var newID = getNewNodeId(ed, eds[0])
                 if (newID) {
                     eds[0] = newID;
-                    addCandidates2DictForLoad(eds[0])
+                    addCandidates2DictForLoad(eds[0], window)
                     createEdges(eds[0], eds[1], window)
                 }
                 //if process is updated through process modal, reset the edge of input/output parameter and reset the single circles.
