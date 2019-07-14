@@ -172,7 +172,7 @@ used as it is.
 
                 uploaders[id] = uploader;
 
-                
+
 
                 function handleStatus(file) {
                     var actionClass;
@@ -197,8 +197,11 @@ used as it is.
                         actionClass = 'plupload_delete';
                     }
 
-                    if (file.state == plupload.UPLOADING || transferState == "uploading") {
+                    if (file.state == plupload.UPLOADING ) {
                         actionClass = 'plupload_uploading';
+                    }
+                    if (transferState == "uploading") {
+                        actionClass = 'plupload_rsync';
                     }
 
                     var icon = $('#' + file.id).attr('class', actionClass).find('a').css('display', 'block');
@@ -213,7 +216,7 @@ used as it is.
                     $('span.plupload_upload_status', target).html(
                         plupload.sprintf(_('Uploaded %d/%d files'), uploader.total.uploaded, uploader.files.length)
                     );
-                    
+
 
 
                 }
@@ -261,10 +264,10 @@ used as it is.
 
                         handleStatus(file);
 
-                        $('#' + file.id + '.plupload_delete a').click(function(e) {
+
+                        $('#' + file.id).on('click', '.plupload_delete > .plupload_file_action > a', function (e) {
                             $('#' + file.id).remove();
                             uploader.removeFile(file);
-
                             e.preventDefault();
                         });
                     });
@@ -397,12 +400,8 @@ used as it is.
                     if (uploader.state === plupload.STARTED) {
                         $('li.plupload_delete a,div.plupload_buttons', target).hide();
                         uploader.disableBrowse(true);
-
-                        $('span.plupload_upload_status,div.plupload_progress,a.plupload_stop', target).css('display', 'block');
                         $(".plupload_transfer_status", target).css("display", "inline");
-                        
                         $('span.plupload_upload_status', target).html('Uploaded ' + uploader.total.uploaded + '/' + uploader.files.length + ' files');
-
                         if (settings.multiple_queues) {
                             $('span.plupload_total_status,span.plupload_total_file_size', target).show();
                         }
@@ -410,11 +409,8 @@ used as it is.
                         updateList();
                         $('a.plupload_stop,div.plupload_progress', target).hide();
                         $('a.plupload_delete', target).css('display', 'block');
-
                         if (settings.multiple_queues && uploader.total.uploaded + uploader.total.failed == uploader.files.length) {
-                            $(".plupload_buttons,.plupload_upload_status,.plupload_transfer_status", target).css("display", "inline");
                             uploader.disableBrowse(false);
-
                             $(".plupload_start", target).addClass("plupload_disabled");
                             $(".plupload_start_dummy", target).addClass("plupload_disabled");
                             $('span.plupload_total_status,span.plupload_total_file_size', target).hide();

@@ -133,7 +133,10 @@
 	height: 16px;
 }
 
-li.plupload_uploading {background: #ECF3DC url('../img/backgrounds.gif') repeat-x 0 -238px;}
+li.plupload_uploading {
+    background: #ECF3DC url('../img/backgrounds.gif') repeat-x 0 -238px;
+    cursor: default;
+}
 li.plupload_done {color:#AAA}
 
 li.plupload_delete a {
@@ -148,6 +151,9 @@ li.plupload_failed a {
 li.plupload_done a {
 	background: url('../img/done.gif');
 	cursor: default;
+}
+li.plupload_rsync a {
+	background: url('../img/retake.png');
 }
 
 .plupload_progress, .plupload_upload_status {

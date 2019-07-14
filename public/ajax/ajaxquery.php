@@ -104,6 +104,13 @@ else if ($p=="resetUpload"){
     $filename  = $_REQUEST['filename'];
     $data = $db->resetUpload($filename, $email, $ownerID);
 }
+else if ($p=="retryRsync"){
+    $fileName  = $_REQUEST['filename'];
+    $target_dir = $_REQUEST['dir'];
+    $run_env = $_REQUEST['run_env'];
+    $data = $db->retryRsync($fileName, $target_dir, $run_env, $email, $ownerID);
+    
+}
 else if ($p=="getReportData"){
     $uuid  = $_REQUEST['uuid'];
     $path = $_REQUEST['path']; //pubweb, run

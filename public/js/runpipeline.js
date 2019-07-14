@@ -7034,7 +7034,6 @@ $(document).ready(function () {
             var str = "";
             plupload.each(arguments, function(arg) {
                 var row = "";
-
                 if (typeof(arg) != "string") {
                     plupload.each(arg, function(value, key) {
                         // Convert items in File objects to human readable form
@@ -7044,15 +7043,12 @@ $(document).ready(function () {
                                 case plupload.QUEUED:
                                     value = 'QUEUED';
                                     break;
-
                                 case plupload.UPLOADING:
                                     value = 'UPLOADING';
                                     break;
-
                                 case plupload.FAILED:
                                     value = 'FAILED';
                                     break;
-
                                 case plupload.DONE:
                                     value = 'DONE';
                                     break;
@@ -7130,7 +7126,7 @@ $(document).ready(function () {
                 if (status == "error"){
                     $("#" + fileId).attr('class', "plupload_failed").find('a').css('display', 'block');
                 } else if (status == "uploading"){
-                    $("#" + fileId).attr('class', "plupload_uploading").find('a').css('display', 'block');
+                    $("#" + fileId).attr('class', "plupload_rsync").find('a').css('display', 'block');
                 } else if (status == "done"){
                     $("#" + fileId).attr('class', "plupload_done").find('a').css('display', 'block');
                 }  
@@ -7162,7 +7158,6 @@ $(document).ready(function () {
                         } else {
                             if (s.match(/\d+\%/)) {
                                 var list = s.match(/\d+\%/g);
-                                console.log(list)
                                 if (list.length >0){
                                     var percent = list[list.length-1];
                                     upd_plupload_transfer_obj(fileId,"uploading",percent,"");
@@ -7406,9 +7401,29 @@ $(document).ready(function () {
                 }
                 showInfoModal("#infoModal", "#infoModalText", warning)
             }
-
-
         });
+
+        //xxxx
+        $('#addFileModal').on('click', '.plupload_rsync > .plupload_file_action > a', function (e) {
+            var clickedFileUID = $(e.target).closest('li').attr("id");
+            var uploader = $("#pluploader").pluploadQueue();
+            var files = uploader.files;
+            var fileName = "";
+            for (var i = 0; i < files.length; i++) {
+                var fileID  = files[i].uid
+                if (fileID == clickedFileUID){
+                    fileName  = files[i].name
+                    break;
+                }
+            }
+            var target_dir = $("#target_dir").val();
+            var run_env = $('#chooseEnv').find(":selected").val();
+            if (fileName && target_dir && run_env){
+                var retryRsync = getValues({ p: "retryRsync", dir: target_dir, run_env:run_env, filename: fileName  });
+                console.log(retryRsync)
+            }
+        });
+
         $('#addFileModal').on('click', '#pluploaderReset', function (e) {
             var uploader = $("#pluploader").pluploadQueue();
             var files = uploader.files;
