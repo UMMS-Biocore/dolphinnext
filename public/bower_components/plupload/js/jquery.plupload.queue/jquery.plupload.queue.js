@@ -407,6 +407,7 @@ used as it is.
                         }
                     } else {
                         updateList();
+                        $('div.plupload_buttons', target).css('display', 'block');
                         $('a.plupload_stop,div.plupload_progress', target).hide();
                         $('a.plupload_delete', target).css('display', 'block');
                         if (settings.multiple_queues && uploader.total.uploaded + uploader.total.failed == uploader.files.length) {

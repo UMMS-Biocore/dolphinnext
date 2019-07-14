@@ -7166,7 +7166,11 @@ $(document).ready(function () {
                                         clearInterval(window['interval_rsyncStatus_' + fileId]);
                                         log('[TransferFile]', "Done");
                                     }
-                                } 
+                                } else {
+                                    var percent = "0"
+                                    upd_plupload_transfer_obj(fileId,"uploading",percent,"");
+                                    
+                                }
                             } 
                         }
                         updateTransferedFiles()
