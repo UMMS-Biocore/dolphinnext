@@ -1042,7 +1042,7 @@ class dbfuncs {
         if (count($activeRun) > 0){ return "Active run is found"; }
         //if process comes to this checkpoint it has to be activated
         if ($autoshutdown_check == "true" && $autoshutdown_active == "true"){
-        error_log("Active run not found->might trigger autoshutdown.");
+            error_log("Active run not found->might trigger autoshutdown.");
             //if timer not set then set timer
             if (empty($autoshutdown_date)){
                 $autoshutdown_date = strtotime("+10 minutes");
@@ -2385,7 +2385,7 @@ class dbfuncs {
             $ssh_id = $cluDataArr[0]["ssh_id"];
             $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
-            $cmd="rsync --info=progress2 -avzu --rsync-path='mkdir -p $target_dir && rsync' -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $localFile $connect:$target_dir/ > $upload_dir/.$fileName 2>&1 & echo $! &"; 
+            $cmd="rsync --info=progress2 --partial-dir='$target_dir/.tmp_$fileName' -avzu --rsync-path='mkdir -p $target_dir && rsync' -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $localFile $connect:$target_dir/ > $upload_dir/.$fileName 2>&1 & echo $! &"; 
             $cmd_log = shell_exec($cmd);
             if (!empty($cmd_log)){
                 $cmd_log = trim($cmd_log);
@@ -2423,6 +2423,22 @@ class dbfuncs {
         return json_encode($res);
     }
 
+    function retryRsync($fileName, $target_dir, $run_env, $email, $ownerID){
+        $profileAr = explode("-", $run_env);
+        $profileType = $profileAr[0];
+        $profileId = $profileAr[1];
+        $logReset = $this->resetUpload($fileName, $email, $ownerID);
+        error_log($logReset);
+        $tmp_path = TEMPPATH;
+        $upload_dir = "$tmp_path/uploads/{$email}";
+        if (!file_exists($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        $localFile = $upload_dir . DIRECTORY_SEPARATOR . $fileName;
+        $data = $this->rsyncTransfer($localFile,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID);
+        error_log($data);
+        return json_encode($data);
+    }
 
     function retrieve_remote_file_size($url){
         $ch = curl_init($url);
