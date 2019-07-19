@@ -1401,6 +1401,7 @@ function autofillEmptyInputs(autoFillJSON) {
 
 //change propipeinputs in case all conds are true
 function fillStates(states) {
+    console.log(states)
     $("#inputsTab").loading('start');
     $.each(states, function (st) {
         var defName = states[st]; // expected Value
@@ -1526,6 +1527,8 @@ function bindEveHandler(autoFillJSON) {
                                 //bind eventhandler to indropdown button
                                 $(varNameButAr[0]).change(function () {
                                     var statusCond = checkConds(conds);
+                                    console.log(conds)
+                                    console.log(statusCond)
                                     var statusCondDefault = checkConds(conds, "default");
                                     if (statusCond === true) {
                                         fillStates(states);
@@ -4196,7 +4199,6 @@ function autofillMountPath() {
                         }
                     }
                 }
-
             } else {
                 var inputPath = $(inputPaths[el]).text();
                 var parsedPath = parseMountPath(inputPath);
@@ -4206,12 +4208,24 @@ function autofillMountPath() {
                     }
                 }
             }
-
+        });
+    }
+    //get form paths
+    var formPaths = $("div[id^='addProcessRow-']").find("input");
+    if (formPaths && formPaths != null) {
+        $.each(formPaths, function (el) {
+            var inputPath = $(formPaths[el]).val();
+                var parsedPath = parseMountPath(inputPath);
+                if (parsedPath) {
+                    if (pathArray.indexOf(parsedPath) === -1) {
+                        pathArray.push(parsedPath)
+                    }
+                }
         });
     }
     //turn into lsf command (use -E to define scripts which will be executed just before the main job)
     if (pathArray.length > 0) {
-        var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"'
+        var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"';
         } else {
             var execOtherOpt = '';
         }
@@ -7169,7 +7183,7 @@ $(document).ready(function () {
                                 } else {
                                     var percent = "0"
                                     upd_plupload_transfer_obj(fileId,"uploading",percent,"");
-                                    
+
                                 }
                             } 
                         }

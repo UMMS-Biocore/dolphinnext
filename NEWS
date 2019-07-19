@@ -1,3 +1,7 @@
+19.07.2019 Version 0.3.45
+Ghpcc mounting upgraded to check path inside of the form fields.
+"Profile Variables" field added to profile settings. 
+
 13.07.2019 Version 0.3.44
 Upload file feature upgraded to support rsync resume/retry.
 
