@@ -4199,7 +4199,6 @@ function autofillMountPath() {
                         }
                     }
                 }
-
             } else {
                 var inputPath = $(inputPaths[el]).text();
                 var parsedPath = parseMountPath(inputPath);
@@ -4216,7 +4215,6 @@ function autofillMountPath() {
     if (formPaths && formPaths != null) {
         $.each(formPaths, function (el) {
             var inputPath = $(formPaths[el]).val();
-            console.log(inputPath)
                 var parsedPath = parseMountPath(inputPath);
                 if (parsedPath) {
                     if (pathArray.indexOf(parsedPath) === -1) {
@@ -4225,8 +4223,6 @@ function autofillMountPath() {
                 }
         });
     }
-    console.log(pathArray)
-    
     //turn into lsf command (use -E to define scripts which will be executed just before the main job)
     if (pathArray.length > 0) {
         var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"';
