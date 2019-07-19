@@ -398,6 +398,14 @@
                             <input type="text" class="form-control" id="mEnvSinguCache" name="singu_cache">
                         </div>
                     </div>
+                    <div id="mEnvVarDiv" class="form-group" style="display:none">
+                        <label for="mEnvVar" class="col-sm-3 control-label">Profile Variables
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="You can set commonly used pipeline variables here, such as _DOWNDIR. (eg. _DOWNDIR='/share/data'). You can enter multiple variables by separating them with newline."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                        </label>
+                        <div class="col-sm-9">
+                            <textarea type="text" rows="1" class="form-control" id="mEnvVar" name="variable"></textarea>
+                        </div>
+                    </div>
                     <div id="mExecDiv" class="form-group" style="display:none">
                         <label for="mExec" class="col-sm-3 control-label">Executor of Nextflow</label>
                         <div class="col-sm-9">

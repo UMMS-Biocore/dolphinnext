@@ -155,6 +155,10 @@ $(document).ready(function () {
 
 
         var allMenuGroup = getValues({ p: "getProfiles", type: "public" });
+        for (var i = 0; i < allMenuGroup.length; i++) {
+            allMenuGroup[i].variable = decodeHtml(allMenuGroup[i].variable);
+        }
+        console.log(allMenuGroup)
         $('#mEnvName').selectize({
             valueField: 'id',
             searchField: ['name'],
@@ -221,11 +225,16 @@ $(document).ready(function () {
             var proId = rowData.id;
             if (proType === "cluster") {
                 var data = getValues({ p: "getProfileCluster", id: proId });
+                console.log(data[0])
+                console.log(data[0].variable)
+                console.log(decodeHtml(data[0].variable))
+                data[0].variable=decodeHtml(data[0].variable)
                 $('#chooseEnv').val('cluster').trigger('change');
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             } else if (proType === "amazon") {
                 var data = getValues({ p: "getProfileAmazon", id: proId });
+                data[0].variable =decodeHtml(data[0].variable)
                 $('#chooseEnv').val('amazon').trigger('change');
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
@@ -239,9 +248,6 @@ $(document).ready(function () {
             } else {
                 $("#mEnvName")[0].selectize.setValue(rowData.id, false);
             }
-
-
-
             $('#chooseEnv').attr('disabled', "disabled");
         }
     });
@@ -267,16 +273,16 @@ $(document).ready(function () {
             var blockList = [];
             if (selEnvType === "cluster" && !title.match(/Public/)) {
                 var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv"];
-                var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv"];
+                var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv"];
             } else if (selEnvType === "amazon" && !title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv"];
-                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
+                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
             } else if (selEnvType === "cluster" && title.match(/Public/)) {
                 var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvUsernameDiv", "mEnvSSHKeyDiv"];
-                var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv"];
+                var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv"];
             } else if (selEnvType === "amazon" && title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv"];
-                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv"];
+                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv"];
             }
             $.each(noneList, function (element) {
                 $('#' + noneList[element]).css('display', 'none');
@@ -335,7 +341,7 @@ $(document).ready(function () {
     });
 
     $('#profilemodal').on('hide.bs.modal', function (event) {
-        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv"];
+        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv"];
         $.each(noneList, function (element) {
             $('#' + noneList[element]).css('display', 'none');
         });
@@ -365,6 +371,7 @@ $(document).ready(function () {
                 formObj.name = $("#mEnvName")[0].selectize.options[nameID].name;
             }
         }
+        formObj.variable = encodeURIComponent(formObj.variable);
         if (formObj.executor_job == "ignite") {
             formObj.job_queue = "";
             formObj.job_time = "";
