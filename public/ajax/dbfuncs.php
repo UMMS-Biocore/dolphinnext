@@ -284,6 +284,7 @@ class dbfuncs {
         }
         $run_dir = "$outdir/run{$project_pipeline_id}";
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+        $collection = array();
         $file_name = array();
         $file_dir = array();
         $file_type = array();
@@ -291,11 +292,18 @@ class dbfuncs {
         $archive_dir = array();
         $s3_archive_dir = array();
         $collection_type = array();
+        //url download
+        $url = array();
+        $urlzip = array();
+        $checkpath = array();
+        $given_name = array();
+        $input_name = array();
         foreach ($allinputs as $inputitem):
         $collection_id = $inputitem->{'collection_id'};
         if (!empty($collection_id)){
             $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
             foreach ($allfiles as $fileData):
+            $collection[] = $collection_id;
             $file_name[] = $fileData->{'name'};
             $file_dir[] = $fileData->{'file_dir'};
             $file_type[] = $fileData->{'file_type'};
@@ -305,8 +313,16 @@ class dbfuncs {
             $collection_type[] = $fileData->{'collection_type'};
             endforeach;
         }
+        if (!empty($inputitem->{'url'}) || !empty($inputitem->{'urlzip'})){
+            $given_name[] = $inputitem->{'given_name'};
+            $input_name[] = $inputitem->{'name'};
+            $url[] = $inputitem->{'url'};
+            $urlzip[] = $inputitem->{'urlzip'};
+            $checkpath[] = $inputitem->{'checkpath'};
+        }
         endforeach;
-        if (!empty($file_name)) {
+        
+        if (!empty($file_name) || !empty($url) || !empty($urlzip)) {
             $quote1 ="\\\"";
             if ($executor === "local"){
                 $quote2 ="\\\\\\\"";
@@ -316,10 +332,14 @@ class dbfuncs {
             $params .= " --attempt ".$quote1.$attempt.$quote1;
             $params .= " --run_dir ".$quote1.$run_dir.$quote1;
             $params .= " --profile ".$quote1.$profile.$quote1;
-            $paramNameAr = array("file_name", "file_dir", "file_type", "files_used", "archive_dir", "s3_archive_dir", "collection_type","file_name_all","file_type_all","collection_type_all");
-            $paramAr = array($file_name, $file_dir, $file_type, $files_used, $archive_dir, $s3_archive_dir, $collection_type, $file_name, $file_type, $collection_type);
+            $paramNameAr = array("given_name", "input_name", "url", "urlzip", "checkpath", "collection", "file_name", "file_dir", "file_type", "files_used", "archive_dir", "s3_archive_dir", "collection_type");
+            $paramAr = array($given_name, $input_name, $url, $urlzip, $checkpath, $collection, $file_name, $file_dir, $file_type, $files_used, $archive_dir, $s3_archive_dir, $collection_type);
+            
             for ($i=0; $i<count($paramNameAr); $i++) {
-                $params.= " --".$paramNameAr[$i]." ".$quote1.$quote2.implode("$quote2,$quote2", $paramAr[$i]).$quote2.$quote1;
+                if (!empty($paramAr[$i])){
+                    $params.= " --".$paramNameAr[$i]." ".$quote1.$quote2.implode("$quote2,$quote2", $paramAr[$i]).$quote2.$quote1; 
+                }
+                
             }
         }
         return $params;
@@ -334,7 +354,7 @@ class dbfuncs {
             $inputName = $inputitem->{'name'};
             $collection_id = $inputitem->{'collection_id'};
             if (!empty($collection_id)){
-                $inputsPath = "$outdir/run{$project_pipeline_id}/inputs";
+                $inputsPath = "$outdir/run{$project_pipeline_id}/inputs/$collection_id";
                 $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
                 $file_type = $allfiles[0]->{'file_type'};
                 $collection_type = $allfiles[0]->{'collection_type'};
@@ -2722,7 +2742,22 @@ class dbfuncs {
         $sql = "INSERT INTO file_project (f_id, p_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$p_id', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
-
+    function checkInsertUrlInput($name, $type, $ownerID) {
+        $url_id = "";
+        if (!empty($name)) {
+            $checkUrl = $this->checkInput($name,$type);
+            $checkUrlData = json_decode($checkUrl,true);
+            if (isset($checkUrlData[0])){
+                $url_id = $checkUrlData[0]["id"];
+            } else {
+                //insert into input table
+                $insertIn = $this->insertInput($name, $type, $ownerID);
+                $insertInData = json_decode($insertIn,true);
+                $url_id = $insertInData["id"];
+            }
+        }
+        return $url_id;
+    }
     public function insertInput($name, $type, $ownerID) {
         $sql = "INSERT INTO input(name, type, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
                   ('$name', '$type', '$ownerID', 3, now(), now(), '$ownerID')";
@@ -2817,17 +2852,17 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     // ------- Project Pipeline Inputs  ------
-    public function insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $ownerID) {
-        $sql = "INSERT INTO project_pipeline_input(collection_id, project_pipeline_id, input_id, project_id, pipeline_id, g_num, given_name, qualifier, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$collection_id', '$project_pipeline_id', '$input_id', '$project_id', '$pipeline_id', '$g_num', '$given_name', '$qualifier', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $url, $urlzip, $checkpath, $ownerID) {
+        $sql = "INSERT INTO project_pipeline_input(collection_id, project_pipeline_id, input_id, project_id, pipeline_id, g_num, given_name, qualifier, url, urlzip, checkpath, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$collection_id', '$project_pipeline_id', '$input_id', '$project_id', '$pipeline_id', '$g_num', '$given_name', '$qualifier', '$url', '$urlzip', '$checkpath', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function updateProPipeInput($id, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $ownerID) {
-        $sql = "UPDATE project_pipeline_input SET collection_id='$collection_id', project_pipeline_id='$project_pipeline_id', input_id='$input_id', project_id='$project_id', pipeline_id='$pipeline_id', g_num='$g_num', given_name='$given_name', qualifier='$qualifier', last_modified_user ='$ownerID'  WHERE id = $id";
+    public function updateProPipeInput($id, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $url, $urlzip, $checkpath,$ownerID) {
+        $sql = "UPDATE project_pipeline_input SET collection_id='$collection_id', url='$url', urlzip='$urlzip', checkpath='$checkpath', project_pipeline_id='$project_pipeline_id', input_id='$input_id', project_id='$project_id', pipeline_id='$pipeline_id', g_num='$g_num', given_name='$given_name', qualifier='$qualifier', last_modified_user ='$ownerID'  WHERE id = $id";
         return self::runSQL($sql);
     }
     public function duplicateProjectPipelineInput($new_id,$old_id,$ownerID) {
-        $sql = "INSERT INTO project_pipeline_input(input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, project_pipeline_id, owner_id, perms, date_created, date_modified, last_modified_user)
-                      SELECT input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, '$new_id', '$ownerID', '3', now(), now(),'$ownerID'
+        $sql = "INSERT INTO project_pipeline_input(url, urlzip, checkpath, input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, project_pipeline_id, owner_id, perms, date_created, date_modified, last_modified_user)
+                      SELECT url, urlzip, checkpath, input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, '$new_id', '$ownerID', '3', now(), now(),'$ownerID'
                       FROM project_pipeline_input
                       WHERE deleted=0 AND project_pipeline_id='$old_id'";
         return self::insTable($sql);
@@ -2874,9 +2909,12 @@ class dbfuncs {
 
     public function getProjectPipelineInputs($project_pipeline_id,$ownerID) {
         $where = " where (c.deleted = 0 OR c.deleted IS NULL) AND ppi.deleted=0 AND ppi.project_pipeline_id = '$project_pipeline_id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63 OR (ug.u_id ='$ownerID' and ppi.perms = 15))";
-        $sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num, ppi.collection_id, c.name as collection_name
+        $sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num, ppi.collection_id, c.name as collection_name, i2.name as url, i3.name as urlzip, i4.name as checkpath
                       FROM project_pipeline_input ppi
-                      LEFT JOIN input i ON i.id = ppi.input_id
+                      LEFT JOIN input i ON (i.id = ppi.input_id)
+                      LEFT JOIN input i2 ON (i2.id = ppi.url)
+                      LEFT JOIN input i3 ON (i3.id = ppi.urlzip)
+                      LEFT JOIN input i4 ON (i4.id = ppi.checkpath)
                       LEFT JOIN collection c ON c.id = ppi.collection_id
                       LEFT JOIN user_group ug ON ppi.group_id=ug.g_id
                       $where";
@@ -2884,9 +2922,12 @@ class dbfuncs {
     }
     public function getProjectPipelineInputsById($id,$ownerID) {
         $where = " where (c.deleted = 0 OR c.deleted IS NULL) AND ppi.deleted=0 AND ppi.id= '$id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63)" ;
-        $sql = "SELECT ppi.id, ppi.qualifier, i.id as input_id, i.name, ppi.collection_id, c.name as collection_name
+        $sql = "SELECT ppi.id, ppi.qualifier, i.id as input_id, i.name, ppi.collection_id, c.name as collection_name, i2.name as url, i3.name as urlzip, i4.name as checkpath
                       FROM project_pipeline_input ppi
-                      LEFT JOIN input i ON i.id = ppi.input_id
+                      LEFT JOIN input i ON (i.id = ppi.input_id)
+                      LEFT JOIN input i2 ON (i2.id = ppi.url)
+                      LEFT JOIN input i3 ON (i3.id = ppi.urlzip)
+                      LEFT JOIN input i4 ON (i3.id = ppi.checkpath)
                       LEFT JOIN collection c ON c.id = ppi.collection_id
                       $where";
         return self::queryTable($sql);
