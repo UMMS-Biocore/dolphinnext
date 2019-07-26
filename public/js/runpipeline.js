@@ -551,7 +551,45 @@ function parseBrackets(arr, trim) {
     return finalArr;
 }
 
-
+//parse for autofill: @url, @urlzip, @checkPath
+function parseRegPartAutofill(regPart) {
+    var url = null;
+    var urlzip = null;
+    var checkPath = null;
+    if (regPart.match(/@/)) {
+        var regSplit = regPart.split('@');
+        for (var i = 0; i < regSplit.length; i++) {
+            // find url
+            var urlCheck = regSplit[i].match(/^url:"(.*)"|^url:'(.*)'/i);
+            if (urlCheck) {
+                if (urlCheck[1]) {
+                    url = urlCheck[1];
+                } else if (urlCheck[2]) {
+                    url = urlCheck[2];
+                }
+            }
+            // find url
+            var urlzipCheck = regSplit[i].match(/^urlzip:"(.*)"|^urlzip:'(.*)'/i);
+            if (urlzipCheck) {
+                if (urlzipCheck[1]) {
+                    urlzip = urlzipCheck[1];
+                } else if (urlzipCheck[2]) {
+                    urlzip = urlzipCheck[2];
+                }
+            }
+            // find url
+            var checkPathCheck = regSplit[i].match(/^checkpath:"(.*)"|^checkpath:'(.*)'/i);
+            if (checkPathCheck) {
+                if (checkPathCheck[1]) {
+                    checkPath = checkPathCheck[1];
+                } else if (checkPathCheck[2]) {
+                    checkPath = checkPathCheck[2];
+                }
+            }
+        }
+    }
+    return [url, urlzip, checkPath];
+}
 
 //parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings
 //parse style categories: @multicolumn, @array, @condition
@@ -1306,7 +1344,7 @@ function hideProcessOptionsAsIcons (){
 
 
 //fill file/Val buttons
-function autoFillButton(buttonText, value, keepExist) {
+function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
     var button = $(buttonText);
     var checkDropDown = button.attr("id") == "dropDown";
     var checkFileExist = button.css("display") == "none";
@@ -1320,22 +1358,21 @@ function autoFillButton(buttonText, value, keepExist) {
     [rowID, gNumParam, given_name, qualifier, sType] = getInputVariables(button);
     var proPipeInputID = $('#' + rowID).attr('propipeinputid');
     var inputID = null;
-
     var data = [];
     data.push({ name: "id", value: "" });
     data.push({ name: "name", value: value });
     // insert into project pipeline input table
     if (value && value != "") {
         if (checkDropDown == false && checkFileExist == false) {
-            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
+            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
         } else if (checkDropDown == false && checkFileExist == true && keepExist == false) {
-            checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, null);
+            checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, null, url, urlzip, checkPath);
         } else if (checkDropDown == true && keepExist == false) {
             // if proPipeInputID exist, then first remove proPipeInputID.
             if (proPipeInputID) {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
             }
-            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
+            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
         }
     } else { // if value is empty:"" then remove from project pipeline input table
         if (keepExist == false) {
@@ -1373,12 +1410,18 @@ function autofillEmptyInputs(autoFillJSON) {
     $.each(autoFillJSON, function (el) {
         var conds = autoFillJSON[el].condition;
         var states = autoFillJSON[el].statement;
+        var url = autoFillJSON[el].url;
+        var urlzip = autoFillJSON[el].urlzip;
+        var checkPath = autoFillJSON[el].checkPath;
         if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
             if (conds.$HOSTNAME) {
                 var statusCond = checkConds(conds);
                 if (statusCond === true) {
                     $.each(states, function (st) {
                         var defName = states[st]; // expected Value
+                        var defUrl = url[st] || null;; // expected Value
+                        var defUrlzip = urlzip[st] || null; // expected Value
+                        var defcheckPath = checkPath[st] || null; // expected Value
                         //if variable start with "params." then check #inputsTab
                         if (st.match(/params\.(.*)/)) {
                             var varName = st.match(/params\.(.*)/)[1]; //variable Name
@@ -1387,7 +1430,7 @@ function autofillEmptyInputs(autoFillJSON) {
                                 var varNameButAr = $(checkVarName).children();
                                 if (varNameButAr && varNameButAr[0]) {
                                     var keepExist = true;
-                                    autoFillButton(varNameButAr[0], defName, keepExist);
+                                    autoFillButton(varNameButAr[0], defName, keepExist, defUrl, defUrlzip, defcheckPath);
                                 }
                             }
                             autoCheck("fillstates")
@@ -1400,11 +1443,13 @@ function autofillEmptyInputs(autoFillJSON) {
 }
 
 //change propipeinputs in case all conds are true
-function fillStates(states) {
-    console.log(states)
+function fillStates(states, url, urlzip, checkPath) {
     $("#inputsTab").loading('start');
     $.each(states, function (st) {
-        var defName = states[st]; // expected Value
+        var defName = states[st] ; // expected Value
+        var defUrl = url[st] || null;; // expected Value
+        var defUrlzip = urlzip[st] || null; // expected Value
+        var defcheckPath = checkPath[st] || null; // expected Value
         //if variable start with "params." then check #inputsTab
         if (st.match(/params\.(.*)/)) {
             var varName = st.match(/params\.(.*)/)[1]; //variable Name
@@ -1413,7 +1458,7 @@ function fillStates(states) {
                 var varNameButAr = $(checkVarName).children();
                 if (varNameButAr && varNameButAr[0]) {
                     var keepExist = false;
-                    autoFillButton(varNameButAr[0], defName, keepExist);
+                    autoFillButton(varNameButAr[0], defName, keepExist, defUrl, defUrlzip, defcheckPath);
                 }
             }
             //if variable starts with "$" then run parameters for pipeline are defined. Fill run parameters. $SINGULARITY_IMAGE, $SINGULARITY_OPTIONS, $DOCKER_IMAGE, $DOCKER_OPTIONS, $MEMORY, $TIME, $QUEUE, $CPU, $EXEC_OPTIONS 
@@ -1476,8 +1521,6 @@ function fillStates(states) {
             }
         }
     });
-
-
 }
 // to execute autofill function, binds event handlers
 function bindEveHandler(autoFillJSON) {
@@ -1488,12 +1531,15 @@ function bindEveHandler(autoFillJSON) {
             $.each(autoFillJSON, function (el) {
                 var conds = autoFillJSON[el].condition;
                 var states = autoFillJSON[el].statement;
+                var url = autoFillJSON[el].url;
+                var urlzip = autoFillJSON[el].urlzip;
+                var checkPath = autoFillJSON[el].checkPath;
                 if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
                     //bind eventhandler to #chooseEnv
                     if (conds.$HOSTNAME) {   
                         var statusCond = checkConds(conds, type);
                         if (statusCond === true) {
-                            fillStates(states)
+                            fillStates(states, url, urlzip, checkPath)
                             triggeredFillStates = true;
                             autoCheck("fillstates")
                         }
@@ -1513,6 +1559,9 @@ function bindEveHandler(autoFillJSON) {
     $.each(autoFillJSON, function (el) {
         var conds = autoFillJSON[el].condition;
         var states = autoFillJSON[el].statement;
+        var url = autoFillJSON[el].url;
+        var urlzip = autoFillJSON[el].urlzip;
+        var checkPath = autoFillJSON[el].checkPath;
         if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
             //if condition exist other than $HOSTNAME then bind eventhandler to #params. button (eg. dropdown or inputValEnter)
             $.each(conds, function (el) {
@@ -1527,14 +1576,12 @@ function bindEveHandler(autoFillJSON) {
                                 //bind eventhandler to indropdown button
                                 $(varNameButAr[0]).change(function () {
                                     var statusCond = checkConds(conds);
-                                    console.log(conds)
-                                    console.log(statusCond)
                                     var statusCondDefault = checkConds(conds, "default");
                                     if (statusCond === true) {
-                                        fillStates(states);
+                                        fillStates(states, url, urlzip, checkPath);
                                         autoCheck("fillstates")
                                     } else if (statusCondDefault === true){
-                                        fillStates(states);
+                                        fillStates(states, url, urlzip, checkPath);
                                         autoCheck("fillstates")
                                     }
                                 });
@@ -1547,9 +1594,54 @@ function bindEveHandler(autoFillJSON) {
     });
 }
 
+var addProfileLib = function (oldLibObj, profileVariables){
+    var lines = profileVariables.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+        var varName = null;
+        var defaultVal = null;
+        [varName, defaultVal] = parseVarPart(lines[i]);
+        if (varName && defaultVal != null){
+            oldLibObj[varName] = defaultVal
+        }
+    }
+}
+
+function addProfileVar(autoFillJSON) {
+    var profileVar = getValues({ "p": "getProfileVariables" });
+    if (autoFillJSON) {
+        for (var i = 0; i < profileVar.length; i++) {
+            var confirmUpdate = false;
+            var proHost = profileVar[i].hostname
+            var proVar = decodeHtml(profileVar[i].variable);
+            // find conditions that matches $HOSTNAME
+            $.each(autoFillJSON, function (el) {
+                if (!confirmUpdate){
+                    if (autoFillJSON[el].condition && autoFillJSON[el].condition != null && !$.isEmptyObject(autoFillJSON[el].condition)) {
+                        if (autoFillJSON[el].condition.$HOSTNAME){
+                            if (autoFillJSON[el].condition.$HOSTNAME == proHost){
+                                addProfileLib (autoFillJSON[el].library,proVar);
+                                confirmUpdate = true;
+                            }
+                        }
+                    }
+                }
+            });
+            //insert as a new row if not exist in the exising obj
+            if (!confirmUpdate){
+                var newCond = { condition: {}, genCondition: {}, statement: {}, library: {}, url:{}, urlzip:{}, checkPath:{} };
+                newCond.condition.$HOSTNAME = proHost;
+                addProfileLib(newCond.library,proVar);
+                autoFillJSON.push(newCond);
+            }
+        }
+    }
+    return autoFillJSON
+}
+
 //parses header_script and create autoFill array. 
 //eg. [condition:{hostname:ghpcc, var:mm10},statement:{indexPath:"/path"}] 
 //or generic condition eg. [genCondition:{hostname:null, params.genomeTypePipeline:null}, library:{_species:"human"}] 
+//url:{}, urlzip:{}, checkPath:{}
 function parseAutofill(script) {
     if (script) {
         //check if autofill comment is exist: //* autofill
@@ -1562,6 +1654,9 @@ function parseAutofill(script) {
             var autoFill = [];
             var states = {}; //keep all statements for if block
             var library = {}; //keep all string filling library for if block
+            var url = {}; 
+            var urlzip = {}; 
+            var checkPath = {}; 
             for (var i = 0; i < lines.length; i++) {
                 var varName = null;
                 var defaultVal = null;
@@ -1585,18 +1680,21 @@ function parseAutofill(script) {
                     if (lines[i].match(/.*if *\((.*)\).*/i)) {
                         if (ifBlockStart) {
                             if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
-                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library, url: url, urlzip:urlzip, checkPath:checkPath })
                             }
                             //push global variables    
                         } else if (!ifBlockStart) {
                             if (conds && states && library && genConds && ($.isEmptyObject(conds) && $.isEmptyObject(genConds) && (!$.isEmptyObject(states) || !$.isEmptyObject(library)))) {
-                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library, url: url, urlzip:urlzip, checkPath:checkPath })
                             }
                         }
                         conds = {};
                         genConds = {};
                         library = {}; //new library object. Will be used for filling strings. 
                         states = {}; //new statement object. It will be filled with following statements until next if condition
+                        url ={};
+                        urlzip = {}; 
+                        checkPath = {};
                         ifBlockStart = i;
                         cond = lines[i].match(/.*if *\((.*)\).*/i)[1]
                         if (cond) {
@@ -1615,28 +1713,57 @@ function parseAutofill(script) {
                         blockStart = null;
                         ifBlockStart = null;
                         if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
-                            autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                            autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library, url: url, urlzip:urlzip, checkPath:checkPath })
                         }
                         //end of if condition with curly brackets 
                     } else if ($.trim(lines[i]).match(/^\}$/m)) {
                         if (ifBlockStart) {
                             ifBlockStart = null;
                             if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
-                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library, url: url, urlzip:urlzip, checkPath:checkPath })
                             }
                         }
                         conds = {};
                         genConds = {};
                         library = {};
                         states = {};
+                        url ={};
+                        urlzip = {}; 
+                        checkPath = {};
                         //lines of statements 
                     } else {
-                        [varName, defaultVal] = parseVarPart(lines[i]);
+                        if (lines[i].match('\/\/\*') && lines[i].split('\/\/\*').length>1 ) {
+                            var varPart = lines[i].split('\/\/\*')[0];
+                            var regPart = lines[i].split('\/\/\*')[1];
+                        } else {
+                            var varPart = lines[i];
+                            var regPart = "";
+                        }
+                        if (varPart){
+                            [varName, defaultVal] = parseVarPart(varPart);
+                        }
+                        var urlVal = null;
+                        var urlzipVal = null;
+                        var checkPathVal = null;
+                        if (regPart){
+                            if (regPart.match(/@url|@checkpath|/i)){
+                                [urlVal, urlzipVal, checkPathVal] = parseRegPartAutofill(regPart)
+                            }
+                        }
                         if (varName && defaultVal) {
                             if (varName.match(/^_.*$/)) {
                                 library[varName] = defaultVal;
                             } else {
                                 states[varName] = defaultVal;
+                                if (urlVal){
+                                    url[varName] = urlVal;
+                                }
+                                if (urlzipVal){
+                                    urlzip[varName] = urlzipVal;
+                                }
+                                if (checkPathVal){
+                                    checkPath[varName] = checkPathVal;
+                                }
                                 //check if params.VARNAME is defined and return all VARNAMES to fill them as system inputs
                                 if (varName.match(/params\.(.*)/)) {
                                     var sysInput = varName.match(/params\.(.*)/)[1];
@@ -1658,15 +1785,15 @@ function parseAutofill(script) {
 }
 
 // get new statements for each combination of conditions
-function getNewStatements(conditions, autoFillJSON, genStatement) {
-    var newStateCond = { condition: {}, genCondition: {}, statement: {}, library: {} };
+function getNewStatements(conditions, autoFillJSON, genStatement, url, urlzip, checkPath) {
+    var newStateCond = { condition: {}, genCondition: {}, statement: {}, library: {}, url:{}, urlzip:{}, checkPath:{} };
     if (conditions) {
         var defValLibrary = [];
         var mergedLib = {}
         // get Merged library for given conditions
         $.each(conditions, function (ele) {
             var varName = Object.keys(conditions[ele]);
-            var defVal = conditions[ele][varName]
+            var defVal = conditions[ele][varName];
             newStateCond.condition[varName] = defVal;
             //find varName = defVal statement in autoFillJSON which has library
             $.each(autoFillJSON, function (elem) {
@@ -1679,15 +1806,29 @@ function getNewStatements(conditions, autoFillJSON, genStatement) {
                             jQuery.extend(mergedLib, library);
                         }
                     }
+                    //find default library that not belong to any condition or generic condition.
+                } else if ($.isEmptyObject(autoFillJSON[elem].condition) && $.isEmptyObject(autoFillJSON[elem].genCondition) && autoFillJSON[elem].library && !$.isEmptyObject(autoFillJSON[elem].library)){
+                    var deflibrary = autoFillJSON[elem].library;
+                    jQuery.extend(mergedLib, deflibrary);    
                 }
             });
+
         });
-        // use Merged library to fill genStatements
-        $.each(genStatement, function (stateKey) {
-            var stateValue = genStatement[stateKey];
-            var newStateValue = fillStateValue(stateValue, mergedLib);
-            newStateCond.statement[stateKey] = newStateValue;
-        });
+
+        // use Merged library to fill genStatement,url,urlzip,checkPath
+        var fillWithNewValue = function(newStateCond, section,fillName, mergedLib){
+            $.each(section, function (key) {
+                var stateValue = section[key];
+                var newStateValue = fillStateValue(stateValue, mergedLib);
+                newStateCond[fillName][key] = newStateValue;
+            });
+        }
+        var sectionAr = [genStatement,url,urlzip,checkPath];
+        var fillName = ["statement","url","urlzip","checkPath"];
+        for (var i = 0; i < sectionAr.length; i++) {
+            fillWithNewValue(newStateCond, sectionAr[i], fillName[i], mergedLib);
+        }
+
     }
     return newStateCond
 }
@@ -1746,15 +1887,17 @@ function decodeGenericCond(autoFillJSON) {
             if (autoFillJSON[el].genCondition && autoFillJSON[el].genCondition != "" && !$.isEmptyObject(autoFillJSON[el].genCondition)) {
                 var genConditions = autoFillJSON[el].genCondition;
                 var genStatements = autoFillJSON[el].statement;
+                var url = autoFillJSON[el].url;
+                var urlzip = autoFillJSON[el].urlzip;
+                var checkPath = autoFillJSON[el].checkPath;
                 var newCondStatements = {};
                 //find each generic condition in other cond&state pairs and get their default values.
                 var genCondDefaultVal = findDefVal(genConditions, autoFillJSON);
                 // get combinations array of each conditions
                 var combiConditions = cartesianProduct(genCondDefaultVal);
-
                 // get new statements for each combination of conditions
                 $.each(combiConditions, function (cond) {
-                    newCondStatements = getNewStatements(combiConditions[cond], autoFillJSON, genStatements);
+                    newCondStatements = getNewStatements(combiConditions[cond], autoFillJSON, genStatements, url, urlzip, checkPath);
                     autoFillJSON.push(newCondStatements)
                 });
             }
@@ -1814,7 +1957,10 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
             var collection_id = getProPipeInputs[0].collection_id;
             var collection_name = getProPipeInputs[0].collection_name;
             var collection = { collection_id: collection_id, collection_name: collection_name }
-            insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection);
+            var url = getProPipeInputs[0].url;
+            var urlzip = getProPipeInputs[0].urlzip;
+            var checkPath = getProPipeInputs[0].checkpath;
+            insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath);
         }
         if (getProPipeInputs.length > 1) {
             for (var k = 1; k < getProPipeInputs.length; k++) {
@@ -2845,7 +2991,10 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
                     var collection_id = getProPipeInputs[0].collection_id;
                     var collection_name = getProPipeInputs[0].collection_name;
                     var collection = { collection_id: collection_id, collection_name: collection_name }
-                    insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection); 
+                    var url = getProPipeInputs[0].url;
+                    var urlzip = getProPipeInputs[0].urlzip;
+                    var checkPath = getProPipeInputs[0].checkpath;
+                    insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath); 
                 }
                 if (getProPipeInputs.length > 1) {
                     for (var k = 1; k < getProPipeInputs.length; k++) {
@@ -3303,6 +3452,8 @@ function loadPipelineDetails(pipeline_id, pipeData) {
                 insertProPipePanel(script_pipe_header, "pipe", "Pipeline", window, processData);
                 //generate json for autofill by using script of pipeline header
                 autoFillJSON = parseAutofill(script_pipe_header);
+                // get Profile variables -> update library of $HOSTNAME conditions 
+                autoFillJSON = addProfileVar(autoFillJSON);
                 autoFillJSON = decodeGenericCond(autoFillJSON);
 
             }
@@ -3566,9 +3717,8 @@ function loadRunOptions(type) {
     }
 }
 //insert selected input to inputs table
-function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection) {
+function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection, url, urlzip, checkPath) {
     var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
-
     if (checkDropDown) {
         $(checkDropDown).val(filePath)
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
@@ -3585,6 +3735,16 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
             $('#' + rowID).find('#inputValEnter').css('display', 'none');
             $('#' + rowID).find('#defValUse').css('display', 'none');
         }
+
+        var showUrlIcon = "display:none;"
+        var urlData = url || "";
+        var urlzipData = urlzip || "";
+        var checkPathData = checkPath || "";
+        if (url || urlzip){
+            showUrlIcon = "";
+        }
+        var urlIcon = '<button type="button" class="btn"  url="'+urlData+'" urlzip="'+urlzipData+'" checkpath="'+checkPathData+'" style="'+showUrlIcon+' padding:0px; margin-right:2px;" id="urlBut-'+rowID+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Info"><span><i style="font-size: 16px;" class="fa fa-cloud-download"></i></span></a></button>'
+
         filePath = escapeHtml(filePath);
         var collectionAttr = ' collection_id="" ';
         if (collection) {
@@ -3593,7 +3753,7 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
                 filePath = '<i class="fa fa-database"></i> ' + collection.collection_name
             }
         }
-        $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + filePath + '</span>' + editIcon + deleteIcon);
+        $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + filePath + '</span>' + urlIcon + editIcon + deleteIcon );
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
 
     }
@@ -3621,7 +3781,8 @@ function removeSelectFile(rowID, sType) {
             buttonList[2].remove();
         }
         if (buttonList[1]) {
-            if ($(buttonList[1]).attr("id") == "inputValEdit" || $(buttonList[1]).attr("id") == "inputFileEdit") {
+            var but1id = $(buttonList[1]).attr("id");
+            if (but1id == "inputValEdit" || but1id == "inputFileEdit" || but1id.match(/^urlBut-/)) {
                 buttonList[1].remove();
             }
         }
@@ -3629,7 +3790,7 @@ function removeSelectFile(rowID, sType) {
     }
 }
 
-function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection) {
+function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection, url, urlzip, checkPath) {
     if (inputID === null) { inputID = "" }
     var nameInput = "";
     if (data) {
@@ -3643,6 +3804,9 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
             collection_name = collection.collection_name;
         }
     }
+    var urlData = url || "";
+    var urlzipData = urlzip || "";
+    var checkPathData = checkPath || "";
     var fillInput = getValues({
         p: "fillInput",
         inputID: inputID,
@@ -3655,17 +3819,20 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
         "g_num": gNumParam,
         "given_name": given_name,
         "qualifier": qualifier,
-        proPipeInputID: ""
+        proPipeInputID: "",
+        url: urlData,
+        urlzip: urlzipData,
+        checkpath: checkPathData
     });
     //insert into #inputsTab
     if (fillInput.projectPipelineInputID && collection_name) {
-        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection);
+        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath);
     } else if (fillInput.projectPipelineInputID && fillInput.inputName) {
-        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection);
+        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath);
     }
 }
 
-function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection) {
+function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection, url, urlzip, checkPath) {
     if (inputID === null) { inputID = "" }
     var nameInput = "";
     if (data) {
@@ -3679,6 +3846,9 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
             collection_name = collection.collection_name;
         }
     }
+    var urlData = url || "";
+    var urlzipData = urlzip || "";
+    var checkPathData = checkPath || "";
     var fillInput = getValues({
         p: "fillInput",
         inputID: inputID,
@@ -3691,7 +3861,10 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
         "g_num": gNumParam,
         "given_name": given_name,
         "qualifier": qualifier,
-        proPipeInputID: proPipeInputID
+        proPipeInputID: proPipeInputID,
+        url: urlData,
+        urlzip: urlzipData,
+        checkpath: checkPathData
     });
     //update #inputsTab
     if (fillInput.projectPipelineInputID && collection_name) {
@@ -3699,7 +3872,19 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
     } else if (fillInput.projectPipelineInputID && fillInput.inputName) {
         $('#filePath-' + gNumParam).text(fillInput.inputName);
     }
-    $('#filePath-' + gNumParam).attr("collection_id", collection_id)
+    $('#filePath-' + gNumParam).attr("collection_id", collection_id);
+    //update urlBut settings inside #inputsTab
+    var urlData = url || "";
+    var urlzipData = urlzip || "";
+    var checkPathData = checkPath || "";
+    if (url || urlzip){
+        $("#urlBut-" +rowID).css("display","inline-block")
+    } else {
+        $("#urlBut-" +rowID).css("display","none")
+    }
+    $("#urlBut-" +rowID).attr("url",urlData)
+    $("#urlBut-" +rowID).attr("urlzip",urlzipData)
+    $("#urlBut-" +rowID).attr("checkpath",checkPathData)
 }
 
 function saveFileSetValModal(data, sType, inputID, collection) {
@@ -3712,9 +3897,9 @@ function saveFileSetValModal(data, sType, inputID, collection) {
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
+    var url=null, urlzip=null, checkPath=null;
     //check database if file is exist, if not exist then insert
-    checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection);
-    console.log("2")
+    checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection, url, urlzip, checkPath);
     checkReadytoRun();
 }
 
@@ -3729,8 +3914,9 @@ function editFileSetValModal(data, sType, inputID, collection) {
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
+    var url=null, urlzip=null, checkPath=null;
     //check database if file is exist, if not exist then insert
-    checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection);
+    checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection, url, urlzip, checkPath);
     checkReadytoRun();
 }
 checkType = "";
@@ -4215,20 +4401,20 @@ function autofillMountPath() {
     if (formPaths && formPaths != null) {
         $.each(formPaths, function (el) {
             var inputPath = $(formPaths[el]).val();
-                var parsedPath = parseMountPath(inputPath);
-                if (parsedPath) {
-                    if (pathArray.indexOf(parsedPath) === -1) {
-                        pathArray.push(parsedPath)
-                    }
+            var parsedPath = parseMountPath(inputPath);
+            if (parsedPath) {
+                if (pathArray.indexOf(parsedPath) === -1) {
+                    pathArray.push(parsedPath)
                 }
+            }
         });
     }
     //turn into lsf command (use -E to define scripts which will be executed just before the main job)
     if (pathArray.length > 0) {
         var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"';
-        } else {
-            var execOtherOpt = '';
-        }
+    } else {
+        var execOtherOpt = '';
+    }
 
     //check if exec_all or exec_each checkboxes are clicked.
     if ($('#exec_all').is(":checked") === true) {
@@ -6387,8 +6573,9 @@ $(document).ready(function () {
         data.push({ name: "id", value: "" });
         data.push({ name: "name", value: value });
         var inputID = null;
+        var url=null, urlzip=null, checkPath=null;
         //check database if file is exist, if not exist then insert
-        checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
+        checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
         button.css("display", "none");
         showHideSett(rowID)
         autoCheck()
@@ -6430,7 +6617,8 @@ $(document).ready(function () {
                 data.push({ name: "id", value: "" });
                 data.push({ name: "name", value: value });
                 var inputID = null;
-                checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
+                var url=null, urlzip=null, checkPath=null;
+                checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
             } else { // remove from project pipeline input table
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
                 removeSelectFile(rowID, qualifier);

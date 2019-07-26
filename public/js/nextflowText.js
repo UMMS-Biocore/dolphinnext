@@ -381,10 +381,25 @@ function createNextflowFile(nxf_runmode, uuid) {
     nextText = "";
     createPiGnumList();
     if (nxf_runmode === "run") {
+        var chooseEnv = $('#chooseEnv option:selected').val();
         var hostname = $('#chooseEnv').find('option:selected').attr('host');
         if (hostname) {
             nextText += '$HOSTNAME = "' + hostname + '"\n';
         }
+        if (chooseEnv) {
+            var patt = /(.*)-(.*)/;
+            var proType = chooseEnv.replace(patt, '$1');
+            var proId = chooseEnv.replace(patt, '$2');
+            var profileVar = getValues({ p: "getProfileVariables", proType: proType, id:proId  });
+            if (profileVar){
+                if (profileVar[0]){
+                    if (profileVar[0].variable){
+                        nextText += decodeHtml(profileVar[0].variable) + '\n';
+                    }
+                }
+            }
+        }
+
         var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
         if (publish_dir_check === "true") {
             var output_dir = $('#publish_dir').val();
@@ -570,8 +585,8 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                         var sNodeProId = inputIdSplit[1];
                         var inputParAll = getValues({ p: "getInputsPP", "process_id": sNodeProId });
                         var inputParMate = inputParAll.filter(function (el) { return el.sname == "mate" }).length
-                    }
-                    
+                        }
+
                     firstPartTemp = 'if (!params.' + inputParamName + '){params.' + inputParamName + ' = ""} \n'
                     if (qual === "file") {
                         if (checkRegex === false) {
@@ -592,7 +607,7 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                         //if val(name), file(read) format -> turn into set input
                         if (connectedNodeName.match(/.*val\(.*\).*file\(.*\).*/)) {
                             secPartTemp = "Channel.fromPath(params." + inputParamName + ", type: 'any').map{ file -> tuple(file.baseName, file) }"+channelSetInto+"\n"
-                        //or other formats eg. file(fastq1), file(fastq2), file(fastq3)    
+                            //or other formats eg. file(fastq1), file(fastq2), file(fastq3)    
                         } else {
                             secPartTemp = "Channel.fromPath(params." + inputParamName + ", type: 'any').toSortedList()"+channelSetInto+"\n";
                         }
@@ -800,13 +815,13 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
                 for (var k = 0; k < tmp.length; k++) {
                     whenText += $.trim(tmp[k]) + " = Channel.empty()\n";
                 }
-        } else {
-            whenText += tmp + " = Channel.empty()\n";
+            } else {
+                whenText += tmp + " = Channel.empty()\n";
+            }
         }
+        whenText += "} else {";
     }
-    whenText += "} else {";
-}
-return whenText
+    return whenText
 }
 
 function addChannelName(whenCond, whenLib, file_type, channelName, param_name, qual) {
@@ -864,7 +879,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                 var mainPipeOutNodeId = mainPipeOut[0];
                 var fNo = "";
                 var sNo = "";
-            [fNo, sNo] = splitEdges(mainPipeOutNodeId);
+                [fNo, sNo] = splitEdges(mainPipeOutNodeId);
                 if (fNo.split("-")[1] === "outPro") {
                     var parId = fNo.split("-")[4]
                     var userEntryId = "text-" + fNo.split("-")[4]
@@ -973,7 +988,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
             if (allEdges[c].indexOf(Oid) == 0) {
                 var fNode = "";
                 var secNode = "";
-                    [fNode, secNode] = splitEdges(allEdges[c]);
+                [fNode, secNode] = splitEdges(allEdges[c]);
                 var secProType = secNode.split("-")[1];
                 if (secProType !== "outPro") {
                     if (channelNameAll === "") {
@@ -985,7 +1000,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
             } else if (allEdges[c].indexOf(Oid) > 0) {
                 var fstNode = "";
                 var secNode = "";
-                    [fstNode, secNode] = splitEdges(allEdges[c]);
+                [fstNode, secNode] = splitEdges(allEdges[c]);
                 var fstProType = fstNode.split("-")[1];
                 if (fstProType !== "outPro") {
                     if (channelNameAll === "") {

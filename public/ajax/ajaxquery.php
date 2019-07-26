@@ -41,7 +41,7 @@ if ($p=="saveRun"){
         $attempt = "0";
     }
     //create initialrun script
-    $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun@08e8feb9cbef6797292bf59171ad985617c1d7cb.simg";
+    $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-24.07.2019.simg";
     $initialRunParams = $db->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
@@ -109,7 +109,7 @@ else if ($p=="retryRsync"){
     $target_dir = $_REQUEST['dir'];
     $run_env = $_REQUEST['run_env'];
     $data = $db->retryRsync($fileName, $target_dir, $run_env, $email, $ownerID);
-    
+
 }
 else if ($p=="getReportData"){
     $uuid  = $_REQUEST['uuid'];
@@ -751,6 +751,40 @@ else if ($p=="generateKeys")
 {
     $data = $db->generateKeys($ownerID);
 }
+
+else if ($p=="getProfileVariables"){
+    $proType = isset($_REQUEST['proType']) ? $_REQUEST['proType'] : "";
+    if (!empty($id) && !empty($proType)) {
+        if ($proType == "cluster"){
+            $data = $db->getProfileClusterbyID($id, $ownerID);
+        } else if ($proType == "amazon"){
+            $data = $db->getProfileAmazonbyID($id, $ownerID);
+        }
+    } else {
+        $proClu = $db->getProfileCluster($ownerID);
+        $proAmz = $db->getProfileAmazon($ownerID);
+        $clu_obj = json_decode($proClu,true);
+        $amz_obj = json_decode($proAmz,true);
+        $merged_obj = array_merge($clu_obj, $amz_obj);
+        $new_obj = array();
+        if (isset($merged_obj)){
+            if (!empty($merged_obj[0])){
+                for ($i = 0; $i < count($merged_obj); $i++) {
+                    $variable = isset($merged_obj[$i]["variable"]) ? $merged_obj[$i]["variable"] : "";
+                    $hostname = isset($merged_obj[$i]["hostname"]) ? $merged_obj[$i]["hostname"] : "";
+                    if (!empty($variable) && !empty($hostname)){
+                        $tmpObj = array();
+                        $tmpObj["variable"]=$variable;
+                        $tmpObj["hostname"]=$hostname;
+                        $new_obj[] = $tmpObj; //push $out object into array
+                    }
+                }
+            }
+        }
+        $data= json_encode($new_obj);  
+    }
+
+}
 else if ($p=="getProfiles")
 {
     $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
@@ -1050,11 +1084,13 @@ else if ($p=="saveProPipeInput"){
     $qualifier = $_REQUEST['qualifier'];
     $collection_id = isset($_REQUEST['collection_id']) ? $_REQUEST['collection_id'] : "";
     settype($collection_id, 'integer');
-
+    $url_id = 0;
+    $urlzip_id = 0;
+    $checkpath_id = 0;
     if (!empty($id)) {
-        $data = $db->updateProPipeInput($id, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $collection_id, $ownerID);
+        $data = $db->updateProPipeInput($id, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $collection_id, $url_id, $urlzip_id, $checkpath_id, $ownerID);
     } else {
-        $data = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $collection_id, $ownerID);
+        $data = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name,$qualifier, $collection_id, $url_id, $urlzip_id, $checkpath_id, $ownerID);
     }
 }
 else if ($p=="fillInput"){
@@ -1071,7 +1107,15 @@ else if ($p=="fillInput"){
     $given_name = $_REQUEST['given_name'];
     $qualifier = $_REQUEST['qualifier'];
     $proPipeInputID = $_REQUEST['proPipeInputID'];
-
+    $url = isset($_REQUEST['url']) ? $_REQUEST['url'] : "";
+    $urlzip = isset($_REQUEST['urlzip']) ? $_REQUEST['urlzip'] : "";
+    $checkpath= isset($_REQUEST['checkpath']) ? $_REQUEST['checkpath'] : "";
+    $url_id = $db->checkInsertUrlInput($url, "url", $ownerID);
+    $urlzip_id = $db->checkInsertUrlInput($urlzip, "url", $ownerID);
+    $checkpath_id = $db->checkInsertUrlInput($checkpath, "url", $ownerID);
+    settype($url_id, 'integer');
+    settype($urlzip_id, 'integer');
+    settype($checkpath_id, 'integer');
     if (empty($collection_id)){
         //check if input exist?
         if (empty($inputID)) {
@@ -1114,10 +1158,10 @@ else if ($p=="fillInput"){
     }
     //insert into project_pipeline_input table
     if (!empty($proPipeInputID)){
-        $data = $db->updateProPipeInput($proPipeInputID, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $ownerID);
+        $data = $db->updateProPipeInput($proPipeInputID, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $url_id, $urlzip_id, $checkpath_id, $ownerID);
         $projectPipelineInputID = $proPipeInputID;
     } else {
-        $insertProPipe = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $ownerID);
+        $insertProPipe = $db->insertProPipeInput($project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $url_id, $urlzip_id, $checkpath_id, $ownerID);
         $insertProPipeData = json_decode($insertProPipe,true);
         $projectPipelineInputID = $insertProPipeData["id"];
     }
