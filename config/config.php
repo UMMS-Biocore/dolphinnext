@@ -52,12 +52,14 @@ $secUiconfig = $secRaw['UICONFIG'];
 if (!empty($secUiconfig)){
     $SHOW_AMAZON_KEYS= isset($secUiconfig['SHOW_AMAZON_KEYS']) ? $secUiconfig['SHOW_AMAZON_KEYS'] : "true";
     $SHOW_SSH_KEYS= isset($secUiconfig['SHOW_SSH_KEYS']) ? $secUiconfig['SHOW_SSH_KEYS'] : "true";
+    $SHOW_GITHUB= isset($secUiconfig['SHOW_GITHUB']) ? $secUiconfig['SHOW_GITHUB'] : "true";
     $SHOW_GROUPS= isset($secUiconfig['SHOW_GROUPS']) ? $secUiconfig['SHOW_GROUPS'] : "true";
     $COMPANY_NAME= isset($secUiconfig['COMPANY_NAME']) ? $secUiconfig['COMPANY_NAME'] : "";
     $ALLOW_SIGNUP= isset($secUiconfig['ALLOW_SIGNUP']) ? $secUiconfig['ALLOW_SIGNUP'] : "true";
     $ALLOW_SIGNUPGOOGLE= isset($secUiconfig['ALLOW_SIGNUPGOOGLE']) ? $secUiconfig['ALLOW_SIGNUPGOOGLE'] : "true";
     define('SHOW_AMAZON_KEYS', $SHOW_AMAZON_KEYS);
     define('SHOW_SSH_KEYS', $SHOW_SSH_KEYS);
+    define('SHOW_GITHUB', $SHOW_GITHUB);
     define('SHOW_GROUPS', $SHOW_GROUPS);
     define('COMPANY_NAME', $COMPANY_NAME);
     define('ALLOW_SIGNUP', $ALLOW_SIGNUP);

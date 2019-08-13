@@ -81,6 +81,7 @@ function createSVG() {
     processList = {}
     processListMain = {}
     ccIDList = {} //pipeline module match id list
+    nullIDList = {} //in case node info is changed after import/save on existing. use getNewNodeId function to get new id
     edges = []
     candidates = []
     saveNodes = []
@@ -143,7 +144,7 @@ function resetOriginal(paramType, firstParamId) {
 }
 
 //edges-> all edge list, nullId-> process input/output id that not exist in the d3 diagrams 
-function getNewNodeId(edges, nullId) {
+function getNewNodeId(edges, nullId, MainGNum) {
     //nullId: i-24-14-20-1
     var nullProcessInOut = nullId.split("-")[0];
     var nullProcessId = nullId.split("-")[1];
@@ -161,11 +162,12 @@ function getNewNodeId(edges, nullId) {
         if (paraData.length === 1 && nullProcessId !== "inPro" && nullProcessId !== "outPro") {
             var patt = /(.*)-(.*)-(.*)-(.*)-(.*)/;
             var nullIdRegEx = new RegExp(nullId.replace(patt, '$1-$2-' + '(.*)' + '-$4-$5'), 'g')
-            var newNode = $('#g-' + nullProcessGnum).find("circle").filter(function () {
+            var newNode = $('#g' + MainGNum + "-" + nullProcessGnum).find("circle").filter(function () {
                 return this.id.match(nullIdRegEx);
             })
             if (newNode.length === 1) {
                 var newNodeId = newNode.attr("id");
+                nullIDList["p"+MainGNum+nullId]=newNodeId
                 return newNodeId;
             }
         }
@@ -212,9 +214,9 @@ function openSubPipeline(piID, pObj) {
     pObj.processList = {};
     pObj.processListMain = {};
     pObj.edges = [];
-    //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
+    //check if params.VARNAME is defined in the autofill section of pipeline header or pipeline config. Then return all VARNAMES to define as system inputs
     var processData = ""
-    insertProPipePanel(decodeHtml(sData.script_pipe_header), "pipe", "Pipeline", window, processData);
+    insertProPipePanel(decodeHtml(sData.script_pipe_config) + "\n" + decodeHtml(sData.script_pipe_header), "pipe", "Pipeline", window, processData);
     var hideModule = false;
     if ($("#subPipelinePanelTitle").find('div[pipeid*=' + piID + ']').length > 0) {
         hideModule = true;
@@ -223,7 +225,7 @@ function openSubPipeline(piID, pObj) {
     if (hideModule) {
         hideModuleText = 'style="display:none;"';
     }
-    var pipeName = sData.name;
+    var pipeName = cleanProcessName(sData.name);
     var dispTitle = $('#subPipelinePanelTitle').css("display");
     if (dispTitle == "none") {
         $('#subPipelinePanelTitle').css("display", "inline");
@@ -252,7 +254,7 @@ function openSubPipeline(piID, pObj) {
             pObj.x = pObj.nodes[key][0]
             pObj.y = pObj.nodes[key][1]
             pObj.pId = pObj.nodes[key][2]
-            pObj.name = pObj.nodes[key][3]
+            pObj.name = cleanProcessName(pObj.nodes[key][3]);
             var processModules = pObj.nodes[key][4];
             pObj.gNum = key.split("-")[1]
             if (pObj.pId.match(/p(.*)/)) {
@@ -304,65 +306,67 @@ function openSubPipeline(piID, pObj) {
 function openPipeline(id) {
     createSVG()
     sData = [window.pipeObj["main_pipeline_" + id]]
-    if (Object.keys(sData).length > 0) {
-        nodes = sData[0].nodes
-        nodes = JSON.parse(nodes.replace(/'/gi, "\""))
-        mG = sData[0].mainG
-        mG = JSON.parse(mG.replace(/'/gi, "\""))["mainG"]
-        translateSVG(mG, window)
-        for (var key in nodes) {
-            x = nodes[key][0]
-            y = nodes[key][1]
-            pId = nodes[key][2]
-            name = cleanProcessName(nodes[key][3])
-            var processModules = nodes[key][4];
-            gNum = parseInt(key.split("-")[1])
-            //for pipeline circles
-            if (pId.match(/p(.*)/)) {
-                var piID = pId.match(/p(.*)/)[1];
-                var newMainGnum = "pObj" + gNum;
-                window[newMainGnum] = {};
-                window[newMainGnum].piID = piID;
-                window[newMainGnum].MainGNum = gNum;
-                window[newMainGnum].lastGnum = gNum;
-                window[newMainGnum].sData = [window.pipeObj["pipeline_module_" + piID]]
-                window[newMainGnum].lastPipeName = name;
-                // create new SVG workplace inside panel, if not added before
-                openSubPipeline(piID, window[newMainGnum]);
-                // add pipeline circle to main workplace
-                addPipeline(piID, x, y, name, window, window[newMainGnum]);
-                //for process circles
-            } else {
-                loadPipeline(x, y, pId, name, processModules, gNum, window)
+    if (sData) {
+        if (Object.keys(sData).length > 0) {
+            nodes = sData[0].nodes
+            nodes = JSON.parse(nodes.replace(/'/gi, "\""))
+            mG = sData[0].mainG
+            mG = JSON.parse(mG.replace(/'/gi, "\""))["mainG"]
+            translateSVG(mG, window)
+            for (var key in nodes) {
+                x = nodes[key][0]
+                y = nodes[key][1]
+                pId = nodes[key][2]
+                name = cleanProcessName(nodes[key][3])
+                var processModules = nodes[key][4];
+                gNum = parseInt(key.split("-")[1])
+                //for pipeline circles
+                if (pId.match(/p(.*)/)) {
+                    var piID = pId.match(/p(.*)/)[1];
+                    var newMainGnum = "pObj" + gNum;
+                    window[newMainGnum] = {};
+                    window[newMainGnum].piID = piID;
+                    window[newMainGnum].MainGNum = gNum;
+                    window[newMainGnum].lastGnum = gNum;
+                    window[newMainGnum].sData = [window.pipeObj["pipeline_module_" + piID]]
+                    window[newMainGnum].lastPipeName = name;
+                    // create new SVG workplace inside panel, if not added before
+                    openSubPipeline(piID, window[newMainGnum]);
+                    // add pipeline circle to main workplace
+                    addPipeline(piID, x, y, name, window, window[newMainGnum]);
+                    //for process circles
+                } else {
+                    loadPipeline(x, y, pId, name, processModules, gNum, window)
+                }
             }
-        }
-        ed = sData[0].edges
-        ed = JSON.parse(ed.replace(/'/gi, "\""))["edges"]
-        for (var ee = 0; ee < ed.length; ee++) {
-            eds = ed[ee].split("_")
-            if (!document.getElementById(eds[0]) && document.getElementById(eds[1])) {
-                //if process is updated through process modal, reconnect the uneffected one based on their parameter_id.
-                var newID = getNewNodeId(ed, eds[0])
-                if (newID) {
-                    eds[0] = newID;
+            ed = sData[0].edges
+            ed = JSON.parse(ed.replace(/'/gi, "\""))["edges"]
+            for (var ee = 0; ee < ed.length; ee++) {
+                eds = ed[ee].split("_")
+                if (!document.getElementById(eds[0]) && document.getElementById(eds[1])) {
+                    //if process is updated through process modal, reconnect the uneffected one based on their parameter_id.
+                    var newID = getNewNodeId(ed, eds[0], "")
+                    if (newID) {
+                        eds[0] = newID;
+                        addCandidates2DictForLoad(eds[0], window)
+                        createEdges(eds[0], eds[1], window)
+                    }
+                    //if process is updated through process modal, reset the edge of input/output parameter and reset the single circles.
+                    resetSingleParam(eds[1]);
+
+                } else if (!document.getElementById(eds[1]) && document.getElementById(eds[0])) {
+                    var newID = getNewNodeId(ed, eds[1], "");
+                    if (newID) {
+                        eds[1] = newID;
+                        addCandidates2DictForLoad(eds[0], window)
+                        createEdges(eds[0], eds[1], window)
+                    }
+                    resetSingleParam(eds[0]);
+
+                } else if (document.getElementById(eds[1]) && document.getElementById(eds[0])) {
                     addCandidates2DictForLoad(eds[0], window)
                     createEdges(eds[0], eds[1], window)
                 }
-                //if process is updated through process modal, reset the edge of input/output parameter and reset the single circles.
-                resetSingleParam(eds[1]);
-
-            } else if (!document.getElementById(eds[1]) && document.getElementById(eds[0])) {
-                var newID = getNewNodeId(ed, eds[1], "");
-                if (newID) {
-                    eds[1] = newID;
-                    addCandidates2DictForLoad(eds[0], window)
-                    createEdges(eds[0], eds[1], window)
-                }
-                resetSingleParam(eds[0]);
-
-            } else if (document.getElementById(eds[1]) && document.getElementById(eds[0])) {
-                addCandidates2DictForLoad(eds[0], window)
-                createEdges(eds[0], eds[1], window)
             }
         }
     }
@@ -1282,6 +1286,7 @@ function hideProcessOptionsAsIcons (){
                     if (show_settingArr.length > 1 || show_settingProcessPanel.length >1){
                         tooltip = "Edit: " + label
                     }
+
                     if (processorgname == show_setting || allname == show_setting){
                         //insert button
                         var buttonId = 'show_sett_'+allname;
@@ -3142,12 +3147,15 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
     }
     var processData = JSON.parse(window.pipeObj["process_" + process_id]);
     if (processData) {
+        var allProScript = "";
         if (processData[0].script_header !== "" && processData[0].script_header !== null) {
-            var allProScript = decodeHtml(processData[0].script_header);
-            if (processData[0].script !== "" && processData[0].script !== null){
-                var script = decodeHtml(processData[0].script);
-                allProScript += "\n"+script;
-            }
+            allProScript = decodeHtml(processData[0].script_header);
+        }
+        if (processData[0].script !== "" && processData[0].script !== null){
+            var script = decodeHtml(processData[0].script);
+            allProScript = allProScript +"\n"+script;
+        }
+        if (allProScript){
             insertProPipePanel(allProScript, pObj.gNum, name, pObj, processData);
             //generate json for autofill by using script of process header
             var pro_autoFillJSON = parseAutofill(allProScript);
@@ -3169,7 +3177,6 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
                     bindEveHandler(pro_autoFillJSON);
                 }
             }, 1000);
-
         }
     }
 }
@@ -3443,15 +3450,21 @@ function loadPipelineDetails(pipeline_id, pipeData) {
             $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
             $('#pipelineSum').val(decodeHtml(pData[0].summary));
+            var script_pipe_header_config = ""
             if (pData[0].script_pipe_header !== null) {
+                script_pipe_header_config += decodeHtml(pData[0].script_pipe_header) + "\n";
+            }
+            if (pData[0].script_pipe_config !== null) {
+                script_pipe_header_config += decodeHtml(pData[0].script_pipe_config);
+            }
+            if (script_pipe_header_config) {
                 pipeGnum = 0;
-                script_pipe_header = decodeHtml(pData[0].script_pipe_header);
                 //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
                 //##insertInputRowParams will add inputs rows and fill according to propipeinputs within insertProPipePanel
                 var processData = ""
-                insertProPipePanel(script_pipe_header, "pipe", "Pipeline", window, processData);
+                insertProPipePanel(script_pipe_header_config, "pipe", "Pipeline", window, processData);
                 //generate json for autofill by using script of pipeline header
-                autoFillJSON = parseAutofill(script_pipe_header);
+                autoFillJSON = parseAutofill(script_pipe_header_config);
                 // get Profile variables -> update library of $HOSTNAME conditions 
                 autoFillJSON = addProfileVar(autoFillJSON);
                 autoFillJSON = decodeGenericCond(autoFillJSON);
@@ -4467,6 +4480,7 @@ function runProPipeCall(checkType, uuid) {
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
     var nextText = encodeURIComponent(nextTextRaw);
+    var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
     var delIntermediate = '';
     var profileTypeId = $('#chooseEnv').find(":selected").val(); //local-32
     var patt = /(.*)-(.*)/;
@@ -4578,6 +4592,7 @@ function runProPipeCall(checkType, uuid) {
     var serverLogGet = getValues({
         p: "saveRun",
         nextText: nextText,
+        proVarObj: proVarObj,
         configText: configText,
         profileType: proType,
         profileId: proId,

@@ -57,6 +57,33 @@ $(document).ready(function () {
         }],
         'order': [[2, 'desc']]
     });
+    
+    function getGithubTableOptions() {
+            var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#githubModal" data-toggle="modal" class="editGithub">Edit</a></li><li><a href="#confirmDelModal" data-toggle="modal" class="deleteGithub">Delete</a></li></ul></div>';
+            return button;
+        }
+    
+    var githubTable = $('#githubTable').DataTable({
+            "ajax": {
+                url: "ajax/ajaxquery.php",
+                data: { "p": "getGithub" },
+                "dataSrc": ""
+            },
+            "columns": [{
+                "data": "username"
+            }, {
+                "data": "email"
+            },{
+                "data": "date_modified"
+            }, {
+                data: null,
+                className: "center",
+                fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html(getGithubTableOptions());
+                }
+            }]
+        });
+
 
 
     function getProfileButton(type) {
@@ -862,7 +889,6 @@ $(document).ready(function () {
             var rowData = sshTable.row(clickedRow).data();
             var remove_id = rowData.id;
             $('#mDelBtn').attr('remove_id', remove_id);
-
             $('#mDelBtn').attr('class', 'btn btn-primary deleteSSHKeys');
             $('#confirmDelModalText').html('Are you sure you want to delete?');
         } else if (button.attr('class') === 'delUser'){
@@ -870,11 +896,39 @@ $(document).ready(function () {
             var rowData = AdmUserTable.row(clickedRow).data();
             var remove_id = rowData.id;
             $('#mDelBtn').attr('remove_id', remove_id);
-
             var email = rowData.email;
             var name = rowData.name;
             $('#mDelBtn').attr('class', 'btn btn-primary delUser');
             $('#confirmDelModalText').html('Are you sure you want to delete following user?</br></br>Name: '+name+'</br>E-mail: '+email);
+        } else if (button.attr('class') === 'deleteGithub') {
+            var rowData = githubTable.row(clickedRow).data();
+            var remove_id = rowData.id;
+            $('#mDelBtn').attr('remove_id', remove_id);
+            $('#mDelBtn').attr('class', 'btn btn-primary deleteGithub');
+            $('#confirmDelModalText').html('Are you sure you want to delete?');
+        }
+    });
+
+    $('#confirmDelModal').on('click', '.deleteGithub', function (event) {
+        var remove_id = $('#mDelBtn').attr('remove_id');
+        var clickedRow = $('#mDelBtn').data('clickedrow');
+        if (remove_id !== '') {
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    id: remove_id,
+                    p: "removeGithub"
+                },
+                async: true,
+                success: function (s) {
+                    githubTable.row(clickedRow).remove().draw();
+                    $('#confirmDelModal').modal('hide');
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
         }
     });
 
@@ -885,7 +939,6 @@ $(document).ready(function () {
             var warnUser = false;
             var warnText = '';
             //[warnUser, warnText] = checkDeletionSSH(remove_id);
-
             //A. If it is allowed to delete    
             if (warnUser === false) {
                 $.ajax({
@@ -919,8 +972,6 @@ $(document).ready(function () {
     $('#confirmDelModal').on('click', '.delUser', function (event) {
         var remove_id = $('#mDelBtn').attr('remove_id');
         var clickedRow = $('#mDelBtn').data('clickedrow');
-        console.log(remove_id)
-        console.log(clickedRow)
         if (remove_id) {
             $.ajax({
                 type: "POST",
@@ -1548,8 +1599,70 @@ $(document).ready(function () {
                 });
             }
         });
+        //---user modal section ends---
 
+        //---github section starts---
+        
 
+        
+        $('#githubModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            $(this).find('form').trigger('reset');
+            if (button.attr('id') === 'addGithub') {
+                $('#githubmodaltitle').html('Add GitHub Account');
+            } else {
+                $('#githubmodaltitle').html('Edit GitHub Account');
+                var clickedRow = button.closest('tr');
+                var rowData = githubTable.row(clickedRow).data();
+                var data = getValues({ p: "getGithub", id: rowData.id })[0];
+                
+                $('#saveGithub').data('clickedrow', clickedRow);
+                fillFormByName('#githubModal', 'input, select', data);
+            }
+        });
+
+        $('#githubModal').on('hide.bs.modal', function (event) {
+            cleanHasErrorClass("#githubModal")
+        });
+
+        $('#githubModal').on('click', '#saveGithub', function (event) {
+            event.preventDefault();
+            var formValues = $('#githubModal').find('input, select');
+            var requiredFields = ["username", "email", "password"];
+            var clickedRow = $('#saveGithub').data('clickedrow')
+            var formObj = {};
+            var stop = "";
+            [formObj, stop] = createFormObj(formValues, requiredFields)
+            var savetype = $('#mGitID').val();
+            if (stop === false) {
+                formObj.p = "saveGithub"
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: formObj,
+                    async: true,
+                    success: function (s) {
+                        if (savetype.length) { //edit
+                            var newGitData = getValues({ p: "getGithub", id: savetype })
+                            if (newGitData[0]) {
+                                githubTable.row(clickedRow).remove().draw();
+                                githubTable.row.add(newGitData[0]).draw();
+                            }
+                        } else { //insert
+                            var newGitData = getValues({ p: "getGithub", id: s.id })
+                            if (newGitData[0]) {
+                                githubTable.row.add(newGitData[0]).draw();
+                            }
+                        }
+                        $('#githubModal').modal('hide');
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        });
+        //---github section ends---
 
 
 

@@ -136,6 +136,7 @@ function createSVG() {
     processList = {}
     processListMain = {}
     ccIDList = {} //pipeline module match id list
+    nullIDList = {} //in case node info is changed after import/save on existing. use getNewNodeId function to get new id
     processListNoOutput = {}
     edges = []
     candidates = []
@@ -170,12 +171,13 @@ function startzoom() {
 $('#editorPipeHeader').keyup(function () {
     autosave();
 });
+$('#editorPipeConfig').keyup(function () {
+    autosave();
+});
 $('#editorPipeFooter').keyup(function () {
     autosave();
 });
-$('#pipelineSum').keyup(function () {
-    autosaveDetails();
-});
+
 $('#groupSelPipe').change(function () {
     autosaveDetails();
 });
@@ -269,6 +271,7 @@ function getNewNodeId(edges, nullId, MainGNum) {
             })
             if (newNode.length === 1) {
                 var newNodeId = newNode.attr("id");
+                nullIDList["p"+MainGNum+nullId]=newNodeId
                 return newNodeId;
             }
         }
@@ -1998,7 +2001,8 @@ function refreshCreatorData(pipeline_id) {
 //Revision is not required for advanced options, description
 function saveDetails() {
     var id = $("#pipeline-title").attr('pipelineid');
-    var summary = encodeURIComponent($('#pipelineSum').val());
+    var scriptSumEditor = pipelineSumEditor.getValue();
+    var summary = encodeURIComponent(scriptSumEditor);
     var group_id = $('#groupSelPipe').val();
     var perms = $('#permsPipe').val();
     var pin = $('#pin').is(":checked").toString();
@@ -2168,7 +2172,8 @@ function save() {
     var svgH = $("#container").height();
     sName = document.getElementById("pipeline-title").value;
     warnUserRedBorder('#pipeline-title', sName)
-    var pipelineSummary = encodeURIComponent($('#pipelineSum').val());
+    var scriptSumEditor = pipelineSumEditor.getValue();
+    var pipelineSummary = encodeURIComponent(scriptSumEditor);
     var group_id = $('#groupSelPipe').val();
     var perms = $('#permsPipe').val();
     var pin = $('#pin').is(":checked").toString();
@@ -2178,6 +2183,7 @@ function save() {
     var script_mode_footer = $('#script_mode_pipe_footer').val();
     var script_pipe_header = getScriptEditor('editorPipeHeader');
     var script_pipe_footer = getScriptEditor('editorPipeFooter');
+    var script_pipe_config = getScriptEditor('editorPipeConfig');
     pipeline_group_id = $('#pipeGroupAll').val();
     var pipeGroupWarn = false;
     if (!pipeline_group_id || pipeline_group_id == "") {
@@ -2222,6 +2228,8 @@ function save() {
         "script_mode_header": script_mode_header
 	      }, {
         "script_mode_footer": script_mode_footer
+	      }, {
+        "script_pipe_config": script_pipe_config
 	      }, {
         "pipeline_group_id": pipeline_group_id
 	      }, {

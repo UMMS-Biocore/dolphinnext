@@ -703,6 +703,8 @@ immediately after the control sidebar -->
     <script src="bower_components/crypto-js/aes.js"></script>
     <!-- dropzone -->
     <script src="bower_components/dropzone/dropzone.js"></script>
+    <!-- showdownjs -->
+    <script src="bower_components/showdownjs/dist/showdown.min.js"></script>
     <!-- plupload -->
     <script src="bower_components/plupload/js/plupload.full.min.js"></script>
     <script src="bower_components/plupload/js/jquery.ui.plupload/jquery.ui.plupload.min.js"></script>
