@@ -1,11 +1,11 @@
 13.08.2019 Version 0.3.47
+Github integration completed to publish pipelines into Github.
+Pipeline description section supports markdown format to publish it as github readme file.
 Nextflow config section added in pipeline page.
-github supported added to publish pipelines.
 Input paramters moved to nextflow.config
 Config tag feature added to create mutiple files in Nextflow config file .
 Process output as val format supported for modular structure.
 Minor bug fixed in createProcessPanelAutoFill function.
-
 
 24.07.2019 Version 0.3.46
 Url download feature added to createCollection and urlDownload step.
