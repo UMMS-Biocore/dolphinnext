@@ -11,6 +11,7 @@ class dbfuncs {
     private $run_path = RUNPATH;
     private $tmp_path = TEMPPATH;
     private $ssh_path = SSHPATH;
+    private $base_path = BASE_PATH;
     private $ssh_settings = "-oStrictHostKeyChecking=no -q -oChallengeResponseAuthentication=no -oBatchMode=yes -oPasswordAuthentication=no -oConnectTimeout=3";
     private $amz_path = AMZPATH;
     private $amazon = AMAZON;
@@ -149,7 +150,7 @@ class dbfuncs {
     function createDirFile ($pathDir, $fileName, $type, $text){
         if ($pathDir != ""){
             if (!file_exists($pathDir)) {
-                mkdir($pathDir, 0777, true);
+                mkdir($pathDir, 0755, true);
             }
         }
         if ($fileName != ""){
@@ -255,6 +256,24 @@ class dbfuncs {
     }
 
 
+
+    function getConfigHostnameVariable($profileId, $profileType, $ownerID) {
+        $hostname ="";
+        $variable ="";
+        if ($profileType == 'cluster'){
+            $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
+            $cluDataArr=json_decode($cluData,true);
+            $hostname = $cluDataArr[0]["hostname"];
+            $variable = $cluDataArr[0]["variable"];
+        } else if ($profileType == 'amazon'){
+            $cluData=$this->getProfileAmazonbyID($profileId, $ownerID);
+            $cluDataArr=json_decode($cluData,true);
+            $hostname = $cluDataArr[0]["shared_storage_id"];
+            $variable = $cluDataArr[0]["variable"];
+        }
+        return array($hostname,$variable);
+    }
+
     function getCluAmzData($profileId, $profileType, $ownerID) {
         if ($profileType == 'cluster'){
             $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
@@ -271,10 +290,10 @@ class dbfuncs {
     }
 
 
-    function initialRunParams ($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID){
+    function initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID){
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $executor = $cluDataArr[0]['executor'];
-        $params="";
+        $params = "params {\n";
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         $profile= $proPipeAll[0]->{'profile'};
@@ -321,35 +340,31 @@ class dbfuncs {
             $checkpath[] = $inputitem->{'checkpath'};
         }
         endforeach;
-        
+
         if (!empty($file_name) || !empty($url) || !empty($urlzip)) {
-            $quote1 ="\\\"";
-            if ($executor === "local"){
-                $quote2 ="\\\\\\\"";
-            } else {
-                $quote2 ="\\\\\\\\\\\"";
-            }
-            $params .= " --attempt ".$quote1.$attempt.$quote1;
-            $params .= " --run_dir ".$quote1.$run_dir.$quote1;
-            $params .= " --profile ".$quote1.$profile.$quote1;
+            $params .= "  attempt = '".$attempt."'\n";
+            $params .= "  run_dir = '".$run_dir."'\n";
+            $params .= "  profile = '".$profile."'\n";
             $paramNameAr = array("given_name", "input_name", "url", "urlzip", "checkpath", "collection", "file_name", "file_dir", "file_type", "files_used", "archive_dir", "s3_archive_dir", "collection_type");
             $paramAr = array($given_name, $input_name, $url, $urlzip, $checkpath, $collection, $file_name, $file_dir, $file_type, $files_used, $archive_dir, $s3_archive_dir, $collection_type);
-            
+
             for ($i=0; $i<count($paramNameAr); $i++) {
                 if (!empty($paramAr[$i])){
-                    $params.= " --".$paramNameAr[$i]." ".$quote1.$quote2.implode("$quote2,$quote2", $paramAr[$i]).$quote2.$quote1; 
+                    $params.= "  ".$paramNameAr[$i]." = '\"".implode('","', $paramAr[$i])."\"'\n"; 
                 }
-                
+
             }
         }
+        $params .= "}\n";
         return $params;
     }
 
     //get nextflow input parameters
-    function getNextInputs ($executor, $project_pipeline_id, $outdir, $ownerID ){
+    function getMainRunInputs ($project_pipeline_id, $outdir, $ownerID ){
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $next_inputs="";
         if (!empty($allinputs)){
+            $next_inputs="params {\n";
             foreach ($allinputs as $inputitem):
             $inputName = $inputitem->{'name'};
             $collection_id = $inputitem->{'collection_id'};
@@ -364,13 +379,9 @@ class dbfuncs {
                     $inputName = "$inputsPath/*.{R1,R2}.$file_type";
                 }
             }
-
-            if ($executor === "local"){
-                $next_inputs.="--".$inputitem->{'given_name'}." \\\"".$inputName."\\\" ";
-            } else if ($executor !== "local"){
-                $next_inputs.="--".$inputitem->{'given_name'}." \\\\\\\"".$inputName."\\\\\\\" ";
-            }
+            $next_inputs.="  ".$inputitem->{'given_name'}." = '".$inputName."'\n";
             endforeach;
+            $next_inputs.="}\n";
         }
         return $next_inputs;
 
@@ -484,7 +495,7 @@ class dbfuncs {
         }
         return sprintf($format, $hours, $minutes);
     }
-    function cleanName($name){
+    function cleanName($name, $limit){
         $name = str_replace("/","_",$name);
         $name = str_replace(" ","",$name);
         $name = str_replace("(","_",$name);
@@ -496,7 +507,7 @@ class dbfuncs {
         $name = str_replace("<","_",$name);
         $name = str_replace(">","_",$name);
         $name = str_replace("-","_",$name);
-        $name = substr($name, 0, 9);
+        $name = substr($name, 0, $limit);
         return $name;
     }
 
@@ -513,7 +524,7 @@ class dbfuncs {
         return $memoryText;
     }
     function getJobName($jobname, $executor){
-        $jobname = $this->cleanName($jobname);
+        $jobname = $this->cleanName($jobname, 9);
         $jobNameText = "";
         if (!empty($jobname)){
             if ($executor == "sge"){
@@ -575,7 +586,7 @@ class dbfuncs {
     }
 
     //get all nextflow executor text
-    function getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $logName, $initialRunParams, $ownerID) {
+    function getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $logName, $initialRunParams, $ownerID) {
         if ($runType == "resumerun"){
             $runType = "-resume";
         } else {
@@ -591,9 +602,9 @@ class dbfuncs {
             if ($executor == "local" && $executor_job == 'ignite'){
                 $igniteCmdInit = "-w $dolphin_path_real/initialrun/work -process.executor ignite";
             }
-            $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $igniteCmdInit $initialRunParams $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
+            $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $igniteCmdInit $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
-        $mainNextCmd = "$initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $igniteCmd $next_inputs $runType $reportOptions > $dolphin_path_real/$logName";
+        $mainNextCmd = "$initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $igniteCmd $runType $reportOptions > $dolphin_path_real/$logName";
 
         //for lsf "bsub -q short -n 1  -W 100 -R rusage[mem=32024]";
         if ($executor == "local"){
@@ -603,7 +614,7 @@ class dbfuncs {
             settype($next_memory, 'integer');
             $next_memory = $next_memory*1000;
             //-J $jobname
-            $jobname = $this->cleanName($jobname);
+            $jobname = $this->cleanName($jobname, 9);
             $lsfRunFile = "printf '#!/bin/bash \\n#BSUB -q $next_queue\\n#BSUB -J $jobname\\n#BSUB -n $next_cpu\\n#BSUB -W $next_time\\n#BSUB -R rusage[mem=$next_memory]\\n$mainNextCmd'> $dolphin_path_real/.dolphinnext.run";
             $exec_string = "bsub -e $dolphin_path_real/err.log $next_clu_opt < $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $lsfRunFile && $exec_string";
@@ -635,7 +646,47 @@ class dbfuncs {
         return $exec_next_all;
     }
 
-    function getInitialRunConfig($configText,$profileType,$profileId, $initialrun_img, $ownerID){
+    function getMainRunConfig($configText,$project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID){
+        $configText = "// Process Config:\n\n".$configText;
+        // get outputdir
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        $outdir = $proPipeAll[0]->{'output_dir'};
+        $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
+        //get nextflow.config from pipeline.
+        $pipe = $this->loadPipeline($pipeline_id,$ownerID);
+        $pipe_obj = json_decode($pipe,true);
+        $script_pipe_configRaw = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
+        $script_pipe_config = htmlspecialchars_decode($script_pipe_configRaw , ENT_QUOTES);
+        $configText .= "\n// Pipeline Config:\n\n";
+        list($hostVar,$variableRaw) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
+        $variable = htmlspecialchars_decode($variableRaw , ENT_QUOTES);
+
+        $configText .= "\$HOSTNAME='".$hostVar."'\n";
+        $configText .= "$variable\n";
+        $configText .= "$script_pipe_config\n";
+        //get main run input parameters
+        $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $outdir, $ownerID);
+        $configText .= "\n// Run Parameters:\n\n".$mainRunParams;
+        //get main run local variable parameters:
+        $configText = $this->getProcessParams($proVarObj, $configText);
+        return $configText;
+    }
+    
+    function getProcessParams($proVarObj, $configText){
+        $checkVarObj = (array)$proVarObj;
+        if (!empty($checkVarObj)) {
+            $configText .= "\n\n// Process Parameters:\n";
+            foreach ($proVarObj as $processName => $varObj):
+            $configText .= "\n// Process Parameters for $processName:\n";
+            foreach ($varObj as $varname => $line):
+            $configText .= "$line\n";
+            endforeach;
+            endforeach;
+        }
+        return $configText;
+    }
+
+    function getInitialRunConfig($project_pipeline_id, $attempt, $configText,$profileType,$profileId, $initialrun_img, $ownerID){
         $configTextClean = "";
         $configTextLines = explode("\n", $configText);
         //clean container specific lines and insert initialrun image
@@ -664,8 +715,12 @@ class dbfuncs {
             $imageName=$imageNameAr[count($imageNameAr)-1];
             $image = $singuPath.'/.dolphinnext/singularity/'.$imageName;
         }
-        $configText = "process.container = '$image'\n"."singularity.enabled = true\n".$configTextClean;
-        return $configText;
+        $configText = "//Process Config\nprocess.container = '$image'\n"."singularity.enabled = true\n".$configTextClean;
+
+        //get initial run input paramaters
+        $initialRunParams = $this->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
+        $configText .= "\n//Initial Run Parameters\n".$initialRunParams;
+        return array($configText,$initialRunParams);
     }
 
     function getRenameCmd($dolphin_path_real,$attempt){
@@ -688,8 +743,158 @@ class dbfuncs {
         return $renameLog;
     }
 
-    function initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $initialrun_img, $s3configFileDir, $ownerID){
+    function zipDirectory($dir,$zip_file){
+        $ret = "";
+        // Get real path for our folder
+        $rootPath = realpath($dir);
+        // Initialize archive object
+        $zip = new ZipArchive();
+        $zip->open($zip_file, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        // Create recursive directory iterator
+        /** @var SplFileInfo[] $files */
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($rootPath),
+            RecursiveIteratorIterator::LEAVES_ONLY
+        );
+        foreach ($files as $name => $file)
+        {
+            // Skip directories (they would be added automatically)
+            if (!$file->isDir())
+            {
+                // Get real and relative path for current file
+                $filePath = $file->getRealPath();
+                $relativePath = substr($filePath, strlen($rootPath) + 1);
+                // Add current file to archive
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+
+        // Zip archive will be created only after closing object
+        $zip->close();
+        if (!$zip->status == ZIPARCHIVE::ER_OK){
+            $ret = "Failed to write files to zip\n";
+        }
+        return $ret;
+    }
+
+    function execute_cmd($cmd, $logObj, $log_name, $cmd_name){
+        $log = shell_exec($cmd);
+        $logObj[$cmd_name]=$cmd;
+        $logObj[$log_name]=$log;
+        return $logObj;
+    }
+
+    function updatePipelineGithub($pipeline_id, $username, $repo, $branch, $commit, $ownerID){
+        $obj=array();
+        $obj["username"]=$username;
+        $obj["repository"]=$repo;
+        $obj["branch"]=$branch;
+        $obj["commit"]=$commit;
+        $github = json_encode($obj);
+        $sql = "UPDATE biocorepipe_save SET github='$github', last_modified_user ='$ownerID', date_modified=now() WHERE deleted = 0 AND id = '$pipeline_id' AND owner_id = '$ownerID'";
+        return self::runSQL($sql);
+    }
+
+    //$type: "downPack" or "pushGithub"
+    function initGitRepo ($description, $pipeline_id, $pipeline_name, $username_id, $github_repo, $github_branch, $configText, $nfData, $dnData, $type, $ownerID){
+        $ret = array();
+        $dir_name = !empty($username_id) ? "{$github_repo}_{$github_branch}" : $pipeline_name;
+        //create git folder
+        $gitDir= "{$this->tmp_path}/git/$ownerID";
+        $repoDir= "{$this->tmp_path}/git/$ownerID/$dir_name";
+        $zip_file= "{$this->tmp_path}/git/$ownerID/$dir_name.zip";
+        $zip_file_public= "{$this->base_path}/tmp/git/$ownerID/$dir_name.zip";
+        if (!file_exists($gitDir)) {
+            mkdir($gitDir, 0755, true);
+        }   
+        //create empty git repo folder
+        if (!file_exists($repoDir)) {
+            mkdir($repoDir, 0755, true);
+        } else{
+            system('rm -rf ' . escapeshellarg("$repoDir"), $retval);
+            if ($retval == 0){
+                $ret["clean_repo_dir_log"]=$repoDir." successfully deleted";
+                mkdir($repoDir, 0755, true);
+            } else {
+                $ret["clean_repo_dir_log"]=$repoDir." could not deleted->$retval";
+                return $ret;
+            }
+        }
+
+        if ($type == "pushGithub"){
+            $git_data = json_decode($this->getGithubbyID($username_id, $ownerID));
+            $password = trim($this->amazonDecode($git_data[0]->password));
+            $username= $git_data[0]->username;
+            $email= $git_data[0]->email;
+            $check_repo_cmd = "curl https://api.github.com/repos/$username/$github_repo 2>&1";
+            $ret = $this->execute_cmd($check_repo_cmd, $ret, "check_repo_cmd_log", "check_repo_cmd");
+            $repo_found = "";
+            if (preg_match('/"message": "Not Found"/',$ret["check_repo_cmd_log"])){
+                $repo_found = "false";
+            }
+            $git_init_cmd = "";
+            if ($repo_found == "false"){
+                //repo not found, create with curl
+                $init_cmd = "curl -u '$username:$password' https://api.github.com/user/repos -d '{\"name\":\"$github_repo\"}' && cd $repoDir && git init 2>&1";
+                $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
+            } else {
+                //repo found, git clone 
+                $init_cmd = "git clone https://github.com/$username/{$github_repo}.git $repoDir 2>&1";
+                $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
+            }
+            //change branch if required 
+            $branch_cmd = "cd $repoDir && git checkout $github_branch || git checkout -b $github_branch 2>&1";
+            $ret = $this->execute_cmd($branch_cmd, $ret, "branch_cmd_log", "branch_cmd");
+            //Erase all the files in the repo instead of .git directory
+            //$clean_cmd = "cd $repoDir && find . -maxdepth 1 -mindepth 1 -not -name '.git' -exec rm -r {} + 2>&1";
+
+            //save files into new repo
+            $this->createMultiConfig ($repoDir, $configText);
+            $this->createDirFile ($repoDir, "main.nf", 'w', $nfData);
+            $this->createDirFile ($repoDir, "main.dn", 'w', $dnData);
+            $this->createDirFile ($repoDir, "README.md", 'w', $description);
+            $date = date("d-m-Y H:i:s", time());
+
+            //push to github
+            $push_cmd = "cd $repoDir && git config --local user.name \"$username\" && git config --local user.email \"$email\" && git add . && git commit -m \"$date\" && git  push --porcelain https://{$username}:{$password}@github.com/$username/{$github_repo}.git $github_branch 2>&1";
+            $ret = $this->execute_cmd($push_cmd, $ret, "push_cmd_log", "push_cmd");
+            //parse commit_id
+            //[master 407d677] 01-08-2019 21:08:45
+            if (preg_match('/Done/',$ret["push_cmd_log"])){
+                if (preg_match("/\[$github_branch(.*)\] $date/",$ret["push_cmd_log"])){
+                    preg_match("/\[$github_branch(.*)\] $date/",$ret["push_cmd_log"], $match);
+                    $block = explode(" ", trim($match[1]));
+                    $part_of_commit_id = end($block);
+                    if (!empty($part_of_commit_id)){
+                        $get_commit_id_cmd = "cd $repoDir && git config --local user.name \"$username\" && git config --local user.email \"$email\" && git log -1 $part_of_commit_id | head -1 2>&1";
+                        $ret = $this->execute_cmd($get_commit_id_cmd, $ret, "get_commit_id_cmd_log", "get_commit_id_cmd");
+                        preg_match("/commit(.*)/",$ret["get_commit_id_cmd_log"], $commit_log);
+                        if (!empty($commit_log[1])){
+                            $commit_id=$commit_log[1];
+                            $ret["commit_id"]=trim($commit_id);
+                            $this->updatePipelineGithub ($pipeline_id, $username, $github_repo, $github_branch, trim($commit_id), $ownerID);
+                        }
+                    }
+                }
+            }
+        }
+        if ($type == "downPack"){
+            $this->createMultiConfig ($repoDir, $configText);
+            $this->createDirFile ($repoDir, "main.nf", 'w', $nfData);
+            $this->createDirFile ($repoDir, "main.dn", 'w', $dnData);
+            $this->createDirFile ($repoDir, "README.md", 'w', $description);
+            $ret["zip_log"] = $this->zipDirectory($repoDir,$zip_file);
+            $ret["zip_file"]= $zip_file_public;
+        }
+        system('rm -rf ' . escapeshellarg("$repoDir"), $retval);
+        return json_encode($ret);
+    }
+
+
+
+    function getAmazonConfig($amazon_cre_id){
         //if  $amazon_cre_id is defined append the aws credentials into nextflow.config
+        $configText = "";
         if ($amazon_cre_id != "" ){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
             foreach($amz_data as $d){
@@ -701,29 +906,61 @@ class dbfuncs {
             $access_key = $amz_data[0]->{'amz_acc_key'};
             $secret_key = $amz_data[0]->{'amz_suc_key'};
             $default_region = $amz_data[0]->{'amz_def_reg'};
+            $configText.= "\n//AWS Credentials\n";
             $configText.= "aws{\n";
             $configText.= "   accessKey = '$access_key'\n";
             $configText.= "   secretKey = '$secret_key'\n";
             $configText.= "   region = '$default_region'\n";
             $configText.= "}\n";
         }
-        //create folders
-        if (!file_exists("{$this->run_path}/$uuid/run")) {
-            mkdir("{$this->run_path}/$uuid/run", 0755, true);
+        return $configText;
+    }
+
+    //nextflow config might have multiple files(@config tag separated). Use createMultiConfig function to parse and save into run folder
+    function createMultiConfig($dir, $allConf){
+        $allConf = trim($allConf);
+        $lines = explode("\n", $allConf);
+        $publishDir = $dir;
+        $filename = "nextflow.config";
+        $this->createDirFile ($publishDir, $filename, "w", ""); //empty file
+        $newPath = "false"; //Check if lines belongs to @config tag
+        for ($i = 0; $i < count($lines); $i++) {
+            $newConfText = "";
+            if (preg_match("/\/\/\*/i",$lines[$i]) && preg_match("/@config:/i",$lines[$i]) && $newPath == "false"){
+                //initiate sub config
+                $newPath = "true";
+                preg_match("/@config:[\"|'](.*)[\"|']/i",$lines[$i], $match);
+                if (!empty($match[1])){
+                    $publishDir = $dir."/".$match[1];
+                    $block = explode("/", $publishDir);
+                    $filename = end($block);
+                    //remove last item and join with "/"
+                    array_pop($block);
+                    $publishDir = join("/",$block);
+                    $this->createDirFile ($publishDir, $filename, "w", ""); //empty file
+
+                }
+            } else if (preg_match("/\/\/\*/i",$lines[$i]) && $newPath == "true"){
+                //end of sub config
+                $newPath = "false";
+                $publishDir = $dir;
+                $filename = "nextflow.config";
+            } else {
+                $this->createDirFile ($publishDir, $filename, "a", $lines[$i]."\n");
+            }
         }
-        $file = fopen("{$this->run_path}/$uuid/run/nextflow.nf", 'w');//creates new file
-        fwrite($file, $nextText);
-        fclose($file);
-        chmod("{$this->run_path}/$uuid/run/nextflow.nf", 0755);
-        $file = fopen("{$this->run_path}/$uuid/run/nextflow.config", 'w');//creates new file
-        fwrite($file, $configText);
-        fclose($file);
-        chmod("{$this->run_path}/$uuid/run/nextflow.config", 0755);
+    }
+
+    function initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $s3configFileDir, $ownerID){
+        //create files and folders
+        $this->createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
+        //separate nextflow config (by using @config tag).
+        $this->createMultiConfig ("{$this->run_path}/$uuid/run", $mainConfigText);
+
         $initialRunText = "";
         $run_path_real = "{$this->run_path}/$uuid/run";
         if (!empty($initialRunParams)){
-            $configText = $this->getInitialRunConfig($configText,$profileType,$profileId,$initialrun_img,  $ownerID);
-            $this->createDirFile ("{$this->run_path}/$uuid/initialrun", "nextflow.config", 'w', $configText );
+            $this->createDirFile ("{$this->run_path}/$uuid/initialrun", "nextflow.config", 'w', $initialConfigText );
             copy("{$this->nf_path}/initialrun.nf", "{$this->run_path}/$uuid/initialrun/nextflow.nf");
             $initialRunText = "{$this->run_path}/$uuid/initialrun";
         }
@@ -757,7 +994,7 @@ class dbfuncs {
         }
         $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
         //mkdir and copy nextflow file to run directory in cluster
-        $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} $scp_port -i $userpky $s3configFileDir $initialRunText $run_path_real/nextflow.nf $run_path_real/nextflow.config $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
+        $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} $scp_port -i $userpky $s3configFileDir $initialRunText $run_path_real/* $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
         $mkdir_copynext_pid =shell_exec($cmd);
         $this->writeLog($uuid,$cmd,'a','serverlog.txt');
         $serverlog = $this->readFile("$run_path_real/serverlog.txt");
@@ -777,8 +1014,6 @@ class dbfuncs {
         list($outdir, $proPipeCmd, $jobname, $singu_check, $singu_img, $imageCmd, $initImageCmd, $reportOptions) = $this->getNextExecParam($project_pipeline_id,$profileType, $profileId, $initialRunParams, $initialrun_img, $ownerID);
         //get username and hostname and exec info for connection
         list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port)=$this->getNextConnectExec($profileId,$ownerID, $profileType);
-        //get nextflow input parameters
-        $next_inputs = $this->getNextInputs($executor, $project_pipeline_id, $outdir, $ownerID);
         //get cmd before run
         $preCmd = $this->getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd);
         //eg. /project/umw_biocore/bin
@@ -809,7 +1044,7 @@ class dbfuncs {
         preg_match("/(.*)Nextflow file(.*)exists(.*)/", $next_exist, $matches);
         $log_array['next_exist'] = $next_exist;
         if ($matches[2] == " ") {
-            $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_inputs, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "log.txt", $initialRunParams, $ownerID);
+            $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "log.txt", $initialRunParams, $ownerID);
             $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$renameLog $preCmd $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
             $next_submit_pid= shell_exec($cmd); //"Job <203477> is submitted to queue <long>.\n"
             $this->writeLog($uuid,$cmd,'a','serverlog.txt');
@@ -1714,6 +1949,23 @@ class dbfuncs {
         $sql = "UPDATE amazon_credentials SET name='$name', amz_def_reg='$amz_def_reg', amz_acc_key='$amz_acc_key', amz_suc_key='$amz_suc_key', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    public function insertGithub($username, $email, $password, $ownerID) {
+        $sql = "INSERT INTO github (username, email, password, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
+              ('$username', '$email', '$password', now() , now(), '$ownerID', '3', '$ownerID')";
+        return self::insTable($sql);
+    }
+    public function updateGithub($id, $username, $email, $password, $ownerID) {
+        $sql = "UPDATE github SET username='$username', email='$email', password='$password', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function getGithub($ownerID) {
+        $sql = "SELECT id, username, email, owner_id, group_id, perms, date_created, date_modified, last_modified_user FROM github WHERE owner_id = '$ownerID' AND deleted=0";
+        return self::queryTable($sql);
+    }
+    public function getGithubbyID($id,$ownerID) {
+        $sql = "SELECT * FROM github WHERE owner_id = '$ownerID' and id = '$id' AND deleted=0";
+        return self::queryTable($sql);
+    }
     public function getAmz($ownerID) {
         $sql = "SELECT id, name, owner_id, group_id, perms, date_created, date_modified, last_modified_user FROM amazon_credentials WHERE owner_id = '$ownerID'";
         return self::queryTable($sql);
@@ -2037,6 +2289,10 @@ class dbfuncs {
     }
     public function removeUser($id, $ownerID) {
         $sql = "UPDATE users SET deleted = 1, date_modified = now() WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    public function removeGithub($id, $ownerID) {
+        $sql = "UPDATE github SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
     public function removeProjectPipeline($id) {
@@ -3008,7 +3264,7 @@ class dbfuncs {
     }
 
     public function getPublicPipelines() {
-        $sql= "SELECT pip.id, pip.name, pip.summary, pip.pin, pip.pin_order, pip.script_pipe_header, pip.script_pipe_footer, pip.script_mode_header, pip.script_mode_footer, pip.pipeline_group_id
+        $sql= "SELECT pip.id, pip.name, pip.summary, pip.pin, pip.pin_order, pip.script_pipe_header, pip.script_pipe_config, pip.script_pipe_footer, pip.script_mode_header, pip.script_mode_footer, pip.pipeline_group_id
                       FROM biocorepipe_save pip
                       INNER JOIN (
                         SELECT pipeline_gid, MAX(rev_id) rev_id
@@ -3647,6 +3903,7 @@ class dbfuncs {
         $publish = $newObj->{"publish"};
         $script_pipe_header = addslashes(htmlspecialchars(urldecode($newObj->{"script_pipe_header"}), ENT_QUOTES));
         $script_pipe_footer = addslashes(htmlspecialchars(urldecode($newObj->{"script_pipe_footer"}), ENT_QUOTES));
+        $script_pipe_config = addslashes(htmlspecialchars(urldecode($newObj->{"script_pipe_config"}), ENT_QUOTES));
         $script_mode_header = $newObj->{"script_mode_header"};
         $script_mode_footer = $newObj->{"script_mode_footer"};
         $pipeline_group_id = $newObj->{"pipeline_group_id"};
@@ -3680,9 +3937,9 @@ class dbfuncs {
             $this->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
         }
         if ($id > 0){
-            $sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', pin = '$pin', publish = '$publish', script_pipe_header = '$script_pipe_header', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', publish_web_dir='$publish_web_dir', pin_order = '$pin_order', last_modified_user = '$ownerID' where id = '$id'";
+            $sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', pin = '$pin', publish = '$publish', script_pipe_header = '$script_pipe_header', script_pipe_config = '$script_pipe_config', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', publish_web_dir='$publish_web_dir', pin_order = '$pin_order', last_modified_user = '$ownerID' where id = '$id'";
         }else{
-            $sql = "INSERT INTO biocorepipe_save(owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, pin, pin_order, publish, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid, publish_web_dir) VALUES ('$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms', '$pin', '$pin_order', $publish, '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid', '$publish_web_dir')";
+            $sql = "INSERT INTO biocorepipe_save(owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, pin, pin_order, publish, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid, publish_web_dir, script_pipe_config) VALUES ('$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms', '$pin', '$pin_order', $publish, '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid', '$publish_web_dir', '$script_pipe_config')";
         }
         return self::insTable($sql);
 

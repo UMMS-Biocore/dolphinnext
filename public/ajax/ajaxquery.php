@@ -23,15 +23,17 @@ if (isset($_REQUEST['id'])) {
     $id = $_REQUEST['id'];
 }
 
+
+
 if ($p=="saveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $amazon_cre_id = $_REQUEST['amazon_cre_id'];
-    $nextTextRaw = $_REQUEST['nextText'];
-    $nextText = urldecode($nextTextRaw);
-    $configTextRaw = $_REQUEST['configText'];
-    $configText = urldecode($configTextRaw);
+    $nextText = urldecode($_REQUEST['nextText']);
+    $runConfig = urldecode($_REQUEST['configText']);
+    $proVarObj = json_decode(urldecode($_REQUEST['proVarObj']));
+
     $runType = $_REQUEST['runType'];
     $uuid = $_REQUEST['uuid'];
     $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
@@ -42,10 +44,12 @@ if ($p=="saveRun"){
     }
     //create initialrun script
     $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-24.07.2019.simg";
-    $initialRunParams = $db->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
+    $amzConfigText = $db->getAmazonConfig($amazon_cre_id);
+    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($project_pipeline_id, $attempt, $amzConfigText.$runConfig, $profileType,$profileId, $initialrun_img, $ownerID);
+    $mainConfigText = $db->getMainRunConfig($amzConfigText.$runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
-    $log_array = $db->initRun($project_pipeline_id, $configText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $initialrun_img, $s3configFileDir, $ownerID);
+    $log_array = $db->initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $s3configFileDir, $ownerID);
     //run the script
     $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunParams, $attempt, $initialrun_img, $ownerID);
     //activate autoshutdown feature for amazon
@@ -747,6 +751,10 @@ else if ($p=="removeUser")
 {
     $data = $db->removeUser($id,$ownerID);
 }
+else if ($p=="removeGithub")
+{
+    $data = $db->removeGithub($id,$ownerID);
+}
 else if ($p=="generateKeys")
 {
     $data = $db->generateKeys($ownerID);
@@ -887,6 +895,59 @@ else if ($p=="saveAmzKeys"){
         $data = $db->updateAmz($id, $name, $amz_def_reg,$amz_acc_key,$amz_suc_key, $ownerID);
     } else {
         $data = $db->insertAmz($name, $amz_def_reg,$amz_acc_key,$amz_suc_key, $ownerID);
+    }
+}
+if ($p=="publishGithub"){
+    $data = json_encode("");
+    $username_id = isset($_REQUEST['username']) ? $_REQUEST['username'] : "";
+    $github_repo = isset($_REQUEST['github_repo']) ? $_REQUEST['github_repo'] : "";
+    $github_branch = isset($_REQUEST['github_branch']) ? $_REQUEST['github_branch'] : "";
+    $proVarObj = isset($_REQUEST['proVarObj']) ? json_decode(urldecode($_REQUEST['proVarObj'])) : "";
+    $type = $_REQUEST['type']; //downPack, pushGithub
+    $pipeline_id = $_REQUEST['pipeline_id']; 
+    $pipeData = $db->loadPipeline($pipeline_id,$ownerID);
+    $pipe_obj = json_decode($pipeData,true);
+    if (!empty($pipe_obj[0])){
+        if ($pipe_obj[0]["own"] == "1"){
+            $pipeline_name = $db->cleanName($pipe_obj[0]["name"], 30);
+            $script_pipe_config = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
+            $description = htmlspecialchars_decode($pipe_obj[0]["summary"], ENT_QUOTES); 
+            $configText = "";
+            $configText = $db->getProcessParams($proVarObj, $configText);
+            
+            if (!empty($script_pipe_config)){
+                $configText .= "\n// Pipeline Config:\n";
+                $configText .= htmlspecialchars_decode($script_pipe_config , ENT_QUOTES); 
+            }
+            $nfData = urldecode($_REQUEST['nfData']); 
+            $dnData = urldecode($_REQUEST['dnData']); 
+            $initGitRepo = $db->initGitRepo($description, $pipeline_id, $pipeline_name, $username_id, $github_repo, $github_branch, $configText, $nfData, $dnData, $type, $ownerID);
+            $data= json_encode($initGitRepo);
+        }
+    }
+}
+else if ($p=="saveGithub"){
+    $username = $_REQUEST['username'];
+    $email = $_REQUEST['email'];
+    $passwordRaw = $_REQUEST['password'];
+    $password = $db->amazonEncode($passwordRaw);
+    if (!empty($id)) {
+        $data = $db->updateGithub($id, $username, $email, $password, $ownerID);
+    } else {
+        $data = $db->insertGithub($username, $email, $password, $ownerID);
+    }
+}
+else if ($p=="getGithub")
+{
+    if (!empty($id)) {
+        $data = json_decode($db->getGithubbyID($id, $ownerID));
+        foreach($data as $d){
+            $password = $d->password;
+            $d->password = trim($db->amazonDecode($password));
+        }
+        $data=json_encode($data);
+    } else {
+        $data = $db->getGithub($ownerID);
     }
 }
 else if ($p=="saveProfileCluster"){
@@ -1400,8 +1461,8 @@ else if ($p=="saveProjectPipeline"){
     $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
     $exec_each = isset($_REQUEST['exec_each']) ? $_REQUEST['exec_each'] : "";
     $exec_all = isset($_REQUEST['exec_all']) ? $_REQUEST['exec_all'] : "";
-    $exec_all_settings = isset($_REQUEST['exec_all_settings']) ?addslashes(htmlspecialchars(urldecode($_REQUEST['exec_all_settings']), ENT_QUOTES)) : "";
-    $exec_each_settings = isset($_REQUEST['exec_each_settings']) ?addslashes(htmlspecialchars(urldecode($_REQUEST['exec_each_settings']), ENT_QUOTES)) : "";
+    $exec_all_settings = isset($_REQUEST['exec_all_settings']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['exec_all_settings']), ENT_QUOTES)) : "";
+    $exec_each_settings = isset($_REQUEST['exec_each_settings']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['exec_each_settings']), ENT_QUOTES)) : "";
     $exec_next_settings = isset($_REQUEST['exec_next_settings']) ? $_REQUEST['exec_next_settings'] : "";
     $docker_check = isset($_REQUEST['docker_check']) ? $_REQUEST['docker_check'] : "";
     $docker_img = isset($_REQUEST['docker_img']) ? $_REQUEST['docker_img'] : "";
@@ -1415,7 +1476,7 @@ else if ($p=="saveProjectPipeline"){
     $withTrace = isset($_REQUEST['withTrace']) ? $_REQUEST['withTrace'] : "";
     $withTimeline = isset($_REQUEST['withTimeline']) ? $_REQUEST['withTimeline'] : "";
     $withDag = isset($_REQUEST['withDag']) ? $_REQUEST['withDag'] : "";
-    $process_opt = isset($_REQUEST['process_opt']) ?addslashes(htmlspecialchars(urldecode($_REQUEST['process_opt']), ENT_QUOTES)) : "";
+    $process_opt = isset($_REQUEST['process_opt']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['process_opt']), ENT_QUOTES)) : "";
     settype($group_id, 'integer');
     settype($amazon_cre_id, 'integer');
     if (!empty($id)) {

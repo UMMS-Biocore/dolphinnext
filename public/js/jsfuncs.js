@@ -1367,6 +1367,8 @@ function decodeHtml(str) {
     };
     if (str === null) {
         return null
+    } else if (str === undefined) {
+        return ""
     }
     return str.replace(/&amp;|&lt;|&gt;|&quot;|&#039;/g, function (m) { return map[m]; });
 }

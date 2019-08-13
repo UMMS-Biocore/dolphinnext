@@ -43,7 +43,7 @@ You will be prompted to supply a filename and a password. In order to accept the
 * **B. Create new keys:** You will proceed by clicking generate keys button where new pair of ssh keys will be specifically produced for you. You should keep these keys in your default .ssh directory (``~/.ssh/id_rsa`` for private and ``~/.ssh/id_rsa.pub`` for public key). It is required to be adjust your public key permissions to 644 (-rw-r--r--) and private key permissions to 600 (-rw-------) by entering following commands::
 
     chmod -R 600 ~/.ssh/id_rsa
-    chmod -R 644 ~/.ssh/id_rsa_pub
+    chmod -R 644 ~/.ssh/id_rsa.pub
 
 
 .. warning:: In both of the cases, private key will be used for submiting jobs in the host. Therefore, public key required to be added into ``~/.ssh/authorized_keys`` in the host by user. 

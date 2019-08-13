@@ -12,6 +12,7 @@
     $SHOW_AMAZON_KEYS= SHOW_AMAZON_KEYS;
     $SHOW_SSH_KEYS=SHOW_SSH_KEYS;
     $SHOW_GROUPS=SHOW_GROUPS;
+    $SHOW_GIT=SHOW_GITHUB;
 ?>
 
 <section class="content" style="max-width: 1500px; ">
@@ -31,6 +32,9 @@
                         }
                         if ($login == 1 && ($SHOW_AMAZON_KEYS != false || !empty($admin_id) || $role == "admin")){
                             echo '<li class=""><a href="#amazonKeys" data-toggle="tab" aria-expanded="false">Amazon Keys</a></li>';
+                        }
+                        if ($login == 1 && ($SHOW_GIT != false || !empty($admin_id) || $role == "admin")){
+                            echo '<li class=""><a href="#github" data-toggle="tab" aria-expanded="false">GitHub</a></li>';
                         }
                         echo '<li class=""><a href="#changePass" data-toggle="tab" aria-expanded="false">Change Password</a></li>';
                         if ($login == 1 && $role == "admin"){
@@ -161,6 +165,32 @@
                                         <tr>
                                             <th>Amazon Key Name</th>
                                             <th>Created on</th>
+                                            <th>Options</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.tab-pane ends -->
+                    <!-- /.tab-pane starts -->
+                    <div class="tab-pane" id="github">
+                        <div class="panel panel-default" >
+                            <div class="panel-heading clearfix">
+                                <div class="pull-right">
+                                    <button type="button" class="btn btn-primary btn-sm" id="addGithub" data-toggle="modal" data-target="#githubModal">Add GitHub Account</button>
+                                </div>
+                                <div class="pull-left">
+                                    <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> GitHub Accounts</h5>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <table id="githubTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th>GitHub Username</th>
+                                            <th>GitHub E-Mail</th>
+                                            <th>Modified on</th>
                                             <th>Options</th>
                                         </tr>
                                     </thead>
@@ -722,6 +752,52 @@
     </div>
 </div>
 <!-- amz keys modal ends-->
+
+<!-- github modal starts-->
+<div id="githubModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="githubmodaltitle">Modal title</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group" style="display:none">
+                        <label for="mGitID" class="col-sm-2 control-label">ID</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="mGitID" name="id">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mGitName" class="col-sm-3 control-label">GitHub Username</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mGitUsername" name="username">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mGitEmail" class="col-sm-3 control-label">GitHub E-mail</label>
+                        <div class="col-sm-9">
+                            <input type="email" required class="form-control" id="mGitEmail" name="email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mGitPassword" class="col-sm-3 control-label">GitHub Password</label>
+                        <div class="col-sm-9">
+                            <input type="password" class="form-control" id="mGitPassword" name="password">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveGithub" >Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- amz keys modal ends-->
+
 
 <!-- user modal starts-->
 <div id="userModal" class="modal fade" tabindex="-1" role="dialog">

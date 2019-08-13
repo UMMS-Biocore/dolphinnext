@@ -10,6 +10,8 @@ createAceEditors("editorProHeader", "#script_mode_header") //ace process header 
 createAceEditors("editorProFooter", "#script_mode_footer") //ace process header editor
 createAceEditors("editorPipeHeader", "#script_mode_pipe_header") //ace pipeline header editor
 createAceEditors("editorPipeFooter", "#script_mode_pipe_footer") //ace pipeline footer editor
+createAceEditors("editorPipeConfig", "#script_mode_pipe_config") //ace pipeline config editor
+createAceEditors("pipelineSumEditor", "#pipelineSumEditor_mode") 
 
 function createAceEditors(editorId, script_modeId) {
     //ace process editor
@@ -53,6 +55,9 @@ $('#advOpt').on('show.bs.collapse', function () {
     var scriptPipeFooter = editorPipeFooter.getValue();
     editorPipeFooter.setValue(scriptPipeFooter);
     editorPipeFooter.clearSelection();
+    var scriptPipeConfig = editorPipeConfig.getValue();
+    editorPipeConfig.setValue(scriptPipeConfig);
+    editorPipeConfig.clearSelection();
 });
 
 // cleanProcessModal when modal is closed     
@@ -804,7 +809,7 @@ function checkDeletionPipe(pipeline_id) {
     return [warnUserPipe, warnPipeText];
 }
 
-//xxxxxxxx1
+
 function checkRevisionPipe(pipeline_id) {
     var warnUserPipe = false;
     var warnPipeText = '';
@@ -1194,7 +1199,25 @@ function prepareInfoModal() {
     $('#createRevisionBut').css('display', "none");
 }
 
-//xxxx
+function updateGitTitle(github_username, github_repo, commit_id){
+    if (commit_id && github_username && github_repo){
+        $("#pipGitTitleDiv").css("display", "inline-block");
+        var username = '<a target="_blank" href="https://github.com/'+github_username+'">'+github_username+'</a>';
+        var repo = '<a target="_blank" href="https://github.com/'+github_username+'/'+github_repo+'">'+github_repo+'</a>';
+        var commit = '<a target="_blank" href="https://github.com/'+github_username+'/'+github_repo+'/tree/'+commit_id+'"><i style="font-size:12px;" class="fa fa-external-link"></i></a>';
+        $("#pipGitTitle").html(username + " / " + repo + " / " + commit);
+    }
+}
+
+function updateMarkdown(text, targetDiv){
+    var target = document.getElementById(targetDiv)
+    var converter = new showdown.Converter();
+    var html = converter.makeHtml(text);
+    target.innerHTML = html;
+}
+
+
+
 function loadPipelineDetails(pipeline_id, usRole) {
     window.pipeObj = {};
     var getPipelineD = [];
@@ -1213,19 +1236,31 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 $('#creatorInfoPip').css('display', "block");
                 $('#pipeline-title').changeVal(pData[0].name);
                 $('#ownUserNamePip').text(pData[0].username);
-                $('#pipelineSum').val(decodeHtml(pData[0].summary));
+                pipelineSumEditor.setValue(decodeHtml(pData[0].summary));
+                updateMarkdown(decodeHtml(pData[0].summary), "pipelineSum")
+                if (pData[0].github){
+                    if (IsJsonString(pData[0].github)) {
+                        var git_json = JSON.parse(pData[0].github)
+                        if (git_json) {
+                            updateGitTitle(git_json.username, git_json.repository, git_json.commit)
+                        }
+                    }
+                }
                 pipelineOwn = pData[0].own;
                 pipelinePerm = pData[0].perms;
                 // if user not own it, cannot change or delete pipeline
                 if (pipelineOwn === "0") {
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
-                    $('#pipelineSum').attr('disabled', 'disabled');
+                    $('#editPipeSum').remove();
+                    $('#confirmPipeSum').remove();
                     editorPipeHeader.setReadOnly(true);
                     editorPipeFooter.setReadOnly(true);
+                    editorPipeConfig.setReadOnly(true);
                     $('#permsPipeDiv').css('display', 'none');
                     $('#groupSelPipeDiv').css('display', 'none');
                     $('#publishPipeDiv').css('display', 'none');
+                    $('#gitConsoleBtn').css('display', 'none');
                     $('#pipeMenuGroupBottom').css('display', 'none');
                 }
                 if (usRole === "admin") {
@@ -1252,14 +1287,19 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 }
                 //load header and foother script
                 if (pData[0].script_pipe_header !== "" && pData[0].script_pipe_header !== null) {
-                    var editorScriptPipeHeader = removeDoubleQuote(decodeHtml(pData[0].script_pipe_header));
+                    var editorScriptPipeHeader = decodeHtml(pData[0].script_pipe_header);
                     editorPipeHeader.setValue(editorScriptPipeHeader);
                     editorPipeHeader.clearSelection();
                 }
                 if (pData[0].script_pipe_footer !== "" && pData[0].script_pipe_footer !== null) {
-                    var editorScriptPipeFooter = removeDoubleQuote(decodeHtml(pData[0].script_pipe_footer));
+                    var editorScriptPipeFooter = decodeHtml(pData[0].script_pipe_footer);
                     editorPipeFooter.setValue(editorScriptPipeFooter);
                     editorPipeFooter.clearSelection();
+                }
+                if (pData[0].script_pipe_config !== "" && pData[0].script_pipe_config !== null) {
+                    var editorScriptPipeConfig = decodeHtml(pData[0].script_pipe_config);
+                    editorPipeConfig.setValue(editorScriptPipeConfig);
+                    editorPipeConfig.clearSelection();
                 }
                 //load user groups
                 var allUserGrp = getValues({ p: "getUserGroups" });
@@ -1410,6 +1450,7 @@ function exportPipeline() {
 
 
 
+
 function loadSelectedPipeline(pipeline_id) {
     var pData = getValues({ p: "loadPipeline", id: pipeline_id })
     var pDataTable = [];
@@ -1549,13 +1590,11 @@ $(document).ready(function () {
             $('#groupSelPipe').append($('<option>', { value: item.id, text : item.name }));
             $('#groupSelPro').append($('<option>', { value: item.id, text : item.name }));
         });
-
-
         loadPipeMenuGroup(true);
     }
 
     //Make modal draggable    
-    $('.modal-dialog').draggable({ cancel: 'input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amzTable' });
+    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amzTable' });
 
 
 
@@ -1669,6 +1708,179 @@ $(document).ready(function () {
         })
     });
 
+    //xxxxx
+    $(function () {
+        $('#gitConsoleModal').on('show.bs.modal', function (e) {
+            $(this).find('form').trigger('reset');
+            $.ajax({
+                type: "GET",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    p: "getGithub"
+                },
+                async: false,
+                success: function (s) {
+                    //fill the dropdown
+                    $("#mGitUsername").empty();
+                    var firstOptionGroup = new Option("Select Github Account...", '');
+                    $("#mGitUsername").append(firstOptionGroup);
+                    for (var i = 0; i < s.length; i++) {
+                        var param = s[i];
+                        var optionGroup = new Option(param.username, param.id);
+                        $("#mGitUsername").append(optionGroup);
+                    }
+                    //fill the form
+                    var pipeline_id = $('#pipeline-title').attr('pipelineid');
+                    if (pipeline_id) {
+                        var pData = [window.pipeObj["main_pipeline_"+pipeline_id]];
+                        if (pData[0].github){
+                            if (IsJsonString(pData[0].github)) {
+                                var git_json = JSON.parse(pData[0].github)
+                                if (git_json) {
+                                    if (git_json.username){
+                                        var el = document.getElementById("mGitUsername");
+                                        for(var i=0; i<el.options.length; i++) {
+                                            if ( el.options[i].text == git_json.username ) {
+                                                el.selectedIndex = i;
+                                                $("#github_repo").val(git_json.repository)
+                                                $("#github_branch").val(git_json.branch)
+                                                break;
+                                            }
+                                        } 
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+
+
+
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        });
+        $('#gitConsoleModal').on('hide.bs.modal', function (event) {
+            cleanHasErrorClass("#gitConsoleModal")
+            $("#mGitLog").css("display", "none");
+            $("#mGitSuccess").html("");
+        });
+        $('#gitConsoleModal').on('click', '#pushGit', function (event) {
+            event.preventDefault();
+            var github_username = $("#mGitUsername option:selected").text();
+            var formValues = $('#gitConsoleModal').find('input, select');
+            var requiredFields = ["username", "github_repo", "github_branch"];
+            var formObj = {};
+            var stop = "";
+            [formObj, stop] = createFormObj(formValues, requiredFields)
+            if (stop === false) {
+                var pipeline_id = $('#pipeline-title').attr('pipelineid');
+                if (pipeline_id){
+                    var dnData   = encodeURIComponent(exportPipeline())
+                    var nfData   = encodeURIComponent(createNextflowFile("git"))
+                    var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
+                    formObj.proVarObj = proVarObj
+                    formObj.pipeline_id = pipeline_id
+                    formObj.dnData = dnData
+                    formObj.nfData = nfData
+                    formObj.type = "pushGithub"
+                    formObj.p = "publishGithub"
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: formObj,
+                        beforeSend: function () { showLoadingDiv("gitConsoleDiv"); },
+                        complete: function () {
+                            hideLoadingDiv("gitConsoleDiv");
+                        },
+                        async: true,
+                        success: function (s) {
+                            $("#mGitLog").val("");
+                            $("#mGitLog").css("display", "inline-block");
+                            if (IsJsonString(s)) {
+                                var json = JSON.parse(s)
+                                console.log(json)
+                                if (json) {
+                                    if (json.check_repo_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+"Checking Repository:"+"\n"+json.check_repo_cmd_log)
+                                    }
+                                    if (json.init_cmd){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+"Initiating:")
+                                    }
+                                    if (json.init_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.init_cmd_log)
+                                    }
+                                    if (json.branch_cmd){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.branch_cmd)
+                                    }
+                                    if (json.branch_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.branch_cmd_log)
+                                    }
+                                    if (json.push_cmd){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+"Pushing Repository:")
+                                    }
+                                    if (json.push_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.push_cmd_log)
+                                    }
+                                    if (json.get_commit_id_cmd){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.get_commit_id_cmd)
+                                    }
+                                    if (json.get_commit_id_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.get_commit_id_cmd_log)
+                                        var textarea = document.getElementById('mGitLog');
+                                        textarea.scrollTop = textarea.scrollHeight;
+                                    }
+                                    //successfully completed.
+                                    if (json.commit_id){
+                                        $("#mGitSuccess").html('Pipeline successfully pushed to GitHub: <a style="word-wrap: break-word;" target="_blank" href="https://github.com/'+github_username+'/'+formObj.github_repo+'/tree/'+json.commit_id+'"> https://github.com/'+github_username+'/'+formObj.github_repo+'/tree/'+json.commit_id+'</a><br/>Commit id: '+json.commit_id);
+                                        //update pipeline info
+                                        updateGitTitle(github_username, formObj.github_repo, json.commit_id)
+                                    } else {
+                                        $("#mGitSuccess").html("Failed to push GitHub. Please check the logs to for the reason.")
+                                    }
+                                }
+                            }
+                        },
+                        error: function (errorThrown) {
+                            alert("Error: " + errorThrown);
+                        }
+                    });
+                }
+            }
+        });
+
+        $(document).on('click', "#downPipeline", function (e) {
+            var pipeline_id = $('#pipeline-title').attr('pipelineid');
+            if (pipeline_id){
+                var dnData    = encodeURIComponent(exportPipeline())
+                var nfData    = encodeURIComponent(createNextflowFile("git"))
+                var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
+                var downPack = getValues({ p: "publishGithub", proVarObj:proVarObj, pipeline_id: pipeline_id, nfData: nfData, dnData: dnData,  type: "downPack" })
+                if (IsJsonString(downPack)) {
+                    var json = JSON.parse(downPack)
+                    if (json) {
+                        if (json.zip_file){
+                            window.location = json.zip_file
+                        }
+                    }
+                }
+            }
+
+        });
+    });
+
     $(function () {
         $(document).on('change', '#permsPro', function (event) {
             var selPerm = $(this).val();
@@ -1736,6 +1948,31 @@ $(document).ready(function () {
             $("#" + id).attr("prev", selPipeId);
         })
     });
+
+    $(function () {
+        $(document).on('click', '#editPipeSum', function (e) {
+            pipelineSumEditor.clearSelection();
+            $("#pipelineSumEditorDiv").css("display", "inline-block")
+            $("#pipelineSum").css("display", "none")
+            $("#editPipeSum").css("display", "none")
+            $("#confirmPipeSum").css("display","inline-block")
+            //            pipelineSumEditor.setValue(scriptPipeConfig);
+
+        });
+        $(document).on('click', '#confirmPipeSum', function (e) {
+            autosaveDetails();
+            var scriptSumEditor = pipelineSumEditor.getValue();
+            updateMarkdown(scriptSumEditor, "pipelineSum")
+            $("#pipelineSum").css("display", "inline-block")
+            $("#pipelineSumEditorDiv").css("display", "none")
+            $("#editPipeSum").css("display", "inline-block")
+            $("#confirmPipeSum").css("display","none")
+        });
+        //xxxxxx
+    });
+
+
+
 
 
 
