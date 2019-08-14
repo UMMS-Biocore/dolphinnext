@@ -293,7 +293,7 @@ class dbfuncs {
     function initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID){
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $executor = $cluDataArr[0]['executor'];
-        $params = "params {\n";
+        $params = "";
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         $profile= $proPipeAll[0]->{'profile'};
@@ -342,6 +342,7 @@ class dbfuncs {
         endforeach;
 
         if (!empty($file_name) || !empty($url) || !empty($urlzip)) {
+            $params  = "params {\n";
             $params .= "  attempt = '".$attempt."'\n";
             $params .= "  run_dir = '".$run_dir."'\n";
             $params .= "  profile = '".$profile."'\n";
@@ -354,8 +355,8 @@ class dbfuncs {
                 }
 
             }
+            $params .= "}\n";
         }
-        $params .= "}\n";
         return $params;
     }
 
@@ -3436,7 +3437,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function checkInput($name,$type) {
-        $sql = "SELECT id, name FROM input WHERE name = '$name' AND type='$type'";
+        $sql = "SELECT id, name FROM input WHERE name = BINARY '$name' AND type='$type'";
         return self::queryTable($sql);
     }
     public function checkProjectInput($project_id, $input_id) {
