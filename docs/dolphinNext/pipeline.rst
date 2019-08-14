@@ -318,4 +318,4 @@ By default, all new pipelines are only seen by the owner. You can share your pip
 Copying and Revisions
 =====================
 
-It is always allowed to create a copy of your pipele by clicking "Copy Pipeline" button just to the right of the pipeline name box and buttons. When your pipeline is set to public or it has been used by other group members, it is not allow to make changes on same revision. Instead, new revision of the pipeline can be created and changes could be done on this revision.
+To make changes, new trials, improvements on your or other people's pipelines, it is always allowed to create a copy of the pipeline by clicking "Copy Pipeline" button just to the right of the name box and buttons. When your pipeline is set to public or it has been used by other group members, it is not allow to make changes on the same revision. Instead, new revision of the pipeline can be created and changes could be done on this new revision.
