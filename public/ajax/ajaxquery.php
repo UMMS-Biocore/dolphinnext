@@ -913,10 +913,12 @@ if ($p=="publishGithub"){
             $script_pipe_config = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
             $description = htmlspecialchars_decode($pipe_obj[0]["summary"], ENT_QUOTES); 
             $configText = "";
+            
             $configText = $db->getProcessParams($proVarObj, $configText);
             
             if (!empty($script_pipe_config)){
                 $configText .= "\n// Pipeline Config:\n";
+                $configText .= "\$HOSTNAME='default'\n";
                 $configText .= htmlspecialchars_decode($script_pipe_config , ENT_QUOTES); 
             }
             $nfData = urldecode($_REQUEST['nfData']); 
