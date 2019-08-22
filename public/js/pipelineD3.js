@@ -254,11 +254,16 @@ function getNewNodeId(edges, nullId, MainGNum) {
     var nullProcessId = nullId.split("-")[1];
     var nullProcessParId = nullId.split("-")[3];
     var nullProcessGnum = nullId.split("-")[4];
+    var nodes;
     //check is parameter is unique:
     if (nullProcessInOut === "i") {
-        var nodes = JSON.parse(window.pipeObj["pro_para_inputs_" + nullProcessId]);
+        if (window.pipeObj["pro_para_inputs_" + nullProcessId]){
+            nodes = JSON.parse(window.pipeObj["pro_para_inputs_" + nullProcessId]);
+        }
     } else if (nullProcessInOut === "o") {
-        var nodes = JSON.parse(window.pipeObj["pro_para_outputs_" + nullProcessId]);
+        if (window.pipeObj["pro_para_inputs_" + nullProcessId]){
+            nodes = JSON.parse(window.pipeObj["pro_para_outputs_" + nullProcessId]);
+        }
     }
     if (nodes) {
         var paraData = nodes.filter(function (el) { return el.parameter_id == nullProcessParId });
@@ -276,6 +281,7 @@ function getNewNodeId(edges, nullId, MainGNum) {
             }
         }
     }
+    return "";
 }
 
 function openSubPipeline(piID, pObj) {
