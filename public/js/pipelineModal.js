@@ -1777,6 +1777,7 @@ $(document).ready(function () {
             var stop = "";
             [formObj, stop] = createFormObj(formValues, requiredFields)
             if (stop === false) {
+                showLoadingDiv("gitConsoleDiv");
                 var pipeline_id = $('#pipeline-title').attr('pipelineid');
                 if (pipeline_id){
                     var dnData   = encodeURIComponent(exportPipeline())
@@ -1792,7 +1793,6 @@ $(document).ready(function () {
                         type: "POST",
                         url: "ajax/ajaxquery.php",
                         data: formObj,
-                        beforeSend: function () { showLoadingDiv("gitConsoleDiv"); },
                         complete: function () {
                             hideLoadingDiv("gitConsoleDiv");
                         },
@@ -2952,6 +2952,8 @@ $(document).ready(function () {
     function fillRenameModal(renameTextDefVal, checkID, inputID) {
         if (renameTextDefVal != null) {
             if (renameTextDefVal !== "") {
+                renameTextDefVal= renameTextDefVal.replace(/'/gi, "");
+                renameTextDefVal = renameTextDefVal.replace(/"/gi, "");
                 if ($(inputID).data().multiselect) {
                     $(inputID).multiselect('enable')
                     var optAr = []
