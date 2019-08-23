@@ -2,7 +2,7 @@
 
 ### A platform to create reproducible, portable and highly parallel pipelines
 
-[![Build Status](https://api.travis-ci.com/UMMS-Biocore/dolphinnext.svg?branch=master)](https://api.travis-ci.com/UMMS-Biocore/dolphinnext)
+[![Build Status](https://api.travis-ci.com/UMMS-Biocore/dolphinnext.svg?branch=master)](https://api.travis-ci.com/UMMS-Biocore/dolphinnext)[![DOI:10.1101/689539](https://zenodo.org/badge/DOI/10.1101/689539.svg)](https://doi.org/10.1101/689539)
 
 -----
 
