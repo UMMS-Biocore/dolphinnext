@@ -1380,7 +1380,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['p'] = 'getUserRole';
         $_SESSION['ownerID'] = '1';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->role, "admin");
+		$this->assertEquals(json_decode($data)[0]->role, "user");
 		ob_end_clean();
 	}
 
