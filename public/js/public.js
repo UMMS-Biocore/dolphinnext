@@ -2,13 +2,12 @@ function getAllMarkdown(arr){
     var allhtmlText = ""
     var arrText = ""
     if (arr.length){
-        for (var k = 0; k < arr.length; k++) {
+        for (var k = 0; k < 1; k++) {
             if (arr[k]){
-                arrText += arr[k]
+                var html = getMarkdown(arr[k])
+                html = html.replace("<p>", '<p style="margin:0px;">')
+                allhtmlText += html
             }
-        }
-        if (arrText){
-            allhtmlText = getMarkdown(arrText)
         }
     } 
     return allhtmlText
@@ -19,9 +18,6 @@ function getMarkdown(text){
     var html = converter.makeHtml(text);
     return html
 }
-
-
-
 
 function prepSummary(summary){
     var retObj = {}
@@ -99,7 +95,6 @@ $(function () {
                     retObj = prepSummary(item.summary);
                     var summary = retObj.summary
                     var labelArr = retObj.labelArr
-                    console.log(labelArr)
                     var labelhtml = getAllMarkdown(labelArr)
                     dataHtml += '<div style="min-width:25%; padding-right:30px; padding-bottom:25px;" class="col-md-4"><div style=" height:300px;" class="movebox widget-user-2"><div style="height:100px" class="widget-user-header "><div class="boxheader"><i style="font-size:30px; float:left; color:orange; padding:5px;" class="fa fa-spinner"></i><h4 style="text-align:center;">' + item.name + '</h4></div></div><div class="box-body"><p style="height:110px; overflow:hidden; word-break: break-all;">' + summary + '</p><div style="padding-top:10px;" class="pull-right"><a href="index.php?np=1&id=' + item.id + '" style="background-color:#508CB8;" class="btn btn-primary btn-sm ad-click-event">LEARN MORE</a></div><div style="padding-top:10px;" class="pull-left">'+labelhtml+'</div> </div></div></div>';
                 });
