@@ -68,10 +68,8 @@ class ajaxQueryTest extends TestCase
 		ob_end_clean();
 	}
 
-    
-    
 
-    public function testInsertUserManual() {
+    public function testSaveUserManual() {
 		ob_start();
 		$_REQUEST['p'] = 'saveUserManual';
 		$_REQUEST['id'] = '';
@@ -86,9 +84,9 @@ class ajaxQueryTest extends TestCase
 		ob_end_clean();
 	}
     /**
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
-    public function testInsertUser2() {
+    public function testSaveUserManual2() {
 		ob_start();
         $_REQUEST['p'] = 'saveUserManual';
 		$_REQUEST['id'] = '';
@@ -104,7 +102,7 @@ class ajaxQueryTest extends TestCase
 	}
      
     /**
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
     public function testInsertGroup() {
 		ob_start();
@@ -1317,7 +1315,7 @@ class ajaxQueryTest extends TestCase
 	}
     /**
      * @depends testInsertGroup
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
     public function testgetMemberAdd() {
 		ob_start();
@@ -1330,7 +1328,7 @@ class ajaxQueryTest extends TestCase
 	}
     /**
      * @depends testInsertGroup
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
     public function testviewGroupMembers() {
 		ob_start();
@@ -1375,7 +1373,7 @@ class ajaxQueryTest extends TestCase
 		ob_end_clean();
 	}
     /**
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
     public function testgetUserRole() {
 		ob_start();
