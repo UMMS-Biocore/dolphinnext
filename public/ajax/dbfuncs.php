@@ -1857,22 +1857,6 @@ class dbfuncs {
         $sql = "SELECT * FROM users WHERE email = '$email' AND deleted=0";
         return self::queryTable($sql);
     }
-    public function insertGoogleUser($google_id, $email, $google_image) {
-        $email = str_replace("'", "''", $email);
-        $sql = "INSERT INTO users(google_id, email, google_image, username, institute, lab, memberdate, date_created, date_modified, perms) VALUES
-              ('$google_id', '$email', '$google_image', '', '', '', now() , now(), now(), '3')";
-        return self::insTable($sql);
-    }
-    public function updateGoogleUser($id, $google_id, $email, $google_image) {
-        $email = str_replace("'", "''", $email);
-        $sql = "UPDATE users SET google_id='$google_id', email='$email', google_image='$google_image', last_modified_user='$id' WHERE id = '$id'";
-        return self::runSQL($sql);
-    }
-
-    public function updateUser($id, $name, $username, $institute, $lab, $verification) {
-        $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', verification='$verification', last_modified_user='$id' WHERE id = '$id'";
-        return self::runSQL($sql);
-    }
     public function updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID) {
         $email = str_replace("'", "''", $email);
         $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', logintype='$logintype', email='$email', last_modified_user='$ownerID' WHERE id = '$id'";
@@ -1882,10 +1866,9 @@ class dbfuncs {
         $sql = "UPDATE users SET pass_hash='$pass_hash', last_modified_user='$ownerID' WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function insertUserManual($name, $email, $username, $institute, $lab, $logintype) {
+    public function insertUserManual($name, $email, $username, $institute, $lab, $logintype, $role, $active, $pass_hash, $verify, $google_id) {
         $email = str_replace("'", "''", $email);
-        $sql = "INSERT INTO users(name, email, username, institute, lab, logintype, role, active, memberdate, date_created, date_modified, perms) VALUES
-              ('$name', '$email', '$username', '$institute', '$lab', '$logintype','user', 1, now() , now(), now(), '3')";
+        $sql = "INSERT INTO users(name, email, username, institute, lab, logintype, role, active, memberdate, date_created, date_modified, perms, pass_hash, verification, google_id) VALUES ('$name', '$email', '$username', '$institute', '$lab', '$logintype','$role', $active, now() , now(), now(), '3', '$pass_hash', '$verify', '$google_id')";
         return self::insTable($sql);
     }
     public function checkExistUser($id,$username,$email) {

@@ -435,7 +435,12 @@ else if ($p=="saveUserManual"){
         if (!empty($id)) {
             $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID);  
         } else {
-            $data = $db->insertUserManual($name, $email, $username, $institute, $lab, $logintype); 
+            $role = "user"; 
+            $active = 1; 
+            $pass_hash = NULL;
+            $verify = NULL;
+            $google_id = NULL;
+            $data = $db->insertUserManual($name, $email, $username, $institute, $lab, $logintype, $role, $active, $pass_hash, $verify,$google_id); 
             $ownerIDarr = json_decode($data,true); 
         }
     }
@@ -458,25 +463,15 @@ else if ($p=="saveGoogleUser"){
         $_SESSION['username'] = $username;
     }
     $_SESSION['google_login'] = true;
+    $_SESSION['google_id'] = $google_id;
     $_SESSION['email'] = $email;
     $_SESSION['name'] = $name;
     $_SESSION['google_image'] = $google_image;
     if (!empty($id)) {
         $_SESSION['ownerID'] = $id;
         $_SESSION['role'] = $role;
-        $data = $db->updateGoogleUser($id, $google_id, $email, $google_image);  
-    } else {
-        $data = $db->insertGoogleUser($google_id, $email, $google_image);  
-        $ownerIDarr = json_decode($data,true); 
-        $_SESSION['ownerID'] = $ownerIDarr['id'];
-        $_SESSION['role'] = "";
-        //first user will be admin
-        if ($ownerIDarr['id'] == "1"){
-            $db->changeRoleUser($ownerIDarr['id'], "admin");
-        } else {
-            $db->changeRoleUser($ownerIDarr['id'], "user");
-        }
     }
+    $data = json_encode("done");
     session_write_close();
 } else if ($p=="impersonUser"){
     $user_id = $_REQUEST['user_id'];

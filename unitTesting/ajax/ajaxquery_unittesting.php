@@ -69,54 +69,40 @@ class ajaxQueryTest extends TestCase
 	}
 
 
-    public function testInsertUser() {
+    public function testSaveUserManual() {
 		ob_start();
-		$_REQUEST['p'] = 'saveGoogleUser';
+		$_REQUEST['p'] = 'saveUserManual';
 		$_REQUEST['id'] = '';
-		$_REQUEST['google_id'] = '111';
 		$_REQUEST['name'] = "onur yukselen";
-		$_REQUEST['google_image'] = "https://lh4.googleusercontent.com/-h7_FO3k9sB4/AAAAAAAAAAI/AAAAAAAAAAA/AGi4gfw9MqsLVfHz5xXsoOzA1KIZ1yLwXw/s96-c/photo.jpg";
 		$_REQUEST['username'] = "admin";
 		$_REQUEST['email'] = "admin@gmail.com";
+		$_REQUEST['institute'] = "institute";
+		$_REQUEST['lab'] = "lab";
+		$_REQUEST['logintype'] = "";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'1');
 		ob_end_clean();
 	}
     /**
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
-    public function testInsertUser2() {
+    public function testSaveUserManual2() {
 		ob_start();
-		$_REQUEST['p'] = 'saveGoogleUser';
+        $_REQUEST['p'] = 'saveUserManual';
 		$_REQUEST['id'] = '';
-		$_REQUEST['google_id'] = '222';
 		$_REQUEST['name'] = "member name";
-		$_REQUEST['google_image'] = "https://lh4.googleusercontent.com/-h7_FO3k9sB4/AAAAAAAAAAI/AAAAAAAAAAA/AGi4gfw9MqsLVfHz5xXsoOzA1KIZ1yLwXw/s96-c/photo.jpg";
 		$_REQUEST['username'] = "member";
 		$_REQUEST['email'] = "member@gmail.com";
+		$_REQUEST['institute'] = "institute";
+		$_REQUEST['lab'] = "lab";
+		$_REQUEST['logintype'] = "";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'2');
 		ob_end_clean();
 	}
-     /**
-     * @depends testInsertUser
-     */
-    public function testUpdateUser() {
-		ob_start();
-		$_REQUEST['p'] = 'saveGoogleUser';
-		$_REQUEST['id'] = '1';
-		$_REQUEST['google_id'] = '111';
-		$_REQUEST['name'] = "onur yukselen";
-		$_REQUEST['google_image'] = "https://lh6.googleusercontent.com/-j-GMmh9Xzd0/AAAAAAAAAAI/AAAAAAAAByM/HnRa5tGHpLU/s96-c/photo.jpg";
-		$_REQUEST['username'] = "admin";
-		$_REQUEST['email'] = "admin@gmail.com";
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($db->getUserByGoogleId("111"))[0]->id,'1');
-		ob_end_clean();
-		$this->assertEquals(json_decode($db->getUserByGoogleId("111"))[0]->google_image,'https://lh6.googleusercontent.com/-j-GMmh9Xzd0/AAAAAAAAAAI/AAAAAAAAByM/HnRa5tGHpLU/s96-c/photo.jpg');
-	}
+     
     /**
-     * @depends testUpdateUser
+     * @depends testSaveUserManual
      */
     public function testInsertGroup() {
 		ob_start();
@@ -1329,7 +1315,7 @@ class ajaxQueryTest extends TestCase
 	}
     /**
      * @depends testInsertGroup
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
     public function testgetMemberAdd() {
 		ob_start();
@@ -1342,7 +1328,7 @@ class ajaxQueryTest extends TestCase
 	}
     /**
      * @depends testInsertGroup
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
     public function testviewGroupMembers() {
 		ob_start();
@@ -1387,14 +1373,14 @@ class ajaxQueryTest extends TestCase
 		ob_end_clean();
 	}
     /**
-     * @depends testUpdateUser
+     * @depends testSaveUserManual
      */
     public function testgetUserRole() {
 		ob_start();
 		$_REQUEST['p'] = 'getUserRole';
         $_SESSION['ownerID'] = '1';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->role, "admin");
+		$this->assertEquals(json_decode($data)[0]->role, "user");
 		ob_end_clean();
 	}
 
