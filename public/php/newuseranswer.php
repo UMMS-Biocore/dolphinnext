@@ -88,8 +88,7 @@ if (isset($_POST['request'])){
             $err_password = '<font class="text-center" color="crimson">Passwords must match.</font>';
         }
     }
-
-
+    
     if(!isset($_SESSION['google_login']) && !isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_email) && !isset($err_password) && !isset($err_verifypassword) && !isset($err_lab) && !isset($err_institute)){
         //	Calc pass hash
         $pass_hash=hash('md5', $password_val . SALT) . hash('sha256', $password_val . PEPPER);

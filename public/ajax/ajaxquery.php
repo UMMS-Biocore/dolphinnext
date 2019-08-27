@@ -467,6 +467,10 @@ else if ($p=="saveGoogleUser"){
     $_SESSION['email'] = $email;
     $_SESSION['name'] = $name;
     $_SESSION['google_image'] = $google_image;
+    if (!empty($id)) {
+        $_SESSION['ownerID'] = $id;
+        $_SESSION['role'] = $role;
+    }
     $data = json_encode("done");
     session_write_close();
 } else if ($p=="impersonUser"){
