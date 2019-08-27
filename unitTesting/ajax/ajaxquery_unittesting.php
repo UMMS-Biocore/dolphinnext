@@ -73,7 +73,7 @@ class ajaxQueryTest extends TestCase
 
     public function testInsertUserManual() {
 		ob_start();
-		$_REQUEST['p'] = 'insertUserManual';
+		$_REQUEST['p'] = 'saveUserManual';
 		$_REQUEST['id'] = '';
 		$_REQUEST['name'] = "onur yukselen";
 		$_REQUEST['username'] = "admin";
@@ -90,7 +90,7 @@ class ajaxQueryTest extends TestCase
      */
     public function testInsertUser2() {
 		ob_start();
-        $_REQUEST['p'] = 'insertUserManual';
+        $_REQUEST['p'] = 'saveUserManual';
 		$_REQUEST['id'] = '';
 		$_REQUEST['name'] = "member name";
 		$_REQUEST['username'] = "member";
