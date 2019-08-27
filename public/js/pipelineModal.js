@@ -1264,7 +1264,6 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     $('#pipeMenuGroupBottom').css('display', 'none');
                 }
                 if (usRole === "admin") {
-                    $('#advOptDiv').css('display', 'inline');
                     $('#pinMainPage').css("display", "inline");
                     $('#savePipeline').css('display', 'inline');
                     $('#permsPipeDiv').css('display', 'inline');
@@ -2077,13 +2076,24 @@ $(document).ready(function () {
     $('#confirmModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         if (button.attr('id') === 'deleteRevision') {
+            $("#deleteBtn").text("Delete")
             $('#deleteBtn').attr('class', 'btn btn-primary delprocess');
             $('#confirmModalText').html('Are you sure you want to delete this process revision?');
         } else if (button.attr('id') === 'delPipeline') {
+            $("#deleteBtn").text("Delete")
             $('#deleteBtn').attr('class', 'btn btn-primary delpipeline');
             $('#confirmModalText').html('Are you sure you want to delete this pipeline?');
+        } else if (button.attr('id') === 'dupPipeline') {
+            $("#deleteBtn").text("Duplicate")
+            $('#deleteBtn').attr('class', 'btn btn-primary dupPipeline');
+            $('#confirmModalText').html("Are you sure you want to duplicate this pipeline? </br></br> * It is not suggested to use this feature, unless you are planning to create custom pipeline.");
         }
     });
+
+    $('#confirmModal').on('click', '.dupPipeline', function (event) {
+        $('#confirmModal').modal('hide');
+        duplicatePipeline();
+    })
 
     $('#confirmModal').on('click', '.delpipeline', function (event) {
         var pipeline_id = $('#pipeline-title').attr('pipelineid');
