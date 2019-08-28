@@ -388,9 +388,13 @@ function translateSVG(mG, pObj) {
     if (!mG[3]) {
         mG[3] = 1378; //default width of container if its not defined before
     }
-    var widthC = $("#container").width();
+    //    var widthC = $("#container").width(); //not working for inactive tab
+    var widthC = $("#pipeTabDiv").width();
+    if (!widthC) {
+        widthC = 700;
+    }
     var coefW = widthC / mG[3];
-    var height = widthC / 3;
+    var height = widthC / 1.8;
     if (height < 300) {
         height = 300;
     }

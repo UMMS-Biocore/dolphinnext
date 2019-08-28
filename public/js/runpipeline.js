@@ -1452,6 +1452,7 @@ function fillStates(states, url, urlzip, checkPath) {
     $("#inputsTab").loading('start');
     $.each(states, function (st) {
         var defName = states[st] ; // expected Value
+        console.log(defName)
         var defUrl = url[st] || null;; // expected Value
         var defUrlzip = urlzip[st] || null; // expected Value
         var defcheckPath = checkPath[st] || null; // expected Value
@@ -1624,6 +1625,9 @@ function addProfileVar(autoFillJSON) {
                     if (autoFillJSON[el].condition && autoFillJSON[el].condition != null && !$.isEmptyObject(autoFillJSON[el].condition)) {
                         if (autoFillJSON[el].condition.$HOSTNAME){
                             if (autoFillJSON[el].condition.$HOSTNAME == proHost){
+                                addProfileLib (autoFillJSON[el].library,proVar);
+                                confirmUpdate = true;
+                            } else if (autoFillJSON[el].condition.$HOSTNAME == "default"){
                                 addProfileLib (autoFillJSON[el].library,proVar);
                                 confirmUpdate = true;
                             }
@@ -1846,6 +1850,18 @@ function fillStateValue(stateValue, library) {
         var re = new RegExp(replaceKey, "g");
         stateValue = stateValue.replace(re, replaceVal);
     });
+//    if (stateValue.match(/\$\{(.*)\}/)){
+//        var missingAr = stateValue.split("\${");
+//        for (var i = 0; i < missingAr.length; i++) {
+//            if (missingAr[i].match(/}/)){
+//                var missingVar = missingAr[i].substring(0, missingAr[i].indexOf('}'));
+//                if (missingVar){
+//                    //global object for missing variables
+//                    missingVarObj[missingVar] = "";
+//                }
+//            }
+//        }
+//    }
     return stateValue;
 }
 
