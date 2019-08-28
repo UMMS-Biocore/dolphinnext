@@ -393,7 +393,7 @@ function translateSVG(mG, pObj) {
     if (!widthC) {
         widthC = 700;
     }
-    widthC = widthC - 40; //container div is 40px smaller than pipeTabDiv
+    widthC = widthC - 32; //container div is 40px smaller than pipeTabDiv
     var coefW = widthC / mG[3];
     var height = widthC / 1.8;
     if (height < 300) {
