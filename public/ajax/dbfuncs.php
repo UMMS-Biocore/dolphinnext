@@ -941,7 +941,7 @@ class dbfuncs {
                     $this->createDirFile ($publishDir, $filename, "w", ""); //empty file
 
                 }
-            } else if (preg_match("/\/\/\*/i",$lines[$i]) && $newPath == "true"){
+            } else if (trim($lines[$i]) == "//*"  && $newPath == "true"){
                 //end of sub config
                 $newPath = "false";
                 $publishDir = $dir;
