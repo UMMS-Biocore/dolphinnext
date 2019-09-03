@@ -64,7 +64,7 @@
                 ?>
                     
                 <div class="form-group" style="margin-top:20px;">
-                    <input type="email" name="email" class="form-control" placeholder="E-mail" />
+                    <input name="emailusername" class="form-control" placeholder="E-mail/Username" />
                 </div>
                 <div class="form-group">
                     <input type="password" name="password" class="form-control" placeholder="Password" />

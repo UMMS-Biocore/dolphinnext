@@ -45,6 +45,7 @@ class dbfuncs {
         $link->close();
 
         if (!$result) {
+            error_log($sql);
             trigger_error('Database Error: ' . self::$link->error);
         }
         if ($result && $result!="1")
@@ -1855,6 +1856,11 @@ class dbfuncs {
     public function getUserByEmail($email) {
         $email = str_replace("'", "''", $email);
         $sql = "SELECT * FROM users WHERE email = '$email' AND deleted=0";
+        return self::queryTable($sql);
+    }
+    public function getUserByEmailorUsername($emailusername) {
+        $emailusername = strtolower(str_replace("'", "''", $emailusername));
+        $sql = "SELECT * FROM users WHERE (email = '$emailusername' OR username = '$emailusername' ) AND deleted=0";
         return self::queryTable($sql);
     }
     public function updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID) {
