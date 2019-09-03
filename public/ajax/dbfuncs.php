@@ -889,6 +889,12 @@ class dbfuncs {
             $ret["zip_file"]= $zip_file_public;
         }
         system('rm -rf ' . escapeshellarg("$repoDir"), $retval);
+        foreach($ret as $key => $val){
+            if (!empty($password)){
+                $valClean = str_replace($password,"****",$val);  
+                $ret[$key] = $valClean;
+            }
+        }
         return json_encode($ret);
     }
 

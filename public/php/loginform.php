@@ -77,7 +77,7 @@
                   <form action="<?php echo BASE_PATH?>/" method="post">      
                    <?php 
                     if (ALLOW_SIGNUP != false){
-                        echo '<div class="text-center" style="margin-top:30%;">Don\'t have a account <button type="submit" name="signup" class="btn btn-default" style="margin-left:10px;">Sign Up</button></div>';
+                        echo '<div class="text-center" style="margin-top:30%;">Don\'t have an account <button type="submit" name="signup" class="btn btn-default" style="margin-left:10px;">Sign Up</button></div>';
                     } else {
                         echo '<div class="text-center" style="margin-top:15%;"></div>';
                         

@@ -22,7 +22,7 @@ First off, you need to enter dolphinNext web page: https://dolphinnext.umassmed.
 
 .. image:: dolphinnext_images/sign_in.png
 	:align: center
-	:width: 50%
+	:width: 99%
 
 Creating Profile
 ================
