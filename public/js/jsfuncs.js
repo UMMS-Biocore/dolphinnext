@@ -1370,7 +1370,7 @@ function decodeHtml(str) {
         '&#039;': "'"
     };
     if (str === null) {
-        return null
+        return ""
     } else if (str === undefined) {
         return ""
     }
