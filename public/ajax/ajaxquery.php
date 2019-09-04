@@ -473,7 +473,8 @@ else if ($p=="saveGoogleUser"){
     }
     $data = json_encode("done");
     session_write_close();
-} else if ($p=="impersonUser"){
+} 
+else if ($p=="impersonUser"){
     $user_id = $_REQUEST['user_id'];
     if (!empty($_SESSION['admin_id'])){
         $admin_id = $_SESSION['admin_id'];
@@ -483,6 +484,7 @@ else if ($p=="saveGoogleUser"){
     if (!empty($admin_id)){
         session_destroy();
         session_start();
+        $_SESSION = []; //manually clear $_SESSION
         $userData = json_decode($db->getUserById($user_id))[0];
         $username = $userData->{'username'};
         $email = $userData->{'email'};
