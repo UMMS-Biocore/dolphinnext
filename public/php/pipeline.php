@@ -196,6 +196,8 @@
 
         <div id="advancedTab" class="tab-pane fade">
             <div id="advOpt" style="margin-top:15px;">
+                <div id="pipelineFiles"></div>
+               
                 <div class="col-md-12" style="margin-bottom:15px;">
                     <div class="form-group">
                         <label style="width:150px;" class="col-sm-2 control-label">Pipeline Config</label>

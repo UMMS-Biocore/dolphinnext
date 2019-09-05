@@ -2194,7 +2194,7 @@ function save() {
     var script_mode_footer = $('#script_mode_pipe_footer').val();
     var script_pipe_header = getScriptEditor('editorPipeHeader');
     var script_pipe_footer = getScriptEditor('editorPipeFooter');
-    var script_pipe_config = getScriptEditor('editorPipeConfig');
+    var script_pipe_config = combineTextEditor('pipelineFiles')
     pipeline_group_id = $('#pipeGroupAll').val();
     var pipeGroupWarn = false;
     if (!pipeline_group_id || pipeline_group_id == "") {
