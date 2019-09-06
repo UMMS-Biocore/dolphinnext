@@ -4533,9 +4533,9 @@ function runProPipeCall(checkType, uuid) {
         var singuPath = singu_img.replace(patt, '$1');
         var mntPath = "";
         if (profileData[0].shared_storage_mnt) {
-            mntPath = profileData[0].shared_storage_mnt;
+            mntPath = profileData[0].shared_storage_mnt + '/.dolphinnext/singularity';
         } else {
-            mntPath = "//$HOME";
+            mntPath = "//$NXF_SINGULARITY_CACHEDIR";
         }
         if (profileData[0].singu_cache) {
             mntPath = profileData[0].singu_cache;
@@ -4543,11 +4543,11 @@ function runProPipeCall(checkType, uuid) {
 
         if (patt.test(singu_img)) {
             singuPath = singuPath.replace(/\//g, '-')
-            var downSingu_img = mntPath + '/.dolphinnext/singularity/' + singuPath + '.simg';
+            var downSingu_img = mntPath + '/' + singuPath + '.simg';
         } else if (singu_img.match(/http:/) || singu_img.match(/https:/) || singu_img.match(/ftp:/)){
             var singuPathAr = singuPath.split('/')
             singuPath = singuPathAr[singuPathAr.length-1]
-            var downSingu_img = mntPath + '/.dolphinnext/singularity/' + singuPath;
+            var downSingu_img = mntPath + '/'+ singuPath;
         } else {
             var downSingu_img = singu_img;
         }

@@ -105,42 +105,42 @@ class dbfuncs {
     //$singu_save=true to overwrite on image
     function imageCmd($singu_cache, $img, $singu_save, $type, $profileType,$profileId,$ownerID){
         if (preg_match("/http:/i",$img) || preg_match("/https:/i",$img) || preg_match("/ftp:/i",$img)){
-            $downPath = '~';
+            $downPath = '\\$NXF_SINGULARITY_CACHEDIR';
             if ($profileType == "amazon"){
                 $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
                 $amzDataArr=json_decode($amzData,true);
-                $downPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
+                $downPath = $amzDataArr[0]["shared_storage_mnt"]."/.dolphinnext/singularity"; // /mnt/efs
             }
             if (!empty($singu_cache)){
                 $downPath = $singu_cache;
             }
             $imageNameAr = explode('/',$img);
             $imageName=$imageNameAr[count($imageNameAr)-1];
-            $wgetCmd = "if [ ! -f $downPath/.dolphinnext/singularity/$imageName ]; then wget $img; fi";
+            $wgetCmd = "if [ ! -f $downPath/$imageName ]; then wget $img; fi";
             if ($singu_save == "true"){
-                $cmd = "mkdir -p $downPath/.dolphinnext/singularity && cd $downPath/.dolphinnext/singularity && rm -f ".$imageName." && $wgetCmd";
+                $cmd = "mkdir -p $downPath && cd $downPath && rm -f ".$imageName." && $wgetCmd";
             } else {
-                $cmd = "mkdir -p $downPath/.dolphinnext/singularity && cd $downPath/.dolphinnext/singularity && $wgetCmd";
+                $cmd = "mkdir -p $downPath && cd $downPath && $wgetCmd";
             }
             return $cmd;
         } else if ($type == 'singularity'){
             preg_match("/shub:\/\/(.*)/", $img, $matches);
             if (!empty($matches[1])){
-                $singuPath = '~';
+                $singuPath = '\\$NXF_SINGULARITY_CACHEDIR';
                 if ($profileType == "amazon"){
                     $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
                     $amzDataArr=json_decode($amzData,true);
-                    $singuPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
+                    $singuPath = $amzDataArr[0]["shared_storage_mnt"]."/.dolphinnext/singularity"; // /mnt/efs
                 }
                 if (!empty($singu_cache)){
                     $singuPath = $singu_cache;
                 }
                 $imageName = str_replace("/","-",$matches[1]);
-                $shubCmd = "if [ ! -f $singuPath/.dolphinnext/singularity/{$imageName}.simg ]; then singularity pull --name {$imageName}.simg $img; fi";
+                $shubCmd = "if [ ! -f $singuPath/{$imageName}.simg ]; then singularity pull --name {$imageName}.simg $img; fi";
                 if ($singu_save == "true"){
-                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && rm -f {$imageName}.simg && $shubCmd";
+                    $cmd = "mkdir -p $singuPath && cd $singuPath && rm -f {$imageName}.simg && $shubCmd";
                 } else {
-                    $cmd = "mkdir -p $singuPath/.dolphinnext/singularity && cd $singuPath/.dolphinnext/singularity && $shubCmd";
+                    $cmd = "mkdir -p $singuPath && cd $singuPath && $shubCmd";
                 }
                 return $cmd;
             }
@@ -459,8 +459,10 @@ class dbfuncs {
             $nextVerText = "export NXF_VER=$nextVer";
         }
         $nextANSILog = "export NXF_ANSI_LOG=false";
-        //combine pre-run cmd
-        $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $imageCmd , $initImageCmd);
+        // set NXF_SINGULARITY_CACHEDIR as $HOME/.dolphinnext/singularity, if it is not defined.
+        $singu_cachedir = 'NXF_SINGULARITY_CACHEDIR="\\${NXF_SINGULARITY_CACHEDIR:-\\$HOME/.dolphinnext/singularity}" && export NXF_SINGULARITY_CACHEDIR=\\$NXF_SINGULARITY_CACHEDIR';
+        // combine pre-run cmd
+        $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd , $initImageCmd);
         $preCmd="";
         for ($i=0; $i<count($arr); $i++) {
             if (!empty($arr[$i]) && !empty($preCmd)){
@@ -699,11 +701,11 @@ class dbfuncs {
         }
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $singu_cache = $cluDataArr[0]["singu_cache"];
-        $singuPath = '//$HOME';
+        $singuPath = '//$NXF_SINGULARITY_CACHEDIR';
         if ($profileType == "amazon"){
             $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
             $amzDataArr=json_decode($amzData,true);
-            $singuPath = $amzDataArr[0]["shared_storage_mnt"]; // /mnt/efs
+            $singuPath = $amzDataArr[0]["shared_storage_mnt"].'/.dolphinnext/singularity'; // /mnt/efs
         }
         if (!empty($singu_cache)){
             $singuPath = $singu_cache;
@@ -711,11 +713,11 @@ class dbfuncs {
         preg_match("/shub:\/\/(.*)/", $initialrun_img, $matches);
         if (!empty($matches[1])){
             $imageName = str_replace("/","-",$matches[1]);
-            $image = $singuPath.'/.dolphinnext/singularity/'.$imageName.'.simg';
+            $image = $singuPath.'/'.$imageName.'.simg';
         } else if (preg_match("/http:/i",$initialrun_img) || preg_match("/https:/i",$initialrun_img) || preg_match("/ftp:/i",$initialrun_img)){
             $imageNameAr = explode('/',$initialrun_img);
             $imageName=$imageNameAr[count($imageNameAr)-1];
-            $image = $singuPath.'/.dolphinnext/singularity/'.$imageName;
+            $image = $singuPath.'/'.$imageName;
         }
         $configText = "//Process Config\nprocess.container = '$image'\n"."singularity.enabled = true\n".$configTextClean;
 
