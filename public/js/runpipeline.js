@@ -7822,7 +7822,7 @@ $(document).ready(function () {
                     filename = split[split.length - 1];
                     dir = filePath.substring(0, filePath.indexOf(filename));
                 }
-                console.log(dir )
+                console.log(dir)
                 var fileid = $(this).attr("fileid");
                 var pubWebPath = $("#basepathinfo").attr("pubweb");
                 var debrowserUrl = $("#basepathinfo").attr("debrowser");
@@ -8830,6 +8830,7 @@ $(document).ready(function () {
                     cache: false,
                     success: function (results) {
                         res = results
+                        
                     },
                     error: function (errorThrown) {
                         console.log("##Error: ");

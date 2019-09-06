@@ -675,7 +675,7 @@ class dbfuncs {
         $configText = $this->getProcessParams($proVarObj, $configText);
         return $configText;
     }
-    
+
     function getProcessParams($proVarObj, $configText){
         $checkVarObj = (array)$proVarObj;
         if (!empty($checkVarObj)) {
@@ -810,7 +810,8 @@ class dbfuncs {
         $zip_file_public= "{$this->base_path}/tmp/git/$ownerID/$dir_name.zip";
         if (!file_exists($gitDir)) {
             mkdir($gitDir, 0755, true);
-        }   
+        }
+        system('rm -f ' . escapeshellarg("$zip_file"), $retval);
         //create empty git repo folder
         if (!file_exists($repoDir)) {
             mkdir($repoDir, 0755, true);
@@ -926,40 +927,44 @@ class dbfuncs {
         return $configText;
     }
 
-    //nextflow config might have multiple files(@config tag separated). Use createMultiConfig function to parse and save into run folder
+    //nextflow config tag and label separated: ~@:~@~:"filename"~@:~text
+    //Use createMultiConfig function to parse and save into run folder
     function createMultiConfig($dir, $allConf){
-        $allConf = trim($allConf);
-        $lines = explode("\n", $allConf);
         $publishDir = $dir;
-        $filename = "nextflow.config";
-        $this->createDirFile ($publishDir, $filename, "w", ""); //empty file
-        $newPath = "false"; //Check if lines belongs to @config tag
-        for ($i = 0; $i < count($lines); $i++) {
-            $newConfText = "";
-            if (preg_match("/\/\/\*/i",$lines[$i]) && preg_match("/@config:/i",$lines[$i]) && $newPath == "false"){
-                //initiate sub config
-                $newPath = "true";
-                preg_match("/@config:[\"|'](.*)[\"|']/i",$lines[$i], $match);
-                if (!empty($match[1])){
-                    $publishDir = $dir."/".$match[1];
-                    $block = explode("/", $publishDir);
-                    $filename = end($block);
-                    //remove last item and join with "/"
-                    array_pop($block);
-                    $publishDir = join("/",$block);
-                    $this->createDirFile ($publishDir, $filename, "w", ""); //empty file
-
-                }
-            } else if (trim($lines[$i]) == "//*"  && $newPath == "true"){
-                //end of sub config
-                $newPath = "false";
-                $publishDir = $dir;
+        //if empty or null, then show as empty nextflow.config
+        if (empty($allConf)){
+            $filename = "nextflow.config";
+            $this->createDirFile ($publishDir, $filename, "w", "");
+        } else {
+            $sep    = "~@:~";
+            $lines = explode($sep, $allConf);
+            $filename = "";
+            $checkLabel = "false";
+            for ($i = 0; $i < count($lines); $i++) {
+                if (preg_match("/@~:\"(.*)\"/",$lines[$i])){
+                    //initiate sub config
+                    preg_match("/@~:\"(.*)\"/",$lines[$i], $match);
+                    if (!empty($match[1])){
+                        $publishDir = $dir."/".$match[1];
+                        $block = explode("/", $publishDir);
+                        $filename = end($block);
+                        //remove last item and join with "/"
+                        array_pop($block);
+                        $publishDir = join("/",$block);
+                        $this->createDirFile ($publishDir, $filename, "w", $lines[$i+1]); //empty file
+                        $checkLabel = "true";
+                        continue;
+                    }
+                } 
+            }
+            //if header info is not found, then show as nextflow.config
+            if ($checkLabel == "false"){
                 $filename = "nextflow.config";
-            } else {
-                $this->createDirFile ($publishDir, $filename, "a", $lines[$i]."\n");
+                $this->createDirFile ($dir, $filename, "w", $allConf); //empty file
             }
         }
     }
+
 
     function initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $s3configFileDir, $ownerID){
         //create files and folders
