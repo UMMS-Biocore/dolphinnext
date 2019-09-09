@@ -171,7 +171,7 @@ function startzoom() {
 $('#editorPipeHeader').keyup(function () {
     autosave();
 });
-$('#editorPipeConfig').keyup(function () {
+$('#pipelineFiles').keyup(function () {
     autosave();
 });
 $('#editorPipeFooter').keyup(function () {
@@ -2179,7 +2179,8 @@ function save() {
         Mainx = Maint.translate[0]
     Mainy = Maint.translate[1]
     Mainz = Maint.scale[0]
-    var svgW = $("#container").width();
+    //$("#container").width(); //not working for inactive tab
+    var svgW = $("#pipeTabDiv").width() - 32; //container div is 32px smaller than pipeTabDiv
     var svgH = $("#container").height();
     sName = document.getElementById("pipeline-title").value;
     warnUserRedBorder('#pipeline-title', sName)
