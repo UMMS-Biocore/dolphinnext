@@ -1716,7 +1716,7 @@ function createMultiConfig(allConf){
     } else {
         allConf=decodeHtml(allConf)
         var checkLabel = false;
-        var sep    = "//~@:~\n";
+        var sep    = "//~@:~";
         var confAr = allConf.split(sep)
         var filename = "";
         for (var i = 0; i < confAr.length; i++) {
@@ -1739,7 +1739,7 @@ function createMultiConfig(allConf){
 
 function combineTextEditor(divID){
     var ret = "";
-    var sep    = "//~@:~\n";
+    var sep    = "//~@:~";
     var label  = "@~:";
     var liAr = $("#fileListDiv_"+divID).find("li");
     for (var i = 0; i < liAr.length; i++) {
