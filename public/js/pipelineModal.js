@@ -1747,7 +1747,7 @@ function combineTextEditor(divID){
         var editorID = $(liAr[i]).attr("editorID");
         if (editorID && filename){
             var script = window[editorID].getValue();
-            ret += sep + label + '"'+filename+'"' + sep +script
+            ret += sep + label + '"'+filename+'"' + sep +script + sep
         }
     }
     return encodeURIComponent(ret)

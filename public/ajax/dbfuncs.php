@@ -930,11 +930,10 @@ class dbfuncs {
     //nextflow config tag and label separated: //~@:~@~:"filename"//~@:~text
     //Use createMultiConfig function to parse and save into run folder
     function createMultiConfig($dir, $allConf){
-        $publishDir = $dir;
         //if empty or null, then show as empty nextflow.config
         if (empty($allConf)){
             $filename = "nextflow.config";
-            $this->createDirFile ($publishDir, $filename, "w", "");
+            $this->createDirFile ($dir, $filename, "w", "");
         } else {
             $sep    = "//~@:~";
             $lines = explode($sep, $allConf);
@@ -955,7 +954,13 @@ class dbfuncs {
                         $checkLabel = "true";
                         continue;
                     }
-                } 
+                } else {
+                    //getMainRunConfig might append or prepend config text.
+                    if ($i == 0 || $i == count($lines)-1 ){
+                        $filename = "nextflow.config";
+                        $this->createDirFile ($dir, $filename, "a", $lines[$i]);
+                    }
+                }
             }
             //if header info is not found, then show as nextflow.config
             if ($checkLabel == "false"){
