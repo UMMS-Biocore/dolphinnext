@@ -950,7 +950,11 @@ class dbfuncs {
                         //remove last item and join with "/"
                         array_pop($block);
                         $publishDir = join("/",$block);
-                        $this->createDirFile ($publishDir, $filename, "w", $lines[$i+1]); //empty file
+                        $writeType = "w";
+                        if ($filename == "nextflow.config"){
+                            $writeType = "a";
+                        }
+                        $this->createDirFile ($publishDir, $filename, $writeType, $lines[$i+1]); //empty file
                         $checkLabel = "true";
                         continue;
                     }
