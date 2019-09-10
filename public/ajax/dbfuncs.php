@@ -942,7 +942,7 @@ class dbfuncs {
                 if (preg_match("/@~:\"(.*)\"/",$lines[$i])){
                     //initiate sub config
                     preg_match("/@~:\"(.*)\"/",$lines[$i], $match);
-                    if (!empty($match[1])){
+                    if (!empty($match[1]) && isset($lines[$i+1])){
                         $publishDir = $dir."/".$match[1];
                         $block = explode("/", $publishDir);
                         $filename = end($block);
