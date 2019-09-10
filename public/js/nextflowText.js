@@ -152,9 +152,22 @@ function getMergedProcessList() {
     return proList
 }
 
+//takes edges array and replaces nodes that defined in nullIDList and return same array
+function replaceNullIDEdges(edges){
+    for (var i = 0; i < edges.length; ++i) {
+        var firstNode = "";
+        var secNode = "";
+        [firstNode, secNode] = splitEdges(edges[i]);
+        if (nullIDList[firstNode]) {
+            edges[i] = nullIDList[firstNode] + "_" + secNode;
+        } else if (nullIDList[secNode]){
+            edges[i] = firstNode + "_" + nullIDList[secNode];
+        }
+    }
+    return edges
+}
 //merge Edges for each pipelineModule type=main or all
 function getMergedEdges(type) {
-    var edgesFinal = [];
     if (type === "main") {
         var edges = getMainEdges(window);
         for (var p = 0; p < piGnumList.length; p++) {
@@ -173,8 +186,9 @@ function getMergedEdges(type) {
             }
             edges = edges.concat(tmpEdgesFinal);
         }
-
     }
+    //replace edges if the found in the nullIDList
+    edges = replaceNullIDEdges(edges)
     return edges
 }
 
@@ -203,6 +217,8 @@ function sortProcessList(processList, gnumList) {
     var mainEdgeList = getMergedEdges("main");
     //replace process nodes with ccID's for pipeline modules
     var mainEdges = checkCopyId(mainEdgeList);
+    mainEdges = replaceNullIDEdges(mainEdges)
+
     if (gnumList == null) {
         var sortGnum = [];
     } else {
@@ -295,59 +311,92 @@ function sortProcessList(processList, gnumList) {
     return { processList: sortProcessList, gnumList: sortGnum };
 }
 
-// gnum numbers used for process header.  gNum="pipe" is used for pipeline header
-function getNewScriptHeader(script_header, process_opt, gNum) {
-    var newScriptHeader = "";
-    var lines = script_header.split('\n');
-    for (var i = 0; i < lines.length; i++) {
-        var varName = null;
-        // check if process opt is defined in line
-        var pattern = /(.*)=(.*)\/\/\*(.*)/;
-        var re = new RegExp(pattern);
-        var checkParam = lines[i].match(re);
-        if (checkParam && checkParam[0] && checkParam[1]) {
-            var checkArrFill = false;
-            var newLine = "";
-            var varName = $.trim(checkParam[1]);
-            var oldDefVal = $.trim(checkParam[2]);
-            var quoteType = "";
-            if (oldDefVal[0] === "'") {
-                quoteType = "'";
-            } else if (oldDefVal[0] === '"') {
-                quoteType = '"';
-            }
+function getNewLocalVarLine (line, process_opt, gNum, varName, quoteType, pattern, tmpParams){
+    var checkArrFill = false;
+    if (process_opt && gNum){
+        if (process_opt[gNum]){
             //check if varName_indx is defined in eachProcessOpt for form arrays
             //then fill as array format
             var re = new RegExp(varName + "_ind" + "(.*)$", "g");
             var filt_keys = filterKeys(process_opt[gNum], re);
             var num_filt_keys = parseInt(filt_keys.length);
-            if (num_filt_keys != 0) {
+            if (num_filt_keys > 0) {
                 var fillValArray = [];
                 for (var k = 0; k < num_filt_keys; k++) {
                     fillValArray.push(process_opt[gNum][filt_keys[k]]);
                 }
                 var fillVal = "[" + quoteType + fillValArray.join(quoteType + "," + quoteType) + quoteType + "]";
                 fillVal = fillVal.replace(/(\r\n|\n|\r)/gm, "\\n");
-                var newLine = lines[i].replace(pattern, varName + ' = ' + fillVal + ' //*' + '$3' + '\n');
-                newScriptHeader += newLine;
+                var newLine = line.replace(pattern, tmpParams + ' = ' + fillVal + ' //*' + '$3' );
+                return  newLine;
                 checkArrFill = true;
             }
-            //fill original format in not filled as array format
+            //fill original format when not filled as array format
             if (!checkArrFill) {
-                if (process_opt[gNum][varName]) {
+                if (process_opt[gNum][varName] != undefined) {
                     var fillVal = process_opt[gNum][varName];
+                    //if integer is entered blank, make it empty string
+                    if (fillVal === "" && quoteType === ""){
+                        quoteType = '"';
+                    }
                     fillVal = fillVal.replace(/(\r\n|\n|\r)/gm, "\\n");
-                    var newLine = lines[i].replace(pattern, '$1' + ' = ' + quoteType + fillVal + quoteType + ' //*' + '$3' + '\n');
-                    newScriptHeader += newLine;
-                } else {
-                    newScriptHeader += lines[i] + "\n";
-                }
+                    var newLine = line.replace(pattern, tmpParams + ' = ' + quoteType + fillVal + quoteType + ' //*' + '$3' );
+                    return newLine;
+                } 
             }
-        } else {
-            newScriptHeader += lines[i] + "\n";
+        } 
+    } 
+    //replace new line with tmpParams
+    var newLine = line.replace(pattern, tmpParams + ' = ' + '$2' + ' //*' + '$3' );
+    return newLine;
+}
+
+// gnum numbers used for process header.  gNum="pipe" is used for pipeline header
+function getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName) {
+    if (script_header.match(/\/\/\*/) ) {
+        var newScriptHeader = "";
+        var lines = script_header.split('\n');
+        for (var i = 0; i < lines.length; i++) {
+            var varName = null;
+            // check if process opt is defined in line
+            var pattern = /(.*)=(.*)\/\/\*(.*)/;
+            var re = new RegExp(pattern);
+            var checkParam = lines[i].match(re);
+            if (checkParam && checkParam[0] && checkParam[1]) {
+                var checkArrFill = false;
+                var newLine = "";
+                var varName = $.trim(checkParam[1]);
+                var oldDefVal = $.trim(checkParam[2]);
+                var quoteType = '';
+                if (oldDefVal[0] === "'") {
+                    quoteType = "'";
+                } else if (oldDefVal[0] === '"') {
+                    quoteType = '"';
+                } else if (oldDefVal[0] === '[') {
+                    quoteType = '"';
+                }
+                if (!varName.match(/^params\./) && mergedProcessName){
+                    var tmpParams = "params."+mergedProcessName+"."+varName;
+                    newLine = getNewLocalVarLine (lines[i], process_opt, gNum, varName, quoteType, pattern, tmpParams);
+                    newScriptHeader +=  varName + " = "+ tmpParams + "\n";  
+                    if (!window["processVarObj"][mergedProcessName]){
+                        window["processVarObj"][mergedProcessName] ={}
+                    }
+                    window["processVarObj"][mergedProcessName][varName] =newLine
+
+                } else {
+                    newLine  = getNewLocalVarLine (lines[i], process_opt, gNum, varName, quoteType, pattern, varName);
+                    newScriptHeader +=  newLine + "\n";                                               
+
+                }
+
+            } else {
+                newScriptHeader += lines[i] + "\n";
+            }
         }
+        return newScriptHeader
     }
-    return newScriptHeader
+    return script_header
 }
 
 // in case error occured, use recursiveCounter to stop recursive loop
@@ -371,14 +420,31 @@ function recursiveSort(sortedProcessList, initGnumList) {
 
 
 function createNextflowFile(nxf_runmode, uuid) {
+    //keep process specific (local) variable info (which doesn't start with params.)
+    window["processVarObj"]={} // it will be appended to the nextflow.config file 
     var run_uuid = uuid || false; //default false
     nextText = "";
     createPiGnumList();
     if (nxf_runmode === "run") {
+        var chooseEnv = $('#chooseEnv option:selected').val();
         var hostname = $('#chooseEnv').find('option:selected').attr('host');
         if (hostname) {
             nextText += '$HOSTNAME = "' + hostname + '"\n';
+        }  
+        if (chooseEnv) {
+            var patt = /(.*)-(.*)/;
+            var proType = chooseEnv.replace(patt, '$1');
+            var proId = chooseEnv.replace(patt, '$2');
+            var profileVar = getValues({ p: "getProfileVariables", proType: proType, id:proId  });
+            if (profileVar){
+                if (profileVar[0]){
+                    if (profileVar[0].variable){
+                        nextText += decodeHtml(profileVar[0].variable) + '\n';
+                    }
+                }
+            }
         }
+
         var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
         if (publish_dir_check === "true") {
             var output_dir = $('#publish_dir').val();
@@ -396,7 +462,8 @@ function createNextflowFile(nxf_runmode, uuid) {
         //get all the proPipeInputs to check glob(*,?{,} characters)
         var getProPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
     } else {
-        nextText = "params.outdir = 'results' " + " \n\n";
+        nextText += '$HOSTNAME = ""\n';
+        nextText += "params.outdir = 'results' " + " \n\n";
         var getProPipeInputs = null;
     }
 
@@ -404,11 +471,7 @@ function createNextflowFile(nxf_runmode, uuid) {
     var header_pipe_script = "";
     var footer_pipe_script = "";
     [header_pipe_script, footer_pipe_script] = getPipelineScript(pipeline_id);
-    if (process_opt != undefined && process_opt != null) {
-        if (header_pipe_script.match(/\/\/\*/) && process_opt["pipe"]) {
-            header_pipe_script = getNewScriptHeader(header_pipe_script, process_opt, "pipe");
-        }
-    }
+    header_pipe_script = getNewScriptHeader(header_pipe_script, process_opt, "pipe", "pipeline");
     nextText += header_pipe_script + "\n";
 
     iniTextSecond = ""
@@ -423,9 +486,13 @@ function createNextflowFile(nxf_runmode, uuid) {
     var allEdgesList = getMergedEdges("all");
     //replace process nodes with ccID's for pipeline modules
     var allEdges = checkCopyId(allEdgesList);
+    allEdges = replaceNullIDEdges(allEdges)
+
     var mainPipeEdgesList = edges.slice();
-    //replace process nodes with ccID's for pipeline modules
+    //replace process nodes with ccID's for main pipeline edge list
     var mainPipeEdges = checkCopyId(mainPipeEdgesList);
+    mainPipeEdges = replaceNullIDEdges(mainPipeEdges)
+
 
     //initial input data added
     for (var i = 0; i < sortedProcessList.length; i++) {
@@ -456,15 +523,15 @@ function createNextflowFile(nxf_runmode, uuid) {
             var script_footer = "";
 
             [body, script_header, script_footer] = IOandScriptForNf(mainProcessId, sortedProcessList[k], allEdges, nxf_runmode, run_uuid, mainPipeEdges);
-            // add process options after the process script_header to overwite them
-            if (nxf_runmode === "run" && process_opt) {
-                //check if parameter comment  //* and process_opt[gNum] are exist:
-                if (script_header.match(/\/\/\*/) && process_opt[gNum]) {
-                    script_header = getNewScriptHeader(script_header, process_opt, gNum);
-                }
-            }
             var mergedProcessList = getMergedProcessList();
-            proText = script_header + "\nprocess " + mergedProcessList[sortedProcessList[k]].replace(/ /g, '_') + " {\n\n" + publishDir(mainProcessId, sortedProcessList[k], mainPipeEdges) + body + "\n}\n" + script_footer + "\n"
+            var mergedProcessName = mergedProcessList[sortedProcessList[k]].replace(/ /g, '_');
+            // add process options after the process script_header to overwite them
+            //check if parameter comment  //* and process_opt[gNum] are exist:
+            script_header = getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName);
+            body = getNewScriptHeader(body, process_opt, gNum, mergedProcessName);
+
+
+            proText = script_header + "\nprocess " + mergedProcessName + " {\n\n" + publishDir(mainProcessId, sortedProcessList[k], mainPipeEdges) + body + "\n}\n" + script_footer + "\n"
             nextText += proText;
         }
     };
@@ -561,17 +628,18 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                         var sNodeProId = inputIdSplit[1];
                         var inputParAll = getValues({ p: "getInputsPP", "process_id": sNodeProId });
                         var inputParMate = inputParAll.filter(function (el) { return el.sname == "mate" }).length
-                    }
+                        }
+
                     firstPartTemp = 'if (!params.' + inputParamName + '){params.' + inputParamName + ' = ""} \n'
                     if (qual === "file") {
                         if (checkRegex === false) {
                             var chanList = channelNameAll.split(";");
                             for (var e = 0; e < chanList.length; e++) {
-                                secPartTemp += chanList[e] + " = " + "file(params." + inputParamName + ") \n";
+                                secPartTemp += chanList[e] + " = " + "file(params." + inputParamName + ", type: 'any') \n";
                             }
 
                         } else if (checkRegex === true) {
-                            secPartTemp = "Channel.fromPath(params." + inputParamName + ")" + channelSetInto + "\n";
+                            secPartTemp = "Channel.fromPath(params." + inputParamName + ", type: 'any')" + channelSetInto + "\n";
                         }
                         //if mate defined in process use fromFilePairs
                     } else if (qual === "set" && inputParMate > 0) {
@@ -579,10 +647,12 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
                     }
                     //if mate not defined in process use fromPath
                     else if (qual === "set" && inputParMate === 0) {
+                        //if val(name), file(read) format -> turn into set input
                         if (connectedNodeName.match(/.*val\(.*\).*file\(.*\).*/)) {
-                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ").map{ file -> tuple(file.baseName, file) } \n"
+                            secPartTemp = "Channel.fromPath(params." + inputParamName + ", type: 'any').map{ file -> tuple(file.baseName, file) }"+channelSetInto+"\n"
+                            //or other formats eg. file(fastq1), file(fastq2), file(fastq3)    
                         } else {
-                            secPartTemp = channelNameAll + " = " + "Channel.fromPath(params." + inputParamName + ").toSortedList() \n"
+                            secPartTemp = "Channel.fromPath(params." + inputParamName + ", type: 'any').toSortedList()"+channelSetInto+"\n";
                         }
                     } else if (qual === "val") {
                         secPartTemp = "Channel.value(params." + inputParamName + ")" + channelSetInto + "\n"
@@ -637,6 +707,12 @@ function getPublishDirRegex(outputName) {
     return outputName;
 }
 
+
+
+//publishDir params.outdir, overwrite: true, mode: 'copy',
+//	saveAs: {filename ->
+//	if (filename =~ /${basedir}\/${newDirName}\/$/) "star_build_index/$filename"
+//}
 function publishDir(id, currgid, mainPipeEdges) {
     oText = ""
     var closePar = false
@@ -648,56 +724,61 @@ function publishDir(id, currgid, mainPipeEdges) {
                 var fNode = "";
                 var sNode = "";
                 [fNode, sNode] = splitEdges(mainPipeEdges[e]);
+                var sNode_Split = sNode.split("-")
+                var sNode_paramData = parametersData.filter(function (el) { return el.id == sNode_Split[3] })[0]
+                var sNode_qual = sNode_paramData.qualifier
                 //publishDir Section
-                if (fNode.split("-")[1] === "outPro" && closePar === false) {
-                    closePar = true
-                    //outPro node : get userEntryId and userEntryText
-                    var parId = fNode.split("-")[4]
-                    var userEntryId = "text-" + fNode.split("-")[4]
-                    outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
-                    reg_ex = document.getElementById(oId).getAttribute("reg_ex");
-                    if (reg_ex !== "" && reg_ex !== null) {
-                        reg_ex = decodeHtml(reg_ex);
-                        if (reg_ex.length > 0) {
-                            var lastLetter = reg_ex.length - 1;
-                            if (reg_ex[0] === "\/" && reg_ex[lastLetter] === "\/") {
-                                outputName = reg_ex;
-                            } else {
-                                outputName = "\/" + reg_ex + "\/";
+                if (fNode.split("-")[1] === "outPro" && sNode_qual != "val") {
+                    if (closePar === false) {
+                        closePar = true
+                        //outPro node : get userEntryId and userEntryText
+                        var parId = fNode.split("-")[4]
+                        var userEntryId = "text-" + fNode.split("-")[4]
+                        outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
+
+                        reg_ex = document.getElementById(oId).getAttribute("reg_ex");
+                        if (reg_ex !== "" && reg_ex !== null) {
+                            reg_ex = decodeHtml(reg_ex);
+                            if (reg_ex.length > 0) {
+                                var lastLetter = reg_ex.length - 1;
+                                if (reg_ex[0] === "\/" && reg_ex[lastLetter] === "\/") {
+                                    outputName = reg_ex;
+                                } else {
+                                    outputName = "\/" + reg_ex + "\/";
+                                }
                             }
+
+                        } else {
+                            outputName = document.getElementById(oId).getAttribute("name")
+                            outputName = "/" + getPublishDirRegex(outputName) + "/";
+
                         }
-
-                    } else {
-                        outputName = document.getElementById(oId).getAttribute("name")
-                        outputName = "/" + getPublishDirRegex(outputName) + "/";
-
-                    }
-                    oText = "publishDir params.outdir, mode: 'copy',\n\tsaveAs: {filename ->\n"
-                    tempText = "\tif \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
-                    // if (filename =~ /^path.8.fastq$/) filename
-                    oText = oText + tempText
-                } else if (fNode.split("-")[1] === "outPro" && closePar === true) {
-                    reg_ex = document.getElementById(oId).getAttribute("reg_ex");
-                    if (reg_ex !== "" && reg_ex !== null) {
-                        reg_ex = decodeHtml(reg_ex);
-                        if (reg_ex.length > 0) {
-                            var lastLetter = reg_ex.length - 1;
-                            if (reg_ex[0] === "\/" && reg_ex[lastLetter] === "\/") {
-                                outputName = reg_ex;
-                            } else {
-                                outputName = "\/" + reg_ex + "\/";
+                        oText = "publishDir params.outdir, overwrite: true, mode: 'copy',\n\tsaveAs: {filename ->\n"
+                        tempText = "\tif \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
+                        // if (filename =~ /^path.8.fastq$/) filename
+                        oText = oText + tempText
+                    } else if (closePar === true) {
+                        reg_ex = document.getElementById(oId).getAttribute("reg_ex");
+                        if (reg_ex !== "" && reg_ex !== null) {
+                            reg_ex = decodeHtml(reg_ex);
+                            if (reg_ex.length > 0) {
+                                var lastLetter = reg_ex.length - 1;
+                                if (reg_ex[0] === "\/" && reg_ex[lastLetter] === "\/") {
+                                    outputName = reg_ex;
+                                } else {
+                                    outputName = "\/" + reg_ex + "\/";
+                                }
                             }
+                        } else {
+                            outputName = document.getElementById(oId).getAttribute("name")
+                            outputName = "/" + getPublishDirRegex(outputName) + "/";
                         }
-                    } else {
-                        outputName = document.getElementById(oId).getAttribute("name")
-                        outputName = "/" + getPublishDirRegex(outputName) + "/";
+                        var parId = fNode.split("-")[4]
+                        var userEntryId = "text-" + fNode.split("-")[4]
+                        outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
+                        tempText = "\telse if \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
+                        oText = oText + tempText
                     }
-                    var parId = fNode.split("-")[4]
-                    var userEntryId = "text-" + fNode.split("-")[4]
-                    outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
-                    tempText = "\telse if \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
-                    oText = oText + tempText
-
                 }
             }
         }
@@ -705,7 +786,7 @@ function publishDir(id, currgid, mainPipeEdges) {
     if (closePar === true) {
         oText = oText + "}\n\n";
         if (outputName === '' && reg_ex === "") {
-            oText = "publishDir \"${params.outdir}/" + outParUserEntry + "\", mode: 'copy'\n\n";
+            oText = "publishDir \"${params.outdir}/" + outParUserEntry + "\", overwrite: true, mode: 'copy'\n\n";
         }
         closePar = false
     }
@@ -714,17 +795,15 @@ function publishDir(id, currgid, mainPipeEdges) {
 }
 
 function getPipelineScript(pipeline_id) {
+    var script_pipe_footer = "";
+    var script_pipe_header = "";
     var pipelineData = getValues({ p: "loadPipeline", "id": pipeline_id });
     if (pipelineData[0] && pipelineData[0].script_pipe_header !== null) {
-        var script_pipe_header = decodeHtml(pipelineData[0].script_pipe_header);
-    } else {
-        var script_pipe_header = "";
-    }
+        script_pipe_header = decodeHtml(pipelineData[0].script_pipe_header);
+    } 
     if (pipelineData[0] && pipelineData[0].script_pipe_footer !== null) {
-        var script_pipe_footer = decodeHtml(pipelineData[0].script_pipe_footer);
-    } else {
-        var script_pipe_footer = "";
-    }
+        script_pipe_footer = decodeHtml(pipelineData[0].script_pipe_footer);
+    } 
     return [script_pipe_header, script_pipe_footer]
 }
 
@@ -754,8 +833,7 @@ function getOptionalInText(optionalInAr, optionalInNameAr) {
         } else {
             inputNameOptional = $.trim(inputName);
         }
-        console.log(inputNameOptional)
-        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(file('" + inputNameOptional + "')) \n";
+        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(file('" + inputNameOptional + "', type: 'any')) \n";
     }
     return optText
 }
@@ -789,13 +867,13 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
                 for (var k = 0; k < tmp.length; k++) {
                     whenText += $.trim(tmp[k]) + " = Channel.empty()\n";
                 }
-        } else {
-            whenText += tmp + " = Channel.empty()\n";
+            } else {
+                whenText += tmp + " = Channel.empty()\n";
+            }
         }
+        whenText += "} else {";
     }
-    whenText += "} else {";
-}
-return whenText
+    return whenText
 }
 
 function addChannelName(whenCond, whenLib, file_type, channelName, param_name, qual) {
@@ -837,7 +915,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         script = script.substring(1, script.length - 1); //remove first and last duble quote
     }
     //insert """ for script if not exist
-    if (script.search('"""') === -1 && script.search('\'\'\'') === -1) {
+    if (script.search('"""') === -1 && script.search('\'\'\'') === -1 && script.search('when:') === -1 && script.search('script:') === -1 && script.search('shell:') === -1 && script.search('exec:') === -1) {
         script = '"""\n' + script + '\n"""'
     }
     bodyInput = ""
@@ -853,7 +931,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                 var mainPipeOutNodeId = mainPipeOut[0];
                 var fNo = "";
                 var sNo = "";
-            [fNo, sNo] = splitEdges(mainPipeOutNodeId);
+                [fNo, sNo] = splitEdges(mainPipeOutNodeId);
                 if (fNo.split("-")[1] === "outPro") {
                     var parId = fNo.split("-")[4]
                     var userEntryId = "text-" + fNo.split("-")[4]
@@ -962,7 +1040,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
             if (allEdges[c].indexOf(Oid) == 0) {
                 var fNode = "";
                 var secNode = "";
-                    [fNode, secNode] = splitEdges(allEdges[c]);
+                [fNode, secNode] = splitEdges(allEdges[c]);
                 var secProType = secNode.split("-")[1];
                 if (secProType !== "outPro") {
                     if (channelNameAll === "") {
@@ -974,7 +1052,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
             } else if (allEdges[c].indexOf(Oid) > 0) {
                 var fstNode = "";
                 var secNode = "";
-                    [fstNode, secNode] = splitEdges(allEdges[c]);
+                [fstNode, secNode] = splitEdges(allEdges[c]);
                 var fstProType = fstNode.split("-")[1];
                 if (fstProType !== "outPro") {
                     if (channelNameAll === "") {

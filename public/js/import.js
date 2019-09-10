@@ -196,7 +196,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
         importJSONcp = removeSpecific(importJSONcp)
         dbJSONcp = removeSpecific(dbJSONcp)
         checkObj2 = keyChecker(["nodes", "edges", "mainG"], importJSONcp, dbJSONcp)
-        checkObj = keyChecker(["summary", "script_pipe_footer", "script_pipe_header", "name"], importJSON, dbJSON)
+        checkObj = keyChecker(["summary", "script_pipe_footer", "script_pipe_header", "script_pipe_config", "name"], importJSON, dbJSON)
         jQuery.extend(checkObj, checkObj2);
     }
     return checkObj;
@@ -504,10 +504,12 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
             importJSON.summary = switchHostSpecific(importJSON.summary, dbJSON.summary)
             importJSON.script_pipe_footer = switchHostSpecific(importJSON.script_pipe_footer, dbJSON.script_pipe_footer)
             importJSON.script_pipe_header = switchHostSpecific(importJSON.script_pipe_header, dbJSON.script_pipe_header)
+            importJSON.script_pipe_config = switchHostSpecific(importJSON.script_pipe_config, dbJSON.script_pipe_config)
         } else {
             importJSON.summary = removePlatform(importJSON.summary)
             importJSON.script_pipe_footer = removePlatform(importJSON.script_pipe_footer)
             importJSON.script_pipe_header = removePlatform(importJSON.script_pipe_header)
+            importJSON.script_pipe_config = removePlatform(importJSON.script_pipe_config)
         }
         sendJSON.id = ""; //modify later
         sendJSON.nodes = importJSON.nodes;
@@ -522,10 +524,11 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
         sendJSON.name = importJSON.name
         sendJSON.script_pipe_footer = importJSON.script_pipe_footer
         sendJSON.script_pipe_header = importJSON.script_pipe_header
+        sendJSON.script_pipe_config = importJSON.script_pipe_config
         sendJSON.summary = importJSON.summary
         sendJSON.script_mode_footer = importJSON.script_mode_footer
         sendJSON.script_mode_header = importJSON.script_mode_header
-        sendJSON.rev_comment = "imported";
+        sendJSON.rev_comment = importJSON.rev_comment;
         sendJSON.group_id = ""
         sendJSON.publish = ""
         sendJSON.pin = importJSON.pin
@@ -858,8 +861,9 @@ function decodeElement(type, importJSON) {
         importJSON.closure = decodeHtml(importJSON.closure)
         importJSON.reg_ex = decodeHtml(importJSON.reg_ex)
     } else if (type == "pipeline") {
-        importJSON.script_pipe_footer = removeDoubleQuote(decodeHtml(importJSON.script_pipe_footer));
-        importJSON.script_pipe_header = removeDoubleQuote(decodeHtml(importJSON.script_pipe_header));
+        importJSON.script_pipe_footer = decodeHtml(importJSON.script_pipe_footer);
+        importJSON.script_pipe_header = decodeHtml(importJSON.script_pipe_header);
+        importJSON.script_pipe_config = decodeHtml(importJSON.script_pipe_config);
         importJSON.summary = decodeHtml(importJSON.summary)
     }
     return importJSON
@@ -962,13 +966,14 @@ function encodeElement(type, importJSON, fileID) {
         importJSON.summary = encodeURIComponent(importJSON.summary)
         importJSON.script_pipe_footer = encodeURIComponent(importJSON.script_pipe_footer)
         importJSON.script_pipe_header = encodeURIComponent(importJSON.script_pipe_header)
+        importJSON.script_pipe_config = encodeURIComponent(importJSON.script_pipe_config)
         importJSON.edges = encodeEdges(importJSON.edges, fileID)
         importJSON.nodes = encodeNodes(importJSON.nodes, fileID)
         importJSON.mainG = JSON.parse(importJSON.mainG.replace(/'/gi, "\""))["mainG"];
         importJSON.pipeline_list = encodeProPipeList(importJSON.pipeline_list, fileID, "pipeline")
         importJSON.process_list = encodeProPipeList(importJSON.process_list, fileID, "process")
         var savedList = [];
-        var itemOrder = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publish", "script_pipe_header", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
+        var itemOrder = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publish", "script_pipe_header", "script_pipe_config", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
         for (var i = 0; i < itemOrder.length; i++) {
             var key = itemOrder[i];
             var tObj = {};

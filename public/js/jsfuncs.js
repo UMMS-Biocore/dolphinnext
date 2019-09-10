@@ -59,6 +59,7 @@ function filterObjKeys(obj, filter, type) {
     return keys;
 }
 
+
 //var filteredObj = filterObjVal(obj, "34")
 function filterObjVal(obj, filter) {
     var result = {};
@@ -101,15 +102,22 @@ function hideLoadingDiv(parentId) {
     $('#loading-image-' + parentId).remove();
 }
 
-
 //eg showInfoModal('#warnDelete','#warnDeleteText', text)
 function showInfoModal(modalId, textID, text) {
-    $(modalId).off();
-    $(modalId).on('show.bs.modal', function (event) {
-        $(this).find('form').trigger('reset');
-        $(textID).html(text);
-    });
-    $(modalId).modal('show');
+    //true if modal is open
+    if (($("#infoModal").data('bs.modal') || {}).isShown ){
+        var oldText = $(textID).html();
+        var newText = oldText + "<br/><br/>" +text;
+        $(textID).html(newText);
+    } else {
+        $(modalId).off();
+        $(modalId).on('show.bs.modal', function (event) {
+            $(this).find('form').trigger('reset');
+            $(textID).html(text);
+        });
+        $(modalId).modal('show'); 
+    }
+
 }
 
 
@@ -182,14 +190,24 @@ retryTimer = 5000;
 function checkAmazonStatus(proId) {
     var checkAmazonStatusLog = getValues({ p: "checkAmazonStatus", profileId: proId });
     console.log(checkAmazonStatusLog)
+    var logAmzStart = "";
+    var logAmzCloudList = "";
+    if (checkAmazonStatusLog.logAmzStart){
+        logAmzStart = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" data="amzLogStart" id="amzLogStart-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Log"><span><i class="fa fa-file-text-o"></i></span></a></button>'
+    }
+    if (checkAmazonStatusLog.logAmzCloudList){
+        logAmzCloudList = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" data="AmzCloudListLog" id="AmzCloudListLog-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Cloud List"><span><i class="fa fa-file-text-o"></i></span></a></button>'
+    }
+
+
     if (stopAmz && checkAmazonStatusLog.status !== "terminated") {
         window.modalRec['last_status_log_' + proId] = "Waiting for termination..";
-        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
+        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, 5500);
     } else if (checkAmazonStatusLog.status === "waiting") {
         window.modalRec['last_status_log_' + proId] = "Waiting for reply..";
-        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..');
+        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
@@ -200,7 +218,7 @@ function checkAmazonStatus(proId) {
         window.modalRec['last_status_' + proId] = checkAmazonStatusLog.status;
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> Initializing..');
+        $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> Initializing..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, 20000);
@@ -209,9 +227,9 @@ function checkAmazonStatus(proId) {
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'none');
         var tempLog = window.modalRec['last_status_log_' + proId]
         if (tempLog) {
-            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + tempLog);
+            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + tempLog + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         } else {
-            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ');
+            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         }
         clearInterval(window['interval_amzStatus_' + proId]);
         checkAmazonTimer(proId, retryTimer);
@@ -233,7 +251,7 @@ function checkAmazonStatus(proId) {
             var status = $('#chooseEnv').find(":selected").attr("status");
             if (status) {
                 if (chooseEnv === "amazon-" + proId && status !== "running") {
-                    loadRunOptions(); //used from runpipeline.js
+                    loadRunOptions("silent"); //used from runpipeline.js
                 }
             }
 
@@ -245,7 +263,7 @@ function checkAmazonStatus(proId) {
         }
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#status-' + proId).html('Running <br/>' + sshText);
+        $('#status-' + proId).html('Running <br/>' + sshText + "<p>" + logAmzStart + logAmzCloudList + "</p>");
         window.modalRec['last_status_log_' + proId] = 'Running <br/>' + sshText;
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
 
@@ -279,7 +297,7 @@ function checkAmazonStatus(proId) {
             if ((logTextStart.match(/error/i) && !logTextStart.match(/WARN: One or more errors/i)) || logTextStart.match(/denied/i) || logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
                 errorText = "(" + logTextStart + ")";
         }
-        $('#status-' + proId).html('Terminated <br/>' + errorText);
+        $('#status-' + proId).html('Terminated <br/>' + errorText );
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'inline');
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
@@ -287,9 +305,16 @@ function checkAmazonStatus(proId) {
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
         $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
     }
+    $('[data-toggle="tooltip"]').tooltip();
+    if (checkAmazonStatusLog.logAmzStart){
+        $('#amzLogStart-'+proId).data("logData", checkAmazonStatusLog.logAmzStart)
+    }
+    if (checkAmazonStatusLog.logAmzCloudList){
+        $('#AmzCloudListLog-'+proId).data("logData", checkAmazonStatusLog.logAmzCloudList)
+    }
 
+    // set autoshutdown counter
     var proAmzData = getValues({ p: "getProfileAmazon", id:proId });
-    console.log(proAmzData)
     var autoshutdown_check = proAmzData[0].autoshutdown_check;
     var autoshutdown_active = proAmzData[0].autoshutdown_active;
     var autoshutdown_date = proAmzData[0].autoshutdown_date;
@@ -297,8 +322,8 @@ function checkAmazonStatus(proId) {
 
     if (autoshutdown_check == "true" && autoshutdown_active == "true" && autoshutdown_date && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")){
         if (!window['countdown_' + proId]){
+            console.log("countdown_"+proId+"setInterval")
             window['elapsed_' + proId]  = 0;
-            //            $('#amzModal').modal('show');
             window['countdown_' + proId] = setInterval(function () {
                 window['elapsed_' + proId] ++;
                 var remaining = autoshutdown_date-window['elapsed_' + proId];
@@ -324,6 +349,9 @@ function checkAmazonStatus(proId) {
     }
 
 }
+
+
+
 
 function stopAmzByAjax(proId){
     var data = { "id": proId, "p": "stopProAmazon" };
@@ -389,6 +417,24 @@ $(document).ready(function () {
                 checkAmazonStatus(amzProfileId);
             }
         });
+        $(document).on('click', 'button[data=amzLogStart]', function (e) {
+            e.preventDefault();
+            var amzProfileId = $(this).attr("id").split("-")[1];
+            var logData = $('#amzLogStart-'+amzProfileId).data("logData")
+            if (logData.match(/Downloading nextflow dependencies(.*)Fetching EC2 prices/)){
+                logData = logData.replace(/Downloading nextflow dependencies(.*)Fetching EC2 prices/,'')
+            }
+            logData = logData.replace(/\n/g, '<br/>');
+            showInfoModal("#infoMod","#infoModText", logData)
+        });
+        $(document).on('click', 'button[data=AmzCloudListLog]', function (e) {
+            e.preventDefault();
+            var amzProfileId = $(this).attr("id").split("-")[1];
+            var logData = $('#AmzCloudListLog-'+amzProfileId).data("logData")
+            logData = logData.replace(/\n/g, '<br/>');
+            showInfoModal("#infoMod","#infoModText", logData)
+        });
+
 
     });
     function addAmzRow(id, name, executor, instance_type, image_id, subnet_id, autoshutdown_check, autoshutdown_active, autoshutdown_date, status, proAmzData) {
@@ -427,7 +473,9 @@ $(document).ready(function () {
         var clickedRowId = $(this).closest('tr').attr('id'); //local-20
         var patt = /(.*)-(.*)/;
         var proId = clickedRowId.replace(patt, '$2');
-
+        if (window['countdown_' + proId]){
+            window['countdown_' + proId] = null;
+        }
         //enter amazon details modal
         $('#addAmzNodeModal').off();
         $('#addAmzNodeModal').on('show.bs.modal', function (event) {
@@ -445,6 +493,8 @@ $(document).ready(function () {
             var data = {};
             var numNodes = $('#numNodes').val();
             var autoshutdown_check = $('#autoshut_check').is(":checked").toString();
+
+
             $('#shutdownLog-'+proId).empty();
             $('#shutdownTimer-'+proId).empty();
             if (autoshutdown_check == "true"){
@@ -493,6 +543,14 @@ $(document).ready(function () {
         var proId = clickedRowId.replace(patt, '$2');
         var data = { "id": proId, "p": "stopProAmazon" };
         stopAmzByAjax(proId);
+        if (window['countdown_' + proId]){
+            clearInterval(window['countdown_' + proId]);
+        }
+        $('#shutdownTimer-' + proId).text("");
+        //        window['countdown_' + proId] = null;
+        window['elapsed_' + proId] = 0;
+        $('#shutdownLog-'+proId).empty();
+        $('#shutdownTimer-'+proId).empty();
     });
 });
 
@@ -759,7 +817,11 @@ $inputText.each(function () {
 });
 
 function numberWithCommas(x) {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    if (typeof x !== 'undefined'){
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    } else {
+        return ""
+    }
 }
 
 
@@ -774,7 +836,11 @@ function tsvPercent(tsv) {
         var divider = currentline[1];
         tsvPercent += currentline[0] + "\t" + numberWithCommas(currentline[1]);
         for (var j = 2; j < currentline.length; j++) {
-            tsvPercent += "\t" + numberWithCommas(currentline[j]) + " (" + parseFloat(Math.round(currentline[j] / divider * 100 * 100) / 100).toFixed(2) + "%)";
+            if ($.isNumeric(divider) && $.isNumeric(currentline[j] / divider)){
+                tsvPercent += "\t" + numberWithCommas(currentline[j]) + " (" + parseFloat(Math.round(currentline[j] / divider * 100 * 100) / 100).toFixed(2) + "%)";
+            } else {
+                tsvPercent += "\t" + numberWithCommas(currentline[j]);
+            }
             if (currentline.length - 1 == j) {
                 tsvPercent += "\n"
             }
@@ -1092,17 +1158,7 @@ function downloadText(text, filename) {
     document.body.removeChild(element);
 }
 
-//use array of item to fill select element
-function fillArray2Select(arr, id, clean) {
-    if (clean === true) {
-        $(id).empty();
-    }
-    for (var i = 0; i < arr.length; i++) {
-        var param = arr[i];
-        var optionGroup = new Option(param, param);
-        $(id).append(optionGroup);
-    }
-}
+
 
 
 $('.collapseIcon').on('click', function (e) {
@@ -1314,7 +1370,9 @@ function decodeHtml(str) {
         '&#039;': "'"
     };
     if (str === null) {
-        return null
+        return ""
+    } else if (str === undefined) {
+        return ""
     }
     return str.replace(/&amp;|&lt;|&gt;|&quot;|&#039;/g, function (m) { return map[m]; });
 }

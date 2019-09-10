@@ -161,7 +161,7 @@ $(document).ready(function () {
                 } else if (st == "NextRun") {
                     $(nTd).html('<a ' + href + ' class="runLink">Running</a>');
                 } else if (st == "Aborted") {
-                    $(nTd).html('<a ' + href + ' class="runLink">Aborted</a>');
+                    $(nTd).html('<a ' + href + ' class="runLink">Reconnecting</a>');
                 }
             }
             }, {
@@ -194,7 +194,8 @@ $(document).ready(function () {
             } else if (st == "init" || st == "Waiting" || st == "NextRun") {
                 $(row).css("background-color", "#D8EDF6");
             }
-        }
+        },
+        sScrollX: "100%"
     });
 
     //reload the table each 30 secs

@@ -32,11 +32,7 @@ before_script:
   - sudo ./runUpdate biocorepipe
   - cd ..
 
-  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\nSALT=123test\nPEPPER=456test\nMASTER=test\nVERIFY=verifytest\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=../tmp/logs\nTEMPPATH=../tmp\nAPI_PATH=https://www.dolphinnext.com\nBASE_PATH=https://www.dolphinnext.com\nPUBWEB_URL=http://localhost:8080/dolphinnext/tmp/pub\nOCPU_URL=http://localhost\nDEBROWSER_URL=https://debrowser.umassmed.edu:444\nOCPU_PUBWEB_URL=http://localhost/dolphinnext/tmp/pub\nNEXTFLOW_VERSION=0.30.0\nLDAP_SERVER=test\nDN_STRING=test\nBIND_USER= SVCLinuxLDAPAuth\nBIND_PASS=test\nEMAIL_SENDER=biocore@umassmed.edu\nEMAIL_ADMIN= onur.yukselen@umassmed.edu\n[UICONFIG]\nSHOW_AMAZON_KEYS=false\nSHOW_SSH_KEYS=false\nSHOW_GROUPS=false\nCOMPANY_NAME=Biocore\nALLOW_SIGNUP=true\nALLOW_SIGNUPGOOGLE=true" > config/.sec
-
-
-
-
+  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\nSALT=123test\nPEPPER=456test\nMASTER=test\nVERIFY=verifytest\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=../tmp/logs\nTEMPPATH=../tmp\nAPI_URL=http://localhost/dolphinnext\nCENTRAL_API_URL=https://www.dolphinnext.com\nBASE_PATH=https://www.dolphinnext.com\nPUBWEB_URL=http://localhost:8080/dolphinnext/tmp/pub\nOCPU_URL=http://localhost\nDEBROWSER_URL=https://debrowser.umassmed.edu:444\nOCPU_PUBWEB_URL=http://localhost/dolphinnext/tmp/pub\nNEXTFLOW_VERSION=0.30.0\nLDAP_SERVER=test\nDN_STRING=test\nBIND_USER= SVCLinuxLDAPAuth\nBIND_PASS=test\nEMAIL_SENDER=biocore@umassmed.edu\nEMAIL_ADMIN= onur.yukselen@umassmed.edu\n[UICONFIG]\nSHOW_AMAZON_KEYS=false\nSHOW_SSH_KEYS=false\nSHOW_GROUPS=false\nCOMPANY_NAME=Biocore\nALLOW_SIGNUP=true\nALLOW_SIGNUPGOOGLE=true" > config/.sec
 
 
 script:

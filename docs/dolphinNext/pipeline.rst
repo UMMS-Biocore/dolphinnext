@@ -47,7 +47,21 @@ Input files or values which will be used in the process, need to be added by **I
 .. image:: dolphinnext_images/pipeline_buildindex.png
 	:align: center
 
-By using the **Pencil icon** which is located at the left side of the circle, you can edit name of the input parameters. These names will be used while creating variables in the nextflow file, therefore these names should be unique in overall pipeline.
+By using the **Pencil icon** which is located at the left side of the circle, you can edit name, define dropdown option, default value or enable show settings feature for run page.
+
+    * **Name:** will be used while creating variables in the nextflow file, therefore these names should be unique in overall pipeline.
+    * **Default value:** will assing a default value for the input which will be autofilled in the run page. eg. yes
+    * **Dropdown options:** Run page input will be shown as dropdown whose options entered in comma separated format. eg. yes, no
+    * **Show Settings :** Show Settings: Clicking checkbox will show settings of the connected process as a wrench button in the run page. You may specify alternative processes by entering their process name. eg. map_STAR, map_RSEM
+    
+.. image:: dolphinnext_images/pipeline_input_rename.png
+	:align: center  
+    
+Please check the example input row in run page which is designed as above. 
+
+.. image:: dolphinnext_images/pipeline_input_inrun.png
+	:align: center     
+
 
 Output Parameters
 =================
@@ -218,7 +232,7 @@ Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname w
 
 **Executor Properties:**
 
-Five type of executor properties are available to autofill **Executor Settings for All Processes**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue and Other Options. See the example below::
+Five type of executor properties are available to autofill **Executor Settings for All Processes**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue/Partition and Other Options. See the example below::
     
     //* autofill
     $MEMORY = 32
@@ -304,4 +318,4 @@ By default, all new pipelines are only seen by the owner. You can share your pip
 Copying and Revisions
 =====================
 
-It is always allowed to create a copy of your pipele by clicking "Copy Pipeline" button just to the right of the pipeline name box and buttons. When your pipeline is set to public or it has been used by other group members, it is not allow to make changes on same revision. Instead, new revision of the pipeline can be created and changes could be done on this revision.
+To make changes, new trials, improvements on your or other people's pipelines, it is always allowed to create a copy of the pipeline by clicking "Copy Pipeline" button just to the right of the name box and buttons. When your pipeline is set to public or it has been used by other group members, it is not allow to make changes on the same revision. Instead, new revision of the pipeline can be created and changes could be done on this new revision.

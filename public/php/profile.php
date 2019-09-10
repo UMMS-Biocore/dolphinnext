@@ -12,6 +12,7 @@
     $SHOW_AMAZON_KEYS= SHOW_AMAZON_KEYS;
     $SHOW_SSH_KEYS=SHOW_SSH_KEYS;
     $SHOW_GROUPS=SHOW_GROUPS;
+    $SHOW_GIT=SHOW_GITHUB;
 ?>
 
 <section class="content" style="max-width: 1500px; ">
@@ -31,6 +32,9 @@
                         }
                         if ($login == 1 && ($SHOW_AMAZON_KEYS != false || !empty($admin_id) || $role == "admin")){
                             echo '<li class=""><a href="#amazonKeys" data-toggle="tab" aria-expanded="false">Amazon Keys</a></li>';
+                        }
+                        if ($login == 1 && ($SHOW_GIT != false || !empty($admin_id) || $role == "admin")){
+                            echo '<li class=""><a href="#github" data-toggle="tab" aria-expanded="false">GitHub</a></li>';
                         }
                         echo '<li class=""><a href="#changePass" data-toggle="tab" aria-expanded="false">Change Password</a></li>';
                         if ($login == 1 && $role == "admin"){
@@ -170,6 +174,32 @@
                     </div>
                     <!-- /.tab-pane ends -->
                     <!-- /.tab-pane starts -->
+                    <div class="tab-pane" id="github">
+                        <div class="panel panel-default" >
+                            <div class="panel-heading clearfix">
+                                <div class="pull-right">
+                                    <button type="button" class="btn btn-primary btn-sm" id="addGithub" data-toggle="modal" data-target="#githubModal">Add GitHub Account</button>
+                                </div>
+                                <div class="pull-left">
+                                    <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> GitHub Accounts</h5>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <table id="githubTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th>GitHub Username</th>
+                                            <th>GitHub E-Mail</th>
+                                            <th>Modified on</th>
+                                            <th>Options</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.tab-pane ends -->
+                    <!-- /.tab-pane starts -->
                     <div class="tab-pane" id="changePass">
                         <div class="panel panel-default" id="changePassPanel">
                             <div class="panel-heading clearfix">
@@ -182,12 +212,12 @@
                                     <p>Use the form below to change your password.</p>
                                     <form method="post" id="passwordForm">
                                         <div class="form-group">
-                                           <div>
-                                            <input type="password" class="input form-control" name="password0" id="password0" placeholder="Old Password" autocomplete="off">
-                                        </div>
+                                            <div>
+                                                <input type="password" class="input form-control" name="password0" id="password0" placeholder="Old Password" autocomplete="off">
+                                            </div>
                                         </div>
                                         <div class="form-group">
-                                            <div >
+                                            <div>
                                                 <input type="password" class="input form-control" name="password1" id="password1" placeholder="New Password" autocomplete="off">
                                                 <div class="row" id="8charDiv" style="display:none;">
                                                     <div class="col-sm-6">
@@ -197,7 +227,7 @@
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <div >
+                                            <div>
                                                 <input type="password" class="input form-control" name="password2" id="password2" placeholder="Repeat New Password" autocomplete="off">
                                                 <div class="row">
                                                     <div class="col-sm-12" id="pwmatchDiv" style="display:none;">
@@ -311,6 +341,14 @@
                             <input type="text" class="form-control" id="mEnvHostname" name="hostname">
                         </div>
                     </div>
+                    <div id="mEnvPortDiv" class="form-group" style="display:none">
+                        <label for="mEnvPort" class="col-sm-3 control-label">SSH Port (optional)
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="By default TCP port 22 is used for SSH connection. You can change this default by entering port number."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                        </label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mEnvPort" name="port">
+                        </div>
+                    </div>
                     <div id="mEnvSSHKeyDiv" class="form-group" style="display:none">
                         <label for="mEnvSSHKey" class="col-sm-3 control-label">SSH Keys
                             <span><a data-toggle="tooltip" data-placement="bottom" title="Keys that are saved in SSH keys tab and to be used while connecting to host"><i class='glyphicon glyphicon-info-sign'></i></a></span>
@@ -349,13 +387,10 @@
                     </div>
                     <div id="mSecurityGroupDiv" class="form-group" style="display:none">
                         <label for="mSecurityGroup" class="col-sm-3 control-label">Security Group (opt.)<span><a data-toggle="tooltip" data-placement="bottom" title="Identifier of the security group to be applied e.g. sg-df72b9ba."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                        
+
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSecurityGroup" name="security_group">
                         </div>
-                        
-                        
-                        
                     </div>
                     <div id="mSharedStorageIdDiv" class="form-group" style="display:none">
                         <label for="mSharedStorageId" class="col-sm-3 control-label">Shared Storage Id</label>
@@ -385,21 +420,36 @@
                             <input type="text" class="form-control" id="mEnvNextPath" name="next_path">
                         </div>
                     </div>
+                    <div id="mEnvSinguCacheDiv" class="form-group" style="display:none">
+                        <label for="mEnvSinguCache" class="col-sm-3 control-label">Singularity Cache Folder
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="Directory where remote Singularity images are stored. By default home directory is used. Note: When using a computing cluster it must be a shared folder accessible from all computing nodes."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                        </label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mEnvSinguCache" name="singu_cache">
+                        </div>
+                    </div>
+                    <div id="mEnvVarDiv" class="form-group" style="display:none">
+                        <label for="mEnvVar" class="col-sm-3 control-label">Profile Variables
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="You can set commonly used pipeline variables here, such as _DOWNDIR. (eg. _DOWNDIR='/share/data'). You can enter multiple variables by separating them with newline."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                        </label>
+                        <div class="col-sm-9">
+                            <textarea type="text" rows="1" class="form-control" id="mEnvVar" name="variable"></textarea>
+                        </div>
+                    </div>
                     <div id="mExecDiv" class="form-group" style="display:none">
                         <label for="mExec" class="col-sm-3 control-label">Executor of Nextflow</label>
                         <div class="col-sm-9">
                             <select style=" width:150px" id="mExec" class="fbtn btn-default form-control" name="executor">
-                                <!--                                  <option value="none">None </option>-->
                                 <option class="hideClu" value="local">Local</option>
                                 <option value="sge">SGE</option>
                                 <option value="lsf">LSF</option>
-                                <!--                                  <option value="slurm">SLURM</option>-->
-                                <!--                                  <option value="ignite">IGNITE</option>-->
-                                <!--                                  <option value="pbs">PBS/Torque</option>-->
-                                <!--                                  <option value="nqsii">NQSII</option>-->
-                                <!--                                  <option value="condor">HTCondor</option>-->
-                                <!--                                  <option value="k8s">Kubernetes</option>-->
-                                <!--                                  <option value="awsbatch">AWS Batch</option>-->
+                                <option value="slurm">SLURM</option>
+                                <!--<option value="ignite">IGNITE</option>-->
+                                <!--<option value="pbs">PBS/Torque</option>-->
+                                <!--<option value="nqsii">NQSII</option>-->
+                                <!--<option value="condor">HTCondor</option>-->
+                                <!--<option value="k8s">Kubernetes</option>-->
+                                <!--<option value="awsbatch">AWS Batch</option>-->
                             </select>
                         </div>
                     </div>
@@ -410,7 +460,7 @@
                                 <table id="execNextSettTable" class="table">
                                     <thead>
                                         <tr>
-                                            <th scope="col">Queue</th>
+                                            <th scope="col" id="execNextQueue">Queue</th>
                                             <th scope="col">Memory(GB)</th>
                                             <th scope="col">CPUs</th>
                                             <th scope="col">Time(min.)</th>
@@ -455,7 +505,7 @@
                                 <table id="execJobSetTable" class="table">
                                     <thead>
                                         <tr>
-                                            <th scope="col">Queue</th>
+                                            <th scope="col" id="execJobQueue">Queue</th>
                                             <th scope="col">Memory(GB)</th>
                                             <th scope="col">CPUs</th>
                                             <th scope="col">Time(min.)</th>
@@ -587,7 +637,7 @@
                             <label for="mUserPubKey" class="col-sm-4 control-label">Public Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to to be added into '~/.ssh/authorized_keys' in the host by user"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                             <div class="col-sm-8">
                                 <textarea type="text" rows="5" class="form-control" id="mUserPubKey" name="pubkey"></textarea>
-                                <p style="font-size:13px;"><b style="color:blue;">* Important Information:</b> Private key will be used for submiting jobs in the host. Therefore, public key of the private key required to be added into '~/.ssh/authorized_keys' in the host by user </p>
+                                <p style="font-size:13px;"><b style="color:blue;">* Important Information:</b> Private key will be used for submiting jobs in the host. Therefore, public key of the private key required to be added into '~/.ssh/authorized_keys' in the host by user. Please check <a style="color:blue;" target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">adding keys section</a> for more information.</p>
                             </div>
                         </div>
                     </div>
@@ -611,10 +661,18 @@
                             <label for="mOurPubKey" class="col-sm-4 control-label">Public Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to to be added into '~/.ssh/authorized_keys' in the host by user"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                             <div class="col-sm-8">
                                 <textarea type="text" rows="5" class="form-control" id="mOurPubKey" name="pubkey"></textarea>
-                                <p style="font-size:13px;"><b style="color:blue;">* Important Information:</b> Private key will be used for submiting jobs in the host. Therefore, public key of the private key required to be added into '~/.ssh/authorized_keys' in the host by user </p>
+                                <p style="font-size:13px;"><b style="color:blue;">* Important Information:</b> Private key will be used for submiting jobs in the host. Therefore, public key of the private key required to be added into '~/.ssh/authorized_keys' in the host by user. Please check <a style="color:blue;" target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">adding keys section</a> for more information.</p>
                             </div>
                         </div>
                     </div>
+                    <?php
+                        if ($login == 1 && (!empty($admin_id) || $role == "admin")){
+                            echo '<div id="hideKeysDiv" class="form-group">
+                        <label class="col-sm-4 control-label">
+                        <input type="checkbox" id="hideKeys"> Hide Keys from User </input></label>
+                    </div>';
+                        }
+                    ?>
                 </form>
             </div>
             <div class="modal-footer">
@@ -694,6 +752,52 @@
     </div>
 </div>
 <!-- amz keys modal ends-->
+
+<!-- github modal starts-->
+<div id="githubModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="githubmodaltitle">Modal title</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group" style="display:none">
+                        <label for="mGitID" class="col-sm-2 control-label">ID</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="mGitID" name="id">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mGitName" class="col-sm-3 control-label">GitHub Username</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mGitUsername" name="username">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mGitEmail" class="col-sm-3 control-label">GitHub E-mail</label>
+                        <div class="col-sm-9">
+                            <input type="email" required class="form-control" id="mGitEmail" name="email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mGitPassword" class="col-sm-3 control-label">GitHub Password</label>
+                        <div class="col-sm-9">
+                            <input type="password" class="form-control" id="mGitPassword" name="password">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveGithub" >Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- amz keys modal ends-->
+
 
 <!-- user modal starts-->
 <div id="userModal" class="modal fade" tabindex="-1" role="dialog">

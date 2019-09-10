@@ -104,9 +104,30 @@
 <li class="toctree-l3"><a class="reference internal" href="#id5">Operators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#id6">Regular Expressions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#header-script">Header Script</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#process-options">Process Options</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#styles-for-process-options">Styles for Process Options</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#autofill-feature-for-process">Autofill Feature for Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#process-options">Process Options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#input">&#64;input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#textbox">&#64;textbox</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#checkbox">&#64;checkbox</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dropdown">&#64;dropdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#description">&#64;description</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tooltip">&#64;tooltip</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#title">&#64;title</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#options">&#64;options</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#styles-for-process-options">Styles for Process Options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#a-multicolumn">A. &#64;multicolumn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#b-array">B. &#64;array</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c-condition">C. &#64;condition</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#autofill-feature-for-process">Autofill Feature for Process</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hostname-independent-autofill">Hostname Independent Autofill:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hostname-dependent-autofill">Hostname Dependent Autofill:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#executor-properties">Executor Properties:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#platform-tag">Platform Tag:</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#permissions-groups-and-publish">Permissions, Groups and Publish</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#copying-and-revisions">Copying and Revisions</a></li>
 </ul>
@@ -205,14 +226,9 @@
 <h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h2>
 <p>This section is used to create parameters which will be used while defining <em>inputs</em> or <em>outputs</em>. New parameters are created by clicking “add parameter” button.</p>
 <img alt="../_images/process_addparameter.png" class="align-center" src="../_images/process_addparameter.png" />
-<ul class="simple">
-<li><strong>Identifier:</strong> Identifier is simply parameter name and allows you to call same parameters in other processes.</li>
-</ul>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">When qualifier set to <code class="docutils literal notranslate"><span class="pre">val</span></code>, <code class="docutils literal notranslate"><span class="pre">identifier</span></code> is used to filter available nodes while connecting each nodes. However, when <code class="docutils literal notranslate"><span class="pre">file</span></code> or <code class="docutils literal notranslate"><span class="pre">set</span></code> is selected as qualifier, <code class="docutils literal notranslate"><span class="pre">file</span> <span class="pre">type</span></code> is used for filtering available nodes.</p>
-</div>
 <ul>
+<li><p class="first"><strong>Identifier:</strong> Identifier is simply parameter name and allows you to call same parameters in other processes.</p>
+</li>
 <li><dl class="first docutils">
 <dt><strong>Qualifier:</strong> Three main type of qualifiers (<code class="docutils literal notranslate"><span class="pre">file</span></code>, <code class="docutils literal notranslate"><span class="pre">set</span></code> and <code class="docutils literal notranslate"><span class="pre">val</span></code>) are exist in DolphinNext:</dt>
 <dd><ol class="first last arabic">
@@ -231,6 +247,11 @@
 </pre></div>
 </div>
 </li>
+<li><p class="first"><strong>Each:</strong> Lets you execute the process for each entry in the input collection. Example usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">each</span> <span class="n">bed_list</span>
+</pre></div>
+</div>
+</li>
 </ol>
 </dd>
 </dl>
@@ -241,6 +262,10 @@
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
 <p class="last">For instance, you may create <code class="docutils literal notranslate"><span class="pre">genome</span></code> parameter by entering identifier as:<code class="docutils literal notranslate"><span class="pre">genome</span></code>, qualifier: <code class="docutils literal notranslate"><span class="pre">file</span></code> and file type: <code class="docutils literal notranslate"><span class="pre">fasta</span></code>. Similarly for creating <code class="docutils literal notranslate"><span class="pre">script_path</span></code> parameter you can define identifier as:<code class="docutils literal notranslate"><span class="pre">script_path</span></code> and qualifier: <code class="docutils literal notranslate"><span class="pre">val</span></code>.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">When qualifier set to <code class="docutils literal notranslate"><span class="pre">val</span></code>, <strong>identifier</strong> is used to filter available nodes while connecting each nodes. If <code class="docutils literal notranslate"><span class="pre">file</span></code> or <code class="docutils literal notranslate"><span class="pre">set</span></code> is selected as qualifier, <strong>file type</strong> is used for filtering available nodes. When qualifier is set to <code class="docutils literal notranslate"><span class="pre">each</span></code>, you may enter both <strong>file type</strong> (if you’re planing to connect with file nodes) or <strong>identifier</strong> (in case of connecting to val nodes.)</p>
 </div>
 </div>
 <div class="section" id="inputs">
@@ -265,15 +290,19 @@
 <td>script_path</td>
 <td>${script_path}</td>
 </tr>
-<tr class="row-odd"><td>file</td>
+<tr class="row-odd"><td>each</td>
+<td>bed_list</td>
+<td>${bed_list}</td>
+</tr>
+<tr class="row-even"><td>file</td>
 <td>genome</td>
 <td>${genome}</td>
 </tr>
-<tr class="row-even"><td>set</td>
+<tr class="row-odd"><td>set</td>
 <td>val(name), file(genome)</td>
 <td>${genome}</td>
 </tr>
-<tr class="row-odd"><td>set</td>
+<tr class="row-even"><td>set</td>
 <td>val(name), file(genome)</td>
 <td>${name}</td>
 </tr>
@@ -318,7 +347,7 @@
 <h2>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h2>
 <p>The output nodes are defined in this section. Similar to adding inputs, by clicking “Add output…” dropdown and selecting output parameter will show <cite>output name</cite> box, <cite>add operator</cite> and <cite>add regular expression</cite> buttons.</p>
 <img alt="../_images/process_outputs.png" class="align-center" src="../_images/process_outputs.png" />
-<p>Output files, created by the process, are grabbed by “output name” box. By entering the pattern of the output files eg. <code class="docutils literal notranslate"><span class="pre">genome.index*</span></code> would grab the files that are starts with <code class="docutils literal notranslate"><span class="pre">genome.index</span></code>. Besides you can use nextflow variables which are defined in <a class="reference external" href="process.html#inputs">inputs</a> or <a class="reference external" href="process.html#id4">scripts</a> section. As an example, if you enter input name as <code class="docutils literal notranslate"><span class="pre">genome</span></code>, in the outputs section you can recall this variable as <code class="docutils literal notranslate"><span class="pre">'${genome}_out.txt'</span></code>. Other examples are listed in the following table:</p>
+<p>Output files, created by the process, are grabbed by “output name” box. By entering the pattern of the output files eg. <code class="docutils literal notranslate"><span class="pre">&quot;genome.index*&quot;</span></code> would grab the files that are starts with <code class="docutils literal notranslate"><span class="pre">genome.index</span></code>. Besides you can use nextflow variables which are defined in <a class="reference external" href="process.html#inputs">inputs</a> or <a class="reference external" href="process.html#id4">scripts</a> section. As an example, if you enter input name as <code class="docutils literal notranslate"><span class="pre">genome</span></code>, in the outputs section you can recall this variable as <code class="docutils literal notranslate"><span class="pre">&quot;${genome}_out.txt&quot;</span></code>. Other examples are listed in the following table:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="16%" />
@@ -366,14 +395,36 @@
 <h2>Scripts<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <p>Main process scripts are defined in this region. Three type of mode are available in Nextflow: A. Script B. Shell C. Exec. These statements defines how the command going to be executed by the process.</p>
 <p><strong>A. Script:</strong></p>
-<p>For simplicity, DolphinNext uses script format by default, and accepts each line as a command. It is same as using three double quotes <code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code> at the start and the end of the command block. If you use three double quotes, DolphinNext will take that particular area as command block. Therefore, following two strings will be executed as same:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&quot;&quot;&quot; tophat2 -o . ${indexPath} $reads &quot;&quot;&quot;
+<p>For simplicity, DolphinNext uses <cite>script</cite> format by default. So defined commands will be executed as BASH script in the host. It is same as using three double quotes <code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code> at the start and the end of the command block. If you use three double quotes, DolphinNext will take that particular area as command block. Therefore, following two blocks will be executed as same:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>script:
+&quot;&quot;&quot;
+tophat2 -o . ${indexPath} ${reads}
+&quot;&quot;&quot;
 
-tophat2 -o . ${indexPath} $reads
+OR
+
+tophat2 -o . ${indexPath} ${reads}
 </pre></div>
 </div>
-<p>Each line is executed as a BASH script in the host. It can be any command or script that is typically used in terminal shell or BASH script.</p>
+<p>These blocks can contain any command or script that is typically used in terminal shell or BASH script.</p>
 <img alt="../_images/process_script.png" class="align-center" src="../_images/process_script.png" />
+<p>Let’s analyze more complicated version of script block. Here nextflow variable <code class="docutils literal notranslate"><span class="pre">name</span></code> is defined in between <code class="docutils literal notranslate"><span class="pre">script:</span></code> keyword and three double quotes <code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>script:
+name =  reads.toString() - &#39;.fastq&#39;  //local scope for nextflow variables
+
+&quot;&quot;&quot;
+newPath=&quot;/mypath&quot;   // inside of &quot;&quot;&quot; block is used for define bash variables in local scope
+tophat2 -o . \${newPath} ${name}
+&quot;&quot;&quot;
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li><code class="docutils literal notranslate"><span class="pre">newPath</span></code> variable is defined in bash script and used in tophat command as <code class="docutils literal notranslate"><span class="pre">\${newPath}</span></code>. (Note that bash variables need to be escaped by backslash)</li>
+<li><code class="docutils literal notranslate"><span class="pre">name</span></code> variable is defined in scope of groovy as nextflow variable and used in tophat command as <code class="docutils literal notranslate"><span class="pre">${name}</span></code>.</li>
+</ul>
+</div>
 <ul class="simple">
 <li><strong>Conditional Scripts:</strong></li>
 </ul>
@@ -404,6 +455,24 @@ tophat2 -o . ${indexPath} $reads
 <span class="sd">echo $PATH and !{new_path}</span>
 <span class="sd">&#39;&#39;&#39;</span>
 </pre></div>
+</div>
+<p>Here is the use case of a perl script block:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>shell:
+name =  reads.toString() - &#39;.fastq&#39;  //local scope for nextflow variables
+
+&#39;&#39;&#39;
+#!/usr/bin/env perl // inside of &#39;&#39;&#39; block you can define perl (or other language) variables in local scope
+$newPath=&quot;/mypath&quot;;
+system(&quot;tophat2 -o . ${newPath} !{name}&quot;);
+&#39;&#39;&#39;
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li><code class="docutils literal notranslate"><span class="pre">$newPath</span></code> variable is defined in perl script and used in tophat command as <code class="docutils literal notranslate"><span class="pre">${newPath}</span></code>. (Note that variables don’t need to be escaped by backslash if <code class="docutils literal notranslate"><span class="pre">shell:</span></code> keyword is used.)</li>
+<li><code class="docutils literal notranslate"><span class="pre">name</span></code> variable is defined in scope of groovy as nextflow variable and used in tophat command as <code class="docutils literal notranslate"><span class="pre">!{name}</span></code>.</li>
+</ul>
 </div>
 <p><strong>C. Exec:</strong></p>
 <p>Nextflow processes allows you to execute native code other than system commands. This way you may easily follow local Nextflow variables. To start exec mode, you can add <code class="docutils literal notranslate"><span class="pre">exec:</span></code> block at the beggining of the script:</p>
@@ -461,93 +530,119 @@ tophat2 -o . ${indexPath} $reads
 <h2>Process Options<a class="headerlink" href="#process-options" title="Permalink to this headline">¶</a></h2>
 <p>You may separate your main process inputs and optional parameters by using <strong>Process Options</strong> feature. On the run page, these parameters will be asked separately in the Process Options section as in the image shown at below:</p>
 <img alt="../_images/process_processopt.png" class="align-center" src="../_images/process_processopt.png" />
-<p>In order to create these form, you need to use following syntax in the <strong>process header</strong>:</p>
+<p>In order to create these forms, you need to use following syntax in the <strong>script</strong> or <strong>process header</strong> section:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">variableName</span> <span class="o">=</span> <span class="n">defaultValue</span> <span class="o">//*</span> <span class="nd">@formType</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;...&quot;</span> <span class="nd">@tooltip</span><span class="p">:</span><span class="s2">&quot;...&quot;</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;...&quot;</span>
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">You can define defaultValue with single/double quotes (for strings) or without any quotes (for numbers).</p>
+<p class="last">You can define defaultValue with single/double quotes (for strings) or without any quotes (for numbers). If you define your variable as an array by using &#64;style tag, you may enter more than one default value by using following array format: <code class="docutils literal notranslate"><span class="pre">variableName</span> <span class="pre">=</span> <span class="pre">[&quot;defaultValue1&quot;,&quot;defaultValue2&quot;]</span></code></p>
 </div>
-<ul>
-<li><p class="first"><strong>&#64;formType:</strong> Four type of form fields are available in DolphinNext (<code class="docutils literal notranslate"><span class="pre">&#64;input</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;textbox</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;checkbox</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;dropdown</span></code>):</p>
-<blockquote>
-<div><ol class="arabic">
-<li><p class="first"><strong>&#64;input:</strong> It creates single-line text field. Example usage and created form field in run page:</p>
+<ul class="simple">
+<li><strong>&#64;formType:</strong> Four type of form fields are available in DolphinNext (<code class="docutils literal notranslate"><span class="pre">&#64;input</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;textbox</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;checkbox</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;dropdown</span></code>):</li>
+</ul>
+<div class="section" id="input">
+<h3>&#64;input<a class="headerlink" href="#input" title="Permalink to this headline">¶</a></h3>
+<p>It creates single-line text field. Example usage and created form field in run page:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">readsPerFile</span> <span class="o">=</span> <span class="mi">5000000</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;The number of reads per file&quot;</span>
-<span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span> <span class="nd">@tooltip</span><span class="p">:</span><span class="s2">&quot;parameters for Tophat2 version 2.6&quot;</span>
+    <span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span> <span class="nd">@tooltip</span><span class="p">:</span><span class="s2">&quot;parameters for Tophat2 version 2.6&quot;</span>
 </pre></div>
 </div>
-</li>
-</ol>
 <img alt="../_images/process_input.png" class="align-center" src="../_images/process_input.png" />
-</div></blockquote>
-</li>
-</ul>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<blockquote>
-<div><ol class="arabic" start="2">
-<li><p class="first"><strong>&#64;textbox:</strong> It creates multi-line text field. Example usage and created form field in run page:</p>
+</div>
+<div class="section" id="textbox">
+<h3>&#64;textbox<a class="headerlink" href="#textbox" title="Permalink to this headline">¶</a></h3>
+<p>It creates multi-line text field. Example usage and created form field in run page:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Adapter_Sequence</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@textbox</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;You can enter a single sequence or multiple sequences in different lines.&quot;</span>
 </pre></div>
 </div>
-</li>
-</ol>
 <img alt="../_images/process_textbox.png" class="align-center" src="../_images/process_textbox.png" />
-</div></blockquote>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<blockquote>
-<div><ol class="arabic" start="3">
-<li><p class="first"><strong>&#64;checkbox:</strong> It creates checkbox for the user and their available options are defined as <code class="docutils literal notranslate"><span class="pre">true</span></code> or <code class="docutils literal notranslate"><span class="pre">false</span></code> by default. Example usage and created form field in run page:</p>
+</div>
+<div class="section" id="checkbox">
+<h3>&#64;checkbox<a class="headerlink" href="#checkbox" title="Permalink to this headline">¶</a></h3>
+<p>It creates checkbox for the user and their available options are defined as <code class="docutils literal notranslate"><span class="pre">true</span></code> or <code class="docutils literal notranslate"><span class="pre">false</span></code> by default. Example usage and created form field in run page:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">run_rRNA_Mapping</span> <span class="o">=</span> <span class="s2">&quot;false&quot;</span> <span class="o">//*</span> <span class="nd">@checkbox</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Check the box to activate rRNA mapping.&quot;</span>
 <span class="n">rRNA_filtering</span> <span class="o">=</span> <span class="s2">&quot;true&quot;</span> <span class="o">//*</span> <span class="nd">@checkbox</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Check the box to filter rRNA reads.&quot;</span>
 </pre></div>
 </div>
-</li>
-</ol>
 <img alt="../_images/process_checkbox.png" class="align-center" src="../_images/process_checkbox.png" />
-</div></blockquote>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<blockquote>
-<div><ol class="arabic" start="4">
-<li><p class="first"><strong>&#64;dropdown:</strong> It create dropdown menu and their options can be specified by entering <code class="docutils literal notranslate"><span class="pre">&#64;options</span></code> feature. Example usage and created form field in run page:</p>
+</div>
+<div class="section" id="dropdown">
+<h3>&#64;dropdown<a class="headerlink" href="#dropdown" title="Permalink to this headline">¶</a></h3>
+<p>It create dropdown menu and their options can be specified by entering <code class="docutils literal notranslate"><span class="pre">&#64;options</span></code> feature. Example usage and created form field in run page:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">genomeType</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Genome type for pipeline&quot;</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;hg19&quot;</span><span class="p">,</span><span class="s2">&quot;mm10&quot;</span><span class="p">,</span> <span class="s2">&quot;custom&quot;</span>
 </pre></div>
 </div>
-</li>
-</ol>
 <img alt="../_images/process_dropdown.png" class="align-center" src="../_images/process_dropdown.png" />
-</div></blockquote>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-<ul>
-<li><p class="first"><strong>&#64;description:</strong> You can describe inputs by using <code class="docutils literal notranslate"><span class="pre">&#64;description</span></code> tag. Please check the examples at above.</p>
-</li>
-<li><p class="first"><strong>&#64;tooltip:</strong> You can also create tooltip to add detailed explanation by using <code class="docutils literal notranslate"><span class="pre">&#64;tooltip</span></code> tag. See the example at below:</p>
+</div>
+<div class="section" id="description">
+<h3>&#64;description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h3>
+<p>You can describe inputs by using <code class="docutils literal notranslate"><span class="pre">&#64;description</span></code> tag. Please check the examples at above.</p>
+</div>
+<div class="section" id="tooltip">
+<h3>&#64;tooltip<a class="headerlink" href="#tooltip" title="Permalink to this headline">¶</a></h3>
+<p>You can also create tooltip to add detailed explanation by using <code class="docutils literal notranslate"><span class="pre">&#64;tooltip</span></code> tag. See the example at below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@tooltip</span><span class="p">:</span><span class="s2">&quot;parameters for Tophat2 version 2.6&quot;</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span>
 </pre></div>
 </div>
-</li>
-<li><p class="first"><strong>&#64;title:</strong> You can also create header on top of the variable by using <code class="docutils literal notranslate"><span class="pre">&#64;title</span></code> tag. This way you can easily organize the complicated form structures. See the example at below:</p>
+</div>
+<div class="section" id="title">
+<h3>&#64;title<a class="headerlink" href="#title" title="Permalink to this headline">¶</a></h3>
+<p>You can also create header on top of the variable by using <code class="docutils literal notranslate"><span class="pre">&#64;title</span></code> tag. This way you can easily organize the complicated form structures. See the example at below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Alignment Section&quot;</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span>
 </pre></div>
 </div>
-</li>
-<li><p class="first"><strong>&#64;options:</strong> When you define &#64;dropdown as a formType, you should define available options by using <code class="docutils literal notranslate"><span class="pre">&#64;options</span></code> tag. Please check the example dropdown at above.</p>
+</div>
+<div class="section" id="options">
+<h3>&#64;options<a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h3>
+<p>When you define &#64;dropdown as a formType, you should define available options by using <code class="docutils literal notranslate"><span class="pre">&#64;options</span></code> tag. Please check the simpliest version of dropdown:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">genomeType</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;hg19&quot;</span><span class="p">,</span><span class="s2">&quot;mm10&quot;</span><span class="p">,</span><span class="s2">&quot;custom&quot;</span>
+</pre></div>
+</div>
+<ul>
+<li><p class="first"><strong>Conditional Options - Version 1 (Advanced Usage):</strong> Same process can be seen different in different pipelines. In order to control the dropdown options that are visible, you can define variables in the pipeline header which starts with underscore. For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_nucleicAcidType</span> <span class="o">=</span> <span class="s2">&quot;rna&quot;</span> <span class="o">//</span><span class="n">In</span> <span class="n">RNA</span><span class="o">-</span><span class="n">seq</span> <span class="n">pipeline</span> <span class="n">header</span>
+<span class="n">_nucleicAcidType</span> <span class="o">=</span> <span class="s2">&quot;dna&quot;</span> <span class="o">//</span><span class="n">In</span> <span class="n">ChIP</span><span class="o">-</span><span class="n">seq</span> <span class="n">pipeline</span> <span class="n">header</span>
+</pre></div>
+</div>
 </li>
 </ul>
+<p>and you can control which options will be visible by using following format:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">param</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:{</span><span class="n">_nucleicAcidType</span><span class="o">=</span><span class="s2">&quot;rna&quot;</span><span class="p">,</span><span class="s2">&quot;rRNA&quot;</span><span class="p">,</span><span class="s2">&quot;miRNA&quot;</span><span class="p">,</span><span class="s2">&quot;snRNA&quot;</span><span class="p">},{</span><span class="n">_nucleicAcidType</span><span class="o">=</span><span class="s2">&quot;dna&quot;</span><span class="p">,</span> <span class="s2">&quot;ercc&quot;</span><span class="p">,</span><span class="s2">&quot;rmsk&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Now, <code class="docutils literal notranslate"><span class="pre">param</span></code> dropdown will have 3 options (“rRNA”,”miRNA”,”snRNA”) in RNA-seq pipeline and 2 options (“ercc”,”rmsk”) in ChIP-seq pipeline. Similarly you can define default options by not assigning any value as seen at the example below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">param</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:{</span><span class="s2">&quot;rRNA&quot;</span><span class="p">,</span><span class="s2">&quot;miRNA&quot;</span><span class="p">,</span><span class="s2">&quot;snRNA&quot;</span><span class="p">},{</span><span class="n">_nucleicAcidType</span><span class="o">=</span><span class="s2">&quot;dna&quot;</span><span class="p">,</span><span class="s2">&quot;ercc&quot;</span><span class="p">,</span><span class="s2">&quot;rmsk&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Here, by default 3 options(“rRNA”,”miRNA”,”snRNA”) will be visible unless in the pipeline header <code class="docutils literal notranslate"><span class="pre">_nucleicAcidType=&quot;dna&quot;</span></code> is defined.</p>
+<ul>
+<li><p class="first"><strong>Conditional Options - Version 2 (Advanced Usage):</strong> You can control the dropdown options that are visible, based on the selected parameter in other dropdown. Please check the example below, where dropdown called <code class="docutils literal notranslate"><span class="pre">sequence</span></code> controls the visible options of the dropdown <code class="docutils literal notranslate"><span class="pre">aligner</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">aligner</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@options</span><span class="p">:{</span><span class="n">sequence</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;rRNA&quot;</span><span class="p">,</span><span class="s2">&quot;miRNA&quot;</span><span class="p">,</span><span class="s2">&quot;snRNA&quot;</span><span class="p">),</span><span class="s2">&quot;bowtie&quot;</span><span class="p">,</span><span class="s2">&quot;bowtie2&quot;</span><span class="p">},{</span><span class="n">sequence</span><span class="o">=</span><span class="s2">&quot;genome&quot;</span><span class="p">,</span> <span class="s2">&quot;star&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>When <code class="docutils literal notranslate"><span class="pre">sequence</span></code> is selected as one of the following options:”rRNA”,”miRNA”,”snRNA”, <code class="docutils literal notranslate"><span class="pre">aligner</span></code> will have “bowtie and bowtie2” options. Similarly, “star” will be seen, if <code class="docutils literal notranslate"><span class="pre">sequence</span></code> selected as “genome”.</p>
+</div>
 </div>
 <div class="section" id="styles-for-process-options">
 <h2>Styles for Process Options<a class="headerlink" href="#styles-for-process-options" title="Permalink to this headline">¶</a></h2>
 <p>You might use additional tags to give specific shapes to form fields: A. <code class="docutils literal notranslate"><span class="pre">&#64;multicolumn</span></code> B. <code class="docutils literal notranslate"><span class="pre">&#64;array</span></code> C. <code class="docutils literal notranslate"><span class="pre">condition</span></code>.</p>
-<p><strong>A. &#64;multicolumn:</strong></p>
+<div class="section" id="a-multicolumn">
+<h3>A. &#64;multicolumn<a class="headerlink" href="#a-multicolumn" title="Permalink to this headline">¶</a></h3>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var1&quot;</span>
 <span class="n">var2</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var2&quot;</span>
@@ -560,7 +655,9 @@ tophat2 -o . ${indexPath} $reads
 </div>
 <p>In this example, var1, var2 and var3 will be located in the same row, by default var4 will fill single row and, var5 and var6 will share same row as shown at below.</p>
 <a class="reference internal image-reference" href="../_images/process_multicolumn.png"><img alt="../_images/process_multicolumn.png" class="align-center" src="../_images/process_multicolumn.png" style="width: 85%;" /></a>
-<p><strong>B. &#64;array:</strong></p>
+</div>
+<div class="section" id="b-array">
+<h3>B. &#64;array<a class="headerlink" href="#b-array" title="Permalink to this headline">¶</a></h3>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var1&quot;</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Step 1&quot;</span>
 <span class="n">var2</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var2&quot;</span>
@@ -576,7 +673,14 @@ tophat2 -o . ${indexPath} $reads
 <p class="last">You can combine multiple style options on same variables. For example <code class="docutils literal notranslate"><span class="pre">//*</span> <span class="pre">&#64;style</span> <span class="pre">&#64;array:{var1,</span> <span class="pre">var2},</span> <span class="pre">{var4}</span> <span class="pre">&#64;multicolumn:{var1,</span> <span class="pre">var2}</span></code> will combine both multicolumn and array features for <code class="docutils literal notranslate"><span class="pre">var1</span></code> and <code class="docutils literal notranslate"><span class="pre">var2</span></code> as shown below.</p>
 </div>
 <a class="reference internal image-reference" href="../_images/process_array_multi.png"><img alt="../_images/process_array_multi.png" class="align-center" src="../_images/process_array_multi.png" style="width: 85%;" /></a>
-<p><strong>C. &#64;condition:</strong></p>
+<p>You can define multiple default values by using following syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var1</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;defVal1&quot;</span><span class="p">,</span> <span class="s2">&quot;defVal2&quot;</span><span class="p">]</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var1&quot;</span>
+</pre></div>
+</div>
+<p>Here, run page will open with two rows and these default values  will be defVal1 and  defVal2.</p>
+</div>
+<div class="section" id="c-condition">
+<h3>C. &#64;condition<a class="headerlink" href="#c-condition" title="Permalink to this headline">¶</a></h3>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var1</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@dropdown</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var1&quot;</span> <span class="nd">@options</span><span class="p">:</span><span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;no&quot;</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Step 1&quot;</span>
 <span class="n">var2</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;description of var2&quot;</span>
@@ -590,20 +694,24 @@ tophat2 -o . ${indexPath} $reads
 <a class="reference internal image-reference" href="../_images/process_condi.png"><img alt="../_images/process_condi.png" class="align-center" src="../_images/process_condi.png" style="width: 75%;" /></a>
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
-<p class="last">Similar to previous tip, you can combine all style options on same variable. For example <code class="docutils literal notranslate"><span class="pre">//*</span> <span class="pre">&#64;style</span> <span class="pre">&#64;condition:{var1=&quot;yes&quot;,</span> <span class="pre">var2},</span> <span class="pre">{var1=&quot;no&quot;,</span> <span class="pre">var3,</span> <span class="pre">var4}</span> <span class="pre">&#64;array:{var1,</span> <span class="pre">var2,</span> <span class="pre">var3,</span> <span class="pre">var4}</span> <span class="pre">&#64;multicolumn:{var1,</span> <span class="pre">var2,</span> <span class="pre">var3,</span> <span class="pre">var4}</span></code> will combine features as shown below:</p>
+<p class="last">Similar to previous tip, you can combine all style options on same variable. For example //* &#64;style &#64;condition:{var1=”yes”, var2}, {var1=”no”, var3, var4} &#64;array:{var1, var2, var3, var4} &#64;multicolumn:{var1, var2, var3, var4} will combine features as shown below:</p>
 </div>
 <a class="reference internal image-reference" href="../_images/process_array_multi_condi.png"><img alt="../_images/process_array_multi_condi.png" class="align-center" src="../_images/process_array_multi_condi.png" style="width: 85%;" /></a>
 </div>
+</div>
 <div class="section" id="autofill-feature-for-process">
 <h2>Autofill Feature for Process<a class="headerlink" href="#autofill-feature-for-process" title="Permalink to this headline">¶</a></h2>
-<p><strong>Hostname Independent Autofill :</strong></p>
+<div class="section" id="hostname-independent-autofill">
+<h3>Hostname Independent Autofill:<a class="headerlink" href="#hostname-independent-autofill" title="Permalink to this headline">¶</a></h3>
 <p>If you want to define executor properties that are going to be automatically filled by default, you can use following syntax:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//*</span> <span class="n">autofill</span>
 <span class="o">&lt;</span><span class="n">executor</span> <span class="n">properties</span><span class="o">&gt;</span>
 <span class="o">//*</span> <span class="n">autofill</span>
 </pre></div>
 </div>
-<p><strong>Hostname Dependent Autofill :</strong></p>
+</div>
+<div class="section" id="hostname-dependent-autofill">
+<h3>Hostname Dependent Autofill:<a class="headerlink" href="#hostname-dependent-autofill" title="Permalink to this headline">¶</a></h3>
 <p>Additionally, you might overwrite default executor properties by using <strong>hostname dependent executor properties</strong>. Please check the following syntax:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
 &lt;executor properties&gt;
@@ -614,8 +722,10 @@ if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
 </pre></div>
 </div>
 <p>Here, <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code> is DolphinNext specific variable that recalls the hostname which is selected in the run as <strong>Run Environment</strong>. Therefore, in this example, all <code class="docutils literal notranslate"><span class="pre">&lt;executor</span> <span class="pre">properties&gt;</span></code> will be automatically filled in case of pipeline is going to run on <strong>ghpcc06.umassrc.org</strong>.</p>
-<p><strong>Executor Properties:</strong></p>
-<p>Five type of executor properties are available to autofill <strong>Executor Settings for Each Process</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue and Other Options. See the example below:</p>
+</div>
+<div class="section" id="executor-properties">
+<h3>Executor Properties:<a class="headerlink" href="#executor-properties" title="Permalink to this headline">¶</a></h3>
+<p>Five type of executor properties are available to autofill <strong>Executor Settings for Each Process</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue/Partition and Other Options. See the example below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
 $TIME = 1000
 if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
@@ -630,7 +740,9 @@ if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
 </div>
 <a class="reference internal image-reference" href="../_images/process_autofill.png"><img alt="../_images/process_autofill.png" class="align-center" src="../_images/process_autofill.png" style="width: 99%;" /></a>
 <p>In the example, since run environment is selected as ghpcc06.umassrc.org, autofill feature overwrited the default <code class="docutils literal notranslate"><span class="pre">$TIME</span></code> value (1000) and filled with 3000.</p>
-<p><strong>Platform Tag :</strong></p>
+</div>
+<div class="section" id="platform-tag">
+<h3>Platform Tag:<a class="headerlink" href="#platform-tag" title="Permalink to this headline">¶</a></h3>
 <p>Optionally, you can isolate platform dependent paramaters by using <strong>platform</strong> tag. This way, exported process won’t have the platform dependent parameters and similarly when process is imported, exisiting platform dependent parameters won’t be overwritten. Please check the the example usage at below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
 $MEMORY = 32
@@ -646,6 +758,7 @@ $CPU  = 1
     //* platform
 //* autofill
 </pre></div>
+</div>
 </div>
 </div>
 <div class="section" id="permissions-groups-and-publish">

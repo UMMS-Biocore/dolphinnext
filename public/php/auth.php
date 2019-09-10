@@ -3,7 +3,7 @@ if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 require_once(__DIR__."/../ajax/dbfuncs.php");
 $db=new dbfuncs();
 if (strpos(getcwd(), "travis/build") == 6){
-  $_SESSION['email'] = 'travis';
+    $_SESSION['email'] = 'travis';
 }
 if (isset($_GET['p']) && $_GET['p'] == "logout" ){
     if (isset($_SESSION['admin_id'])) {
@@ -28,6 +28,10 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         exit;
     }
 }
+if(isset($_GET['p']) && $_GET['p'] == "verify" ){
+    require_once("adminverify.php");
+    exit;
+}
 if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
     if(isset($_POST['ok'])){
         session_destroy();
@@ -36,10 +40,6 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
     }
     if (!isset($_POST['request']) && isset($_SESSION['google_login']) && $_SESSION['google_login'] != ""){
         require_once("newuserform.php");
-        exit;
-    }
-    if(isset($_GET['p']) && $_GET['p'] == "verify" ){
-        require_once("adminverify.php");
         exit;
     }
     if(isset($_POST['signup'])){
@@ -59,6 +59,6 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
 } else if(isset($_SESSION['google_login']) && $_SESSION['google_login'] == true){
     require_once("login.php");
     exit;
- } else if (isset($_SESSION['username']) && $_SESSION['username'] != ""){
+} else if (isset($_SESSION['username']) && $_SESSION['username'] != ""){
     require_once("main.php");
 }

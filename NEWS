@@ -1,7 +1,197 @@
+10.09.2019 Version 0.3.61
+Documentation updated for:
+ - Executor Settings
+ - Developer Tutorial
+ - Reports (new images and DEbrowser section)
+ - Pipeline examples
+
+10.09.2019 Version 0.3.60
+Bug in createMultiConfig function is fixed.
+
+10.09.2019 Version 0.3.59
+Minor fix for Pipeline files section.
+
+09.09.2019 Version 0.3.58
+Pipeline files section added into pipeline tab.
+Bug fixed while copying option process button.
+
+06.09.2019 Version 0.3.57
+NXF_SINGULARITY_CACHEDIR is supported by dolphinnext.
+
+03.09.2019 Version 0.3.56
+Typo fixed in documentation.
+Github password is masked in the logs.
+
+03.09.2019 Version 0.3.55
+Login page updated to support login with username.
+
+03.09.2019 Version 0.3.54
+Minor fix for config parser.
+
+28.08.2019 Version 0.3.53
+Minor fix for workflow width.
+
+27.08.2019 Version 0.3.52
+Pipeline page updated with tabs.
+Duplicate pipeline button updated.
+Autofill json updated for default conditions.
+
+27.08.2019 Version 0.3.51
+Pipeline labels updated in the main page.
+Sign-up updated to assign admin for the first user.
+
+22.08.2019 Version 0.3.50
+Pipeline labels added to main page.
+Quote usage fixed in the default value section of the pipeline inputs modal.
+
+14.08.2019 Version 0.3.49
+$HOSTNAME="default" variable added to top of the nextflow.config for consistency.
+
+14.08.2019 Version 0.3.48
+Minor bug fixed in initial parameters config file.
+Autofill feature updated by case sensitive insert for pipeline inputs.
+
+13.08.2019 Version 0.3.47
+Github integration completed to publish pipelines into Github.
+Pipeline description section supports markdown format to publish it as github readme file.
+Nextflow config section added in pipeline page.
+Input paramters moved to nextflow.config
+Config tag feature added to create mutiple files in Nextflow config file .
+Process output as val format supported for modular structure.
+Minor bug fixed in createProcessPanelAutoFill function.
+
+24.07.2019 Version 0.3.46
+Url download feature added to createCollection and urlDownload step.
+Initialcheck step added to initialrun to detect missing files and urls.
+Missing files and urls created by separate processes.
+Multiple collections support added (individual directories will be used in inputs folder).
+Initial run singularity image updated to support awscli.
+S3 upload check improved by awscli and --content-md5 header (https://aws.amazon.com/premiumsupport/knowledge-center/data-integrity-s3/)
+
+19.07.2019 Version 0.3.45
+Ghpcc mounting upgraded to check path inside of the form fields.
+"Profile Variables" field added to profile settings. 
+
+13.07.2019 Version 0.3.44
+Upload file feature upgraded to support rsync resume/retry.
+
+12.07.2019 Version 0.3.43
+Minor bug fix for loading run page.
+Documentation update.
+
+08.07.2019 Version 0.3.42
+View button added to sample table in run page.
+Singularity image url support added.
+
+30.06.2019 Version 0.3.41
+Slurm executor supported added.
+Admin delete user feature added.
+Hide ssh keys from user feature added.
+Default parameters will be autofilled for initial opening of the run page.
+
+25.06.2019 Version 0.3.40
+Empty folder warning fixed in view directory.
+ShowInfoModal freeze fixed. 
+Bug fixed on autoshutdown feature of amazon instances. 
+
+16.06.2019 Version 0.3.39
+Upload module added.
+
+07.06.2019 Version 0.3.38
+Pipeline examples added to documentation. 
+
+06.06.2019 Version 0.3.37
+Bug fixed for null server log retrieved.
+
+06.06.2019 Version 0.3.36
+Bug fixed when s3 path entered with backslash.
+Adding files upgraded to support multiple directories.
+Initial run script copied from nf folder and their inputs entered from outside in ssh command.
+
+03.06.2019 Version 0.3.35
+Bug fixed regarding to impersonating user and updating their run status.
+
+03.06.2019 Version 0.3.34
+Overwrite the published files when resumed. 
+
+31.05.2019 Version 0.3.33
+Initial run image update.
+
+30.05.2019 Version 0.3.32
+Show settings feature added to workflow inputs.
+
+27.05.2019 Version 0.3.31
+Minor update related to default load of form fields.
+
+27.05.2019 Version 0.3.30
+Array rows upgraded to support default values in form fields. (eg. varname = ["a","b"] //* @input)
+Process script upgraded to support form fields.
+Each parameter type added to support repetitive processes.
+Documentation updated to cover point at above.
+
+24.05.2019 Version 0.3.29
+Minor bug fixed to replace empty form options on nextflow file.
+Minor bug fixed by changing object key filtering method.
+
+22.05.2019 Version 0.3.28
+Pipeline revision are consolidated as dropdown in the project details page.
+Confirmation modal added for removing run in the project details page.
+
+20.05.2019 Version 0.3.27
+Settings icon of the process in the run page enabled when its shared with others.
+Dropdown options upgraded to dynamically show dropdown options. 
+Copy run feature upgraded to allow choosing project.
+Move run feature added.
+
+15.05.2019 Version 0.3.26
+Input channels are fixed to support multiple channels in set format.
+
+15.05.2019 Version 0.3.25
+Channel.fromPath updated to support both files and directories as input.
+Minor bug fixed in profile table.
+
+14.05.2019 Version 0.3.24
+SSH port and singularity cache directory fields added to profile.
+
+13.05.2019 Version 0.3.23
+Minor bug fixed in pipeline developer page.
+Minor bug fixed in add file modal.
+
+10.05.2019 Version 0.3.22
+Bug fixed to support old file format in run logs.
+Bug fixed on file selection modal.
+
+10.05.2019 Version 0.3.21
+Datatable show percent table upgraded to support non-integers in report section.
+Saving run feature upgraded to execute only run environment is changed.
+Run Status ordering is updated based on the date_modified column of run table.
+
+08.05.2019 Version 0.3.20
+DolphinNext version added to top of the main page.
+Minor fix in user verification.
+Language mode added for R scripts.
+"Select File Modal" updated. (host and project dropdowns added)
+Dropdowns of "Select File Modal" upgraded to deselect rows that are filtered out.
+Delete file button added into Select File Modal.
+
+
+06.05.2019 Version 0.3.19
+Saving pubweb functionality added into auto update run status feature.
+Saving pubweb functionality upgraded to support published s3 files.
+Executor settings bug fixed by autosaving run page when run environment is changed.
+Bug fixed to allow quote usage in project and pipeline name.
+
+02.05.2019 Version 0.3.18
+Status update based on the "failed" keyword removed.
+
 21.04.2019 Version 0.3.17
 Auto shutdown Amazon EC2 instance feature added.
 Auto update run status feature added.
 Nextflow cloud commands will be executed according to nextflow version defined in .sec file.
+API_URL variable added to .sec file. (API_URL=http://localhost/dolphinnext)
+API_PATH variable replaced with CENTRAL_API_URL in .sec file. (CENTRAL_API_URL=https://www.dolphinnext.com)
+Logs and cloud list added to amazon management console.
+Documentation updated.
 
 18.04.2019 Version 0.3.16
 Error reporting updated. (Run directory could not created) 

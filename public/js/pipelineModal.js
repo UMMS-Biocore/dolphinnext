@@ -1,14 +1,509 @@
+//################################
+// --textEditor jquery plugin --
+//################################
+
+(function ($) {
+    var methods = {
+        init: function (options) {
+            var settings = $.extend({
+                // default values.
+                color: "#556b2f",
+                backgroundColor: "white",
+                heightHeader: "60px",
+                lineHeightHeader: "60px",
+                heightBody: "600px",
+                heightEditor: "530px",
+                heightFileList: "565px",
+                heightTitle: "50px",
+                lineHeightTitle: "50px",
+                heightIconBar: "35px"
+            }, options);
+            var elems = $(this);
+            elems.css("width", "100%")
+            elems.css("height", "100%")
+            var elemsID = $(this).attr("id");
+            elems.data('settings', settings);
+            elems.data("tooglescreen","expand")
+            var data = getData(settings);
+            console.log(data)
+            if (data === undefined || data == null || data == "") {
+                elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to show</div>')
+            } else {
+                // append panel
+                elems.append(getPanel(data, settings, elemsID));
+                // after appending panel
+                afterAppendPanel(data,settings, elemsID, elems)
+            }
+            return this;
+        },
+        fnAddFile: function (filename) {
+            var elems = $(this);
+            var elemsID = $(this).attr("id");
+            var settings = elems.data('settings');
+            var liAr = elems.find("li[tabid]");
+            var newLiID = ""
+            if (liAr.length > 0){
+                newLiID = parseInt($(liAr[liAr.length-1]).attr("el"))+1
+            } else {
+                newLiID = "0"
+            }
+            var liDiv = elems.find(".li-content");
+            var tabDivAr = elems.find(".tab-content");
+            var newLiElement = getLi(filename, elemsID, newLiID);
+            var text = ""
+            $(liDiv[0]).append(newLiElement);
+            $(tabDivAr[0]).append(getTab(elemsID, newLiID, settings));
+            afterAppendEachEl(text, newLiID, elemsID, elems, settings)
+            var tooglescreen = elems.data("tooglescreen") //expand or compress
+            if (tooglescreen == "compress"){
+                tooglescreen = "expand"
+                var editorID = $(newLiElement).attr("editorID");
+                toogleContentSize(editorID, elemsID, newLiID, tooglescreen, elems, settings);
+            } 
+            var a = elems.find('li[el="'+newLiID+'"] > a');
+            if (a.length){
+                a.click()
+            }
+            return this;
+        }
+    };
+
+    $.fn.textEditor = function (methodOrOptions) {
+        if (methods[methodOrOptions]) {
+            return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
+        } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
+            // Default to "init"
+            return methods.init.apply(this, arguments);
+        } else {
+            $.error('Method ' + methodOrOptions + ' does not exist on jQuery');
+        }
+    };
+
+    var cleanFileName = function (name, type) {
+        if (type == "jquery"){
+            name = name.replace(/\./g, "_");
+            name = name.replace(/\//g, "_");
+        }
+        name = name.replace(/\$/g, "_");
+        name = name.replace(/\!/g, "_");
+        name = name.replace(/\</g, "_");
+        name = name.replace(/\>/g, "_");
+        name = name.replace(/\?/g, "_");
+        name = name.replace(/\(/g, "_");
+        name = name.replace(/\"/g, "_");
+        name = name.replace(/\'/g, "_");
+        name = name.replace(/\\/g, "_");
+        name = name.replace(/@/g, "_");
+        return name;
+    }
+
+    var getFileListHeaderIconDiv = function (elemsID) {
+        var border = "border-right: 1px solid lightgray;"
+        var addIcon = `<li role="presentation"><a id="addIcon-` + elemsID + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Add File"><i style="font-size: 18px;" class="fa fa-plus"></i></a></li>`;
+        var renameIcon = `<li role="presentation"><a id="renameIcon-` + elemsID + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Rename File"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
+        var deleteIcon = `<li role="presentation"><a  id="deleteIcon-` + elemsID + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Delete File"><i style="font-size: 18px;" class="fa fa-trash"></i></a></li>`;
+        var content = `<ul style="float:right"  class="nav nav-pills panelheader">` + addIcon + renameIcon + deleteIcon + `</ul>`;
+        var wrapDiv = '<div id="' + elemsID + '-ListHeaderIconDiv" style="'+border+'height:35px; width:100%;">' + content + '</div>';
+        return wrapDiv;
+    }
+
+    var getLi = function (filename, elemsID, el){
+        var active = "";
+        if (el == 0) {
+            active = "active"
+        } else {
+            active = "";
+        }
+        var icon = "fa-file-text-o";
+        var filenameClwithDot = cleanFileName(filename, "default")
+        var editorID = "editorID_" + elemsID + "_" + el;
+        var fileid = "fileID_" + elemsID + "_" + el;
+        var tabID = "fileTabs_" + elemsID + "_" + el;
+        //remove directory str, only show filename in label
+        return '<li el="'+el+'" tabID="'+tabID+'" editorID="'+editorID+'" id="'+filenameClwithDot+'" class="' + active + '"><a  class="reportFile" data-toggle="tab" href="#' + tabID + '" ><i class="fa ' + icon + '"></i><span>' + filenameClwithDot + '</span></a></li>';
+    }
+
+    var getTab = function (elemsID, el, settings){
+        var tabID = "fileTabs_" + elemsID + "_" + el;
+        var fileid = "fileID_" + elemsID + "_" + el;
+        var active = "";
+        if (el == 0) {
+            active = 'in active';
+        }
+        var editorID = "editorID_" + elemsID + "_" + el;
+        var scriptMode = "scriptMode_" + elemsID + "_" + el;          
+        var aceEditorDiv = `<div id="`+editorID+`" style="height:`+settings.heightEditor+`; width: 100%;"></div>
+<div class="row">
+<p class="col-sm-4" style="padding-top:4px; padding-right:0; padding-left:60px;">Language Mode:</p>
+<div class="col-sm-3">
+<select id="`+scriptMode+`" class="form-control">
+<option value="groovy">groovy</option>
+<option value="markdown">markdown</option>
+</select>
+</div>
+</div>`;
+        var contentDiv = getFileContentHeaderIconDiv(fileid) + '<div style="width:100%; height:'+settings.heightIconBar+';" id="' + fileid + '">' + aceEditorDiv + '</div>';
+        return '<div style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" >'+contentDiv+'</div>';
+    } 
+
+    var getFileListCol = function (elemsID, dataObj, height, lineHeight, settings) {
+        var fileListColID = "fileListDiv_" + elemsID;
+        var colPercent =  "15";
+        var overflowT = 'overflow: scroll; ';
+        var liText = "";
+        $.each(dataObj, function (el) {
+            if (dataObj[el]) {
+                liText +=  getLi(dataObj[el].filename, elemsID, el);
+            }
+        });
+        if (!liText) {
+            liText = '<div style="margin:10px;"> <ul class="nav nav-pills nav-stacked li-content">No data available</ul></div>';
+        } else {
+            liText = '<ul class="nav nav-pills nav-stacked li-content">' + liText + '</ul>';
+            liText = '<div style="'+overflowT+'width:100%; height:calc(100% - '+settings.heightIconBar+');" >' + liText + '</div>';
+        }
+        var columnPercent = '15';
+        var clearFix = " clear:both; "; //if its the first element of multicolumn
+        var center = ""
+        var heightT = ""
+        var lineHeightT = ""
+        if (height) {
+            heightT = 'height:' + height + '; ';
+        }
+        if (lineHeight) {
+            lineHeightT = 'line-height:' + lineHeight + '; ';
+        }
+        var IconDiv = getFileListHeaderIconDiv(elemsID);
+        var listDiv = '<div id="'+fileListColID+'" style="'+heightT + lineHeightT+ clearFix + ' float:left; '+' width:'+ columnPercent + '%;" id = "' + fileListColID  + '" >'+IconDiv+liText+'</div>';
+        return listDiv
+    }
+
+    var getFileContentHeaderIconDiv = function (fileid) {
+        var content = `<ul style="float:inherit"  class="nav nav-pills panelheader">` +
+            `<li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>` +`</ul>`
+        var wrapDiv = '<div id="' + fileid + '-ContentHeaderIconDiv" style="float:right; height:35px; width:100%;">' + content + '</div>';
+        return wrapDiv;
+    }
+
+    var getFileContentCol = function (elemsID, dataObj, height, lineHeight, settings) { 
+        var colPercent = "85";
+        var heightT = ""
+        var lineHeightT = ""
+        var navTabDiv = '<div style="height:inherit;" class="tab-content">';
+        $.each(dataObj, function (el) {
+            navTabDiv += getTab(elemsID, el, settings);
+        });
+        navTabDiv += '</div>';
+        if (height) {
+            heightT = 'height:' + height + '; ';
+        }
+        if (lineHeight) {
+            lineHeightT = 'line-height:' + lineHeight + '; ';
+        }
+        return '<div style="' + heightT + lineHeightT + 'float:left;  width:' + colPercent + '%; ">' + navTabDiv + "</div>";
+    }
+
+    var getColumnContent = function (dataObj, colObj, nTd) {
+        var col = "";
+        if (colObj.fnCreatedCell && !nTd) {
+            var nTd = $("<span></span>");
+            colObj.fnCreatedCell(nTd, dataObj)
+            col = nTd.clone().wrap('<p>').html();
+        } else if (colObj.fnCreatedCell && nTd) {
+            colObj.fnCreatedCell(nTd, dataObj)
+        } else if (colObj.data) {
+            col = dataObj[colObj.data]
+        }
+        return col
+    };
+
+    var toogleFullSize = function (tooglescreen, elems, settings) {
+        if (tooglescreen == "expand") {
+            var featList = ["z-index", "height", "position", "top", "left", "background"]
+            var newValue = ["1049", "100%", "fixed", "0", "0", "white"]
+            var oldCSS = {};
+            var newCSS = {};
+            for (var i = 0; i < featList.length; i++) {
+                oldCSS[featList[i]] = elems.css(featList[i])
+                newCSS[featList[i]] = newValue[i]
+            }
+            elems.data("oldCSS", oldCSS);
+            elems.data("tooglescreen", "compress");
+
+        } else {
+            var newCSS = elems.data("oldCSS");
+            elems.data("tooglescreen", "expand");
+
+        }
+        //apply css obj
+        $.each(newCSS, function (el) {
+            elems.css(el, newCSS[el])
+        });
+    }
+
+    var toogleContentSize = function (editorId, elemsID, el ,tooglescreen, elems, settings) {
+        var fileListColID = "fileListDiv_" + elemsID;
+        var each_file_id = "fileID_" + elemsID + "_" + el;
+        var icon = $('#fullscr-' + each_file_id).children()
+        if (tooglescreen == "expand") {
+            icon.attr("class", "fa fa-compress")
+        } else {
+            icon.attr("class", "fa fa-expand")
+        }
+        if (tooglescreen == "expand") {
+            $("#" + editorId ).css("height", $(window).height() - settings.heightIconBar.substring(0, settings.heightIconBar.length - 2) -45)
+            $("#" + fileListColID ).css("height", $(window).height() - settings.heightIconBar.substring(0, settings.heightIconBar.length - 2) -10)
+        } else {
+            $("#" + editorId).css("height", settings.heightEditor)
+            $("#" + fileListColID).css("height", settings.heightFileList) 
+        }
+        window[editorId].resize();
+    }
+
+
+    var bindEveHandlerIcon = function (fileid, elems, elemsID, settings) {
+        $('[data-toggle="tooltip"]').tooltip();
+        $('#fullscr-' + fileid).on('click', function (event) {
+            var tooglescreen = elems.data("tooglescreen");
+            var liAr = elems.find("li[tabid]");
+            for (var el = 0; el < liAr.length; el++) {
+                var editorID = $(liAr[el]).attr("editorID");
+                toogleContentSize(editorID, elemsID, el, tooglescreen, elems, settings);
+            }
+            toogleFullSize(tooglescreen, elems, settings);
+        });
+    }
+
+    var getColumnData = function (elemsID, dataObj, settings, height, lineHeight) {
+        var processParamDiv = ""
+        processParamDiv += getFileListCol(elemsID, dataObj, height, lineHeight, settings)
+        processParamDiv += getFileContentCol(elemsID, dataObj, height, lineHeight, settings)
+        return processParamDiv
+    }
+
+    var createAceEditor = function (editorId, script_modeId) {
+        //ace process editor
+        console.log(editorId)
+        window[editorId] = ace.edit(editorId);
+        window[editorId].setTheme("ace/theme/tomorrow");
+        window[editorId].getSession().setMode("ace/mode/sh");
+        window[editorId].$blockScrolling = Infinity;
+        //If mode is exist, then apply it
+        var mode = $("#"+script_modeId).val();
+        if (mode && mode != "") {
+            window[editorId].session.setMode("ace/mode/" + mode);
+        }
+        $(function () {
+            $(document).on('change', script_modeId, function () {
+                var newMode = $(script_modeId).val();
+                window[editorId].session.setMode("ace/mode/" + newMode);
+            })
+        });
+    }
+
+    var setValueAceEditor = function (editorId, text){
+        window[editorId].setValue(text);
+        window[editorId].clearSelection();
+    }
+
+    var createModal = function () {
+        var infoModal = `
+<div id="tEditorInfo" class="modal fade" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<h4 class="modal-title" id="tEditorInfoTitle">Title</h4>
+</div>
+<div class="modal-body">
+<p id="tEditorInfoText"></p>
+<form style="padding-right:10px;" class="form-horizontal">
+<div id="tEditorInfoNameDiv" class="form-group">
+<label class="col-sm-3 control-label">File Name</label>
+<div class="col-sm-9">
+<input id="tEditorInfoName" type="text" class="form-control">
+</div>
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+<button id="tEditorInfoButton" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+</div>
+</div>
+</div>
+</div>`;
+        if (document.getElementById("tEditorInfo") === null) {
+            $('body').append(infoModal);
+        }
+    }
+
+    var bindEventHandlerModal = function (elemsID){
+        $(function () {
+            $('#addIcon-' + elemsID).on('click', function (e) {
+                //                    var fileAr = [];
+                //                    var liAr = $("#fileListDiv_"+elemsID).find("li");
+                //                    for (var i = 0; i < liAr.length; i++) {
+                //                        var filename = $(liAr[i]).attr("id");
+                //                        if (filename != "" && filename !== null){
+                //                            fileAr.push filename)
+                //                        }
+                //                    }
+
+                $("#tEditorInfoTitle").text("Create New File")
+                $("#tEditorInfoName").val("New File")
+                $("#tEditorInfoText").css("display","none");
+                $("#tEditorInfoNameDiv").css("display","inline");
+                $("#tEditorInfoButton").attr("class", "btn btn-primary save")
+                $("#tEditorInfoButton").text("Save")
+                $("#tEditorInfo").modal("show");
+            });
+            $('#renameIcon-' + elemsID).on('click', function (e) {
+                var activeLi = $("#fileListDiv_"+elemsID).find("li.active");
+                var filename = $(activeLi[0]).attr("id");
+                $("#tEditorInfo").removeData("li_element")
+                $("#tEditorInfo").data("li_element", activeLi)
+                $("#tEditorInfoTitle").text("Rename File")
+                $("#tEditorInfoName").val(filename)
+                $("#tEditorInfoText").css("display","none");
+                $("#tEditorInfoNameDiv").css("display","inline");
+                $("#tEditorInfoButton").attr("class", "btn btn-primary rename")
+                $("#tEditorInfoButton").text("Rename")
+                $("#tEditorInfo").modal("show");
+            });
+            $('#deleteIcon-' + elemsID).on('click', function (e) {
+                var activeLi = $("#fileListDiv_"+elemsID).find("li.active");
+                var filename = $(activeLi[0]).attr("id");
+                $("#tEditorInfo").removeData("li_element")
+                $("#tEditorInfo").data("li_element", activeLi)
+                $("#tEditorInfoTitle").text("Delete File")
+                $("#tEditorInfoNameDiv").css("display","none");
+                $("#tEditorInfoText").css("display","inline");
+                $("#tEditorInfoText").text('Are you sure you want to delete '+filename+'?')
+                $("#tEditorInfoButton").attr("class", "btn btn-primary delete")
+                $("#tEditorInfoButton").text("Delete")
+                $("#tEditorInfo").modal("show");
+            });
+            $("#tEditorInfo").on('click', '.rename', function (event) {
+                var newName = $("#tEditorInfoName").val();
+                var activeLi = $("#tEditorInfo").data("li_element")
+                if (activeLi[0] &&  newName){
+                    var activeSpan = $(activeLi[0]).find("span")
+                    if (activeSpan[0]){
+                        $(activeLi[0]).attr("id",newName) 
+                        $(activeSpan[0]).text(newName) 
+                        $("#tEditorInfo").modal("hide");
+                    }
+                }
+            });
+            $("#tEditorInfo").on('click', '.delete', function (event) {
+                var activeLi = $("#tEditorInfo").data("li_element")
+                if (activeLi[0]){
+                    var a = $(activeLi[0]).find("[href]")
+                    if (a[0]){
+                        var href = $(a[0]).attr("href")
+                        var hrefDiv = $("#"+elemsID).find(href)
+                        if (hrefDiv[0]){
+                            $(activeLi[0]).remove()
+                            $(hrefDiv[0]).remove()
+                            var liAr = $("#fileListDiv_"+elemsID).find('li[tabid]');
+                            if (liAr.length >0){
+                                var a = $(liAr[0]).find("a");
+                                console.log(a)
+                                if (a.length){
+                                    a.click()
+                                }
+                            }
+                            $("#tEditorInfo").modal("hide");
+                        }
+                    }
+                }
+
+            });
+            $("#tEditorInfo").on('click', '.save', function (event) {
+                var newName = $("#tEditorInfoName").val();
+                $("#"+elemsID).textEditor("fnAddFile", newName)
+            });
+        });
+    }
+
+
+    var afterAppendEachEl = function (text, el, elemsID, elems, settings){
+        var tabID = "fileTabs_" + elemsID + "_" + el;
+        var fileid = "fileID_" + elemsID + "_" + el;
+        var editorID = "editorID_" + elemsID + "_" + el;
+        var scriptMode = "scriptMode_" + elemsID + "_" + el;
+        bindEveHandlerIcon(fileid, elems, elemsID, settings);
+        createAceEditor(editorID, scriptMode);
+        setValueAceEditor(editorID, text);
+    }
+    var afterAppendPanel = function (dataObj, settings, elemsID, elems) {
+        $.each(dataObj, function (el) {
+            var text = dataObj[el].text
+            afterAppendEachEl(text, el, elemsID, elems, settings)
+        });
+        createModal()
+        bindEventHandlerModal(elemsID)
+    }
+
+    var getPanel = function (dataObj, settings, elemsID) {
+        if (dataObj) {
+            var id = "0"
+            var bodyDiv = getColumnData(elemsID, dataObj, settings, settings.heightBody, settings.lineHeightBody);
+            var wrapBody = '<div  id="' + elemsID + '-' + id + '" style="word-break: break-all;"><div class="panel-body" style="background-color:white; height:' + settings.heightBody + '; padding:0px;">' + bodyDiv + '</div>';
+            return '<div id="' + elemsID + 'PanelDiv-' + id + '" ><div class="panel" style="background-color:' + settings.backgroundcolorleave + '; margin-bottom:15px;">' + wrapBody + '</div></div>'
+        } else
+            return ""
+    }
+
+
+    var getData = function (settings) {
+        var res = null;
+        if (settings.ajax.url) {
+            $.ajax({
+                type: "POST",
+                url: settings.ajax.url,
+                data: settings.ajax.data,
+                datatype: "json",
+                async: false,
+                cache: false,
+                success: function (results) {
+                    res = results
+                },
+                error: function (errorThrown) {
+                    console.log("##Error: ");
+                    console.log(errorThrown)
+                }
+            });
+            return res
+        } else if (settings.ajax.data) {
+            if (settings.ajax.data === undefined || settings.ajax.data.length == 0) {
+                res = null;
+            } else {
+                res = settings.ajax.data;
+            }
+        }
+        return res;
+    }
+
+    }(jQuery));
+
+//--end of textEditor jquery plugin --
+//#####################################
+
 //template text for ace editor
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
 templateperl = '#perl example: \n\n#!/usr/bin/perl \n print \'Hi there!\' . \'\\n\';';
 templatepython = '#python example: \n\n#!/usr/bin/python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
-templatesh = '#shell example: \n\n#!/bin/sh \nmy_variable="Hello World" \necho $my_variable';
+templatesh = '#shell example: \n\n#!/bin/sh \nmy_variable="Hello World" \necho \\$my_variable';
+templater = '';
 
 createAceEditors("editor", "#script_mode"); //ace process main editor
 createAceEditors("editorProHeader", "#script_mode_header") //ace process header editor
 createAceEditors("editorProFooter", "#script_mode_footer") //ace process header editor
 createAceEditors("editorPipeHeader", "#script_mode_pipe_header") //ace pipeline header editor
 createAceEditors("editorPipeFooter", "#script_mode_pipe_footer") //ace pipeline footer editor
+createAceEditors("pipelineSumEditor", "#pipelineSumEditor_mode") 
 
 function createAceEditors(editorId, script_modeId) {
     //ace process editor
@@ -22,17 +517,19 @@ function createAceEditors(editorId, script_modeId) {
         window[editorId].session.setMode("ace/mode/" + mode);
     }
     // If template text is not changed or it is blank : set the template text on change
-    $(function () {
-        $(document).on('change', script_modeId, function () {
-            var newMode = $(script_modeId).val();
-            window[editorId].session.setMode("ace/mode/" + newMode);
-            var editorText = window[editorId].getValue();
-            if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templatesh || editorText === '') {
-                var newTempText = 'template' + newMode;
-                window[editorId].setValue(window[newTempText]);
-            }
-        })
-    });
+    if (script_modeId == "#script_mode"){
+        $(function () {
+            $(document).on('change', script_modeId, function () {
+                var newMode = $(script_modeId).val();
+                window[editorId].session.setMode("ace/mode/" + newMode);
+                var editorText = window[editorId].getValue();
+                if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templatesh || editorText === '') {
+                    var newTempText = 'template' + newMode;
+                    window[editorId].setValue(window[newTempText]);
+                }
+            })
+        });
+    }
 }
 // To refresh the content of ace editors. Otherwise it doesn't show the text
 $('#advOptPro').on('show.bs.collapse', function () {
@@ -279,9 +776,11 @@ function loadSelectedProcess(selProcessId) {
     }
     if (showProcess.script_mode !== "" && showProcess.script_mode !== null) {
         $('#script_mode').val(showProcess.script_mode);
+        $("#script_mode").trigger("change");
     }
     if (showProcess.script_mode_header !== "" && showProcess.script_mode_header !== null) {
         $('#script_mode_header').val(showProcess.script_mode_header);
+        $("#script_mode_header").trigger("change");
     }
     if (showProcess.script !== null) {
         editorScript = removeDoubleQuote(decodeHtml(showProcess.script));
@@ -446,6 +945,7 @@ function checkProParameters(inputProParams, outputProParams, proID) {
 //-----Add input output parameters to process_parameters
 // startpoint: first object in data array where inputparameters starts.
 function addProParatoDB(data, startPoint, process_id, perms, group) {
+    console.log(data)
     var ppIDinputList = [];
     var ppIDoutputList = [];
     for (var i = startPoint; i < data.length; i++) {
@@ -573,11 +1073,7 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
             }
             //rgb(255, 255, 255) for activated Optional button
             if ($("#mInOptional-" + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
-                for (var n = startPoint; n < data.length; n++) {
-                    if (data[n].name === 'mInOptional-' + matchSPart) {
-                        dataToProcessParam.push({ name: "optional", value: "true" });
-                    }
-                }
+                dataToProcessParam.push({ name: "optional", value: "true" });
             }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
@@ -615,11 +1111,7 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
             }
             //rgb(255, 255, 255) for activated Optional button
             if ($("#mOutOptional-" + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
-                for (var n = startPoint; n < data.length; n++) {
-                    if (data[n].name === 'mOutOptional-' + matchSPart) {
-                        dataToProcessParam.push({ name: "optional", value: "true" });
-                    }
-                }
+                dataToProcessParam.push({ name: "optional", value: "true" });
             }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
@@ -799,7 +1291,7 @@ function checkDeletionPipe(pipeline_id) {
     return [warnUserPipe, warnPipeText];
 }
 
-//xxxxxxxx1
+
 function checkRevisionPipe(pipeline_id) {
     var warnUserPipe = false;
     var warnPipeText = '';
@@ -1189,7 +1681,71 @@ function prepareInfoModal() {
     $('#createRevisionBut').css('display', "none");
 }
 
-//xxxx
+function updateGitTitle(github_username, github_repo, commit_id){
+    if (commit_id && github_username && github_repo){
+        $("#pipGitTitleDiv").css("display", "inline-block");
+        var username = '<a target="_blank" href="https://github.com/'+github_username+'">'+github_username+'</a>';
+        var repo = '<a target="_blank" href="https://github.com/'+github_username+'/'+github_repo+'">'+github_repo+'</a>';
+        var commit = '<a target="_blank" href="https://github.com/'+github_username+'/'+github_repo+'/tree/'+commit_id+'"><i style="font-size:12px;" class="fa fa-external-link"></i></a>';
+        $("#pipGitTitle").html(username + " / " + repo + " / " + commit);
+    }
+}
+
+function updateMarkdown(text, targetDiv){
+    var target = document.getElementById(targetDiv)
+    var converter = new showdown.Converter({tables: true});
+    var html = converter.makeHtml(text);
+    target.innerHTML = html;
+}
+
+//[{"filename":"nextflow.config", "text":editorScriptPipeConfig}]
+//\n//~@:~\n@~:"filename"\n//~@:~\ntext
+function createMultiConfig(allConf){
+    var ret    = []
+    //if empty or null, then show as empty nextflow.config
+    if (allConf === null || !allConf) {
+        ret.push ({"filename": "nextflow.config", "text": ""})
+    } else {
+        allConf=decodeHtml(allConf)
+        console.log(allConf)
+        var checkLabel = false;
+        var sep    = "\n//~@:~\n";
+        var confAr = allConf.split(sep)
+        var filename = "";
+        for (var i = 0; i < confAr.length; i++) {
+            if (confAr[i].match(/@~:"(.*)"/)){
+                filename = confAr[i].match(/@~:"(.*)"/)[1]
+                if (filename && confAr[i+1] != null && typeof confAr[i+1] !== 'undefined' ){
+                    checkLabel = true
+                    ret.push ({"filename": filename, "text": confAr[i+1]})
+                    continue;
+                }
+            }
+        }
+        //if header info is not found, then show as nextflow.config
+        if (!checkLabel){
+            ret.push ({"filename": "nextflow.config", "text": allConf})
+        }
+    }
+    return ret;
+}
+
+function combineTextEditor(divID){
+    var ret = "";
+    var sep    = "\n//~@:~\n";
+    var label  = "@~:";
+    var liAr = $("#fileListDiv_"+divID).find("li");
+    for (var i = 0; i < liAr.length; i++) {
+        var filename = $(liAr[i]).attr("id");
+        var editorID = $(liAr[i]).attr("editorID");
+        if (editorID && filename){
+            var script = window[editorID].getValue();
+            ret += sep + label + '"'+filename+'"' + sep +script + sep
+        }
+    }
+    return encodeURIComponent(ret)
+}
+
 function loadPipelineDetails(pipeline_id, usRole) {
     window.pipeObj = {};
     var getPipelineD = [];
@@ -1208,24 +1764,33 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 $('#creatorInfoPip').css('display', "block");
                 $('#pipeline-title').changeVal(pData[0].name);
                 $('#ownUserNamePip').text(pData[0].username);
-                $('#pipelineSum').val(decodeHtml(pData[0].summary));
+                pipelineSumEditor.setValue(decodeHtml(pData[0].summary));
+                updateMarkdown(decodeHtml(pData[0].summary), "pipelineSum")
+                if (pData[0].github){
+                    if (IsJsonString(pData[0].github)) {
+                        var git_json = JSON.parse(pData[0].github)
+                        if (git_json) {
+                            updateGitTitle(git_json.username, git_json.repository, git_json.commit)
+                        }
+                    }
+                }
                 pipelineOwn = pData[0].own;
                 pipelinePerm = pData[0].perms;
                 // if user not own it, cannot change or delete pipeline
-                console.log(pipelineOwn)
                 if (pipelineOwn === "0") {
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
-                    $('#pipelineSum').attr('disabled', 'disabled');
+                    $('#editPipeSum').remove();
+                    $('#confirmPipeSum').remove();
                     editorPipeHeader.setReadOnly(true);
                     editorPipeFooter.setReadOnly(true);
                     $('#permsPipeDiv').css('display', 'none');
                     $('#groupSelPipeDiv').css('display', 'none');
                     $('#publishPipeDiv').css('display', 'none');
+                    $('#gitConsoleBtn').css('display', 'none');
                     $('#pipeMenuGroupBottom').css('display', 'none');
                 }
                 if (usRole === "admin") {
-                    $('#advOptDiv').css('display', 'inline');
                     $('#pinMainPage').css("display", "inline");
                     $('#savePipeline').css('display', 'inline');
                     $('#permsPipeDiv').css('display', 'inline');
@@ -1240,21 +1805,35 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 // fill Script_modes
                 if (pData[0].script_mode_header) {
                     $('#script_mode_pipe_header').val(pData[0].script_mode_header);
+                    $("#script_mode_pipe_header").trigger("change");
                 }
                 if (pData[0].script_mode_footer) {
                     $('#script_mode_pipe_footer').val(pData[0].script_mode_footer);
+                    $("#script_mode_pipe_footer").trigger("change");
                 }
                 //load header and foother script
+                var editorScriptPipeConfig = ""
                 if (pData[0].script_pipe_header !== "" && pData[0].script_pipe_header !== null) {
-                    var editorScriptPipeHeader = removeDoubleQuote(decodeHtml(pData[0].script_pipe_header));
+                    var editorScriptPipeHeader = decodeHtml(pData[0].script_pipe_header);
                     editorPipeHeader.setValue(editorScriptPipeHeader);
                     editorPipeHeader.clearSelection();
                 }
                 if (pData[0].script_pipe_footer !== "" && pData[0].script_pipe_footer !== null) {
-                    var editorScriptPipeFooter = removeDoubleQuote(decodeHtml(pData[0].script_pipe_footer));
+                    var editorScriptPipeFooter = decodeHtml(pData[0].script_pipe_footer);
                     editorPipeFooter.setValue(editorScriptPipeFooter);
                     editorPipeFooter.clearSelection();
                 }
+                editorScriptPipeConfig = createMultiConfig(pData[0].script_pipe_config);
+
+                $("#pipelineFiles").textEditor({
+                    ajax: {
+                        data: editorScriptPipeConfig
+                    },
+                    backgroundcolorenter: "#ced9e3",
+                    backgroundcolorleave: "#ECF0F4",
+                    height: "600px"
+                });
+
                 //load user groups
                 var allUserGrp = getValues({ p: "getUserGroups" });
                 $.each(allUserGrp, function (i, item) {
@@ -1404,6 +1983,7 @@ function exportPipeline() {
 
 
 
+
 function loadSelectedPipeline(pipeline_id) {
     var pData = getValues({ p: "loadPipeline", id: pipeline_id })
     var pDataTable = [];
@@ -1543,13 +2123,19 @@ $(document).ready(function () {
             $('#groupSelPipe').append($('<option>', { value: item.id, text : item.name }));
             $('#groupSelPro').append($('<option>', { value: item.id, text : item.name }));
         });
-
-
         loadPipeMenuGroup(true);
+        $("#pipelineFiles").textEditor({
+            ajax: {
+                data: [{"filename":"nextflow.config", "text":""}]
+            },
+            backgroundcolorenter: "#ced9e3",
+            backgroundcolorleave: "#ECF0F4",
+            height: "600px"
+        });
     }
 
     //Make modal draggable    
-    $('.modal-dialog').draggable({ cancel: 'input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amzTable' });
+    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amzTable' });
 
 
 
@@ -1663,6 +2249,179 @@ $(document).ready(function () {
         })
     });
 
+    //xxxxx
+    $(function () {
+        $('#gitConsoleModal').on('show.bs.modal', function (e) {
+            $(this).find('form').trigger('reset');
+            $.ajax({
+                type: "GET",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    p: "getGithub"
+                },
+                async: false,
+                success: function (s) {
+                    //fill the dropdown
+                    $("#mGitUsername").empty();
+                    var firstOptionGroup = new Option("Select Github Account...", '');
+                    $("#mGitUsername").append(firstOptionGroup);
+                    for (var i = 0; i < s.length; i++) {
+                        var param = s[i];
+                        var optionGroup = new Option(param.username, param.id);
+                        $("#mGitUsername").append(optionGroup);
+                    }
+                    //fill the form
+                    var pipeline_id = $('#pipeline-title').attr('pipelineid');
+                    if (pipeline_id) {
+                        var pData = [window.pipeObj["main_pipeline_"+pipeline_id]];
+                        if (pData[0].github){
+                            if (IsJsonString(pData[0].github)) {
+                                var git_json = JSON.parse(pData[0].github)
+                                if (git_json) {
+                                    if (git_json.username){
+                                        var el = document.getElementById("mGitUsername");
+                                        for(var i=0; i<el.options.length; i++) {
+                                            if ( el.options[i].text == git_json.username ) {
+                                                el.selectedIndex = i;
+                                                $("#github_repo").val(git_json.repository)
+                                                $("#github_branch").val(git_json.branch)
+                                                break;
+                                            }
+                                        } 
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+
+
+
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        });
+        $('#gitConsoleModal').on('hide.bs.modal', function (event) {
+            cleanHasErrorClass("#gitConsoleModal")
+            $("#mGitLog").css("display", "none");
+            $("#mGitSuccess").html("");
+        });
+        $('#gitConsoleModal').on('click', '#pushGit', function (event) {
+            event.preventDefault();
+            var github_username = $("#mGitUsername option:selected").text();
+            var formValues = $('#gitConsoleModal').find('input, select');
+            var requiredFields = ["username", "github_repo", "github_branch"];
+            var formObj = {};
+            var stop = "";
+            [formObj, stop] = createFormObj(formValues, requiredFields)
+            if (stop === false) {
+                showLoadingDiv("gitConsoleDiv");
+                var pipeline_id = $('#pipeline-title').attr('pipelineid');
+                if (pipeline_id){
+                    var dnData   = encodeURIComponent(exportPipeline())
+                    var nfData   = encodeURIComponent(createNextflowFile("git"))
+                    var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
+                    formObj.proVarObj = proVarObj
+                    formObj.pipeline_id = pipeline_id
+                    formObj.dnData = dnData
+                    formObj.nfData = nfData
+                    formObj.type = "pushGithub"
+                    formObj.p = "publishGithub"
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: formObj,
+                        complete: function () {
+                            hideLoadingDiv("gitConsoleDiv");
+                        },
+                        async: true,
+                        success: function (s) {
+                            $("#mGitLog").val("");
+                            $("#mGitLog").css("display", "inline-block");
+                            if (IsJsonString(s)) {
+                                var json = JSON.parse(s)
+                                console.log(json)
+                                if (json) {
+                                    if (json.check_repo_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+"Checking Repository:"+"\n"+json.check_repo_cmd_log)
+                                    }
+                                    if (json.init_cmd){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+"Initiating:")
+                                    }
+                                    if (json.init_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.init_cmd_log)
+                                    }
+                                    if (json.branch_cmd){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.branch_cmd)
+                                    }
+                                    if (json.branch_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.branch_cmd_log)
+                                    }
+                                    if (json.push_cmd){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+"Pushing Repository:")
+                                    }
+                                    if (json.push_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.push_cmd_log)
+                                    }
+                                    if (json.get_commit_id_cmd){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.get_commit_id_cmd)
+                                    }
+                                    if (json.get_commit_id_cmd_log){
+                                        var oldLog = $("#mGitLog").val()
+                                        $("#mGitLog").val(oldLog+"\n"+json.get_commit_id_cmd_log)
+                                        var textarea = document.getElementById('mGitLog');
+                                        textarea.scrollTop = textarea.scrollHeight;
+                                    }
+                                    //successfully completed.
+                                    if (json.commit_id){
+                                        $("#mGitSuccess").html('Pipeline successfully pushed to GitHub: <a style="word-wrap: break-word;" target="_blank" href="https://github.com/'+github_username+'/'+formObj.github_repo+'/tree/'+json.commit_id+'"> https://github.com/'+github_username+'/'+formObj.github_repo+'/tree/'+json.commit_id+'</a><br/>Commit id: '+json.commit_id);
+                                        //update pipeline info
+                                        updateGitTitle(github_username, formObj.github_repo, json.commit_id)
+                                    } else {
+                                        $("#mGitSuccess").html("Failed to push GitHub. Please check the logs to for the reason.")
+                                    }
+                                }
+                            }
+                        },
+                        error: function (errorThrown) {
+                            alert("Error: " + errorThrown);
+                        }
+                    });
+                }
+            }
+        });
+
+        $(document).on('click', "#downPipeline", function (e) {
+            var pipeline_id = $('#pipeline-title').attr('pipelineid');
+            if (pipeline_id){
+                var dnData    = encodeURIComponent(exportPipeline())
+                var nfData    = encodeURIComponent(createNextflowFile("git"))
+                var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
+                var downPack = getValues({ p: "publishGithub", proVarObj:proVarObj, pipeline_id: pipeline_id, nfData: nfData, dnData: dnData,  type: "downPack" })
+                if (IsJsonString(downPack)) {
+                    var json = JSON.parse(downPack)
+                    if (json) {
+                        if (json.zip_file){
+                            window.location = json.zip_file
+                        }
+                    }
+                }
+            }
+
+        });
+    });
+
     $(function () {
         $(document).on('change', '#permsPro', function (event) {
             var selPerm = $(this).val();
@@ -1730,6 +2489,31 @@ $(document).ready(function () {
             $("#" + id).attr("prev", selPipeId);
         })
     });
+
+    $(function () {
+        $(document).on('click', '#editPipeSum', function (e) {
+            pipelineSumEditor.clearSelection();
+            $("#pipelineSumEditorDiv").css("display", "inline-block")
+            $("#pipelineSum").css("display", "none")
+            $("#editPipeSum").css("display", "none")
+            $("#confirmPipeSum").css("display","inline-block")
+            //            pipelineSumEditor.setValue(scriptPipeConfig);
+
+        });
+        $(document).on('click', '#confirmPipeSum', function (e) {
+            autosaveDetails();
+            var scriptSumEditor = pipelineSumEditor.getValue();
+            updateMarkdown(scriptSumEditor, "pipelineSum")
+            $("#pipelineSum").css("display", "inline-block")
+            $("#pipelineSumEditorDiv").css("display", "none")
+            $("#editPipeSum").css("display", "inline-block")
+            $("#confirmPipeSum").css("display","none")
+        });
+        //xxxxxx
+    });
+
+
+
 
 
 
@@ -1834,13 +2618,24 @@ $(document).ready(function () {
     $('#confirmModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         if (button.attr('id') === 'deleteRevision') {
+            $("#deleteBtn").text("Delete")
             $('#deleteBtn').attr('class', 'btn btn-primary delprocess');
             $('#confirmModalText').html('Are you sure you want to delete this process revision?');
         } else if (button.attr('id') === 'delPipeline') {
+            $("#deleteBtn").text("Delete")
             $('#deleteBtn').attr('class', 'btn btn-primary delpipeline');
             $('#confirmModalText').html('Are you sure you want to delete this pipeline?');
+        } else if (button.attr('id') === 'dupPipeline') {
+            $("#deleteBtn").text("Duplicate")
+            $('#deleteBtn').attr('class', 'btn btn-primary dupPipeline');
+            $('#confirmModalText').html("Are you sure you want to duplicate this pipeline? </br></br> * It is not suggested to use this feature, unless you are planning to create custom pipeline.");
         }
     });
+
+    $('#confirmModal').on('click', '.dupPipeline', function (event) {
+        $('#confirmModal').modal('hide');
+        duplicatePipeline();
+    })
 
     $('#confirmModal').on('click', '.delpipeline', function (event) {
         var pipeline_id = $('#pipeline-title').attr('pipelineid');
@@ -1960,8 +2755,6 @@ $(document).ready(function () {
             var scripteditor = getScriptEditor('editor');
             var scripteditorProHeader = getScriptEditor('editorProHeader');
             var scripteditorProFooter = getScriptEditor('editorProFooter');
-            //            var maxProcess_gid = getValues({ p: "getMaxProcess_gid" })[0].process_gid;
-            //            var newProcess_gid = parseInt(maxProcess_gid) + 1;
             var script_mode = $('#script_mode').val();
             var script_mode_header = $('#script_mode_header').val();
             dataToProcess.push({ name: "perms", value: perms });
@@ -2419,6 +3212,12 @@ $(document).ready(function () {
         } else {
             $('#mFileTypeDiv').css('display', 'block');
         }
+        if ($('#modalQualifier').val() === 'each') {
+            $('#mFileTypeLabel').html('File Type/Identifier <span><a id="mFileTypeTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores. If qualifier is set to each, you may enter both file type (if you\'re planing to connect with file nodes) or identifier(in case of connecting to val nodes.)"><i class=\'glyphicon glyphicon-info-sign\'></i></a></span>');
+        } else {
+            $('#mFileTypeLabel').html('File Type <span><a id="mFileTypeTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores."><i class=\'glyphicon glyphicon-info-sign\'></i></a></span>');
+        }
+        $('[data-toggle="tooltip"]').tooltip();
     });
 
     //parameter modal 
@@ -2675,6 +3474,7 @@ $(document).ready(function () {
     });
     // "change name" modal for input parameters: remove attr:disabled by click
     toggleCheckBox('#checkDropDown', '#dropDownOpt');
+    toggleCheckBox('#checkShowSett', '#showSettOpt');
     toggleCheckBox('#checkDefVal', '#defVal');
     toggleCheckBox('#checkPubWeb', '#pubWebOpt');
 
@@ -2700,8 +3500,10 @@ $(document).ready(function () {
     }
     // "change name" modal for input parameters
     function fillRenameModal(renameTextDefVal, checkID, inputID) {
-        if (renameTextDefVal) {
+        if (renameTextDefVal != null) {
             if (renameTextDefVal !== "") {
+                renameTextDefVal= renameTextDefVal.replace(/'/gi, "");
+                renameTextDefVal = renameTextDefVal.replace(/"/gi, "");
                 if ($(inputID).data().multiselect) {
                     $(inputID).multiselect('enable')
                     var optAr = []
@@ -2711,6 +3513,9 @@ $(document).ready(function () {
                     $(inputID).removeAttr('disabled')
                     $(inputID).val(renameTextDefVal)
                 }
+                $(checkID).attr('checked', true);
+            } else if (inputID == "#showSettOpt" && renameTextDefVal === ""){
+                $(inputID).removeAttr('disabled')
                 $(checkID).attr('checked', true);
             } else {
                 if ($(inputID).data().multiselect) {
@@ -2737,7 +3542,9 @@ $(document).ready(function () {
             value = value.join(",")
         }
         var checkValue = $(checkId).is(":checked").toString();
-        if (checkValue === "true" && value !== "") {
+        if (checkValue === "true" && attr == "showSett"){
+            $("#" + renameTextID).attr(attr, value)
+        } else if (checkValue === "true" && value !== "") {
             $("#" + renameTextID).attr(attr, value)
         } else {
             $("#" + renameTextID).removeAttr(attr);
@@ -2765,19 +3572,23 @@ $(document).ready(function () {
         if (renameTextClassType === null) {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")
+            $('#showSettDiv').css("display", "none")
             $('#pubWebDiv').css("display", "none")
         } else if (renameTextClassType === "input") {
             $('#defValDiv').css("display", "block")
             $('#dropdownDiv').css("display", "block")
+            $('#showSettDiv').css("display", "block")
             $('#pubWebDiv').css("display", "none")
         } else if (renameTextClassType === "output") {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")
+            $('#showSettDiv').css("display", "none")
             $('#pubWebDiv').css("display", "block")
         }
 
         fillRenameModal(renameTextDefVal, "#checkDefVal", '#defVal');
         fillRenameModal(renameTextDropDown, '#checkDropDown', '#dropDownOpt');
+        fillRenameModal(renameTextShowSett, '#checkShowSett', '#showSettOpt');
         fillRenameModal(renameTextPubWeb, '#checkPubWeb', '#pubWebOpt');
         $('#renameModaltitle').html('Change Name');
         $('#mRenName').val(renameText);
@@ -2786,6 +3597,7 @@ $(document).ready(function () {
         saveValue('#checkDefVal', '#defVal', "defVal");
         saveValue('#checkDropDown', '#dropDownOpt', "dropDown");
         saveValue('#checkPubWeb', '#pubWebOpt', "pubWeb");
+        saveValue('#checkShowSett', '#showSettOpt', "showSett");
         changeName();
         autosave();
         $('#renameModal').modal("hide");

@@ -81,6 +81,7 @@ function createSVG() {
     processList = {}
     processListMain = {}
     ccIDList = {} //pipeline module match id list
+    nullIDList = {} //in case node info is changed after import/save on existing. use getNewNodeId function to get new id
     edges = []
     candidates = []
     saveNodes = []
@@ -143,7 +144,7 @@ function resetOriginal(paramType, firstParamId) {
 }
 
 //edges-> all edge list, nullId-> process input/output id that not exist in the d3 diagrams 
-function getNewNodeId(edges, nullId) {
+function getNewNodeId(edges, nullId, MainGNum) {
     //nullId: i-24-14-20-1
     var nullProcessInOut = nullId.split("-")[0];
     var nullProcessId = nullId.split("-")[1];
@@ -161,11 +162,12 @@ function getNewNodeId(edges, nullId) {
         if (paraData.length === 1 && nullProcessId !== "inPro" && nullProcessId !== "outPro") {
             var patt = /(.*)-(.*)-(.*)-(.*)-(.*)/;
             var nullIdRegEx = new RegExp(nullId.replace(patt, '$1-$2-' + '(.*)' + '-$4-$5'), 'g')
-            var newNode = $('#g-' + nullProcessGnum).find("circle").filter(function () {
+            var newNode = $('#g' + MainGNum + "-" + nullProcessGnum).find("circle").filter(function () {
                 return this.id.match(nullIdRegEx);
             })
             if (newNode.length === 1) {
                 var newNodeId = newNode.attr("id");
+                nullIDList["p"+MainGNum+nullId]=newNodeId
                 return newNodeId;
             }
         }
@@ -212,9 +214,9 @@ function openSubPipeline(piID, pObj) {
     pObj.processList = {};
     pObj.processListMain = {};
     pObj.edges = [];
-    //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
+    //check if params.VARNAME is defined in the autofill section of pipeline header or pipeline config. Then return all VARNAMES to define as system inputs
     var processData = ""
-    insertProPipePanel(decodeHtml(sData.script_pipe_header), "pipe", "Pipeline", window, processData);
+    insertProPipePanel(decodeHtml(sData.script_pipe_config) + "\n" + decodeHtml(sData.script_pipe_header), "pipe", "Pipeline", window, processData);
     var hideModule = false;
     if ($("#subPipelinePanelTitle").find('div[pipeid*=' + piID + ']').length > 0) {
         hideModule = true;
@@ -223,7 +225,7 @@ function openSubPipeline(piID, pObj) {
     if (hideModule) {
         hideModuleText = 'style="display:none;"';
     }
-    var pipeName = sData.name;
+    var pipeName = cleanProcessName(sData.name);
     var dispTitle = $('#subPipelinePanelTitle').css("display");
     if (dispTitle == "none") {
         $('#subPipelinePanelTitle').css("display", "inline");
@@ -252,7 +254,7 @@ function openSubPipeline(piID, pObj) {
             pObj.x = pObj.nodes[key][0]
             pObj.y = pObj.nodes[key][1]
             pObj.pId = pObj.nodes[key][2]
-            pObj.name = pObj.nodes[key][3]
+            pObj.name = cleanProcessName(pObj.nodes[key][3]);
             var processModules = pObj.nodes[key][4];
             pObj.gNum = key.split("-")[1]
             if (pObj.pId.match(/p(.*)/)) {
@@ -304,65 +306,67 @@ function openSubPipeline(piID, pObj) {
 function openPipeline(id) {
     createSVG()
     sData = [window.pipeObj["main_pipeline_" + id]]
-    if (Object.keys(sData).length > 0) {
-        nodes = sData[0].nodes
-        nodes = JSON.parse(nodes.replace(/'/gi, "\""))
-        mG = sData[0].mainG
-        mG = JSON.parse(mG.replace(/'/gi, "\""))["mainG"]
-        translateSVG(mG, window)
-        for (var key in nodes) {
-            x = nodes[key][0]
-            y = nodes[key][1]
-            pId = nodes[key][2]
-            name = cleanProcessName(nodes[key][3])
-            var processModules = nodes[key][4];
-            gNum = parseInt(key.split("-")[1])
-            //for pipeline circles
-            if (pId.match(/p(.*)/)) {
-                var piID = pId.match(/p(.*)/)[1];
-                var newMainGnum = "pObj" + gNum;
-                window[newMainGnum] = {};
-                window[newMainGnum].piID = piID;
-                window[newMainGnum].MainGNum = gNum;
-                window[newMainGnum].lastGnum = gNum;
-                window[newMainGnum].sData = [window.pipeObj["pipeline_module_" + piID]]
-                window[newMainGnum].lastPipeName = name;
-                // create new SVG workplace inside panel, if not added before
-                openSubPipeline(piID, window[newMainGnum]);
-                // add pipeline circle to main workplace
-                addPipeline(piID, x, y, name, window, window[newMainGnum]);
-                //for process circles
-            } else {
-                loadPipeline(x, y, pId, name, processModules, gNum, window)
-            }
-        }
-        ed = sData[0].edges
-        ed = JSON.parse(ed.replace(/'/gi, "\""))["edges"]
-        for (var ee = 0; ee < ed.length; ee++) {
-            eds = ed[ee].split("_")
-            if (!document.getElementById(eds[0]) && document.getElementById(eds[1])) {
-                //if process is updated through process modal, reconnect the uneffected one based on their parameter_id.
-                var newID = getNewNodeId(ed, eds[0])
-                if (newID) {
-                    eds[0] = newID;
-                    addCandidates2DictForLoad(eds[0])
-                    createEdges(eds[0], eds[1], window)
+    if (sData) {
+        if (Object.keys(sData).length > 0) {
+            nodes = sData[0].nodes
+            nodes = JSON.parse(nodes.replace(/'/gi, "\""))
+            mG = sData[0].mainG
+            mG = JSON.parse(mG.replace(/'/gi, "\""))["mainG"]
+            translateSVG(mG, window)
+            for (var key in nodes) {
+                x = nodes[key][0]
+                y = nodes[key][1]
+                pId = nodes[key][2]
+                name = cleanProcessName(nodes[key][3])
+                var processModules = nodes[key][4];
+                gNum = parseInt(key.split("-")[1])
+                //for pipeline circles
+                if (pId.match(/p(.*)/)) {
+                    var piID = pId.match(/p(.*)/)[1];
+                    var newMainGnum = "pObj" + gNum;
+                    window[newMainGnum] = {};
+                    window[newMainGnum].piID = piID;
+                    window[newMainGnum].MainGNum = gNum;
+                    window[newMainGnum].lastGnum = gNum;
+                    window[newMainGnum].sData = [window.pipeObj["pipeline_module_" + piID]]
+                    window[newMainGnum].lastPipeName = name;
+                    // create new SVG workplace inside panel, if not added before
+                    openSubPipeline(piID, window[newMainGnum]);
+                    // add pipeline circle to main workplace
+                    addPipeline(piID, x, y, name, window, window[newMainGnum]);
+                    //for process circles
+                } else {
+                    loadPipeline(x, y, pId, name, processModules, gNum, window)
                 }
-                //if process is updated through process modal, reset the edge of input/output parameter and reset the single circles.
-                resetSingleParam(eds[1]);
+            }
+            ed = sData[0].edges
+            ed = JSON.parse(ed.replace(/'/gi, "\""))["edges"]
+            for (var ee = 0; ee < ed.length; ee++) {
+                eds = ed[ee].split("_")
+                if (!document.getElementById(eds[0]) && document.getElementById(eds[1])) {
+                    //if process is updated through process modal, reconnect the uneffected one based on their parameter_id.
+                    var newID = getNewNodeId(ed, eds[0], "")
+                    if (newID) {
+                        eds[0] = newID;
+                        addCandidates2DictForLoad(eds[0], window)
+                        createEdges(eds[0], eds[1], window)
+                    }
+                    //if process is updated through process modal, reset the edge of input/output parameter and reset the single circles.
+                    resetSingleParam(eds[1]);
 
-            } else if (!document.getElementById(eds[1]) && document.getElementById(eds[0])) {
-                var newID = getNewNodeId(ed, eds[1], "");
-                if (newID) {
-                    eds[1] = newID;
+                } else if (!document.getElementById(eds[1]) && document.getElementById(eds[0])) {
+                    var newID = getNewNodeId(ed, eds[1], "");
+                    if (newID) {
+                        eds[1] = newID;
+                        addCandidates2DictForLoad(eds[0], window)
+                        createEdges(eds[0], eds[1], window)
+                    }
+                    resetSingleParam(eds[0]);
+
+                } else if (document.getElementById(eds[1]) && document.getElementById(eds[0])) {
                     addCandidates2DictForLoad(eds[0], window)
                     createEdges(eds[0], eds[1], window)
                 }
-                resetSingleParam(eds[0]);
-
-            } else if (document.getElementById(eds[1]) && document.getElementById(eds[0])) {
-                addCandidates2DictForLoad(eds[0], window)
-                createEdges(eds[0], eds[1], window)
             }
         }
     }
@@ -383,7 +387,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -471,6 +475,9 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
     if (dropDown) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('dropDown', dropDown)
     }
+    if (showSett != null) {
+        $("#text" + MainGNum + "-" + pObj.gNum).attr('showSett', showSett)
+    }
     if (pubWeb) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('pubWeb', pubWeb)
     }
@@ -479,6 +486,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
 //inputText = "example" //* @textbox @description:"One inputbox is invented"
 //selectText = "sel1" //* @dropdown @options:"none","sel1","sel2" @description:"One text is invented"
 //checkBox = "true" //* @checkbox @description:"One checkbox is created"
+//arr = ["name1","name2"] //* @input 
 
 function parseVarPart(varPart, type) {
     var splitType = type || "";
@@ -496,6 +504,11 @@ function parseVarPart(varPart, type) {
             // if defaultVal starts and ends with single or double quote, remove these. (keep other quotes)
             if ((defaultVal.charAt(0) === '"' || defaultVal.charAt(0) === "'") && (defaultVal.charAt(defaultVal.length - 1) === '"' || defaultVal.charAt(defaultVal.length - 1) === "'")) {
                 defaultVal = defaultVal.substr(1, defaultVal.length - 2);
+            } else if (defaultVal.charAt(0) === '[' || defaultVal.charAt(defaultVal.length - 1) === "]"){
+                var content = defaultVal.substr(1, defaultVal.length - 2);
+                content = content.replace(/\"/g, '');
+                content = content.replace(/\'/g, '');
+                defaultVal = content.split(",")
             }
         }
     } // if /=/ not exist then genericCond is defined   
@@ -542,7 +555,45 @@ function parseBrackets(arr, trim) {
     return finalArr;
 }
 
-
+//parse for autofill: @url, @urlzip, @checkPath
+function parseRegPartAutofill(regPart) {
+    var url = null;
+    var urlzip = null;
+    var checkPath = null;
+    if (regPart.match(/@/)) {
+        var regSplit = regPart.split('@');
+        for (var i = 0; i < regSplit.length; i++) {
+            // find url
+            var urlCheck = regSplit[i].match(/^url:"(.*)"|^url:'(.*)'/i);
+            if (urlCheck) {
+                if (urlCheck[1]) {
+                    url = urlCheck[1];
+                } else if (urlCheck[2]) {
+                    url = urlCheck[2];
+                }
+            }
+            // find url
+            var urlzipCheck = regSplit[i].match(/^urlzip:"(.*)"|^urlzip:'(.*)'/i);
+            if (urlzipCheck) {
+                if (urlzipCheck[1]) {
+                    urlzip = urlzipCheck[1];
+                } else if (urlzipCheck[2]) {
+                    urlzip = urlzipCheck[2];
+                }
+            }
+            // find url
+            var checkPathCheck = regSplit[i].match(/^checkpath:"(.*)"|^checkpath:'(.*)'/i);
+            if (checkPathCheck) {
+                if (checkPathCheck[1]) {
+                    checkPath = checkPathCheck[1];
+                } else if (checkPathCheck[2]) {
+                    checkPath = checkPathCheck[2];
+                }
+            }
+        }
+    }
+    return [url, urlzip, checkPath];
+}
 
 //parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings
 //parse style categories: @multicolumn, @array, @condition
@@ -710,27 +761,35 @@ function findDynamicArr(optArr, gNum) {
     var opt = null;
     for (var t = 0; t < optArr.length; t++) {
         if (optArr[t].varNameCond && optArr[t].selOpt && optArr[t].autoVal) {
-            optArr[t].varNameCond = checkDynamicVar(optArr[t].varNameCond, autoFillJSON, null, gNum)
-            if (optArr[t].varNameCond == optArr[t].selOpt) {
-                opt = optArr[t].autoVal;
-                return opt
+            var checkVal = checkDynamicVar(optArr[t].varNameCond, autoFillJSON, null, gNum)
+            if (checkVal){
+                optArr[t].varNameCond = checkVal
+                if (optArr[t].varNameCond == optArr[t].selOpt) {
+                    opt = optArr[t].autoVal;
+                    return opt
+                }
             }
         }
     }
     return opt
 }
 
+// at this position we know that default option will be shown (other options are not valid or conditionally seen options are available -> keep these option in hiddenOpt)
 function findDefaultArr(optArr) {
     var defaultOpt = null;
+    var hiddenOpt = [];
+    var allOpt = [];
     for (var t = 0; t < optArr.length; t++) {
+        $.extend(allOpt,optArr[t].autoVal)
         if (!optArr[t].varNameCond && !optArr[t].selOpt && optArr[t].autoVal) {
             var mergedOpt = optArr[t].autoVal.join("")
             if (!mergedOpt.match(/=/)) {
                 defaultOpt = optArr[t].autoVal;
             }
-        }
+        } 
     }
-    return defaultOpt
+    hiddenOpt = $(allOpt).not(defaultOpt).get();
+    return [defaultOpt,hiddenOpt,allOpt]
 }
 
 
@@ -738,10 +797,16 @@ function findDefaultArr(optArr) {
 
 //insert form fields into panels of process options 
 function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title) {
+    if ($.isArray(defaultVal)){
+        defaultVal = "";
+    }
     var checkInsert = $('#addProcessRow-' + gNum).find('[id]').filter(function () {
         return $(this).attr('id') === 'var_' + gNum + '-' + varName
     });
     if (!checkInsert.length) {
+        var hiddenOpt = null; // if conditional dropdown options are defined
+        var allOpt = null; // if conditional dropdown options are defined
+        var optArr = []; // for dropdown options
         var arrayCheck = false; //is it belong to array
         var clearFix = ""; //if its the first element of multicol
         var arrayId = "";
@@ -778,6 +843,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                         $('#addProcessRow-' + gNum + "> #" + arrayId + '_ind0 + #addDiv > button').attr("onclick", "javascript:appendBeforeDiv(this)")
                     }
                 }
+                //xxxxxxxxx
             });
         }
         if (tool && tool != "") {
@@ -813,13 +879,13 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
             var optionDiv = "";
             var defaultOpt = null;
             var dynamicOpt = null;
+            var optOrg = opt;
             if (opt) {
                 if (opt.length) {
                     //check if conditional options are defined.
                     var condOptCheck = $.isArray(opt[0])
                     if (condOptCheck) {
                         //conditional options
-                        var optArr = [];
                         optArr = createDynFillArr([opt])
                         //check if dynamic variables (_var) exist in varNameCond
                         dynamicOpt = findDynamicArr(optArr, gNum)
@@ -827,19 +893,24 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                             opt = dynamicOpt;
                         } else {
                             // check if default option is defined(without =)
-                            opt = findDefaultArr(optArr)
+                            // check if conditional options are defined and keep them in hiddenOpt 
+                            [opt,hiddenOpt,allOpt] = findDefaultArr(optArr)
                         }
                     }
                     if (opt) {
                         for (var k = 0; k < opt.length; k++) {
                             if (defaultVal === opt[k]) {
-                                optionDiv += '<option selected>' + opt[k] + ' </option>';
+                                optionDiv += '<option value="'+opt[k]+'" selected>' + opt[k] + ' </option>';
                             } else {
-                                optionDiv += '<option>' + opt[k] + ' </option>';
+                                optionDiv += '<option value="'+opt[k]+'">' + opt[k] + ' </option>';
                             }
                         }
                     }
-
+                    if (hiddenOpt) {
+                        for (var k = 0; k < hiddenOpt.length; k++) {
+                            optionDiv += '<option style="display:none;" value="'+hiddenOpt[k]+'">' + hiddenOpt[k] + ' </option>';
+                        }
+                    }
                 }
             }
             processParamDiv += label + inputDiv + optionDiv + '</select>' + descText + '</div>';
@@ -851,6 +922,53 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
             // if array defined then append each element into that arraydiv.
             $('#addProcessRow-' + gNum + "> #" + arrayId + '_ind0').append(processParamDiv);
             $('#addProcessRow-' + gNum + "> #" + arrayId + '_ind0 > #delDiv').insertAfter($('#addProcessRow-' + gNum + "> #" + arrayId + '_ind0 div:last')); //keep remove button at last
+        }
+        //bind event handler to dynamically show dropdown options  
+        if (hiddenOpt && optArr && allOpt) {
+            $.each(optArr, function (el) {
+                if (optArr[el].selOpt){
+                    if (!optArr[el].selOpt.match(/\|/)){
+                        var dataGroup = $.extend(true, {}, optArr[el]);
+                        dataGroup.type = type;
+                        var varNameCond = dataGroup.varNameCond;
+                        //find dropdown based condition changes are created.
+                        //in order to grep all array rows which has same id, following jquery pattern is used.
+                        var condDiv = $('[id="var_' + gNum + "-" + varNameCond + '"]');
+                        //bind change event to dropdown
+                        $.each(condDiv, function (eachArrayForm) {
+                            $(condDiv[eachArrayForm]).change(dataGroup, function () {
+                                var lastdataGroup = $.extend(true, {}, dataGroup);
+                                var autoVal = lastdataGroup.autoVal;
+                                var varNameCond = lastdataGroup.varNameCond;
+                                var selOpt = lastdataGroup.selOpt;
+                                var type = lastdataGroup.type;
+                                var selectedVal = "";
+                                if (type == "dropdown") {
+                                    selectedVal = $(this).val();
+                                } 
+                                var parentDiv = $(this).parent().parent();
+                                if (selectedVal === selOpt) {
+                                    //show only valid options
+                                    for (var k = 0; k < autoVal.length; k++) {
+                                        parentDiv.find("#var_" + gNum + "-" + varName).children("option[value=" + autoVal[k] + "]").css("display","block")
+                                    }
+                                    //hide option if they are not valid 
+                                    var hideOpt = $(allOpt).not(autoVal).get();
+                                    for (var k = 0; k < hideOpt.length; k++) {
+                                        var oldOpt= parentDiv.find("#var_" + gNum + "-" + varName).children("option[value=" + hideOpt[k] + "]")
+                                        oldOpt.css("display","none");
+                                        // if option selected that select first opt of dropdown
+                                        if (oldOpt.is(':selected')){
+                                            parentDiv.find("#var_" + gNum + "-" + varName).prop("selectedIndex", 0);;
+                                        }
+                                    }
+                                } 
+                            });
+                            $(condDiv[eachArrayForm]).trigger("change")
+                        });
+                    }
+                }
+            });
         }
     }
 }
@@ -891,7 +1009,8 @@ function createDynFillArr(autoform) {
     $.each(autoform, function (elem) {
         var condArr = autoform[elem];
         for (var n = 0; n < condArr.length; n++) {
-            if (condArr[n].length > 1) {
+            // it was > 1 before, why?
+            if (condArr[n].length > 0) {
                 var autoObj = { varNameCond: null, selOpt: null, autoVal: [] };
                 for (var k = 0; k < condArr[n].length; k++) {
                     // check if condArr has element like "var1=yes" where varName=var1 or "var1=(yes|no)"
@@ -976,12 +1095,7 @@ function addProcessPanelAutoform(gNum, name, varName, type, autoform) {
                     }
                 });
                 $(condDiv[eachArrayForm]).trigger("change")
-                //                    trigger one more time to effectively change according to last value
-                //                    if (el == allAutoForm.length - 1) {
-                //                        $(condDiv[eachArrayForm]).trigger("change")
-                //                    }
             });
-
         });
     }
 }
@@ -1159,7 +1273,7 @@ function hideProcessOptionsAsIcons (){
             var show_settingArr = show_setting.split(',');
             for (var t = 0; t < show_settingArr.length; t++) {
                 show_setting = show_settingArr[t];
-                var show_settingProcessPanel = $('#ProcessPanel > div[processorgname="'+show_setting+'"]')
+                var show_settingProcessPanel = $('#ProcessPanel > div[processorgname="'+show_setting+'"],div[allname="'+show_setting+'"]')
                 for (var k = 0; k < show_settingProcessPanel.length; k++) {
                     var panel = $(show_settingProcessPanel[k]);
                     var panelContent = $(show_settingProcessPanel[k]).children().children().eq(1);
@@ -1172,7 +1286,8 @@ function hideProcessOptionsAsIcons (){
                     if (show_settingArr.length > 1 || show_settingProcessPanel.length >1){
                         tooltip = "Edit: " + label
                     }
-                    if (processorgname == show_setting){
+
+                    if (processorgname == show_setting || allname == show_setting){
                         //insert button
                         var buttonId = 'show_sett_'+allname;
                         var button = '<button style="display:none; margin-left:7px;" show_sett_but="'+allname+'" type="button" class="btn btn-primary btn-sm"  id="'+buttonId+'"><a data-toggle="tooltip" data-placement="bottom" data-original-title="'+tooltip+'"><span><i class="fa fa-wrench"></i></span></a></button>';
@@ -1187,17 +1302,17 @@ function hideProcessOptionsAsIcons (){
                                     });
                                 });
                             }
-
+                            //ui-dialog
                             $(panelContent).dialog({
                                 title: label,
                                 resizable: false,
                                 draggable: true,
                                 autoOpen: false,
                                 position:['middle',100],
-                                width: '70%',
+                                width: '90%',
                                 modal: true,
                                 minHeight: 0,
-                                maxHeight: 750,
+                                maxHeight: 650,
                                 buttons: {
                                     "Ok": function () {
                                         $(this).dialog("close");
@@ -1234,7 +1349,7 @@ function hideProcessOptionsAsIcons (){
 
 
 //fill file/Val buttons
-function autoFillButton(buttonText, value, keepExist) {
+function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
     var button = $(buttonText);
     var checkDropDown = button.attr("id") == "dropDown";
     var checkFileExist = button.css("display") == "none";
@@ -1248,22 +1363,21 @@ function autoFillButton(buttonText, value, keepExist) {
     [rowID, gNumParam, given_name, qualifier, sType] = getInputVariables(button);
     var proPipeInputID = $('#' + rowID).attr('propipeinputid');
     var inputID = null;
-
     var data = [];
     data.push({ name: "id", value: "" });
     data.push({ name: "name", value: value });
     // insert into project pipeline input table
     if (value && value != "") {
         if (checkDropDown == false && checkFileExist == false) {
-            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
+            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
         } else if (checkDropDown == false && checkFileExist == true && keepExist == false) {
-            checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, null);
+            checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, null, url, urlzip, checkPath);
         } else if (checkDropDown == true && keepExist == false) {
             // if proPipeInputID exist, then first remove proPipeInputID.
             if (proPipeInputID) {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
             }
-            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
+            checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
         }
     } else { // if value is empty:"" then remove from project pipeline input table
         if (keepExist == false) {
@@ -1301,12 +1415,18 @@ function autofillEmptyInputs(autoFillJSON) {
     $.each(autoFillJSON, function (el) {
         var conds = autoFillJSON[el].condition;
         var states = autoFillJSON[el].statement;
+        var url = autoFillJSON[el].url;
+        var urlzip = autoFillJSON[el].urlzip;
+        var checkPath = autoFillJSON[el].checkPath;
         if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
             if (conds.$HOSTNAME) {
                 var statusCond = checkConds(conds);
                 if (statusCond === true) {
                     $.each(states, function (st) {
                         var defName = states[st]; // expected Value
+                        var defUrl = url[st] || null;; // expected Value
+                        var defUrlzip = urlzip[st] || null; // expected Value
+                        var defcheckPath = checkPath[st] || null; // expected Value
                         //if variable start with "params." then check #inputsTab
                         if (st.match(/params\.(.*)/)) {
                             var varName = st.match(/params\.(.*)/)[1]; //variable Name
@@ -1315,7 +1435,7 @@ function autofillEmptyInputs(autoFillJSON) {
                                 var varNameButAr = $(checkVarName).children();
                                 if (varNameButAr && varNameButAr[0]) {
                                     var keepExist = true;
-                                    autoFillButton(varNameButAr[0], defName, keepExist);
+                                    autoFillButton(varNameButAr[0], defName, keepExist, defUrl, defUrlzip, defcheckPath);
                                 }
                             }
                             autoCheck("fillstates")
@@ -1328,10 +1448,14 @@ function autofillEmptyInputs(autoFillJSON) {
 }
 
 //change propipeinputs in case all conds are true
-function fillStates(states) {
+function fillStates(states, url, urlzip, checkPath) {
     $("#inputsTab").loading('start');
     $.each(states, function (st) {
-        var defName = states[st]; // expected Value
+        var defName = states[st] ; // expected Value
+        console.log(defName)
+        var defUrl = url[st] || null;; // expected Value
+        var defUrlzip = urlzip[st] || null; // expected Value
+        var defcheckPath = checkPath[st] || null; // expected Value
         //if variable start with "params." then check #inputsTab
         if (st.match(/params\.(.*)/)) {
             var varName = st.match(/params\.(.*)/)[1]; //variable Name
@@ -1340,7 +1464,7 @@ function fillStates(states) {
                 var varNameButAr = $(checkVarName).children();
                 if (varNameButAr && varNameButAr[0]) {
                     var keepExist = false;
-                    autoFillButton(varNameButAr[0], defName, keepExist);
+                    autoFillButton(varNameButAr[0], defName, keepExist, defUrl, defUrlzip, defcheckPath);
                 }
             }
             //if variable starts with "$" then run parameters for pipeline are defined. Fill run parameters. $SINGULARITY_IMAGE, $SINGULARITY_OPTIONS, $DOCKER_IMAGE, $DOCKER_OPTIONS, $MEMORY, $TIME, $QUEUE, $CPU, $EXEC_OPTIONS 
@@ -1403,8 +1527,6 @@ function fillStates(states) {
             }
         }
     });
-
-
 }
 // to execute autofill function, binds event handlers
 function bindEveHandler(autoFillJSON) {
@@ -1415,12 +1537,15 @@ function bindEveHandler(autoFillJSON) {
             $.each(autoFillJSON, function (el) {
                 var conds = autoFillJSON[el].condition;
                 var states = autoFillJSON[el].statement;
+                var url = autoFillJSON[el].url;
+                var urlzip = autoFillJSON[el].urlzip;
+                var checkPath = autoFillJSON[el].checkPath;
                 if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
                     //bind eventhandler to #chooseEnv
                     if (conds.$HOSTNAME) {   
                         var statusCond = checkConds(conds, type);
                         if (statusCond === true) {
-                            fillStates(states)
+                            fillStates(states, url, urlzip, checkPath)
                             triggeredFillStates = true;
                             autoCheck("fillstates")
                         }
@@ -1440,6 +1565,9 @@ function bindEveHandler(autoFillJSON) {
     $.each(autoFillJSON, function (el) {
         var conds = autoFillJSON[el].condition;
         var states = autoFillJSON[el].statement;
+        var url = autoFillJSON[el].url;
+        var urlzip = autoFillJSON[el].urlzip;
+        var checkPath = autoFillJSON[el].checkPath;
         if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
             //if condition exist other than $HOSTNAME then bind eventhandler to #params. button (eg. dropdown or inputValEnter)
             $.each(conds, function (el) {
@@ -1456,10 +1584,10 @@ function bindEveHandler(autoFillJSON) {
                                     var statusCond = checkConds(conds);
                                     var statusCondDefault = checkConds(conds, "default");
                                     if (statusCond === true) {
-                                        fillStates(states);
+                                        fillStates(states, url, urlzip, checkPath);
                                         autoCheck("fillstates")
                                     } else if (statusCondDefault === true){
-                                        fillStates(states);
+                                        fillStates(states, url, urlzip, checkPath);
                                         autoCheck("fillstates")
                                     }
                                 });
@@ -1472,9 +1600,57 @@ function bindEveHandler(autoFillJSON) {
     });
 }
 
+var addProfileLib = function (oldLibObj, profileVariables){
+    var lines = profileVariables.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+        var varName = null;
+        var defaultVal = null;
+        [varName, defaultVal] = parseVarPart(lines[i]);
+        if (varName && defaultVal != null){
+            oldLibObj[varName] = defaultVal
+        }
+    }
+}
+
+function addProfileVar(autoFillJSON) {
+    var profileVar = getValues({ "p": "getProfileVariables" });
+    if (autoFillJSON) {
+        for (var i = 0; i < profileVar.length; i++) {
+            var confirmUpdate = false;
+            var proHost = profileVar[i].hostname
+            var proVar = decodeHtml(profileVar[i].variable);
+            // find conditions that matches $HOSTNAME
+            $.each(autoFillJSON, function (el) {
+                if (!confirmUpdate){
+                    if (autoFillJSON[el].condition && autoFillJSON[el].condition != null && !$.isEmptyObject(autoFillJSON[el].condition)) {
+                        if (autoFillJSON[el].condition.$HOSTNAME){
+                            if (autoFillJSON[el].condition.$HOSTNAME == proHost){
+                                addProfileLib (autoFillJSON[el].library,proVar);
+                                confirmUpdate = true;
+                            } else if (autoFillJSON[el].condition.$HOSTNAME == "default"){
+                                addProfileLib (autoFillJSON[el].library,proVar);
+                                confirmUpdate = true;
+                            }
+                        }
+                    }
+                }
+            });
+            //insert as a new row if not exist in the exising obj
+            if (!confirmUpdate){
+                var newCond = { condition: {}, genCondition: {}, statement: {}, library: {}, url:{}, urlzip:{}, checkPath:{} };
+                newCond.condition.$HOSTNAME = proHost;
+                addProfileLib(newCond.library,proVar);
+                autoFillJSON.push(newCond);
+            }
+        }
+    }
+    return autoFillJSON
+}
+
 //parses header_script and create autoFill array. 
 //eg. [condition:{hostname:ghpcc, var:mm10},statement:{indexPath:"/path"}] 
 //or generic condition eg. [genCondition:{hostname:null, params.genomeTypePipeline:null}, library:{_species:"human"}] 
+//url:{}, urlzip:{}, checkPath:{}
 function parseAutofill(script) {
     if (script) {
         //check if autofill comment is exist: //* autofill
@@ -1487,6 +1663,9 @@ function parseAutofill(script) {
             var autoFill = [];
             var states = {}; //keep all statements for if block
             var library = {}; //keep all string filling library for if block
+            var url = {}; 
+            var urlzip = {}; 
+            var checkPath = {}; 
             for (var i = 0; i < lines.length; i++) {
                 var varName = null;
                 var defaultVal = null;
@@ -1510,18 +1689,21 @@ function parseAutofill(script) {
                     if (lines[i].match(/.*if *\((.*)\).*/i)) {
                         if (ifBlockStart) {
                             if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
-                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library, url: url, urlzip:urlzip, checkPath:checkPath })
                             }
                             //push global variables    
                         } else if (!ifBlockStart) {
                             if (conds && states && library && genConds && ($.isEmptyObject(conds) && $.isEmptyObject(genConds) && (!$.isEmptyObject(states) || !$.isEmptyObject(library)))) {
-                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library, url: url, urlzip:urlzip, checkPath:checkPath })
                             }
                         }
                         conds = {};
                         genConds = {};
                         library = {}; //new library object. Will be used for filling strings. 
                         states = {}; //new statement object. It will be filled with following statements until next if condition
+                        url ={};
+                        urlzip = {}; 
+                        checkPath = {};
                         ifBlockStart = i;
                         cond = lines[i].match(/.*if *\((.*)\).*/i)[1]
                         if (cond) {
@@ -1540,28 +1722,57 @@ function parseAutofill(script) {
                         blockStart = null;
                         ifBlockStart = null;
                         if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
-                            autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                            autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library, url: url, urlzip:urlzip, checkPath:checkPath })
                         }
                         //end of if condition with curly brackets 
                     } else if ($.trim(lines[i]).match(/^\}$/m)) {
                         if (ifBlockStart) {
                             ifBlockStart = null;
                             if (conds && states && library && genConds && (!$.isEmptyObject(conds) || !$.isEmptyObject(genConds)) && (!$.isEmptyObject(states) || !$.isEmptyObject(library))) {
-                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library })
+                                autoFill.push({ condition: conds, genCondition: genConds, statement: states, library: library, url: url, urlzip:urlzip, checkPath:checkPath })
                             }
                         }
                         conds = {};
                         genConds = {};
                         library = {};
                         states = {};
+                        url ={};
+                        urlzip = {}; 
+                        checkPath = {};
                         //lines of statements 
                     } else {
-                        [varName, defaultVal] = parseVarPart(lines[i]);
+                        if (lines[i].match('\/\/\*') && lines[i].split('\/\/\*').length>1 ) {
+                            var varPart = lines[i].split('\/\/\*')[0];
+                            var regPart = lines[i].split('\/\/\*')[1];
+                        } else {
+                            var varPart = lines[i];
+                            var regPart = "";
+                        }
+                        if (varPart){
+                            [varName, defaultVal] = parseVarPart(varPart);
+                        }
+                        var urlVal = null;
+                        var urlzipVal = null;
+                        var checkPathVal = null;
+                        if (regPart){
+                            if (regPart.match(/@url|@checkpath|/i)){
+                                [urlVal, urlzipVal, checkPathVal] = parseRegPartAutofill(regPart)
+                            }
+                        }
                         if (varName && defaultVal) {
                             if (varName.match(/^_.*$/)) {
                                 library[varName] = defaultVal;
                             } else {
                                 states[varName] = defaultVal;
+                                if (urlVal){
+                                    url[varName] = urlVal;
+                                }
+                                if (urlzipVal){
+                                    urlzip[varName] = urlzipVal;
+                                }
+                                if (checkPathVal){
+                                    checkPath[varName] = checkPathVal;
+                                }
                                 //check if params.VARNAME is defined and return all VARNAMES to fill them as system inputs
                                 if (varName.match(/params\.(.*)/)) {
                                     var sysInput = varName.match(/params\.(.*)/)[1];
@@ -1583,15 +1794,15 @@ function parseAutofill(script) {
 }
 
 // get new statements for each combination of conditions
-function getNewStatements(conditions, autoFillJSON, genStatement) {
-    var newStateCond = { condition: {}, genCondition: {}, statement: {}, library: {} };
+function getNewStatements(conditions, autoFillJSON, genStatement, url, urlzip, checkPath) {
+    var newStateCond = { condition: {}, genCondition: {}, statement: {}, library: {}, url:{}, urlzip:{}, checkPath:{} };
     if (conditions) {
         var defValLibrary = [];
         var mergedLib = {}
         // get Merged library for given conditions
         $.each(conditions, function (ele) {
             var varName = Object.keys(conditions[ele]);
-            var defVal = conditions[ele][varName]
+            var defVal = conditions[ele][varName];
             newStateCond.condition[varName] = defVal;
             //find varName = defVal statement in autoFillJSON which has library
             $.each(autoFillJSON, function (elem) {
@@ -1604,15 +1815,29 @@ function getNewStatements(conditions, autoFillJSON, genStatement) {
                             jQuery.extend(mergedLib, library);
                         }
                     }
+                    //find default library that not belong to any condition or generic condition.
+                } else if ($.isEmptyObject(autoFillJSON[elem].condition) && $.isEmptyObject(autoFillJSON[elem].genCondition) && autoFillJSON[elem].library && !$.isEmptyObject(autoFillJSON[elem].library)){
+                    var deflibrary = autoFillJSON[elem].library;
+                    jQuery.extend(mergedLib, deflibrary);    
                 }
             });
+
         });
-        // use Merged library to fill genStatements
-        $.each(genStatement, function (stateKey) {
-            var stateValue = genStatement[stateKey];
-            var newStateValue = fillStateValue(stateValue, mergedLib);
-            newStateCond.statement[stateKey] = newStateValue;
-        });
+
+        // use Merged library to fill genStatement,url,urlzip,checkPath
+        var fillWithNewValue = function(newStateCond, section,fillName, mergedLib){
+            $.each(section, function (key) {
+                var stateValue = section[key];
+                var newStateValue = fillStateValue(stateValue, mergedLib);
+                newStateCond[fillName][key] = newStateValue;
+            });
+        }
+        var sectionAr = [genStatement,url,urlzip,checkPath];
+        var fillName = ["statement","url","urlzip","checkPath"];
+        for (var i = 0; i < sectionAr.length; i++) {
+            fillWithNewValue(newStateCond, sectionAr[i], fillName[i], mergedLib);
+        }
+
     }
     return newStateCond
 }
@@ -1625,6 +1850,18 @@ function fillStateValue(stateValue, library) {
         var re = new RegExp(replaceKey, "g");
         stateValue = stateValue.replace(re, replaceVal);
     });
+//    if (stateValue.match(/\$\{(.*)\}/)){
+//        var missingAr = stateValue.split("\${");
+//        for (var i = 0; i < missingAr.length; i++) {
+//            if (missingAr[i].match(/}/)){
+//                var missingVar = missingAr[i].substring(0, missingAr[i].indexOf('}'));
+//                if (missingVar){
+//                    //global object for missing variables
+//                    missingVarObj[missingVar] = "";
+//                }
+//            }
+//        }
+//    }
     return stateValue;
 }
 
@@ -1671,15 +1908,17 @@ function decodeGenericCond(autoFillJSON) {
             if (autoFillJSON[el].genCondition && autoFillJSON[el].genCondition != "" && !$.isEmptyObject(autoFillJSON[el].genCondition)) {
                 var genConditions = autoFillJSON[el].genCondition;
                 var genStatements = autoFillJSON[el].statement;
+                var url = autoFillJSON[el].url;
+                var urlzip = autoFillJSON[el].urlzip;
+                var checkPath = autoFillJSON[el].checkPath;
                 var newCondStatements = {};
                 //find each generic condition in other cond&state pairs and get their default values.
                 var genCondDefaultVal = findDefVal(genConditions, autoFillJSON);
                 // get combinations array of each conditions
                 var combiConditions = cartesianProduct(genCondDefaultVal);
-
                 // get new statements for each combination of conditions
                 $.each(combiConditions, function (cond) {
-                    newCondStatements = getNewStatements(combiConditions[cond], autoFillJSON, genStatements);
+                    newCondStatements = getNewStatements(combiConditions[cond], autoFillJSON, genStatements, url, urlzip, checkPath);
                     autoFillJSON.push(newCondStatements)
                 });
             }
@@ -1688,8 +1927,8 @@ function decodeGenericCond(autoFillJSON) {
     return autoFillJSON
 }
 
-//***
-// if variable start with "params." then insert into inputs table
+//*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
+//*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, showsett) {
     var dropDownQual = false;
     var paraQualifier = "val"
@@ -1739,7 +1978,10 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
             var collection_id = getProPipeInputs[0].collection_id;
             var collection_name = getProPipeInputs[0].collection_name;
             var collection = { collection_id: collection_id, collection_name: collection_name }
-            insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection);
+            var url = getProPipeInputs[0].url;
+            var urlzip = getProPipeInputs[0].urlzip;
+            var checkPath = getProPipeInputs[0].checkpath;
+            insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath);
         }
         if (getProPipeInputs.length > 1) {
             for (var k = 1; k < getProPipeInputs.length; k++) {
@@ -1748,8 +1990,7 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
         }
     }
     //check if run saved before
-    var checkSaveBefore = pipeData[0].docker_check; //"" without save
-    if (checkSaveBefore != "false" && checkSaveBefore != "true") {
+    if (pipeData[0].date_created == pipeData[0].date_modified) {
         //after filling, if "use default" button is exist, then click default option.
         clickUseDefault(rowID, defaultVal);
     }
@@ -1757,9 +1998,10 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, name, sh
 
 
 function clickUseDefault(rowID, defaultVal) {
-    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
+    //    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
+    //    var checkinputValEnter = $('#' + rowID).find('#inputValEnter')[0]
     var checkDefVal = $('#' + rowID).find('#defValUse').css('display')
-    if (defaultVal && defaultVal != "" && checkDropDown && checkDefVal !== "none") {
+    if (defaultVal && defaultVal != "" && checkDefVal !== "none") {
         $('#' + rowID).find('#defValUse').trigger("click")
     }
 }
@@ -1842,11 +2084,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
         onlyModuleName = pObj.lastPipeName
         onlyProcessName = pObj.name
         separator = ": "
-        //        console.log(onlyModuleName)
-        //        console.log(onlyProcessName)
         prefix = MainGNum + "_";
-        //        console.log('proPanelID="proPanel-' + prefix + gNum + '"');
-
     }
     if (processData){
         if (processData[0]){
@@ -1896,7 +2134,50 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                         addProcessPanelRow(prefix + gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title);
                     }
                     if (autoform) {
+                        // if @autofill exists, then create event binders
                         addProcessPanelAutoform(prefix + gNum, name, varName, type, autoform);
+                    }
+                }
+            }
+            if (array){
+                //if defVal is array than insert array rows and fill them
+                for (var a = 0; a < array.length; a++) {
+                    for (var i = 0; i < panelObj.schema.length; i++) {
+                        var varName = panelObj.schema[i].varName;
+                        var defaultVal = panelObj.schema[i].defaultVal;
+                        if ($.isArray(defaultVal)){
+                            var insertObj = {}
+                            insertObj[prefix + gNum] = {}
+                            $.each(array, function (el) {
+                                if (array[el].indexOf(varName) > -1) {
+                                    var arrayId = array[el].join('_');
+                                    for (var k = 0; k < defaultVal.length; k++) {
+                                        var ind = k+1
+                                        //check if div inserted or not
+                                        if (!$('#addProcessRow-' + prefix + gNum + "> #" + arrayId + '_ind'+ind).length){
+                                            insertObj[prefix + gNum][varName+"_ind"+ind]= defaultVal[k]
+                                        }
+                                    }
+                                    addArrForms(insertObj)
+                                }
+                            });
+                            //fill rows with with default values
+                            $.each(array, function (el) {
+                                if (array[el].indexOf(varName) > -1) {
+                                    var arrayId = array[el].join('_');
+                                    for (var k = 0; k < defaultVal.length; k++) {
+                                        var ind = k+1
+                                        if ($('#addProcessRow-' + prefix + gNum + "> #" + arrayId + '_ind'+ind).length){
+                                            var fillObj = {}
+                                            fillObj[varName+"_ind"+ind]= defaultVal[k]
+                                            var inputDiv = $('#addProcessRow-' + prefix + gNum + "> #" + arrayId + '_ind'+ind).find("#var_"+prefix + gNum+"-"+varName);
+                                            var inputDivType = $(inputDiv).attr("type");
+                                            fillEachProcessOpt(fillObj, varName+"_ind"+ind, inputDiv, inputDivType);
+                                        }
+                                    }
+                                }
+                            });
+                        }
                     }
                 }
             }
@@ -2643,17 +2924,48 @@ function insertInRow(inRow, paramGivenName, rowType, insertType) {
     }
 }
 
-//insert input table row based on edges of input parameters.
+//*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
+//*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix, second) {
     var paramGivenName = document.getElementById('text' + MainGNum + "-" + firGnum).getAttribute("name");
     var paraData = parametersData.filter(function (el) { return el.id == pObj.secPI });
     var paraFileType = "";
     var paraQualifier = "";
     var paraIdentifier = "";
+    var show_setting = "";
     var dropDownQual = false;
     var paramDefVal = $('#text-' + firGnum).attr("defVal");
     var paramDropDown = $('#text-' + firGnum).attr("dropDown");
-
+    var paramShowSett = $('#text-' + firGnum).attr("showSett");
+    var processName = $('#text-' + secGnum).attr('name');
+    if (paramShowSett != undefined){
+        if (paramShowSett === ""){
+            //check ccID for nested pipelines
+            var ccID = $("#"+second).attr("ccID")
+            if (ccID){
+                var parentG = $("#"+ccID).attr("parentG")
+                var textID = parentG.replace("g", "text"); //text73-4
+                var childProcessName = $("#" + textID).attr("name");
+                if (childProcessName){
+                    processName = processName + "_" + childProcessName;
+                }
+            }
+            show_setting = processName;
+        } else {
+            show_setting = paramShowSett;
+        }
+        show_setting = show_setting.split(',');
+        if (show_setting.length) {
+            for (var k = 0; k < show_setting.length; k++) {
+                show_setting[k] = $.trim(show_setting[k]);
+                show_setting[k] = show_setting[k].replace(/\"/g, '');
+                show_setting[k] = show_setting[k].replace(/\'/g, '');
+            }
+        }
+        if (Array.isArray(show_setting)){
+            show_setting = show_setting.join(",");
+        }
+    }
     if (paraData && paraData != '') {
         var paraFileType = paraData[0].file_type;
         var paraQualifier = paraData[0].qualifier;
@@ -2676,7 +2988,6 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
     } else {
         var dropDownMenu = "";
     }
-    var processName = $('#text-' + secGnum).attr('name');
     var rowExist = ''
     rowExist = document.getElementById(rowType + 'Ta-' + firGnum);
     if (rowExist) {
@@ -2685,7 +2996,6 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
         $('#' + rowType + 'Ta-' + firGnum + '> :nth-child(5)').append('<span id=proGName-' + secGnum + '>' + processName + '</span>');
     } else {
         //fill inputsTable
-        var show_setting = "";
         if (rowType === 'input') {
             var selectFileButton = getSelectFileButton(paraQualifier, dropDownQual, dropDownMenu, defValButton)
             //insert both system and user inputs
@@ -2702,7 +3012,10 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
                     var collection_id = getProPipeInputs[0].collection_id;
                     var collection_name = getProPipeInputs[0].collection_name;
                     var collection = { collection_id: collection_id, collection_name: collection_name }
-                    insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection); 
+                    var url = getProPipeInputs[0].url;
+                    var urlzip = getProPipeInputs[0].urlzip;
+                    var checkPath = getProPipeInputs[0].checkpath;
+                    insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath); 
                 }
                 if (getProPipeInputs.length > 1) {
                     for (var k = 1; k < getProPipeInputs.length; k++) {
@@ -2711,8 +3024,7 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
                 }
             }
             //check if run saved before
-            var checkSaveBefore = pipeData[0].docker_check; //"" without save
-            if (checkSaveBefore != "false" && checkSaveBefore != "true") {
+            if (pipeData[0].date_created == pipeData[0].date_modified) {
                 //after filling, if "use default" button is exist, then click default option.
                 clickUseDefault(rowID, paramDefVal);
             }
@@ -2851,11 +3163,18 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
     }
     var processData = JSON.parse(window.pipeObj["process_" + process_id]);
     if (processData) {
+        var allProScript = "";
         if (processData[0].script_header !== "" && processData[0].script_header !== null) {
-            var pro_script_header = decodeHtml(processData[0].script_header);
-            insertProPipePanel(pro_script_header, pObj.gNum, name, pObj, processData);
+            allProScript = decodeHtml(processData[0].script_header);
+        }
+        if (processData[0].script !== "" && processData[0].script !== null){
+            var script = decodeHtml(processData[0].script);
+            allProScript = allProScript +"\n"+script;
+        }
+        if (allProScript){
+            insertProPipePanel(allProScript, pObj.gNum, name, pObj, processData);
             //generate json for autofill by using script of process header
-            var pro_autoFillJSON = parseAutofill(pro_script_header);
+            var pro_autoFillJSON = parseAutofill(allProScript);
             // bind event handlers for autofill
             setTimeout(function () {
                 if (pro_autoFillJSON !== null && pro_autoFillJSON !== undefined) {
@@ -2874,7 +3193,6 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
                     bindEveHandler(pro_autoFillJSON);
                 }
             }, 1000);
-
         }
     }
 }
@@ -2899,12 +3217,16 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var defVal = null;
     var dropDown = null;
     var pubWeb = null;
+    var showSett = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
             defVal = processModules.defVal;
         }
         if (processModules.dropDown) {
             dropDown = processModules.dropDown;
+        }
+        if (processModules.showSett != undefined) {
+            showSett = processModules.showSett;
         }
         if (processModules.pubWeb) {
             pubWeb = processModules.pubWeb;
@@ -2943,7 +3265,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             }
         }
 
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
@@ -2978,7 +3300,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
@@ -3144,15 +3466,23 @@ function loadPipelineDetails(pipeline_id, pipeData) {
             $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
             $('#pipelineSum').val(decodeHtml(pData[0].summary));
+            var script_pipe_header_config = ""
             if (pData[0].script_pipe_header !== null) {
+                script_pipe_header_config += decodeHtml(pData[0].script_pipe_header) + "\n";
+            }
+            if (pData[0].script_pipe_config !== null) {
+                script_pipe_header_config += decodeHtml(pData[0].script_pipe_config);
+            }
+            if (script_pipe_header_config) {
                 pipeGnum = 0;
-                script_pipe_header = decodeHtml(pData[0].script_pipe_header);
                 //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
                 //##insertInputRowParams will add inputs rows and fill according to propipeinputs within insertProPipePanel
                 var processData = ""
-                insertProPipePanel(script_pipe_header, "pipe", "Pipeline", window, processData);
+                insertProPipePanel(script_pipe_header_config, "pipe", "Pipeline", window, processData);
                 //generate json for autofill by using script of pipeline header
-                autoFillJSON = parseAutofill(script_pipe_header);
+                autoFillJSON = parseAutofill(script_pipe_header_config);
+                // get Profile variables -> update library of $HOSTNAME conditions 
+                autoFillJSON = addProfileVar(autoFillJSON);
                 autoFillJSON = decodeGenericCond(autoFillJSON);
 
             }
@@ -3252,10 +3582,10 @@ function showHideColumnRunSett(colList, type) {
 
 
 function loadProjectPipeline(pipeData) {
-    loadRunOptions();
+    loadRunOptions("change");
     $('#creatorInfoPip').css('display', "block");
-    $('#project-title').text(pipeData[0].project_name);
-    $('#run-title').changeVal(pipeData[0].pp_name);
+    $('#project-title').text(decodeHtml(pipeData[0].project_name));
+    $('#run-title').changeVal(decodeHtml(pipeData[0].pp_name));
     $('#runSum').val(decodeHtml(pipeData[0].summary));
     $('#rOut_dir').val(pipeData[0].output_dir);
     $('#publish_dir').val(pipeData[0].publish_dir);
@@ -3341,6 +3671,13 @@ function loadProjectPipeline(pipeData) {
         } else {
             showHideColumnRunSett([1, 4, 5], "show")
         }
+        if (executor_job === "slurm"){
+            $('#eachProcessQueue').text('Partition');
+            $('#allProcessQueue').text('Partition');
+        }else {
+            $('#eachProcessQueue').text('Queue');
+            $('#allProcessQueue').text('Queue');
+        }
         $('#jobSettingsDiv').css('display', 'inline');
         //insert exec_all_settings data into allProcessSettTable table
         if (IsJsonString(decodeHtml(pipeData[0].exec_all_settings))) {
@@ -3371,10 +3708,11 @@ $('#inputsTable').on('click', '#systemInputs', function (e) {
 });
 
 function refreshEnv() {
-    loadRunOptions();
+    loadRunOptions("change");
 }
 
-function loadRunOptions() {
+//type="change","silent"
+function loadRunOptions(type) {
     var selectedOpt = $('#chooseEnv').find(":selected").val();
     $('#chooseEnv').find('option').not(':disabled').remove();
     //get profiles for user
@@ -3399,14 +3737,17 @@ function loadRunOptions() {
     if (selectedOpt) {
         if (selectedOpt != "") {
             $('#chooseEnv').val(selectedOpt);
-            $('#chooseEnv').trigger("change");
+            if (type == "silent"){
+                checkReadytoRun();
+            } else {
+                $('#chooseEnv').trigger("change");
+            }
         }
     }
 }
 //insert selected input to inputs table
-function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection) {
+function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection, url, urlzip, checkPath) {
     var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
-
     if (checkDropDown) {
         $(checkDropDown).val(filePath)
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
@@ -3423,6 +3764,16 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
             $('#' + rowID).find('#inputValEnter').css('display', 'none');
             $('#' + rowID).find('#defValUse').css('display', 'none');
         }
+
+        var showUrlIcon = "display:none;"
+        var urlData = url || "";
+        var urlzipData = urlzip || "";
+        var checkPathData = checkPath || "";
+        if (url || urlzip){
+            showUrlIcon = "";
+        }
+        var urlIcon = '<button type="button" class="btn"  url="'+urlData+'" urlzip="'+urlzipData+'" checkpath="'+checkPathData+'" style="'+showUrlIcon+' padding:0px; margin-right:2px;" id="urlBut-'+rowID+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Info"><span><i style="font-size: 16px;" class="fa fa-cloud-download"></i></span></a></button>'
+
         filePath = escapeHtml(filePath);
         var collectionAttr = ' collection_id="" ';
         if (collection) {
@@ -3431,7 +3782,7 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
                 filePath = '<i class="fa fa-database"></i> ' + collection.collection_name
             }
         }
-        $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + filePath + '</span>' + editIcon + deleteIcon);
+        $('#' + rowID + '> :nth-child(6)').append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + filePath + '</span>' + urlIcon + editIcon + deleteIcon );
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
 
     }
@@ -3459,7 +3810,8 @@ function removeSelectFile(rowID, sType) {
             buttonList[2].remove();
         }
         if (buttonList[1]) {
-            if ($(buttonList[1]).attr("id") == "inputValEdit" || $(buttonList[1]).attr("id") == "inputFileEdit") {
+            var but1id = $(buttonList[1]).attr("id");
+            if (but1id == "inputValEdit" || but1id == "inputFileEdit" || but1id.match(/^urlBut-/)) {
                 buttonList[1].remove();
             }
         }
@@ -3467,7 +3819,7 @@ function removeSelectFile(rowID, sType) {
     }
 }
 
-function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection) {
+function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection, url, urlzip, checkPath) {
     if (inputID === null) { inputID = "" }
     var nameInput = "";
     if (data) {
@@ -3481,6 +3833,9 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
             collection_name = collection.collection_name;
         }
     }
+    var urlData = url || "";
+    var urlzipData = urlzip || "";
+    var checkPathData = checkPath || "";
     var fillInput = getValues({
         p: "fillInput",
         inputID: inputID,
@@ -3493,17 +3848,20 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
         "g_num": gNumParam,
         "given_name": given_name,
         "qualifier": qualifier,
-        proPipeInputID: ""
+        proPipeInputID: "",
+        url: urlData,
+        urlzip: urlzipData,
+        checkpath: checkPathData
     });
     //insert into #inputsTab
     if (fillInput.projectPipelineInputID && collection_name) {
-        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection);
+        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath);
     } else if (fillInput.projectPipelineInputID && fillInput.inputName) {
-        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection);
+        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath);
     }
 }
 
-function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection) {
+function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection, url, urlzip, checkPath) {
     if (inputID === null) { inputID = "" }
     var nameInput = "";
     if (data) {
@@ -3517,6 +3875,9 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
             collection_name = collection.collection_name;
         }
     }
+    var urlData = url || "";
+    var urlzipData = urlzip || "";
+    var checkPathData = checkPath || "";
     var fillInput = getValues({
         p: "fillInput",
         inputID: inputID,
@@ -3529,7 +3890,10 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
         "g_num": gNumParam,
         "given_name": given_name,
         "qualifier": qualifier,
-        proPipeInputID: proPipeInputID
+        proPipeInputID: proPipeInputID,
+        url: urlData,
+        urlzip: urlzipData,
+        checkpath: checkPathData
     });
     //update #inputsTab
     if (fillInput.projectPipelineInputID && collection_name) {
@@ -3537,7 +3901,19 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
     } else if (fillInput.projectPipelineInputID && fillInput.inputName) {
         $('#filePath-' + gNumParam).text(fillInput.inputName);
     }
-    $('#filePath-' + gNumParam).attr("collection_id", collection_id)
+    $('#filePath-' + gNumParam).attr("collection_id", collection_id);
+    //update urlBut settings inside #inputsTab
+    var urlData = url || "";
+    var urlzipData = urlzip || "";
+    var checkPathData = checkPath || "";
+    if (url || urlzip){
+        $("#urlBut-" +rowID).css("display","inline-block")
+    } else {
+        $("#urlBut-" +rowID).css("display","none")
+    }
+    $("#urlBut-" +rowID).attr("url",urlData)
+    $("#urlBut-" +rowID).attr("urlzip",urlzipData)
+    $("#urlBut-" +rowID).attr("checkpath",checkPathData)
 }
 
 function saveFileSetValModal(data, sType, inputID, collection) {
@@ -3550,9 +3926,9 @@ function saveFileSetValModal(data, sType, inputID, collection) {
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
+    var url=null, urlzip=null, checkPath=null;
     //check database if file is exist, if not exist then insert
-    checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection);
-    console.log("2")
+    checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, collection, url, urlzip, checkPath);
     checkReadytoRun();
 }
 
@@ -3567,8 +3943,9 @@ function editFileSetValModal(data, sType, inputID, collection) {
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
+    var url=null, urlzip=null, checkPath=null;
     //check database if file is exist, if not exist then insert
-    checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection);
+    checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection, url, urlzip, checkPath);
     checkReadytoRun();
 }
 checkType = "";
@@ -3679,7 +4056,7 @@ function checkShub() {
     var shubpattern = 'shub://';
     var pathCheck = false;
     if (singuPath !== '') {
-        if (singuPath.indexOf(shubpattern) > -1) {
+        if (singuPath.indexOf(shubpattern) > -1 || singuPath.indexOf('ftp:') > -1 || singuPath.indexOf('http:') > -1 || singuPath.indexOf('https:') > -1) {
             $("#singu_save_div").css('display', "block");
         } else {
             $("#singu_save_div").css('display', "none");
@@ -3743,7 +4120,14 @@ function autoCheck(type) {
     if (autoCheckType == "fillstates") {
         timeoutCheck = setTimeout(function () {
             $("#inputsTab").loading('stop');
-            checkReadytoRun()
+            checkReadytoRun();
+            if (changeOnchooseEnv != undefined){
+                if (changeOnchooseEnv == true){
+                    //save run after all parameters loaded on change of chooseEnv
+                    saveRun();
+                } 
+            }
+
         }, 2000);
     } else {
         timeoutCheck = setTimeout(function () { checkReadytoRun() }, 2000);
@@ -3919,8 +4303,15 @@ function parseRunPid(serverLog) {
     runPid = "";
     //for lsf: Job <203477> is submitted to queue <long>.\n"
     //for sge: Your job 2259 ("run_bowtie2") has been submitted
-    if (serverLog.match(/Job <(.*)> is submitted/)) {
-        var regEx = /Job <(.*)> is submitted/g;
+    //for slurm: Submitted batch job 8748700
+    if (serverLog.match(/Job <(.*)> is submitted/) || serverLog.match(/job (.*) \(.*\) .* submitted/) || serverLog.match(/Submitted batch job (.*)/)) {
+        if (serverLog.match(/Job <(.*)> is submitted/)) {
+            var regEx = /Job <(.*)> is submitted/g;
+        } else if (serverLog.match(/job (.*) \(.*\) .* submitted/)) {
+            var regEx = /job (.*) \(.*\) .* submitted/g;
+        } else if (serverLog.match(/Submitted batch job (.*)/)) {
+            var regEx = /Submitted batch job (.*)/g;
+        }
         var runPidAr = getMultipleRegex(serverLog, regEx);
         if (runPidAr.length) {
             runPid = runPidAr[runPidAr.length - 1];
@@ -3931,19 +4322,7 @@ function parseRunPid(serverLog) {
         } else {
             runPid = null;
         }
-    } else if (serverLog.match(/job (.*) \(.*\) .* submitted/)) {
-        var regEx = /job (.*) \(.*\) .* submitted/g;
-        var runPidAr = getMultipleRegex(serverLog, regEx);
-        if (runPidAr.length) {
-            runPid = runPidAr[runPidAr.length - 1];
-            runPid = $.trim(runPid);
-        }
-        if (runPid && runPid != "") {
-            var updateRunPidComp = getValues({ p: "updateRunPid", pid: runPid, project_pipeline_id: project_pipeline_id });
-        } else {
-            runPid = null;
-        }
-    } else {
+    }else {
         runPid = null;
     }
     return runPid
@@ -3989,7 +4368,25 @@ function getNewExecOpt(oldExecOpt, newPaths) {
     }
     return newExecAll
 }
+function removeCollectionFromInputs(col_id){
+    //get all input paths
+    var inputPaths = $('#inputsTab > table > tbody >tr').find("span[id*='filePath']");
+    if (inputPaths && inputPaths != null) {
+        $.each(inputPaths, function (el) {
+            var collection_id = $(inputPaths[el]).attr("collection_id");
+            if (collection_id){
+                if (collection_id == col_id){
+                    var delButton = $(inputPaths[el]).parent().find("button[id*='inputDelDelete']")
+                    $(delButton).trigger("click")
+                    $('#mIdFile').val(""); //reset modal for insert new collection
+                }
+            }
+        });
+    }
+}
 
+
+//autofill for ghpcc06 cluster to mount all directories before run executed.
 function autofillMountPath() {
     var pathArray = [];
     var workDir = $('#rOut_dir').val();
@@ -4017,7 +4414,6 @@ function autofillMountPath() {
                         }
                     }
                 }
-
             } else {
                 var inputPath = $(inputPaths[el]).text();
                 var parsedPath = parseMountPath(inputPath);
@@ -4027,15 +4423,27 @@ function autofillMountPath() {
                     }
                 }
             }
-
+        });
+    }
+    //get form paths
+    var formPaths = $("div[id^='addProcessRow-']").find("input");
+    if (formPaths && formPaths != null) {
+        $.each(formPaths, function (el) {
+            var inputPath = $(formPaths[el]).val();
+            var parsedPath = parseMountPath(inputPath);
+            if (parsedPath) {
+                if (pathArray.indexOf(parsedPath) === -1) {
+                    pathArray.push(parsedPath)
+                }
+            }
         });
     }
     //turn into lsf command (use -E to define scripts which will be executed just before the main job)
     if (pathArray.length > 0) {
-        var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"'
-        } else {
-            var execOtherOpt = '';
-        }
+        var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"';
+    } else {
+        var execOtherOpt = '';
+    }
 
     //check if exec_all or exec_each checkboxes are clicked.
     if ($('#exec_all').is(":checked") === true) {
@@ -4088,6 +4496,7 @@ function runProPipeCall(checkType, uuid) {
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
     var nextText = encodeURIComponent(nextTextRaw);
+    var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
     var delIntermediate = '';
     var profileTypeId = $('#chooseEnv').find(":selected").val(); //local-32
     var patt = /(.*)-(.*)/;
@@ -4120,18 +4529,25 @@ function runProPipeCall(checkType, uuid) {
     }
     if ($('#singu_check').is(":checked") === true) {
         var singu_img = $('#singu_img').val();
-        var patt = /^docker:\/\/(.*)/g;
         var patt = /^shub:\/\/(.*)/g;
         var singuPath = singu_img.replace(patt, '$1');
         var mntPath = "";
+        if (profileData[0].shared_storage_mnt) {
+            mntPath = profileData[0].shared_storage_mnt + '/.dolphinnext/singularity';
+        } else {
+            mntPath = "//$NXF_SINGULARITY_CACHEDIR";
+        }
+        if (profileData[0].singu_cache) {
+            mntPath = profileData[0].singu_cache;
+        }
+
         if (patt.test(singu_img)) {
             singuPath = singuPath.replace(/\//g, '-')
-            if (profileData[0].shared_storage_mnt) {
-                mntPath = profileData[0].shared_storage_mnt;
-            } else {
-                mntPath = "//$HOME";
-            }
-            var downSingu_img = mntPath + '/.dolphinnext/singularity/' + singuPath + '.simg';
+            var downSingu_img = mntPath + '/' + singuPath + '.simg';
+        } else if (singu_img.match(/http:/) || singu_img.match(/https:/) || singu_img.match(/ftp:/)){
+            var singuPathAr = singuPath.split('/')
+            singuPath = singuPathAr[singuPathAr.length-1]
+            var downSingu_img = mntPath + '/'+ singuPath;
         } else {
             var downSingu_img = singu_img;
         }
@@ -4192,6 +4608,7 @@ function runProPipeCall(checkType, uuid) {
     var serverLogGet = getValues({
         p: "saveRun",
         nextText: nextText,
+        proVarObj: proVarObj,
         configText: configText,
         profileType: proType,
         profileId: proId,
@@ -4213,14 +4630,14 @@ function readNextflowLogTimer(proType, proId, type) {
     }
     interval_readNextlog = setInterval(function () {
         readNextLog(proType, proId, "no_reload")
-    }, 10000);
+    }, 13000);
     interval_readPubWeb = setInterval(function () {
         readPubWeb(proType, proId, "no_reload")
     }, 60000);
 }
 
 autoScrollLog = true;
-$('#runLogArea').on('click', function (e) {
+$(document).on('click', '#runLogArea', function () {
     autoScrollLog = false;
 });
 
@@ -4290,64 +4707,80 @@ function clearIntNextLog(proType, proId) {
 }
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
-    var updateProPipeStatus = getValues({ p: "updateProPipeStatus", project_pipeline_id: project_pipeline_id });
-    window.serverLog = updateProPipeStatus.serverLog;
-    window.nextflowLog = updateProPipeStatus.nextflowLog;
-    window.runStatus = updateProPipeStatus.runStatus;
-    var pidStatus = "";
-    if (serverLog && serverLog !== null && serverLog !== false) {
-        var runPid = parseRunPid(serverLog);
-    } 
-    // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
-    // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
-    if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
-        if (type !== "reload") {
-            clearIntNextLog(proType, proId);
-            clearIntPubWeb(proType, proId);
+    if (projectpipelineOwn === "1") {
+        var updateProPipeStatus = getValues({ p: "updateProPipeStatus", project_pipeline_id: project_pipeline_id });
+        window.serverLog = "";
+        window.nextflowLog = "";
+        window.runStatus = "";
+        if (updateProPipeStatus){
+            window.serverLog = updateProPipeStatus.serverLog;
+            window.nextflowLog = updateProPipeStatus.nextflowLog;
+            window.runStatus = updateProPipeStatus.runStatus;
+        } 
+        if (serverLog && serverLog !== null && serverLog !== false) {
+            var runPid = parseRunPid(serverLog);
         }
-        if (runStatus === "NextSuc") {
-            displayButton('completeProPipe');
-            //            showOutputPath();
-        } else if (runStatus === "Error" || runStatus === "NextErr") {
-            displayButton('errorProPipe');
-        } else if (runStatus === "Terminated") {
-            displayButton('terminatedProPipe');
-        }
-    }
-    // when run hasn't finished yet and page reloads then show connecting button
-    else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
-        displayButton('connectingProPipe');
-        if (type === "reload") {
-            readNextflowLogTimer(proType, proId, type);
-        }
-    }
-    // when run hasn't finished yet and connection is down
-    else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
-        displayButton('abortedProPipe');
-        //log file might be deleted or couldn't read the log file
-        var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
-        if (nextflowLog !== null && nextflowLog !== undefined) {
-            nextflowLog += "\nConnection is lost.";
-        } else {
-            serverLog += "\nConnection is lost.";
-        }
-    } 
-    // otherwise parse nextflow file to get status
-    else if (runStatus === "Waiting" || runStatus === "init" || runStatus === "NextRun") {
-        if (runStatus === "Waiting" || runStatus === "init") {
-            displayButton('waitingProPipe');
-        } else if (runStatus === "NextRun") {
-            displayButton('runningProPipe');
-        }
-    }
-    
-var lastrun = $('#runLogArea').attr('lastrun');
-if (lastrun) {
-    $('#runLogArea').val(serverLog + "\n" + nextflowLog);
-    autoScrollLogArea()
-}
+        var pidStatus = "";
 
-setTimeout(function () { saveNexLg(proType, proId) }, 100);
+        // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+        // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
+        if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
+            window["countFailRead"]=0;
+            if (type !== "reload") {
+                clearIntNextLog(proType, proId);
+                clearIntPubWeb(proType, proId);
+            }
+            if (runStatus === "NextSuc") {
+                displayButton('completeProPipe');
+                //            showOutputPath();
+            } else if (runStatus === "Error" || runStatus === "NextErr") {
+                displayButton('errorProPipe');
+            } else if (runStatus === "Terminated") {
+                displayButton('terminatedProPipe');
+            }
+        }
+        // when run hasn't finished yet and page reloads then show connecting button
+        else if (type == "reload" || window.saveNextLog === false || window.saveNextLog === undefined) {
+            window["countFailRead"]=0;
+            displayButton('connectingProPipe');
+            if (type === "reload") {
+                readNextflowLogTimer(proType, proId, type);
+            }
+        }
+        // when run hasn't finished yet and connection is down
+        else if (window.saveNextLog == "logNotFound" && (runStatus !== "Waiting" && runStatus !== "init")) {
+            if (window["countFailRead"] >3){
+                displayButton('abortedProPipe');
+                //log file might be deleted or couldn't read the log file
+                var setStatus = getValues({ p: "updateRunStatus", run_status: "Aborted", project_pipeline_id: project_pipeline_id });
+                if (nextflowLog !== null && nextflowLog !== undefined) {
+                    nextflowLog += "\nConnection is lost.";
+                } else {
+                    serverLog += "\nConnection is lost.";
+                } 
+            } else {
+                window["countFailRead"]++
+            }
+
+        } 
+        // otherwise parse nextflow file to get status
+        else if (runStatus === "Waiting" || runStatus === "init" || runStatus === "NextRun") {
+            window["countFailRead"]=0;
+            if (runStatus === "Waiting" || runStatus === "init") {
+                displayButton('waitingProPipe');
+            } else if (runStatus === "NextRun") {
+                displayButton('runningProPipe');
+            }
+        }
+
+        var lastrun = $('#runLogArea').attr('lastrun');
+        if (lastrun) {
+            $('#runLogArea').val(serverLog + "\n" + nextflowLog);
+            autoScrollLogArea()
+        }
+
+        setTimeout(function () { saveNexLg(proType, proId) }, 8000);
+    }
 }
 
 
@@ -4407,9 +4840,9 @@ function getServerLog(project_pipeline_id, name) {
 function filterKeys(obj, filter) {
     var key, keys = [];
     for (key in obj) {
-        if (obj.hasOwnProperty(key) && filter.test(key)) {
+        if (obj.hasOwnProperty(key) && key.match(filter)) {
             keys.push(key);
-        }
+        } 
     }
     return keys;
 }
@@ -4426,7 +4859,7 @@ function formToJson(rawFormData, stringify) {
         return formDataArr;
     }
 }
-//xxxx
+
 //prepare JSON to save db
 function getProcessOpt() {
     var processOptAll = {};
@@ -4514,7 +4947,7 @@ function addArrForms(allProcessOpt) {
                     //trigger click on add button if numAddedForm>0 and added div is not exist
                     if (numAddedForm && numAddedForm != 0) {
                         if (!$('#addProcessRow-' + proGnum + " > #" + outerDivVarname + "_ind" + numAddedForm)[0]) {
-                            var addButton = $(outerDiv.next().find("button[defval*='" + outerDivVarname + "']")[0]);
+                            var addButton = $(outerDiv.next().find("button[id*='Add'][defval*='" + outerDivVarname + "']")[0]);
                             for (var i = 0; i < numAddedForm; i++) {
                                 addButton.trigger("click");
                             }
@@ -4526,13 +4959,36 @@ function addArrForms(allProcessOpt) {
     });
 }
 
+// add array forms before fill the data
+function delArrForms(allProcessOpt) {
+    $.each(allProcessOpt, function (proGnum) {
+        var eachProcessOpt = allProcessOpt[proGnum];
+        // find all form-groups for each process by proGnum
+        var formGroupArray = $('#addProcessRow-' + proGnum).find('.form-group').toArray();
+        $.each(formGroupArray, function (elem) {
+            var outerDiv = $(formGroupArray[elem]).parent();
+            var outerDivId = outerDiv.attr("id");
+            //check if visible arrayDiv is exist
+            if (outerDivId) {
+                if (outerDivId.match(/(.*)_ind(.*)/)) {
+                    var outerDivIndId = outerDivId.match(/(.*)_ind(.*)$/)[2];
+                    if (outerDivIndId >0){
+                        if ($('#addProcessRow-' + proGnum + " > #" + outerDivId ).length){
+                            $('#addProcessRow-' + proGnum + " > #" + outerDivId).remove();
+                        }
+                    }
+                }
+            }
+        });
+    });
+}
 
-
-//xxxxxxx
 //get JSON from db and fill the process options
 function loadProcessOpt(allProcessOpt) {
     if (allProcessOpt) {
         allProcessOpt = JSON.parse(allProcessOpt);
+        // clean array rows before adding new ones (consider added rows by default value["a","b"])
+        delArrForms(allProcessOpt);
         // add array forms before fill the data
         addArrForms(allProcessOpt);
         $.each(allProcessOpt, function (el) {
@@ -4606,6 +5062,7 @@ function saveRun() {
     } else if (dupliProPipe === true) {
         old_project_pipeline_id = project_pipeline_id;
         project_pipeline_id = '';
+        project_id = $('#userProject').val();
         run_name = run_name + '-copy'
         if (confirmNewRev) {
             newpipelineID = highestRevPipeId;
@@ -4768,18 +5225,66 @@ function checkNewRevision() {
     return [highestRevPipeId, askNewRev]
 }
 
-function duplicateProPipe() {
-    dupliProPipe = true;
-    confirmNewRev = false;
-    [highestRevPipeId, askNewRev] = checkNewRevision();
-    if (askNewRev === true) {
-        $('#confirmDuplicate').modal("show");
-    } else {
-        saveRun();
-    }
+function refreshProjectDropDown(id){
+    $.ajax({
+        type: "GET",
+        url: "ajax/ajaxquery.php",
+        data: {
+            p: "getProjects"
+        },
+        async: false,
+        success: function (s) {
+            $(id).empty();
+            for (var i = 0; i < s.length; i++) {
+                var param = s[i];
+                var optionGroup = new Option(decodeHtml(param.name), param.id);
+                $(id).append(optionGroup);
+            }
+            $(id).val(project_id)
+        },
+        error: function (errorThrown) {
+            alert("Error: " + errorThrown);
+        }
+    });
 }
+
+function duplicateProPipe(type) {
+    refreshProjectDropDown("#userProject");
+
+    if (type == "copy"){
+        dupliProPipe = true;
+        confirmNewRev = false;
+        [highestRevPipeId, askNewRev] = checkNewRevision();
+        $('#copyRunBut').css("display","none");
+        $('#moveRunBut').css("display","none");
+        $('#duplicateKeepBtn').css("display","none");
+        $('#duplicateNewBtn').css("display","none");
+        if (askNewRev === true) {
+            $('#duplicateKeepBtn').css("display","inline-block");
+            $('#duplicateNewBtn').css("display","inline-block");
+            $("#confirmDuplicateText").text('New revision of this pipeline is available. If you want to create a new run and keep your revision of pipeline, please click "Keep Existing Revision" button. If you wish to use same input parameters in new revision of pipeline then click "Use New Revision" button.');
+        } else {
+            $('#copyRunBut').css("display","inline-block");
+            $("#confirmDuplicateText").text('Please select target project to copy your run.');
+        }
+        $("#confirmDuplicateTitle").text('Copy Run');
+        $('#confirmDuplicate').modal("show");  
+    } else if (type == "move"){
+        dupliProPipe = false;
+        saveRun();
+        $('#copyRunBut').css("display","none");
+        $('#duplicateKeepBtn').css("display","none");
+        $('#duplicateNewBtn').css("display","none");
+        $('#moveRunBut').css("display","inline-block");
+        $("#confirmDuplicateText").text('Please select target project to move your run.');
+        $("#confirmDuplicateTitle").text('Move Run');
+    }
+    $('#confirmDuplicate').modal("show");
+}
+
 $(function () {
     $(document).on('change', '#runVerLog', function (event) {
+        console.log("runVerLog")
         var run_log_uuid = $(this).val();
         if (run_log_uuid) {
             var version = $('option:selected', this).attr('ver');
@@ -4812,7 +5317,6 @@ $(function () {
                     var path = "run"
                     }
             var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
-            console.log(fileList);
             var fileListAr = getObjectValues(fileList);
             var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
             var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
@@ -4973,7 +5477,17 @@ function updateRunVerNavBar() {
     }
 }
 
-
+//use array of item to fill select element
+function fillArray2Select(arr, id, clean) {
+    if (clean === true) {
+        $(id).empty();
+    }
+    for (var i = 0; i < arr.length; i++) {
+        var param = arr[i];
+        var optionGroup = new Option(param, param);
+        $(id).append(optionGroup);
+    }
+}
 
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
@@ -4982,51 +5496,21 @@ $(document).ready(function () {
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
     runPid = "";
+    countFailRead = 0; //count failed read amount if it reaches 5, show connection lost 
+    changeOnchooseEnv = false;
     // if user not own it, cannot change or delete run
     if (projectpipelineOwn === "0") {
         $('#deleteRun').remove();
+        $('#moveRun').remove();
         $('#delRun').remove();
         $('#saveRunIcon').remove();
         $('#pipeRunDiv').remove();
         $("#run-title").prop("disabled", true);
     }
-    runStatus = "";
-    if (projectpipelineOwn === "1") {
-        runStatus = getRunStatus(project_pipeline_id);
-    }
-    var profileTypeId = pipeData[0].profile //local-32
-    console.log(profileTypeId)
-    proTypeWindow = "";
-    proIdWindow = "";
-    if (profileTypeId) {
-        if (profileTypeId.match(/-/)) {
-            var patt = /(.*)-(.*)/;
-            proTypeWindow = profileTypeId.replace(patt, '$1');
-            proIdWindow = profileTypeId.replace(patt, '$2');
-        }
-    }
-
-    if (runStatus !== "") {
-        //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
-        readNextLog(proTypeWindow, proIdWindow, "reload");
-        readPubWeb(proTypeWindow, proIdWindow, "reload");
-    } else {
-        $('#statusProPipe').css('display', 'inline');
-    }
-
-    $('#pipeline-title').attr('pipeline_id', pipeline_id);
-    if (project_pipeline_id !== '' && pipeline_id !== '') {
-        projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
-        loadPipelineDetails(pipeline_id, pipeData);
-
-    }
-    //after loading pipeline disable all the inputs
-    if (projectpipelineOwn === "0") {
-        setTimeout(function () {
-            $("#configTab :input").prop("disabled", true);
-            $("#advancedTab :input").prop("disabled", true);
-        }, 1000);
-    }
+    ///fixCollapseMenu checkboxes
+    fixCollapseMenu('#allProcessDiv', '#exec_all');
+    fixCollapseMenu('#eachProcessDiv', '#exec_each');
+    fixCollapseMenu('#publishDirDiv', '#publish_dir_check');
     //not allow to check both docker and singularity
     $('#docker_imgDiv').on('show.bs.collapse', function () {
         if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
@@ -5064,25 +5548,63 @@ $(document).ready(function () {
     $('#singu_imgDiv').on('hidden.bs.collapse', function () {
         $('#singu_check').removeAttr('onclick');
     });
-    ///fixCollapseMenu checkboxes
-    fixCollapseMenu('#allProcessDiv', '#exec_all');
-    fixCollapseMenu('#eachProcessDiv', '#exec_each');
-    fixCollapseMenu('#publishDirDiv', '#publish_dir_check');
+
+    //runStatus
+    runStatus = "";
+    if (projectpipelineOwn === "1") {
+        runStatus = getRunStatus(project_pipeline_id);
+    }
+    var profileTypeId = pipeData[0].profile //local-32
+    proTypeWindow = "";
+    proIdWindow = "";
+    if (profileTypeId) {
+        if (profileTypeId.match(/-/)) {
+            var patt = /(.*)-(.*)/;
+            proTypeWindow = profileTypeId.replace(patt, '$1');
+            proIdWindow = profileTypeId.replace(patt, '$2');
+        }
+    }
+
+    if (runStatus !== "") {
+        //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
+        readNextLog(proTypeWindow, proIdWindow, "reload");
+        readPubWeb(proTypeWindow, proIdWindow, "reload");
+    } else {
+        $('#statusProPipe').css('display', 'inline');
+    }
+
+    $('#pipeline-title').attr('pipeline_id', pipeline_id);
+    if (project_pipeline_id !== '' && pipeline_id !== '') {
+        projectPipeInputs = getValues({ p: "getProjectPipelineInputs", project_pipeline_id: project_pipeline_id });
+        loadPipelineDetails(pipeline_id, pipeData);
+
+    }
+    //after loading pipeline disable all the inputs
+    if (projectpipelineOwn === "0") {
+        setTimeout(function () {
+            $("#configTab :input").not( ":button[show_sett_but]" ).prop("disabled", true);
+            $("#advancedTab :input").prop("disabled", true);
+            $('.ui-dialog :input').prop("disabled", true);
+        }, 1000);
+    }
+
+
 
 
     //##################
     //Sample Modal
     initCompleteFunction = function (settings, json) {
-        var columnsToSearch = { 2: 'collection' };
+        console.log("initCompleteFunction")
+        var columnsToSearch = { 2: 'Collection', 3:"Host", 4:"Project" };
         for (var i in columnsToSearch) {
             var api = new $.fn.dataTable.Api(settings);
-            console.log("initCompleteFunction")
             $("#sampleTable_filter").css("display", "inline-block")
             $("#searchBarST").append('<div style="margin-bottom:20px; padding-left:8px; display:inline-block;" id="filter-' + columnsToSearch[i] + '"></div>')
             var select = $('<select id="select-' + columnsToSearch[i] + '" name="' + columnsToSearch[i] + '" multiple="multiple"></select>')
             .appendTo($('#filter-' + columnsToSearch[i]).empty())
             .attr('data-col', i)
             .on('change', function () {
+
                 var vals = $(this).val();
                 var valReg = "";
                 for (var k = 0; k < vals.length; k++) {
@@ -5098,24 +5620,40 @@ $(document).ready(function () {
                 api.column($(this).attr('data-col'))
                     .search(valReg ? '(^|,)' + valReg + '(,|$)' : '', true, false)
                     .draw();
+
+                //deselect rows that are selected but not visible
+                var visibleRows = sampleTable.rows({ search: 'applied' })[0];
+                var selectedRows = sampleTable.rows( '.selected' )[0];
+                api.column($(this).attr('data-col')).rows( function ( idx, data, node ) { 
+                    if($.inArray(idx, visibleRows) === -1 && $.inArray(idx, selectedRows) !== -1) {
+                        sampleTable.row(idx).deselect(idx);
+                    }
+                    return false;
+                });
+
             });
             var collectionList = []
             api.column(i).data().unique().sort().each(function (d, j) {
-                var multiCol = d.split(",");
-                for (var n = 0; n < multiCol.length; n++) {
-                    if (collectionList.indexOf(multiCol[n]) == -1) {
-                        collectionList.push(multiCol[n])
-                        select.append('<option value="' + multiCol[n] + '">' + multiCol[n] + '</option>');
-                    }
+                if (d){
+                    var multiCol = d.split(",");
+                    for (var n = 0; n < multiCol.length; n++) {
+                        if (collectionList.indexOf(multiCol[n]) == -1) {
+                            collectionList.push(multiCol[n])
+                            select.append('<option value="' + multiCol[n] + '">' + multiCol[n] + '</option>');
+                        }
+                    }  
                 }
+
             });
+
+
             createMultiselect('#select-' + columnsToSearch[i])
             createMultiselectBinder('#filter-' + columnsToSearch[i])
             var selCollectionNameArr = $("#sampleTable").data("select")
             if (selCollectionNameArr) {
                 if (selCollectionNameArr.length) {
                     $("#sampleTable").removeData("select");
-                    selectMultiselect("#select-collection", selCollectionNameArr);
+                    selectMultiselect("#select-Collection", selCollectionNameArr);
                     sampleTable.rows({ search: 'applied' }).select();
                 }
             }
@@ -5147,10 +5685,13 @@ $(document).ready(function () {
             }
         });
 
+
         $('#addFileModal').on('show.bs.modal', function () {
             $('#addFileModal').find('form').trigger('reset');
             $('.nav-tabs a[href="#hostFiles"]').tab('show');
             $("#viewDir").removeData("fileArr");
+            $("#viewDir").removeData("fileDir");
+            $("#viewDir").removeData("amzKey");
             fillArray2Select([], "#viewDir", true)
             resetPatternList()
             clearSelection()
@@ -5192,6 +5733,11 @@ $(document).ready(function () {
                 });
                 $(selectizeIDs[i])[0].selectize.clear()
             }
+            //#uploadFiles tab:
+            var workDir = $("#rOut_dir").val();
+            if (workDir){
+                $("#target_dir").val(workDir+"/run"+project_pipeline_id+"/upload")
+            }
         });
 
         $('#viewDirBut').click(function () {
@@ -5200,11 +5746,20 @@ $(document).ready(function () {
             var warnUser = false;
             if (dir) {
                 if (dir.match(/s3:/)){
+                    var lastChr = dir.slice(-1);
+                    if (lastChr == "/"){
+                        dir = dir.substring(0, dir.length - 1);
+                    }
                     amazon_cre_id = $('#mRunAmzKeyS3').val()
                     if (!amazon_cre_id){
                         showInfoModal("#infoModal", "#infoModalText", "Please select Amazon Keys to search files in your S3 storage.");
                         warnUser = true;
                     } 
+                } else if (dir.match(/:\/\//)){
+                    var lastChr = dir.slice(-1);
+                    if (lastChr == "/"){
+                        dir = dir.substring(0, dir.length - 1);
+                    }  
                 }
                 if (!warnUser){
                     var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
@@ -5217,7 +5772,6 @@ $(document).ready(function () {
                             var raw = dirList.split('\n');
                             for (var i = 0; i < raw.length; i++) {
                                 var filePath = raw[i].split(" ").pop();
-                                console.log(filePath)
                                 if (filePath){
                                     if (filePath.match(/s3:/)){
                                         var allBlock = filePath.split("/");
@@ -5234,24 +5788,41 @@ $(document).ready(function () {
                                     errorAr.push(raw[i])
                                 }
                             }
+                        } else if (dir.match(/:\/\//)){
+                            fileArr = dirList.split('\n');
+                            errorAr = fileArr.filter(line => line.match(/:/));
+                            fileArr = fileArr.filter(line => !line.match(/:/));
                         } else {
                             fileArr = dirList.split('\n');
                             errorAr = fileArr.filter(line => line.match(/ls:/));
                             fileArr = fileArr.filter(line => !line.match(/:/));
                         }
+                        console.log(fileArr)
+                        console.log(errorAr)
                         if (fileArr.length > 0) {
                             fillArray2Select(fileArr, "#viewDir", true)
                             $("#viewDir").data("fileArr", fileArr)
+                            $("#viewDir").data("fileDir", dir)
+                            var amzKey = ""
+                            if (dir.match(/s3:/i)){
+                                amzKey= $("#mRunAmzKeyS3").val()
+                            }
+                            $("#viewDir").data("amzKey", amzKey)
+
                             $('#collection_type').trigger("change");
                         } else {
                             if (errorAr.length > 0) {
-                                fillArray2Select(errorAr, "#viewDir", true)
+                                var errTxt = errorAr.join(' ')
+                                showInfoModal("#infoModal", "#infoModalText", errTxt)
                                 resetPatternList()
                             } else {
                                 fillArray2Select(["Files Not Found."], "#viewDir", true)
                                 resetPatternList()
                             }
                         }
+                    } else {
+                        fillArray2Select(["Files Not Found."], "#viewDir", true)
+                        resetPatternList()
                     }
                 } else {
                     fillArray2Select(["Files Not Found."], "#viewDir", true)
@@ -5375,22 +5946,26 @@ $(document).ready(function () {
                 var ret = {};
                 var infoModalText = ""
                 ret = getTableSamples("selectedSamplesTable")
+                var rowData = selectedSamplesTable.fnGetData();
+                var fileDirArr = []
+                for (var i = 0; i < rowData.length; i++) {
+                    var file_dir = rowData[i][2];
+                    var amzKey = rowData[i][4];
+                    if (file_dir.match("s3:")){
+                        file_dir = file_dir+"\t"+amzKey
+                    }
+                    fileDirArr.push(file_dir);
+                }
+
                 if (ret.warnUser) {
                     infoModalText += ret.warnUser;
                 } 
                 if (!ret.file_array.length) {
                     infoModalText += " * Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons."
                 } 
-                var file_dir  = $.trim($("#file_dir").val());
-                var amzKey  = $("#mRunAmzKeyS3").val();
                 var s3_archive_dir  = $.trim($("#s3_archive_dir").val());
                 var amzArchKey  = $("#mArchAmzKeyS3").val();
-                if (file_dir.match(/s3:/)){
-                    if (!amzKey){
-                        infoModalText += " * Please select Amazon Keys to search files into your S3 storage.";
-                        warnUser = true;
-                    } 
-                } 
+
                 if (!warnUser && s3_archive_dir.match(/s3:/)){
                     if (!amzArchKey){
                         infoModalText += " * Please select Amazon Archive Keys to save files into your S3 storage.";
@@ -5413,16 +5988,17 @@ $(document).ready(function () {
                             formObj.collection_id = collection_data.id
                         }
                     }
-                    if (file_dir.match("s3:")){
-                        formObj.file_dir = file_dir+"\t"+amzKey
-                    }
+
+                    formObj.file_dir = fileDirArr;
 
                     if (s3_archive_dir.match("s3:")){
                         formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
                     }
-                    console.log(formObj)
-                    formObj.file_array = ret.file_array
+                    formObj.file_array = ret.file_array;
+                    formObj.run_env = $('#chooseEnv').find(":selected").val();
+                    formObj.project_id = project_id;
                     formObj.p = "saveFile"
+                    console.log(formObj)
                     $.ajax({
                         type: "POST",
                         url: "ajax/ajaxquery.php",
@@ -5487,8 +6063,9 @@ $(document).ready(function () {
                         formObj.s3_archive_dir = s3_archive_dir_geo+"\t"+amzArchKey
                     }
                     formObj.file_array = ret.file_array
+                    formObj.run_env = $('#chooseEnv').find(":selected").val();
+                    formObj.project_id = project_id;
                     formObj.p = "saveFile"
-                    console.log(formObj)
                     $.ajax({
                         type: "POST",
                         url: "ajax/ajaxquery.php",
@@ -5511,7 +6088,7 @@ $(document).ready(function () {
 
     });
 
-    createMultiselect = function (id) {
+    createMultiselect = function (id,columnToSearch, apiColumn) {
         $(id).multiselect({
             includeResetOption: true,
             resetText: "Clear filters",
@@ -5561,21 +6138,128 @@ $(document).ready(function () {
         }, {
             "data": "collection_name"
         }, {
+            "data": "run_env"
+        }, {
+            "data": "project_name"
+        }, {
             "data": "date_created"
+        },{
+            "data": null,
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                $(nTd).html('<button type="button" class="btn btn-default btn-sm showDetailSample"> Details</button>');
+            }
         }],
         'select': {
-            'style': 'multi'
+            'style': 'multi',
+            selector: 'td:not(.no_select_row)'
         },
         'order': [[3, 'desc']],
+        "columnDefs": [
+            {
+                'targets': [3,4],
+                className: "disp_none"
+            },
+            {
+                'targets': [6],
+                className: "no_select_row"
+            },
+        ],
         initComplete: initCompleteFunction
     });
 
-    selectedSamplesTable = $('#selectedSamples').dataTable();
+    selectedSamplesTable = $('#selectedSamples').dataTable({
+        "columnDefs": [
+            {
+                'targets': [4],
+                visible: false
+            },
+        ]
+    });
     selectedGeoSamplesTable = $('#selectedGeoSamples').dataTable();
     searchedGeoSamplesTable = $('#searchedGeoSamples').dataTable();
 
+    //xxx
+    $(document).on('click', '.showDetailSample', function (e) {
 
+        var getHeaderRow = function (text){
+            if (!text){
+                text = "";
+            }
+            return '<thead><tr><th>'+text+'</th></tr></thead>';
+        }
+        var getBodyRow = function (text){
+            if (!text){
+                text = "";
+            }
+            return '<tbody><tr><td>'+text+'</td></tr></tbody>';
+        }
+        var s3Clean = function (text){
+            if (!text){
+                text = "";
+            } else if (text.match(/s3:/i)){
+                var textPath = $.trim(text).split("\t")[0]
+                if (textPath){
+                    text = textPath;
+                }
+            }
+            return text;
+        }
+        var insertDetailsTable = function (data){
+            var tableRows = "";
+            $("#details_of_file_table").empty()
+            tableRows += getHeaderRow("Name:");
+            tableRows += getBodyRow(data.name);
+            if (data.file_dir){
+                tableRows += getHeaderRow("Input File(s) Directory:")
+                tableRows += getBodyRow(s3Clean(data.file_dir))
+                tableRows += getHeaderRow("Input File(s):")
+                tableRows += getBodyRow(data.files_used.replace(/\|/g, '<br/>'))
+            } else {
+                //geo files:
+                tableRows += getHeaderRow("GEO ID:")
+                tableRows += getBodyRow(data.files_used.replace(/\|/g, '<br/>'))
+            }
+            var collection_type ="";
+            if (data.collection_type == "single"){
+                collection_type = "Single/List"
+            } else if (data.collection_type == "pair"){
+                collection_type = "Paired List"
+            }
 
+            tableRows += getHeaderRow("Collection Type:")
+            tableRows += getBodyRow(collection_type)
+            tableRows += getHeaderRow("Local Archive Directory:")
+            tableRows += getBodyRow(data.archive_dir)
+            tableRows += getHeaderRow("Amazon S3 Backup:")
+            tableRows += getBodyRow(s3Clean(data.s3_archive_dir))
+            if (data.run_env){
+                tableRows += getHeaderRow("Run Environment:")
+                tableRows += getBodyRow(data.run_env) 
+            }
+            if (data.project_name){
+                tableRows += getHeaderRow("Project(s):")
+                tableRows += getBodyRow(data.project_name) 
+            }
+            $("#details_of_file_table").append(tableRows)
+        }
+        if ($("#detailsOfFileDiv").css("display") == "none"){
+            $("#detailsOfFileDiv").css("display","block")
+        } 
+        var clickedRow = $(e.target).closest('tr');
+        var rowData = sampleTable.row(clickedRow).data();
+        insertDetailsTable(rowData)
+
+    });
+
+    // show file details if one file is selected 
+    $('#sampleTable').on( 'select.dt deselect.dt', function ( e, dt, type, indexes ) {
+        var selectedRows = sampleTable.rows({ selected: true }).data();
+        if (selectedRows.length >0 ){
+            $("#deleteSample").css("display","inline-block")
+        } else {
+            $("#deleteSample").css("display","none")
+        }
+    } );
 
     function resetPatternList() {
         fillArray2Select([], "#singleList", true)
@@ -5780,6 +6464,9 @@ $(document).ready(function () {
             //  var file_regex = new RegExp(regex_string);
             if (collection_type == "single") {
                 //	use regex to find the values before the pivot
+                if (regex === "") {
+                    regex = '.';
+                }
                 var regex_string = files_select[0].value.split(regex)[0];
                 for (var x = 0; x < files_select.length; x++) {
                     var prefix = files_select[x].value.split(regex)[0];
@@ -5796,11 +6483,6 @@ $(document).ready(function () {
                 for (var x = 0; x < files_select.length; x++) {
                     var prefix1 = files_select[x].value.split(regex1)[0];
                     var prefix2 = files_selectRev[x].value.split(regex2)[0];
-
-                    console.log(prefix1)
-                    console.log(prefix2)
-                    console.log(regex_string)
-                    console.log(regex_string2)
                     if (regex_string === prefix1 && regex_string2 === prefix2) {
                         file_string += files_select[x].value + ',' + files_selectRev[x].value + ' | '
                         recordDelList("#forwardList", files_select[x].value, "del")
@@ -5812,18 +6494,30 @@ $(document).ready(function () {
                 }
             }
             file_string = file_string.substring(0, file_string.length - 3);
-            var name = regex_string.split(' | ')[0].split('.')[0];
+            if (regex === "") {
+                var name = file_string;
+            } else {
+                var name = file_string.split(regex)[0];
+            }
+            var name = name.split(' | ')[0].split('.')[0];
             var input = createElement('input', ['id', 'type', 'class', 'value', 'onChange'], [name, 'text', '', name, 'updateNameTable(this)'])
             var button_div = createElement('div', ['class'], ['text-center'])
             var remove_button = createElement('button', ['class', 'type', 'onclick'], ['btn-sm btn-danger text-center', 'button', 'removeRowSelTable(this,\'' + collection_type + '\')']);
             var icon = createElement('i', ['class'], ['fa fa-times']);
             remove_button.appendChild(icon);
             button_div.appendChild(remove_button);
+            var fileDir = $("#viewDir").data("fileDir")
+            var mRunAmzKeyS3 = "";
+            if (fileDir.match(/s3:/)){
+                mRunAmzKeyS3 = $("#viewDir").data("amzKey")
+            }
 
             selectedSamplesTable.fnAddData([
                 input.outerHTML,
                 file_string,
-                button_div.outerHTML
+                fileDir,
+                button_div.outerHTML,
+                mRunAmzKeyS3
             ]);
         }
     }
@@ -5873,10 +6567,18 @@ $(document).ready(function () {
                 var icon = createElement('i', ['class'], ['fa fa-times']);
                 remove_button.appendChild(icon);
                 button_div.appendChild(remove_button);
+                var fileDir = $("#viewDir").data("fileDir")
+                var mRunAmzKeyS3 = "";
+                if (fileDir.match(/s3:/)){
+                    mRunAmzKeyS3 = $("#viewDir").data("amzKey")
+                }
+
                 selectedSamplesTable.fnAddData([
                     input.outerHTML,
                     file_string,
-                    button_div.outerHTML
+                    fileDir,
+                    button_div.outerHTML,
+                    mRunAmzKeyS3
                 ]);
             }
         }
@@ -5902,8 +6604,9 @@ $(document).ready(function () {
         data.push({ name: "id", value: "" });
         data.push({ name: "name", value: value });
         var inputID = null;
+        var url=null, urlzip=null, checkPath=null;
         //check database if file is exist, if not exist then insert
-        checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
+        checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
         button.css("display", "none");
         showHideSett(rowID)
         autoCheck()
@@ -5924,7 +6627,6 @@ $(document).ready(function () {
         });
     })
     //change on dropDown button
-    //xxxxxx
     $(function () {
         $(document).on('change', 'select[indropdown]', function () {
             var button = $(this);
@@ -5946,7 +6648,8 @@ $(document).ready(function () {
                 data.push({ name: "id", value: "" });
                 data.push({ name: "name", value: value });
                 var inputID = null;
-                checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null);
+                var url=null, urlzip=null, checkPath=null;
+                checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
             } else { // remove from project pipeline input table
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
                 removeSelectFile(rowID, qualifier);
@@ -5963,6 +6666,7 @@ $(document).ready(function () {
     $(function () {
         $(document).on('change', '#chooseEnv', function () {
             //reset before autofill feature actived for #runCmd
+            changeOnchooseEnv = true;
             $('#runCmd').val("");
             var [allProSett, profileData] = getJobData("both");
             var executor_job = profileData[0].executor_job;
@@ -5973,6 +6677,13 @@ $(document).ready(function () {
                 showHideColumnRunSett([1, 4, 5], "hide")
             } else {
                 showHideColumnRunSett([1, 4, 5], "show")
+            }
+            if (executor_job === "slurm"){
+                $('#eachProcessQueue').text('Partition');
+                $('#allProcessQueue').text('Partition');
+            }else {
+                $('#eachProcessQueue').text('Queue');
+                $('#allProcessQueue').text('Queue');
             }
             var profileTypeId = $('#chooseEnv').find(":selected").val();
             var patt = /(.*)-(.*)/;
@@ -5985,7 +6696,9 @@ $(document).ready(function () {
             selectAmzKey();
             checkShub()
             checkReadytoRun();
+            //save run in change 
             saveRun();
+
         });
     });
 
@@ -5995,7 +6708,9 @@ $(document).ready(function () {
         $(this).find('form').trigger('reset');
         $('#projectFileTable').DataTable().rows().deselect();
         $('.nav-tabs a[href="#importedFiles"]').trigger("click");
-        selectMultiselect("#select-collection", []);
+        selectMultiselect("#select-Collection", []);
+        selectMultiselect("#select-Host", []);
+        selectMultiselect("#select-Project", []);
         sampleTable.rows().deselect();
         var clickedRow = button.closest('tr');
         var rowID = clickedRow[0].id; //#inputTa-3
@@ -6015,10 +6730,9 @@ $(document).ready(function () {
                 var collection_id = proInputGet[0].collection_id;
                 var collection_name = proInputGet[0].collection_name;
                 if (collection_id && collection_id != "0" && collection_name) {
-                    selectMultiselect("#select-collection", [collection_name]);
+                    selectMultiselect("#select-Collection", [collection_name]);
                     sampleTable.rows({ search: 'applied' }).select();
                     $('.nav-tabs a[href="#importedFilesTab"]').tab('show');
-                    //xxxxxxxxxxxxxxx
                 } else if (input_id) {
                     var inputGet = getValues({ "p": "getInputs", "id": input_id })[0];
                     if (inputGet) {
@@ -6046,7 +6760,6 @@ $(document).ready(function () {
         var table_nodes = window[tableId].fnGetNodes();
         for (var y = 0; y < table_data.length; y++) {
             var name = $.trim(table_nodes[y].children[0].children[0].id)
-            console.log(name)
             name = name.replace(/:/g, "_").replace(/,/g, "_").replace(/\$/g, "_").replace(/\!/g, "_").replace(/\</g, "_").replace(/\>/g, "_").replace(/\?/g, "_").replace(/\(/g, "-").replace(/\)/g, "-").replace(/\"/g, "_").replace(/\'/g, "_").replace(/\//g, "_").replace(/\\/g, "_");
             if (!name) {
                 warnUser = 'Please fill all the filenames in the table.'
@@ -6060,7 +6773,6 @@ $(document).ready(function () {
     }
 
     checkOneCollection = function (selectedRows) {
-        console.log(selectedRows)
         //get collection_id of first item. it can be space separated multiple ids
         var pushFeatureIntoArray = function (ar, column) {
             var vals = [];
@@ -6070,7 +6782,6 @@ $(document).ready(function () {
             return vals
         }
         var collectionIdAr = selectedRows[0].collection_id.split(",")
-        console.log(collectionIdAr)
         var selRowsfileIdAr = [];
         selRowsfileIdAr = pushFeatureIntoArray(selectedRows, "id")
         for (var n = 0; n < collectionIdAr.length; n++) {
@@ -6093,15 +6804,20 @@ $(document).ready(function () {
         });
         e.preventDefault();
         var savetype = $('#mIdFile').val();
-        var checkdata = $('#inputFilemodal').find('.active.tab-pane')[0].getAttribute('id');
+        var checkdata = $('#inputFilemodal').find("[searchTab='true'].active.tab-pane")[0].getAttribute('id');
         if (checkdata === 'importedFilesTab') {
             $('#inputFilemodal').loading("stop");
             var fillCollection = function (savetype, collection) {
+                console.log(savetype)
+                console.log(!savetype.length)
+                console.log(collection)
                 if (!savetype.length) { //add item
                     saveFileSetValModal(null, 'file', null, collection);
                 } else {
                     editFileSetValModal(null, 'file', null, collection);
                 }
+                var insertFileProject = getValues({ p: "insertFileProject", collection_id: collection.collection_id, project_id:project_id });
+                $("#sampleTable").DataTable().ajax.reload(null, false);
             }
             var selectedRows = sampleTable.rows({ selected: true }).data();
             if (selectedRows.length === 0) {
@@ -6112,8 +6828,6 @@ $(document).ready(function () {
                 var selRowsfileIdAr = [];
                 var checkOneCol = "";
                 [checkOneCol, selRowsfileIdAr] = checkOneCollection(selectedRows)
-                console.log(checkOneCol)
-                console.log(selRowsfileIdAr)
                 //if new collection required, ask for name
                 if (!checkOneCol) {
                     $("#newCollectionModal").off();
@@ -6129,7 +6843,7 @@ $(document).ready(function () {
                             if (collection_data.id) {
                                 collection_id = collection_data.id;
                                 var savecollection = getValues({
-                                    p: "saveFileByID",
+                                    p: "insertFileCollection",
                                     file_array: selRowsfileIdAr,
                                     collection_id: collection_id
                                 })
@@ -6163,7 +6877,6 @@ $(document).ready(function () {
                     var data = formValues.serializeArray(); // convert form to array
                     // check if name is entered
                     data[1].value = $.trim(data[1].value);
-                    console.log(data)
                     if (data[1].value !== '') {
                         saveFileSetValModal(data, 'file', null, null);
                         $('#inputFilemodal').loading("stop");
@@ -6478,31 +7191,566 @@ $(document).ready(function () {
 
     $('#confirmModal').on('show.bs.modal', function (e) {
         var button = $(e.relatedTarget);
+        $('#confirmModal').data("buttonID", button.attr('id'));
         if (button.attr('id') === 'deleteRun' || button.attr('id') === 'delRun') {
             $('#confirmModalText').html('Are you sure you want to delete this run?');
+        } else if (button.attr('id') === 'deleteSample') {
+            var selRows = sampleTable.rows({ selected: true }).data();
+            var selRowsName =[];
+            for (var i = 0; i < selRows.length; i++) {
+                selRowsName.push(selRows[i].name);
+            }
+            var selRowsTxt = selRowsName.join("<br/>");
+            $('#confirmModalText').html('Are you sure you want to delete selected '+selRows.length+' file(s)?<br/><br/>File List:<br/>' + selRowsTxt);
         }
     });
 
     $('#confirmModal').on('click', '#deleteBtn', function (e) {
         e.preventDefault();
-        project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+        var buttonID = $('#confirmModal').data("buttonID");
+        if (buttonID === 'deleteRun' || buttonID === 'delRun'){
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    id: project_pipeline_id,
+                    p: "removeProjectPipeline"
+                },
+                async: true,
+                success: function (s) {
+                    window.location.replace("index.php?np=2&id=" + project_id);
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });  
+        } else if (buttonID === 'deleteSample') {
+            var selRows = sampleTable.rows({ selected: true }).data();
+            var selRowsId =[];
+            for (var i = 0; i < selRows.length; i++) {
+                selRowsId.push(selRows[i].id);
+            }
+            if (selRowsId.length >0){
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: {
+                        file_array: selRowsId,
+                        p: "removeFile"
+                    },
+                    async: true,
+                    success: function (s) {
+                        if (s.length >0){
+                            var removedCollection = s;
+                            for (var i = 0; i < removedCollection.length; i++) {
+                                removeCollectionFromInputs(removedCollection[i]);
+                            }
+                        }
+                        $("#sampleTable").DataTable().ajax.reload(null, false);
+                        $("#detailsOfFileDiv").css("display","none")
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
+            }
+
+
+        }
+
+    });
+
+    //### pluplouder start
+
+    $(function() {
+        function log() {
+            var str = "";
+            plupload.each(arguments, function(arg) {
+                var row = "";
+                if (typeof(arg) != "string") {
+                    plupload.each(arg, function(value, key) {
+                        // Convert items in File objects to human readable form
+                        if (arg instanceof plupload.File) {
+                            // Convert status to human readable
+                            switch (value) {
+                                case plupload.QUEUED:
+                                    value = 'QUEUED';
+                                    break;
+                                case plupload.UPLOADING:
+                                    value = 'UPLOADING';
+                                    break;
+                                case plupload.FAILED:
+                                    value = 'FAILED';
+                                    break;
+                                case plupload.DONE:
+                                    value = 'DONE';
+                                    break;
+                            }
+                        }
+
+                        if (typeof(value) != "function") {
+                            row += (row ? ', ' : '') + key + '=' + value;
+                        }
+                    });
+
+                    str += row + " ";
+                } else {
+                    str += arg + " ";
+                }
+            });
+            var log = $('#pluploaderLog');
+            log.append(str + "\n");
+            log.scrollTop(log[0].scrollHeight);
+        }
+
+        function getTransferedFiles(){
+            var done = 0
+            if (window["plupload_transfer_obj"]){
+                var obj = window["plupload_transfer_obj"];
+                if (!jQuery.isEmptyObject(obj)){
+                    $.each(obj, function (el) {
+                        if (window["plupload_transfer_obj"][el]["status"]){
+                            if (window["plupload_transfer_obj"][el]["status"] == "done"){
+                                done ++
+                            }
+                        }
+                    });
+                }
+            }
+            return done;
+        }
+        function updateTransferedFiles(){
+            var uploader = $("#pluploader").pluploadQueue()
+            var totalFile=0;
+            var transferedFile=0;
+            var totalFile=uploader.files.length;
+            var transferedFile=getTransferedFiles();
+            console.log(totalFile)
+            console.log(totalFile > 0)
+            console.log(transferedFile)
+            console.log(transferedFile == totalFile)
+            if (transferedFile && totalFile){
+                if (totalFile > 0 && transferedFile == totalFile){
+                    $("#uploadSucDiv").css("display","inline");
+                } 
+            }
+            if (totalFile){
+                $('span.plupload_transfer_status').html('  Transfered '+transferedFile+'/'+totalFile+' files');
+
+            }
+
+        }
+        //interval will decide the check period
+        function checkRsyncTimer(up,fileName, fileId, interval) {
+            window['interval_rsyncStatus_' + fileId] = setInterval(function () {
+                runRsyncCheck(up, fileName, fileId);
+            }, interval);
+        }
+
+        function upd_plupload_transfer_obj(fileId,status,transfer,rsyncPid){
+            if (typeof window["plupload_transfer_obj"] == "undefined"){
+                window["plupload_transfer_obj"] = {}
+            }
+            if (typeof window["plupload_transfer_obj"][fileId] == "undefined"){
+                window["plupload_transfer_obj"][fileId] = {}
+            }
+            if (status){
+                window["plupload_transfer_obj"][fileId]["status"]=status
+                if (status == "error"){
+                    $("#" + fileId).attr('class', "plupload_failed").find('a').css('display', 'block');
+                } else if (status == "uploading"){
+                    $("#" + fileId).attr('class', "plupload_rsync").find('a').css('display', 'block');
+                } else if (status == "done"){
+                    $("#" + fileId).attr('class', "plupload_done").find('a').css('display', 'block');
+                }  
+            }   
+            if (transfer){
+                window["plupload_transfer_obj"][fileId]["transfer"]=transfer
+                $("#" + fileId +" > .plupload_file_transfer").text(transfer)
+            }
+            if (rsyncPid){
+                window["plupload_transfer_obj"][fileId]["rsync"]=rsyncPid
+            }
+        }
+        function runRsyncCheck(up, fileName, fileId) {
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    filename: fileName,
+                    p: "getRsyncStatus"
+                },
+                async: true,
+                success: function (s) {
+                    if (s){
+                        console.log(s)
+                        log('[TransferFile]', s);
+                        if (s.match(/cannot create directory/)){
+                            upd_plupload_transfer_obj(fileId,"error","Error","");
+                            clearInterval(window['interval_rsyncStatus_' + fileId]);
+                        } else {
+                            if (s.match(/\d+\%/)) {
+                                var list = s.match(/\d+\%/g);
+                                if (list.length >0){
+                                    var percent = list[list.length-1];
+                                    upd_plupload_transfer_obj(fileId,"uploading",percent,"");
+                                    if (percent.match(/100%/)) {
+                                        upd_plupload_transfer_obj(fileId,"done",percent,"");
+                                        clearInterval(window['interval_rsyncStatus_' + fileId]);
+                                        log('[TransferFile]', "Done");
+                                    }
+                                } else {
+                                    var percent = "0"
+                                    upd_plupload_transfer_obj(fileId,"uploading",percent,"");
+
+                                }
+                            } 
+                        }
+                        updateTransferedFiles()
+                    }
+                },
+                error: function (errorThrown) {
+                    console.log("Error: " + errorThrown);
+                }
+            });
+        }
+
+        var initPlupload = function (){
+
+            $("#pluploader").pluploadQueue({
+                runtimes : 'html5,html4', //flash,silverlight
+                url : "ajax/upload.php",
+                chunk_size : '3mb', 
+                // to enable chunk_size larger than 2mb: "ajax/.htaccess file should have "php_value post_max_size 12M", "php_value upload_max_filesize 12M"
+                // test for 320mb file : 
+                // chunk_size=10mb :take 130sec
+                // chunk_size=3-4-5mb :take 80sec
+                // chunk_size=1-2mb :take 110sec
+                max_retries: 3,
+                unique_names : true,
+                multiple_queues : true,
+                rename : true,
+                dragdrop: true,
+                multipart : true,
+                //multipart_params : {'target_dir': "old"},
+                filters : {
+                    // Maximum file size
+                    max_file_size : '2gb'
+                },
+                // PreInit events, bound before any internal events
+                preinit : {
+                    Init: function(up, info) {
+                        log('[Init]', 'Info:', info, 'Features:', up.features);
+                    },
+                    UploadFile: function(up, file) {
+                        log('[UploadFile]', file);
+                        //                        up.stop();
+                        // You can override settings before the file is uploaded
+                        // up.setOption('url', 'upload.php?id=' + file.id);
+                    }
+                },
+                // Post init events, bound after the internal events
+                init : {
+                    PostInit: function(up) {
+                        // Called after initialization is finished and internal event handlers bound
+                        log('[PostInit]');
+                    },
+                    Browse: function(up) {
+                        // Called when file picker is clicked
+                        log('[Browse]');
+                    },
+                    Refresh: function(up) {
+                        // Called when the position or dimensions of the picker change
+                        log('[Refresh]');
+                        updateTransferedFiles()
+                    },
+                    StateChanged: function(up) {
+                        // Called when the state of the queue is changed
+                        log('[StateChanged]', up.state == plupload.STARTED ? "STARTED" : "STOPPED");
+                    },
+                    QueueChanged: function(up) {
+                        // Called when queue is changed by adding or removing files
+                        log('[QueueChanged]');
+                    },
+                    OptionChanged: function(up, name, value, oldValue) {
+                        // Called when one of the configuration options is changed
+                        log('[OptionChanged]', 'Option Name: ', name, 'Value: ', value, 'Old Value: ', oldValue);
+                    },
+                    BeforeUpload: function(up, file) {
+                        //Called right before the upload for a given file starts, can be used to cancel it if required
+                        log('[BeforeUpload]', 'File: ', file);
+                        updateTransferedFiles()
+                        var target_dir = $("#target_dir").val();
+                        var run_env = $('#chooseEnv').find(":selected").val();
+                        if (target_dir && run_env){
+                            up.settings.multipart_params.target_dir = target_dir;
+                            up.settings.multipart_params.run_env = run_env;
+                        } 
+                    },
+                    UploadProgress: function(up, file) {
+                        // Called while file is being uploaded
+                        log('[UploadProgress]', 'File:', file, "Total:", up.total);
+                    },
+                    FileFiltered: function(up, file) {
+                        // Called when file successfully files all the filters
+                        log('[FileFiltered]', 'File:', file);
+                    },
+                    FilesAdded: function(up, files) {
+                        // Called when files are added to queue
+                        log('[FilesAdded]');
+                        //get files in the target directory
+                        var target_dir = $("#target_dir").val();
+                        var amazon_cre_id = "";
+                        var dirList = getValues({ "p": "getLsDir", dir: target_dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
+                        console.log(dirList)
+                        var fileArr = [];
+                        var errorAr = [];
+                        if (dirList) {
+                            dirList = $.trim(dirList)
+                            fileArr = dirList.split('\n');
+                            errorAr = fileArr.filter(line => line.match(/ls:/));
+                            fileArr = fileArr.filter(line => !line.match(/:/));
+                        }
+                        var removedFiles = [];
+                        var dupFiles = [];
+                        var emptyFiles = [];
+                        console.log(fileArr)
+                        //check if file is found in the targetdir -> remove file and give warning
+                        plupload.each(files, function(file) {
+                            //remove files that has no size
+                            if (file.size == 0){
+                                emptyFiles.push(file.name)
+                                up.removeFile(file); 
+                            }
+                            //remove duplicate file
+                            var upfile = $.grep(up.files, function(v) { return v.name === file.name });
+                            if (upfile.length > 0){
+                                if (upfile[0] != file){
+                                    dupFiles.push(file.name)
+                                    up.removeFile(file);
+                                }
+                            }
+                            //remove file found in the remote host
+                            if ($.inArray(file.name, fileArr) !== -1){
+                                removedFiles.push(file.name)
+                                up.removeFile(file);
+                            }
+                            log('  File:', file);
+                        });
+
+                        var delRowsTxt = ""
+                        var dupFilesTxt = ""
+                        var emptyFilesTxt = ""
+                        if (removedFiles.length>0){
+                            var delRowsTxt = "Following file(s) already found in the target directory. Therefore, they removed from download queue.<br/><br/>File List:<br/>" + removedFiles.join("<br/>") + "<br/><br/>";
+                        }
+                        if (dupFiles.length >0){
+                            var dupFilesTxt = "Following file(s) already found in the queue list. <br/><br/>File List:<br/>" + dupFiles.join("<br/>") + "<br/><br/>";
+                        }
+                        if (emptyFiles.length >0){
+                            var emptyFilesTxt = "Following file(s) are empty and removed from the download queue. <br/><br/>File List:<br/>" + emptyFiles.join("<br/>") + "<br/><br/>";
+                        }
+                        if (removedFiles.length>0 || dupFiles.length >0 || emptyFiles.length >0){
+                            showInfoModal("#infoModal", "#infoModalText",  delRowsTxt + dupFilesTxt + emptyFilesTxt)
+                        }
+                    },
+                    FilesRemoved: function(up, files) {
+                        // Called when files are removed from queue
+                        log('[FilesRemoved]');
+                        plupload.each(files, function(file) {
+                            log('  File:', file);
+                        });
+                    },
+                    FileUploaded: function(up, file, info) {
+                        // Called when file has finished uploading
+                        log('[FileUploaded] File:', file, "Info:", info);
+                        console.log(file)
+                        console.log(info)
+                        console.log(up)
+                        var fileName = file.name
+                        var fileId = file.id
+                        var fileState = file.state //5==done
+                        if (fileState == 5 && fileName){
+                            if (info){
+                                console.log(info)
+                                if (info.response){
+                                    console.log(info.response)
+                                    if (IsJsonString(info.response)) {
+                                        var json = JSON.parse(info.response)
+                                        console.log(json)
+                                        if (json) {
+                                            if (json.rsync_log){
+                                                var pid = $.trim(json.rsync_log)
+                                                upd_plupload_transfer_obj(fileId,"","",pid);
+                                            }
+                                            if (!json.error) {
+                                                //start reading log from rsync each 10 sec.
+                                                checkRsyncTimer(up,fileName,fileId, 10000);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                        }
+                    },
+                    ChunkUploaded: function(up, file, info) {
+                        // Called when file chunk has finished uploading
+                        log('[ChunkUploaded] File:', file, "Info:", info);
+                    },
+                    UploadComplete: function(up, files) {
+                        // Called when all files are either uploaded or failed
+                        log('[UploadComplete]');
+                    },
+                    Destroy: function(up) {
+                        // Called when uploader is destroyed
+                        log('[Destroy] ');
+                    },
+                    Error: function(up, args) {
+                        // Called when error occurs
+                        log('[Error] ', args);
+                    }
+                }
+            });
+        }
+        initPlupload();
+
+        $('#addFileModal').on('click', '.plupload_start_dummy', function (e) {
+            var target_dir = $("#target_dir").val();
+            var run_env = $('#chooseEnv').find(":selected").val();
+            var warning = ""
+            if (target_dir && run_env){
+                var  chkRmDirWritable = getValues({ p: "chkRmDirWritable", dir: target_dir, run_env:run_env  });
+                console.log(chkRmDirWritable)
+                if (chkRmDirWritable.match(/writeable/)){
+                    $('.plupload_start').trigger("click");
+                } else {
+                    warning += "Write permission denied for your target directory." 
+                    showInfoModal("#infoModal", "#infoModalText", warning)
+                }
+            } else {
+                if (!target_dir && !run_env){
+                    warning += "Please choose your run environment and enter target directory and try again." 
+                } else if (!target_dir){
+                    warning += "Please enter target directory and try again." 
+                } else if (!run_env){
+                    warning += "Please choose your run environment and try again." 
+                }
+                showInfoModal("#infoModal", "#infoModalText", warning)
+            }
+        });
+
+        //xxxx
+        $('#addFileModal').on('click', '.plupload_rsync > .plupload_file_action > a', function (e) {
+            var clickedFileUID = $(e.target).closest('li').attr("id");
+            var uploader = $("#pluploader").pluploadQueue();
+            var files = uploader.files;
+            var fileName = "";
+            for (var i = 0; i < files.length; i++) {
+                var fileID  = files[i].uid
+                if (fileID == clickedFileUID){
+                    fileName  = files[i].name
+                    break;
+                }
+            }
+            var target_dir = $("#target_dir").val();
+            var run_env = $('#chooseEnv').find(":selected").val();
+            if (fileName && target_dir && run_env){
+                var retryRsync = getValues({ p: "retryRsync", dir: target_dir, run_env:run_env, filename: fileName  });
+                console.log(retryRsync)
+            }
+        });
+
+        $('#addFileModal').on('click', '#pluploaderReset', function (e) {
+            var uploader = $("#pluploader").pluploadQueue();
+            var files = uploader.files;
+            for (var i = 0; i < files.length; i++) {
+                var fileID  = files[i].uid
+                var fileName  = files[i].name
+                if (window["plupload_transfer_obj"]){
+                    if (window["plupload_transfer_obj"][fileID]){
+                        if (window['interval_rsyncStatus_' + fileID]){
+                            clearInterval(window['interval_rsyncStatus_' + fileID]);
+                        }
+                        if (window["plupload_transfer_obj"][fileID]["status"] && window["plupload_transfer_obj"][fileID]["rsync"]){
+                            if (window["plupload_transfer_obj"][fileID]["status"] != "done"){
+                                var killRsync =  getValues({ p: "resetUpload", filename: fileName });
+                            }
+                        }
+                    }
+                }
+            }
+            uploader.splice(0);
+            uploader.destroy();
+            window["plupload_transfer_obj"]={}
+            initPlupload();
+        });
+
+        //        $('#addFileModal').on('click', '#pluploaderStop', function (e) {
+        ////            var uploader = $("#pluploader").pluploadQueue();
+        ////            uploader.stop()
+        ////            var uploader = $("#pluploader").pluploadQueue();
+        ////            var copiedObj = $.extend(true, {}, uploader);
+        ////            console.log(copiedObj)
+        ////            var fileList = []
+        ////            var files = copiedObj.files;
+        ////            for (var i = 0; i < files.length; i++) {
+        ////                var fileObj  = files[i].getSource()
+        ////                fileList.push(fileObj)
+        ////            }
+        ////            uploader.splice(0);
+        ////            uploader.destroy();
+        ////            initPlupload();
+        //            //** objectler icin:
+        ////            var copiedObj = $.extend(true, {}, orObj);
+        //            
+        ////            var uploaderNew = $("#pluploader").pluploadQueue();
+        ////            for (var i = 0; i < fileList.length; i++) {
+        ////                uploaderNew.addFile(fileList[i])
+        ////            }
+        ////            $(".plupload_buttons,.plupload_upload_status,.plupload_transfer_status").css("display", "inline");
+        //        });
+
+
+    });
+
+
+    $('#addFileModal').on('click', '#showHostFiles', function (e) {
+        var target_dir = $('#target_dir').val();
+        $('#file_dir').val(target_dir);
+        $('#viewDirBut').trigger("click");
+        $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
+    });
+
+
+    //### pluplouder ends
+
+
+    //######### copy/move runs
+    $('#confirmDuplicate').on('click', '#moveRunBut', function (e) {
+        var new_project_id = $('#userProject').val();
         $.ajax({
             type: "POST",
             url: "ajax/ajaxquery.php",
             data: {
-                id: project_pipeline_id,
-                p: "removeProjectPipeline"
+                old_project_id: project_id,
+                new_project_id: new_project_id,
+                project_pipeline_id: project_pipeline_id,
+                p: "moveRun"
             },
             async: true,
             success: function (s) {
-                window.location.replace("index.php?np=2&id=" + project_id);
+                setTimeout(function () { window.location.replace("index.php?np=3&id=" + project_pipeline_id); }, 0);
             },
             error: function (errorThrown) {
                 alert("Error: " + errorThrown);
             }
         });
     });
-
+    $('#confirmDuplicate').on('click', '#copyRunBut', function (e) {
+        confirmNewRev = false;
+        saveRun();
+    });
     $('#confirmDuplicate').on('click', '#duplicateKeepBtn', function (e) {
         confirmNewRev = false;
         saveRun();
@@ -6511,6 +7759,32 @@ $(document).ready(function () {
         confirmNewRev = true;
         saveRun();
     });
+
+
+    $('#projectmodal').on('show.bs.modal', function (event) {
+        $(this).find('form').trigger('reset');
+    });
+
+    $('#projectmodal').on('click', '#saveproject', function (event) {
+        event.preventDefault();
+        var projectName = $('#mProjectName').val();
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {name:projectName, summary:"", p:"saveProject"},
+            async: true,
+            success: function (s) {
+                refreshProjectDropDown("#userProject");
+                $("#userProject").val(s.id);
+                $('#projectmodal').modal('hide');
+            },
+            error: function (errorThrown) {
+                alert("Error: " + errorThrown);
+            }
+        });
+    });
+
+    //######### copy/move runs end
 
     $(function () {
         $(document).on('click', '.updateIframe', function (event) {
@@ -6548,7 +7822,7 @@ $(document).ready(function () {
                     filename = split[split.length - 1];
                     dir = filePath.substring(0, filePath.indexOf(filename));
                 }
-                console.log(dir )
+                console.log(dir)
                 var fileid = $(this).attr("fileid");
                 var pubWebPath = $("#basepathinfo").attr("pubweb");
                 var debrowserUrl = $("#basepathinfo").attr("debrowser");
@@ -7556,6 +8830,7 @@ $(document).ready(function () {
                     cache: false,
                     success: function (results) {
                         res = results
+                        
                     },
                     error: function (errorThrown) {
                         console.log("##Error: ");

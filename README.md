@@ -2,7 +2,7 @@
 
 ### A platform to create reproducible, portable and highly parallel pipelines
 
-[![Build Status](https://api.travis-ci.com/UMMS-Biocore/dolphinnext.svg?branch=master)](https://api.travis-ci.com/UMMS-Biocore/dolphinnext)
+[![Build Status](https://api.travis-ci.com/UMMS-Biocore/dolphinnext.svg?branch=master)](https://api.travis-ci.com/UMMS-Biocore/dolphinnext)[![DOI:10.1101/689539](https://zenodo.org/badge/DOI/10.1101/689539.svg)](https://doi.org/10.1101/689539)
 
 -----
 
@@ -63,6 +63,8 @@
 *Quick start guide*, can be reached at https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html
 
 *Complete documentation* is available at https://dolphinnext.readthedocs.io
+
+[**Developer Tutorial**](https://github.com/UMMS-Biocore/dolphinnext-tutorial) is available which explains the basics of DolphinNext. You can use our [website](https://dolphinnext.umassmed.edu/), or easily pull Docker image of Dolphinnext and start creating pipelines in your local server.
 
 
 ## Support

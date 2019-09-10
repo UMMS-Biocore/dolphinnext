@@ -1,3 +1,53 @@
+function getAllMarkdown(arr){
+    var allhtmlText = ""
+    var arrText = ""
+    if (arr.length){
+        for (var k = 0; k < 1; k++) {
+            if (arr[k]){
+                var html = getMarkdown(arr[k])
+                html = html.replace("<p>", '<p style="margin:0px;">')
+                allhtmlText += html
+            }
+        }
+    } 
+    return allhtmlText
+}
+
+function getMarkdown(text){
+    var converter = new showdown.Converter({tables: true});
+    var html = converter.makeHtml(text);
+    return html
+}
+
+function prepSummary(summary){
+    var retObj = {}
+    var labelArr = [];
+    if (summary.match(/\[\!/)){
+        var sumArr = [];
+        var lines = summary.split("\n");
+        for (var i = 0; i < lines.length; i++) {
+            var currline = lines[i];
+            if (i<10){
+                if (currline.match(/\[\!/)){
+                    var labels = currline.split("[!");
+                    for (var k = 0; k < labels.length; k++) {
+                        if ($.trim(labels[k])){
+                            labelArr.push("[!"+labels[k]);
+                        }
+                    }
+                } else {
+                    sumArr.push(currline)
+                }
+            } else {
+                sumArr.push(currline)
+            }
+        }
+        summary = sumArr.join('\n')
+    }
+    retObj.summary = summary
+    retObj.labelArr = labelArr
+    return retObj
+}
 //open the pipelines sidebar on entrance.
 //var tagElems = $('#autocompletes1').children();
 //$(tagElems).closest('li').addClass('menu-open');
@@ -41,7 +91,12 @@ $(function () {
                 //                window.console && console.log(response, pagination);
                 var dataHtml = '<section class="content" style="max-width: 1500px; "><h2 class="page-header">Public Pipelines</h2><div class="row">';
                 $.each(response, function (index, item) {
-                    dataHtml += '<div style="min-width:25%; padding-right:30px; padding-bottom:25px;" class="col-md-4"><div style=" height:300px;" class="movebox widget-user-2"><div style="height:100px" class="widget-user-header "><div class="boxheader"><i style="font-size:30px; float:left; color:orange; padding:5px;" class="fa fa-spinner"></i><h4 style="text-align:center;">' + item.name + '</h4></div></div><div class="box-body"><p style="height:110px; overflow:hidden; word-break: break-all;">' + item.summary + '</p><div style="padding-top:10px;" class="pull-right"><a href="index.php?np=1&id=' + item.id + '" style="background-color:#508CB8;" class="btn btn-primary btn-sm ad-click-event">LEARN MORE</a></div></div></div></div>';
+                    var retObj ={};
+                    retObj = prepSummary(item.summary);
+                    var summary = retObj.summary
+                    var labelArr = retObj.labelArr
+                    var labelhtml = getAllMarkdown(labelArr)
+                    dataHtml += '<div style="min-width:25%; padding-right:30px; padding-bottom:25px;" class="col-md-4"><div style=" height:300px;" class="movebox widget-user-2"><div style="height:100px" class="widget-user-header "><div class="boxheader"><i style="font-size:30px; float:left; color:orange; padding:5px;" class="fa fa-spinner"></i><h4 style="text-align:center;">' + item.name + '</h4></div></div><div class="box-body"><p style="height:110px; overflow:hidden; word-break: break-all;">' + summary + '</p><div style="padding-top:10px;" class="pull-right"><a href="index.php?np=1&id=' + item.id + '" style="background-color:#508CB8;" class="btn btn-primary btn-sm ad-click-event">LEARN MORE</a></div><div style="padding-top:10px;" class="pull-left">'+labelhtml+'</div> </div></div></div>';
                 });
                 dataHtml += '</div></section>';
                 container.prev().html(dataHtml);

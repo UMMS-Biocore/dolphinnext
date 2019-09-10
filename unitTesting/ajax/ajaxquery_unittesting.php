@@ -69,54 +69,40 @@ class ajaxQueryTest extends TestCase
 	}
 
 
-    public function testInsertUser() {
+    public function testSaveUserManual() {
 		ob_start();
-		$_REQUEST['p'] = 'saveGoogleUser';
+		$_REQUEST['p'] = 'saveUserManual';
 		$_REQUEST['id'] = '';
-		$_REQUEST['google_id'] = '111';
 		$_REQUEST['name'] = "onur yukselen";
-		$_REQUEST['google_image'] = "https://lh4.googleusercontent.com/-h7_FO3k9sB4/AAAAAAAAAAI/AAAAAAAAAAA/AGi4gfw9MqsLVfHz5xXsoOzA1KIZ1yLwXw/s96-c/photo.jpg";
 		$_REQUEST['username'] = "admin";
 		$_REQUEST['email'] = "admin@gmail.com";
+		$_REQUEST['institute'] = "institute";
+		$_REQUEST['lab'] = "lab";
+		$_REQUEST['logintype'] = "";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'1');
 		ob_end_clean();
 	}
     /**
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
-    public function testInsertUser2() {
+    public function testSaveUserManual2() {
 		ob_start();
-		$_REQUEST['p'] = 'saveGoogleUser';
+        $_REQUEST['p'] = 'saveUserManual';
 		$_REQUEST['id'] = '';
-		$_REQUEST['google_id'] = '222';
 		$_REQUEST['name'] = "member name";
-		$_REQUEST['google_image'] = "https://lh4.googleusercontent.com/-h7_FO3k9sB4/AAAAAAAAAAI/AAAAAAAAAAA/AGi4gfw9MqsLVfHz5xXsoOzA1KIZ1yLwXw/s96-c/photo.jpg";
 		$_REQUEST['username'] = "member";
 		$_REQUEST['email'] = "member@gmail.com";
+		$_REQUEST['institute'] = "institute";
+		$_REQUEST['lab'] = "lab";
+		$_REQUEST['logintype'] = "";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'2');
 		ob_end_clean();
 	}
-     /**
-     * @depends testInsertUser
-     */
-    public function testUpdateUser() {
-		ob_start();
-		$_REQUEST['p'] = 'saveGoogleUser';
-		$_REQUEST['id'] = '1';
-		$_REQUEST['google_id'] = '111';
-		$_REQUEST['name'] = "onur yukselen";
-		$_REQUEST['google_image'] = "https://lh6.googleusercontent.com/-j-GMmh9Xzd0/AAAAAAAAAAI/AAAAAAAAByM/HnRa5tGHpLU/s96-c/photo.jpg";
-		$_REQUEST['username'] = "admin";
-		$_REQUEST['email'] = "admin@gmail.com";
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($db->getUserByGoogleId("111"))[0]->id,'1');
-		ob_end_clean();
-		$this->assertEquals(json_decode($db->getUserByGoogleId("111"))[0]->google_image,'https://lh6.googleusercontent.com/-j-GMmh9Xzd0/AAAAAAAAAAI/AAAAAAAAByM/HnRa5tGHpLU/s96-c/photo.jpg');
-	}
+     
     /**
-     * @depends testUpdateUser
+     * @depends testSaveUserManual
      */
     public function testInsertGroup() {
 		ob_start();
@@ -595,6 +581,9 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['hostname'] = "localhost";
 		$_REQUEST['next_path'] = "";
 		$_REQUEST['ssh_id'] = "1";
+		$_REQUEST['port'] = "22";
+		$_REQUEST['variable'] = "test";
+		$_REQUEST['singu_cache'] = "";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'2');
 		ob_end_clean();
@@ -637,6 +626,8 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['hostname'] = "localhost";
 		$_REQUEST['next_path'] = "";
 		$_REQUEST['ssh_id'] = "1";
+		$_REQUEST['port'] = "22";
+		$_REQUEST['singu_cache'] = "";
 		include('ajaxquery.php');
         $_REQUEST['p'] = 'getProfileCluster';
 		$_REQUEST['id'] = '2';
@@ -686,6 +677,9 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['shared_storage_mnt'] = "";
 		$_REQUEST['next_path'] = "";
 		$_REQUEST['ssh_id'] = "1";
+        $_REQUEST['port'] = "22";
+		$_REQUEST['variable'] = "testAmz";
+		$_REQUEST['singu_cache'] = "";
 		$_REQUEST['amazon_cre_id'] = "1";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'1');
@@ -733,6 +727,8 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['next_path'] = "";
 		$_REQUEST['ssh_id'] = "1";
 		$_REQUEST['amazon_cre_id'] = "1";
+        $_REQUEST['port'] = "22";
+		$_REQUEST['singu_cache'] = "";
 		include('ajaxquery.php');
         $_REQUEST['p'] = 'getProfileAmazon';
 		$_REQUEST['id'] = '1';
@@ -789,7 +785,7 @@ class ajaxQueryTest extends TestCase
     public function testsaveAllPipeline() {
 		ob_start();
 		$_REQUEST['p'] = 'saveAllPipeline';
-		$_REQUEST['dat'] = '[{"name":"test_pipeline"},{"id":""},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":""},{"group_id":""},{"perms":"3"},{"pin":"false"},{"pin_order":""},{"publish":"0"},{"script_pipe_header":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":""},{"pipeline_list":""},{"publish_web_dir":""},{"pipeline_gid":null},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
+		$_REQUEST['dat'] = '[{"name":"test_pipeline"},{"id":""},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":""},{"group_id":""},{"perms":"3"},{"pin":"false"},{"pin_order":""},{"publish":"0"},{"script_pipe_header":""},{"script_pipe_config":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":""},{"pipeline_list":""},{"publish_web_dir":""},{"pipeline_gid":null},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'1');
 		ob_end_clean();
@@ -845,7 +841,7 @@ class ajaxQueryTest extends TestCase
     public function testsaveAllPipelineUpdate() {
 		ob_start();
 		$_REQUEST['p'] = 'saveAllPipeline';
-		$_REQUEST['dat'] = '[{"name":"test_pipeline"},{"id":"1"},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":"pipeline_summary_updated"},{"group_id":""},{"perms":"63"},{"pin":"true"},{"pin_order":""},{"publish":"0"},{"script_pipe_header":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":"1"},{"pipeline_list":"2,3"},{"publish_web_dir":""},{"pipeline_gid":null},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
+		$_REQUEST['dat'] = '[{"name":"test_pipeline"},{"id":"1"},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":"pipeline_summary_updated"},{"group_id":""},{"perms":"63"},{"pin":"true"},{"pin_order":""},{"publish":"0"},{"script_pipe_header":""},{"script_pipe_config":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":"1"},{"pipeline_list":"2,3"},{"publish_web_dir":""},{"pipeline_gid":null},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
 		include('ajaxquery.php');
         $_REQUEST['p'] = 'loadPipeline';
 		$_REQUEST['id'] = '1';
@@ -933,7 +929,7 @@ class ajaxQueryTest extends TestCase
 		ob_start();
 		$_SESSION['ownerID'] = '2';
 		$_REQUEST['p'] = 'saveAllPipeline';
-		$_REQUEST['dat'] = '[{"name":"test_pipeline2"},{"id":""},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":""},{"group_id":""},{"perms":"3"},{"pin":"false"},{"pin_order":""},{"publish":"0"},{"script_pipe_header":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":"1,4"},{"pipeline_list":"2,3"},{"publish_web_dir":""},{"pipeline_gid":1},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
+		$_REQUEST['dat'] = '[{"name":"test_pipeline2"},{"id":""},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":""},{"group_id":""},{"perms":"3"},{"pin":"false"},{"pin_order":""},{"publish":"0"},{"script_pipe_config":""},{"script_pipe_header":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":"1,4"},{"pipeline_list":"2,3"},{"publish_web_dir":""},{"pipeline_gid":1},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'2');
 		ob_end_clean();
@@ -1319,7 +1315,7 @@ class ajaxQueryTest extends TestCase
 	}
     /**
      * @depends testInsertGroup
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
     public function testgetMemberAdd() {
 		ob_start();
@@ -1332,7 +1328,7 @@ class ajaxQueryTest extends TestCase
 	}
     /**
      * @depends testInsertGroup
-     * @depends testInsertUser
+     * @depends testSaveUserManual
      */
     public function testviewGroupMembers() {
 		ob_start();
@@ -1377,14 +1373,14 @@ class ajaxQueryTest extends TestCase
 		ob_end_clean();
 	}
     /**
-     * @depends testUpdateUser
+     * @depends testSaveUserManual
      */
     public function testgetUserRole() {
 		ob_start();
 		$_REQUEST['p'] = 'getUserRole';
         $_SESSION['ownerID'] = '1';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->role, null);
+		$this->assertEquals(json_decode($data)[0]->role, "user");
 		ob_end_clean();
 	}
 
