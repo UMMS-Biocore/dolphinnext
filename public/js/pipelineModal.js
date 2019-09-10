@@ -1715,7 +1715,7 @@ function createMultiConfig(allConf){
         for (var i = 0; i < confAr.length; i++) {
             if (confAr[i].match(/@~:"(.*)"/)){
                 filename = confAr[i].match(/@~:"(.*)"/)[1]
-                if (filename && confAr[i+1]){
+                if (filename && confAr[i+1] != null && typeof confAr[i+1] !== 'undefined' ){
                     checkLabel = true
                     ret.push ({"filename": filename, "text": confAr[i+1]})
                     continue;
