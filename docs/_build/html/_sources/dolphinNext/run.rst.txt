@@ -41,9 +41,8 @@ Terminated  User terminated the run by using "terminate run" button.
 Run Settings
 ============
 
-* **Work Directory:** Full path of the directory, where all nextflow runs will be executed. Example paths::
+* **Work Directory:** Full path of the directory, where all nextflow runs will be executed. Example path::
     
-    ~/workdir     
     /home/newuser/workdir
 
 * **Run Environment:** Profile that is created in the `profile <profile.html>`_  page. If `Amazon profile <profile.html#b-defining-amazon-profile>`_  is selected, then status of the profile should to be at the stage of **running**.
@@ -53,15 +52,16 @@ Run Settings
     
     1. **Image:** Docker image name. Example::
         
-        nephantes/dolphinnext-docker
+        UMMS-Biocore/dolphinnext-studio
     
-    2. **RunOptions (optional):** You can enter any command line options supported by the docker run command. Please click `this link <https://docs.docker.com/engine/reference/commandline/cli/>`_ for details.
+    2. **RunOptions (optional):** You can enter any command line options supported by the docker run command. Please click `this docker link <https://docs.docker.com/engine/reference/commandline/cli/>`_ for details.
 
 * **Use Singularity Image:** Alternative to Docker, you can activate singularity image by clicking "Use Singularity Image" checkbox and entering relevant fields. The only requirement is the `installation of the Singularity <http://singularity.lbl.gov/docs-installation/>`_ on the execution platform.
     
     1. **Image:** Path to sigularity image. Example::
         
-        project/umw_biocore/singularity/UMMS-Biocore-singularity-master.simg
+        shub://UMMS-biocore/singularitysc
+        /project/umw_biocore/singularity/UMMS-Biocore-singularity-master.simg
     
     2. **RunOptions (optional):** You can enter any command line options supported by the ``singularity exec``. Please click `link for details <http://singularity.lbl.gov/docs-usage/>`_. For instance, you can mount the directories by using ``--bind command``.  Example::
         
@@ -79,11 +79,25 @@ Advanced Options
 
 * **Publish Directory:** Work directory is default publish directory for DolphinNext. If you want to enter new publish directory, just click this item and enter the full path of publish directory. Both local paths (eg. ``/home/user/test``) or amazon s3 paths (eg. ``s3://yourbucket/test``) are accepted.
 
-* **Executor Settings for All Processes:** If any option other than local and ignite is selected as **nextflow executor** in the profile, it is allowed to override and adjust these settings by clicking this item. Following settings will be prompted: ``Queue/Partition``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``.
 
-	.. note::  In case of non-standart resources or settings is required for executor, then you can specify these parameters by using **Other options** box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter ``-pe orte 3`` (to use MPI for distributed-memory machines) or ``-pe smp 3`` (to use OpenMP for shared-memory machines) in the **Other options** box and **just leave the CPU box empty!** 
+* **Executor Settings:** 
 
-* **Executor Settings for Each Process:** You may change executor settings for each process and override to **executor settings for all processes** by clicking this item and clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest. Similarly, following settings will be prompted for checked process: ``Queue/Partition``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``.
+    **1. Executor Settings for Nextflow (in the profile)**:
+    You can determine the system where nextflow itself is initiated. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself. 
+    e.g. suggested parameters: long 8GB 1CPU 5000-8000min
+    
+    **2. Executor of Nextflow Jobs (in the profile)**:
+    This setting will be used if you don’t set any parameter in advanced section of your run page. If any option other than local and ignite, is selected, additional settings will be prompt for ``Queue/Partition``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``. Adjustment of these parameters are allowed for both options.
+    e.g. suggested parameters: short 20GB 1CPU 240min
+    
+    **3. Executor Settings for All Processes (in Advanced tab of run page)**:
+    This setting will overwrite Executor of Nextflow Jobs (in the profile). 
+    e.g. suggested parameters: short 20GB 1CPU 240min
+    
+    **4. Executor Settings for Each Process (in Advanced tab of run page)**:
+    If particular process needs special parameters other than **executor settings for all processes**, you may override general settings by clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest.
+    e.g. suggested parameters: long 20GB 4CPU 1000-5000min
+
 
 * **Delete intermadiate files after run:** This is default settings for DolphinNext to keep only selected output files in the work/publish directory and removing the rest of the files. Here the main goal is to minimize the required space for each project.
 
@@ -111,7 +125,7 @@ Val         ~/scripts/filter.py
 Workflow
 ========
 
-To give you an overview, overall pipeline and its description are showed in this region. You may hide it by clicking minus/plus icon just next to **Workflow** title.
+To give you an overview, overall pipeline and its modules are showed in this region. You can also reach the process contents after clicking the **go to pipeline** link.
 
 Run Logs
 ========
@@ -177,6 +191,16 @@ Reports tab will be appear in the run page as soon as run is initiated by clicki
 
 Each report row corresponds to output parameter in the pipeline workflow and you can easily visualize their content by clicking on each row. All these sections have download, full screen, and open in new window icons in order to help you to investigate each report.
 
+.. note:: If you want to integrate your visualization tool into DolphinNext, please let us know about it (biocore@umassmed.edu). We can add this feature for you.
+
+* **DEBrowser:**
+
+DEBrowser is a R library to provide an easy way to perform and visualize DE analysis. This module takes count matrices as input and allows interactive exploration of the resulting data. You can reach their documentation by clicking `this link <https://bioconductor.org/packages/release/bioc/vignettes/debrowser/inst/doc/DEBrowser.html>`_. 
+
+.. image:: dolphinnext_images/report_debrowser.png
+    :align: center
+    :width: 99%
+
 * **R Markdown:**
 
 R Markdown feature provides interactive analysis of the produced data. We have prepared series of R Markdown reports which will allow you to reach your report in a HTML or PDF format as soon as your run complete. Within an R Markdown (.RMD) file, R Code Chunks can be embedded with the native Markdown syntax for fenced code regions. For example, the following code chunk computes a data histogram and renders a bar plot as a PNG image:
@@ -216,7 +240,7 @@ This module allows you to fit the table in your screen by clicking "full screen"
 
 * **HTML Viewer:**
 
-You can easily embed html content in to our report section by using HTML viewer. Please check the example for FastQC output at below:
+You can easily embed html content in to our report section by using HTML viewer. Please check the example for MultiQC output at below:
 
 .. image:: dolphinnext_images/report_html.png
     :align: center
@@ -226,7 +250,7 @@ You can easily embed html content in to our report section by using HTML viewer.
 
 * **PDF Viewer:**
 
-Similar to HTML Viewer, PDF files can be embeded in report section. You can see the RseQC reports as an example at below:
+Similar to HTML Viewer, PDF files can be embeded in report section. You can see the piPipes report as an example at below:
 
 .. image:: dolphinnext_images/report_pdf.png
     :align: center

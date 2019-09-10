@@ -96,11 +96,27 @@ A. Defining Host Profile:
 * **SSH Keys:** are saved in SSH keys tab and will be used while connecting to host.
 * **Run Command (optional):** You may run the command or commands (by seperating each command with ``&&`` sign) before the nextflow job starts. eg. ``source /etc/bashrc && module load java/1.8.0_31 && module load bowtie2/2.3.2``
 * **Nextflow Path (optional):** If nextflow path is not added to ``$PATH`` environment, you can define the path in this block. eg.``/project/umw_biocore/bin``
-* **Executor of Nextflow/Executor of Nextflow Jobs:** You can determine the system where nextflow itself is initiated. Currently local, sge and lsf executors are supported by DolphinNext to initiate nextflow. Apart from the executor of nextflow, you may change the executor of each job by using "Executor of Nextflow Jobs" option. If any option other than local and ignite, is selected, additional settings will be prompt for ``Queue/Partition``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``. Adjustment of these parameters are allowed for both options.
+* **Executor Settings:** 
+
+    **1. Executor Settings for Nextflow (in the profile)**:
+    You can determine the system where nextflow itself is initiated. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself. 
+    e.g. suggested parameters: long 8GB 1CPU 5000-8000min
+    
+    **2. Executor of Nextflow Jobs (in the profile)**:
+    This setting will be used if you don’t set any parameter in advanced section of your run page. If any option other than local and ignite, is selected, additional settings will be prompt for ``Queue/Partition``, ``Memory(GB)``, ``CPU`` and ``Time(min.)``. Adjustment of these parameters are allowed for both options.
+    e.g. suggested parameters: short 20GB 1CPU 240min
+    
+    **3. Executor Settings for All Processes (in Advanced tab of run page)**:
+    This setting will overwrite Executor of Nextflow Jobs (in the profile). 
+    e.g. suggested parameters: short 20GB 1CPU 240min
+    
+    **4. Executor Settings for Each Process (in Advanced tab of run page)**:
+    If particular process needs special parameters other than **executor settings for all processes**, you may override general settings by clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest.
+    e.g. suggested parameters: long 20GB 4CPU 1000-5000min
 
 .. note::  For instance you may initiate nextflow in ``local`` and allow nextflow to run its jobs ``local``, ``sge``, ``lsf``, ``slurm`` or ``ignite``. Alternatively, selection both options to ``lsf`` or ``sge`` would allow both executions to be maintained by ``lsf`` or ``sge`` executor.
 
-.. note::  In case of non-standart resources or settings is required for executor, then you can specify these parameters by using **Other options** box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter ``-pe orte 3`` (to use MPI for distributed-memory machines) or ``-pe smp 3`` (to use OpenMP for shared-memory machines) in the **Other options** box and **just leave the CPU box empty!**
+.. note::  In case of non-standart resources or settings is required for executor, then you can specify these parameters by using **Other options** box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter ``-pe orte 3`` (to use MPI for distributed-memory machines) or ``-pe smp 3`` (to use OpenMP for shared-memory machines) in the **Other options** box and just leave the CPU box empty.
 
 B. Defining Amazon Profile:
 ===========================

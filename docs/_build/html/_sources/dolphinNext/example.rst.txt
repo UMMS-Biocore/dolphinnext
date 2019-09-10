@@ -10,11 +10,12 @@ There are numerous publicly available pipelines and processes exist in `DolphinN
 RNA-Seq Pipeline
 ================
 
+    * `Github Repository for RNA-Seq Pipeline <https://github.com/dolphinnext/rnaseq>`_
+
+
 .. image:: dolphinnext_images/rna-seq.jpg
 	:align: center
     
-* `Download executable RNA-Seq NF File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/RNA-seqPipeline.nf>`_. 
-* `Download importable RNA-Seq DN File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/RNA-seqPipeline.dn>`_.
 
 RNA-seq pipeline includes Quality Control, rRNA filtering, Genome Alignment using HISAT2, STAR and Tophat2, and estimating gene and isoform expression levels by RSEM and featureCounts.  
   
@@ -34,6 +35,10 @@ Steps:
 
 ATAC-Seq and ChIP-Seq pipeline
 ==============================
+    
+    * `Github Repository for ATAC-seq Pipeline <https://github.com/dolphinnext/atacseq>`_
+    * `Github Repository for CHIP-seq Pipeline <https://github.com/dolphinnext/chipseq>`_
+
 
 .. image:: dolphinnext_images/atac.jpg
 	:align: center
@@ -41,12 +46,7 @@ ATAC-Seq and ChIP-Seq pipeline
 .. image:: dolphinnext_images/chip.jpg
 	:align: center
 
-* `Download executable ATAC-Seq NF File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/ATAC-seqPipeline.nf>`_. 
-* `Download importable ATAC-Seq DN File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/ATAC-seqPipeline.dn>`_.
-* `Download executable ChIP-Seq NF File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/ChIP-seqPipeline.nf>`_. 
-* `Download importable ChIP-Seq DN File <https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/ChIP-seqPipeline.dn>`_.
-
-
+    
 DolphinNext offers pipelines to process libraries for the processing of ChIP-Seq and ATAC-Seq data. These two pipelines share most processes and only differ at very specific points. They also share all data preparation steps with the RNA-Seq pipeline and indeed both rely on the very same processes for read filtering, read quality reporting and alignment to desired genomic locations.
 
     1) For Quality Control, we use FastQC to create qc outputs. There are optional read quality filtering (trimmomatic), read quality trimming (trimmomatic), adapter removal (cutadapt) processes available.  

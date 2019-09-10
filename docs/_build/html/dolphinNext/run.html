@@ -243,9 +243,8 @@
 <div class="section" id="run-settings">
 <h2>Run Settings<a class="headerlink" href="#run-settings" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p class="first"><strong>Work Directory:</strong> Full path of the directory, where all nextflow runs will be executed. Example paths:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">~/</span><span class="n">workdir</span>
-<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">newuser</span><span class="o">/</span><span class="n">workdir</span>
+<li><p class="first"><strong>Work Directory:</strong> Full path of the directory, where all nextflow runs will be executed. Example path:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">newuser</span><span class="o">/</span><span class="n">workdir</span>
 </pre></div>
 </div>
 </li>
@@ -255,11 +254,11 @@
 <blockquote>
 <div><ol class="arabic">
 <li><p class="first"><strong>Image:</strong> Docker image name. Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nephantes</span><span class="o">/</span><span class="n">dolphinnext</span><span class="o">-</span><span class="n">docker</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">UMMS</span><span class="o">-</span><span class="n">Biocore</span><span class="o">/</span><span class="n">dolphinnext</span><span class="o">-</span><span class="n">studio</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first"><strong>RunOptions (optional):</strong> You can enter any command line options supported by the docker run command. Please click <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/cli/">this link</a> for details.</p>
+<li><p class="first"><strong>RunOptions (optional):</strong> You can enter any command line options supported by the docker run command. Please click <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/cli/">this docker link</a> for details.</p>
 </li>
 </ol>
 </div></blockquote>
@@ -268,7 +267,8 @@
 <blockquote>
 <div><ol class="arabic">
 <li><p class="first"><strong>Image:</strong> Path to sigularity image. Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">project</span><span class="o">/</span><span class="n">umw_biocore</span><span class="o">/</span><span class="n">singularity</span><span class="o">/</span><span class="n">UMMS</span><span class="o">-</span><span class="n">Biocore</span><span class="o">-</span><span class="n">singularity</span><span class="o">-</span><span class="n">master</span><span class="o">.</span><span class="n">simg</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">shub</span><span class="p">:</span><span class="o">//</span><span class="n">UMMS</span><span class="o">-</span><span class="n">biocore</span><span class="o">/</span><span class="n">singularitysc</span>
+<span class="o">/</span><span class="n">project</span><span class="o">/</span><span class="n">umw_biocore</span><span class="o">/</span><span class="n">singularity</span><span class="o">/</span><span class="n">UMMS</span><span class="o">-</span><span class="n">Biocore</span><span class="o">-</span><span class="n">singularity</span><span class="o">-</span><span class="n">master</span><span class="o">.</span><span class="n">simg</span>
 </pre></div>
 </div>
 </li>
@@ -296,15 +296,21 @@
 </li>
 <li><p class="first"><strong>Publish Directory:</strong> Work directory is default publish directory for DolphinNext. If you want to enter new publish directory, just click this item and enter the full path of publish directory. Both local paths (eg. <code class="docutils literal notranslate"><span class="pre">/home/user/test</span></code>) or amazon s3 paths (eg. <code class="docutils literal notranslate"><span class="pre">s3://yourbucket/test</span></code>) are accepted.</p>
 </li>
-<li><p class="first"><strong>Executor Settings for All Processes:</strong> If any option other than local and ignite is selected as <strong>nextflow executor</strong> in the profile, it is allowed to override and adjust these settings by clicking this item. Following settings will be prompted: <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>.</p>
+<li><p class="first"><strong>Executor Settings:</strong></p>
 <blockquote>
-<div><div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">In case of non-standart resources or settings is required for executor, then you can specify these parameters by using <strong>Other options</strong> box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">orte</span> <span class="pre">3</span></code> (to use MPI for distributed-memory machines) or <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">smp</span> <span class="pre">3</span></code> (to use OpenMP for shared-memory machines) in the <strong>Other options</strong> box and <strong>just leave the CPU box empty!</strong></p>
-</div>
+<div><p><strong>1. Executor Settings for Nextflow (in the profile)</strong>:
+You can determine the system where nextflow itself is initiated. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself.
+e.g. suggested parameters: long 8GB 1CPU 5000-8000min</p>
+<p><strong>2. Executor of Nextflow Jobs (in the profile)</strong>:
+This setting will be used if you don’t set any parameter in advanced section of your run page. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>. Adjustment of these parameters are allowed for both options.
+e.g. suggested parameters: short 20GB 1CPU 240min</p>
+<p><strong>3. Executor Settings for All Processes (in Advanced tab of run page)</strong>:
+This setting will overwrite Executor of Nextflow Jobs (in the profile).
+e.g. suggested parameters: short 20GB 1CPU 240min</p>
+<p><strong>4. Executor Settings for Each Process (in Advanced tab of run page)</strong>:
+If particular process needs special parameters other than <strong>executor settings for all processes</strong>, you may override general settings by clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest.
+e.g. suggested parameters: long 20GB 4CPU 1000-5000min</p>
 </div></blockquote>
-</li>
-<li><p class="first"><strong>Executor Settings for Each Process:</strong> You may change executor settings for each process and override to <strong>executor settings for all processes</strong> by clicking this item and clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest. Similarly, following settings will be prompted for checked process: <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>.</p>
 </li>
 <li><p class="first"><strong>Delete intermadiate files after run:</strong> This is default settings for DolphinNext to keep only selected output files in the work/publish directory and removing the rest of the files. Here the main goal is to minimize the required space for each project.</p>
 </li>
@@ -349,7 +355,7 @@
 </div>
 <div class="section" id="workflow">
 <h2>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
-<p>To give you an overview, overall pipeline and its description are showed in this region. You may hide it by clicking minus/plus icon just next to <strong>Workflow</strong> title.</p>
+<p>To give you an overview, overall pipeline and its modules are showed in this region. You can also reach the process contents after clicking the <strong>go to pipeline</strong> link.</p>
 </div>
 <div class="section" id="run-logs">
 <h2>Run Logs<a class="headerlink" href="#run-logs" title="Permalink to this headline">¶</a></h2>
@@ -376,6 +382,15 @@
 <p>Reports tab will be appear in the run page as soon as run is initiated by clicking <strong>Ready to Run</strong> button. You can view output files in various modules such as R-Markdown, Datatables, Highcharts, HTML or PDF viewer. Please check the example report section of RSEM pipeline at below.</p>
 <a class="reference internal image-reference" href="../_images/report_all.png"><img alt="../_images/report_all.png" class="align-center" src="../_images/report_all.png" style="width: 99%;" /></a>
 <p>Each report row corresponds to output parameter in the pipeline workflow and you can easily visualize their content by clicking on each row. All these sections have download, full screen, and open in new window icons in order to help you to investigate each report.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you want to integrate your visualization tool into DolphinNext, please let us know about it (<a class="reference external" href="mailto:biocore&#37;&#52;&#48;umassmed&#46;edu">biocore<span>&#64;</span>umassmed<span>&#46;</span>edu</a>). We can add this feature for you.</p>
+</div>
+<ul class="simple">
+<li><strong>DEBrowser:</strong></li>
+</ul>
+<p>DEBrowser is a R library to provide an easy way to perform and visualize DE analysis. This module takes count matrices as input and allows interactive exploration of the resulting data. You can reach their documentation by clicking <a class="reference external" href="https://bioconductor.org/packages/release/bioc/vignettes/debrowser/inst/doc/DEBrowser.html">this link</a>.</p>
+<a class="reference internal image-reference" href="../_images/report_debrowser.png"><img alt="../_images/report_debrowser.png" class="align-center" src="../_images/report_debrowser.png" style="width: 99%;" /></a>
 <ul class="simple">
 <li><strong>R Markdown:</strong></li>
 </ul>
@@ -407,12 +422,12 @@
 <ul class="simple">
 <li><strong>HTML Viewer:</strong></li>
 </ul>
-<p>You can easily embed html content in to our report section by using HTML viewer. Please check the example for FastQC output at below:</p>
+<p>You can easily embed html content in to our report section by using HTML viewer. Please check the example for MultiQC output at below:</p>
 <a class="reference internal image-reference" href="../_images/report_html.png"><img alt="../_images/report_html.png" class="align-center" src="../_images/report_html.png" style="width: 99%;" /></a>
 <ul class="simple">
 <li><strong>PDF Viewer:</strong></li>
 </ul>
-<p>Similar to HTML Viewer, PDF files can be embeded in report section. You can see the RseQC reports as an example at below:</p>
+<p>Similar to HTML Viewer, PDF files can be embeded in report section. You can see the piPipes report as an example at below:</p>
 <a class="reference internal image-reference" href="../_images/report_pdf.png"><img alt="../_images/report_pdf.png" class="align-center" src="../_images/report_pdf.png" style="width: 99%;" /></a>
 </div>
 </div>

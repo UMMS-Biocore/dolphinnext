@@ -179,11 +179,12 @@
 <img alt="../_images/examples_public.png" class="align-center" src="../_images/examples_public.png" />
 <div class="section" id="rna-seq-pipeline">
 <h2>RNA-Seq Pipeline<a class="headerlink" href="#rna-seq-pipeline" title="Permalink to this headline">¶</a></h2>
-<img alt="../_images/rna-seq.jpg" class="align-center" src="../_images/rna-seq.jpg" />
-<ul class="simple">
-<li><a class="reference external" href="https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/RNA-seqPipeline.nf">Download executable RNA-Seq NF File</a>.</li>
-<li><a class="reference external" href="https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/RNA-seqPipeline.dn">Download importable RNA-Seq DN File</a>.</li>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://github.com/dolphinnext/rnaseq">Github Repository for RNA-Seq Pipeline</a></li>
 </ul>
+</div></blockquote>
+<img alt="../_images/rna-seq.jpg" class="align-center" src="../_images/rna-seq.jpg" />
 <p>RNA-seq pipeline includes Quality Control, rRNA filtering, Genome Alignment using HISAT2, STAR and Tophat2, and estimating gene and isoform expression levels by RSEM and featureCounts.</p>
 <dl class="docutils">
 <dt>Steps:</dt>
@@ -201,14 +202,14 @@
 </div>
 <div class="section" id="atac-seq-and-chip-seq-pipeline">
 <h2>ATAC-Seq and ChIP-Seq pipeline<a class="headerlink" href="#atac-seq-and-chip-seq-pipeline" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://github.com/dolphinnext/atacseq">Github Repository for ATAC-seq Pipeline</a></li>
+<li><a class="reference external" href="https://github.com/dolphinnext/chipseq">Github Repository for CHIP-seq Pipeline</a></li>
+</ul>
+</div></blockquote>
 <img alt="../_images/atac.jpg" class="align-center" src="../_images/atac.jpg" />
 <img alt="../_images/chip.jpg" class="align-center" src="../_images/chip.jpg" />
-<ul class="simple">
-<li><a class="reference external" href="https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/ATAC-seqPipeline.nf">Download executable ATAC-Seq NF File</a>.</li>
-<li><a class="reference external" href="https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/ATAC-seqPipeline.dn">Download importable ATAC-Seq DN File</a>.</li>
-<li><a class="reference external" href="https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/nf/ChIP-seqPipeline.nf">Download executable ChIP-Seq NF File</a>.</li>
-<li><a class="reference external" href="https://raw.githubusercontent.com/UMMS-Biocore/dolphinnext/master/docs/dolphinNext/dn/ChIP-seqPipeline.dn">Download importable ChIP-Seq DN File</a>.</li>
-</ul>
 <p>DolphinNext offers pipelines to process libraries for the processing of ChIP-Seq and ATAC-Seq data. These two pipelines share most processes and only differ at very specific points. They also share all data preparation steps with the RNA-Seq pipeline and indeed both rely on the very same processes for read filtering, read quality reporting and alignment to desired genomic locations.</p>
 <blockquote>
 <div><ol class="arabic simple">
