@@ -130,17 +130,21 @@ Once you copied the pipeline/process, you will own all the  permissions of your 
 Creating New Pipelines/Processes
 ================================
 
-Please follow through the `Pipeline Guide <pipeline.html>`_ to create new pipelines and `Process Guide <process.html>`_ for processes. You can also check our developer guide video to start:
+Basics of DolphinNext are explained in `Developer Tutorial <https://github.com/UMMS-Biocore/dolphinnext-tutorial>`_. You can use our `UMASS server  <https://dolphinnext.umassmed.edu/>`_, or easily pull Docker image of Dolphinnext and start creating pipelines in your local server.
+
+**Overview of the Tutorial**
+  * Tutorial Video
+  * Exercise 1: Creating processes (FastQC, Hisat2, RSeQC)
+  * Exercise 2: Building a pipeline
+  * Exercise 3: Running a pipeline
+
+You can also reach our reference DolphinNext documentation, using following links:
+  * `Process Guide <process.html>`_ 
+  * `Pipeline Guide <pipeline.html>`_
 
 .. raw:: html
 
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
-        <iframe src="https://www.youtube.com/embed/d6jkg1l7FgA" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+        <iframe src="https://www.youtube.com/embed/Q3P7eN2CRtc" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
     </div>
-    </br>
-    
-    
-
-
-
-
+    </br> 

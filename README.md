@@ -64,6 +64,8 @@
 
 *Complete documentation* is available at https://dolphinnext.readthedocs.io
 
+[*Developer Tutorial*](https://github.com/UMMS-Biocore/dolphinnext-tutorial) is available which explains the basics of DolphinNext. You can use our [website](https://dolphinnext.umassmed.edu/), or easily pull Docker image of Dolphinnext and start creating pipelines in your local server.
+
 
 ## Support
 

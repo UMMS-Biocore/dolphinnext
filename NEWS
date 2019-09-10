@@ -1,3 +1,10 @@
+10.09.2019 Version 0.3.61
+Documentation updated for:
+ - Executor Settings
+ - Developer Tutorial
+ - Reports (new images and DEbrowser section)
+ - Pipeline examples
+
 10.09.2019 Version 0.3.60
 Bug in createMultiConfig function is fixed.
 

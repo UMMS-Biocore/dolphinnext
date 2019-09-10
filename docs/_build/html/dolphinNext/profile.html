@@ -256,11 +256,29 @@
 <p class="first admonition-title">Note</p>
 <p class="last">You don’t need to add <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> sign while entering this information.</p>
 </div>
-<ul class="simple">
-<li><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</li>
-<li><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></li>
-<li><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg.``/project/umw_biocore/bin``</li>
-<li><strong>Executor of Nextflow/Executor of Nextflow Jobs:</strong> You can determine the system where nextflow itself is initiated. Currently local, sge and lsf executors are supported by DolphinNext to initiate nextflow. Apart from the executor of nextflow, you may change the executor of each job by using “Executor of Nextflow Jobs” option. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>. Adjustment of these parameters are allowed for both options.</li>
+<ul>
+<li><p class="first"><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</p>
+</li>
+<li><p class="first"><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></p>
+</li>
+<li><p class="first"><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg.``/project/umw_biocore/bin``</p>
+</li>
+<li><p class="first"><strong>Executor Settings:</strong></p>
+<blockquote>
+<div><p><strong>1. Executor Settings for Nextflow (in the profile)</strong>:
+You can determine the system where nextflow itself is initiated. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself.
+e.g. suggested parameters: long 8GB 1CPU 5000-8000min</p>
+<p><strong>2. Executor of Nextflow Jobs (in the profile)</strong>:
+This setting will be used if you don’t set any parameter in advanced section of your run page. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>. Adjustment of these parameters are allowed for both options.
+e.g. suggested parameters: short 20GB 1CPU 240min</p>
+<p><strong>3. Executor Settings for All Processes (in Advanced tab of run page)</strong>:
+This setting will overwrite Executor of Nextflow Jobs (in the profile).
+e.g. suggested parameters: short 20GB 1CPU 240min</p>
+<p><strong>4. Executor Settings for Each Process (in Advanced tab of run page)</strong>:
+If particular process needs special parameters other than <strong>executor settings for all processes</strong>, you may override general settings by clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest.
+e.g. suggested parameters: long 20GB 4CPU 1000-5000min</p>
+</div></blockquote>
+</li>
 </ul>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -268,7 +286,7 @@
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">In case of non-standart resources or settings is required for executor, then you can specify these parameters by using <strong>Other options</strong> box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">orte</span> <span class="pre">3</span></code> (to use MPI for distributed-memory machines) or <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">smp</span> <span class="pre">3</span></code> (to use OpenMP for shared-memory machines) in the <strong>Other options</strong> box and <strong>just leave the CPU box empty!</strong></p>
+<p class="last">In case of non-standart resources or settings is required for executor, then you can specify these parameters by using <strong>Other options</strong> box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">orte</span> <span class="pre">3</span></code> (to use MPI for distributed-memory machines) or <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">smp</span> <span class="pre">3</span></code> (to use OpenMP for shared-memory machines) in the <strong>Other options</strong> box and just leave the CPU box empty.</p>
 </div>
 </div>
 <div class="section" id="b-defining-amazon-profile">
