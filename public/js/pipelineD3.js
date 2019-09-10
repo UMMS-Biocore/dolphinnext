@@ -106,7 +106,7 @@ function drop(event) {
 
 refreshDataset();
 function refreshDataset(){
-   parametersData = getValues({ p: "getAllParameters" }) 
+    parametersData = getValues({ p: "getAllParameters" }) 
 }
 
 
@@ -126,7 +126,7 @@ function createSVG() {
     var dat = [{
         x: 0,
         y: 0
-	      }]
+    }]
     gNum = 0
     MainGNum = "";
     selectedgID = ""
@@ -172,8 +172,10 @@ $('#editorPipeHeader').keyup(function () {
     autosave();
 });
 $('#pipelineFiles').keyup(function () {
+    console.log("keyUP")
     autosave();
 });
+
 $('#editorPipeFooter').keyup(function () {
     autosave();
 });
@@ -483,10 +485,10 @@ function openPipeline(id) {
 d3.select("#container").style("background-image", "url(css/workplace_image.png)").style("background-repeat", "repeat").on("keydown", cancel).on("mousedown", cancel)
 
 var zoom = d3.behavior.zoom()
-    .translate([0, 0])
-    .scale(1)
-    .scaleExtent([0.15, 2])
-    .on("zoom", zoomed);
+.translate([0, 0])
+.scale(1)
+.scaleExtent([0.15, 2])
+.on("zoom", zoomed);
 
 createSVG()
 
@@ -527,7 +529,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         .datum([{
             cx: 0,
             cy: 0
-                }])
+        }])
         .attr("id", "sc" + MainGNum + "-" + pObj.gNum)
         .attr("class", "sc" + MainGNum + "-" + id)
         .attr("type", "sc")
@@ -565,7 +567,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
             cx: 0,
             cy: 20,
             "name": name
-                }])
+        }])
         .attr('font-family', "FontAwesome, sans-serif")
         .attr('font-size', '1em')
         .attr('name', name)
@@ -596,7 +598,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
             .datum([{
                 cx: 0,
                 cy: 0
-                }])
+            }])
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '0.9em')
             .attr("x", -40)
@@ -742,7 +744,7 @@ function addProcess(processDat, xpos, ypos) {
             .attr("cx", cx)
             .attr("cy", cy)
             .attr("r", r + ior)
-            //  .attr('fill-opacity', 0.6)
+        //  .attr('fill-opacity', 0.6)
             .attr("fill", "red")
             .transition()
             .delay(500)
@@ -753,7 +755,7 @@ function addProcess(processDat, xpos, ypos) {
             .datum([{
                 cx: 0,
                 cy: 0
-                }])
+            }])
             .attr("id", "sc-" + gNum)
             .attr("class", "sc-" + id)
             .attr("type", "sc")
@@ -768,7 +770,7 @@ function addProcess(processDat, xpos, ypos) {
             .datum([{
                 cx: 0,
                 cy: 0
-                }])
+            }])
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '1em')
             .attr('name', name)
@@ -783,7 +785,7 @@ function addProcess(processDat, xpos, ypos) {
             .datum([{
                 cx: 0,
                 cy: 0
-                }])
+            }])
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '0.9em')
             .attr("x", -6)
@@ -902,7 +904,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .datum([{
             cx: 0,
             cy: 0
-                }])
+        }])
         .attr("id", "sc-" + MainGNum + "-" + pObjOrigin.gNum)
         .attr("class", "sc" + MainGNum + "-" + id)
         .attr("type", "sc")
@@ -917,7 +919,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .datum([{
             cx: 0,
             cy: 0
-                }])
+        }])
         .attr('font-family', "FontAwesome, sans-serif")
         .attr('font-size', '1em')
         .attr('name', name)
@@ -932,7 +934,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
             .datum([{
                 cx: 0,
                 cy: 0
-                }])
+            }])
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '0.9em')
             .attr("x", -6)
@@ -1168,12 +1170,12 @@ function mouseOutG() {
 }
 
 var drag = d3.behavior.drag()
-    .origin(function (d) {
-        return d;
-    })
-    .on("dragstart", dragstarted)
-    .on("drag", dragged)
-    .on("dragend", dragended);
+.origin(function (d) {
+    return d;
+})
+.on("dragstart", dragstarted)
+.on("drag", dragged)
+.on("dragend", dragended);
 
 function dragstarted(d) {
 
@@ -1341,15 +1343,15 @@ function removeDelCircle(lineid) {
     d3.select("#c--" + lineid).remove()
 }
 var tooltip = d3.select("body")
-    .append("div").attr("class", "tooltip-svg")
-    .style("position", "absolute")
-    .style("max-width", "400px")
-    .style("max-height", "100px")
-    .style("opacity", .75)
-    .style("z-index", "10")
-    .style("visibility", "hidden")
-    .text("Something")
-    .style("color", "black");
+.append("div").attr("class", "tooltip-svg")
+.style("position", "absolute")
+.style("max-width", "400px")
+.style("max-height", "100px")
+.style("opacity", .75)
+.style("z-index", "10")
+.style("visibility", "hidden")
+.text("Something")
+.style("color", "black");
 
 //basic tooltip for icons
 basicTooltip = d3.select("body")
@@ -1599,9 +1601,9 @@ function showOptions() {
     d3.selectAll("circle[status ='posCandidate']").attr("r", ior * 1.4).style("stroke", "#ff9999").style("stroke-width", 4).style("stroke-opacity", .5)
 }
 var link = d3.svg.diagonal()
-    .projection(function (d) {
-        return [d.y, d.x];
-    });
+.projection(function (d) {
+    return [d.y, d.x];
+});
 
 function showEdges() {
     d3.selectAll("line[status = 'standard']").style("stroke", "#B0B0B0").style("stroke-width", 4).attr("opacity", 1);
@@ -1659,9 +1661,9 @@ function addCandidates2Dict() {
 function updateSecClassName(second, inputParamLocF) {
     if (inputParamLocF === 0) {
         var candi = "output"
-    } else {
-        var candi = "input"
-    }
+        } else {
+            var candi = "input"
+            }
 
     secClassName = document.getElementById(second).className.baseVal.split("-")[0].split(" ")[0] + " " + candi
     return secClassName
@@ -2074,7 +2076,7 @@ function checkNameUnique(processList) {
     }
     var duplicatesSoFar = [];
     var duplicates = false;
-	      [duplicates, duplicatesSoFar] = hasDuplicates(processListArray);
+    [duplicates, duplicatesSoFar] = hasDuplicates(processListArray);
     if (duplicates === true) {
         var warnUserText = "Process and input parameter names should be unique in pipeline. Please modify following names: ";
         $.each(duplicatesSoFar, function (element) {
@@ -2214,43 +2216,43 @@ function save() {
     saveMainG["mainG"] = [Mainx, Mainy, Mainz, svgW, svgH]
     savedList = [{
         "name": sName
-	      }, {
+    }, {
         "id": id
-	      }, {
+    }, {
         "nodes": saveNodes
-	      }, saveMainG, {
+    }, saveMainG, {
         "edges": edges
-	      }, {
+    }, {
         "summary": pipelineSummary
-	      }, {
+    }, {
         "group_id": group_id
-	      }, {
+    }, {
         "perms": perms
-	      }, {
+    }, {
         "pin": pin
-	      }, {
+    }, {
         "pin_order": pin_order
-	      }, {
+    }, {
         "publish": publish
-	      }, {
+    }, {
         "script_pipe_header": script_pipe_header
-	      }, {
+    }, {
         "script_pipe_footer": script_pipe_footer
-	      }, {
+    }, {
         "script_mode_header": script_mode_header
-	      }, {
+    }, {
         "script_mode_footer": script_mode_footer
-	      }, {
+    }, {
         "script_pipe_config": script_pipe_config
-	      }, {
+    }, {
         "pipeline_group_id": pipeline_group_id
-	      }, {
+    }, {
         "process_list": processListDb.toString()
-	      }, {
+    }, {
         "pipeline_list": pipelineListDb.toString()
-	      }, {
+    }, {
         "publish_web_dir": pubWebDirListDb.toString()
-	      }];
+    }];
     if (createPipeRev === "true") {
         return [savedList, id, sName];
     } else {
@@ -2282,7 +2284,7 @@ function save() {
             var warnPipeText = '';
             var numOfProject = '';
             var numOfProjectPublic = '';
-              [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic] = checkRevisionPipe(id);
+            [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic] = checkRevisionPipe(id);
             //B.1 allow updating on existing pipeline
             if (warnUserPipe === false || saveOnExist === true) {
                 sl = JSON.stringify(savedList);
@@ -2537,7 +2539,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             .datum([{
                 cx: 0,
                 cy: 0
-			        }])
+            }])
             .attr("id", "sc" + MainGNum + "-" + pObj.gNum)
             .attr("class", "sc" + MainGNum + "-" + id)
             .attr("type", "sc")
@@ -2552,7 +2554,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             .datum([{
                 cx: 0,
                 cy: 0
-			        }])
+            }])
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '1em')
             .attr('name', name)
@@ -2567,7 +2569,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 .datum([{
                     cx: 0,
                     cy: 0
-			        }])
+                }])
                 .attr('font-family', "FontAwesome, sans-serif")
                 .attr('font-size', '0.9em')
                 .attr("x", -6)

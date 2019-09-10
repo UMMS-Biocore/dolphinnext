@@ -302,7 +302,6 @@
     }
 
     var setValueAceEditor = function (editorId, text){
-        console.log(text)
         window[editorId].setValue(text);
         window[editorId].clearSelection();
     }
@@ -946,6 +945,7 @@ function checkProParameters(inputProParams, outputProParams, proID) {
 //-----Add input output parameters to process_parameters
 // startpoint: first object in data array where inputparameters starts.
 function addProParatoDB(data, startPoint, process_id, perms, group) {
+    console.log(data)
     var ppIDinputList = [];
     var ppIDoutputList = [];
     for (var i = startPoint; i < data.length; i++) {
@@ -1073,11 +1073,7 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
             }
             //rgb(255, 255, 255) for activated Optional button
             if ($("#mInOptional-" + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
-                for (var n = startPoint; n < data.length; n++) {
-                    if (data[n].name === 'mInOptional-' + matchSPart) {
-                        dataToProcessParam.push({ name: "optional", value: "true" });
-                    }
-                }
+                dataToProcessParam.push({ name: "optional", value: "true" });
             }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
@@ -1115,11 +1111,7 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
             }
             //rgb(255, 255, 255) for activated Optional button
             if ($("#mOutOptional-" + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
-                for (var n = startPoint; n < data.length; n++) {
-                    if (data[n].name === 'mOutOptional-' + matchSPart) {
-                        dataToProcessParam.push({ name: "optional", value: "true" });
-                    }
-                }
+                dataToProcessParam.push({ name: "optional", value: "true" });
             }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
@@ -2762,8 +2754,6 @@ $(document).ready(function () {
             var scripteditor = getScriptEditor('editor');
             var scripteditorProHeader = getScriptEditor('editorProHeader');
             var scripteditorProFooter = getScriptEditor('editorProFooter');
-            //            var maxProcess_gid = getValues({ p: "getMaxProcess_gid" })[0].process_gid;
-            //            var newProcess_gid = parseInt(maxProcess_gid) + 1;
             var script_mode = $('#script_mode').val();
             var script_mode_header = $('#script_mode_header').val();
             dataToProcess.push({ name: "perms", value: perms });

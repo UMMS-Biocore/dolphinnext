@@ -931,10 +931,9 @@ class dbfuncs {
     //Use createMultiConfig function to parse and save into run folder
     function createMultiConfig($dir, $allConf){
         //if empty or null, then show as empty nextflow.config
-        if (empty($allConf)){
-            $filename = "nextflow.config";
-            $this->createDirFile ($dir, $filename, "w", "");
-        } else {
+        $filename = "nextflow.config";
+        $this->createDirFile ($dir, $filename, "w", "");
+        if (!empty($allConf)){
             $sep    = "//~@:~";
             $lines = explode($sep, $allConf);
             $filename = "";
@@ -959,7 +958,7 @@ class dbfuncs {
                         continue;
                     }
                 } else {
-                    //getMainRunConfig might append or prepend config text.
+                    //getMainRunConfig function might append or prepend nextflow.config text.
                     if ($i == 0 || $i == count($lines)-1 ){
                         $filename = "nextflow.config";
                         $this->createDirFile ($dir, $filename, "a", $lines[$i]);
@@ -969,7 +968,7 @@ class dbfuncs {
             //if header info is not found, then show as nextflow.config
             if ($checkLabel == "false"){
                 $filename = "nextflow.config";
-                $this->createDirFile ($dir, $filename, "w", $allConf); //empty file
+                $this->createDirFile ($dir, $filename, "w", $allConf); 
             }
         }
     }
