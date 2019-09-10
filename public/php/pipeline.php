@@ -196,23 +196,10 @@
 
         <div id="advancedTab" class="tab-pane fade">
             <div id="advOpt" style="margin-top:15px;">
-                <div class="col-md-12" style="margin-bottom:15px;">
-                    <div class="form-group">
-                        <label style="width:150px;" class="col-sm-2 control-label">Pipeline Config</label>
-                        <div id="editorPipeConfigdiv" class="col-sm-10">
-                            <div id="editorPipeConfig" style="height:500px;"></div>
-                            <div class="row" style="display:none;">
-                                <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
-                                <div class="col-sm-3" style="padding-left:0;">
-                                    <select id="script_mode_pipe_config" name="script_mode_config" class="form-control">
-                                        <option value="groovy">groovy</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+               <div class="col-md-12" style="float:none; margin-bottom:30px;">
+                        <label class="col-sm-12 control-label">Pipeline Files</label>
                 </div>
-
+                <div id="pipelineFiles" style="margin-bottom:15px;"></div>
                 <div class="col-md-12" style="margin-bottom:15px;">
                     <div class="form-group">
                         <label style="width:150px;" class="col-sm-2 control-label">Pipeline Header Script</label>

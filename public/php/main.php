@@ -390,7 +390,7 @@ folder instead of downloading all of them to reduce the load. -->
     </head>
 
     <body class="hold-transition skin-blue sidebar-mini">
-        <div class="wrapper">
+        <div class="wrapper" style="position:static">
             <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
             <header class="main-header">
                 <!-- Logo -->
@@ -404,12 +404,12 @@ folder instead of downloading all of them to reduce the load. -->
 
                 <!-- Header Navbar: style can be found in header.less -->
                 <nav class="navbar navbar-static-top">
+                   
                     <div class="navbar-custom-menu pull-left">
                         <ul class="nav navbar-nav">
                             <li><a href="index.php?np=1">Pipelines </a></li>
                             <li><a href="index.php?np=2">Projects </a></li>
                             <li><a href="index.php?np=5">Run Status </a></li>
-                            <!-- <li><a href="#"><i class="fa fa-bell-o"></i></a></li>-->
                             <?php
     include("php/funcs.php");
             $np = isset($_REQUEST["np"]) ? $_REQUEST["np"] : "";
