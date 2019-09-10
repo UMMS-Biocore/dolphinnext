@@ -1699,7 +1699,7 @@ function updateMarkdown(text, targetDiv){
 }
 
 //[{"filename":"nextflow.config", "text":editorScriptPipeConfig}]
-////~@:~\n@~:"filename"//~@:~\ntext
+//\n//~@:~\n@~:"filename"\n//~@:~\ntext
 function createMultiConfig(allConf){
     var ret    = []
     //if empty or null, then show as empty nextflow.config
@@ -1709,7 +1709,7 @@ function createMultiConfig(allConf){
         allConf=decodeHtml(allConf)
         console.log(allConf)
         var checkLabel = false;
-        var sep    = "//~@:~\n";
+        var sep    = "\n//~@:~\n";
         var confAr = allConf.split(sep)
         var filename = "";
         for (var i = 0; i < confAr.length; i++) {
@@ -1732,7 +1732,7 @@ function createMultiConfig(allConf){
 
 function combineTextEditor(divID){
     var ret = "";
-    var sep    = "//~@:~\n";
+    var sep    = "\n//~@:~\n";
     var label  = "@~:";
     var liAr = $("#fileListDiv_"+divID).find("li");
     for (var i = 0; i < liAr.length; i++) {

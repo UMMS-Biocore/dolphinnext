@@ -927,14 +927,14 @@ class dbfuncs {
         return $configText;
     }
 
-    //nextflow config tag and label separated: //~@:~\n@~:"filename"//~@:~\ntext
+    //nextflow config tag and label separated: \n//~@:~\n@~:"filename"\n//~@:~\ntext
     //Use createMultiConfig function to parse and save into run folder
     function createMultiConfig($dir, $allConf){
         //if empty or null, then show as empty nextflow.config
         $filename = "nextflow.config";
         $this->createDirFile ($dir, $filename, "w", "");
         if (!empty($allConf)){
-            $sep    = "//~@:~\n";
+            $sep    = "\n//~@:~\n";
             $lines = explode($sep, $allConf);
             $filename = "";
             $checkLabel = "false";
