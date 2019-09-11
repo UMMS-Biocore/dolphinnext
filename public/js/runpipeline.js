@@ -4031,7 +4031,9 @@ function checkMissingVar(){
             egText += el + ' = "/yourpath"</br>'
         });
         warnText += undefinedVarAr.join(", ") + ". "
-        warnText += "Please define these variables inside <b>Profile Variables</b> section of your run environment. e.g.</br>"
+        
+        
+        warnText += 'Please define these variables inside <a href="index.php?np=4"><b>Profile Variables</b> </a> section of your run environment. e.g.</br>'
         warnText += egText
         warnText += 'Then please reload this page and click <b>Refresh Environments</b> button '+icon+' to autofill system inputs.'
         if (!document.getElementById("undefinedVar")){
