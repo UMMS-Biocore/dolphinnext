@@ -4017,7 +4017,6 @@ function checkMissingVar(){
         var inputSpan = $(systemInputAr[i]).find("span[id*='filePath']");
         if (inputSpan && inputSpan[0]) {
             var inputPath = $(inputSpan[0]).text();
-            console.log(inputPath)
             addMissingVar(inputPath)
         }
     }
@@ -4035,7 +4034,6 @@ function checkMissingVar(){
         warnText += "Please define these variables inside <b>Profile Variables</b> section of your run environment. e.g.</br>"
         warnText += egText
         warnText += 'Then please reload this page and click <b>Refresh Environments</b> button '+icon+' to autofill system inputs.'
-        console.log(warnText)
         if (!document.getElementById("undefinedVar")){
             var warningPanel = '<div id="undefinedVar" class="panel panel-danger" style="border:2px solid #E08D08; background-color:#e08d080f;"><div class="panel-body"><span id="undefText">'+warnText+'</span></div></div>'
             $("#warningSection").append(warningPanel)
