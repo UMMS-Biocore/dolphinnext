@@ -135,6 +135,9 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
     </div>
 </div>
 
+<div id="warningSection">
+</div>
+
 <div id="runTabSection">
     <ul id="runTabDiv" class="nav nav-tabs">
         <li class="active"><a class="nav-item" data-toggle="tab" href="#configTab">Run Settings</a></li>

@@ -1707,7 +1707,6 @@ function createMultiConfig(allConf){
         ret.push ({"filename": "nextflow.config", "text": ""})
     } else {
         allConf=decodeHtml(allConf)
-        console.log(allConf)
         var checkLabel = false;
         var sep    = "\n//~@:~\n";
         var confAr = allConf.split(sep)

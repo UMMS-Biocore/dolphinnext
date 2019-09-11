@@ -1447,12 +1447,15 @@ function autofillEmptyInputs(autoFillJSON) {
     })
 }
 
+
+
+
+
 //change propipeinputs in case all conds are true
 function fillStates(states, url, urlzip, checkPath) {
     $("#inputsTab").loading('start');
     $.each(states, function (st) {
         var defName = states[st] ; // expected Value
-        console.log(defName)
         var defUrl = url[st] || null;; // expected Value
         var defUrlzip = urlzip[st] || null; // expected Value
         var defcheckPath = checkPath[st] || null; // expected Value
@@ -1561,7 +1564,8 @@ function bindEveHandler(autoFillJSON) {
         }
     });
 
-
+    //find buttons elements that should trigger autofill
+    var bindButtonArray = [];
     $.each(autoFillJSON, function (el) {
         var conds = autoFillJSON[el].condition;
         var states = autoFillJSON[el].statement;
@@ -1569,28 +1573,19 @@ function bindEveHandler(autoFillJSON) {
         var urlzip = autoFillJSON[el].urlzip;
         var checkPath = autoFillJSON[el].checkPath;
         if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
-            //if condition exist other than $HOSTNAME then bind eventhandler to #params. button (eg. dropdown or inputValEnter)
+            //if condition exists other than $HOSTNAME then bind eventhandler to #params. button (eg. dropdown or inputValEnter)
             $.each(conds, function (el) {
                 if (el !== "$HOSTNAME") {
-                    //if variable start with "params." then check #inputsTab
+                    //if variable starts with "params." then check #inputsTab
                     if (el.match(/params\.(.*)/)) {
                         var varName = el.match(/params\.(.*)/)[1]; //variable Name
                         var checkVarName = $("#inputsTab").find("td[given_name='" + varName + "']")[0];
                         if (checkVarName) {
                             var varNameButAr = $(checkVarName).children();
                             if (varNameButAr && varNameButAr[0]) {
-                                //bind eventhandler to indropdown button
-                                $(varNameButAr[0]).change(function () {
-                                    var statusCond = checkConds(conds);
-                                    var statusCondDefault = checkConds(conds, "default");
-                                    if (statusCond === true) {
-                                        fillStates(states, url, urlzip, checkPath);
-                                        autoCheck("fillstates")
-                                    } else if (statusCondDefault === true){
-                                        fillStates(states, url, urlzip, checkPath);
-                                        autoCheck("fillstates")
-                                    }
-                                });
+                                if (bindButtonArray.indexOf(varNameButAr[0]) === -1){
+                                    bindButtonArray.push(varNameButAr[0])
+                                }
                             }
                         }
                     }
@@ -1598,6 +1593,58 @@ function bindEveHandler(autoFillJSON) {
             });
         }
     });
+
+    //bind eventhandler to dropdown button
+    for (var i = 0; i < bindButtonArray.length; i++) {
+        var bindButton = bindButtonArray[i]
+        $(bindButton).change(function () {
+            var triggeredFillStates = false;
+            var fillHostFunc = function(autoFillJSON, type) {
+                var triggeredFillStates = false;
+                $.each(autoFillJSON, function (el) {
+                    var conds = autoFillJSON[el].condition;
+                    var states = autoFillJSON[el].statement;
+                    var url = autoFillJSON[el].url;
+                    var urlzip = autoFillJSON[el].urlzip;
+                    var checkPath = autoFillJSON[el].checkPath;
+                    if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
+                        //if condition exists other than $HOSTNAME then bind eventhandler to #params. button (eg. dropdown or inputValEnter)
+                        $.each(conds, function (el) {
+                            if (el !== "$HOSTNAME") {
+                                //if variable starts with "params." then check #inputsTab
+                                if (el.match(/params\.(.*)/)) {
+                                    var varName = el.match(/params\.(.*)/)[1]; //variable Name
+                                    var checkVarName = $("#inputsTab").find("td[given_name='" + varName + "']")[0];
+                                    if (checkVarName) {
+                                        var varNameButAr = $(checkVarName).children();
+                                        if (varNameButAr && varNameButAr[0]) {
+                                            if (varNameButAr[0] == bindButton){
+                                                var statusCond = checkConds(conds, type);
+                                                if (statusCond === true) {
+                                                    fillStates(states, url, urlzip, checkPath)
+                                                    triggeredFillStates = true;
+                                                    autoCheck("fillstates")
+                                                }
+
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+
+                    };
+                }); 
+                return triggeredFillStates
+            }
+            triggeredFillStates = fillHostFunc(autoFillJSON)
+            // fill $HOSTNAME ="default" states if not triggered before
+            if (!triggeredFillStates){
+                fillHostFunc(autoFillJSON, "default")
+            }
+        });
+    }
 }
 
 var addProfileLib = function (oldLibObj, profileVariables){
@@ -1614,6 +1661,7 @@ var addProfileLib = function (oldLibObj, profileVariables){
 
 function addProfileVar(autoFillJSON) {
     var profileVar = getValues({ "p": "getProfileVariables" });
+    var defaultLib = {}
     if (autoFillJSON) {
         for (var i = 0; i < profileVar.length; i++) {
             var confirmUpdate = false;
@@ -1625,11 +1673,11 @@ function addProfileVar(autoFillJSON) {
                     if (autoFillJSON[el].condition && autoFillJSON[el].condition != null && !$.isEmptyObject(autoFillJSON[el].condition)) {
                         if (autoFillJSON[el].condition.$HOSTNAME){
                             if (autoFillJSON[el].condition.$HOSTNAME == proHost){
-                                addProfileLib (autoFillJSON[el].library,proVar);
+                                addProfileLib(autoFillJSON[el].library,proVar);
                                 confirmUpdate = true;
-                            } else if (autoFillJSON[el].condition.$HOSTNAME == "default"){
-                                addProfileLib (autoFillJSON[el].library,proVar);
-                                confirmUpdate = true;
+                            } 
+                            else if (autoFillJSON[el].condition.$HOSTNAME == "default"){
+                                defaultLib = $.extend(true, {}, autoFillJSON[el].library);
                             }
                         }
                     }
@@ -1637,10 +1685,10 @@ function addProfileVar(autoFillJSON) {
             });
             //insert as a new row if not exist in the exising obj
             if (!confirmUpdate){
-                var newCond = { condition: {}, genCondition: {}, statement: {}, library: {}, url:{}, urlzip:{}, checkPath:{} };
+                var newCond = { condition: {}, genCondition: {}, statement: {}, library: defaultLib, url:{}, urlzip:{}, checkPath:{} };
                 newCond.condition.$HOSTNAME = proHost;
                 addProfileLib(newCond.library,proVar);
-                autoFillJSON.push(newCond);
+                autoFillJSON.push(newCond); 
             }
         }
     }
@@ -1837,7 +1885,6 @@ function getNewStatements(conditions, autoFillJSON, genStatement, url, urlzip, c
         for (var i = 0; i < sectionAr.length; i++) {
             fillWithNewValue(newStateCond, sectionAr[i], fillName[i], mergedLib);
         }
-
     }
     return newStateCond
 }
@@ -1850,18 +1897,6 @@ function fillStateValue(stateValue, library) {
         var re = new RegExp(replaceKey, "g");
         stateValue = stateValue.replace(re, replaceVal);
     });
-//    if (stateValue.match(/\$\{(.*)\}/)){
-//        var missingAr = stateValue.split("\${");
-//        for (var i = 0; i < missingAr.length; i++) {
-//            if (missingAr[i].match(/}/)){
-//                var missingVar = missingAr[i].substring(0, missingAr[i].indexOf('}'));
-//                if (missingVar){
-//                    //global object for missing variables
-//                    missingVarObj[missingVar] = "";
-//                }
-//            }
-//        }
-//    }
     return stateValue;
 }
 
@@ -3948,6 +3983,72 @@ function editFileSetValModal(data, sType, inputID, collection) {
     checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, proPipeInputID, inputID, collection, url, urlzip, checkPath);
     checkReadytoRun();
 }
+
+//keep record of missing variables
+function addMissingVar(defName){
+    if (defName){
+        if (defName.match(/\$\{(.*)\}/)){
+            var missingAr = defName.split("\${");
+            for (var i = 0; i < missingAr.length; i++) {
+                if (missingAr[i].match(/}/)){
+                    var missingVar = missingAr[i].substring(0, missingAr[i].indexOf('}'));
+                    if (missingVar){
+                        //global object for missing variables
+                        if (!window["undefinedVarObj"]){
+                            window["undefinedVarObj"] = {};
+                        } 
+                        if (window["undefinedVarObj"]){
+                            window["undefinedVarObj"][missingVar] = "";
+                        }
+                    }
+                }
+            }
+        } 
+    }
+}
+
+function checkMissingVar(){
+    window["undefinedVarObj"] = {};
+    var systemInputAr = $('#inputsTable > tbody').find('td[given_name]').filter(function () {
+        return systemInputs.indexOf($(this).attr('given_name')) > -1
+    });
+    //get all system input paths
+    for (var i = 0; i < systemInputAr.length; i++) {
+        var inputSpan = $(systemInputAr[i]).find("span[id*='filePath']");
+        if (inputSpan && inputSpan[0]) {
+            var inputPath = $(inputSpan[0]).text();
+            addMissingVar(inputPath)
+        }
+    }
+
+    if (!$.isEmptyObject(window["undefinedVarObj"])){
+        var egText = ""
+        var undefinedVarAr = []
+        var warnText = "Undefined variables found in your system inputs: ";
+        var icon ='<button type="button" class="btn" data-backdrop="false" onclick="refreshEnv()" style="padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Refresh Environments"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>';
+        $.each(window["undefinedVarObj"], function (el) {
+            undefinedVarAr.push(el);
+            egText += el + ' = "/yourpath"</br>'
+        });
+        warnText += undefinedVarAr.join(", ") + ". "
+        
+        
+        warnText += 'Please define these variables inside <a href="index.php?np=4"><b>Profile Variables</b> </a> section of your run environment. e.g.</br>'
+        warnText += egText
+        warnText += 'Then please reload this page and click <b>Refresh Environments</b> button '+icon+' to autofill system inputs.'
+        if (!document.getElementById("undefinedVar")){
+            var warningPanel = '<div id="undefinedVar" class="panel panel-danger" style="border:2px solid #E08D08; background-color:#e08d080f;"><div class="panel-body"><span id="undefText">'+warnText+'</span></div></div>'
+            $("#warningSection").append(warningPanel)
+        } else {
+            $("#undefText").html(warnText)
+            
+        }
+    } else {
+        $("#warningSection> #undefinedVar").remove()
+    }
+}
+
+
 checkType = "";
 //checkType become "rerun" or "resumerun" when rerun or resume button is clicked.
 function checkReadytoRun(type) {
@@ -3955,6 +4056,7 @@ function checkReadytoRun(type) {
     if (checkType === "") {
         checkType = type || "";
     }
+    checkMissingVar()
     runStatus = getRunStatus(project_pipeline_id);
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     var getProPipeInputs = getValues({
@@ -8830,7 +8932,7 @@ $(document).ready(function () {
                     cache: false,
                     success: function (results) {
                         res = results
-                        
+
                     },
                     error: function (errorThrown) {
                         console.log("##Error: ");
