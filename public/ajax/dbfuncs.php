@@ -144,6 +144,8 @@ class dbfuncs {
                 }
                 return $cmd;
             }
+        } else {
+            return "";
         }
     }
 
@@ -398,6 +400,7 @@ class dbfuncs {
         $proPipeCmd = $proPipeAll[0]->{'cmd'};
         $jobname = html_entity_decode($proPipeAll[0]->{'pp_name'},ENT_QUOTES);
         $singu_check = $proPipeAll[0]->{'singu_check'};
+        $docker_check = $proPipeAll[0]->{'docker_check'};
         $initImageCmd = "";
         $imageCmd = "";
         $singu_save = "";
@@ -408,7 +411,11 @@ class dbfuncs {
             $imageCmd = $this->imageCmd($singu_cache, $singu_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
         }
         if (!empty($initialRunParams)){
-            $initImageCmd = $this->imageCmd($singu_cache, $initialrun_img, "", 'singularity', $profileType,$profileId,$ownerID);
+            $containerType = 'singularity'; //default
+            if ($docker_check == "true"){
+                $containerType = 'docker';
+            }
+            $initImageCmd = $this->imageCmd($singu_cache, $initialrun_img, "", $containerType, $profileType,$profileId,$ownerID);
         }
         //get report options
         $reportOptions = "";
@@ -690,37 +697,34 @@ class dbfuncs {
         return $configText;
     }
 
-    function getInitialRunConfig($project_pipeline_id, $attempt, $configText,$profileType,$profileId, $initialrun_img, $ownerID){
-        $configTextClean = "";
-        $configTextLines = explode("\n", $configText);
-        //clean container specific lines and insert initialrun image
-        for ($i = 0; $i < count($configTextLines); $i++) {
-            if (!preg_match("/process.container =/",$configTextLines[$i]) && !preg_match("/singularity.enabled =/",$configTextLines[$i]) && !preg_match("/docker.enabled =/",$configTextLines[$i]) && !preg_match('/process\.\$/',$configTextLines[$i])){
-                $configTextClean .= $configTextLines[$i]."\n";
+    function getInitialRunConfig($project_pipeline_id, $attempt, $amzConfigText, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID){
+        $containerText = "";
+        if ($docker_check == "true"){
+            $containerText = "//Process Config\nprocess.container = '$initialrun_img'\n"."docker.enabled = true\n";
+        } else {
+            list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+            $singu_cache = $cluDataArr[0]["singu_cache"];
+            $singuPath = '//$NXF_SINGULARITY_CACHEDIR';
+            if ($profileType == "amazon"){
+                $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
+                $amzDataArr=json_decode($amzData,true);
+                $singuPath = $amzDataArr[0]["shared_storage_mnt"].'/.dolphinnext/singularity'; // /mnt/efs
             }
+            if (!empty($singu_cache)){
+                $singuPath = $singu_cache;
+            }
+            preg_match("/shub:\/\/(.*)/", $initialrun_img, $matches);
+            if (!empty($matches[1])){
+                $imageName = str_replace("/","-",$matches[1]);
+                $image = $singuPath.'/'.$imageName.'.simg';
+            } else if (preg_match("/http:/i",$initialrun_img) || preg_match("/https:/i",$initialrun_img) || preg_match("/ftp:/i",$initialrun_img)){
+                $imageNameAr = explode('/',$initialrun_img);
+                $imageName=$imageNameAr[count($imageNameAr)-1];
+                $image = $singuPath.'/'.$imageName;
+            }
+            $containerText = "//Process Config\nprocess.container = '$image'\n"."singularity.enabled = true\n"; 
         }
-        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
-        $singu_cache = $cluDataArr[0]["singu_cache"];
-        $singuPath = '//$NXF_SINGULARITY_CACHEDIR';
-        if ($profileType == "amazon"){
-            $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
-            $amzDataArr=json_decode($amzData,true);
-            $singuPath = $amzDataArr[0]["shared_storage_mnt"].'/.dolphinnext/singularity'; // /mnt/efs
-        }
-        if (!empty($singu_cache)){
-            $singuPath = $singu_cache;
-        }
-        preg_match("/shub:\/\/(.*)/", $initialrun_img, $matches);
-        if (!empty($matches[1])){
-            $imageName = str_replace("/","-",$matches[1]);
-            $image = $singuPath.'/'.$imageName.'.simg';
-        } else if (preg_match("/http:/i",$initialrun_img) || preg_match("/https:/i",$initialrun_img) || preg_match("/ftp:/i",$initialrun_img)){
-            $imageNameAr = explode('/',$initialrun_img);
-            $imageName=$imageNameAr[count($imageNameAr)-1];
-            $image = $singuPath.'/'.$imageName;
-        }
-        $configText = "//Process Config\nprocess.container = '$image'\n"."singularity.enabled = true\n".$configTextClean;
-
+        $configText = $containerText.$initRunOptions."\n".$amzConfigText;
         //get initial run input paramaters
         $initialRunParams = $this->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
         $configText .= "\n//Initial Run Parameters\n".$initialRunParams;
