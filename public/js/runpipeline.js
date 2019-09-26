@@ -4536,6 +4536,37 @@ function getPathArray() {
     return pathArray
 }
 
+//Autofill runOptions of singularity and docker image
+function autofillMountPathImage(pathArrayL1){
+    // docker.runOptions = -v /export:/export
+    // singularity.runOptions = -B /export:/export
+    var newRunOpt = "";
+    var oldRunOpt = "";
+    var bindParam = "";
+    if (pathArrayL1.length > 0) {
+        if ($('#docker_check').is(":checked") === true) {
+            bindParam = "-v"
+            oldRunOpt = $('#docker_opt').val();
+        } else if ($('#singu_check').is(":checked") === true) {
+            bindParam = "-B"
+            oldRunOpt = $('#singu_opt').val();
+        } 
+        //combine items as /path -> /path:/path
+        newRunOpt = oldRunOpt;
+        for (var k = 0; k < pathArrayL1.length; k++) {
+            if (!oldRunOpt.match(pathArrayL1[k])){
+                newRunOpt += bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
+            }
+        }
+        if ($('#docker_check').is(":checked") === true) {
+            $('#docker_opt').val(newRunOpt);
+        } else if ($('#singu_check').is(":checked") === true) {
+            $('#singu_opt').val(newRunOpt);
+        }
+    }
+    return newRunOpt
+}
+
 //autofill for ghpcc06 cluster to mount all directories before run executed.
 function autofillMountPath(pathArray) {
     var pathArrayL2 = []
@@ -4579,7 +4610,8 @@ function autofillMountPath(pathArray) {
     return execOtherOpt
 }
 
-function getInitRunOptions(pathArray) {
+
+function getPathArrayL1(pathArray){
     var pathArrayL1 = []
     for (var i = 0; i < pathArray.length; i++) {
         var length = 1;
@@ -4590,8 +4622,13 @@ function getInitRunOptions(pathArray) {
             }
         }
     }
+    return pathArrayL1;
+}
+
+//initial run run-options to send with ajax
+function getInitRunOptions(pathArrayL1) {
     // docker.runOptions = -v /export:/export
-    // singularity.runOptions = --bind /export:/export
+    // singularity.runOptions = -B /export:/export
     var runOptions = "";
     if (pathArrayL1.length > 0) {
         //default for initial run
@@ -4602,11 +4639,11 @@ function getInitRunOptions(pathArray) {
             bindParam = "-v"
         } else if ($('#singu_check').is(":checked") === true) {
             conType = "singularity";
-            bindParam = "--bind"
+            bindParam = "-B"
         } else {
             //singularity is default for initial run
             conType = "singularity";
-            bindParam = "--bind" 
+            bindParam = "-B"; 
         }
         runOptions += conType+".runOptions='";
         //combine items as /path -> /path:/path
@@ -4623,6 +4660,7 @@ function runProjectPipe(runProPipeCall, checkType) {
     //reset the checktype
     var keepCheckType = checkType;
     var pathArray = [];
+    var pathArrayL1 = []; //shortened to 1 directory
     window['checkType'] = "";
     window['execOtherOpt'] = "";
     window['initRunOptions'] = "";
@@ -4637,7 +4675,11 @@ function runProjectPipe(runProPipeCall, checkType) {
     if (hostname === "ghpcc06.umassrc.org") {
         execOtherOpt = autofillMountPath(pathArray)
     }
-    initRunOptions = getInitRunOptions(pathArray)
+    pathArrayL1 = getPathArrayL1(pathArray)
+    //Autofill runOptions of singularity and docker image
+    window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
+    //initial run run-options to send with ajax
+    initRunOptions = getInitRunOptions(pathArrayL1)
 
     // Call the callback
     setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
@@ -4652,7 +4694,7 @@ function runProPipeCall(checkType, uuid) {
     var nextText = encodeURIComponent(nextTextRaw);
     var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
     var initRunOptions = encodeURIComponent(window["initRunOptions"])
-    console.log(initRunOptions)
+    var imageRunOpt = window["imageRunOpt"]; //creates dependency
     var delIntermediate = '';
     var profileTypeId = $('#chooseEnv').find(":selected").val(); //local-32
     var patt = /(.*)-(.*)/;

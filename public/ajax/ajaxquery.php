@@ -45,7 +45,7 @@ if ($p=="saveRun"){
     }
     $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-24.07.2019.simg"; //default
     if ($docker_check == "true"){
-        $initialrun_img = "onuryukselen/initialrun-docker:1.0";
+        $initialrun_img = "ummsbiocore/initialrun-docker:1.0";
     }
     $amzConfigText = $db->getAmazonConfig($amazon_cre_id);
     list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($project_pipeline_id, $attempt, $amzConfigText, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID);
@@ -913,9 +913,9 @@ if ($p=="publishGithub"){
             $script_pipe_config = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
             $description = htmlspecialchars_decode($pipe_obj[0]["summary"], ENT_QUOTES); 
             $configText = "";
-            
+
             $configText = $db->getProcessParams($proVarObj, $configText);
-            
+
             if (!empty($script_pipe_config)){
                 $configText .= "\n// Pipeline Config:\n";
                 $configText .= "\$HOSTNAME='default'\n";
@@ -938,6 +938,10 @@ else if ($p=="saveGithub"){
     } else {
         $data = $db->insertGithub($username, $email, $password, $ownerID);
     }
+}
+else if ($p=="pullLatestVer"){
+    $pullLatestVer = $db->pullLatestVer($ownerID);
+    $data= json_encode($pullLatestVer);
 }
 else if ($p=="getGithub")
 {

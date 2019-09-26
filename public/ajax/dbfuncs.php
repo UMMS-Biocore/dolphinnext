@@ -803,6 +803,22 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
+    function pullLatestVer($ownerID){
+        $ret = array();
+        if (!empty($ownerID)){
+            $userRoleArr = json_decode($this->getUserRole($ownerID));
+            $userRole = $userRoleArr[0]->{'role'};
+            if ($userRole == "admin"){
+                $pull_cmd = "git pull 2>&1";
+                $ret = $this->execute_cmd($pull_cmd, $ret, "pull_cmd_log", "pull_cmd");
+                $runUpdateCmd = 'cd '.__DIR__."/../../db/ && bash ./runUpdate $this->db $ownerID $this->dbuser $this->dbpass 2>&1";
+                $ret = $this->execute_cmd($runUpdateCmd, $ret, "runUpdate_cmd_log", "runUpdate_cmd");
+            }
+        }
+        return json_encode($ret);
+    }
+
+
     //$type: "downPack" or "pushGithub"
     function initGitRepo ($description, $pipeline_id, $pipeline_name, $username_id, $github_repo, $github_branch, $configText, $nfData, $dnData, $type, $ownerID){
         $ret = array();

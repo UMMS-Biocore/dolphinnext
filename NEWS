@@ -1,3 +1,8 @@
+26.09.2019 Version 0.3.63
+Autofill feature for singularity and docker image added to auto-mount paths based on the selected inputs.
+Initial run paths auto-mounted based on selected inputs.
+Run update feature added to admin console.
+
 11.09.2019 Version 0.3.62
 Warnings added into run page, to show undefined variables in the system inputs.
 addProfileVar function in runpipeline.js updated to support multiple profile variables.
