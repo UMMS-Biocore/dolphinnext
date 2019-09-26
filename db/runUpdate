@@ -1,36 +1,33 @@
-ls -1 patch/ | sort -V
-
 db=$1
-mysql -u root $db < updateVersion0.1.10.sql
-mysql -u root $db < updateVersion0.1.14.sql
-mysql -u root $db < updateVersion0.1.15.sql
-mysql -u root $db < updateVersion0.1.16.sql
-mysql -u root $db < updateVersion0.1.34.sql
-mysql -u root $db < updateVersion0.1.36.sql
-mysql -u root $db < updateVersion0.2.06.sql
-mysql -u root $db < updateVersion0.2.10.sql
-mysql -u root $db < updateVersion0.2.12.sql
-mysql -u root $db < updateVersion0.2.39.sql
-mysql -u root $db < updateVersion0.2.41.sql
-mysql -u root $db < updateVersion0.2.42.sql
-mysql -u root $db < updateVersion0.2.46.sql
-mysql -u root $db < updateVersion0.2.50.sql
-mysql -u root $db < updateVersion0.2.52.sql
-mysql -u root $db < updateVersion0.2.54.sql
-mysql -u root $db < updateVersion0.2.56.sql
-mysql -u root $db < updateVersion0.2.61.sql
-mysql -u root $db < updateVersion0.2.65.sql
-mysql -u root $db < updateVersion0.2.69.sql
-mysql -u root $db < updateVersion0.2.70.sql
-mysql -u root $db < updateVersion0.2.73.sql
-mysql -u root $db < updateVersion0.2.82.sql
-mysql -u root $db < updateVersion0.3.06.sql
-mysql -u root $db < updateVersion0.3.12.sql
-mysql -u root $db < updateVersion0.3.17.sql
-mysql -u root $db < updateVersion0.3.20.sql
-mysql -u root $db < updateVersion0.3.23.sql
-mysql -u root $db < updateVersion0.3.34.sql
-mysql -u root $db < updateVersion0.3.41.sql
-mysql -u root $db < updateVersion0.3.45.sql
-mysql -u root $db < updateVersion0.3.46.sql
-mysql -u root $db < updateVersion0.3.47.sql
+user_id=${2-1} #default user_id: 1
+user=${3-root}
+p=${4}
+[[ ! -z $p ]] && pass="-p${p}" || pass=""
+exist_table=$(mysql -u${user} ${pass} $db -N -s -e  "select count(*) from information_schema.tables where table_schema='${db}' and table_name='update_db';")
+echo "INFO: check update_db table:$exist_table"
+exist_db=$(mysql -u${user} ${pass} $db -sse "SELECT DISTINCT name FROM update_db;")
+#echo "INFO: check applied patches:\n$exist_db"
+exist_patch=$(ls -1 patch/)
+#echo "INFO: get all patch list:\n$exist_db"
+not_exist_db=$(printf "${exist_db}\n${exist_patch}"  | sort | uniq -u | sort -V) 
+printf "INFO: Checking db patches that are not applied:\n$not_exist_db\n"
+
+for i in $not_exist_db; do
+    success="f"
+    if [ -f patch/${i} ]; then
+        echo "INFO: Database patch ${i} will be executed."
+        mysql -u${user} ${pass} $db < patch/${i} && success="t" && echo "INFO: Database patch ${i} successfully executed."
+    fi
+    ## if update_db table exist then add as new line
+    if [ "$exist_table" -eq 1 ] && [ $success == "t" ]; then
+        echo "INFO: update_db will be updated for ${i}."
+        mysql -u${user} ${pass} $db -sse "INSERT INTO update_db (name, owner_id, date_created, date_modified, last_modified_user) VALUES (\"${i}\", \"${user_id}\", NOW(), NOW(), \"${user_id}\");" && echo "INFO: update_db table successfully updated" 
+    fi
+done
+echo "INFO: runUpdate Completed."
+
+
+
+
+
+
