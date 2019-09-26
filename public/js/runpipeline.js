@@ -4555,7 +4555,7 @@ function autofillMountPathImage(pathArrayL1){
         newRunOpt = oldRunOpt;
         for (var k = 0; k < pathArrayL1.length; k++) {
             if (!oldRunOpt.match(pathArrayL1[k])){
-                newRunOpt += bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
+                newRunOpt += " "+ bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
             }
         }
         if ($('#docker_check').is(":checked") === true) {
