@@ -57,32 +57,32 @@ $(document).ready(function () {
         }],
         'order': [[2, 'desc']]
     });
-    
+
     function getGithubTableOptions() {
-            var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#githubModal" data-toggle="modal" class="editGithub">Edit</a></li><li><a href="#confirmDelModal" data-toggle="modal" class="deleteGithub">Delete</a></li></ul></div>';
-            return button;
-        }
-    
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#githubModal" data-toggle="modal" class="editGithub">Edit</a></li><li><a href="#confirmDelModal" data-toggle="modal" class="deleteGithub">Delete</a></li></ul></div>';
+        return button;
+    }
+
     var githubTable = $('#githubTable').DataTable({
-            "ajax": {
-                url: "ajax/ajaxquery.php",
-                data: { "p": "getGithub" },
-                "dataSrc": ""
-            },
-            "columns": [{
-                "data": "username"
-            }, {
-                "data": "email"
-            },{
-                "data": "date_modified"
-            }, {
-                data: null,
-                className: "center",
-                fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                    $(nTd).html(getGithubTableOptions());
-                }
-            }]
-        });
+        "ajax": {
+            url: "ajax/ajaxquery.php",
+            data: { "p": "getGithub" },
+            "dataSrc": ""
+        },
+        "columns": [{
+            "data": "username"
+        }, {
+            "data": "email"
+        },{
+            "data": "date_modified"
+        }, {
+            data: null,
+            className: "center",
+            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                $(nTd).html(getGithubTableOptions());
+            }
+        }]
+    });
 
 
 
@@ -1435,6 +1435,50 @@ $(document).ready(function () {
 
     if (usRole === "admin") {
 
+        $('#softUpt').on('click', '#pullLatestVer', function (event) {
+        event.preventDefault();
+            showLoadingDiv("softUptBody");
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {p: "pullLatestVer"},
+                complete: function () {
+                    hideLoadingDiv("softUptBody");
+                },
+                async: true,
+                success: function (s) {
+                    $("#mVerLog").val("");
+                    $("#mVerLog").css("display", "inline-block");
+                    console.log(s)
+                    if (IsJsonString(s)) {
+                        var json = JSON.parse(s)
+                    console.log(json)
+                        
+                        if (json) {
+                            if (json.pull_cmd){
+                                $("#mVerLog").val("INFO: Pulling:"+ "\n"+json.pull_cmd)
+                            }
+                            if (json.pull_cmd_log){
+                                var oldLog = $("#mVerLog").val()
+                                $("#mVerLog").val(oldLog+"\n"+json.pull_cmd_log)
+                            }
+                            if (json.runUpdate_cmd){
+                                var oldLog = $("#mVerLog").val()
+                                $("#mVerLog").val(oldLog+"\n\n"+"INFO: Database Update:\n"+json.runUpdate_cmd)
+                            }
+                            if (json.runUpdate_cmd_log){
+                                var oldLog = $("#mVerLog").val()
+                                $("#mVerLog").val(oldLog+"\n"+json.runUpdate_cmd_log)
+                            }
+                        }
+                    }
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        });
+
         var AdmUserTable = $('#AdminUserTable').DataTable({
             "ajax": {
                 url: "ajax/ajaxquery.php",
@@ -1602,9 +1646,9 @@ $(document).ready(function () {
         //---user modal section ends---
 
         //---github section starts---
-        
 
-        
+
+
         $('#githubModal').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);
             $(this).find('form').trigger('reset');
@@ -1615,7 +1659,7 @@ $(document).ready(function () {
                 var clickedRow = button.closest('tr');
                 var rowData = githubTable.row(clickedRow).data();
                 var data = getValues({ p: "getGithub", id: rowData.id })[0];
-                
+
                 $('#saveGithub').data('clickedrow', clickedRow);
                 fillFormByName('#githubModal', 'input, select', data);
             }

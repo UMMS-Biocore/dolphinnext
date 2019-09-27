@@ -29,11 +29,12 @@ if ($p=="saveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
+    $docker_check = $_REQUEST['docker_check'];
     $amazon_cre_id = $_REQUEST['amazon_cre_id'];
     $nextText = urldecode($_REQUEST['nextText']);
     $runConfig = urldecode($_REQUEST['configText']);
     $proVarObj = json_decode(urldecode($_REQUEST['proVarObj']));
-
+    $initRunOptions = urldecode($_REQUEST['initRunOptions']);
     $runType = $_REQUEST['runType'];
     $uuid = $_REQUEST['uuid'];
     $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
@@ -42,10 +43,12 @@ if ($p=="saveRun"){
     if (empty($attempt) || $attempt == 0 || $attempt == "0"){
         $attempt = "0";
     }
-    //create initialrun script
-    $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-24.07.2019.simg";
+    $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-24.07.2019.simg"; //default
+    if ($docker_check == "true"){
+        $initialrun_img = "ummsbiocore/initialrun-docker:1.0";
+    }
     $amzConfigText = $db->getAmazonConfig($amazon_cre_id);
-    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($project_pipeline_id, $attempt, $amzConfigText.$runConfig, $profileType,$profileId, $initialrun_img, $ownerID);
+    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($project_pipeline_id, $attempt, $amzConfigText, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID);
     $mainConfigText = $db->getMainRunConfig($amzConfigText.$runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
@@ -910,9 +913,9 @@ if ($p=="publishGithub"){
             $script_pipe_config = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
             $description = htmlspecialchars_decode($pipe_obj[0]["summary"], ENT_QUOTES); 
             $configText = "";
-            
+
             $configText = $db->getProcessParams($proVarObj, $configText);
-            
+
             if (!empty($script_pipe_config)){
                 $configText .= "\n// Pipeline Config:\n";
                 $configText .= "\$HOSTNAME='default'\n";
@@ -935,6 +938,10 @@ else if ($p=="saveGithub"){
     } else {
         $data = $db->insertGithub($username, $email, $password, $ownerID);
     }
+}
+else if ($p=="pullLatestVer"){
+    $pullLatestVer = $db->pullLatestVer($ownerID);
+    $data= json_encode($pullLatestVer);
 }
 else if ($p=="getGithub")
 {

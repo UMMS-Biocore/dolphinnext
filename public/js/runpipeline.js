@@ -4031,8 +4031,6 @@ function checkMissingVar(){
             egText += el + ' = "/yourpath"</br>'
         });
         warnText += undefinedVarAr.join(", ") + ". "
-        
-        
         warnText += 'Please define these variables inside <a href="index.php?np=4"><b>Profile Variables</b> </a> section of your run environment. e.g.</br>'
         warnText += egText
         warnText += 'Then please reload this page and click <b>Refresh Environments</b> button '+icon+' to autofill system inputs.'
@@ -4041,7 +4039,7 @@ function checkMissingVar(){
             $("#warningSection").append(warningPanel)
         } else {
             $("#undefText").html(warnText)
-            
+
         }
     } else {
         $("#warningSection> #undefinedVar").remove()
@@ -4445,12 +4443,14 @@ function checkRunPid(runPid, proType, proId) {
     return checkPid
 }
 
-function parseMountPath(path) {
+function parseMountPath(path, length) {
     if (path != null && path != "") {
-        if (path.match(/\//)) {
+        if (path.match(/\//) && !path.match(/:/)) {
             var allDir = path.split("/");
-            if (allDir.length > 2) {
-                return "/" + allDir[1] + "/" + allDir[2]
+            if (length == 2 && allDir[1] & allDir[2]) {
+                return "/" + allDir[1] + "/" + allDir[2];
+            } else if (length == 1 && allDir[1]){
+                return "/" + allDir[1];
             }
         }
     }
@@ -4488,11 +4488,10 @@ function removeCollectionFromInputs(col_id){
 }
 
 
-//autofill for ghpcc06 cluster to mount all directories before run executed.
-function autofillMountPath() {
+
+function getPathArray() {
     var pathArray = [];
     var workDir = $('#rOut_dir').val();
-    workDir = parseMountPath(workDir);
     if (workDir) {
         pathArray.push(workDir);
     }
@@ -4507,21 +4506,16 @@ function autofillMountPath() {
                     if (colFiles[i].file_dir){
                         if (!colFiles[i].file_dir.match(/s3:/)){
                             var inputPath = colFiles[i].file_dir;
-                            var parsedPath = parseMountPath(inputPath);
-                            if (parsedPath) {
-                                if (pathArray.indexOf(parsedPath) === -1) {
-                                    pathArray.push(parsedPath)
-                                }
+                            if (pathArray.indexOf(inputPath) === -1) {
+                                pathArray.push(inputPath)
                             }
                         }
                     }
                 }
             } else {
-                var inputPath = $(inputPaths[el]).text();
-                var parsedPath = parseMountPath(inputPath);
-                if (parsedPath) {
-                    if (pathArray.indexOf(parsedPath) === -1) {
-                        pathArray.push(parsedPath)
+                if (inputPath) {
+                    if (pathArray.indexOf(inputPath) === -1) {
+                        pathArray.push(inputPath)
                     }
                 }
             }
@@ -4532,21 +4526,66 @@ function autofillMountPath() {
     if (formPaths && formPaths != null) {
         $.each(formPaths, function (el) {
             var inputPath = $(formPaths[el]).val();
-            var parsedPath = parseMountPath(inputPath);
-            if (parsedPath) {
-                if (pathArray.indexOf(parsedPath) === -1) {
-                    pathArray.push(parsedPath)
+            if (inputPath) {
+                if (pathArray.indexOf(inputPath) === -1) {
+                    pathArray.push(inputPath)
                 }
             }
         });
     }
+    return pathArray
+}
+
+//Autofill runOptions of singularity and docker image
+function autofillMountPathImage(pathArrayL1){
+    // docker.runOptions = -v /export:/export
+    // singularity.runOptions = -B /export:/export
+    var newRunOpt = "";
+    var oldRunOpt = "";
+    var bindParam = "";
+    if (pathArrayL1.length > 0) {
+        if ($('#docker_check').is(":checked") === true) {
+            bindParam = "-v"
+            oldRunOpt = $('#docker_opt').val();
+        } else if ($('#singu_check').is(":checked") === true) {
+            bindParam = "-B"
+            oldRunOpt = $('#singu_opt').val();
+        } 
+        //combine items as /path -> /path:/path
+        newRunOpt = oldRunOpt;
+        for (var k = 0; k < pathArrayL1.length; k++) {
+            if (!oldRunOpt.match(pathArrayL1[k])){
+                newRunOpt += " "+ bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
+            }
+        }
+        if ($('#docker_check').is(":checked") === true) {
+            $('#docker_opt').val(newRunOpt);
+        } else if ($('#singu_check').is(":checked") === true) {
+            $('#singu_opt').val(newRunOpt);
+        }
+    }
+    return newRunOpt
+}
+
+//autofill for ghpcc06 cluster to mount all directories before run executed.
+function autofillMountPath(pathArray) {
+    var pathArrayL2 = []
+    for (var i = 0; i < pathArray.length; i++) {
+        var length = 2;
+        var parsedPath = parseMountPath(pathArray[i], length);
+        if (parsedPath != null){
+            if (pathArrayL2.indexOf(parsedPath) === -1) {
+                pathArrayL2.push(parsedPath)
+            } 
+        }
+
+    }
     //turn into lsf command (use -E to define scripts which will be executed just before the main job)
-    if (pathArray.length > 0) {
-        var execOtherOpt = '-E "file ' + pathArray.join(' && file ') + '"';
+    if (pathArrayL2.length > 0) {
+        var execOtherOpt = '-E "file ' + pathArrayL2.join(' && file ') + '"';
     } else {
         var execOtherOpt = '';
     }
-
     //check if exec_all or exec_each checkboxes are clicked.
     if ($('#exec_all').is(":checked") === true) {
         var oldExecAll = $('#job_clu_opt').val();
@@ -4571,22 +4610,77 @@ function autofillMountPath() {
     return execOtherOpt
 }
 
+
+function getPathArrayL1(pathArray){
+    var pathArrayL1 = []
+    for (var i = 0; i < pathArray.length; i++) {
+        var length = 1;
+        var parsedPath = parseMountPath(pathArray[i], length);
+        if (parsedPath != null){
+            if (pathArrayL1.indexOf(parsedPath) === -1) {
+                pathArrayL1.push(parsedPath)
+            }
+        }
+    }
+    return pathArrayL1;
+}
+
+//initial run run-options to send with ajax
+function getInitRunOptions(pathArrayL1) {
+    // docker.runOptions = -v /export:/export
+    // singularity.runOptions = -B /export:/export
+    var runOptions = "";
+    if (pathArrayL1.length > 0) {
+        //default for initial run
+        var conType = "";
+        var bindParam = "";
+        if ($('#docker_check').is(":checked") === true) {
+            conType = "docker";
+            bindParam = "-v"
+        } else if ($('#singu_check').is(":checked") === true) {
+            conType = "singularity";
+            bindParam = "-B"
+        } else {
+            //singularity is default for initial run
+            conType = "singularity";
+            bindParam = "-B"; 
+        }
+        runOptions += conType+".runOptions='";
+        //combine items as /path -> /path:/path
+        for (var k = 0; k < pathArrayL1.length; k++) {
+            runOptions += bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
+        }
+        runOptions += "'";
+    } 
+    return runOptions
+}
+
 //callbackfunction to first change the status of button to connecting
 function runProjectPipe(runProPipeCall, checkType) {
     //reset the checktype
     var keepCheckType = checkType;
+    var pathArray = [];
+    var pathArrayL1 = []; //shortened to 1 directory
     window['checkType'] = "";
-    execOtherOpt = "";
+    window['execOtherOpt'] = "";
+    window['initRunOptions'] = "";
     displayButton('connectingProPipe');
     //create uuid for run
     var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id });
     fillRunVerOpt(["#runVerLog", "#runVerReport"])
     $('#runLogArea').val("");
-    //autofill for ghpcc06 cluster to mount all directories before run executed.
     var hostname = $('#chooseEnv').find('option:selected').attr('host');
+    pathArray = getPathArray();
+    //autofill for ghpcc06 cluster to mount all directories before run executed.
     if (hostname === "ghpcc06.umassrc.org") {
-        execOtherOpt = autofillMountPath()
+        execOtherOpt = autofillMountPath(pathArray)
     }
+    pathArrayL1 = getPathArrayL1(pathArray)
+    //Autofill runOptions of singularity and docker image
+    window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
+    //initial run run-options to send with ajax
+    initRunOptions = getInitRunOptions(pathArrayL1)
+
     // Call the callback
     setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
 }
@@ -4599,6 +4693,8 @@ function runProPipeCall(checkType, uuid) {
     nxf_runmode = false;
     var nextText = encodeURIComponent(nextTextRaw);
     var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
+    var initRunOptions = encodeURIComponent(window["initRunOptions"])
+    var imageRunOpt = window["imageRunOpt"]; //creates dependency
     var delIntermediate = '';
     var profileTypeId = $('#chooseEnv').find(":selected").val(); //local-32
     var patt = /(.*)-(.*)/;
@@ -4620,6 +4716,7 @@ function runProPipeCall(checkType, uuid) {
         configTextRaw += "cleanup = true \n";
     }
     var [allProSett, profileData] = getJobData("both");
+    var docker_check = $('#docker_check').is(":checked").toString();
     if ($('#docker_check').is(":checked") === true) {
         var docker_img = $('#docker_img').val();
         var docker_opt = $('#docker_opt').val();
@@ -4714,6 +4811,8 @@ function runProPipeCall(checkType, uuid) {
         configText: configText,
         profileType: proType,
         profileId: proId,
+        initRunOptions: initRunOptions,
+        docker_check: docker_check,
         amazon_cre_id: amazon_cre_id,
         project_pipeline_id: project_pipeline_id,
         runType: checkType,
