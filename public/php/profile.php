@@ -274,7 +274,7 @@
                                     </table>
                                 </div>
                             </div>
-                            <div id="softUpt" class="panel panel-default">
+                            <div id="softUpt" class="panel panel-default" style="display:none;">
                                 <div class="panel-heading clearfix">
                                     <div class="pull-left">
                                         <h5><i class="fa fa-cloud-download" style="margin-left:0px; margin-right:0px;"></i> Software Update</h5>
