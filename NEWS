@@ -1,7 +1,13 @@
+30.09.2019 Version 0.3.64
+Documentation is updated:
+    - Short Overview, About, Support, Developer Tutorial sections added.
+    - Quick Start Guide updated.
+
 26.09.2019 Version 0.3.63
 Autofill feature for singularity and docker image added to auto-mount paths based on the selected inputs.
 Initial run paths auto-mounted based on selected inputs.
-Run update feature added to admin console.
+Run update command to apply db patches updated.
+Run update feature added to admin console (experimental feature and hidden for this revision).
 
 11.09.2019 Version 0.3.62
 Warnings added into run page, to show undefined variables in the system inputs.

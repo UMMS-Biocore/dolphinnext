@@ -48,7 +48,7 @@ You will be prompted to supply a filename and a password. In order to accept the
 
 .. warning:: In both of the cases, private key will be used for submiting jobs in the host. Therefore, public key required to be added into ``~/.ssh/authorized_keys`` in the host by user. 
 
-In order to add you private key to the host, you might use the following command::
+In order to add you public key to the host, you might use the following command::
 	
 	cat ~/.ssh/id_rsa.pub | ssh USERNAME@HOSTNAME "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 	
@@ -89,13 +89,25 @@ This section is used for defining connection profiles by clicking on "Add Enviro
 
 A. Defining Host Profile:
 =========================
-* **Username/Hostname:** You should enter your username and hostname of the host which you would like to connect.  For instance, in order to connect ``us2r@ghpcc06.umassrc.org``, you would enter ``us2r`` as username and ``ghpcc06.umassrc.org`` as hostname.
+* **Username/Hostname:** You should enter your username and hostname of the host which you would like to connect. You don't need to add ``@`` sign while entering this information. For instance, for us2r@ghpcc06.umassrc.org::
+    
+        Username: us2r
+        Hostname: ghpcc06.umassrc.org
 
-.. note::  You don't need to add ``@`` sign while entering this information.
 
 * **SSH Keys:** are saved in SSH keys tab and will be used while connecting to host.
-* **Run Command (optional):** You may run the command or commands (by seperating each command with ``&&`` sign) before the nextflow job starts. eg. ``source /etc/bashrc && module load java/1.8.0_31 && module load bowtie2/2.3.2``
-* **Nextflow Path (optional):** If nextflow path is not added to ``$PATH`` environment, you can define the path in this block. eg.``/project/umw_biocore/bin``
+* **Run Command (optional):** You may run the command or commands (by seperating each command with ``&&`` sign) before the nextflow job starts. eg.::
+
+    source /etc/bashrc && module load java/1.8.0_77 && module load singularity/singularity-3.4.0
+    
+*  **Profile Variables:** Since most of the pipelines uses genome reference and index files, you can define a download directory to keep these files. If multiple people are going to use DolphinNext, we would suggest using a shared path in your cluster. e.g.::
+        
+        params.DOWNDIR="/share/dolphinnext/downloads"
+        
+* **Nextflow Path (optional):** If nextflow path is not added to ``$PATH`` environment, you can define the path in this block. eg.::
+
+    /project/umw_biocore/bin
+    
 * **Executor Settings:** 
 
     **1. Executor Settings for Nextflow (in the profile)**:
