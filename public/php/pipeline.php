@@ -174,7 +174,7 @@
         </div>
         <!--       end of descriptionTab-->
         <div id="workflowTab" class="tab-pane fade">
-            <div class="col-md-12" style="margin-top:5px;" >
+            <div class="col-md-12" style="margin-top:5px;">
                 <div class="panel panel-default" style="margin-bottom:10px;  padding-bottom:0px;">
                     <div style="height:500px; " id="container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 </div>
@@ -196,8 +196,8 @@
 
         <div id="advancedTab" class="tab-pane fade">
             <div id="advOpt" style="margin-top:15px;">
-               <div class="col-md-12" style="float:none; margin-bottom:30px;">
-                        <label class="col-sm-12 control-label">Pipeline Files</label>
+                <div class="col-md-12" style="float:none; margin-bottom:30px;">
+                    <label class="col-sm-12 control-label">Pipeline Files</label>
                 </div>
                 <div id="pipelineFiles" style="margin-bottom:15px;"></div>
                 <div class="col-md-12" style="margin-bottom:15px;">
@@ -1098,14 +1098,29 @@
                 <h4 class="modal-title" id="importModalTitle">Import Tool</h4>
             </div>
             <div class="modal-body">
-                <div id="importModalPart1">
-                    <form id="importArea" action="ajax/import.php" class="dropzone">
-                        <div class="fallback">
-                            <input name="file" type="file" multiple />
+                    <div id="importModalOptions" role="tabpanel">
+                        <!-- Nav tabs -->
+                        <ul id="importNav" class="nav nav-tabs" role="tablist">
+                            <li id="manualImportBut" class="active"><a class="nav-item" data-toggle="tab" href="#manualImportTab">Manually</a></li>
+                            <li id="publicImportBut" class="nav-item"><a class="nav-item" data-toggle="tab" href="#publicImportTab">Public</a></li>
+                        </ul>
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div role="tabpanel" class="tab-pane active" searchtab="true" id="manualImportTab">
+                                <div id="importModalPart1">
+                                    <form id="importArea" action="ajax/import.php" class="dropzone">
+                                        <div class="fallback">
+                                            <input name="file" type="file" multiple />
+                                        </div>
+                                    </form>
+                                </div>
+                                <div id="importModalPart2"></div>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" searchtab="true" id="publicImportTab">
+                            <p>This section is under development.</p>
+                            </div>
                         </div>
-                    </form>
-                </div>
-                <div id="importModalPart2"></div>
+                    </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal" id="cancelButton">Cancel</button>
