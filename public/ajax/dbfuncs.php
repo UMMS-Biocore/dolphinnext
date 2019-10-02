@@ -803,16 +803,33 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-    function pullLatestVer($ownerID){
+    function checkNewRelease($version, $ownerID){
         $ret = array();
+        $newVer = "false";
         if (!empty($ownerID)){
             $userRoleArr = json_decode($this->getUserRole($ownerID));
             $userRole = $userRoleArr[0]->{'role'};
             if ($userRole == "admin"){
-                $pull_cmd = "git pull 2>&1";
-                $ret = $this->execute_cmd($pull_cmd, $ret, "pull_cmd_log", "pull_cmd");
-                $runUpdateCmd = 'cd '.__DIR__."/../../db/ && bash ./runUpdate $this->db $ownerID $this->dbuser $this->dbpass 2>&1";
-                $ret = $this->execute_cmd($runUpdateCmd, $ret, "runUpdate_cmd_log", "runUpdate_cmd");
+                $release_cmd = "curl -s https://api.github.com/repos/umms-biocore/dolphinnext/releases/latest 2>&1";
+                $ret = $this->execute_cmd($release_cmd, $ret, "release_cmd_log", "release_cmd");
+                $rel = json_decode($ret["release_cmd_log"]);
+                if (!empty($rel)) {
+                    $obj=array();
+                    if (isset($rel->tag_name)){ 
+                        $obj["tag_name"]=$rel->tag_name; 
+                        //new version check
+                        if (version_compare($obj["tag_name"], $version) > 0) {
+                            $newVer = "true";
+                            if (isset($rel->html_url)){ $obj["html_url"]=$rel->html_url; }
+                            if (isset($rel->published_at)){ $obj["published_at"]=$rel->published_at; }
+                            if (isset($rel->body)){ $obj["body"]=$rel->body; }
+                            $ret["release_cmd_log"] = $obj;
+                        } 
+                    }
+                }
+                if ($newVer == "false"){
+                    $ret["release_cmd_log"] = "";
+                }
             }
         }
         return json_encode($ret);
