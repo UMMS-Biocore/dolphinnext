@@ -4,6 +4,7 @@ $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
 $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
 $name = isset($_SESSION['name']) ? $_SESSION['name'] : "";
 $google_image = isset($_SESSION['google_image']) ? $_SESSION['google_image'] : "";
+$role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
 if ($email != ''){$login = 1;} 
 else { $login = 0;}
 session_write_close();
@@ -411,7 +412,7 @@ folder instead of downloading all of them to reduce the load. -->
                             <li><a href="index.php?np=2">Projects </a></li>
                             <li><a href="index.php?np=5">Run Status </a></li>
                             <?php
-    include("php/funcs.php");
+            include("php/funcs.php");
             $np = isset($_REQUEST["np"]) ? $_REQUEST["np"] : "";
             $id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "";
                             ?>
@@ -431,7 +432,56 @@ folder instead of downloading all of them to reduce the load. -->
                             ?>
                             <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Tutorial</a></li>
                             <li><a href="http://dolphinnext.readthedocs.io/" target="_blank"><i class="fa fa-mortar-board"></i></a></li>
-                            <li> <a><b style="color:#7c1842;"> VERSION <?php echo DN_VERSION?> </b> </a></li>
+                            <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><b style="color:#7c1842;" id="dn-version" ver="<?php echo DN_VERSION?>" > VERSION <?php echo DN_VERSION?> </b></a>
+                                        <div class="dropdown-menu" style="width:650px; padding:0px;">
+                                            <div class="panel panel-default" style="margin:0px;">
+                                                <div class="panel-heading clearfix">
+                                                    <div class="pull-left">
+                                                        <h5>&nbsp; Version Notes</h5>
+                                                    </div>
+                                                    <div class="pull-right" style="padding-top:6px;">
+                                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" > <span aria-hidden="true">&times;</span></a>
+                                                    </div>
+                                                </div>
+                                                <div class="panel-body" style="padding:0px;">
+                                                    <textarea rows="30" class="form-control" style="resize:none; " id="versionNotes"></textarea>
+                                                </div>
+                                            </div>
+                                        </div></li>
+                            <?php
+                            if ($login == 1 && $role == "admin"){
+                                echo '<li class="dropdown tasks-menu" id="softUpdBut" style="display:none;">
+                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                        <i class="fa fa-cloud-download"></i>
+                                        <span class="label label-danger">1</span>
+                                        </a>
+                                        <div class="dropdown-menu" style="width:550px;">
+                                            <div class="panel panel-default" style="margin-bottom:0px;">
+                                                <div class="panel-heading clearfix">
+                                                    <div class="pull-left">
+                                                        <h5>&nbsp; A new version of DolphinNext is avaliable!</h5>
+                                                    </div>
+                                                    <div class="pull-right" style="padding-top:6px;">
+                                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" > <span aria-hidden="true">&times;</span></a>
+                                                    </div>
+                                                </div>
+                                                <div class="panel-body">
+                                                    <form>
+                                                        <div class="form-group col-sm-12">
+                                                            <p id="softUptDesc"></p> 
+                                                            <textarea readonly rows="1" class="form-control" style="resize:none;" id="softUptCmd"></textarea>
+                                                        </div>
+                                                        <div class="form-group col-sm-12">
+                                                            <p>Release Notes:</p> 
+                                                            <textarea readonly rows="7" class="form-control" style="resize:none;" id="softUptReleaseNotes"></textarea>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>';
+                            }
+                            ?>
                         </ul>
                     </div>
                 </nav>
@@ -461,9 +511,7 @@ folder instead of downloading all of them to reduce the load. -->
                                                          ?>
                                                          " class="img-circle" alt="User Image">
                         </div>
-                        <div id="userInfo" style="display:inline" class="info" email="<?php
-                                                                                      echo $email;  
-                                                                                      ?>">
+                        <div id="userInfo" style="display:inline" class="info" email="<?php echo $email; ?>">
                             <p id="userName">
                                 <?php
                                 if ($login == 1){

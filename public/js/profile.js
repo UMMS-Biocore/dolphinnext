@@ -1434,51 +1434,6 @@ $(document).ready(function () {
     //change password ends----
 
     if (usRole === "admin") {
-
-        $('#softUpt').on('click', '#pullLatestVer', function (event) {
-        event.preventDefault();
-            showLoadingDiv("softUptBody");
-            $.ajax({
-                type: "POST",
-                url: "ajax/ajaxquery.php",
-                data: {p: "pullLatestVer"},
-                complete: function () {
-                    hideLoadingDiv("softUptBody");
-                },
-                async: true,
-                success: function (s) {
-                    $("#mVerLog").val("");
-                    $("#mVerLog").css("display", "inline-block");
-                    console.log(s)
-                    if (IsJsonString(s)) {
-                        var json = JSON.parse(s)
-                    console.log(json)
-                        
-                        if (json) {
-                            if (json.pull_cmd){
-                                $("#mVerLog").val("INFO: Pulling:"+ "\n"+json.pull_cmd)
-                            }
-                            if (json.pull_cmd_log){
-                                var oldLog = $("#mVerLog").val()
-                                $("#mVerLog").val(oldLog+"\n"+json.pull_cmd_log)
-                            }
-                            if (json.runUpdate_cmd){
-                                var oldLog = $("#mVerLog").val()
-                                $("#mVerLog").val(oldLog+"\n\n"+"INFO: Database Update:\n"+json.runUpdate_cmd)
-                            }
-                            if (json.runUpdate_cmd_log){
-                                var oldLog = $("#mVerLog").val()
-                                $("#mVerLog").val(oldLog+"\n"+json.runUpdate_cmd_log)
-                            }
-                        }
-                    }
-                },
-                error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
-                }
-            });
-        });
-
         var AdmUserTable = $('#AdminUserTable').DataTable({
             "ajax": {
                 url: "ajax/ajaxquery.php",

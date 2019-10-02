@@ -939,9 +939,19 @@ else if ($p=="saveGithub"){
         $data = $db->insertGithub($username, $email, $password, $ownerID);
     }
 }
-else if ($p=="pullLatestVer"){
-    $pullLatestVer = $db->pullLatestVer($ownerID);
-    $data= json_encode($pullLatestVer);
+else if ($p=="checkNewRelease"){
+    $version = $_REQUEST['version'];
+    $checkNewRelease = $db->checkNewRelease($version, $ownerID);
+    $data= json_encode($checkNewRelease);
+}
+else if ($p=="getChangeLog"){
+    $file = __DIR__."/../../NEWS";
+    error_log($file);
+    $content = "";
+    if (file_exists($file)) {
+        $content = $db->file_get_contents_utf8($file);
+    }
+    $data= json_encode($content);
 }
 else if ($p=="getGithub")
 {

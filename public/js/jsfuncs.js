@@ -21,6 +21,8 @@ function callusRole() {
 }
 usRole = callusRole();
 
+
+
 //initialize all tooltips on a page (eg.$('#mFileTypeTool').tooltip("show"))
 //to activate dynamically added tooltips, run the command below
 $(function () {
@@ -552,6 +554,56 @@ $(document).ready(function () {
         $('#shutdownLog-'+proId).empty();
         $('#shutdownTimer-'+proId).empty();
     });
+    $(function () {
+        //check latest release and warn admin
+        if (usRole == "admin"){
+            var currentVersion = $("#dn-version").attr("ver")
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {p: "checkNewRelease", version:currentVersion},
+                async: true,
+                cache: true,
+                success: function (releaseData) {
+                    if (IsJsonString(releaseData)) {
+                        var json = JSON.parse(releaseData)
+                        if (json) {
+                            if (json.release_cmd_log){
+                                var latestVersion = json.release_cmd_log.tag_name;
+                                var releaseNotes = json.release_cmd_log.body;
+                                if (latestVersion && releaseNotes){
+                                    $("#softUpdBut").css("display", "inline")
+                                    $("#softUptDesc").html("DolphinNext "+latestVersion+ " is now available. You can update your mirror by running following command:");
+                                    $("#softUptCmd").val("cd scripts && python updateDN --version "+latestVersion)
+                                    $("#softUptReleaseNotes").val(releaseNotes)
+                                }
+                            }
+                        }
+                    }
+                },
+                error: function (jqXHR, exception) {
+                    console.log("#Error:")
+                    console.log(jqXHR.status)
+                    console.log(exception)
+                }
+            });
+        }
+        //load news on click to version button
+        $(document).on('click', '#dnVersionBut', function (event) {
+            var checkLoad = $("#versionNotes").attr("readonly")
+            // For some browsers, `attr` is undefined; for others, `attr` is false. Check for both.
+            if (typeof checkLoad === typeof undefined || checkLoad === false) {
+                var changeLogData = getValues({ p: "getChangeLog" });
+                if (changeLogData){
+                    $("#versionNotes").val(changeLogData)
+                    $("#versionNotes").attr('readonly','readonly');
+
+                } 
+            }
+        });
+
+    });
+
 });
 
 //load filter sidebar menu options

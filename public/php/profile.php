@@ -273,30 +273,7 @@
                                         </thead>
                                     </table>
                                 </div>
-                            </div>
-                            <div id="softUpt" class="panel panel-default" style="display:none;">
-                                <div class="panel-heading clearfix">
-                                    <div class="pull-left">
-                                        <h5><i class="fa fa-cloud-download" style="margin-left:0px; margin-right:0px;"></i> Software Update</h5>
-                                    </div>
-                                </div>
-                                <div id="softUptBody" class="panel-body">
-                                    <form >
-                                        <div class="form-group">
-                                            <div class="col-sm-12">
-                                                <button id="pullLatestVer" type="submit" class="col-xs-4 btn btn-primary btn-load" data-loading-text="Pulling...">Pull Latest Version </button>
-                                            </div>
-                                        </div>
-                                        <div class="form-group" >
-                                            <div class="col-sm-12" style="margin-top:10px;">
-                                                <textarea rows="14" class="form-control"    id="mVerLog" style="display:none;"></textarea>
-                                                <p id="mVerSuccess"></p>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>';
+                            </div>';
                         }
                         ?>
 

@@ -1,3 +1,4 @@
+#!/bin/sh
 db=$1
 user_id=${2-1} #default user_id: 1
 user=${3-root}
