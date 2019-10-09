@@ -4651,7 +4651,7 @@ function getInitRunOptions(pathArrayL1) {
         for (var k = 0; k < pathArrayL1.length; k++) {
             runOptions += bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
         }
-        runOptions += "'";
+        runOptions += "'\n";
     } 
     return runOptions
 }
@@ -4665,7 +4665,7 @@ function runProjectPipe(runProPipeCall, checkType) {
     var profileData = [];
     window['checkType'] = "";
     window['execOtherOpt'] = "";
-    window['initRunOptions'] = "";
+    window.initRunOptions = "";
     window['manualExecCheck'] = false;
     // check ssh key
     profileData= getJobData("job");
@@ -4697,7 +4697,7 @@ function runProjectPipe(runProPipeCall, checkType) {
     //Autofill runOptions of singularity and docker image
     window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
     //initial run run-options to send with ajax
-    initRunOptions = getInitRunOptions(pathArrayL1)
+    window.initRunOptions = getInitRunOptions(pathArrayL1)
 
     // Call the callback
     setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
@@ -4731,7 +4731,7 @@ function runProPipeCall(checkType, uuid) {
     //check if Deletion for intermediate files  is checked
     if ($('#intermeDel').is(":checked") === true) {
         window.configTextRaw  += "cleanup = true \n";
-        window.initRunOptions += "\ncleanup = true \n";
+        window.initRunOptions += "cleanup = true \n";
     }
     var [allProSett, profileData] = getJobData("both");
     var docker_check = $('#docker_check').is(":checked").toString();
