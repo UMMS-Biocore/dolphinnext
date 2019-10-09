@@ -103,9 +103,9 @@ class dbfuncs {
     }
     //$img: path of image
     //$singu_save=true to overwrite on image
-    function imageCmd($singu_cache, $img, $singu_save, $type, $profileType,$profileId,$ownerID){
+    function imageCmd($singu_cache, $img, $singu_save, $type, $profileType,$profileId, $runType, $ownerID){
         if (preg_match("/http:/i",$img) || preg_match("/https:/i",$img) || preg_match("/ftp:/i",$img)){
-            $downPath = '\\$NXF_SINGULARITY_CACHEDIR';
+            $downPath = '$NXF_SINGULARITY_CACHEDIR';
             if ($profileType == "amazon"){
                 $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
                 $amzDataArr=json_decode($amzData,true);
@@ -121,6 +121,9 @@ class dbfuncs {
                 $cmd = "mkdir -p $downPath && cd $downPath && rm -f ".$imageName." && $wgetCmd";
             } else {
                 $cmd = "mkdir -p $downPath && cd $downPath && $wgetCmd";
+            }
+            if ($runType == "initial"){
+                $cmd.= " && find $downPath -type f -regex '.*UMMS-Biocore-initialrun.*img' -not -name '{$imageName}' -delete";
             }
             return $cmd;
         } else if ($type == 'singularity'){
@@ -141,6 +144,9 @@ class dbfuncs {
                     $cmd = "mkdir -p $singuPath && cd $singuPath && rm -f {$imageName}.simg && $shubCmd";
                 } else {
                     $cmd = "mkdir -p $singuPath && cd $singuPath && $shubCmd";
+                }
+                if ($runType == "initial"){
+                    $cmd.= " && find $singuPath -type f -regex '.*UMMS-Biocore-initialrun.*img' -not -name '{$imageName}.simg' -delete";
                 }
                 return $cmd;
             }
@@ -406,16 +412,18 @@ class dbfuncs {
         $singu_save = "";
         $singu_img = "";
         if ($singu_check == "true"){
+            $runType = "default";
             $singu_img = $proPipeAll[0]->{'singu_img'};
             $singu_save = $proPipeAll[0]->{'singu_save'};
-            $imageCmd = $this->imageCmd($singu_cache, $singu_img, $singu_save, 'singularity', $profileType,$profileId,$ownerID);
+            $imageCmd = $this->imageCmd($singu_cache, $singu_img, $singu_save, 'singularity', $profileType,$profileId, $runType, $ownerID);
         }
         if (!empty($initialRunParams)){
+            $runType = "initial";
             $containerType = 'singularity'; //default
             if ($docker_check == "true"){
                 $containerType = 'docker';
             }
-            $initImageCmd = $this->imageCmd($singu_cache, $initialrun_img, "", $containerType, $profileType,$profileId,$ownerID);
+            $initImageCmd = $this->imageCmd($singu_cache, $initialrun_img, "", $containerType, $profileType,$profileId, $runType, $ownerID);
         }
         //get report options
         $reportOptions = "";
@@ -467,7 +475,7 @@ class dbfuncs {
         }
         $nextANSILog = "export NXF_ANSI_LOG=false";
         // set NXF_SINGULARITY_CACHEDIR as $HOME/.dolphinnext/singularity, if it is not defined.
-        $singu_cachedir = 'NXF_SINGULARITY_CACHEDIR="\\${NXF_SINGULARITY_CACHEDIR:-\\$HOME/.dolphinnext/singularity}" && export NXF_SINGULARITY_CACHEDIR=\\$NXF_SINGULARITY_CACHEDIR';
+        $singu_cachedir = 'NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$HOME/.dolphinnext/singularity}" && export NXF_SINGULARITY_CACHEDIR=$NXF_SINGULARITY_CACHEDIR';
         // combine pre-run cmd
         $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd , $initImageCmd);
         $preCmd="";
@@ -606,12 +614,12 @@ class dbfuncs {
         $initialRunCmd = "";
         $igniteCmd = "";
         if ($executor == "local" && $executor_job == 'ignite'){
-            $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite";
+            $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite -cluster.failureDetectionTimeout 100000000 -cluster.clientFailureDetectionTimeout 100000000";
         }
         if (!empty($initialRunParams)){
             $igniteCmdInit = "";
             if ($executor == "local" && $executor_job == 'ignite'){
-                $igniteCmdInit = "-w $dolphin_path_real/initialrun/work -process.executor ignite";
+                $igniteCmdInit = "-w $dolphin_path_real/initialrun/work -process.executor ignite -cluster.failureDetectionTimeout 100000000 -cluster.clientFailureDetectionTimeout 100000000";
             }
             $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $igniteCmdInit $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
@@ -697,7 +705,7 @@ class dbfuncs {
         return $configText;
     }
 
-    function getInitialRunConfig($project_pipeline_id, $attempt, $amzConfigText, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID){
+    function getInitialRunConfig($project_pipeline_id, $attempt, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID){
         $containerText = "";
         if ($docker_check == "true"){
             $containerText = "//Process Config\nprocess.container = '$initialrun_img'\n"."docker.enabled = true\n";
@@ -724,7 +732,7 @@ class dbfuncs {
             }
             $containerText = "//Process Config\nprocess.container = '$image'\n"."singularity.enabled = true\n"; 
         }
-        $configText = $containerText.$initRunOptions."\n".$amzConfigText;
+        $configText = $containerText.$initRunOptions."\n";
         //get initial run input paramaters
         $initialRunParams = $this->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
         $configText .= "\n//Initial Run Parameters\n".$initialRunParams;
@@ -749,6 +757,22 @@ class dbfuncs {
         endforeach;
         endforeach;
         return $renameLog;
+    }
+
+    function tarGzDirectory($dir,$targz_file){
+        // Get real path for our folder
+        $rootPath = realpath($dir);
+        $tar_file = substr($targz_file, 0, -3); //remove .gz part
+        if (file_exists($targz_file)) {
+            unlink($targz_file);
+        }
+        if (file_exists($tar_file)) {
+            unlink($tar_file);
+        }
+        $archive = new PharData($tar_file);
+        $archive->buildFromDirectory($rootPath); // make path\to\archive\arch1.tar
+        $archive->compress(Phar::GZ); // make path\to\archive\arch1.tar.gz
+        unlink($tar_file); // deleting path\to\archive\arch1.tar
     }
 
     function zipDirectory($dir,$zip_file){
@@ -789,6 +813,16 @@ class dbfuncs {
         $log = shell_exec($cmd);
         $logObj[$cmd_name]=$cmd;
         $logObj[$log_name]=$log;
+        return $logObj;
+    }
+
+    function execute_cmd_logfile($cmd, $logObj, $log_name, $cmd_name, $logfile, $mode){
+        $log = shell_exec($cmd);
+        $logObj[$cmd_name]=$cmd;
+        $logObj[$log_name]=$log;
+        $file = fopen($logfile, $mode);
+        fwrite($file, $cmd."\n".$log);
+        fclose($file);
         return $logObj;
     }
 
@@ -938,9 +972,7 @@ class dbfuncs {
         return json_encode($ret);
     }
 
-
-
-    function getAmazonConfig($amazon_cre_id){
+    function getAmazonConfig($amazon_cre_id,$ownerID){
         //if  $amazon_cre_id is defined append the aws credentials into nextflow.config
         $configText = "";
         if ($amazon_cre_id != "" ){
@@ -954,12 +986,7 @@ class dbfuncs {
             $access_key = $amz_data[0]->{'amz_acc_key'};
             $secret_key = $amz_data[0]->{'amz_suc_key'};
             $default_region = $amz_data[0]->{'amz_def_reg'};
-            $configText.= "\n//AWS Credentials\n";
-            $configText.= "aws{\n";
-            $configText.= "   accessKey = '$access_key'\n";
-            $configText.= "   secretKey = '$secret_key'\n";
-            $configText.= "   region = '$default_region'\n";
-            $configText.= "}\n";
+            $configText = "export AWS_ACCESS_KEY_ID=$access_key && export AWS_SECRET_ACCESS_KEY=$access_key && export AWS_DEFAULT_REGION=$default_region";
         }
         return $configText;
     }
@@ -1010,140 +1037,128 @@ class dbfuncs {
         }
     }
 
+    function recurse_copy($src,$dst) { 
+        $dir = opendir($src); 
+        @mkdir($dst); 
+        while(false !== ( $file = readdir($dir)) ) { 
+            if (( $file != '.' ) && ( $file != '..' )) { 
+                if ( is_dir($src . '/' . $file) ) { 
+                    recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+                } 
+                else { 
+                    copy($src . '/' . $file,$dst . '/' . $file); 
+                } 
+            } 
+        } 
+        closedir($dir); 
+    } 
 
-    function initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $s3configFileDir, $ownerID){
-        //create files and folders
-        $this->createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
-        //separate nextflow config (by using @config tag).
-        $this->createMultiConfig ("{$this->run_path}/$uuid/run", $mainConfigText);
-
-        $initialRunText = "";
-        $run_path_real = "{$this->run_path}/$uuid/run";
-        if (!empty($initialRunParams)){
-            $this->createDirFile ("{$this->run_path}/$uuid/initialrun", "nextflow.config", 'w', $initialConfigText );
-            copy("{$this->nf_path}/initialrun.nf", "{$this->run_path}/$uuid/initialrun/nextflow.nf");
-            $initialRunText = "{$this->run_path}/$uuid/initialrun";
-        }
-        // get outputdir
-        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $outdir = $proPipeAll[0]->{'output_dir'};
-        // get username and hostname for connection
-        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
-        $ssh_id = $cluDataArr[0]["ssh_id"];
-        //get userpky
-        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
-        //check $userpky file exist
-        if (!file_exists($userpky)) {
-            $this->writeLog($uuid,'Private key is not found!','a','serverlog.txt');
-            $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-            $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-            die(json_encode('Private key is not found!'));
-        }
-
-        if (!file_exists($run_path_real."/nextflow.nf")) {
-            $this->writeLog($uuid,'Nextflow file is not found!','a','serverlog.txt');
-            $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-            $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-            die(json_encode('Nextflow file is not found!'));
-        }
-        if (!file_exists($run_path_real."/nextflow.config")) {
-            $this->writeLog($uuid,'Nextflow config file is not found!','a','serverlog.txt');
-            $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-            $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-            die(json_encode('Nextflow config file is not found!'));
-        }
-        $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
-        //mkdir and copy nextflow file to run directory in cluster
-        $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dolphin_path_real\" > $run_path_real/serverlog.txt 2>&1 && scp -r {$this->ssh_settings} $scp_port -i $userpky $s3configFileDir $initialRunText $run_path_real/* $connect:$dolphin_path_real >> $run_path_real/serverlog.txt 2>&1";
-        $mkdir_copynext_pid =shell_exec($cmd);
-        $this->writeLog($uuid,$cmd,'a','serverlog.txt');
-        $serverlog = $this->readFile("$run_path_real/serverlog.txt");
-        if (preg_match("/cannot create directory(.*)Permission denied/", $serverlog)){
-            $this->writeLog($uuid,'ERROR: Run directory could not created. Please make sure your work directory has valid permissions.','a','serverlog.txt');
-            $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-            $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
-            die(json_encode('ERROR: Run directory could not created. Please make sure your work directory has valid permissions.'));
-        }
-        $log_array = array('mkdir_copynext_pid' => $mkdir_copynext_pid);
-        return $log_array;
+    function triggerRunErr($message, $uuid,$project_pipeline_id,$ownerID){
+        $this->writeLog($uuid,$message,'a','serverlog.txt');
+        $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+        $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
+        die(json_encode($message));
     }
 
-    function runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunParams, $attempt, $initialrun_img, $ownerID)
-    {
+    function initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $s3configFileDir, $amzConfigText, $attempt, $runType, $initialrun_img, $ownerID){
+        //create files and folders
+        $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
+        //separate nextflow config (by using @config tag).
+        $this -> createMultiConfig ("{$this->run_path}/$uuid/run", $mainConfigText);
+        //create clean serverlog.txt 
+        $this -> writeLog($uuid,'','w','serverlog.txt');
+        $run_path_real = "{$this->run_path}/$uuid/run";
+        if (!empty($initialRunParams)){
+            $this->createDirFile ("{$this->run_path}/$uuid/run/initialrun", "nextflow.config", 'w', $initialConfigText );
+            copy("{$this->nf_path}/initialrun.nf", "{$this->run_path}/$uuid/run/initialrun/nextflow.nf");
+        }
+        if (!file_exists($run_path_real."/nextflow.nf")) {
+            $this->triggerRunErr('ERROR: Nextflow file is not found in server!', $uuid,$project_pipeline_id,$ownerID);
+        }
+        if (!file_exists($run_path_real."/nextflow.config")) {
+            $this->triggerRunErr('ERROR: Nextflow config file is not found!', $uuid,$project_pipeline_id,$ownerID);
+        }
+
         //get nextflow executor parameters
         list($outdir, $proPipeCmd, $jobname, $singu_check, $singu_img, $imageCmd, $initImageCmd, $reportOptions) = $this->getNextExecParam($project_pipeline_id,$profileType, $profileId, $initialRunParams, $initialrun_img, $ownerID);
         //get username and hostname and exec info for connection
         list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port)=$this->getNextConnectExec($profileId,$ownerID, $profileType);
         //get cmd before run
-        $preCmd = $this->getPreCmd ($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd);
-        //eg. /project/umw_biocore/bin
-        $next_path_real = $this->getNextPathReal($next_path);
-        //get userpky
-        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
-        if (!file_exists($userpky)) {
-            $this -> writeLog($uuid,'Private key is not found!','a','serverlog.txt');
-            $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-            $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-            die(json_encode('Private key is not found!'));
-        }
-        $run_path_real = "{$this->run_path}/$uuid/run";
+        $preCmd = $this->getPreCmd($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd); 
+        $next_path_real = $this->getNextPathReal($next_path); //eg. /project/umw_biocore/bin
         $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
         //get command for renaming previous log file
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
-        //check if files are exist
-        $next_exist_cmd= "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect test  -f \"$dolphin_path_real/nextflow.nf\"  && echo \"Nextflow file exists\" || echo \"Nextflow file not exists\" 2>&1 & echo $! &";
-        $next_exist = shell_exec($next_exist_cmd);
-        $this->writeLog($uuid,$next_exist_cmd,'a','serverlog.txt');
-        $serverlog = $this->readFile("$run_path_real/serverlog.txt");
-        if (preg_match("/cannot create directory(.*)Permission denied/", $serverlog)){
-            $this->writeLog($uuid,'ERROR: Run directory could not created. Please make sure your work directory has valid permissions.','a','serverlog.txt');
-            $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-            $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
-            die(json_encode('ERROR: Run directory could not created. Please make sure your work directory has valid permissions.'));
+        $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "log.txt", $initialRunParams, $ownerID);
+        $amzCmd = "";
+        //temporary copy s3 config file into initialrun folder 
+        if (!empty($s3configFileDir)){
+            $this->recurse_copy($s3configFileDir, $run_path_real."/initialrun");
         }
-        preg_match("/(.*)Nextflow file(.*)exists(.*)/", $next_exist, $matches);
-        $log_array['next_exist'] = $next_exist;
-        if ($matches[2] == " ") {
-            $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, "log.txt", $initialRunParams, $ownerID);
-            $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$renameLog $preCmd $exec_next_all\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
-            $next_submit_pid= shell_exec($cmd); //"Job <203477> is submitted to queue <long>.\n"
-            $this->writeLog($uuid,$cmd,'a','serverlog.txt');
-            if (!$next_submit_pid) {
-                $this->writeLog($uuid,'ERROR: Connection failed! Please check your connection profile or internet connection','a','serverlog.txt');
-                $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
-                die(json_encode('ERROR: Connection failed. Please check your connection profile or internet connection'));
-            }
-            $log_array['next_submit_pid'] = $next_submit_pid;
-            $this->updateRunLog($project_pipeline_id, "Waiting", "", $ownerID);
-            $this->updateRunStatus($project_pipeline_id, "Waiting", $ownerID);
-            return json_encode($log_array);
-        } else if ($matches[2] == " not "){
-            for( $i= 0 ; $i < 3 ; $i++ ){
-                $this->writeLog($uuid,'WARN: Run directory is not found in run environment.','a','serverlog.txt');
-                sleep(3);
-                $next_exist = shell_exec($next_exist_cmd);
-                preg_match("/(.*)Nextflow file(.*)exists(.*)/", $next_exist, $matches);
-                $log_array['next_exist'] = $next_exist;
-                if ($matches[2] == " ") {
-                    $next_submit_pid= shell_exec($cmd); //"Job <203477> is submitted to queue <long>.\n"
-                    if (!$next_submit_pid) {
-                        $this->writeLog($uuid,'ERROR: Connection failed. Please check your connection profile or internet connection','a','serverlog.txt');
-                        $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-                        $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
-                        die(json_encode('ERROR: Connection failed. Please check your connection profile or internet connection'));
-                    }
-                    $log_array['next_submit_pid'] = $next_submit_pid;
-                    $this->updateRunLog($project_pipeline_id, "Waiting", "", $ownerID);
-                    $this->updateRunStatus($project_pipeline_id, "Waiting", $ownerID);
-                    return json_encode($log_array);
-                }
-            }
-            $this -> writeLog($uuid,'ERROR: Connection failed. Please check your connection profile or internet connection','a','serverlog.txt');
-            $this -> updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-            $this -> updateRunStatus($project_pipeline_id, "Error", $ownerID);
-            die(json_encode('ERROR: Connection failed. Please check your connection profile or internet connection'));
+        //.aws_cred file to export credentials to remote machine
+        if (!empty($amzConfigText)){
+            $this->createDirFile ($run_path_real, ".aws_cred", 'w', $amzConfigText );
+            $amzCmd = "bash $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
         }
+        //create run cmd file (.dolphinnext.init)
+        $runCmdAll = $amzCmd." ".$renameLog." ".$preCmd." ".$exec_next_all;
+        $this->createDirFile ($run_path_real, ".dolphinnext.init", 'w', $runCmdAll);
+
+        // compress run folder
+        $targz_file= $run_path_real.".tar.gz";
+        $this->tarGzDirectory($run_path_real,$targz_file);
+        // remove credentials from run folder after compressing run folder
+        if (file_exists($run_path_real."/initialrun")) {
+            system('rm -rf ' . escapeshellarg($run_path_real."/initialrun") . "/.conf*", $retval);
+        }
+        // remove .aws_cred file after compressing run folder
+        if (file_exists($run_path_real."/.aws_cred")) {
+            unlink($run_path_real."/.aws_cred");
+        }
+        return array($targz_file, $dolphin_path_real, $runCmdAll);
+    }
+
+    function runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID){
+        $ret = array();
+        // get scp port
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $ssh_id = $cluDataArr[0]["ssh_id"];
+        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+        if (!file_exists($userpky)) {
+            $this->triggerRunErr('ERROR: Private key is not found!', $uuid,$project_pipeline_id,$ownerID);
+        }
+        $run_path_real = "{$this->run_path}/$uuid/run";
+        // 1. Mkdir $dolphin_path_real
+        $mkdir_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dolphin_path_real && echo 'INFO: Run directory created.'\" 2>&1";
+        $ret = $this->execute_cmd_logfile($mkdir_cmd, $ret, "mkdir_cmd_log", "mkdir_cmd", "$run_path_real/serverlog.txt", "a");
+        if (!preg_match("/INFO: Run directory created\./", $ret["mkdir_cmd_log"])){
+            $this->triggerRunErr('ERROR: Run directory cannot be created.\nLOG: '.$ret["mkdir_cmd_log"], $uuid,$project_pipeline_id,$ownerID);
+        }
+        // 2. rsync $targz_file
+        $rsync_cmd = "rsync -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $targz_file $connect:$dolphin_path_real  2>&1";
+        $ret = $this->execute_cmd_logfile($rsync_cmd, $ret, "scp_cmd_log", "scp_cmd", "$run_path_real/serverlog.txt", "a");
+        // 3. remove local $targz_file after transfer (if this command couldn't executed, cronjob will remove it->cleanTempDir)
+        if (file_exists($targz_file)) {
+            unlink($targz_file);
+        }
+        // 4. check $targz_file
+        $package_exist_cmd= "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \" test  -f '$dolphin_path_real/run.tar.gz' && echo 'INFO: Run package exists.'\" 2>&1";
+        $ret = $this->execute_cmd_logfile($package_exist_cmd, $ret, "package_exist_cmd_log", "package_exist_cmd", "$run_path_real/serverlog.txt", "a");
+        if (!preg_match("/INFO: Run package exists\./", $ret["package_exist_cmd_log"])){
+            $this->triggerRunErr('ERROR: Run directory cannot be transfered.\nLOG: '.$ret["package_exist_cmd_log"], $uuid,$project_pipeline_id,$ownerID);
+        }
+        // 4. extract and execute 
+        $exec_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real && rm $dolphin_path_real/run.tar.gz && bash $dolphin_path_real/.dolphinnext.init\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
+        $this->writeLog($uuid,$exec_cmd,'a','serverlog.txt');
+        $this->writeLog($uuid,$runCmdAll,'a','serverlog.txt');
+        $next_submit_pid= shell_exec($exec_cmd); //"Job <203477> is submitted to queue <long>.\n"
+        if (!$next_submit_pid) {
+            $this->triggerRunErr('ERROR: Connection failed! Please check your connection profile or internet connection.', $uuid,$project_pipeline_id,$ownerID);
+        }
+        $ret['next_submit_pid'] = $next_submit_pid;
+        $this->updateRunLog($project_pipeline_id, "Waiting", "", $ownerID);
+        $this->updateRunStatus($project_pipeline_id, "Waiting", $ownerID);
+        return json_encode($ret);
     }
 
     public function updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID){
@@ -1572,28 +1587,36 @@ class dbfuncs {
             WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.id='$project_pipeline_id' AND pp.owner_id='$ownerID'";
         return self::queryTable($sql);
     }
-    public function cleanTempDir ($uploadDir){
-        //clean upload directories if not modified in 30 minutes.
-        $ret = "";
-        if ($uploadDir == "true"){
-            $uploads= "{$this->tmp_path}/uploads/";
-            $cmd = "find $uploads -mindepth 1 -type d -mmin +30 2>&1 & ";
-            $dirlist = array();
-            exec($cmd, $dirlist, $exit);
-            if (!empty($dirlist)){
-                for ($i = 0; $i < count($dirlist); $i++) {
-                    $dir = trim($dirlist[$i]);
-                    if (!empty($dir) && file_exists($dir) && $dir != "{$this->tmp_path}" && $dir != "{$this->tmp_path}/uploads/" && $dir != "{$this->tmp_path}/uploads" ){
-                        system('rm -rf ' . escapeshellarg($dir), $retval);
-                        if ($retval == 0){
-                            $ret.=$dir." ";
-                        } else {
-                            $ret.=$dir." not deleted->$retval";
-                        }
+    function cleanlist($list, $ret){
+        if (!empty($list)){
+            for ($i = 0; $i < count($list); $i++) {
+                $dir = trim($list[$i]);
+                if (!empty($dir) && file_exists($dir) && $dir != "{$this->tmp_path}" && $dir != "{$this->tmp_path}/uploads/" && $dir != "{$this->tmp_path}/uploads" && $dir != "{$this->tmp_path}/pub" && $dir != "{$this->tmp_path}/pub/" ){
+                    system('rm -rf ' . escapeshellarg($dir), $retval);
+                    if ($retval == 0){
+                        $ret.=$dir." ";
+                    } else {
+                        $ret.=$dir." not deleted->$retval";
                     }
                 }
             }
         }
+        return $ret;
+    }
+
+    function cleanTempDir (){
+        //clean upload directories if not modified in 30 minutes.
+        $ret = "";
+        $uploads= "{$this->tmp_path}/uploads/";
+        $cmd = "find $uploads -mindepth 1 -type d -mmin +30 2>&1 & ";
+        $dirlist = array();
+        exec($cmd, $dirlist, $exit);
+        $ret = $this->cleanlist($dirlist, $ret);
+        //clean run.tar.gz in run directories if not modified in 10 minutes.
+        $run_targz = "find {$this->tmp_path}/pub/*/run.tar.gz -mmin +10 2>&1";
+        $filelist = array();
+        exec($run_targz, $filelist, $exit);
+        $ret = $this->cleanlist($filelist, $ret);
         return $ret;
     }
 
@@ -1687,13 +1710,16 @@ class dbfuncs {
                             //|| preg_match("/failed/i",$nextflowLog) removed 
                         } else if (preg_match("/error/i",$nextflowLog)){
                             $confirmErr=true;
-                            if (preg_match("/-- Execution is retried/i",$nextflowLog)){
+                            if (preg_match("/-- Execution is retried/i",$nextflowLog) || preg_match("/WARN: One or more errors/i", $nextflowLog)){
                                 //if only process retried, status shouldn't set as error.
                                 $confirmErr = false;
                                 $txt = trim($nextflowLog);
                                 $lines = explode("\n", $txt);
                                 for ($i = 0; $i < count($lines); $i++) {
-                                    if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i])){
+                                    
+                                    if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i]) && !preg_match("/WARN: One or more errors/i", $lines[$i])){
+                                        error_log("WARN: One or more errors");
+                                        error_log($lines[$i]);
                                         $confirmErr = true;
                                         break;
                                     }
@@ -2910,6 +2936,7 @@ class dbfuncs {
                         $obj = $this->getSRRData($cols[1], $ownerID);
                         $obj->name = trim(str_replace(" ","_",$cols[0]));
                         $data[] = $obj;
+                        sleep(1); //wait ncbi api limit 3query/sec
                     }
                 }
             }

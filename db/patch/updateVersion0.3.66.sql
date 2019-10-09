@@ -1,0 +1,1 @@
+ALTER TABLE biocorepipe_save MODIFY script_pipe_config LONGTEXT;

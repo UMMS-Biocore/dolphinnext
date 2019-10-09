@@ -23,8 +23,6 @@ if (isset($_REQUEST['id'])) {
     $id = $_REQUEST['id'];
 }
 
-
-
 if ($p=="saveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $profileType = $_REQUEST['profileType'];
@@ -43,18 +41,18 @@ if ($p=="saveRun"){
     if (empty($attempt) || $attempt == 0 || $attempt == "0"){
         $attempt = "0";
     }
-    $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-24.07.2019.simg"; //default
+    $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-07.10.2019.simg"; //default
     if ($docker_check == "true"){
         $initialrun_img = "ummsbiocore/initialrun-docker:1.0";
     }
-    $amzConfigText = $db->getAmazonConfig($amazon_cre_id);
-    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($project_pipeline_id, $attempt, $amzConfigText, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID);
-    $mainConfigText = $db->getMainRunConfig($amzConfigText.$runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+    $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
+    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($project_pipeline_id, $attempt, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID);
+    $mainConfigText = $db->getMainRunConfig($runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
-    $log_array = $db->initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $s3configFileDir, $ownerID);
+    list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $s3configFileDir, $amzConfigText, $attempt, $runType, $initialrun_img, $ownerID);
     //run the script
-    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunParams, $attempt, $initialrun_img, $ownerID);
+    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
     //activate autoshutdown feature for amazon
     if  ($profileType == "amazon"){
         $autoshutdown_active = "true";
@@ -946,7 +944,6 @@ else if ($p=="checkNewRelease"){
 }
 else if ($p=="getChangeLog"){
     $file = __DIR__."/../../NEWS";
-    error_log($file);
     $content = "";
     if (file_exists($file)) {
         $content = $db->file_get_contents_utf8($file);
@@ -1127,7 +1124,7 @@ else if ($p=="saveFile"){
 
     for ($i = 0; $i < count($file_array); $i++) {
         $item = $file_array[$i];
-        $item_file_dir = $file_dir[$i];
+        $item_file_dir = isset($file_dir[$i]) ? $file_dir[$i] : ""; 
         $p = explode(" ", $item);
         $name = $p[0];
         unset($p[0]);
