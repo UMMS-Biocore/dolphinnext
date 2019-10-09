@@ -4327,41 +4327,42 @@ function selectAmzKey() {
     } 
 }
 
-function configTextAllProcess(exec_all_settings, type, proName, executor_job) {
+function configTextAllProcess(confText, exec_all_settings, type, proName, executor_job) {
     if (type === "each") {
         for (var keyParam in exec_all_settings) {
             if (exec_all_settings[keyParam] !== '' && (keyParam === 'time' || keyParam === 'job_time') && executor_job != "ignite" && executor_job != "local") {
-                window.configTextRaw += 'process.$' + proName + '.time' + ' = \'' + exec_all_settings[keyParam] + 'm\'\n';
+                confText += 'process.$' + proName + '.time' + ' = \'' + exec_all_settings[keyParam] + 'm\'\n';
             } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'cpu' || keyParam === 'job_cpu')) {
-                window.configTextRaw += 'process.$' + proName + '.cpus' + ' = ' + exec_all_settings[keyParam] + '\n';
+                confText += 'process.$' + proName + '.cpus' + ' = ' + exec_all_settings[keyParam] + '\n';
             } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'queue' || keyParam === 'job_queue') && executor_job != "ignite" && executor_job != "local") {
-                window.configTextRaw += 'process.$' + proName + '.queue' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
+                confText += 'process.$' + proName + '.queue' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
             } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'memory' || keyParam === 'job_memory')) {
-                window.configTextRaw += 'process.$' + proName + '.memory' + ' = \'' + exec_all_settings[keyParam] + ' GB\'\n';
+                confText += 'process.$' + proName + '.memory' + ' = \'' + exec_all_settings[keyParam] + ' GB\'\n';
             } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'opt' || keyParam === 'job_clu_opt') && executor_job != "local") {
-                window.configTextRaw += 'process.$' + proName + '.clusterOptions' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
+                confText += 'process.$' + proName + '.clusterOptions' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
             }
         }
 
     } else {
         for (var keyParam in exec_all_settings) {
             if (exec_all_settings[keyParam] !== '' && (keyParam === 'time' || keyParam === 'job_time') && executor_job != "ignite" && executor_job != "local") {
-                window.configTextRaw += 'process.' + 'time' + ' = \'' + exec_all_settings[keyParam] + 'm\'\n';
+                confText += 'process.' + 'time' + ' = \'' + exec_all_settings[keyParam] + 'm\'\n';
             } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'cpu' || keyParam === 'job_cpu')) {
-                window.configTextRaw += 'process.' + 'cpus' + ' = ' + exec_all_settings[keyParam] + '\n';
+                confText += 'process.' + 'cpus' + ' = ' + exec_all_settings[keyParam] + '\n';
             } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'queue' || keyParam === 'job_queue') && executor_job != "ignite" && executor_job != "local") {
-                window.configTextRaw += 'process.' + 'queue' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
+                confText += 'process.' + 'queue' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
             } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'memory' || keyParam === 'job_memory')) {
-                window.configTextRaw += 'process.' + 'memory' + ' = \'' + exec_all_settings[keyParam] + ' GB\'\n';
+                confText += 'process.' + 'memory' + ' = \'' + exec_all_settings[keyParam] + ' GB\'\n';
             } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'opt' || keyParam === 'job_clu_opt') && executor_job != "local") {
-                window.configTextRaw += 'process.' + 'clusterOptions' + ' = \'' + exec_all_settings[keyParam] + ' \'\n';
+                confText += 'process.' + 'clusterOptions' + ' = \'' + exec_all_settings[keyParam] + ' \'\n';
             }
         }
     }
+    return confText
 }
 
 function displayButton(idButton) {
-    var buttonList = ['runProPipe', 'errorProPipe', 'completeProPipe', 'runningProPipe', 'waitingProPipe', 'statusProPipe', 'connectingProPipe', 'terminatedProPipe', "abortedProPipe"];
+    var buttonList = ['runProPipe', 'errorProPipe', 'completeProPipe', 'runningProPipe', 'waitingProPipe', 'statusProPipe', 'connectingProPipe', 'terminatedProPipe', "abortedProPipe", "manualProPipe"];
     for (var i = 0; i < buttonList.length; i++) {
         document.getElementById(buttonList[i]).style.display = "none";
     }
@@ -4447,7 +4448,7 @@ function parseMountPath(path, length) {
     if (path != null && path != "") {
         if (path.match(/\//) && !path.match(/:/)) {
             var allDir = path.split("/");
-            if (length == 2 && allDir[1] & allDir[2]) {
+            if (length == 2 && allDir[1] && allDir[2]) {
                 return "/" + allDir[1] + "/" + allDir[2];
             } else if (length == 1 && allDir[1]){
                 return "/" + allDir[1];
@@ -4650,7 +4651,7 @@ function getInitRunOptions(pathArrayL1) {
         for (var k = 0; k < pathArrayL1.length; k++) {
             runOptions += bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
         }
-        runOptions += "'";
+        runOptions += "'\n";
     } 
     return runOptions
 }
@@ -4661,10 +4662,27 @@ function runProjectPipe(runProPipeCall, checkType) {
     var keepCheckType = checkType;
     var pathArray = [];
     var pathArrayL1 = []; //shortened to 1 directory
+    var profileData = [];
     window['checkType'] = "";
     window['execOtherOpt'] = "";
-    window['initRunOptions'] = "";
-    displayButton('connectingProPipe');
+    window.initRunOptions = "";
+    window['manualExecCheck'] = false;
+    // check ssh key
+    profileData= getJobData("job");
+    if (profileData){
+        if (profileData[0]){
+            if (profileData[0].ssh_id){
+                window['manualExecCheck'] = true;
+            }
+        }
+    }
+    if (window['manualExecCheck']){
+        displayButton('connectingProPipe');
+    } else {
+        displayButton('manualProPipe');
+    }
+
+    
     //create uuid for run
     var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id });
     fillRunVerOpt(["#runVerLog", "#runVerReport"])
@@ -4679,7 +4697,7 @@ function runProjectPipe(runProPipeCall, checkType) {
     //Autofill runOptions of singularity and docker image
     window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
     //initial run run-options to send with ajax
-    initRunOptions = getInitRunOptions(pathArrayL1)
+    window.initRunOptions = getInitRunOptions(pathArrayL1)
 
     // Call the callback
     setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
@@ -4693,7 +4711,6 @@ function runProPipeCall(checkType, uuid) {
     nxf_runmode = false;
     var nextText = encodeURIComponent(nextTextRaw);
     var proVarObj = encodeURIComponent(JSON.stringify(window["processVarObj"]))
-    var initRunOptions = encodeURIComponent(window["initRunOptions"])
     var imageRunOpt = window["imageRunOpt"]; //creates dependency
     var delIntermediate = '';
     var profileTypeId = $('#chooseEnv').find(":selected").val(); //local-32
@@ -4702,7 +4719,7 @@ function runProPipeCall(checkType, uuid) {
     var proId = profileTypeId.replace(patt, '$2');
     proTypeWindow = proType;
     proIdWindow = proId;
-    configTextRaw = '';
+    window.configTextRaw = '';
 
     //check if s3 path is defined in output or file paths
     var checkAmzKeysDiv = $("#mRunAmzKeyDiv").css('display');
@@ -4713,17 +4730,18 @@ function runProPipeCall(checkType, uuid) {
     }
     //check if Deletion for intermediate files  is checked
     if ($('#intermeDel').is(":checked") === true) {
-        configTextRaw += "cleanup = true \n";
+        window.configTextRaw  += "cleanup = true \n";
+        window.initRunOptions += "cleanup = true \n";
     }
     var [allProSett, profileData] = getJobData("both");
     var docker_check = $('#docker_check').is(":checked").toString();
     if ($('#docker_check').is(":checked") === true) {
         var docker_img = $('#docker_img').val();
         var docker_opt = $('#docker_opt').val();
-        configTextRaw += 'process.container = \'' + docker_img + '\'\n';
-        configTextRaw += 'docker.enabled = true\n';
+        window.configTextRaw += 'process.container = \'' + docker_img + '\'\n';
+        window.configTextRaw += 'docker.enabled = true\n';
         if (docker_opt !== '') {
-            configTextRaw += 'docker.runOptions = \'' + docker_opt + '\'\n';
+            window.configTextRaw += 'docker.runOptions = \'' + docker_opt + '\'\n';
         }
     }
     if ($('#singu_check').is(":checked") === true) {
@@ -4752,10 +4770,10 @@ function runProPipeCall(checkType, uuid) {
         }
 
         var singu_opt = $('#singu_opt').val();
-        configTextRaw += 'process.container = \'' + downSingu_img + '\'\n';
-        configTextRaw += 'singularity.enabled = true\n';
+        window.configTextRaw += 'process.container = \'' + downSingu_img + '\'\n';
+        window.configTextRaw += 'singularity.enabled = true\n';
         if (singu_opt !== '') {
-            configTextRaw += 'singularity.runOptions = \'' + singu_opt + '\'\n';
+            window.configTextRaw += 'singularity.runOptions = \'' + singu_opt + '\'\n';
         }
     }
     var executor_job = profileData[0].executor_job;
@@ -4766,18 +4784,22 @@ function runProPipeCall(checkType, uuid) {
         var next_memory = profileData[0].next_memory;
         if (next_cpu != null && next_cpu != "" && next_cpu != 0) {
             window.configTextRaw += 'executor.$local.cpus' + ' = ' + next_cpu + '\n';
+            window.initRunOptions += 'executor.$local.cpus' + ' = ' + next_cpu + '\n';
         }
         if (next_memory != null && next_memory != "" && next_memory != 0) {
             window.configTextRaw += 'executor.$local.memory' + ' = \'' + next_memory + ' GB\'\n';
+            window.initRunOptions += 'executor.$local.memory' + ' = \'' + next_memory + ' GB\'\n';
         }
 
     }
-    configTextRaw += 'process.executor = \'' + executor_job + '\'\n';
+    window.configTextRaw += 'process.executor = \'' + executor_job + '\'\n';
+    window.initRunOptions += 'process.executor = \'' + executor_job + '\'\n';
     //all process settings eg. process.queue = 'short'
     if ($('#exec_all').is(":checked") === true) {
         var exec_all_settingsRaw = $('#allProcessSettTable').find('input');
         var exec_all_settings = formToJson(exec_all_settingsRaw);
-        configTextAllProcess(exec_all_settings, "all", "", executor_job);
+        configTextAllProcess(window.configTextRaw, exec_all_settings, "all", "", executor_job);
+        window.initRunOptions = configTextAllProcess(window.initRunOptions, exec_all_settings, "all", "", executor_job);
     } else {
         if (execOtherOpt != "" && execOtherOpt != null) {
             var oldJobCluOpt = allProSett.job_clu_opt;
@@ -4786,7 +4808,8 @@ function runProPipeCall(checkType, uuid) {
                 allProSett.job_clu_opt = newJobCluOpt;
             }
         }
-        configTextAllProcess(allProSett, "all", "", executor_job);
+        configTextAllProcess(window.configTextRaw, allProSett, "all", "", executor_job);
+        window.initRunOptions = configTextAllProcess(window.initRunOptions, allProSett, "all", "", executor_job);
     }
     if ($('#exec_each').is(":checked") === true) {
         var exec_each_settings = decodeURIComponent(formToJsonEachPro());
@@ -4796,12 +4819,14 @@ function runProPipeCall(checkType, uuid) {
                 var each_settings = exec_each_settings[el];
                 var processName = $("#" + el + " :nth-child(2)").text()
                 //process.$hello.queue = 'long'
-                configTextAllProcess(each_settings, "each", processName, executor_job);
+                configTextAllProcess(window.configTextRaw, each_settings, "each", processName, executor_job);
             });
         }
     }
     console.log(configTextRaw);
+    console.log(window.initRunOptions);
     var configText = encodeURIComponent(configTextRaw);
+    var initRunOptions = encodeURIComponent(window.initRunOptions)
     //save nextflow text as nextflow.nf and start job
     serverLog = '';
     var serverLogGet = getValues({
@@ -6229,7 +6254,7 @@ $(document).ready(function () {
                 if (!ret.file_array.length) {
                     infoModalText += " * Please fill 'Selected GEO Files' table by clicking 'Select' buttons in the 'Searched GEO Files' table."
                 }
-                var s3_archive_dir_geo  = $.trim($("#archive_dir_geo").val());
+                var s3_archive_dir_geo  = $.trim($("#s3_archive_dir_geo").val());
                 var amzArchKey  = $("#mArchAmzKeyS3_GEO").val();
                 if (s3_archive_dir_geo.match(/s3:/)){
                     if (!amzArchKey){
@@ -6267,6 +6292,7 @@ $(document).ready(function () {
                     formObj.run_env = $('#chooseEnv').find(":selected").val();
                     formObj.project_id = project_id;
                     formObj.p = "saveFile"
+                    console.log(formObj)
                     $.ajax({
                         type: "POST",
                         url: "ajax/ajaxquery.php",
@@ -6998,7 +7024,6 @@ $(document).ready(function () {
         return [false, selRowsfileIdAr];
     }
 
-    //xxxxxxxxxxx
     $('#inputFilemodal').on('click', '#savefile', function (e) {
         $('#inputFilemodal').loading({
             message: 'Working...'

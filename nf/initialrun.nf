@@ -1051,7 +1051,14 @@ process createCollection {
 
           sub fasterqDump {
             my ( $gzip, $outDir, $srrID, $file_name,  $collection_type) = @_;
-            runCommand("rm -f $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID} $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O $outDir -t ${outDir}/sra --split-3 --skip-technical -o $srrID $srrID");
+            ## fastq-dump
+            ## --split-3: For each spot, if there are two biological reads  satisfying filter conditions, the first is  placed in the `*_1.fastq` file,  
+            ## and the second is placed in the `*_2.fastq` file. If there is only one biological read satisfying the filter conditions, it is 
+            ## placed in the `*.fastq` file.All other reads in the spot are ignored.
+            runCommand("rm -f $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fastq-dump -O $outDir --split-3 --skip-technical $srrID");
+            
+            ## fasterq-dump
+            ## runCommand("rm -f $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID} $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O $outDir -t ${outDir}/sra --split-3 --skip-technical -o $srrID $srrID");
             if ($collection_type eq "pair"){
               runCommand("mv $outDir/${srrID}_1.fastq  $outDir/${file_name}.R1.fastq ");
               runCommand("mv $outDir/${srrID}_2.fastq  $outDir/${file_name}.R2.fastq ");
@@ -1059,8 +1066,11 @@ process createCollection {
                 runCommand("gzip  $outDir/${file_name}.R1.fastq ");
                 runCommand("gzip  $outDir/${file_name}.R2.fastq ");
               }
-            } elsif ($collection_type eq "single"){
-              runCommand("mv $outDir/${srrID}  $outDir/${file_name}.fastq ");
+            }elsif ($collection_type eq "single"){
+              unless (-e "${outDir}/${srrID}.fastq") { die "fastq-dump failed for ${srrID}\\n"; }
+              if ( $srrID ne $file_name){
+                runCommand("mv $outDir/${srrID}.fastq  $outDir/${file_name}.fastq ");
+              }
               if ($gzip ne ""){
                 runCommand("gzip  $outDir/${file_name}.fastq ");
               }

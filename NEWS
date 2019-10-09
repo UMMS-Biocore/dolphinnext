@@ -1,3 +1,10 @@
+09.10.2019 Version 0.3.66
+Job submission code updated.
+Minor bugs fixed in the initial run.
+Minor bug fix in the add collection modal.
+Initial run image updated and fasterq-dump replaced with fastq-dump.
+clientFailureDetectionTimeout and FailureDetectionTimeout limits are increased for apache ignite.
+
 02.10.2019 Version 0.3.65
 Version logs will be shown when the "version button" clicked.
 Warning will be shown when new release of DolphinNext is available.
