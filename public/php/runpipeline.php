@@ -125,14 +125,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 </ul>
             </div>
             <div id="manualProPipe" style="display:none; float:right; " class="btn-group">
-                <button class="btn bg-purple-active color-palette" type="button" id="manualProPipeBut">Manual Execution</button>
-                <button type="button" class="btn bg-purple-active color-palette dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
-                    <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu" role="menu">
-                    <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
-                    <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
-                </ul>
+                <button class="btn bg-purple-active color-palette" type="button" id="manualProPipeBut" data-toggle="modal" href="#manualRunModal">Manual Execution</button>
             </div>
             <button class="btn btn-success" type="button" id="runProPipe" onclick="runProjectPipe(runProPipeCall,&#34;newrun&#34;);return false;" title="Ready to run pipeline" data-placement="bottom" data-toggle="tooltip" style="display:none; vertical-align:middle;">Ready to Run</button>
             <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; vertical-align:middle;" title="Waiting for input parameters, output directory and selection of active environment (if s3 path is defined then waiting for the amazon keys)" data-placement="bottom" data-toggle="tooltip">Waiting</button>
@@ -1086,13 +1079,13 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </div>
                             <div class="form-group">
                                 <button type="button" class="btn btn-default pull-right" style="margin-right:8px;" data-toggle="collapse" data-target="#pluploaderLogDiv">View Log</button>
-                                <button type="button" class="btn btn-default pull-right" style="margin-right:8px;" id="pluploaderReset" >Reset</button>
-<!--                                <button type="button" class="btn btn-default pull-right" style="margin-right:8px;" id="pluploaderStop" >Stop</button>-->
+                                <button type="button" class="btn btn-default pull-right" style="margin-right:8px;" id="pluploaderReset">Reset</button>
+                                <!--                                <button type="button" class="btn btn-default pull-right" style="margin-right:8px;" id="pluploaderStop" >Stop</button>-->
                             </div>
                             <div class="form-group">
-                            <div id="pluploaderLogDiv" class="col-sm-12 collapse">
-                                <pre id="pluploaderLog" style="height:250px;"></pre>
-                            </div>
+                                <div id="pluploaderLogDiv" class="col-sm-12 collapse">
+                                    <pre id="pluploaderLog" style="height:250px;"></pre>
+                                </div>
                             </div>
                             </br>
                             <form class="form-horizontal" id="uploadSucDiv" style="display:none;">
@@ -1173,8 +1166,6 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 </div>
 <!--New Collection Modal ENDs-->
 
-
-
 <!--Confirm Modal-->
 <div id="confirmModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -1192,3 +1183,65 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
     </div>
 </div>
 <!--Confirm Modal Ends-->
+
+<!--manualRunModal-->
+<div id="manualRunModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Manual Run Console</h4>
+            </div>
+            <div class="modal-body"  style="padding:20px;">
+                <div class="row">
+                    <div class="form-group col-sm-12">
+                        <p id="manualRunText"></p>
+                    </div>
+                </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div class="form-group col-sm-12" style="margin-bottom:20px;">
+                            <label class="col-sm-3 control-label text-left" style="padding-left:70px; padding-top:5px;">Run Type: </label>
+                            <div class="col-sm-4">
+                                <select id="manuaRunType" class="form-control">
+                                    <option value="rerun">Fresh Start</option>
+                                    <option value="resumerun">Resume</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-1" style="padding-top:5px;">
+                                <span><i class='fa fa-long-arrow-right'></i></span>
+
+                            </div>
+                            <div class="col-sm-4">
+                                <button id="getManualRunCmd" type="button" class="btn btn-primary">Get Run Command</button>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-12">
+                            <p class="col-sm-12 control-label text-left" style="padding:0px; margin:0px;">Run Command: </p>
+                            <div class="col-sm-11" style="padding:0px; margin:0px;">
+                                <textarea readonly rows="1" class="form-control" style="resize:none; " id="manualRunCmd"></textarea>
+                            </div>
+                            <div class="col-sm-1" style="padding:0px; margin:0px; padding-right:20px;">
+                                <button id="cpTooltipManRun" type="button" class="btn btn-default form-control" data-backdrop="false">
+                                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Copy to Clipboard">
+                                        <span><i class="glyphicon glyphicon-copy"></i></span></a>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-sm-12">
+                        <p id="manualRunHelp" style="font-size:13px;"></p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--manualRunModal Ends-->

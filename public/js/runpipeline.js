@@ -4663,44 +4663,47 @@ function runProjectPipe(runProPipeCall, checkType) {
     var pathArray = [];
     var pathArrayL1 = []; //shortened to 1 directory
     var profileData = [];
-    window['checkType'] = "";
-    window['execOtherOpt'] = "";
+    window.checkType = "";
+    window.execOtherOpt = "";
+    window.sshCheck = false;
     window.initRunOptions = "";
-    window['manualExecCheck'] = false;
     // check ssh key
     profileData= getJobData("job");
     if (profileData){
         if (profileData[0]){
             if (profileData[0].ssh_id){
-                window['manualExecCheck'] = true;
+                if (profileData[0].ssh_id != "0"){
+                    window.sshCheck = true;
+                }
             }
         }
     }
-    if (window['manualExecCheck']){
+    //sshCheck should be true or manualRunModal should be open to initiate run with runProPipeCall
+    if (window.sshCheck || ($("#manualRunModal").data('bs.modal') || {}).isShown){
         displayButton('connectingProPipe');
+        //create uuid for run
+        var manualRun = ($("#manualRunModal").data('bs.modal') || {}).isShown.toString();
+        var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id, manualRun:manualRun });
+        fillRunVerOpt(["#runVerLog", "#runVerReport"])
+        $('#runLogArea').val("");
+        var hostname = $('#chooseEnv').find('option:selected').attr('host');
+        pathArray = getPathArray();
+        //autofill for ghpcc06 cluster to mount all directories before run executed.
+        if (hostname === "ghpcc06.umassrc.org") {
+            execOtherOpt = autofillMountPath(pathArray)
+        }
+        pathArrayL1 = getPathArrayL1(pathArray)
+        //Autofill runOptions of singularity and docker image
+        window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
+        //initial run run-options to send with ajax
+        window.initRunOptions = getInitRunOptions(pathArrayL1)
+
+        // Call the callback
+        setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
     } else {
         displayButton('manualProPipe');
+        $("#manualRunModal").modal("show");
     }
-
-    
-    //create uuid for run
-    var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id });
-    fillRunVerOpt(["#runVerLog", "#runVerReport"])
-    $('#runLogArea').val("");
-    var hostname = $('#chooseEnv').find('option:selected').attr('host');
-    pathArray = getPathArray();
-    //autofill for ghpcc06 cluster to mount all directories before run executed.
-    if (hostname === "ghpcc06.umassrc.org") {
-        execOtherOpt = autofillMountPath(pathArray)
-    }
-    pathArrayL1 = getPathArrayL1(pathArray)
-    //Autofill runOptions of singularity and docker image
-    window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
-    //initial run run-options to send with ajax
-    window.initRunOptions = getInitRunOptions(pathArrayL1)
-
-    // Call the callback
-    setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
 }
 
 //click on run button (callback function)
@@ -4823,10 +4826,12 @@ function runProPipeCall(checkType, uuid) {
             });
         }
     }
-    console.log(configTextRaw);
-    console.log(window.initRunOptions);
-    var configText = encodeURIComponent(configTextRaw);
-    var initRunOptions = encodeURIComponent(window.initRunOptions)
+//    console.log(window["configTextRaw"]);
+//    console.log(window["initRunOptions"]);
+    var configText = encodeURIComponent(window["configTextRaw"]);
+    var initRunOptions = encodeURIComponent(window["initRunOptions"]);
+    var manualRun = ($("#manualRunModal").data('bs.modal') || {}).isShown.toString();
+    
     //save nextflow text as nextflow.nf and start job
     serverLog = '';
     var serverLogGet = getValues({
@@ -4841,11 +4846,20 @@ function runProPipeCall(checkType, uuid) {
         amazon_cre_id: amazon_cre_id,
         project_pipeline_id: project_pipeline_id,
         runType: checkType,
+        manualRun: manualRun,
         uuid: uuid
     });
     updateRunVerNavBar()
-    $('.nav-tabs a[href="#logTab"]').tab('show');
-    readNextflowLogTimer(proType, proId, "default");
+    if (manualRun == "true"){
+        if (serverLogGet){
+            console.log(serverLogGet)
+            $("#manualRunCmd").val("test")
+        }
+    } else {
+        $('.nav-tabs a[href="#logTab"]').tab('show');
+        readNextflowLogTimer(proType, proId, "default");
+    }
+    
 }
 
 //#########read nextflow log file for status  ################################################
@@ -5901,6 +5915,11 @@ $(document).ready(function () {
             $('body').css('overflow', 'hidden auto');
             $('body').css('position', 'static');
         })
+
+
+
+
+
 
         $('#inputFilemodal').on('click', '#addSample', function (event) {
             event.preventDefault();
@@ -9269,6 +9288,34 @@ $(document).ready(function () {
             }
         });
     });
+
+
+    $('#manualRunModal').on('show.bs.modal', function () {
+        if (window.sshCheck){
+            $("#manualRunText").html('Run command will be created in the box below which is ready to be executed in your machine.')
+            $("#manualRunHelp").html('');
+        } else {
+            $("#manualRunText").html('You haven\'t defined SSH-Keys in you run environment. However, you can still execute your run by using command line. </br>Please choose your <b>Run Type</b> and click <b>Get Run Command</b> button. Run command will be created in the box below which is ready to be executed in your machine.')
+            $("#manualRunHelp").html('<b style="color:blue;">* Note:</b> If you want DolphinNext to execute your run, please follow <b><a target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">this tutorial</a></b> and add SSH-Keys into your profile.'); 
+        }
+    });
+
+    $( "#getManualRunCmd" ).on('click', function (e) {
+        var checkType = $("#manuaRunType")
+        if (checkType){
+            runProjectPipe(runProPipeCall, checkType);
+        }
+    });
+
+    $( "#cpTooltipManRun" ).on('click', function (e) {
+        var copyText = document.getElementById("manualRunCmd");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+    });
+
+
+
 
 
 
