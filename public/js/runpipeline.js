@@ -4801,7 +4801,7 @@ function runProPipeCall(checkType, uuid) {
     if ($('#exec_all').is(":checked") === true) {
         var exec_all_settingsRaw = $('#allProcessSettTable').find('input');
         var exec_all_settings = formToJson(exec_all_settingsRaw);
-        configTextAllProcess(window.configTextRaw, exec_all_settings, "all", "", executor_job);
+        window.configTextRaw = configTextAllProcess(window.configTextRaw, exec_all_settings, "all", "", executor_job);
         window.initRunOptions = configTextAllProcess(window.initRunOptions, exec_all_settings, "all", "", executor_job);
     } else {
         if (execOtherOpt != "" && execOtherOpt != null) {
@@ -4811,7 +4811,7 @@ function runProPipeCall(checkType, uuid) {
                 allProSett.job_clu_opt = newJobCluOpt;
             }
         }
-        configTextAllProcess(window.configTextRaw, allProSett, "all", "", executor_job);
+        window.configTextRaw = configTextAllProcess(window.configTextRaw, allProSett, "all", "", executor_job);
         window.initRunOptions = configTextAllProcess(window.initRunOptions, allProSett, "all", "", executor_job);
     }
     if ($('#exec_each').is(":checked") === true) {
@@ -4822,7 +4822,7 @@ function runProPipeCall(checkType, uuid) {
                 var each_settings = exec_each_settings[el];
                 var processName = $("#" + el + " :nth-child(2)").text()
                 //process.$hello.queue = 'long'
-                configTextAllProcess(window.configTextRaw, each_settings, "each", processName, executor_job);
+                window.configTextRaw = configTextAllProcess(window.configTextRaw, each_settings, "each", processName, executor_job);
             });
         }
     }
