@@ -4707,7 +4707,6 @@ function runProjectPipe(runProPipeCall, checkType) {
         // Call the callback
         setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
     } else {
-        displayButton('manualProPipe');
         $("#manualRunModal").modal("show");
     }
 }
