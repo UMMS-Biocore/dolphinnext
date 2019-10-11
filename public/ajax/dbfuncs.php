@@ -1166,7 +1166,7 @@ class dbfuncs {
         $ret = array();
         if (!empty($targz_file)){
             $targz_file_public= "{$this->base_path}/tmp/pub/$uuid/run.tar.gz";
-            $ret["manualRunCmd"] = "mkdir -p $dolphin_path_real && cd $dolphin_path_real && wget -O $targz_file_public && tar xf run.tar.gz && rm run.tar.gz && bash .dolphinnext.init";
+            $ret["manualRunCmd"] = "mkdir -p $dolphin_path_real && cd $dolphin_path_real && rm -f run.tar.gz && wget $targz_file_public && tar xf run.tar.gz && rm run.tar.gz && bash .dolphinnext.init";
             $this->writeLog($uuid,"RUN COMMAND:\n".$ret["manualRunCmd"],'a','serverlog.txt');
         }
         return json_encode($ret);
