@@ -6138,67 +6138,133 @@ $(document).ready(function () {
         }
 
         $('#viewGeoBut').click(function () {
-            var geo_id = $('#geo_id').val()
-            if (geo_id) {
-                var geoList = "";
-                $.ajax({
-                    type: "POST",
-                    url: "ajax/ajaxquery.php",
-                    data: { p: 'getGeoData', geo_id: geo_id },
-                    beforeSend: function () { showLoadingDiv("viewGeoButDiv"); },
-                    complete: function () {
-                        $("#seaGeoSamplesDiv").css("display", "block");
-                        hideLoadingDiv("viewGeoButDiv");
-                    },
-                    async: true,
-                    success: function (geoList) {
-                        if (!geoList) {
-                            showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
-                        } else if (geoList.length == 0) {
-                            showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
-                        } else if (geoList.length == 1 && $.isEmptyObject(geoList[0])) {
-                            showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
-                        } else {
-                            var errCount = 0;
-                            if (geoList.length) {
-                                for (var i = 0; i < geoList.length; i++) {
-                                    if (geoList[i].srr_id && geoList[i].collection_type) {
-                                        var name = geoList[i].srr_id;
-                                        if (geoList[i].name) {
-                                            name = geoList[i].name;
-                                        }
-                                        var srr_id = geoList[i].srr_id;
-                                        var collection_type = geoList[i].collection_type;
-                                        if (collection_type == "single") {
-                                            collection_type = "Single";
-                                        } else if (collection_type == "pair") {
-                                            collection_type = "Paired";
-                                        }
-                                        var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
-                                        //check table data before adding.
-                                        var selected_data = selectedGeoSamplesTable.fnGetData();
-                                        var checkSelectedUniqueData = selected_data.filter(function (el) { return el[1] == srr_id });
-                                        var table_data = searchedGeoSamplesTable.fnGetData();
-                                        var checkTableUniqueData = table_data.filter(function (el) { return el[1] == srr_id });
-                                        if (checkTableUniqueData.length == 0 && checkSelectedUniqueData.length == 0) {
-                                            searchedGeoSamplesTable.fnAddData([name, srr_id, collection_type, select_button]);
-                                        } else {
-                                            if (errCount < 1) {
-                                                showInfoModal("#infoModal", "#infoModalText", "Search term " + srr_id + " already added into table.")
-                                            } else {
-                                                var oldtext = $("#infoModalText").html();
-                                                $("#infoModalText").html(oldtext + "</br>" + "Search term " + srr_id + " already added into table.");
+            var sraQuery = function(geo_id, retstart, retmax, geoList){
+                var searchURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&usehistory=y&retmode=json&term='+geo_id;
+                var res = apiCallUrl(searchURL)
+                if (res){
+                    if (res.esearchresult){
+                        if (res.esearchresult.webenv && res.esearchresult.querykey){
+                            var webenv = res.esearchresult.webenv;
+                            var querykey = res.esearchresult.querykey;
+                            var resultsURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=sra&retmode=json&query_key='+querykey+'&WebEnv='+webenv+'&retstart='+retstart+'&retmax='+retmax;
+                            var res2 = apiCallUrl(resultsURL)
+                            if (res2){
+                                if (res2.result){
+                                    var res2_res =res2.result
+                                    $.each(res2_res, function (el) {
+                                        if (res2_res[el]["expxml"]){
+                                            var expJSON = xmlStringToJson(res2_res[el]["expxml"]);
+                                            var runsJSON = xmlStringToJson(res2_res[el]["runs"]);
+                                            if (expJSON.Summary && runsJSON.Run){
+                                                for(var i = 0; i < runsJSON.Run.length; i++){
+                                                    if (expJSON.Summary.Title && runsJSON.Run[i].attributes){
+                                                        if (expJSON.Summary.Title.text && runsJSON.Run[i].attributes.acc){
+                                                            var sra_clean = expJSON.Summary.Title.text.replace(/[^a-z0-9\._\-]/gi, '_').replace(/_+/g, '_');
+                                                            geoList.push({
+                                                                srr_id: runsJSON.Run[i].attributes.acc,
+                                                                collection_type: "single",
+                                                                name: sra_clean,
+                                                            }) 
+                                                        }
+                                                    }
+                                                };
                                             }
-                                            errCount += 1
                                         }
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                return geoList;
+            }
+            
+            //GSM1331276 GSE30567 GSE55190
+            var geo_id = $('#geo_id').val()
+            var geoList = [];
+            if (geo_id) {
+                //onstart:
+                showLoadingDiv("viewGeoButDiv");
+                
+                var retmax = 200;
+                var retstart = 0;
+                //try with db=sra
+                geoList = sraQuery(geo_id, retstart, retmax, geoList);
+                //try with db=gds
+                if (geoList.length == 0) {
+                    var searchURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gds&usehistory=y&retmode=json&term='+geo_id;
+                    var res = apiCallUrl(searchURL)
+                    console.log(res);
+                    if (res){
+                        if (res.esearchresult){
+                            if (res.esearchresult.webenv && res.esearchresult.querykey){
+                                var webenv = res.esearchresult.webenv;
+                                var querykey = res.esearchresult.querykey;
+                                var resultsURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=sra&retmode=json&query_key='+querykey+'&WebEnv='+webenv+'&retstart='+retstart+'&retmax='+retmax;
+                                var res2 = apiCallUrl(resultsURL)
+                                console.log(res2)
+                                if (res2){
+                                    if (res2.result){
+                                        var res2_res =res2.result
+                                        $.each(res2_res, function (el) {
+                                            if (res2_res[el]["accession"] && res2_res[el]["title"]){
+                                                geoList = sraQuery(res2_res[el]["accession"], retstart, retmax, geoList);
+                                            }
+                                        });
                                     }
                                 }
                             }
                         }
                     }
-                });
-
+                }
             }
+
+
+            console.log(geoList)
+            //fill the table based on geoList
+            if (geoList.length == 0) {
+                showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
+            } else {
+                //oncomplete:
+                $("#seaGeoSamplesDiv").css("display", "block");
+                hideLoadingDiv("viewGeoButDiv");
+                var errCount = 0;
+                if (geoList.length) {
+                    for (var i = 0; i < geoList.length; i++) {
+                        if (geoList[i].srr_id && geoList[i].collection_type) {
+                            var name = geoList[i].srr_id;
+                            if (geoList[i].name) {
+                                name = geoList[i].name;
+                            }
+                            var srr_id = geoList[i].srr_id;
+                            var collection_type = geoList[i].collection_type;
+                            if (collection_type == "single") {
+                                collection_type = "Single";
+                            } else if (collection_type == "pair") {
+                                collection_type = "Paired";
+                            }
+                            var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
+                            //check table data before adding.
+                            var selected_data = selectedGeoSamplesTable.fnGetData();
+                            var checkSelectedUniqueData = selected_data.filter(function (el) { return el[1] == srr_id });
+                            var table_data = searchedGeoSamplesTable.fnGetData();
+                            var checkTableUniqueData = table_data.filter(function (el) { return el[1] == srr_id });
+                            if (checkTableUniqueData.length == 0 && checkSelectedUniqueData.length == 0) {
+                                searchedGeoSamplesTable.fnAddData([name, srr_id, collection_type, select_button]);
+                            } else {
+                                if (errCount < 1) {
+                                    showInfoModal("#infoModal", "#infoModalText", "Search term " + srr_id + " already added into table.")
+                                } else {
+                                    var oldtext = $("#infoModalText").html();
+                                    $("#infoModalText").html(oldtext + "</br>" + "Search term " + srr_id + " already added into table.");
+                                }
+                                errCount += 1
+                            }
+                        }
+                    }
+                }
+            }
+
         });
 
 
@@ -9334,7 +9400,7 @@ $(document).ready(function () {
         var checkExistingManualRun = false;
         if (window.runStatus){
             if (window.runStatus == "Manual"){
-            checkExistingManualRun = true;
+                checkExistingManualRun = true;
             }
         }
         if (!checkExistingManualRun){

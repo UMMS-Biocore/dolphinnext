@@ -1011,6 +1011,90 @@ function getValuesErr(data, async) {
 }
 
 
+function apiCallUrl(url) {
+    var result = null;
+    $.ajax({
+        url: url,
+        async: false,
+        type: "GET",
+        success: function (data) {
+            result = data;
+        },
+        error: function (jqXHR, exception) {
+            var msg = '';
+            if (jqXHR.status === 0) {
+                msg = 'Not connect.\n Verify Network.';
+            } else if (jqXHR.status == 404) {
+                msg = 'Requested page not found. [404]';
+            } else if (jqXHR.status == 500) {
+                msg = 'Internal Server Error [500].';
+            } else if (exception === 'parsererror') {
+                msg = 'Requested JSON parse failed.';
+            } else if (exception === 'timeout') {
+                msg = 'Time out error.';
+            } else if (exception === 'abort') {
+                msg = 'Ajax request aborted.';
+            } else {
+                if (jqXHR.responseText) {
+                    msg = 'Uncaught Error.\n' + jqXHR.responseText;
+                }
+            }
+            alert("#Ajax Error: "+msg);
+        }
+    });
+    return result;
+}
+
+
+
+
+function xmlStringToJson(xmlString){
+    var expXMLraw = '<document>'+$('<div/>').html(xmlString).text().trim()+'</document>';
+    var parser = new DOMParser();
+    var xml = parser.parseFromString(expXMLraw,"text/xml");
+    var obj = xmlToJson(xml)
+    if (obj.document){
+        obj = obj.document
+    }
+    return obj;
+}
+
+// Changes XML to JSON
+function xmlToJson(xml) {
+    // Create the return object
+    var obj = {};
+    if (xml.nodeType == 1) { // element
+        // do attributes
+        if (xml.attributes.length > 0) {
+            obj["attributes"] = {};
+            for (var j = 0; j < xml.attributes.length; j++) {
+                var attribute = xml.attributes.item(j);
+                obj["attributes"][attribute.nodeName] = attribute.value;
+            }
+        }
+    } else if (xml.nodeType == 3) { // text
+        obj = xml.nodeValue;
+    }
+    // do children
+    if (xml.hasChildNodes()) {
+        for(var i = 0; i < xml.childNodes.length; i++) {
+            var item = xml.childNodes.item(i);
+            var nodeName = item.nodeName.replace('#','');
+            if (typeof(obj[nodeName]) == "undefined") {
+                obj[nodeName] = xmlToJson(item);
+            } else {
+                if (typeof(obj[nodeName].push) == "undefined") {
+                    var old = obj[nodeName];
+                    obj[nodeName] = [];
+                    obj[nodeName].push(old);
+                }
+                obj[nodeName].push(xmlToJson(item));
+            }
+        }
+    }
+    return obj;
+};
+
 function callMarkDownApp(text) {
     text = JSON.stringify(text)
     var result = null;
@@ -1057,6 +1141,7 @@ function getValuesAsync(data, callback) {
         }
     });
 }
+
 
 
 
