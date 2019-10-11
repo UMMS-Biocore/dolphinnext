@@ -65,6 +65,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <ul class="dropdown-menu" role="menu">
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
+                    <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
                 </ul>
             </div>
             <div id="completeProPipe" style="display:none; float:right; " class="btn-group">
@@ -75,6 +76,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <ul class="dropdown-menu" role="menu">
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
+                    <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
                 </ul>
             </div>
             <div id="runningProPipe" style="display:none; float:right; " class="btn-group">
@@ -112,6 +114,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <ul class="dropdown-menu" role="menu">
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
+                    <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
                 </ul>
             </div>
             <div id="abortedProPipe" style="display:none; float:right; " class="btn-group">
@@ -122,13 +125,31 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <ul class="dropdown-menu" role="menu">
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
+                    <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
                 </ul>
             </div>
             <div id="manualProPipe" style="display:none; float:right; " class="btn-group">
-                <button class="btn bg-purple-active color-palette" type="button" id="manualProPipeBut" data-toggle="modal" href="#manualRunModal">Manual Execution</button>
+                <button class="btn bg-purple-active color-palette" type="button" id="manualProPipeBut" data-toggle="modal" href="#manualRunModal">Manual Run</button>
+                <button type="button" class="btn bg-purple-active color-palette dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
+                    <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
+                    <li><a data-toggle="modal" href="#manualRunModal">Manual Run</a></li>
+                </ul>
             </div>
-            <button class="btn btn-success" type="button" id="runProPipe" onclick="runProjectPipe(runProPipeCall,&#34;newrun&#34;);return false;" title="Ready to run pipeline" data-placement="bottom" data-toggle="tooltip" style="display:none; vertical-align:middle;">Ready to Run</button>
-            <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; vertical-align:middle;" title="Waiting for input parameters, output directory and selection of active environment (if s3 path is defined then waiting for the amazon keys)" data-placement="bottom" data-toggle="tooltip">Waiting</button>
+            <div id="runProPipe" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-success" type="button" id="runProPipeBut" onclick="runProjectPipe(runProPipeCall,&#34;newrun&#34;);return false;" ><i class="fa fa-play" style=""></i> Run</button>
+                <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="#" onclick="runProjectPipe(runProPipeCall,&#34;newrun&#34;);return false;">Start</a></li>
+                    <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
+                </ul>
+            </div>
+            <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; vertical-align:middle;" data-original-title="Waiting for input parameters, output directory and selection of active environment (if s3 path is defined then waiting for the amazon keys)" data-placement="bottom" data-toggle="tooltip">Waiting</button>
         </div>
     </div>
 </div>
@@ -1200,7 +1221,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 </div>
 
                 <div class="panel panel-default">
-                    <div class="panel-body">
+                    <div class="panel-body" id="manuaRunPanel">
                         <div class="form-group col-sm-12" style="margin-bottom:20px;">
                             <label class="col-sm-3 control-label text-left" style="padding-left:70px; padding-top:5px;">Run Type: </label>
                             <div class="col-sm-4">
@@ -1220,9 +1241,9 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         <div class="form-group col-sm-12">
                             <p class="col-sm-12 control-label text-left" style="padding:0px; margin:0px;">Run Command: </p>
                             <div class="col-sm-11" style="padding:0px; margin:0px;">
-                                <textarea readonly rows="1" class="form-control" style="resize:none; " id="manualRunCmd"></textarea>
+                                <textarea readonly rows="4" class="form-control" style="resize:none; " id="manualRunCmd"></textarea>
                             </div>
-                            <div class="col-sm-1" style="padding:0px; margin:0px; padding-right:20px;">
+                            <div class="col-sm-1" style="margin-top:20px; padding-right:10px;">
                                 <button id="cpTooltipManRun" type="button" class="btn btn-default form-control" data-backdrop="false">
                                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Copy to Clipboard">
                                         <span><i class="glyphicon glyphicon-copy"></i></span></a>

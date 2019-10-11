@@ -4678,12 +4678,19 @@ function runProjectPipe(runProPipeCall, checkType) {
             }
         }
     }
+    var manualRunCheck = "false";
+    if (window["manualRun"]){ 
+        if (window["manualRun"] == "true"){
+            manualRunCheck = "true"
+        }
+    }
     //sshCheck should be true or manualRunModal should be open to initiate run with runProPipeCall
-    if (window.sshCheck || ($("#manualRunModal").data('bs.modal') || {}).isShown){
-        displayButton('connectingProPipe');
+    if (window.sshCheck || manualRunCheck == "true"){
+        if (manualRunCheck != "true"){
+            displayButton('connectingProPipe');
+        }
         //create uuid for run
-        var manualRun = ($("#manualRunModal").data('bs.modal') || {}).isShown.toString();
-        var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id, manualRun:manualRun });
+        var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id, manualRun:manualRunCheck });
         fillRunVerOpt(["#runVerLog", "#runVerReport"])
         $('#runLogArea').val("");
         var hostname = $('#chooseEnv').find('option:selected').attr('host');
@@ -4697,7 +4704,6 @@ function runProjectPipe(runProPipeCall, checkType) {
         window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
         //initial run run-options to send with ajax
         window.initRunOptions = getInitRunOptions(pathArrayL1)
-
         // Call the callback
         setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
     } else {
@@ -4826,12 +4832,17 @@ function runProPipeCall(checkType, uuid) {
             });
         }
     }
-//    console.log(window["configTextRaw"]);
-//    console.log(window["initRunOptions"]);
+    console.log(window["configTextRaw"]);
+    console.log(window["initRunOptions"]);
     var configText = encodeURIComponent(window["configTextRaw"]);
     var initRunOptions = encodeURIComponent(window["initRunOptions"]);
-    var manualRun = ($("#manualRunModal").data('bs.modal') || {}).isShown.toString();
-    
+    var manualRunCheck = "false";
+    if (window["manualRun"]){ 
+        if (window["manualRun"] == "true"){
+            manualRunCheck = "true"
+            window["manualRun"] = "false";
+        }
+    }
     //save nextflow text as nextflow.nf and start job
     serverLog = '';
     var serverLogGet = getValues({
@@ -4846,20 +4857,21 @@ function runProPipeCall(checkType, uuid) {
         amazon_cre_id: amazon_cre_id,
         project_pipeline_id: project_pipeline_id,
         runType: checkType,
-        manualRun: manualRun,
+        manualRun: manualRunCheck,
         uuid: uuid
     });
     updateRunVerNavBar()
-    if (manualRun == "true"){
+    if (manualRunCheck == "true"){
         if (serverLogGet){
-            console.log(serverLogGet)
-            $("#manualRunCmd").val("test")
+            if (serverLogGet["manualRunCmd"]){
+                $("#manualRunCmd").val(serverLogGet["manualRunCmd"])
+                hideLoadingDiv("manuaRunPanel");
+            }
         }
-    } else {
-        $('.nav-tabs a[href="#logTab"]').tab('show');
-        readNextflowLogTimer(proType, proId, "default");
-    }
-    
+    } 
+    $('.nav-tabs a[href="#logTab"]').tab('show');
+    readNextflowLogTimer(proType, proId, "default");
+
 }
 
 //#########read nextflow log file for status  ################################################
@@ -4964,7 +4976,7 @@ function readNextLog(proType, proId, type) {
 
         // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
-        if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr") {
+        if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr" || runStatus === "Manual") {
             window["countFailRead"]=0;
             if (type !== "reload") {
                 clearIntNextLog(proType, proId);
@@ -4977,6 +4989,16 @@ function readNextLog(proType, proId, type) {
                 displayButton('errorProPipe');
             } else if (runStatus === "Terminated") {
                 displayButton('terminatedProPipe');
+            } else if (runStatus === "Manual") {
+                displayButton('manualProPipe');
+                if (window.serverLog){
+                    if (window["serverLog"].match(/RUN COMMAND:/)){
+                        var serverlogRows = window["serverLog"].split("\n");
+                        if (serverlogRows[1]){
+                            $("#manualRunCmd").val(serverlogRows[1])
+                        }
+                    }
+                }
             }
         }
         // when run hasn't finished yet and page reloads then show connecting button
@@ -9291,18 +9313,42 @@ $(document).ready(function () {
 
 
     $('#manualRunModal').on('show.bs.modal', function () {
+        window.sshCheck = false;
+        // check ssh key
+        var profileData= getJobData("job");
+        if (profileData){
+            if (profileData[0]){
+                if (profileData[0].ssh_id){
+                    if (profileData[0].ssh_id != "0"){
+                        window.sshCheck = true;
+                    }
+                }
+            }
+        }
         if (window.sshCheck){
-            $("#manualRunText").html('Run command will be created in the box below which is ready to be executed in your machine.')
-            $("#manualRunHelp").html('');
+            $("#manualRunText").html('<b style="color:blue;">Warning:</b> This is an optional feature for users who want to execute their run manually in the terminal. If you want DolphinNext to execute your run, please close this window and click <b>Start</b>, <b>Resume</b> or <b>Rerun</b> buttons. </br>Otherwise, please choose your <b>Run Type</b> at below and click <b>Get Run Command</b> button. Run command will be created in the box below which is ready to be executed in your machine.')
+            $("#manualRunHelp").html('<b style="color:blue;">* Warning:</b> This command expires after 10 minutes for security purposes. After timeout, you can click <b>Get Run Command</b> button to create new one.');
         } else {
-            $("#manualRunText").html('You haven\'t defined SSH-Keys in you run environment. However, you can still execute your run by using command line. </br>Please choose your <b>Run Type</b> and click <b>Get Run Command</b> button. Run command will be created in the box below which is ready to be executed in your machine.')
-            $("#manualRunHelp").html('<b style="color:blue;">* Note:</b> If you want DolphinNext to execute your run, please follow <b><a target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">this tutorial</a></b> and add SSH-Keys into your profile.'); 
+            $("#manualRunText").html('You haven\'t defined SSH-Keys in you run environment. However, you can still execute your run by using terminal. </br>Please choose your <b>Run Type</b> and click <b>Get Run Command</b> button. Run command will be created in the box below which is ready to be executed in your machine.')
+            $("#manualRunHelp").html('<b style="color:blue;">* Warning:</b> This command expires after 10 minutes for security purposes. After timeout, you can click <b>Get Run Command</b> button to create new one.</br> <b style="color:blue;">* Note:</b> If you want DolphinNext to execute your run, please follow <b><a target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">this tutorial</a></b> and add SSH-Keys into your profile.'); 
+        }
+        var checkExistingManualRun = false;
+        if (window.runStatus){
+            if (window.runStatus == "Manual"){
+            checkExistingManualRun = true;
+            }
+        }
+        if (!checkExistingManualRun){
+            $("#manualRunCmd").val("")
         }
     });
 
     $( "#getManualRunCmd" ).on('click', function (e) {
-        var checkType = $("#manuaRunType")
+        var checkType = $("#manuaRunType").val()
         if (checkType){
+            window["manualRun"] = "true"
+            showLoadingDiv("manuaRunPanel");
+            $("#manualRunCmd").val("");
             runProjectPipe(runProPipeCall, checkType);
         }
     });

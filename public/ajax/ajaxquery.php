@@ -53,7 +53,7 @@ if ($p=="saveRun"){
     //create file and folders
     list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $s3configFileDir, $amzConfigText, $attempt, $runType, $initialrun_img, $ownerID);
     if ($manualRun == "true"){
-        $data = $db->getManualRunCmd($targz_file, $dolphin_path_real);
+        $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
     } else {
         //run the script in remote machine
         $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
@@ -71,7 +71,7 @@ else if ($p=="updateRunAttemptLog") {
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : "";
     $res= $db->getUUIDLocal("run_log");
     $uuid = $res->rev_uuid;
-    $status = ($manualRun == "true") ? "manual" : "init";
+    $status = ($manualRun == "true") ? "Manual" : "init";
     //add run into run table and increase the run attempt. $status = "init";
     $db->updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID);
     $data = json_encode($uuid);

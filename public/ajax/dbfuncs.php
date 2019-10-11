@@ -1115,6 +1115,7 @@ class dbfuncs {
         if (file_exists($run_path_real."/.aws_cred")) {
             unlink($run_path_real."/.aws_cred");
         }
+        error_log($uuid);
         return array($targz_file, $dolphin_path_real, $runCmdAll);
     }
 
@@ -1161,9 +1162,13 @@ class dbfuncs {
         return json_encode($ret);
     }
     
-    function getManualRunCmd($targz_file, $dolphin_path_real){
+    function getManualRunCmd($targz_file, $uuid, $dolphin_path_real){
         $ret = array();
-        $ret["manualRunCmd"] = "mkdir -p $dolphin_path_real && wget $targz_file && tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real && rm $dolphin_path_real/run.tar.gz && bash $dolphin_path_real/.dolphinnext.init";
+        if (!empty($targz_file)){
+            $targz_file_public= "{$this->base_path}/tmp/pub/$uuid/run.tar.gz";
+            $ret["manualRunCmd"] = "mkdir -p $dolphin_path_real && cd $dolphin_path_real && wget $targz_file_public && tar xf run.tar.gz && rm run.tar.gz && bash .dolphinnext.init";
+            $this->writeLog($uuid,"RUN COMMAND:\n".$ret["manualRunCmd"],'a','serverlog.txt');
+        }
         return json_encode($ret);
     }
 
@@ -1627,7 +1632,7 @@ class dbfuncs {
     }
 
     public function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
-        // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+        // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted, Manual
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
         $out = array();
         $duration = ""; //run duration
@@ -1691,7 +1696,7 @@ class dbfuncs {
                 $out["serverLog"] = $serverLog;
                 $out["nextflowLog"] = $nextflowLog;
 
-                if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr") {
+                if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr" || $runStatus === "Manual") {
                     // when run hasn't finished yet and connection is down
                 } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
                     //log file might be deleted or couldn't read the log file

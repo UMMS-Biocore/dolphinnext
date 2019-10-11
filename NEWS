@@ -1,5 +1,5 @@
 11.10.2019 Version 0.3.68
-GEO search improved by ENA database. 
+Manual run execution feature added which allows to execute run without defining SSH keys.
 
 10.10.2019 Version 0.3.67
 Minor bug fixed regarding to process executors in the run page.
