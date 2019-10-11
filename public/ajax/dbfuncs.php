@@ -1115,6 +1115,7 @@ class dbfuncs {
         if (file_exists($run_path_real."/.aws_cred")) {
             unlink($run_path_real."/.aws_cred");
         }
+        error_log($uuid);
         return array($targz_file, $dolphin_path_real, $runCmdAll);
     }
 
@@ -1158,6 +1159,16 @@ class dbfuncs {
         $ret['next_submit_pid'] = $next_submit_pid;
         $this->updateRunLog($project_pipeline_id, "Waiting", "", $ownerID);
         $this->updateRunStatus($project_pipeline_id, "Waiting", $ownerID);
+        return json_encode($ret);
+    }
+    
+    function getManualRunCmd($targz_file, $uuid, $dolphin_path_real){
+        $ret = array();
+        if (!empty($targz_file)){
+            $targz_file_public= "{$this->base_path}/tmp/pub/$uuid/run.tar.gz";
+            $ret["manualRunCmd"] = "mkdir -p $dolphin_path_real && cd $dolphin_path_real && rm -f run.tar.gz && wget $targz_file_public && tar xf run.tar.gz && rm run.tar.gz && bash .dolphinnext.init";
+            $this->writeLog($uuid,"RUN COMMAND:\n".$ret["manualRunCmd"],'a','serverlog.txt');
+        }
         return json_encode($ret);
     }
 
@@ -1621,7 +1632,7 @@ class dbfuncs {
     }
 
     public function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
-        // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+        // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted, Manual
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
         $out = array();
         $duration = ""; //run duration
@@ -1685,7 +1696,7 @@ class dbfuncs {
                 $out["serverLog"] = $serverLog;
                 $out["nextflowLog"] = $nextflowLog;
 
-                if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr") {
+                if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr" || $runStatus === "Manual") {
                     // when run hasn't finished yet and connection is down
                 } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
                     //log file might be deleted or couldn't read the log file
@@ -1716,7 +1727,7 @@ class dbfuncs {
                                 $txt = trim($nextflowLog);
                                 $lines = explode("\n", $txt);
                                 for ($i = 0; $i < count($lines); $i++) {
-                                    
+
                                     if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i]) && !preg_match("/WARN: One or more errors/i", $lines[$i])){
                                         error_log("WARN: One or more errors");
                                         error_log($lines[$i]);
@@ -2890,8 +2901,33 @@ class dbfuncs {
         }
     }
 
+    function getSRRDataENA($srr_id) {
+        $obj = new stdClass();
+        if (preg_match("/SRR/i", $srr_id)){
+            //use www.ebi.ac.uk api which is faster and accurate if exist
+            $check_cmd = "curl -s 'https://www.ebi.ac.uk/ena/data/warehouse/filereport?result=read_run&fields=fastq_ftp&accession=$srr_id' 2>&1";
+            $log = shell_exec($check_cmd);
+            if (!empty($log)){
+                $log = trim($log);
+                $lines = explode("\n", $log);
+                if (count($lines) == 2){
+                    if (preg_match("/fastq_ftp/i", $lines[0]) && preg_match("/fastq/i", $lines[1])){
+                        $obj->srr_id = trim($srr_id);
+                        if (preg_match("/;/i", $lines[1])){
+                            $obj->collection_type = "pair";
+                        } else {
+                            $obj->collection_type = "single";
+                        }
+                    }
+                }
+            }
+        }
+        return $obj;
+    }
+    
+    
     //installed edirect(esearch,efetch) path should be added into .bashrc
-    public function getSRRData($srr_id, $ownerID) {
+    function getSRRData($srr_id) {
         $obj = new stdClass();
         $command = "esearch -db sra -query $srr_id |efetch -format runinfo";
         $resText = shell_exec("$command 2>&1 & echo $! &");
@@ -2905,6 +2941,10 @@ class dbfuncs {
                     $col = $header[$i];
                     if ($col == "Run"){
                         $obj->srr_id = trim($vals[$i]);
+                        $retObj = $this->getSRRDataENA($obj->srr_id);
+                        if (isset($retObj->collection_type)){
+                            return $retObj;
+                        }
                     } else if ($col == "LibraryLayout"){
                         if (trim($vals[$i]) == "PAIRED"){
                             $obj->collection_type = "pair";
@@ -2919,12 +2959,12 @@ class dbfuncs {
     }
 
     //installed edirect(esearch,efetch) path should be added into .bashrc
-    public function getGeoData($geo_id, $ownerID) {
+    function getGeoData($geo_id, $ownerID) {
         $data = array();
-        if (preg_match("/SRR/", $geo_id) || preg_match("/GSM/", $geo_id)){
-            $obj = $this->getSRRData($geo_id, $ownerID);
+        if (preg_match("/SRR/i", $geo_id) || preg_match("/GSM/i", $geo_id) || preg_match("/SRX/i", $geo_id)){
+            $obj = $this->getSRRData($geo_id);
             $data[] = $obj;
-        } else if (preg_match("/GSE/", $geo_id)){
+        } else if (preg_match("/GSE/i", $geo_id)){
             $command = "esearch -db gds -query $geo_id | esummary | xtract -pattern DocumentSummary -element title Accession";
             $resText = shell_exec("$command 2>&1 & echo $! &");
             if (!empty($resText)){
@@ -2933,10 +2973,10 @@ class dbfuncs {
                 for ($i = 0; $i < count($lines); $i++) {
                     $cols = explode("\t", $lines[$i]);
                     if (count($cols) == 2){
-                        $obj = $this->getSRRData($cols[1], $ownerID);
+                        $obj = $this->getSRRData($cols[1]);
                         $obj->name = trim(str_replace(" ","_",$cols[0]));
                         $data[] = $obj;
-                        sleep(1); //wait ncbi api limit 3query/sec
+                        usleep(400000); //wait ncbi api limit 3query/sec
                     }
                 }
             }

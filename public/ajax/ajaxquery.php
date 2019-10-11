@@ -34,6 +34,7 @@ if ($p=="saveRun"){
     $proVarObj = json_decode(urldecode($_REQUEST['proVarObj']));
     $initRunOptions = urldecode($_REQUEST['initRunOptions']);
     $runType = $_REQUEST['runType'];
+    $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
     $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
     $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
@@ -51,21 +52,28 @@ if ($p=="saveRun"){
     $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
     list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $s3configFileDir, $amzConfigText, $attempt, $runType, $initialrun_img, $ownerID);
-    //run the script
-    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
-    //activate autoshutdown feature for amazon
-    if  ($profileType == "amazon"){
-        $autoshutdown_active = "true";
-        $db->updateAmzShutdownActive($profileId, $autoshutdown_active, $ownerID);
-        $db->updateAmzShutdownDate($profileId, NULL, $ownerID);
+    if ($manualRun == "true"){
+        $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
+    } else {
+        //run the script in remote machine
+        $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
+        //activate autoshutdown feature for amazon
+        if  ($profileType == "amazon"){
+            $autoshutdown_active = "true";
+            $db->updateAmzShutdownActive($profileId, $autoshutdown_active, $ownerID);
+            $db->updateAmzShutdownDate($profileId, NULL, $ownerID);
+        } 
     }
+
 }
 else if ($p=="updateRunAttemptLog") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : "";
     $res= $db->getUUIDLocal("run_log");
     $uuid = $res->rev_uuid;
+    $status = ($manualRun == "true") ? "Manual" : "init";
     //add run into run table and increase the run attempt. $status = "init";
-    $db->updateRunAttemptLog("init", $project_pipeline_id, $uuid, $ownerID);
+    $db->updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID);
     $data = json_encode($uuid);
 }
 else if ($p=="updateProPipeStatus") {

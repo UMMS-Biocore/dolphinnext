@@ -25,7 +25,8 @@ def main():
     pull_cmd_log = os.popen(pull_cmd).read()
     print "\n" + "LOG :\n" + pull_cmd_log
     runUpdateCmd = "cd ../db/ && bash ./runUpdate " + conf['DB'] + " " + ownerID + " " + conf['DBUSER'] + " " + conf['DBPASS'] + " 2>&1"
-    print "\nINFO:" + " Database Update\nRUN : " + runUpdateCmd
+    runUpdateCmdLog = "cd ../db/ && bash ./runUpdate " + conf['DB'] + " " + ownerID + " " + conf['DBUSER'] + " " + "*****" + " 2>&1"
+    print "\nINFO:" + " Database Update\nRUN : " + runUpdateCmdLog
     runUpdateCmd_log = os.popen(runUpdateCmd).read()
     print "LOG :\n" + runUpdateCmd_log
     
