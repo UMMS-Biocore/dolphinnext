@@ -98,6 +98,15 @@ function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
     $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /></div>');
 }
+function showLoadingDivText(parentId, text) {
+    if ($("#loading-badge-" + parentId).length){
+        $("#loading-badge-" + parentId).text(text)
+    } else {
+        $("#" + parentId).addClass("loader-spin-parent")
+        $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /><p class="text-center"><span style:"margin-left:7px;" id="loading-badge-'+parentId+'" class="badge align-middle">'+text+'</span></p></div>');
+    }
+    return $("#" + parentId)
+}
 
 function hideLoadingDiv(parentId) {
     $("#" + parentId).removeClass("loader-spin-parent")
@@ -966,6 +975,7 @@ function getValues(data, async) {
                     msg = 'Uncaught Error.\n' + jqXHR.responseText;
                 }
             }
+            console.log(data);
             console.log("#Ajax Error: ");
             console.log(msg);
         }
@@ -1011,7 +1021,7 @@ function getValuesErr(data, async) {
 }
 
 
-function apiCallUrl(url) {
+function apiCallUrl(url) { 
     var result = null;
     $.ajax({
         url: url,
@@ -1039,7 +1049,7 @@ function apiCallUrl(url) {
                     msg = 'Uncaught Error.\n' + jqXHR.responseText;
                 }
             }
-            alert("#Ajax Error: "+msg);
+            console.log("#Ajax Error: "+msg);
         }
     });
     return result;
