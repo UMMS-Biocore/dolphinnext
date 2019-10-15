@@ -103,7 +103,7 @@ function showLoadingDivText(parentId, text) {
         $("#loading-badge-" + parentId).text(text)
     } else {
         $("#" + parentId).addClass("loader-spin-parent")
-        $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /><p class="text-center"><span style:"margin-left:7px;" id="loading-badge-'+parentId+'" class="badge align-middle">'+text+'</span></p></div>');
+        $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /><p class="text-center"><span style:"margin-left:9px;" id="loading-badge-'+parentId+'" class="badge align-middle">'+text+'</span></p></div>');
     }
     return $("#" + parentId)
 }
