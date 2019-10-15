@@ -1531,10 +1531,12 @@ function fillStates(states, url, urlzip, checkPath) {
         }
     });
 }
-// to execute autofill function, binds event handlers
-function bindEveHandler(autoFillJSON) {
+
+// to execute autofill function, binds event handlers to chooseEnv
+function bindEveHandlerChooseEnv(autoFillJSON) {
     $("#chooseEnv").change(autoFillJSON, function () {
         var triggeredFillStates = false;
+        console.log("fill with defaults")
         var fillHostFunc = function(autoFillJSON, type) {
             var triggeredFillStates = false;
             $.each(autoFillJSON, function (el) {
@@ -1563,8 +1565,11 @@ function bindEveHandler(autoFillJSON) {
             fillHostFunc(autoFillJSON, "default")
         }
     });
+}
 
-    //find buttons elements that should trigger autofill
+// to execute autofill function, binds event handlers to buttons other than chooseEnv
+function bindEveHandler(autoFillJSON) {
+    //find buttons that should trigger autofill
     var bindButtonArray = [];
     $.each(autoFillJSON, function (el) {
         var conds = autoFillJSON[el].condition;
@@ -2280,7 +2285,7 @@ function insertProRowTable(process_id, gNum, procName, procQueDef, procMemDef, p
 function addProPipeTab(process_id, gNum, procName, pObj) {
     if (pObj && pObj !== window) {
         procName = pObj.lastPipeName + "_" + procName;
-    }
+    }    
     var procQueDef = 'short';
     var procMemDef = '10'
     var procCpuDef = '1';
@@ -3521,7 +3526,7 @@ function loadPipelineDetails(pipeline_id, pipeData) {
                 autoFillJSON = decodeGenericCond(autoFillJSON);
 
             }
-            // first openPipeline  will create tables and forms
+            // first openPipeline() will create tables and forms
             // then loadProjectPipeline will load process options
             var sequentialCmd = function (pipeline_id, callback){
                 openPipeline(pipeline_id);
@@ -3651,6 +3656,7 @@ function loadProjectPipeline(pipeData) {
     // bind event handlers for autofill
     setTimeout(function () {
         if (autoFillJSON !== null && autoFillJSON !== undefined) {
+            bindEveHandlerChooseEnv(autoFillJSON);
             bindEveHandler(autoFillJSON);
         }
     }, 1000);
@@ -3695,7 +3701,7 @@ function loadProjectPipeline(pipeData) {
     // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
     cleanDepProPipeInputs();
     // fill executor settings:
-    if (pipeData[0].profile !== "" && chooseEnv && chooseEnv !== "") {
+    if (pipeData[0].profile !== "" && chooseEnv) {
         var [allProSett, profileData] = getJobData("both");
         var executor_job = profileData[0].executor_job;
         if (executor_job === 'ignite') {
@@ -5434,7 +5440,7 @@ function getJobData(getType) {
         var proId = chooseEnv.replace(patt, '$2');
         var profileData = getProfileData(proType, proId);
         var allProSett = {};
-        if (profileData && profileData != '') {
+        if (profileData) {
             allProSett.job_queue = profileData[0].job_queue;
             allProSett.job_memory = profileData[0].job_memory;
             allProSett.job_cpu = profileData[0].job_cpu;
@@ -6190,6 +6196,8 @@ $(document).ready(function () {
                 var deferreds = [];
                 var deferredsRes = [];
                 var deferredsData = [];
+                            console.log(res)
+                
                 if (res){
                     if (res.esearchresult){
                         if (res.esearchresult.webenv && res.esearchresult.querykey){
@@ -6197,6 +6205,7 @@ $(document).ready(function () {
                             var querykey = res.esearchresult.querykey;
                             var resultsURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=sra&retmode=json&query_key='+querykey+'&WebEnv='+webenv+'&retstart='+retstart+'&retmax='+retmax;
                             var res2 = apiCallUrl(resultsURL)
+                            console.log(res2)
                             if (res2){
                                 if (res2.result){
                                     var res2_res =res2.result
@@ -6217,6 +6226,7 @@ $(document).ready(function () {
                                                         if (expJSON.Summary.Title.text && runsJSON.Run[i].attributes.acc){
                                                             var srr_id = runsJSON.Run[i].attributes.acc
                                                             var sra_clean = expJSON.Summary.Title.text.replace(/[^a-z0-9\._\-]/gi, '_').replace(/_+/g, '_');
+                                                            console.log(srr_id)
                                                             if (srr_id.match(/SRR/i)){
                                                                 k++
                                                                 var searchENAUrl = 'https://www.ebi.ac.uk/ena/data/warehouse/filereport?result=read_run&fields=fastq_ftp&accession='+srr_id;
@@ -6308,6 +6318,7 @@ $(document).ready(function () {
             var gdsQuery = function(geo_id, retstart, retmax, geoList, queryDB){
                 var searchURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gds&usehistory=y&retmode=json&term='+geo_id;
                 var res = apiCallUrl(searchURL)
+                var reachToLastLevel=false
                 console.log(res);
                 if (res){
                     if (res.esearchresult){
@@ -6316,6 +6327,7 @@ $(document).ready(function () {
                             var querykey = res.esearchresult.querykey;
                             var resultsURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=sra&retmode=json&query_key='+querykey+'&WebEnv='+webenv+'&retstart='+retstart+'&retmax='+retmax;
                             var res2 = apiCallUrl(resultsURL)
+                            console.log(res2)
                             if (res2){
                                 if (res2.result){
                                     var res2_res =res2.result
@@ -6324,6 +6336,7 @@ $(document).ready(function () {
                                     $.each(res2_res, function (el) {
                                         if (res2_res[el]["accession"] && res2_res[el]["title"]){
                                             i++
+                                            reachToLastLevel = true
                                             var doCall = function (i, keyLen, geo_id, geoList, queryDB) {
                                                 setTimeout(function () {
                                                     sraQuery(res2_res[el]["accession"], retstart, retmax, geoList, queryDB, "");
@@ -6332,7 +6345,7 @@ $(document).ready(function () {
                                                     if (keyLen-1 == i){
                                                         onCompleteCall(geo_id, geoList) 
                                                     }
-                                                }, 1500*i);
+                                                }, 2000*i);
                                             }
                                             doCall(i,keyLen, geo_id, geoList, queryDB);
                                         }
@@ -6342,11 +6355,12 @@ $(document).ready(function () {
                         }
                     }
                 }
+                if (!reachToLastLevel){
+                    onCompleteCall(geo_id, geoList)
+                }
             }
 
-
-
-            //GSM1331276 GSE30567 GSE55190
+            //GSM1331276 GSE30567 GSE55190 ERP009109 PRJEB8073
             var geo_id = $('#geo_id').val()
             var geoList = [];
             if (geo_id) {
