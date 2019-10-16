@@ -29,6 +29,49 @@ Array.prototype.searchFor = function (candid) {
     return false;
 };
 
+
+///fixCollapseMenu checkboxes
+fixCollapseMenu('#allProcessDiv', '#exec_all');
+fixCollapseMenu('#eachProcessDiv', '#exec_each');
+fixCollapseMenu('#publishDirDiv', '#publish_dir_check');
+//not allow to check both docker and singularity
+$('#docker_imgDiv').on('show.bs.collapse', function () {
+    if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
+        $('#singu_check').trigger("click");
+    }
+    $('#docker_check').attr('onclick', "return false;");
+});
+$('#singu_imgDiv').on('show.bs.collapse', function () {
+    if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
+        $('#docker_check').trigger("click");
+    }
+    $('#singu_check').attr('onclick', "return false;");
+});
+$('#docker_imgDiv').on('shown.bs.collapse', function () {
+    if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
+        $('#singu_check').trigger("click");
+    }
+    $('#docker_check').removeAttr('onclick');
+});
+$('#singu_imgDiv').on('shown.bs.collapse', function () {
+    if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
+        $('#docker_check').trigger("click");
+    }
+    $('#singu_check').removeAttr('onclick');
+});
+$('#singu_imgDiv').on('hide.bs.collapse', function () {
+    $('#singu_check').attr('onclick', "return false;");
+});
+$('#docker_imgDiv').on('hide.bs.collapse', function () {
+    $('#docker_check').attr('onclick', "return false;");
+});
+$('#docker_imgDiv').on('hidden.bs.collapse', function () {
+    $('#docker_check').removeAttr('onclick');
+});
+$('#singu_imgDiv').on('hidden.bs.collapse', function () {
+    $('#singu_check').removeAttr('onclick');
+});
+
 function createPiGnumList() {
     //get available pipeline Module list
     piGnumList = [];
@@ -1587,9 +1630,9 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
         });
     }
     $("#chooseEnv").change(autoFillJSON, function () {
-        var triggeredFillStates = false;
-        var fillHostFunc = function(autoFillJSON, type) {
-            var triggeredFillStates = false;
+        console.log(autoFillJSON)
+        var fillHostFunc = function(autoFillJSON, type, filledVars) {
+            console.log(jsonType)
             $.each(autoFillJSON, function (el) {
                 var conds = autoFillJSON[el].condition;
                 var states = autoFillJSON[el].statement;
@@ -1601,22 +1644,51 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                     if (conds.$HOSTNAME) {   
                         var statusCond = checkConds(conds, type);
                         if (statusCond === true) {
-                            fillStates(states, url, urlzip, checkPath)
-                            triggeredFillStates = true;
+                            if (type == "default"){
+                                var not_filled_states = $.extend(true, {}, states);
+                                var not_filled_url = $.extend(true, {}, url);
+                                var not_filled_urlzip = $.extend(true, {}, urlzip);
+                                var not_filled_checkPath = $.extend(true, {}, checkPath);
+                                $.each(filledVars, function (filled_el) {
+                                    if (filled_el in not_filled_states){
+                                        delete not_filled_states[filled_el]; 
+                                    }
+                                    if (filled_el in not_filled_url){
+                                        delete not_filled_url[filled_el]; 
+                                    }
+                                    if (filled_el in not_filled_urlzip){
+                                        delete not_filled_urlzip[filled_el]; 
+                                    }
+                                    if (filled_el in not_filled_checkPath){
+                                        delete not_filled_checkPath[filled_el]; 
+                                    }
+                                    if (filled_el == "$SINGULARITY_IMAGE" || filled_el == "$DOCKER_IMAGE" || filled_el == "$SINGULARITY_OPTIONS" || filled_el == "$DOCKER_OPTIONS"){
+                                        delete not_filled_states["$SINGULARITY_IMAGE"]; 
+                                        delete not_filled_states["$DOCKER_IMAGE"]; 
+                                        delete not_filled_states["$SINGULARITY_OPTIONS"]; 
+                                        delete not_filled_states["$DOCKER_OPTIONS"]; 
+                                    }
+                                });
+                                console.log(states)
+                                console.log(not_filled_states)
+                                fillStates(not_filled_states, not_filled_url, not_filled_urlzip, not_filled_checkPath)
+                            } else {
+                                fillStates(states, url, urlzip, checkPath)
+                                $.extend(filledVars, states); // Merge states into filledVars
+                            }
                             autoCheck("fillstates")
                         }
                     }
                 };
             }); 
-            return triggeredFillStates
+            return filledVars
         }
         //## position where fillwithDefaults() finalized
-        triggeredFillStates = fillHostFunc(autoFillJSON)
-        // fill $HOSTNAME ="default" states if not triggered before
-        if (!triggeredFillStates){
-            fillHostFunc(autoFillJSON, "default")
-        }
+        var filledVars = fillHostFunc(autoFillJSON, "", {})
+        // fill $HOSTNAME ="default" states if not filled before(based on filledVars obj)
+        fillHostFunc(autoFillJSON, "default", filledVars)
     });
+
 }
 
 // to execute autofill function, binds event handlers to buttons other than chooseEnv
@@ -3587,9 +3659,8 @@ function loadPipelineDetails(pipeline_id, pipeData) {
             }
             sequentialCmd(pipeline_id,function(){
                 //## position where all inputs created and filled
-                loadProjectPipeline(pipeData); // will load process options
+                loadProjectPipeline(pipeData) // will load process options
             })
-
         },
         error: function (errorThrown) {
             alert("Error: " + errorThrown);
@@ -3711,6 +3782,13 @@ function loadProjectPipeline(pipeData) {
         if (autoFillJSON !== null && autoFillJSON !== undefined) {
             bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
             bindEveHandler(autoFillJSON);
+            // if duplicated run has refreshEnv trigger refreshEnv when page loads
+            if (pipeData[0].onload){
+                if (pipeData[0].onload == "refreshEnv"){
+                    console.log("onload refreshEnv")
+                    refreshEnv();
+                }
+            }
         }
     }, 1000);
     //load amazon keys for possible s3 connection
@@ -3791,7 +3869,6 @@ function loadProjectPipeline(pipeData) {
         $('#jobSettingsDiv').css('display', 'none');
     }
     setTimeout(function () { checkReadytoRun(); }, 1000);
-
 }
 
 
@@ -5377,6 +5454,7 @@ function saveRun() {
     var runSummary = encodeURIComponent($('#runSum').val());
     var run_name = $('#run-title').val();
     var newpipelineID = pipeline_id;
+    var onload = ""; //trigger onload function after loading run page
     if (dupliProPipe === false) {
         project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     } else if (dupliProPipe === true) {
@@ -5386,6 +5464,7 @@ function saveRun() {
         run_name = run_name + '-copy'
         if (confirmNewRev) {
             newpipelineID = highestRevPipeId;
+            onload = "refreshEnv";
         }
     }
     //checkAmzKeysDiv
@@ -5451,6 +5530,7 @@ function saveRun() {
         data.push({ name: "withTimeline", value: withTimeline });
         data.push({ name: "withDag", value: withDag });
         data.push({ name: "process_opt", value: process_opt });
+        data.push({ name: "onload", value: onload });
         data.push({ name: "p", value: "saveProjectPipeline" });
         $.ajax({
             type: "POST",
@@ -5582,7 +5662,7 @@ function duplicateProPipe(type) {
         if (askNewRev === true) {
             $('#duplicateKeepBtn').css("display","inline-block");
             $('#duplicateNewBtn').css("display","inline-block");
-            $("#confirmDuplicateText").text('New revision of this pipeline is available. If you want to create a new run and keep your revision of pipeline, please click "Keep Existing Revision" button. If you wish to use same input parameters in new revision of pipeline then click "Use New Revision" button.');
+            $("#confirmDuplicateText").html('New revision of this pipeline is available. If you want to create a new run and keep your revision of pipeline, please click "Keep Existing Revision" button. If you wish to use same input parameters in new revision of pipeline then click "Use New Revision" button.</br></br><b style="color:blue;">* Caution:</b> If you choose "Use New Revision", you might need to re-enter your custom pipeline options.');
         } else {
             $('#copyRunBut').css("display","inline-block");
             $("#confirmDuplicateText").text('Please select target project to copy your run.');
@@ -5827,47 +5907,7 @@ $(document).ready(function () {
         $('#pipeRunDiv').remove();
         $("#run-title").prop("disabled", true);
     }
-    ///fixCollapseMenu checkboxes
-    fixCollapseMenu('#allProcessDiv', '#exec_all');
-    fixCollapseMenu('#eachProcessDiv', '#exec_each');
-    fixCollapseMenu('#publishDirDiv', '#publish_dir_check');
-    //not allow to check both docker and singularity
-    $('#docker_imgDiv').on('show.bs.collapse', function () {
-        if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
-            $('#singu_check').trigger("click");
-        }
-        $('#docker_check').attr('onclick', "return false;");
-    });
-    $('#singu_imgDiv').on('show.bs.collapse', function () {
-        if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
-            $('#docker_check').trigger("click");
-        }
-        $('#singu_check').attr('onclick', "return false;");
-    });
-    $('#docker_imgDiv').on('shown.bs.collapse', function () {
-        if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
-            $('#singu_check').trigger("click");
-        }
-        $('#docker_check').removeAttr('onclick');
-    });
-    $('#singu_imgDiv').on('shown.bs.collapse', function () {
-        if ($('#singu_check').is(":checked") && $('#docker_check').is(":checked")) {
-            $('#docker_check').trigger("click");
-        }
-        $('#singu_check').removeAttr('onclick');
-    });
-    $('#singu_imgDiv').on('hide.bs.collapse', function () {
-        $('#singu_check').attr('onclick', "return false;");
-    });
-    $('#docker_imgDiv').on('hide.bs.collapse', function () {
-        $('#docker_check').attr('onclick', "return false;");
-    });
-    $('#docker_imgDiv').on('hidden.bs.collapse', function () {
-        $('#docker_check').removeAttr('onclick');
-    });
-    $('#singu_imgDiv').on('hidden.bs.collapse', function () {
-        $('#singu_check').removeAttr('onclick');
-    });
+
 
     //runStatus
     runStatus = "";
