@@ -363,11 +363,11 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><input id="job_queue" name="job_queue" class="form-control" type="text" value="short"></td>
-                                        <td><input id="job_memory" class="form-control" type="text" name="job_memory" value="32"></td>
-                                        <td><input id="job_cpu" name="job_cpu" class="form-control" type="text" value="1"></td>
-                                        <td><input id="job_time" name="job_time" class="form-control" type="text" value="100"></td>
-                                        <td><input id="job_clu_opt" name="job_clu_opt" class="form-control" type="text" value=""></td>
+                                        <td><input id="job_queue" name="job_queue" class="form-control execqueue" type="text" value="short"></td>
+                                        <td><input id="job_memory" class="form-control execmemory" type="text" name="job_memory" value="32"></td>
+                                        <td><input id="job_cpu" name="job_cpu" class="form-control execcpu" type="text" value="1"></td>
+                                        <td><input id="job_time" name="job_time" class="form-control exectime" type="text" value="100"></td>
+                                        <td><input id="job_clu_opt" name="job_clu_opt" class="form-control execopt" type="text" value=""></td>
                                     </tr>
                                 </tbody>
                             </table>

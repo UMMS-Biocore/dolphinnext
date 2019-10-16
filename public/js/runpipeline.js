@@ -1,3 +1,22 @@
+// [name] is the name of the event "click", "mouseover", .. 
+// same as you'd pass it to bind()
+// [fn] is the handler function
+$.fn.bindFirst = function(name, fn) {
+    // bind as you normally would
+    // don't want to miss out on any jQuery magic
+    this.on(name, fn);
+
+    // Thanks to a comment by @Martin, adding support for
+    // namespaced events too.
+    this.each(function() {
+        var handlers = $._data(this, 'events')[name.split('.')[0]];
+        // take out the handler we just inserted from the end
+        var handler = handlers.pop();
+        // move it at the beginning
+        handlers.splice(0, 0, handler);
+    });
+};
+
 /**
  * Extend the Array object
  * @param candid The string to search for
@@ -1533,10 +1552,42 @@ function fillStates(states, url, urlzip, checkPath) {
 }
 
 // to execute autofill function, binds event handlers to chooseEnv
-function bindEveHandlerChooseEnv(autoFillJSON) {
+function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
+    if (jsonType == "pipeline"){
+        $("#chooseEnv").bindFirst("change", function(){
+            var [allProSett, profileData] = getJobData("both");
+            $("input.execcheckbox").each(function(){
+                $(this).prop('checked', false);
+            })
+            if (allProSett.job_cpu != null){
+                $(".form-control.execcpu").each(function(){
+                    $(this).val(allProSett.job_cpu);
+                })
+            }
+            if (allProSett.job_memory != null){
+                $(".form-control.execmemory").each(function(){
+                    $(this).val(allProSett.job_memory);
+                })
+            }
+            if (allProSett.job_queue != null){
+                $(".form-control.execqueue").each(function(){
+                    $(this).val(allProSett.job_queue);
+                })
+            }
+            if (allProSett.job_time != null){
+                $(".form-control.exectime").each(function(){
+                    $(this).val(allProSett.job_time);
+                })
+            }
+            if (allProSett.job_clu_opt != null){
+                $(".form-control.execopt").each(function(){
+                    $(this).val(allProSett.job_clu_opt);
+                })
+            }
+        });
+    }
     $("#chooseEnv").change(autoFillJSON, function () {
         var triggeredFillStates = false;
-        console.log("fill with defaults")
         var fillHostFunc = function(autoFillJSON, type) {
             var triggeredFillStates = false;
             $.each(autoFillJSON, function (el) {
@@ -1559,6 +1610,7 @@ function bindEveHandlerChooseEnv(autoFillJSON) {
             }); 
             return triggeredFillStates
         }
+        //## position where fillwithDefaults() finalized
         triggeredFillStates = fillHostFunc(autoFillJSON)
         // fill $HOSTNAME ="default" states if not triggered before
         if (!triggeredFillStates){
@@ -2276,7 +2328,7 @@ function getRowTable(rowType, firGnum, secGnum, paramGivenName, paraIdentifier, 
 }
 
 function insertProRowTable(process_id, gNum, procName, procQueDef, procMemDef, procCpuDef, procTimeDef, procOptDef) {
-    return '<tr procProId="' + process_id + '" id="procGnum-' + gNum + '"><td><input name="check" id="check-' + gNum + '" type="checkbox" </td><td>' + procName + '</td><td><input name="queue" class="form-control execSetting" type="text" value="' + procQueDef + '"></input></td><td><input class="form-control execSetting" type="text" name="memory" value="' + procMemDef + '"></input></td><td><input name="cpu" class="form-control execSetting" type="text" value="' + procCpuDef + '"></input></td><td><input name="time" class="form-control execSetting" type="text" value="' + procTimeDef + '"></input></td><td><input name="opt" class="form-control execSetting" type="text" value="' + procOptDef + '"></input></td></tr>'
+    return '<tr procProId="' + process_id + '" id="procGnum-' + gNum + '"><td><input name="check" class="execcheckbox" id="check-' + gNum + '" type="checkbox" </td><td>' + procName + '</td><td><input name="queue" class="form-control execSetting execqueue" type="text" value="' + procQueDef + '"></input></td><td><input class="form-control execSetting execmemory" type="text" name="memory" value="' + procMemDef + '"></input></td><td><input name="cpu" class="form-control execSetting execcpu" type="text" value="' + procCpuDef + '"></input></td><td><input name="time" class="form-control execSetting exectime" type="text" value="' + procTimeDef + '"></input></td><td><input name="opt" class="form-control execSetting execopt" type="text" value="' + procOptDef + '"></input></td></tr>'
 }
 
 
@@ -3230,6 +3282,7 @@ function createProcessPanelAutoFill(id, pObj, name, process_id) {
                             }
                         });
                     });
+                    bindEveHandlerChooseEnv(pro_autoFillJSON, "process");
                     bindEveHandler(pro_autoFillJSON);
                 }
             }, 1000);
@@ -3656,7 +3709,7 @@ function loadProjectPipeline(pipeData) {
     // bind event handlers for autofill
     setTimeout(function () {
         if (autoFillJSON !== null && autoFillJSON !== undefined) {
-            bindEveHandlerChooseEnv(autoFillJSON);
+            bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
             bindEveHandler(autoFillJSON);
         }
     }, 1000);
@@ -6196,8 +6249,7 @@ $(document).ready(function () {
                 var deferreds = [];
                 var deferredsRes = [];
                 var deferredsData = [];
-                            console.log(res)
-                
+                console.log(res)
                 if (res){
                     if (res.esearchresult){
                         if (res.esearchresult.webenv && res.esearchresult.querykey){
@@ -6310,6 +6362,7 @@ $(document).ready(function () {
                         }
                     }
                     if (typeof callback === "function") {
+                        console.log(geoList)
                         callback(geoList)
                     }
                 });
@@ -6356,6 +6409,7 @@ $(document).ready(function () {
                     }
                 }
                 if (!reachToLastLevel){
+                    console.log(geoList)
                     onCompleteCall(geo_id, geoList)
                 }
             }
@@ -6384,13 +6438,7 @@ $(document).ready(function () {
 
                 var queryDB = "sra" 
                 sraQuery(geo_id, retstart, retmax, geoList, queryDB, callback)
-                console.log(geoList)
-
-
             }
-
-
-
         });
 
 
@@ -7381,13 +7429,11 @@ $(document).ready(function () {
     });
 
 
-
     //clicking on top tabs of select files table
     $('a[data-toggle="tab"]').on('shown.bs.tab click', function (e) {
         // header fix of datatabes in add to files/values tab
         $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
         var activatedTab = $(e.target).attr("href")
-        console.log(activatedTab)
         if (activatedTab === "#manualTab") {
             var projectRows = $('#projectListTable > tbody >');
             // if project is exist click on the first one to show files
@@ -7398,7 +7444,6 @@ $(document).ready(function () {
         } else if (activatedTab === "#manualTabV") {
             var projectRows = $('#projectListTableVal > tbody >');
             console.log(projectRows)
-
             // if project is exist click on the first one to show files
             if (projectRows && projectRows.length > 0) {
                 $('#projectListTableVal > tbody > tr > td ').find('[projectid="' + project_id + '"]').trigger("click")

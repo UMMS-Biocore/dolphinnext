@@ -1137,7 +1137,7 @@ process cleanUp {
             foreach my $dir (@inputCollections) {
                 print "dirs: $dir"; 
                 if ( !grep( /^$dir$/, @validCollection)) {
-                    print "Invalid directory $dir will be removed from inputs directory\\n";
+                    print "\\nInvalid directory $dir will be removed from inputs directory\\n";
                     runCommand("rm -rf $dir");
                 }
             }
