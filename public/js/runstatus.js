@@ -206,7 +206,7 @@ $(document).ready(function () {
             } else if (st == "Manual") {
                 $(row).css("background-color", "#dcdbfc");
             } else {
-                $(row).css("background-color", "#ededed");
+                $(row).css("background-color", "#f4f4f4");
             }
         },
         sScrollX: "100%"
