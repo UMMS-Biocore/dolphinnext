@@ -167,7 +167,7 @@ $(document).ready(function () {
                 } else if (st == "Manual") {
                     return '<a ' + href + ' class="runLink">Manual</a>';
                 } else {
-                    return '<a ' + href + ' class="runLink">Not Initiated</a>';
+                    return '<a ' + href + ' class="runLink">Not Submitted</a>';
                 }
             }
         },  {
