@@ -119,70 +119,80 @@ $(document).ready(function () {
         },
         "columns": [{
             "data": "project_pipeline_id"
-            }, {
-            "data": "date_modified"
-            }, {
-            "data": "name",
-            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+        }, {
+            "data": null,
+            "render": function (data, type, row) {
                 var href = "";
-                if (oData.own === "1" || usRole === "admin") {
+                if (row.own === "1" || usRole === "admin") {
                     href = 'href=""';
                 }
-                $(nTd).html('<a ' + href + ' class="runLink">' + oData.name + "</a>");
+                return '<a ' + href + ' class="runLink">' + row.name + '</a>';
             }
-            }, {
-            "data": null,
-            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                $(nTd).html('<a href="index.php?np=1&amp;id=' + oData.pipeline_id + '" >' + oData.pipeline_name + "</a>")
+        }, {
+            data: null,
+            render: function (data, type, row) {
+                var pipeline_rev = ""
+                if (row.pipeline_rev != null){
+                    pipeline_rev =  " (Rev " + row.pipeline_rev + ")"
+                }
+                return '<a href="index.php?np=1&amp;id=' + row.pipeline_id + '" >' + row.pipeline_name + pipeline_rev + '</a>';
             }
-            }, {
-            "data": "output_dir"
-            },  {
-            "data": null,
-            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                $(nTd).html(truncateName(oData.summary, 'newTable'))
+        }, {
+            data: "output_dir"
+        },  {
+            data: null,
+            render: function (data, type, row) {
+                return truncateName(row.summary, 'newTable');
             }
-            }, {
-            "data": "run_status",
-            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                var st = oData.run_status;
+        }, {
+            data: null,
+            render: function ( data, type, row ) {
+                var st = row.run_status;
                 var href = "";
-                if (oData.own === "1" || usRole === "admin") {
+                if (row.own === "1" || usRole === "admin") {
                     href = 'href=""';
                 }
                 if (st == "NextErr" || st == "Error") {
-                    $(nTd).html('<a ' + href + ' class="runLink">Error</a>');
+                    return '<a ' + href + ' class="runLink">Error</a>';
                 } else if (st == "Terminated") {
-                    $(nTd).html('<a ' + href + ' class="runLink">Terminated</a>');
+                    return '<a ' + href + ' class="runLink">Terminated</a>';
                 } else if (st == "NextSuc") {
-                    $(nTd).html('<a ' + href + ' class="runLink">Completed</a>');
+                    return '<a ' + href + ' class="runLink">Completed</a>';
                 } else if (st == "init" || st == "Waiting") {
-                    $(nTd).html('<a ' + href + ' class="runLink">Initializing</a>');
+                    return '<a ' + href + ' class="runLink">Initializing</a>';
                 } else if (st == "NextRun") {
-                    $(nTd).html('<a ' + href + ' class="runLink">Running</a>');
+                    return '<a ' + href + ' class="runLink">Running</a>';
                 } else if (st == "Aborted") {
-                    $(nTd).html('<a ' + href + ' class="runLink">Reconnecting</a>');
+                    return '<a ' + href + ' class="runLink">Reconnecting</a>';
+                } else if (st == "Manual") {
+                    return '<a ' + href + ' class="runLink">Manual</a>';
+                } else {
+                    return '<a ' + href + ' class="runLink">Not Submitted</a>';
                 }
             }
-            }, {
-            "data": "date_created"
-            }, {
-            "data": "username"
-            }, {
+        },  {
             data: null,
             className: "center",
-            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                $(nTd).html(getRunStatusButton(oData));
+            render: function ( data, type, row ) {
+                var date="" 
+                if (row.run_date_created){
+                    date= row.run_date_created
+                } else if (row.pp_date_created) {
+                    date= row.pp_date_created
+                }
+                return '<span>'+date+'</span>';
             }
-            }],
-        'order': [[1, 'desc']],
-        "columnDefs": [
-            {
-                'targets': [1],
-                'visible': false,
-                'searchable': false
-            },
-        ],
+        },{
+            "data": "username"
+        }, {
+            data: null,
+            className: "center",
+            render: function (data, type, row) {
+                return getRunStatusButton(row);
+            }
+        }
+                   ],
+        'order': [[6, 'desc']],
         "createdRow": function (row, data, dataIndex) {
             var st = data.run_status;
             if (st == "NextErr" || st == "Error") {
@@ -193,10 +203,15 @@ $(document).ready(function () {
                 $(row).css("background-color", "#DFEFD8");
             } else if (st == "init" || st == "Waiting" || st == "NextRun") {
                 $(row).css("background-color", "#D8EDF6");
+            } else if (st == "Manual") {
+                $(row).css("background-color", "#dcdbfc");
+            } else {
+                $(row).css("background-color", "#f4f4f4");
             }
         },
         sScrollX: "100%"
     });
+
 
     //reload the table each 30 secs
     setInterval(function () {

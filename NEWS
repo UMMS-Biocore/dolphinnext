@@ -1,5 +1,11 @@
+17.10.2019 Version 0.3.73
+Run status table updated: 
+    - sorting feature fixed
+    - pipeline revision added
+    - Not submitted runs added.
+
 17.10.2019 Version 0.3.72
-Autofill feature will be executed in case "use new revision" of pipeline is clicked when copying run. It will update executor settings, container options and system inputs.
+Autofill feature will be executed in case "use new revision" is clicked when copying run. It will update executor settings, container options and system inputs.
 Bug fixed in autofill function.
 
 16.10.2019 Version 0.3.71
