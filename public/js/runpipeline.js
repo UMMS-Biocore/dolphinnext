@@ -1725,54 +1725,54 @@ function bindEveHandler(autoFillJSON) {
 
     //bind eventhandler to dropdown button
     for (var i = 0; i < bindButtonArray.length; i++) {
-        var bindButton = bindButtonArray[i]
-        $(bindButton).change(function () {
-            var triggeredFillStates = false;
-            var fillHostFunc = function(autoFillJSON, type) {
+        var bindButton = bindButtonArray[i];
+        var doCall = function (bindButton) {
+            $(bindButton).change(function () {
                 var triggeredFillStates = false;
-                $.each(autoFillJSON, function (el) {
-                    var conds = autoFillJSON[el].condition;
-                    var states = autoFillJSON[el].statement;
-                    var url = autoFillJSON[el].url;
-                    var urlzip = autoFillJSON[el].urlzip;
-                    var checkPath = autoFillJSON[el].checkPath;
-                    if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
-                        //if condition exists other than $HOSTNAME then bind eventhandler to #params. button (eg. dropdown or inputValEnter)
-                        $.each(conds, function (el) {
-                            if (el !== "$HOSTNAME") {
-                                //if variable starts with "params." then check #inputsTab
-                                if (el.match(/params\.(.*)/)) {
-                                    var varName = el.match(/params\.(.*)/)[1]; //variable Name
-                                    var checkVarName = $("#inputsTab").find("td[given_name='" + varName + "']")[0];
-                                    if (checkVarName) {
-                                        var varNameButAr = $(checkVarName).children();
-                                        if (varNameButAr && varNameButAr[0]) {
-                                            if (varNameButAr[0] == bindButton){
-                                                var statusCond = checkConds(conds, type);
-                                                if (statusCond === true) {
-                                                    fillStates(states, url, urlzip, checkPath)
-                                                    triggeredFillStates = true;
-                                                    autoCheck("fillstates")
+                var fillHostFunc = function(autoFillJSON, type) {
+                    var triggeredFillStates = false;
+                    $.each(autoFillJSON, function (el) {
+                        var conds = autoFillJSON[el].condition;
+                        var states = autoFillJSON[el].statement;
+                        var url = autoFillJSON[el].url;
+                        var urlzip = autoFillJSON[el].urlzip;
+                        var checkPath = autoFillJSON[el].checkPath;
+                        if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
+                            //if condition exists other than $HOSTNAME then bind eventhandler to #params. button (eg. dropdown or inputValEnter)
+                            $.each(conds, function (el) {
+                                if (el !== "$HOSTNAME") {
+                                    //if variable starts with "params." then check #inputsTab
+                                    if (el.match(/params\.(.*)/)) {
+                                        var varName = el.match(/params\.(.*)/)[1]; //variable Name
+                                        var checkVarName = $("#inputsTab").find("td[given_name='" + varName + "']")[0];
+                                        if (checkVarName) {
+                                            var varNameButAr = $(checkVarName).children();
+                                            if (varNameButAr && varNameButAr[0]) {
+                                                if (varNameButAr[0] == bindButton){
+                                                    var statusCond = checkConds(conds, type);
+                                                    if (statusCond === true) {
+                                                        fillStates(states, url, urlzip, checkPath)
+                                                        triggeredFillStates = true;
+                                                        autoCheck("fillstates")
+                                                    }
                                                 }
-
                                             }
                                         }
                                     }
                                 }
-                            }
-                        });
-
-
-                    };
-                }); 
-                return triggeredFillStates
-            }
-            triggeredFillStates = fillHostFunc(autoFillJSON)
-            // fill $HOSTNAME ="default" states if not triggered before
-            if (!triggeredFillStates){
-                fillHostFunc(autoFillJSON, "default")
-            }
-        });
+                            });
+                        };
+                    }); 
+                    return triggeredFillStates
+                }
+                triggeredFillStates = fillHostFunc(autoFillJSON)
+                // fill $HOSTNAME ="default" states if not triggered before
+                if (!triggeredFillStates){
+                    fillHostFunc(autoFillJSON, "default")
+                }
+            });
+        }
+        doCall(bindButton);
     }
 }
 
@@ -3625,9 +3625,10 @@ function loadPipelineDetails(pipeline_id, pipeData) {
             window.pipeObj = s
             window.ajaxData.pipelineData = [window.pipeObj["main_pipeline_" + pipeline_id]];
             var pData = window.ajaxData.pipelineData
-            $('#pipeline-title').text(pData[0].name);
+            var pName = pData[0].name + " (Rev " + pData[0].rev_id + ")";
+            $('#pipeline-title').text(pName);
             $('#pipeline-title').attr('href', 'index.php?np=1&id=' + pipeline_id);
-            $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: ' + pData[0].name);
+            $('#pipeline-title2').html('<i class="fa fa-spinner "></i> Go to Pipeline: ' + pName);
             $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
             $('#pipelineSum').val(decodeHtml(pData[0].summary));

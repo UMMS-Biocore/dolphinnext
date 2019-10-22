@@ -13,8 +13,15 @@ function getSideMenuItem($obj)
 {
 $html="";
 foreach ($obj as $item):
+    $orgName = $item->{'name'};
+    $showName = $orgName;
+    $tooltip = "";
+    if (strlen($orgName) >20){
+        $showName = substr($orgName, 0, 20);
+        $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
+    }
     $nameSub = substr($item->{'name'}, 0, 20);
-        $html.='<li><a href="index.php?np=3&id='.$item->{'id'}.'" class="projectItems"  draggable="false" id="propipe-'.$item->{'id'}.'"><i class="fa fa-angle-double-right"></i>'.$nameSub.'</a></li>';
+        $html.='<li '.$tooltip.'><a href="index.php?np=3&id='.$item->{'id'}.'" class="projectItems"  origin="'.$orgName.'" draggable="false" id="propipe-'.$item->{'id'}.'"><i class="fa fa-angle-double-right"></i>'.$showName.'</a></li>';
 endforeach;
 return $html;
 }
@@ -22,9 +29,15 @@ $parentMenus = json_decode($db->getParentSideBarProject($ownerID));
 $menuhtml='<ul id="autocompletes1" class="sidebar-menu" data-widget="tree">';
 $menuhtml.='<li class="header">PROJECTS</li>';
 foreach ($parentMenus as $parentitem):
-    $nameSub = substr($parentitem->{'name'}, 0, 15);
-    $menuhtml.='<li class="treeview">';
-    $menuhtml.='<a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span>'.$nameSub.'</span>';
+    $orgName = $parentitem->{'name'};
+    $showName = $orgName;
+    $tooltip = "";
+    if (strlen($orgName) >15){
+        $showName = substr($orgName, 0, 15);
+        $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
+    }
+    $menuhtml.='<li class="treeview" '.$tooltip.'>';
+    $menuhtml.='<a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span>'.$showName.'</span>';
     $items = json_decode($db->getSubMenuFromSideBarProject($parentitem->{'id'}, $ownerID));
     $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
     $menuhtml.='<ul id="side-'.$parentitem->{'id'}.'" class="treeview-menu">';

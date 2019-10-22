@@ -1,3 +1,10 @@
+18.10.2019 Version 0.3.74
+Pipeline/process search feature upgraded to search within full name.
+Tooltip added for long item names in the pipeline and project page.
+Filter feature upgraded for admin.
+Run status table sql query updated to increase its performance.
+Minor bug fixed in bindEveHandler function in runpipeline.js.
+
 17.10.2019 Version 0.3.73
 Run status table updated: 
     - sorting feature fixed

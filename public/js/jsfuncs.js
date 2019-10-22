@@ -617,6 +617,7 @@ $(document).ready(function () {
 
 //load filter sidebar menu options
 if (usRole === "admin") {
+    $("#filterMenu").append('<li><a href="#" data-value="admin" tabIndex="-1"><input type="checkbox"/>&nbsp;Admin</a></li>');
     $("#filterMenu").append('<li><a href="#" data-value="630" tabIndex="-1"><input type="checkbox"/>&nbsp;Waiting Approval</a></li>');
 }
 $("#filterMenu").append('<li><a href="#" data-value="3" tabIndex="-1"><input type="checkbox"/>&nbsp;Private</a></li>');
@@ -658,7 +659,7 @@ function filterSideBar(options) {
         var selOptArr = [];
         var group_idArr = [];
         for (var i = 0; i < options.length; i++) {
-            if (options[i] === '3' || options[i] === '63' || options[i] === '630') {
+            if (options[i] === '3' || options[i] === '63' || options[i] === '630' || options[i] === 'admin') {
                 var selOpt = options[i];
                 selOptArr.push(selOpt);
             } else if (options[i].match(/group-(.*)/)) {
@@ -668,18 +669,12 @@ function filterSideBar(options) {
                 group_idArr.push(group_id);
             }
         }
+                    console.log($(tagElems))
 
         for (var i = 0; i < tagElems.length; i++) {
             var tagElems2 = $(tagElems).eq(i).children().eq(1).children()
             $(tagElems2).hide()
             for (var j = 0; j < tagElems2.length; j++) {
-                if ($(tagElems2).eq(j).attr('pin')) {
-                    if ($(tagElems2).eq(j).attr('pin') === 'true') {
-                        var checkPinText = '63';
-                    } else {
-                        var checkPinText = '630';
-                    }
-                }
                 if ($(tagElems2).eq(j).attr('pub')) {
                     if ($(tagElems2).eq(j).attr('pub') === '1') {
                         var checkPubText = '630';
@@ -687,26 +682,36 @@ function filterSideBar(options) {
                         var checkPubText = '0';
                     }
                 }
+                var checkAdmin = false;
+                if ($(tagElems2).eq(j).attr('admin')) {
+                    if ($(tagElems2).eq(j).attr('admin') === '1') {
+                        checkAdmin = $.inArray("admin", selOptArr) >= 0;
+                    } 
+                }
                 var checkPublish = $.inArray(checkPubText, selOptArr) >= 0;
-                var checkPin = $.inArray(checkPinText, selOptArr) >= 0;
                 var checkPerm = $.inArray($(tagElems2).eq(j).attr('p'), selOptArr) >= 0;
                 var checkGroup = $.inArray($(tagElems2).eq(j).attr('g'), group_idArr) >= 0;
-
-                if (($(tagElems2).eq(j).attr('p') === "15" && checkPerm && checkGroup) || ($(tagElems2).eq(j).attr('p') === "3" && checkPerm) || ($(tagElems2).eq(j).attr('p') === "63" && checkPin) || ($(tagElems2).eq(j).attr('p') !== "63" && checkPublish)) {
+                if (($(tagElems2).eq(j).attr('p') === "15" && checkPerm && checkGroup ) || ($(tagElems2).eq(j).attr('p') === "3" && checkPerm) || ($(tagElems2).eq(j).attr('p') === "63" && checkPerm) || ($(tagElems2).eq(j).attr('p') !== "63" && checkPublish) || checkAdmin) {
                     $(tagElems).eq(i).show()
-                    if (selOpt !== "") {} else {
-                        $(tagElems).show()
-                    }
                     $(tagElems2).eq(j).show()
                 }
             }
         }
     } else {
         //if nothing is selected show everything
-        $(tagElems).show()
+        //but hide if attribute admin=1 is found
+        $(tagElems).hide();
         for (var i = 0; i < tagElems.length; i++) {
-            var tagElems2 = $(tagElems).eq(i).children().eq(1).children()
-            $(tagElems2).show()
+            var tagElems2 = $(tagElems).eq(i).children().eq(1).children();
+            $(tagElems2).hide()
+            for (var j = 0; j < tagElems2.length; j++) {
+                if ($(tagElems2).eq(j).attr('admin') === '1') {
+                    $(tagElems2).eq(j).hide()
+                } else {
+                    $(tagElems2).eq(j).show()
+                    $(tagElems).eq(i).show()
+                }
+            }
         }
     }
     $('#inputs').show();
@@ -716,27 +721,27 @@ function filterSideBar(options) {
 }
 
 //SideBar menu Search Function
-//$('#tags').on('keyup',function(e){
 $('.main-sidebar').on('keyup', '#tags', function (e) {
     $('.filterM a >').prop('checked', false);
     var tagElems = $('#autocompletes1').children()
     $(tagElems).hide()
     for (var i = 0; i < tagElems.length; i++) {
         var tagElems2 = $(tagElems).eq(i).children().eq(1).children()
-
         $(tagElems2).hide()
         $(tagElems).eq(i).closest('li').children('ul.treeview-menu').hide()
         for (var j = 0; j < tagElems2.length; j++) {
-            if (($(tagElems2).eq(j).text().toLowerCase()).indexOf($(this).val().toLowerCase()) > -1) {
-                $(tagElems).eq(i).show()
-                if ($(this).val().toLowerCase() !== "") {
-                    $(tagElems).eq(i).closest('li').addClass('menu-open')
-                    $(tagElems).eq(i).closest('li').children('ul.treeview-menu').show()
-                } else {
-                    $(tagElems).eq(i).closest('li').removeClass('menu-open')
-                    $(tagElems).show()
+            if (($(tagElems2).eq(j).children().attr("origin"))){
+                if (($(tagElems2).eq(j).children().attr("origin").toLowerCase()).indexOf($(this).val().toLowerCase()) > -1) {
+                    $(tagElems).eq(i).show()
+                    if ($(this).val().toLowerCase() !== "") {
+                        $(tagElems).eq(i).closest('li').addClass('menu-open')
+                        $(tagElems).eq(i).closest('li').children('ul.treeview-menu').show()
+                    } else {
+                        $(tagElems).eq(i).closest('li').removeClass('menu-open')
+                        $(tagElems).show()
+                    }
+                    $(tagElems2).eq(j).show()
                 }
-                $(tagElems2).eq(j).show()
             }
         }
     }
