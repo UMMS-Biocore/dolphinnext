@@ -303,6 +303,7 @@ class dbfuncs {
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $executor = $cluDataArr[0]['executor'];
         $params = "";
+        $checkGeoFiles = "false";
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $outdir = $proPipeAll[0]->{'output_dir'};
         $profile= $proPipeAll[0]->{'profile'};
@@ -339,6 +340,9 @@ class dbfuncs {
             $archive_dir[] = $fileData->{'archive_dir'};
             $s3_archive_dir[] = $fileData->{'s3_archive_dir'};
             $collection_type[] = $fileData->{'collection_type'};
+            if (empty($fileData->{'file_dir'})){
+                $checkGeoFiles = "true";
+            }
             endforeach;
         }
         if (!empty($inputitem->{'url'}) || !empty($inputitem->{'urlzip'})){
@@ -366,7 +370,7 @@ class dbfuncs {
             }
             $params .= "}\n";
         }
-        return $params;
+        return array($params,$checkGeoFiles);
     }
 
     //get nextflow input parameters
@@ -613,13 +617,16 @@ class dbfuncs {
         }
         $initialRunCmd = "";
         $igniteCmd = "";
+        $timeouts = "-cluster.failureDetectionTimeout 100000000 -cluster.clientFailureDetectionTimeout 100000000 -cluster.tcp.socketTimeout 100000000";
+//      $timeouts = " -cluster.tcp.reconnectCount 100000000 -cluster.tcp.networkTimeout 100000000 -cluster.tcp.ackTimeout 100000000 -cluster.tcp.maxAckTimeout 100000000  -cluster.tcp.joinTimeout 100000000";
         if ($executor == "local" && $executor_job == 'ignite'){
-            $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite -cluster.failureDetectionTimeout 100000000 -cluster.clientFailureDetectionTimeout 100000000";
+            $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite $timeouts";
         }
+        
         if (!empty($initialRunParams)){
             $igniteCmdInit = "";
             if ($executor == "local" && $executor_job == 'ignite'){
-                $igniteCmdInit = "-w $dolphin_path_real/initialrun/work -process.executor ignite -cluster.failureDetectionTimeout 100000000 -cluster.clientFailureDetectionTimeout 100000000";
+                $igniteCmdInit = "-w $dolphin_path_real/initialrun/work -process.executor ignite $timeouts";
             }
             $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $igniteCmdInit $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
@@ -706,11 +713,11 @@ class dbfuncs {
     }
 
     function getInitialRunConfig($project_pipeline_id, $attempt, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID){
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $containerText = "";
         if ($docker_check == "true"){
             $containerText = "//Process Config\nprocess.container = '$initialrun_img'\n"."docker.enabled = true\n";
         } else {
-            list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
             $singu_cache = $cluDataArr[0]["singu_cache"];
             $singuPath = '//$NXF_SINGULARITY_CACHEDIR';
             if ($profileType == "amazon"){
@@ -734,7 +741,14 @@ class dbfuncs {
         }
         $configText = $containerText.$initRunOptions."\n";
         //get initial run input paramaters
-        $initialRunParams = $this->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
+        list($initialRunParams,$checkGeoFiles) = $this->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
+        if (isset($checkGeoFiles)){
+            $executor = $cluDataArr[0]['executor'];
+            if ($checkGeoFiles == "true" && $executor == "local"){
+                $configText .= "\n//parallel download limit for GEO files on local executor:\n";
+                $configText .= "executor.queueSize = 4 \n";
+            }
+        }
         $configText .= "\n//Initial Run Parameters\n".$initialRunParams;
         return array($configText,$initialRunParams);
     }
