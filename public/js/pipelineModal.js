@@ -2097,6 +2097,7 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
 
 
 $(document).ready(function () {
+    filterSideBar([]); //trigger filter function of sidebar for admin filtering
     var usRole = callusRole();
     pipeline_id = $('#pipeline-title').attr('pipelineid');
     //fill pipeline groups

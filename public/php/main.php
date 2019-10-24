@@ -384,7 +384,11 @@ folder instead of downloading all of them to reduce the load. -->
 
             .disp_none{
                 display: none !important;
-             }
+            }
+            .tooltip-inner {
+                max-width: none;
+                white-space: nowrap;
+            }
 
         </style>
 
@@ -405,14 +409,14 @@ folder instead of downloading all of them to reduce the load. -->
 
                 <!-- Header Navbar: style can be found in header.less -->
                 <nav class="navbar navbar-static-top">
-                   
+
                     <div class="navbar-custom-menu pull-left">
                         <ul class="nav navbar-nav">
                             <li><a href="index.php?np=1">Pipelines </a></li>
                             <li><a href="index.php?np=2">Projects </a></li>
                             <li><a href="index.php?np=5">Run Status </a></li>
                             <?php
-            include("php/funcs.php");
+    include("php/funcs.php");
             $np = isset($_REQUEST["np"]) ? $_REQUEST["np"] : "";
             $id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "";
                             ?>
@@ -433,24 +437,24 @@ folder instead of downloading all of them to reduce the load. -->
                             <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Tutorial</a></li>
                             <li><a href="http://dolphinnext.readthedocs.io/" target="_blank"><i class="fa fa-mortar-board"></i></a></li>
                             <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><b style="color:#7c1842;" id="dn-version" ver="<?php echo DN_VERSION?>" > VERSION <?php echo DN_VERSION?> </b></a>
-                                        <div class="dropdown-menu" style="width:650px; padding:0px;">
-                                            <div class="panel panel-default" style="margin:0px;">
-                                                <div class="panel-heading clearfix">
-                                                    <div class="pull-left">
-                                                        <h5>&nbsp; Version Notes</h5>
-                                                    </div>
-                                                    <div class="pull-right" style="padding-top:6px;">
-                                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" > <span aria-hidden="true">&times;</span></a>
-                                                    </div>
-                                                </div>
-                                                <div class="panel-body" style="padding:0px;">
-                                                    <textarea rows="30" class="form-control" style="resize:none; " id="versionNotes"></textarea>
-                                                </div>
+                                <div class="dropdown-menu" style="width:650px; padding:0px;">
+                                    <div class="panel panel-default" style="margin:0px;">
+                                        <div class="panel-heading clearfix">
+                                            <div class="pull-left">
+                                                <h5>&nbsp; Version Notes</h5>
                                             </div>
-                                        </div></li>
+                                            <div class="pull-right" style="padding-top:6px;">
+                                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" > <span aria-hidden="true">&times;</span></a>
+                                            </div>
+                                        </div>
+                                        <div class="panel-body" style="padding:0px;">
+                                            <textarea rows="30" class="form-control" style="resize:none; " id="versionNotes"></textarea>
+                                        </div>
+                                    </div>
+                                </div></li>
                             <?php
-                            if ($login == 1 && $role == "admin"){
-                                echo '<li class="dropdown tasks-menu" id="softUpdBut" style="display:none;">
+    if ($login == 1 && $role == "admin"){
+        echo '<li class="dropdown tasks-menu" id="softUpdBut" style="display:none;">
                                         <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                                         <i class="fa fa-cloud-download"></i>
                                         <span class="label label-danger">1</span>
@@ -480,7 +484,7 @@ folder instead of downloading all of them to reduce the load. -->
                                             </div>
                                         </div>
                                     </li>';
-                            }
+    }
                             ?>
                         </ul>
                     </div>
@@ -705,14 +709,14 @@ immediately after the control sidebar -->
                     <div class="modal-body">
                         <span id="infoModText">Text</span>
                         </br>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
-                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
                 </div>
             </div>
         </div>
-        <!--Info Modal ENDs-->
+        </div>
+    <!--Info Modal ENDs-->
 
 
     <!--Google Platform Library on your web pages that integrate Google Sign-In-->
