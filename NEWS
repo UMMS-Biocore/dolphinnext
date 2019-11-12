@@ -1,3 +1,6 @@
+12.11.2019 Version 1.0.0
+Sign out button bug fixed.
+
 18.10.2019 Version 0.3.75
 GEO file download limit added for initial run when local executor is selected. 
 Autoscale error is fixed for AWS-ignite by increasing tcp.socketTimeout value.

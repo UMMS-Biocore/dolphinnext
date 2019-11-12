@@ -515,7 +515,7 @@ folder instead of downloading all of them to reduce the load. -->
                                                          ?>
                                                          " class="img-circle" alt="User Image">
                         </div>
-                        <div id="userInfo" style="display:inline" class="info" email="<?php echo $email; ?>">
+                        <div id="userInfo" class="info" email="<?php echo $email; ?>">
                             <p id="userName">
                                 <?php
                                 if ($login == 1){
@@ -526,8 +526,7 @@ folder instead of downloading all of them to reduce the load. -->
                                 }
                                 ?>
                             </p>
-                            <span style="font-size:11px;"><i class="fa fa-circle text-success"></i> Online</span>
-                            <a style="padding-left:5px; font-size:11px; float:right;" href="<?php echo BASE_PATH?>/index.php?p=logout">Sign out</a>
+                            <span style="font-size:11px;"><i class="fa fa-circle text-success"></i> Online <a style="color:#fff; margin-left:35px; font-size:11px; " href="<?php echo BASE_PATH?>/index.php?p=logout">Sign out</a></span>
                         </div>
                     </div>
 
