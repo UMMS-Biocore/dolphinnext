@@ -94,6 +94,22 @@ function checkArraysEqual(a, b) {
     return true;
 }
 
+//use array of item to fill select element
+function fillDropdownArrObj(arr, val, name, dropdownId, clean, first) {
+    first = first || false; //default false
+    if (clean === true) {
+        $(dropdownId).empty();
+    }
+    if (first){
+        $(dropdownId).append(first);
+    }
+    for (var i = 0; i < arr.length; i++) {
+        var param = arr[i];
+        var optionGroup = new Option(param[name], param[val]);
+        $(dropdownId).append(optionGroup);
+    }
+}
+
 function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
     $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /></div>');
@@ -116,7 +132,7 @@ function hideLoadingDiv(parentId) {
 //eg showInfoModal('#warnDelete','#warnDeleteText', text)
 function showInfoModal(modalId, textID, text) {
     //true if modal is open
-    if (($("#infoModal").data('bs.modal') || {}).isShown ){
+    if (($(modalId).data('bs.modal') || {}).isShown ){
         var oldText = $(textID).html();
         var newText = oldText + "<br/><br/>" +text;
         $(textID).html(newText);
@@ -128,7 +144,6 @@ function showInfoModal(modalId, textID, text) {
         });
         $(modalId).modal('show'); 
     }
-
 }
 
 
@@ -361,9 +376,6 @@ function checkAmazonStatus(proId) {
 
 }
 
-
-
-
 function stopAmzByAjax(proId){
     var data = { "id": proId, "p": "stopProAmazon" };
     $.ajax({
@@ -412,6 +424,48 @@ function updAmzActive(proId, proAmzData) {
     $('#shutdownLog-'+proId).text(activeTxt);
 }
 
+//mode: edit/add , type: runenv
+function getWizardLi(name, mode, type, href, wid){
+    return '<li><a class="col-sm-11" wid="'+wid+'" mode="'+mode+'"  type="'+type+'"  data-toggle="modal" href="'+href+'"><i class="fa fa-user text-yellow"></i> '+name+'</a><a class="col-sm-1 delete_wizard" style="position:static" data-toggle="tooltip" data-placement="bottom" title="Delete"><i style="padding:5px;" class="fa fa-trash pull-right"></i></a></li>';
+}
+
+function loadOngoingWizard (){
+    $.ajax({
+        type: "POST",
+        url: "ajax/ajaxquery.php",
+        data: {p: "getWizard"},
+        async: true,
+        cache: false,
+        success: function (data) {
+            var countActive = 0;
+            $("#ongoingwizard").empty();
+            if(data){
+                for (var k = 0; k < data.length; k++) {
+                    if(data[k]){
+                        if(data[k].id && data[k].name){
+                                countActive++
+                            $("#ongoingwizard").append(getWizardLi(data[k].name, "edit", "runenv", "#profilewizardmodal", data[k].id));
+                        }
+                    }
+                }
+            }
+            if (countActive > 0) {
+                $('#wizAmount').css('display', 'inline');
+                $('#wizAmount').text(countActive);
+                $('[data-toggle="tooltip"]').tooltip();
+            } else {
+                $('#wizAmount').text(countActive);
+                $('#wizAmount').css('display', 'none');
+            }
+
+        },
+        error: function (jqXHR, exception) {
+            console.log("#Error:")
+            console.log(jqXHR.status)
+            console.log(exception)
+        }
+    });
+}   
 
 $(document).ready(function () {
 
@@ -596,6 +650,8 @@ $(document).ready(function () {
                     console.log(exception)
                 }
             });
+
+
         }
         //load news on click to version button
         $(document).on('click', '#dnVersionBut', function (event) {
@@ -610,8 +666,9 @@ $(document).ready(function () {
                 } 
             }
         });
-
     });
+    //check active wizard and fill the dropdown and show warning
+    loadOngoingWizard ()
 
 });
 
@@ -669,7 +726,7 @@ function filterSideBar(options) {
                 group_idArr.push(group_id);
             }
         }
-                    console.log($(tagElems))
+        console.log($(tagElems))
 
         for (var i = 0; i < tagElems.length; i++) {
             var tagElems2 = $(tagElems).eq(i).children().eq(1).children()
@@ -1379,7 +1436,26 @@ function createFormObj(formValues, requiredFields) {
     var stop = false;
     for (var i = 0; i < formValues.length; i++) {
         var name = $(formValues[i]).attr("name");
-        var val = $(formValues[i]).val();
+        var type = $(formValues[i]).attr("type");
+        var val = "";
+        if (type == "radio"){
+            for (var k = 0; k < formValues.length; k++) {
+                if ($(formValues[k]).attr("name")){
+                    if ($(formValues[k]).attr("name") == name && $(formValues[k]).is(':checked')){
+                        val = $(formValues[k]).val();
+                        break;
+                    }  
+                }
+            }
+        } else if (type == "checkbox"){
+            if ($(formValues[i]).is(':checked')){
+                val = "on";
+            }
+        } else {
+            val = $(formValues[i]).val();
+        }
+        console.log(name)
+        console.log(val)
         if (requiredFields.includes(name)) {
             if (val != "") {
                 $(formValues[i]).parent().parent().removeClass("has-error")
@@ -1431,12 +1507,21 @@ function fillFormByName(formId, find, data) {
     var formValues = $(formId).find(find)
     for (var k = 0; k < formValues.length; k++) {
         var nameAttr = $(formValues[k]).attr("name");
+        var radioCheck = $(formValues[k]).is(':radio');
+        var checkboxCheck = $(formValues[k]).is(':checkbox');
+        console.log(radioCheck)
         var keys = Object.keys(data);
         if (data[nameAttr]) {
-            if (data[nameAttr] === "on") {
-                $(formValues[k]).attr('checked', true);
+            if (radioCheck){
+                if (data[nameAttr] == $(formValues[k]).val()) {
+                    $(formValues[k]).attr("checked", true);
+                } 
             } else {
-                $(formValues[k]).val(data[nameAttr]);
+                if (data[nameAttr] === "on") {
+                    $(formValues[k]).attr('checked', true);
+                } else {
+                    $(formValues[k]).val(data[nameAttr]);
+                }
             }
         }
     }

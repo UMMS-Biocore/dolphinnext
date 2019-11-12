@@ -775,8 +775,8 @@ else if ($p=="getProfileVariables"){
             $data = $db->getProfileAmazonbyID($id, $ownerID);
         }
     } else {
-        $proClu = $db->getProfileCluster($ownerID);
-        $proAmz = $db->getProfileAmazon($ownerID);
+        $proClu = $db->getRunProfileCluster($ownerID);
+        $proAmz = $db->getRunProfileAmazon($ownerID);
         $clu_obj = json_decode($proClu,true);
         $amz_obj = json_decode($proAmz,true);
         $merged_obj = array_merge($clu_obj, $amz_obj);
@@ -805,9 +805,12 @@ else if ($p=="getProfiles")
     if (empty($type)){
         $proClu = $db->getProfileCluster($ownerID);
         $proAmz = $db->getProfileAmazon($ownerID);
-    } else {
+    } else if ($type == "public"){
         $proClu = $db->getPublicProfileCluster($ownerID);
         $proAmz = $db->getPublicProfileAmazon($ownerID);
+    } else if ($type == "run"){
+        $proClu = $db->getRunProfileCluster($ownerID);
+        $proAmz = $db->getrunProfileAmazon($ownerID);
     }
     $clu_obj = json_decode($proClu,true);
     $amz_obj = json_decode($proAmz,true);
@@ -822,8 +825,10 @@ else if ($p=="getProfileCluster")
     } else {
         if (empty($type)){
             $data = $db->getProfileCluster($ownerID);
-        } else {
+        } else if ($type == "public"){
             $data = $db->getPublicProfileCluster($ownerID);
+        } else if ($type == "run"){
+            $data = $db->getRunProfileCluster($ownerID);
         }
     }
 }
@@ -835,8 +840,10 @@ else if ($p=="getProfileAmazon")
     } else {
         if (empty($type)){
             $data = $db->getProfileAmazon($ownerID); 
-        } else {
+        } else if ($type == "public"){
             $data = $db->getPublicProfileAmazon($ownerID);
+        } else if ($type == "run"){
+            $data = $db->getRunProfileAmazon($ownerID);
         }
     }
     // convert autoshutdown_date time to seconds
@@ -888,6 +895,27 @@ else if ($p=="saveSSHKeys"){
         $id = $idArray["id"];
         $db->insertKey($id, $prikey, "ssh_pri", $ownerID);
         $db->insertKey($id, $pubkey, "ssh_pub", $ownerID);
+    }
+}
+else if ($p=="getAutoPublicKey"){
+    $data = "";
+    if(!empty($ownerID)){
+        $name = "Auto-Generated Keys";
+        $hide = "false";
+        $check_userkey = "";
+        $check_ourkey = "on";
+        $sshkeys = $db->generateKeys($ownerID);
+        $sshkeysAr = json_decode($sshkeys,true);
+        $pubkey = $sshkeysAr['$keyPub'];
+        $prikey = $sshkeysAr['$keyPri'];
+        $insertSSH = $db->insertSSH($name, $hide, $check_userkey,$check_ourkey, $ownerID);
+        $idArray = json_decode($insertSSH,true);
+        $id = $idArray["id"];
+        $db->insertKey($id, $prikey, "ssh_pri", $ownerID);
+        $db->insertKey($id, $pubkey, "ssh_pub", $ownerID);
+        $idArray['$keyPub'] = $pubkey;
+        $data = json_encode($idArray);
+        
     }
 }
 else if ($p=="saveAmzKeys"){
@@ -950,6 +978,27 @@ else if ($p=="checkNewRelease"){
     $checkNewRelease = $db->checkNewRelease($version, $ownerID);
     $data= json_encode($checkNewRelease);
 }
+else if ($p=="saveWizard"){
+    $name = $_REQUEST['name'];
+    $status = $_REQUEST['status'];
+    $data =  addslashes(htmlspecialchars(urldecode($_REQUEST['data']), ENT_QUOTES));
+    if (!empty($id)) {
+        $data = $db->updateWizard($id, $name, $data, $status, $ownerID);
+    } else {
+        $data = $db->insertWizard($name, $data, $status, $ownerID);
+    }
+}
+else if ($p=="removeWizard"){   
+    $data = $db -> removeWizard($id, $ownerID);
+}
+else if ($p=="getWizard"){
+    if (!empty($id)) {
+        $data = $db->getWizard($id, $ownerID);
+    } else {
+        $data = $db->checkActiveWizard($ownerID);
+    }
+}
+
 else if ($p=="getChangeLog"){
     $file = __DIR__."/../../NEWS";
     $content = "";
@@ -996,10 +1045,16 @@ else if ($p=="saveProfileCluster"){
     $variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
     $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
     settype($ssh_id, 'integer');
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    settype($group_id, 'integer');
+    $auto_workdir = isset($_REQUEST['auto_workdir']) ? $_REQUEST['auto_workdir'] : "";
+    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
+    settype($perms, 'integer');
+    
     if (!empty($id)) {
-        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $ownerID);
+        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID);
     } else {
-        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $ownerID);
+        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID);
     }
 }
 else if ($p=="saveProfileAmazon"){
@@ -1033,10 +1088,15 @@ else if ($p=="saveProfileAmazon"){
     $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
     $security_group = $_REQUEST['security_group'];
     settype($amazon_cre_id, 'integer');
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    settype($group_id, 'integer');
+    $auto_workdir = isset($_REQUEST['auto_workdir']) ? $_REQUEST['auto_workdir'] : "";
+    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
+    settype($perms, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $ownerID);
+        $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $perms, $ownerID);
     } else {
-        $data = $db->insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $ownerID);
+        $data = $db->insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $perms, $ownerID);
     }
 }
 else if ($p=="saveInput"){
@@ -1393,6 +1453,9 @@ else if ($p=="saveGroup"){
     $idArray = json_decode($data,true);
     $g_id = $idArray["id"];
     $db->insertUserGroup($g_id, $ownerID, $ownerID);
+}
+else if ($p=="saveTestGroup"){
+    $data = $db->saveTestGroup($ownerID);
 }
 else if ($p=="saveUserGroup"){
     $u_id = $_REQUEST['u_id'];

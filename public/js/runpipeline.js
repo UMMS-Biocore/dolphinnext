@@ -1,3 +1,35 @@
+$runscope = {
+    //get work OR publish dir OR runcmd
+    getPubVal : function(type){
+        console.log("getPubVal")
+        var perms = $("#chooseEnv").find(":selected").attr('perms');
+        var dir = "";
+        if (type == "work"){
+            dir = $.trim($("#rOut_dir").val());
+        } else if (type == "publish"){
+            dir = $.trim($("#publish_dir").val());
+        } else if (type == "runcmd"){
+            dir = $.trim($("#runCmd").val());
+        }
+        if (perms){
+            if (perms == "15"){
+                if (type == "work"){
+                    project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                    var auto_workdir = $("#chooseEnv").find(":selected").attr('auto_workdir');
+                    dir = auto_workdir+"/id"+project_pipeline_id;
+                } else if (type == "publish" || type == "runcmd"){
+                    dir = "";
+                }
+            }
+        }
+        return dir;
+    }
+}
+//prevent functions overwrite
+Object.defineProperty($runscope, "getPubVal", {configureable: false, writable:false});
+
+
+
 // [name] is the name of the event "click", "mouseover", .. 
 // same as you'd pass it to bind()
 // [fn] is the handler function
@@ -72,6 +104,7 @@ $('#singu_imgDiv').on('hidden.bs.collapse', function () {
     $('#singu_check').removeAttr('onclick');
 });
 
+
 function createPiGnumList() {
     //get available pipeline Module list
     piGnumList = [];
@@ -81,6 +114,8 @@ function createPiGnumList() {
         }
     });
 }
+
+
 
 //adjust container size based on window size
 window.onresize = function (event) {
@@ -1560,7 +1595,7 @@ function fillStates(states, url, urlzip, checkPath) {
                 //two conditions covers both process and pipeline run_commands
             } else if (varName.match(/RUN_COMMAND@(.*)/) || varName === "RUN_COMMAND") {
                 setTimeout(function () {
-                    var initialText = $('#runCmd').val();
+                    var initialText = $runscope.getPubVal("runcmd");
                     if (initialText == "") {
                         $('#runCmd').val(defName);
                     } else {
@@ -1592,6 +1627,31 @@ function fillStates(states, url, urlzip, checkPath) {
             }
         }
     });
+}
+
+function getJobData(getType) {
+    var chooseEnv = $('#chooseEnv option:selected').val();
+    if (chooseEnv) {
+        var patt = /(.*)-(.*)/;
+        var proType = chooseEnv.replace(patt, '$1');
+        var proId = chooseEnv.replace(patt, '$2');
+        var profileData = getProfileData(proType, proId);
+        var allProSett = {};
+        if (profileData) {
+            allProSett.job_queue = profileData[0].job_queue;
+            allProSett.job_memory = profileData[0].job_memory;
+            allProSett.job_cpu = profileData[0].job_cpu;
+            allProSett.job_time = profileData[0].job_time;
+            allProSett.job_clu_opt = profileData[0].job_clu_opt;
+            if (getType === "job") {
+                return profileData;
+            } else if (getType === "both") {
+                return [allProSett, profileData];
+            }
+        } else {
+            return [allProSett, profileData];
+        }
+    }
 }
 
 // to execute autofill function, binds event handlers to chooseEnv
@@ -3088,6 +3148,74 @@ function insertInRow(inRow, paramGivenName, rowType, insertType) {
     }
 }
 
+function showHideColumnRunSett(colList, type) {
+    for (var k = 0; k < colList.length; k++) {
+        var processTableCol = colList[k] + 2;
+        if (type == "hide") {
+            $('#allProcessSettTable').find('th:nth-child(' + colList[k] + ')').hide();
+            $('#allProcessSettTable').find('td:nth-child(' + colList[k] + ')').hide();
+            var doCall = function (processTableCol) {
+                setTimeout(function () {
+                    $('#processTable').find('th:nth-child(' + processTableCol + ')').hide();
+                    $('#processTable').find('tr >td:nth-child(' + processTableCol + ')').hide();
+                }, 100);
+            }
+            doCall(processTableCol);
+        } else {
+            $('#allProcessSettTable').find('th:nth-child(' + colList[k] + ')').show();
+            $('#allProcessSettTable').find('td:nth-child(' + colList[k] + ')').show();
+            var doCall = function (processTableCol) {
+                setTimeout(function () {
+                    $('#processTable').find('th:nth-child(' + processTableCol + ')').show();
+                    $('#processTable').find('tr >td:nth-child(' + processTableCol + ')').show();
+                }, 100);
+            }
+            doCall(processTableCol);
+        }
+    }
+}
+
+function showhideOnEnv(allProSett, profileData){
+    var perms = profileData[0].perms;
+    var executor_job = profileData[0].executor_job;
+    // shared run environments
+    if (perms == "15"){
+        $('#rOut_dirDiv').css("display", "none");
+        $('#publishDirHide').css("display", "none");
+        $('#jobSettingsDiv').css("display", "none");
+        $('#runCmdDiv').css("display", "none");
+        $('#intermeDelDiv').css("display", "none");
+        $('#target_dir_div').css("display", "none");
+        //upload row
+        //terms
+        //host amazon
+        //test grouping
+
+    } else {
+        $('#rOut_dirDiv').css("display", "block");
+        $('#publishDirHide').css("display", "block");
+        $('#jobSettingsDiv').css("display", "block");
+        $('#runCmdDiv').css("display", "block");
+        $('#intermeDelDiv').css("display", "block");
+        $('#target_dir_div').css("display", "block");
+    }
+    if (executor_job === 'ignite') {
+        showHideColumnRunSett([1, 4, 5], "show")
+        showHideColumnRunSett([1, 4], "hide")
+    } else if (executor_job === 'local') {
+        showHideColumnRunSett([1, 4, 5], "hide")
+    } else {
+        showHideColumnRunSett([1, 4, 5], "show")
+    }
+    if (executor_job === "slurm"){
+        $('#eachProcessQueue').text('Partition');
+        $('#allProcessQueue').text('Partition');
+    }else {
+        $('#eachProcessQueue').text('Queue');
+        $('#allProcessQueue').text('Queue');
+    }
+}
+
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix, second) {
@@ -3718,32 +3846,7 @@ function refreshCreatorData(project_pipeline_id) {
 
 
 
-function showHideColumnRunSett(colList, type) {
-    for (var k = 0; k < colList.length; k++) {
-        var processTableCol = colList[k] + 2;
-        if (type == "hide") {
-            $('#allProcessSettTable').find('th:nth-child(' + colList[k] + ')').hide();
-            $('#allProcessSettTable').find('td:nth-child(' + colList[k] + ')').hide();
-            var doCall = function (processTableCol) {
-                setTimeout(function () {
-                    $('#processTable').find('th:nth-child(' + processTableCol + ')').hide();
-                    $('#processTable').find('tr >td:nth-child(' + processTableCol + ')').hide();
-                }, 100);
-            }
-            doCall(processTableCol);
-        } else {
-            $('#allProcessSettTable').find('th:nth-child(' + colList[k] + ')').show();
-            $('#allProcessSettTable').find('td:nth-child(' + colList[k] + ')').show();
-            var doCall = function (processTableCol) {
-                setTimeout(function () {
-                    $('#processTable').find('th:nth-child(' + processTableCol + ')').show();
-                    $('#processTable').find('tr >td:nth-child(' + processTableCol + ')').show();
-                }, 100);
-            }
-            doCall(processTableCol);
-        }
-    }
-}
+
 
 
 function loadProjectPipeline(pipeData) {
@@ -3835,23 +3938,8 @@ function loadProjectPipeline(pipeData) {
     // fill executor settings:
     if (pipeData[0].profile !== "" && chooseEnv) {
         var [allProSett, profileData] = getJobData("both");
-        var executor_job = profileData[0].executor_job;
-        if (executor_job === 'ignite') {
-            showHideColumnRunSett([1, 4, 5], "show")
-            showHideColumnRunSett([1, 4], "hide")
-        } else if (executor_job === 'local') {
-            showHideColumnRunSett([1, 4, 5], "hide")
-        } else {
-            showHideColumnRunSett([1, 4, 5], "show")
-        }
-        if (executor_job === "slurm"){
-            $('#eachProcessQueue').text('Partition');
-            $('#allProcessQueue').text('Partition');
-        }else {
-            $('#eachProcessQueue').text('Queue');
-            $('#allProcessQueue').text('Queue');
-        }
-        $('#jobSettingsDiv').css('display', 'inline');
+        showhideOnEnv(allProSett, profileData)
+
         //insert exec_all_settings data into allProcessSettTable table
         if (IsJsonString(decodeHtml(pipeData[0].exec_all_settings))) {
             var exec_all_settings = JSON.parse(decodeHtml(pipeData[0].exec_all_settings));
@@ -3888,20 +3976,35 @@ function loadRunOptions(type) {
     var selectedOpt = $('#chooseEnv').find(":selected").val();
     $('#chooseEnv').find('option').not(':disabled').remove();
     //get profiles for user
-    var proCluData = getValues({ p: "getProfileCluster" });
-    var proAmzData = getValues({ p: "getProfileAmazon" });
+    var proCluData = getValues({ p: "getProfileCluster", type:"run" });
+    var proAmzData = getValues({ p: "getProfileAmazon", type:"run" });
     if (proCluData && proAmzData) {
         if (proCluData.length + proAmzData.length !== 0) {
             $.each(proCluData, function (el) {
-                var option = new Option(proCluData[el].name + ' (Remote machine: ' + proCluData[el].username + '@' + proCluData[el].hostname + ')', 'cluster-' + proCluData[el].id)
+                var option = "";
+                if (proCluData[el].perms == "15"){
+                    option = new Option(proCluData[el].name, 'cluster-' + proCluData[el].id)
+                } else{
+                    option = new Option(proCluData[el].name + ' (Remote machine: ' + proCluData[el].username + '@' + proCluData[el].hostname + ')', 'cluster-' + proCluData[el].id)
+                }
                 option.setAttribute("host", proCluData[el].hostname);
+                option.setAttribute("perms", proCluData[el].perms);
+                option.setAttribute("auto_workdir", proCluData[el].auto_workdir);
                 $("#chooseEnv").append(option);
             });
             $.each(proAmzData, function (el) {
-                var option = new Option(proAmzData[el].name + ' (Amazon: Status:' + proAmzData[el].status + ' Image id:' + proAmzData[el].image_id + ' Instance type:' + proAmzData[el].instance_type + ')', 'amazon-' + proAmzData[el].id)
+                var option = "";
+                if (proAmzData[el].perms == "15"){
+                    option = new Option(proAmzData[el].name, 'amazon-' + proAmzData[el].id)
+                } else{
+                    option = new Option(proAmzData[el].name + ' (Amazon: Status:' + proAmzData[el].status + ' Image id:' + proAmzData[el].image_id + ' Instance type:' + proAmzData[el].instance_type + ')', 'amazon-' + proAmzData[el].id)
+                }
                 option.setAttribute("host", proAmzData[el].shared_storage_id);
+                option.setAttribute("perms", proAmzData[el].perms);
                 option.setAttribute("status", proAmzData[el].status);
                 option.setAttribute("amz_key", proAmzData[el].amazon_cre_id);
+                option.setAttribute("auto_workdir", proAmzData[el].auto_workdir);
+
                 $("#chooseEnv").append(option);
             });
         }
@@ -4207,12 +4310,12 @@ function checkReadytoRun(type) {
             var amzStatus = profileNextText.replace(patt, '$2');
         }
     }
-    var output_dir = $.trim($('#rOut_dir').val());
+    var output_dir = $runscope.getPubVal("work");
 
     var publishReady = false;
     var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
     if (publish_dir_check === "true") {
-        var publish_dir = $('#publish_dir').val();
+        var publish_dir = $runscope.getPubVal("publish");
         if (publish_dir !== "") {
             publishReady = true;
         } else {
@@ -4309,7 +4412,7 @@ function checkShub() {
 function checkWorkDir(){
     var showInfoM = false
     var infoModalText = "Please check your work directory:"
-    var output_dir = $.trim($('#rOut_dir').val());
+    var output_dir = $runscope.getPubVal("work")
     if (output_dir){
         // full path should start with slash
         if (output_dir[0] != "/"){
@@ -4629,7 +4732,7 @@ function removeCollectionFromInputs(col_id){
 
 function getPathArray() {
     var pathArray = [];
-    var workDir = $('#rOut_dir').val();
+    var workDir = $runscope.getPubVal("work");
     if (workDir) {
         pathArray.push(workDir);
     }
@@ -5185,7 +5288,7 @@ function readNextLog(proType, proId, type) {
 
 function showOutputPath() {
     var outTableRow = $('#outputsTable > tbody > >:last-child').find('span');
-    var output_dir = $('#rOut_dir').val();
+    var output_dir = $runscope.getPubVal("work");
     //add slash if outputdir not ends with slash
     if (output_dir && output_dir.substr(-1) !== '/') {
         output_dir = output_dir + "/";
@@ -5475,14 +5578,14 @@ function saveRun() {
     } else {
         var amazon_cre_id = "";
     }
-    var output_dir = $.trim($('#rOut_dir').val());
-    var publish_dir = $('#publish_dir').val();
+    var output_dir = $runscope.getPubVal("work");
+    var publish_dir = $runscope.getPubVal("publish");
     var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
     var profile = $('#chooseEnv').val();
     var perms = $('#perms').val();
     var interdel = $('#intermeDel').is(":checked").toString();
     var groupSel = $('#groupSel').val();
-    var cmd = encodeURIComponent($('#runCmd').val());
+    var cmd = encodeURIComponent($runscope.getPubVal("runcmd"));
     var exec_each = $('#exec_each').is(":checked").toString();
     var exec_all = $('#exec_all').is(":checked").toString();
     var exec_all_settingsRaw = $('#allProcessSettTable').find('input');
@@ -5559,37 +5662,14 @@ function saveRun() {
 
 function getProfileData(proType, proId) {
     if (proType === 'cluster') {
-        var profileData = getValues({ p: "getProfileCluster", id: proId });
+        var profileData = getValues({ p: "getProfileCluster", id: proId, type:"run" });
     } else if (proType === 'amazon') {
-        var profileData = getValues({ p: "getProfileAmazon", id: proId });
+        var profileData = getValues({ p: "getProfileAmazon", id: proId, type:"run" });
     }
     return profileData;
 }
 
-function getJobData(getType) {
-    var chooseEnv = $('#chooseEnv option:selected').val();
-    if (chooseEnv) {
-        var patt = /(.*)-(.*)/;
-        var proType = chooseEnv.replace(patt, '$1');
-        var proId = chooseEnv.replace(patt, '$2');
-        var profileData = getProfileData(proType, proId);
-        var allProSett = {};
-        if (profileData) {
-            allProSett.job_queue = profileData[0].job_queue;
-            allProSett.job_memory = profileData[0].job_memory;
-            allProSett.job_cpu = profileData[0].job_cpu;
-            allProSett.job_time = profileData[0].job_time;
-            allProSett.job_clu_opt = profileData[0].job_clu_opt;
-            if (getType === "job") {
-                return profileData;
-            } else if (getType === "both") {
-                return [allProSett, profileData];
-            }
-        } else {
-            return [allProSett, profileData];
-        }
-    }
-}
+
 
 function updateSideBarProPipe(project_id, project_pipeline_id, project_pipeline_name, type) {
     if (type === "edit") {
@@ -5878,6 +5958,8 @@ function updateRunVerNavBar() {
     }
 }
 
+
+
 //use array of item to fill select element
 function fillArray2Select(arr, id, clean) {
     if (clean === true) {
@@ -6100,7 +6182,7 @@ $(document).ready(function () {
                 $(selectizeIDs[i])[0].selectize.clear()
             }
             //#uploadFiles tab:
-            var workDir = $("#rOut_dir").val();
+            var workDir = $runscope.getPubVal("work")
             if (workDir){
                 $("#target_dir").val(workDir+"/run"+project_pipeline_id+"/upload")
             }
@@ -7211,35 +7293,21 @@ $(document).ready(function () {
             checkReadytoRun();
         })
     });
+
+
     $(function () {
         $(document).on('change', '#chooseEnv', function () {
             //reset before autofill feature actived for #runCmd
             changeOnchooseEnv = true;
             $('#runCmd').val("");
             var [allProSett, profileData] = getJobData("both");
-            var executor_job = profileData[0].executor_job;
-            if (executor_job === 'ignite') {
-                showHideColumnRunSett([1, 4, 5], "show")
-                showHideColumnRunSett([1, 4], "hide")
-            } else if (executor_job === 'local') {
-                showHideColumnRunSett([1, 4, 5], "hide")
-            } else {
-                showHideColumnRunSett([1, 4, 5], "show")
-            }
-            if (executor_job === "slurm"){
-                $('#eachProcessQueue').text('Partition');
-                $('#allProcessQueue').text('Partition');
-            }else {
-                $('#eachProcessQueue').text('Queue');
-                $('#allProcessQueue').text('Queue');
-            }
+            showhideOnEnv(allProSett, profileData);
             var profileTypeId = $('#chooseEnv').find(":selected").val();
             var patt = /(.*)-(.*)/;
             var proType = profileTypeId.replace(patt, '$1');
             var proId = profileTypeId.replace(patt, '$2');
             proTypeWindow = proType;
             proIdWindow = proId;
-            $('#jobSettingsDiv').css('display', 'inline');
             fillForm('#allProcessSettTable', 'input', allProSett);
             selectAmzKey();
             checkShub()
@@ -7964,7 +8032,7 @@ $(document).ready(function () {
             $("#pluploader").pluploadQueue({
                 runtimes : 'html5,html4', //flash,silverlight
                 url : "ajax/upload.php",
-                chunk_size : '3mb', 
+                chunk_size : '2mb', 
                 // to enable chunk_size larger than 2mb: "ajax/.htaccess file should have "php_value post_max_size 12M", "php_value upload_max_filesize 12M"
                 // test for 320mb file : 
                 // chunk_size=10mb :take 130sec
@@ -7979,7 +8047,7 @@ $(document).ready(function () {
                 //multipart_params : {'target_dir': "old"},
                 filters : {
                     // Maximum file size
-                    max_file_size : '2gb'
+                    max_file_size : '3gb'
                 },
                 // PreInit events, bound before any internal events
                 preinit : {
