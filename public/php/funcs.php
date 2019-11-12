@@ -22,6 +22,7 @@ function getPage($np, $login, $id)
   else if ($np==3 && $login==1 && !empty($id)){include("php/runpipeline.php");}
   else if ($np==4 && $login==1){include("php/profile.php");}
   else if ($np==5 && $login==1 && empty($id)){include("php/runstatus.php");}
+  else if ($np==6 ){include("php/terms.php");}
   else {include("php/public.php");}
 }
 
@@ -34,7 +35,7 @@ function getSidebarMenu($np,$login)
 
 function getJS($np, $login, $id)
 {
-  $js = "<script src=\"js/jsfuncs.js\"></script>";
+  $js = "<script src=\"js/jsfuncs.js\"></script><script src=\"js/wizard.js\"></script>";
     
   if ($np==1 && $login==1){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
   <script src=\"js/pipelineModal.js\"></script>

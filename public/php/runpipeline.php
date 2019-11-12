@@ -182,7 +182,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
             <div><textarea id="runSum" rows="3" placeholder="Enter run description here.." style="min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea></div>
             <div id="runSettings" style="padding-top:7px;">
                 <div>
-                    <div class="row">
+                    <div class="row" id="rOut_dirDiv">
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label>Work Directory (Full path)</label>
@@ -328,13 +328,13 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 
         <div id="advancedTab" class="tab-pane fade">
             <div id="advOpt" class="row" style="margin-top:10px; margin-bottom:2px;">
-                <div class="col-md-12">
+                <div class="col-md-12" id="runCmdDiv">
                     <div class="form-group">
                         <label>Run Command <span><a data-toggle="tooltip" data-placement="bottom" title="You may run the command or commands (by seperating each command with && sign) before the nextflow job starts. (eg. source /etc/bashrc && module load java/1.8.0_31 && module load singularity/singularity-2.4)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <textarea id="runCmd" rows="1" name="runCmd" placeholder="Enter commands here.." style="min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea>
                     </div>
                 </div>
-                <div class="col-md-12">
+                <div class="col-md-12" id="publishDirHide">
                     <div>
                         <label><input type="checkbox" id="publish_dir_check" name="publish_dir_check" data-toggle="collapse" data-target="#publishDirDiv"> Publish Directory</input> <span><a data-toggle="tooltip" data-placement="bottom" title="You may enter new publish directory (default: work directory) by clicking this item and entering path below.(eg. s3://yourbucket/test)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                     </div>
@@ -395,7 +395,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         </div>
                     </div>
                 </div>
-                <div class="col-md-12">
+                <div class="col-md-12" id="intermeDelDiv" >
                     <div class="form-group">
                         <label> <input type="checkbox" id="intermeDel" name="interDelete" value="interDel" checked> Delete intermadiate files after run</input></label>
                     </div>
@@ -1085,14 +1085,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         <div role="tabpanel" class="tab-pane" id="uploadFiles">
                             </br>
                             <form class="form-horizontal">
-                                <div class="form-group">
-                                    <label class="col-sm-4 control-label text-left" style="padding-left:30px;">1. Target Directory in the Host (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host where all uploaded files will be transfered. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                                <div class="form-group" id="target_dir_div">
+                                    <label class="col-sm-4 control-label text-left" style="padding-left:30px;">Target Directory in the Host (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host where all uploaded files will be transfered. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-8">
                                         <input type="text" class="form-control" id="target_dir" name="target_dir" value="">
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-sm-12 control-label text-left" style="padding-left:30px;">2. Add files to upload and click the 'Start Upload' button. First, all files will be uploaded and then transfered to target directory in your run environment.</label>
+                                    <label class="col-sm-12 control-label text-left" style="padding-left:30px;">Add files to upload and click the 'Start Upload' button. First, all files will be uploaded and then transfered to target directory in your run environment.</label>
                                 </div>
                             </form>
                             <div id="pluploader">

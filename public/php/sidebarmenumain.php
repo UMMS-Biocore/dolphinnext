@@ -32,7 +32,8 @@ foreach ($obj as $item):
         $showName = substr($orgName, 0, 20);
         $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
     }
-    $html.='<li admin_only="'.$item->{'admin_only'}.'"  pin="'.$item->{'pin'}.'"  p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"'.$tooltip.'><a href="index.php?np=1&id='.$item->{'id'}.'" class="pipelineItems"  origin="'.$orgName.'" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="pipeline-'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$showName.'</a></li>';
+    $admin_only = isset($item->{'admin_only'}) ? 'admin="'.$item->{'admin_only'}.'"' : "";
+    $html.='<li '.$admin_only.'  pin="'.$item->{'pin'}.'"  p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"'.$tooltip.'><a href="index.php?np=1&id='.$item->{'id'}.'" class="pipelineItems"  origin="'.$orgName.'" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="pipeline-'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$showName.'</a></li>';
 endforeach;
 return $html;
 }

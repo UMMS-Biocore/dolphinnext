@@ -225,6 +225,12 @@ $(document).ready(function () {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
         selectizeProfileName();
+        $('#shareRunEnv').prop('checked', false);
+
+        //load user groups
+        var allUserGrp = getValues({ p: "getUserGroups" });
+        fillDropdownArrObj(allUserGrp, "id", "name", "#groupSel", true, '<option value="0"  selected>Choose group </option>')
+
         if (button.attr('id') === 'addEnv') {
             $('#mAddEnvTitle').html('Add Environment');
             loadOptions("ssh");
@@ -252,9 +258,6 @@ $(document).ready(function () {
             var proId = rowData.id;
             if (proType === "cluster") {
                 var data = getValues({ p: "getProfileCluster", id: proId });
-                console.log(data[0])
-                console.log(data[0].variable)
-                console.log(decodeHtml(data[0].variable))
                 data[0].variable=decodeHtml(data[0].variable)
                 $('#chooseEnv').val('cluster').trigger('change');
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
@@ -266,6 +269,15 @@ $(document).ready(function () {
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             }
+            console.log(data[0].group_id)
+            console.log(data)
+            if (data[0].perms){
+                if (data[0].perms == "3"){
+                    $('#shareRunEnv').prop('checked', false);
+                } else if (data[0].perms == "15"){
+                    $('#shareRunEnv').prop('checked', true);
+                }
+            } 
             if (!$('#mAddEnvTitle').html().match(/Public/)) {
                 $("#mEnvName")[0].selectize.addOption({
                     id: rowData.name,
@@ -300,15 +312,15 @@ $(document).ready(function () {
             var blockList = [];
             if (selEnvType === "cluster" && !title.match(/Public/)) {
                 var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv"];
-                var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv"];
+                var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv", "shareRunEnvDiv"];
             } else if (selEnvType === "amazon" && !title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv"];
-                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv"];
+                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "shareRunEnvDiv"];
             } else if (selEnvType === "cluster" && title.match(/Public/)) {
-                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvUsernameDiv", "mEnvSSHKeyDiv"];
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvUsernameDiv", "mEnvSSHKeyDiv","shareRunEnvDiv"];
                 var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv"];
             } else if (selEnvType === "amazon" && title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","shareRunEnvDiv"];
                 var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv"];
             }
             $.each(noneList, function (element) {
@@ -368,7 +380,7 @@ $(document).ready(function () {
     });
 
     $('#profilemodal').on('hide.bs.modal', function (event) {
-        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv"];
+        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "shareRunEnvDiv"];
         $.each(noneList, function (element) {
             $('#' + noneList[element]).css('display', 'none');
         });
@@ -397,6 +409,11 @@ $(document).ready(function () {
             if ($("#mEnvName")[0].selectize.options[nameID]) {
                 formObj.name = $("#mEnvName")[0].selectize.options[nameID].name;
             }
+        }
+        if ($('#shareRunEnv').is(":checked")){
+            formObj.perms = "15";
+        } else {
+            formObj.perms = "3";
         }
         formObj.variable = encodeURIComponent(formObj.variable);
         if (formObj.executor_job == "ignite") {
