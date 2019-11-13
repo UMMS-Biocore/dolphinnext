@@ -513,7 +513,7 @@ folder instead of downloading all of them to reduce the load. -->
                                                     <form>
                                                         <div class="form-group col-sm-12">
                                                             <p id="softUptDesc"></p> 
-                                                            <textarea readonly rows="1" class="form-control" style="resize:none;" id="softUptCmd"></textarea>
+                                                            <textarea readonly rows="2" class="form-control" style="resize:none;" id="softUptCmd"></textarea>
                                                         </div>
                                                         <div class="form-group col-sm-12">
                                                             <p>Release Notes:</p> 

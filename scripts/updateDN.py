@@ -20,7 +20,7 @@ def main():
     args = parser.parse_args()
     conf=getConf()
     ownerID = "1"
-    pull_cmd = "cd .. && git pull origin " + args.version + " 2>&1"
+    pull_cmd = "cd .. && git pull https://github.com/UMMS-Biocore/dolphinnext.git " + args.version + " 2>&1"
     print "INFO: Pulling"+ "\nRUN : "+ pull_cmd
     pull_cmd_log = os.popen(pull_cmd).read()
     print "\n" + "LOG :\n" + pull_cmd_log

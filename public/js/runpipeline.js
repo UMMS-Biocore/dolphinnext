@@ -10,11 +10,11 @@ $runscope = {
             dir = $.trim($("#publish_dir").val());
         } else if (type == "runcmd"){
             dir = $.trim($("#runCmd").val());
-        }
+        } 
         if (perms){
             if (perms == "15"){
                 if (type == "work"){
-                    project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                    var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
                     var auto_workdir = $("#chooseEnv").find(":selected").attr('auto_workdir');
                     dir = auto_workdir+"/id"+project_pipeline_id;
                 } else if (type == "publish" || type == "runcmd"){
@@ -23,10 +23,32 @@ $runscope = {
             }
         }
         return dir;
+    },
+    getUploadDir : function(type){
+        console.log("getUploadDir")
+        //type:new or type:exist
+        var perms = $("#chooseEnv").find(":selected").attr('perms');
+        var uploadDir = "";
+        var workDir = $runscope.getPubVal("work");
+        var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+        if (type == "new"){
+            if (workDir && project_pipeline_id){
+                uploadDir = workDir+"/run"+project_pipeline_id+"/upload";
+            }
+        } else if (type == "exist"){
+            uploadDir = $.trim($("#target_dir").val());
+        }
+        if (perms){
+            if (perms == "15"){
+                uploadDir = workDir+"/run"+project_pipeline_id+"/upload"; 
+            }
+        }
+        return uploadDir;
     }
 }
 //prevent functions overwrite
 Object.defineProperty($runscope, "getPubVal", {configureable: false, writable:false});
+Object.defineProperty($runscope, "getUploadDir", {configureable: false, writable:false});
 
 
 
@@ -3186,11 +3208,8 @@ function showhideOnEnv(allProSett, profileData){
         $('#runCmdDiv').css("display", "none");
         $('#intermeDelDiv').css("display", "none");
         $('#target_dir_div').css("display", "none");
-        //upload row
-        //terms
-        //host amazon
-        //test grouping
-
+        $('#archive_dir_geo_div').css("display", "none");
+        $('#archive_dir_div').css("display", "none");
     } else {
         $('#rOut_dirDiv').css("display", "block");
         $('#publishDirHide').css("display", "block");
@@ -3198,6 +3217,8 @@ function showhideOnEnv(allProSett, profileData){
         $('#runCmdDiv').css("display", "block");
         $('#intermeDelDiv').css("display", "block");
         $('#target_dir_div').css("display", "block");
+        $('#archive_dir_geo_div').css("display", "block");
+        $('#archive_dir_div').css("display", "block");
     }
     if (executor_job === 'ignite') {
         showHideColumnRunSett([1, 4, 5], "show")
@@ -4496,7 +4517,7 @@ function checkS3filePath(inputID,showDivId) {
     var s3pattern = 's3:';
     var pathCheck = false;
     if (file_path !== '') {
-        if (file_path.indexOf(s3pattern) > -1) {
+        if (file_path.toLowerCase().indexOf(s3pattern) > -1) {
             $(showDivId).css('display', "block");
             pathCheck = true;
         } 
@@ -4513,7 +4534,7 @@ function checkS3(path, getProPipeInputs) {
     var s3pattern = 's3:';
     var pathCheck = false;
     if (path !== '') {
-        if (path.indexOf(s3pattern) > -1) {
+        if (path.toLowerCase().indexOf(s3pattern) > -1) {
             $("#mRunAmzKeyDiv").css('display', "inline");
             pathCheck = true;
         } else {
@@ -4745,7 +4766,7 @@ function getPathArray() {
                 var colFiles = getValues({ "id": collection_id, "p": "getCollectionFiles" })
                 for (var i = 0; i < colFiles.length; i++) {
                     if (colFiles[i].file_dir){
-                        if (!colFiles[i].file_dir.match(/s3:/)){
+                        if (!colFiles[i].file_dir.match(/s3:/i)){
                             var inputPath = colFiles[i].file_dir;
                             if (pathArray.indexOf(inputPath) === -1) {
                                 pathArray.push(inputPath)
@@ -5972,6 +5993,107 @@ function fillArray2Select(arr, id, clean) {
     }
 }
 
+function resetPatternList() {
+    fillArray2Select([], "#singleList", true)
+    fillArray2Select([], "#reverseList", true)
+    fillArray2Select([], "#forwardList", true)
+}
+
+
+function viewDirButSearch(dir){
+    var amazon_cre_id = "";
+    var warnUser = false;
+    if (dir) {
+        if (dir.match(/s3:/i)){
+            var lastChr = dir.slice(-1);
+            if (lastChr == "/"){
+                dir = dir.substring(0, dir.length - 1);
+            }
+            amazon_cre_id = $('#mRunAmzKeyS3').val()
+            if (!amazon_cre_id){
+                showInfoModal("#infoModal", "#infoModalText", "Please select Amazon Keys to search files in your S3 storage.");
+                warnUser = true;
+            } 
+        } else if (dir.match(/:\/\//)){
+            var lastChr = dir.slice(-1);
+            if (lastChr == "/"){
+                dir = dir.substring(0, dir.length - 1);
+            }  
+        }
+        if (!warnUser){
+            var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id, project_pipeline_id:project_pipeline_id });
+            if (dirList) {
+                dirList = $.trim(dirList)
+                console.log(dirList)
+                var fileArr = [];
+                var errorAr = [];
+                if (dir.match(/s3:/i)){
+                    var raw = dirList.split('\n');
+                    for (var i = 0; i < raw.length; i++) {
+                        var filePath = raw[i].split(" ").pop();
+                        if (filePath){
+                            if (filePath.match(/s3:/i)){
+                                var allBlock = filePath.split("/");
+                                if (filePath.substr(-1) == "/"){
+                                    var lastBlock = allBlock[allBlock.length-2]
+                                    } else {
+                                        var lastBlock = allBlock[allBlock.length-1]
+                                        }
+                                fileArr.push(lastBlock)
+                            } else {
+                                errorAr.push(raw[i])
+                            }
+                        } else {
+                            errorAr.push(raw[i])
+                        }
+                    }
+                } else if (dir.match(/:\/\//)){
+                    fileArr = dirList.split('\n');
+                    errorAr = fileArr.filter(line => line.match(/:/));
+                    fileArr = fileArr.filter(line => !line.match(/:/));
+                } else {
+                    fileArr = dirList.split('\n');
+                    errorAr = fileArr.filter(line => line.match(/ls:/));
+                    fileArr = fileArr.filter(line => !line.match(/:/));
+                }
+                console.log(fileArr)
+                console.log(errorAr)
+                if (fileArr.length > 0) {
+                    fillArray2Select(fileArr, "#viewDir", true)
+                    $("#viewDir").data("fileArr", fileArr)
+                    $("#viewDir").data("fileDir", dir)
+                    var amzKey = ""
+                    if (dir.match(/s3:/i)){
+                        amzKey= $("#mRunAmzKeyS3").val()
+                    }
+                    $("#viewDir").data("amzKey", amzKey)
+
+                    $('#collection_type').trigger("change");
+                } else {
+                    if (errorAr.length > 0) {
+                        var errTxt = errorAr.join(' ')
+                        showInfoModal("#infoModal", "#infoModalText", errTxt)
+                        resetPatternList()
+                    } else {
+                        fillArray2Select(["Files Not Found."], "#viewDir", true)
+                        resetPatternList()
+                    }
+                }
+            } else {
+                fillArray2Select(["Files Not Found."], "#viewDir", true)
+                resetPatternList()
+            }
+        } else {
+            fillArray2Select(["Files Not Found."], "#viewDir", true)
+            resetPatternList()
+        }
+        $("#viewDir > option").attr("style", "pointer-events: none;");
+        $("#viewDir").css("display", "inline")
+    } else {
+        showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Directory' to search files in your host.")
+    }
+}
+
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     pipeData = getValues({ p: "getProjectPipelines", id: project_pipeline_id });
@@ -6157,6 +6279,7 @@ $(document).ready(function () {
             $('#mRunAmzKeyS3Div').css("display", "none")
             $('#mArchAmzKeyS3Div_GEO').css("display", "none")
             $('#mArchAmzKeyS3Div').css("display", "none")
+            $('#file_dir_div').css("display","block");
             var renderMenu = {
                 option: function (data, escape) {
                     return '<div class="option">' +
@@ -6182,105 +6305,14 @@ $(document).ready(function () {
                 $(selectizeIDs[i])[0].selectize.clear()
             }
             //#uploadFiles tab:
-            var workDir = $runscope.getPubVal("work")
-            if (workDir){
-                $("#target_dir").val(workDir+"/run"+project_pipeline_id+"/upload")
-            }
+            $("#target_dir").val($runscope.getUploadDir("new"));
         });
+
+
 
         $('#viewDirBut').click(function () {
             var dir = $('#file_dir').val();
-            var amazon_cre_id = "";
-            var warnUser = false;
-            if (dir) {
-                if (dir.match(/s3:/)){
-                    var lastChr = dir.slice(-1);
-                    if (lastChr == "/"){
-                        dir = dir.substring(0, dir.length - 1);
-                    }
-                    amazon_cre_id = $('#mRunAmzKeyS3').val()
-                    if (!amazon_cre_id){
-                        showInfoModal("#infoModal", "#infoModalText", "Please select Amazon Keys to search files in your S3 storage.");
-                        warnUser = true;
-                    } 
-                } else if (dir.match(/:\/\//)){
-                    var lastChr = dir.slice(-1);
-                    if (lastChr == "/"){
-                        dir = dir.substring(0, dir.length - 1);
-                    }  
-                }
-                if (!warnUser){
-                    var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
-                    if (dirList) {
-                        dirList = $.trim(dirList)
-                        console.log(dirList)
-                        var fileArr = [];
-                        var errorAr = [];
-                        if (dir.match(/s3:/)){
-                            var raw = dirList.split('\n');
-                            for (var i = 0; i < raw.length; i++) {
-                                var filePath = raw[i].split(" ").pop();
-                                if (filePath){
-                                    if (filePath.match(/s3:/)){
-                                        var allBlock = filePath.split("/");
-                                        if (filePath.substr(-1) == "/"){
-                                            var lastBlock = allBlock[allBlock.length-2]
-                                            } else {
-                                                var lastBlock = allBlock[allBlock.length-1]
-                                                }
-                                        fileArr.push(lastBlock)
-                                    } else {
-                                        errorAr.push(raw[i])
-                                    }
-                                } else {
-                                    errorAr.push(raw[i])
-                                }
-                            }
-                        } else if (dir.match(/:\/\//)){
-                            fileArr = dirList.split('\n');
-                            errorAr = fileArr.filter(line => line.match(/:/));
-                            fileArr = fileArr.filter(line => !line.match(/:/));
-                        } else {
-                            fileArr = dirList.split('\n');
-                            errorAr = fileArr.filter(line => line.match(/ls:/));
-                            fileArr = fileArr.filter(line => !line.match(/:/));
-                        }
-                        console.log(fileArr)
-                        console.log(errorAr)
-                        if (fileArr.length > 0) {
-                            fillArray2Select(fileArr, "#viewDir", true)
-                            $("#viewDir").data("fileArr", fileArr)
-                            $("#viewDir").data("fileDir", dir)
-                            var amzKey = ""
-                            if (dir.match(/s3:/i)){
-                                amzKey= $("#mRunAmzKeyS3").val()
-                            }
-                            $("#viewDir").data("amzKey", amzKey)
-
-                            $('#collection_type').trigger("change");
-                        } else {
-                            if (errorAr.length > 0) {
-                                var errTxt = errorAr.join(' ')
-                                showInfoModal("#infoModal", "#infoModalText", errTxt)
-                                resetPatternList()
-                            } else {
-                                fillArray2Select(["Files Not Found."], "#viewDir", true)
-                                resetPatternList()
-                            }
-                        }
-                    } else {
-                        fillArray2Select(["Files Not Found."], "#viewDir", true)
-                        resetPatternList()
-                    }
-                } else {
-                    fillArray2Select(["Files Not Found."], "#viewDir", true)
-                    resetPatternList()
-                }
-                $("#viewDir > option").attr("style", "pointer-events: none;");
-                $("#viewDir").css("display", "inline")
-            } else {
-                showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Directory' to search files in your host.")
-            }
+            viewDirButSearch(dir)
         });
 
         removeSRA = function (name, srr_id, collection_type, button) {
@@ -6580,7 +6612,7 @@ $(document).ready(function () {
                 for (var i = 0; i < rowData.length; i++) {
                     var file_dir = rowData[i][2];
                     var amzKey = rowData[i][4];
-                    if (file_dir.match("s3:")){
+                    if (file_dir.match(/s3:/i)){
                         file_dir = file_dir+"\t"+amzKey
                     }
                     fileDirArr.push(file_dir);
@@ -6595,7 +6627,7 @@ $(document).ready(function () {
                 var s3_archive_dir  = $.trim($("#s3_archive_dir").val());
                 var amzArchKey  = $("#mArchAmzKeyS3").val();
 
-                if (!warnUser && s3_archive_dir.match(/s3:/)){
+                if (!warnUser && s3_archive_dir.match(/s3:/i)){
                     if (!amzArchKey){
                         infoModalText += " * Please select Amazon Archive Keys to save files into your S3 storage.";
                         warnUser = true;
@@ -6620,7 +6652,7 @@ $(document).ready(function () {
 
                     formObj.file_dir = fileDirArr;
 
-                    if (s3_archive_dir.match("s3:")){
+                    if (s3_archive_dir.match(/s3:/i)){
                         formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
                     }
                     formObj.file_array = ret.file_array;
@@ -6659,7 +6691,7 @@ $(document).ready(function () {
                 }
                 var s3_archive_dir_geo  = $.trim($("#s3_archive_dir_geo").val());
                 var amzArchKey  = $("#mArchAmzKeyS3_GEO").val();
-                if (s3_archive_dir_geo.match(/s3:/)){
+                if (s3_archive_dir_geo.match(/s3:/i)){
                     if (!amzArchKey){
                         infoModalText += " * Please select Amazon Keys to save files into your S3 storage.";
                         warnUser = true;
@@ -6688,7 +6720,7 @@ $(document).ready(function () {
                     } else if (collection_type[0][2] == "Single") {
                         formObj.collection_type = "single";
                     }
-                    if (s3_archive_dir_geo.match("s3:")){
+                    if (s3_archive_dir_geo.match(/s3:/i)){
                         formObj.s3_archive_dir = s3_archive_dir_geo+"\t"+amzArchKey
                     }
                     formObj.file_array = ret.file_array
@@ -6720,6 +6752,9 @@ $(document).ready(function () {
 
     createMultiselect = function (id,columnToSearch, apiColumn) {
         $(id).multiselect({
+            maxHeight: 500,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
             includeResetOption: true,
             resetText: "Clear filters",
             includeResetDivider: true,
@@ -6738,6 +6773,8 @@ $(document).ready(function () {
             }
         });
     }
+    
+    
     createMultiselectBinder = function (id) {
         var resetBut = $(id).find("a.btn-block");
         resetBut.click(function () {
@@ -6798,6 +6835,7 @@ $(document).ready(function () {
     });
 
     selectedSamplesTable = $('#selectedSamples').dataTable({
+        sScrollX: "100%",
         "columnDefs": [
             {
                 'targets': [4],
@@ -6805,8 +6843,10 @@ $(document).ready(function () {
             },
         ]
     });
-    selectedGeoSamplesTable = $('#selectedGeoSamples').dataTable();
-    searchedGeoSamplesTable = $('#searchedGeoSamples').dataTable();
+    selectedGeoSamplesTable = $('#selectedGeoSamples').dataTable({
+        sScrollX: "100%"});
+    searchedGeoSamplesTable = $('#searchedGeoSamples').dataTable({
+        sScrollX: "100%"});
 
     //xxx
     $(document).on('click', '.showDetailSample', function (e) {
@@ -6891,11 +6931,7 @@ $(document).ready(function () {
         }
     } );
 
-    function resetPatternList() {
-        fillArray2Select([], "#singleList", true)
-        fillArray2Select([], "#reverseList", true)
-        fillArray2Select([], "#forwardList", true)
-    }
+
 
     $(function () {
         $(document).on('change', '#collection_type', function () {
@@ -7138,7 +7174,7 @@ $(document).ready(function () {
             button_div.appendChild(remove_button);
             var fileDir = $("#viewDir").data("fileDir")
             var mRunAmzKeyS3 = "";
-            if (fileDir.match(/s3:/)){
+            if (fileDir.match(/s3:/i)){
                 mRunAmzKeyS3 = $("#viewDir").data("amzKey")
             }
 
@@ -7199,7 +7235,7 @@ $(document).ready(function () {
                 button_div.appendChild(remove_button);
                 var fileDir = $("#viewDir").data("fileDir")
                 var mRunAmzKeyS3 = "";
-                if (fileDir.match(/s3:/)){
+                if (fileDir.match(/s3:/i)){
                     mRunAmzKeyS3 = $("#viewDir").data("amzKey")
                 }
 
@@ -8092,7 +8128,7 @@ $(document).ready(function () {
                         //Called right before the upload for a given file starts, can be used to cancel it if required
                         log('[BeforeUpload]', 'File: ', file);
                         updateTransferedFiles()
-                        var target_dir = $("#target_dir").val();
+                        var target_dir = $runscope.getUploadDir("exist");
                         var run_env = $('#chooseEnv').find(":selected").val();
                         if (target_dir && run_env){
                             up.settings.multipart_params.target_dir = target_dir;
@@ -8111,9 +8147,9 @@ $(document).ready(function () {
                         // Called when files are added to queue
                         log('[FilesAdded]');
                         //get files in the target directory
-                        var target_dir = $("#target_dir").val();
+                        var target_dir = $runscope.getUploadDir("exist");
                         var amazon_cre_id = "";
-                        var dirList = getValues({ "p": "getLsDir", dir: target_dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
+                        var dirList = getValues({ "p": "getLsDir", dir: target_dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id, project_pipeline_id: project_pipeline_id });
                         console.log(dirList)
                         var fileArr = [];
                         var errorAr = [];
@@ -8228,7 +8264,7 @@ $(document).ready(function () {
         initPlupload();
 
         $('#addFileModal').on('click', '.plupload_start_dummy', function (e) {
-            var target_dir = $("#target_dir").val();
+            var target_dir = $runscope.getUploadDir("exist");
             var run_env = $('#chooseEnv').find(":selected").val();
             var warning = ""
             if (target_dir && run_env){
@@ -8265,7 +8301,7 @@ $(document).ready(function () {
                     break;
                 }
             }
-            var target_dir = $("#target_dir").val();
+            var target_dir = $runscope.getUploadDir("exist");
             var run_env = $('#chooseEnv').find(":selected").val();
             if (fileName && target_dir && run_env){
                 var retryRsync = getValues({ p: "retryRsync", dir: target_dir, run_env:run_env, filename: fileName  });
@@ -8328,10 +8364,24 @@ $(document).ready(function () {
 
 
     $('#addFileModal').on('click', '#showHostFiles', function (e) {
-        var target_dir = $('#target_dir').val();
-        $('#file_dir').val(target_dir);
-        $('#viewDirBut').trigger("click");
-        $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
+        var perms = $("#chooseEnv").find(":selected").attr('perms');
+        var sharedProfile = false;
+        if (perms){
+            if (perms == "15"){
+                sharedProfile = true;
+            }
+        }
+        if (sharedProfile){
+            viewDirButSearch($runscope.getUploadDir("exist"));
+            $('#file_dir_div').css("display","none");
+            $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
+        } else {
+            var target_dir = $runscope.getUploadDir("exist");
+            $('#file_dir').val(target_dir);
+            $('#viewDirBut').trigger("click");
+            $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
+        }
+
     });
 
 

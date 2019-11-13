@@ -222,11 +222,12 @@ else if ($p=="saveNextflowLog"){
     }
 }
 else if ($p=="getLsDir"){
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $dir = $_REQUEST['dir'];
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
-    $data = $db -> getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $ownerID);
+    $data = $db -> getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $project_pipeline_id, $ownerID);
 }
 else if ($p=="chkRmDirWritable"){
     $dir = $_REQUEST['dir'];

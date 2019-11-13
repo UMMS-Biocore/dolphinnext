@@ -618,11 +618,11 @@ class dbfuncs {
         $initialRunCmd = "";
         $igniteCmd = "";
         $timeouts = "-cluster.failureDetectionTimeout 100000000 -cluster.clientFailureDetectionTimeout 100000000 -cluster.tcp.socketTimeout 100000000";
-//      $timeouts = " -cluster.tcp.reconnectCount 100000000 -cluster.tcp.networkTimeout 100000000 -cluster.tcp.ackTimeout 100000000 -cluster.tcp.maxAckTimeout 100000000  -cluster.tcp.joinTimeout 100000000";
+        //      $timeouts = " -cluster.tcp.reconnectCount 100000000 -cluster.tcp.networkTimeout 100000000 -cluster.tcp.ackTimeout 100000000 -cluster.tcp.maxAckTimeout 100000000  -cluster.tcp.joinTimeout 100000000";
         if ($executor == "local" && $executor_job == 'ignite'){
             $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite $timeouts";
         }
-        
+
         if (!empty($initialRunParams)){
             $igniteCmdInit = "";
             if ($executor == "local" && $executor_job == 'ignite'){
@@ -873,6 +873,8 @@ class dbfuncs {
                             if (isset($rel->published_at)){ $obj["published_at"]=$rel->published_at; }
                             if (isset($rel->body)){ $obj["body"]=$rel->body; }
                             $ret["release_cmd_log"] = $obj;
+                            $scriptsPath = realpath(__DIR__."/../../scripts");
+                            $ret["scripts_path"] = $scriptsPath;
                         } 
                     }
                 }
@@ -2879,7 +2881,7 @@ class dbfuncs {
         return $size;
     }
 
-    public function getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $ownerID) {
+    public function getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $project_pipeline_id, $ownerID) {
         $dir = trim($dir);
         $log = "";
         if (preg_match("/s3:/i", $dir)){
@@ -2936,6 +2938,21 @@ class dbfuncs {
         } else {
             list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
             $ssh_id = $cluDataArr[0]["ssh_id"];
+            $perms = $cluDataArr[0]["perms"];
+            $auto_workdir = $cluDataArr[0]["auto_workdir"];
+            if (!empty($perms)){
+                if ($perms == "15"){
+                    if (empty($auto_workdir)){
+                        return json_encode("Query failed! Generic work directory not defined in shared run environment.");
+                    }
+                    $rundir = $auto_workdir."/id".$project_pipeline_id;
+                    $rundir = preg_replace('/(\/+)/','/',$rundir);
+                    $dir = preg_replace('/(\/+)/','/',$dir);
+                    if (strpos($dir, $rundir) === false) {
+                        return json_encode("Query failed! You don't have permission to access this directory.");
+                    }
+                }
+            }
             $ssh_own_id = $cluDataArr[0]["owner_id"];
             $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));

@@ -635,9 +635,13 @@ $(document).ready(function () {
                                 var latestVersion = json.release_cmd_log.tag_name;
                                 var releaseNotes = json.release_cmd_log.body;
                                 if (latestVersion && releaseNotes){
+                                    var scriptsPath = "scripts";
+                                    if (json.scripts_path){
+                                        scriptsPath = json.scripts_path
+                                    }
                                     $("#softUpdBut").css("display", "inline")
                                     $("#softUptDesc").html("DolphinNext "+latestVersion+ " is now available. You can update your mirror by running following command:");
-                                    $("#softUptCmd").val("cd scripts && python updateDN --version "+latestVersion)
+                                    $("#softUptCmd").val("cd "+scriptsPath+" && python updateDN.py --version "+latestVersion)
                                     $("#softUptReleaseNotes").val(releaseNotes)
                                 }
                             }

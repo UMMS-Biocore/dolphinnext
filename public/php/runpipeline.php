@@ -14,7 +14,20 @@ $SHOW_RUN_NEXTFLOWLOG= SHOW_RUN_NEXTFLOWLOG;
 $SHOW_RUN_NEXTFLOWNF= SHOW_RUN_NEXTFLOWNF;
 $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 ?>
-
+<style type="text/css">
+ 
+    #fileContent .multiselect-item.multiselect-filter  {
+        text-align: center;
+        width: 100%;
+    }
+    #fileContent .multiselect-item.multiselect-filter > .input-group {
+        width: 93%;
+        margin: 5px;
+    }
+    #fileContent .multiselect-item.multiselect-filter > .input-group > .input-group-btn {
+        width: 40px;
+    }
+    </style>
 
 
 <div class="box-header" style=" padding-top:0px;  font-size:large; ">
@@ -722,7 +735,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="savefile" data-clickedrow="">Save File</button>
+                <button type="button" class="btn btn-primary" id="savefile" data-clickedrow="">Save</button>
             </div>
         </div>
     </div>
@@ -854,7 +867,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group" id="file_dir_div">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">1. File Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-7">
                                         <input type="text" class="form-control" id="file_dir" name="file_dir" value="">
@@ -972,14 +985,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">6. Local Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                                <div class="form-group" id="archive_dir_div">
+                                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Local Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-7">
                                         <input type="text" class="form-control" id="archive_dir" name="archive_dir">
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">7. Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-7">
                                         <input type="text" class="form-control" id="s3_archive_dir" name="s3_archive_dir">
                                     </div>
@@ -1059,14 +1072,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">5. Local Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                                <div class="form-group" id="archive_dir_geo_div">
+                                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Local Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-7">
                                         <input type="text" class="form-control" id="archive_dir_geo" name="archive_dir">
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">6. Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                                    <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-7">
                                         <input type="text" class="form-control" id="s3_archive_dir_geo" name="s3_archive_dir">
                                     </div>
