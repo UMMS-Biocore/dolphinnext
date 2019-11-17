@@ -392,10 +392,12 @@ folder instead of downloading all of them to reduce the load. -->
             .disp_none{
                 display: none !important;
             }
+/*
             .tooltip-inner {
                 max-width: none;
                 white-space: nowrap;
             }
+*/
 
         </style>
 
@@ -438,7 +440,7 @@ folder instead of downloading all of them to reduce the load. -->
                             </li>
                             <?php 
                             if ($login == 1 && $SHOW_WIZARD){
-                            echo '<li class="dropdown notifications-menu" >
+                            echo '<li id="manageProfileWizard" class="dropdown notifications-menu" >
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" >
                                     <i data-toggle="tooltip" data-placement="bottom" title="Wizards" style="padding:3px; padding-left:0px; padding-right:5px;" class="fa fa-magic"></i>
                                     <small id="wizAmount" style="display:none" class="label pull-right label-warning"></small>
@@ -447,7 +449,7 @@ folder instead of downloading all of them to reduce the load. -->
                                     <li class="header"><label>Wizards</label></li>
                                     <li>
                                         <ul class="menu">
-                                            <li><a wid="" mode="add" type="runenv" href="#profilewizardmodal" data-toggle="modal"><i class="fa fa-plus-circle text-aqua"></i> Create New Run Environment</a></li>
+                                            <li><a id="addProfileWizard" wid="" mode="add" type="runenv" href="#profilewizardmodal" data-toggle="modal"><i class="fa fa-plus-circle text-aqua"></i> Create New Run Environment</a></li>
 
                                         </ul>
                                     </li>

@@ -238,6 +238,7 @@ $(document).ready(function () {
         } else if (button.attr('id') === 'addPublicProfile') {
             $('#mAddEnvTitle').html('Add Public Environment');
         } else if (button.attr('id') === 'editPublicProfile' || button.attr('id') === 'profileedit') {
+            $(this).find("form input[type=text], textarea").val("");
             var clickedRow = button.closest('tr');
             if (button.attr('id') === 'editPublicProfile') {
                 $('#mAddEnvTitle').html('Edit Public Environment');
