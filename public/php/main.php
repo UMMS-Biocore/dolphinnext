@@ -8,6 +8,9 @@ $role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
 if ($email != ''){$login = 1;} 
 else { $login = 0;}
 session_write_close();
+
+require_once(__DIR__."/../../config/config.php");
+$SHOW_WIZARD=SHOW_WIZARD;
 ?>
 <!DOCTYPE html>
 <html>
@@ -298,6 +301,10 @@ folder instead of downloading all of them to reduce the load. -->
                 border-radius: 0;
             }
 
+            .modal.fade.in.fullscreen {
+                padding: 0 !important;
+            }
+
 
             /* slider*/
 
@@ -424,18 +431,51 @@ folder instead of downloading all of them to reduce the load. -->
                     </div>
                     <div class="navbar-custom-menu pull-right">
                         <ul class="nav navbar-nav">
-                            <li id="manageAmz" style="display:none">
-                                <a href="#amzModal" data-toggle="modal">Amazon
+                            <li id="manageAmz" style="display:none"  >
+                                <a href="#amzModal" data-toggle="modal"><i style="padding:4px;" data-toggle="tooltip" data-placement="bottom" title="Amazon Web Services" class="fa fa-amazon"></i>
                                     <small id="amzAmount" style="display:none" class="label pull-right bg-green"></small>
                                 </a>
                             </li>
-                            <?php
+                            <?php 
+                            if ($login == 1 && $SHOW_WIZARD){
+                            echo '<li class="dropdown notifications-menu" >
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" >
+                                    <i data-toggle="tooltip" data-placement="bottom" title="Wizards" style="padding:3px; padding-left:0px; padding-right:5px;" class="fa fa-magic"></i>
+                                    <small id="wizAmount" style="display:none" class="label pull-right label-warning"></small>
+                                </a>
+                                <ul class="dropdown-menu" style="width:400px;">
+                                    <li class="header"><label>Wizards</label></li>
+                                    <li>
+                                        <ul class="menu">
+                                            <li><a wid="" mode="add" type="runenv" href="#profilewizardmodal" data-toggle="modal"><i class="fa fa-plus-circle text-aqua"></i> Create New Run Environment</a></li>
+
+                                        </ul>
+                                    </li>
+                                    <li class="header"> Ongoing Wizards</li>
+                                    <li>
+                                        <ul class="menu" id="ongoingwizard">
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>';
+                            }
+                            
                             if ($login == 1){
-                                echo '<li><a href="index.php?np=4">Profiles </a></li>';
+                                echo '<li><a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" title="Profiles"><i class="glyphicon glyphicon-user"></i> </a></li>';
                             }
                             ?>
-                            <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Tutorial</a></li>
-                            <li><a href="http://dolphinnext.readthedocs.io/" target="_blank"><i class="fa fa-mortar-board"></i></a></li>
+
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><i class="fa fa-mortar-board"></i> <span class="caret"></span></a>
+                                <ul class="dropdown-menu" role="menu">
+                                    <li><a href="http://dolphinnext.readthedocs.io/" target="_blank">Reference Documentation</a></li>
+                                    <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Quick Start Guide</a></li>
+                                    <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/dev_quick.html" target="_blank"> Developer Tutorial</a></li>
+                                    <!--                                    <li class="divider"></li>-->
+                                    <!--                                    <li><a href="#">One more separated link</a></li>-->
+                                </ul>
+                            </li>
+
                             <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><b style="color:#7c1842;" id="dn-version" ver="<?php echo DN_VERSION?>" > VERSION <?php echo DN_VERSION?> </b></a>
                                 <div class="dropdown-menu" style="width:650px; padding:0px;">
                                     <div class="panel panel-default" style="margin:0px;">
@@ -473,7 +513,7 @@ folder instead of downloading all of them to reduce the load. -->
                                                     <form>
                                                         <div class="form-group col-sm-12">
                                                             <p id="softUptDesc"></p> 
-                                                            <textarea readonly rows="1" class="form-control" style="resize:none;" id="softUptCmd"></textarea>
+                                                            <textarea readonly rows="2" class="form-control" style="resize:none;" id="softUptCmd"></textarea>
                                                         </div>
                                                         <div class="form-group col-sm-12">
                                                             <p>Release Notes:</p> 
@@ -592,6 +632,14 @@ immediately after the control sidebar -->
                 <div class="control-sidebar-bg"></div>
                 </div>
             <!-- ./wrapper -->
+            <footer class="main-footer" style="display:none; background:#E9EDF2; border-top:0px;">
+                <div class="pull-right hidden-xs">
+                    <a href="php/terms.php" target="_blank">Terms & Privacy Policy </a>
+                </div>
+                <p> </p>
+            </footer>
+
+            <?php print include("php/wizard.php"); ?>
             <!--        feedback modal-->
             <div id="feedback">
                 <div id="feedback-form" style='display:none;' class="col-xs-4 col-md-4 panel panel-default">
@@ -615,7 +663,7 @@ immediately after the control sidebar -->
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title">Amazon Management Console</h4>
+                            <h4 class="modal-title">Amazon (AWS) Management Console</h4>
                         </div>
                         <div class="modal-body">
                             <form class="form-horizontal">
@@ -716,6 +764,24 @@ immediately after the control sidebar -->
         </div>
         </div>
     <!--Info Modal ENDs-->
+
+    <!--Confirm Delete Modal-->
+    <div id="confirmDelWizardModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" >Confirm</h4>
+                </div>
+                <div class="modal-body" id="confirmDelWizardModalText">Text</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary delete" data-dismiss="modal" >Delete</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--Confirm Delete Modal Ends-->
 
 
     <!--Google Platform Library on your web pages that integrate Google Sign-In-->

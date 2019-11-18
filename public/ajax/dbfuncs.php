@@ -16,6 +16,7 @@ class dbfuncs {
     private $amz_path = AMZPATH;
     private $amazon = AMAZON;
     private $next_ver = NEXTFLOW_VERSION;
+    private $test_profile_group_id = TEST_PROFILE_GROUP_ID;
     private static $link;
 
     function __construct() {
@@ -301,7 +302,6 @@ class dbfuncs {
 
     function initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID){
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
-        $executor = $cluDataArr[0]['executor'];
         $params = "";
         $checkGeoFiles = "false";
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
@@ -618,11 +618,11 @@ class dbfuncs {
         $initialRunCmd = "";
         $igniteCmd = "";
         $timeouts = "-cluster.failureDetectionTimeout 100000000 -cluster.clientFailureDetectionTimeout 100000000 -cluster.tcp.socketTimeout 100000000";
-//      $timeouts = " -cluster.tcp.reconnectCount 100000000 -cluster.tcp.networkTimeout 100000000 -cluster.tcp.ackTimeout 100000000 -cluster.tcp.maxAckTimeout 100000000  -cluster.tcp.joinTimeout 100000000";
+        //      $timeouts = " -cluster.tcp.reconnectCount 100000000 -cluster.tcp.networkTimeout 100000000 -cluster.tcp.ackTimeout 100000000 -cluster.tcp.maxAckTimeout 100000000  -cluster.tcp.joinTimeout 100000000";
         if ($executor == "local" && $executor_job == 'ignite'){
             $igniteCmd = "-w $dolphin_path_real/work -process.executor ignite $timeouts";
         }
-        
+
         if (!empty($initialRunParams)){
             $igniteCmdInit = "";
             if ($executor == "local" && $executor_job == 'ignite'){
@@ -744,7 +744,8 @@ class dbfuncs {
         list($initialRunParams,$checkGeoFiles) = $this->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
         if (isset($checkGeoFiles)){
             $executor = $cluDataArr[0]['executor'];
-            if ($checkGeoFiles == "true" && $executor == "local"){
+            $executor_job = $cluDataArr[0]['executor_job'];
+            if ($checkGeoFiles == "true" && (($executor == "local" && $executor_job == "local") || $profileType == "amazon")){
                 $configText .= "\n//parallel download limit for GEO files on local executor:\n";
                 $configText .= "executor.queueSize = 4 \n";
             }
@@ -872,6 +873,8 @@ class dbfuncs {
                             if (isset($rel->published_at)){ $obj["published_at"]=$rel->published_at; }
                             if (isset($rel->body)){ $obj["body"]=$rel->body; }
                             $ret["release_cmd_log"] = $obj;
+                            $scriptsPath = realpath(__DIR__."/../../scripts");
+                            $ret["scripts_path"] = $scriptsPath;
                         } 
                     }
                 }
@@ -882,6 +885,7 @@ class dbfuncs {
         }
         return json_encode($ret);
     }
+
 
 
     //$type: "downPack" or "pushGithub"
@@ -1138,7 +1142,8 @@ class dbfuncs {
         // get scp port
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $ssh_id = $cluDataArr[0]["ssh_id"];
-        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+        $ssh_own_id = $cluDataArr[0]["owner_id"];
+        $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
         if (!file_exists($userpky)) {
             $this->triggerRunErr('ERROR: Private key is not found!', $uuid,$project_pipeline_id,$ownerID);
         }
@@ -1205,7 +1210,7 @@ class dbfuncs {
         $data = $this->insertRunLog($project_pipeline_id, $uuid, $status, $ownerID);
     }
 
-    public function generateKeys($ownerID) {
+    function generateKeys($ownerID) {
         $cmd = "rm -rf {$this->ssh_path}/.tmp$ownerID && mkdir -p {$this->ssh_path}/.tmp$ownerID && cd {$this->ssh_path}/.tmp$ownerID && ssh-keygen -C @dolphinnext -f tkey -t rsa -N '' > logTemp.txt";
         $resText = shell_exec("$cmd");
         $keyPubPath ="{$this->ssh_path}/.tmp$ownerID/tkey.pub";
@@ -2035,6 +2040,23 @@ class dbfuncs {
         $sql = "UPDATE amazon_credentials SET name='$name', amz_def_reg='$amz_def_reg', amz_acc_key='$amz_acc_key', amz_suc_key='$amz_suc_key', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function checkActiveWizard($ownerID) {
+        $sql = "SELECT id, name, status FROM wizard WHERE owner_id ='$ownerID' AND status = 'active' AND deleted = 0 ";
+        return self::queryTable($sql);
+    }
+    function getWizard($id, $ownerID) {
+        $sql = "SELECT * FROM wizard WHERE id = '$id' AND owner_id ='$ownerID' AND deleted = 0";
+        return self::queryTable($sql);
+    }
+    function insertWizard($name, $data, $status, $ownerID) {
+        $sql = "INSERT INTO wizard (name, data, status, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
+              ('$name', '$data', '$status', now() , now(), '$ownerID', '3', '$ownerID')";
+        return self::insTable($sql);
+    }
+    function updateWizard($id, $name, $data, $status, $ownerID) {
+        $sql = "UPDATE wizard SET name='$name', data='$data', status='$status', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
     public function insertGithub($username, $email, $password, $ownerID) {
         $sql = "INSERT INTO github (username, email, password, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
               ('$username', '$email', '$password', now() , now(), '$ownerID', '3', '$ownerID')";
@@ -2077,11 +2099,22 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     public function getProfileClusterbyID($id, $ownerID) {
-        $sql = "SELECT * FROM profile_cluster WHERE owner_id = '$ownerID' and id = '$id'";
+        $sql = "SELECT p.* 
+                FROM profile_cluster p
+                INNER JOIN users u ON p.owner_id = u.id
+                LEFT JOIN user_group ug ON p.group_id=ug.g_id
+                WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
         return self::queryTable($sql);
     }
     public function getProfileCluster($ownerID) {
         $sql = "SELECT * FROM profile_cluster WHERE (public != '1' OR public IS NULL) AND owner_id = '$ownerID'";
+        return self::queryTable($sql);
+    }
+    public function getRunProfileCluster($ownerID) {
+        $sql = "SELECT DISTINCT p.* FROM profile_cluster p 
+                INNER JOIN users u ON p.owner_id = u.id
+                LEFT JOIN user_group ug ON p.group_id=ug.g_id
+                WHERE (p.public != '1' OR p.public IS NULL) AND (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and p.perms = 15))";
         return self::queryTable($sql);
     }
     public function getCollections($ownerID) {
@@ -2119,11 +2152,19 @@ class dbfuncs {
         $sql = "SELECT * FROM profile_amazon WHERE public = '1'";
         return self::queryTable($sql);
     }
+    public function getRunProfileAmazon($ownerID) {
+        $sql = "SELECT DISTINCT p.* FROM profile_amazon p 
+                INNER JOIN users u ON p.owner_id = u.id
+                LEFT JOIN user_group ug ON p.group_id=ug.g_id
+                WHERE (p.public != '1' OR p.public IS NULL) AND (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and p.perms = 15))";
+        return self::queryTable($sql);
+    }
     public function getProfileAmazonbyID($id, $ownerID) {
         $sql = "SELECT p.*, u.username
-              FROM profile_amazon p
-              INNER JOIN users u ON p.owner_id = u.id
-              WHERE p.owner_id = '$ownerID' and p.id = '$id'";
+                FROM profile_amazon p
+                INNER JOIN users u ON p.owner_id = u.id
+                LEFT JOIN user_group ug ON p.group_id=ug.g_id
+                WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
         return self::queryTable($sql);
     }
     public function getActiveRunbyProID($id, $ownerID) {
@@ -2142,20 +2183,20 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-    public function insertProfileCluster($name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $ownerID) {
-        $sql = "INSERT INTO profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, variable, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$username', '$hostname', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$next_clu_opt','$job_clu_opt', '$public', '$variable', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertProfileCluster($name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID) {
+        $sql = "INSERT INTO profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, variable, group_id, auto_workdir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$username', '$hostname', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$next_clu_opt','$job_clu_opt', '$public', '$variable', '$group_id', '$auto_workdir', '$ownerID', '$perms', now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $ownerID) {
-        $sql = "UPDATE profile_cluster SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', username='$username', hostname='$hostname', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', job_clu_opt='$job_clu_opt', next_clu_opt='$next_clu_opt', ssh_id='$ssh_id', public='$public', variable='$variable', last_modified_user ='$ownerID'  WHERE id = '$id'";
+    public function updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID) {
+        $sql = "UPDATE profile_cluster SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', username='$username', hostname='$hostname', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', job_clu_opt='$job_clu_opt', next_clu_opt='$next_clu_opt', ssh_id='$ssh_id', public='$public', variable='$variable', group_id='$group_id', auto_workdir='$auto_workdir', last_modified_user ='$ownerID', perms='$perms'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $ownerID) {
-        $sql = "INSERT INTO profile_amazon(name, executor, next_path, port, singu_cache, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, subnet_id, shared_storage_id, shared_storage_mnt, ssh_id, amazon_cre_id, next_clu_opt, job_clu_opt, public, security_group, variable, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$subnet_id','$shared_storage_id','$shared_storage_mnt','$ssh_id','$amazon_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$security_group', '$variable', '$ownerID', 3, now(), now(), '$ownerID')";
+    public function insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $perms, $ownerID) {
+        $sql = "INSERT INTO profile_amazon(name, executor, next_path, port, singu_cache, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, subnet_id, shared_storage_id, shared_storage_mnt, ssh_id, amazon_cre_id, next_clu_opt, job_clu_opt, public, security_group, variable, group_id, auto_workdir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$subnet_id','$shared_storage_id','$shared_storage_mnt','$ssh_id','$amazon_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$security_group', '$variable', '$group_id', '$auto_workdir', '$ownerID', '$perms', now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id, $shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $ownerID) {
-        $sql = "UPDATE profile_amazon SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', security_group='$security_group', variable='$variable', last_modified_user ='$ownerID'  WHERE id = '$id'";
+    public function updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id, $shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $perms, $ownerID) {
+        $sql = "UPDATE profile_amazon SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', security_group='$security_group', variable='$variable', group_id='$group_id', auto_workdir='$auto_workdir', last_modified_user ='$ownerID', perms='$perms' WHERE id = '$id'";
         return self::runSQL($sql);
     }
     public function updateProfileAmazonOnStart($id, $nodes, $autoscale_check, $autoscale_maxIns, $autoscale_minIns, $autoshutdown_date, $autoshutdown_active, $autoshutdown_check, $ownerID) {
@@ -2381,6 +2422,10 @@ class dbfuncs {
         $sql = "UPDATE github SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function removeWizard($id, $ownerID) {
+        $sql = "UPDATE wizard SET deleted = 1, date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
+        return self::runSQL($sql);
+    }
     public function removeProjectPipeline($id) {
         $sql = "UPDATE project_pipeline SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
@@ -2501,6 +2546,14 @@ class dbfuncs {
                   where u.deleted = 0 AND ug.u_id = '$ownerID'";
         return self::queryTable($sql);
     }
+    public function getUserGroupsById($id, $ownerID) {
+        $sql = "SELECT g.id, g.name, g.date_created, u.username, g.owner_id, ug.u_id
+                  FROM groups g
+                  INNER JOIN user_group ug ON  ug.g_id =g.id
+                  INNER JOIN users u ON u.id = g.owner_id
+                  where u.deleted = 0 AND ug.u_id = '$ownerID' AND g.id = '$id'";
+        return self::queryTable($sql);
+    }
     public function getUserRole($ownerID) {
         $sql = "SELECT role
                   FROM users
@@ -2511,7 +2564,16 @@ class dbfuncs {
         $sql = "INSERT INTO groups(name, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$name', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
-    public function insertUserGroup($g_id, $u_id, $ownerID) {
+    function saveTestGroup($ownerID) {
+        $g_id = $this->test_profile_group_id;
+        $checkTestGroup = $this->getUserGroupsById($g_id,$ownerID);
+        if (empty(json_decode($checkTestGroup))){
+            return $this->insertUserGroup($g_id, $ownerID, $ownerID);
+        } else {
+            return $checkTestGroup;
+        }
+    }
+    function insertUserGroup($g_id, $u_id, $ownerID) {
         $sql = "INSERT INTO user_group (g_id, u_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$g_id', '$u_id', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
@@ -2608,15 +2670,16 @@ class dbfuncs {
         $sql = "SELECT status, node_status FROM profile_amazon WHERE id = '$id'";
         return self::queryTable($sql);
     }
-    public function getAmazonPid($id,$ownerID) {
+    function getAmazonPid($id,$ownerID) {
         $sql = "SELECT pid FROM profile_amazon WHERE id = '$id'";
         return self::queryTable($sql);
     }
-    public function sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID) {
+    function sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID) {
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $ssh_id = $cluDataArr[0]["ssh_id"];
         $executor = $cluDataArr[0]['executor'];
-        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+        $ssh_own_id = $cluDataArr[0]["owner_id"];
+        $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
 
         //get preCmd to load prerequisites (eg: source /etc/bashrc) (to run qstat qdel)
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
@@ -2669,7 +2732,7 @@ class dbfuncs {
         }
 
     }
-    public function terminateRun($pid, $project_pipeline_id, $ownerID) {
+    function terminateRun($pid, $project_pipeline_id, $ownerID) {
         $sql = "SELECT attempt FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
@@ -2697,7 +2760,8 @@ class dbfuncs {
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         if (!empty($cluDataArr)){
             $ssh_id = $cluDataArr[0]["ssh_id"];
-            $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+            $ssh_own_id = $cluDataArr[0]["owner_id"];
+            $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
             if (!file_exists("{$this->run_path}/$uuid/$last_server_dir")) {
                 mkdir("{$this->run_path}/$uuid/$last_server_dir", 0755, true);
@@ -2745,7 +2809,8 @@ class dbfuncs {
             $fileName = str_replace(" ", "\\ ", $fileName);
             $localFile = str_replace(" ", "\\ ", $localFile);
             $ssh_id = $cluDataArr[0]["ssh_id"];
-            $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+            $ssh_own_id = $cluDataArr[0]["owner_id"];
+            $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
             $cmd="rsync --info=progress2 --partial-dir='$target_dir/.tmp_$fileName' -avzu --rsync-path='mkdir -p $target_dir && rsync' -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $localFile $connect:$target_dir/ > $upload_dir/.$fileName 2>&1 & echo $! &"; 
             $cmd_log = shell_exec($cmd);
@@ -2816,7 +2881,7 @@ class dbfuncs {
         return $size;
     }
 
-    public function getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $ownerID) {
+    public function getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $project_pipeline_id, $ownerID) {
         $dir = trim($dir);
         $log = "";
         if (preg_match("/s3:/i", $dir)){
@@ -2873,7 +2938,23 @@ class dbfuncs {
         } else {
             list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
             $ssh_id = $cluDataArr[0]["ssh_id"];
-            $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+            $perms = $cluDataArr[0]["perms"];
+            $auto_workdir = $cluDataArr[0]["auto_workdir"];
+            if (!empty($perms)){
+                if ($perms == "15"){
+                    if (empty($auto_workdir)){
+                        return json_encode("Query failed! Generic work directory not defined in shared run environment.");
+                    }
+                    $rundir = $auto_workdir."/id".$project_pipeline_id;
+                    $rundir = preg_replace('/(\/+)/','/',$rundir);
+                    $dir = preg_replace('/(\/+)/','/',$dir);
+                    if (strpos($dir, $rundir) === false) {
+                        return json_encode("Query failed! You don't have permission to access this directory.");
+                    }
+                }
+            }
+            $ssh_own_id = $cluDataArr[0]["owner_id"];
+            $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
             $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
             $log = shell_exec($cmd);
@@ -2890,7 +2971,8 @@ class dbfuncs {
         $log = "";
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $ssh_id = $cluDataArr[0]["ssh_id"];
-        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+        $ssh_own_id = $cluDataArr[0]["owner_id"];
+        $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
         if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
         $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dir && [ -w $dir ] && echo 'writeable' || echo 'write permission denied'\" 2>&1 &";
         $log = shell_exec($cmd);

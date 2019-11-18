@@ -447,9 +447,9 @@ function createNextflowFile(nxf_runmode, uuid) {
 
         var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
         if (publish_dir_check === "true") {
-            var output_dir = $('#publish_dir').val();
+            var output_dir = $runscope.getPubVal("publish");
         } else {
-            var output_dir = $('#rOut_dir').val();
+            var output_dir = $runscope.getPubVal("work");
         }
         if (output_dir) {
             nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
@@ -666,7 +666,7 @@ function InputParameters(id, currgid, getProPipeInputs, allEdges) {
     }
     iText.firstPart = firstPart
     iText.secPart = secPart
-    return iText
+    return iText;
 }
 
 function getParamOutdir(outParUserEntry) {
@@ -791,7 +791,7 @@ function publishDir(id, currgid, mainPipeEdges) {
         closePar = false
     }
 
-    return oText
+    return oText;
 }
 
 function getPipelineScript(pipeline_id) {
@@ -817,7 +817,7 @@ function getWhenCond(script) {
             }
         }
     }
-    return whenCond
+    return whenCond;
 }
 
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum'))
@@ -835,7 +835,7 @@ function getOptionalInText(optionalInAr, optionalInNameAr) {
         }
         optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(file('" + inputNameOptional + "', type: 'any')) \n";
     }
-    return optText
+    return optText;
 }
 
 function getWhenText(whenCond, whenInLib, whenOutLib) {
@@ -873,7 +873,7 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
         }
         whenText += "} else {";
     }
-    return whenText
+    return whenText;
 }
 
 function addChannelName(whenCond, whenLib, file_type, channelName, param_name, qual) {
@@ -884,7 +884,7 @@ function addChannelName(whenCond, whenLib, file_type, channelName, param_name, q
         whenLib[libName] = [];
         whenLib[libName].push(channelName)
     }
-    return whenLib
+    return whenLib;
 }
 
 function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipeEdges) {

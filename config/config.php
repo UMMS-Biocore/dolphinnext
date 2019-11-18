@@ -80,7 +80,14 @@ if (!empty($secUiconfig)){
     define('SHOW_RUN_NEXTFLOWLOG', $SHOW_RUN_NEXTFLOWLOG);
     define('SHOW_RUN_NEXTFLOWNF', $SHOW_RUN_NEXTFLOWNF);
     define('SHOW_RUN_NEXTFLOWCONFIG', $SHOW_RUN_NEXTFLOWCONFIG);
-
+//  WIZARD CONFIG
+    $SHOW_WIZARD= isset($secUiconfig['SHOW_WIZARD']) ? $secUiconfig['SHOW_WIZARD'] : false;
+    $SHOW_TEST_PROFILE= isset($secUiconfig['SHOW_TEST_PROFILE']) ? $secUiconfig['SHOW_TEST_PROFILE'] : false;
+    $TEST_PROFILE_GROUP_ID= isset($secUiconfig['TEST_PROFILE_GROUP_ID']) ? $secUiconfig['TEST_PROFILE_GROUP_ID'] : "";
+    define('SHOW_WIZARD', $SHOW_WIZARD);
+    define('SHOW_TEST_PROFILE', $SHOW_TEST_PROFILE);
+    define('TEST_PROFILE_GROUP_ID', $TEST_PROFILE_GROUP_ID);
+    
 }
 
 $line = fgets(fopen(__DIR__."/../NEWS", 'r'));

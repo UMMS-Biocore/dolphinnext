@@ -1,3 +1,57 @@
+$runscope = {
+    //get work OR publish dir OR runcmd
+    getPubVal : function(type){
+        console.log("getPubVal")
+        var perms = $("#chooseEnv").find(":selected").attr('perms');
+        var dir = "";
+        if (type == "work"){
+            dir = $.trim($("#rOut_dir").val());
+        } else if (type == "publish"){
+            dir = $.trim($("#publish_dir").val());
+        } else if (type == "runcmd"){
+            dir = $.trim($("#runCmd").val());
+        } 
+        if (perms){
+            if (perms == "15"){
+                if (type == "work"){
+                    var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                    var auto_workdir = $("#chooseEnv").find(":selected").attr('auto_workdir');
+                    dir = auto_workdir+"/id"+project_pipeline_id;
+                } else if (type == "publish" || type == "runcmd"){
+                    dir = "";
+                }
+            }
+        }
+        return dir;
+    },
+    getUploadDir : function(type){
+        console.log("getUploadDir")
+        //type:new or type:exist
+        var perms = $("#chooseEnv").find(":selected").attr('perms');
+        var uploadDir = "";
+        var workDir = $runscope.getPubVal("work");
+        var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+        if (type == "new"){
+            if (workDir && project_pipeline_id){
+                uploadDir = workDir+"/run"+project_pipeline_id+"/upload";
+            }
+        } else if (type == "exist"){
+            uploadDir = $.trim($("#target_dir").val());
+        }
+        if (perms){
+            if (perms == "15"){
+                uploadDir = workDir+"/run"+project_pipeline_id+"/upload"; 
+            }
+        }
+        return uploadDir;
+    }
+}
+//prevent functions overwrite
+Object.defineProperty($runscope, "getPubVal", {configureable: false, writable:false});
+Object.defineProperty($runscope, "getUploadDir", {configureable: false, writable:false});
+
+
+
 // [name] is the name of the event "click", "mouseover", .. 
 // same as you'd pass it to bind()
 // [fn] is the handler function
@@ -72,6 +126,7 @@ $('#singu_imgDiv').on('hidden.bs.collapse', function () {
     $('#singu_check').removeAttr('onclick');
 });
 
+
 function createPiGnumList() {
     //get available pipeline Module list
     piGnumList = [];
@@ -81,6 +136,8 @@ function createPiGnumList() {
         }
     });
 }
+
+
 
 //adjust container size based on window size
 window.onresize = function (event) {
@@ -1560,7 +1617,7 @@ function fillStates(states, url, urlzip, checkPath) {
                 //two conditions covers both process and pipeline run_commands
             } else if (varName.match(/RUN_COMMAND@(.*)/) || varName === "RUN_COMMAND") {
                 setTimeout(function () {
-                    var initialText = $('#runCmd').val();
+                    var initialText = $runscope.getPubVal("runcmd");
                     if (initialText == "") {
                         $('#runCmd').val(defName);
                     } else {
@@ -1592,6 +1649,31 @@ function fillStates(states, url, urlzip, checkPath) {
             }
         }
     });
+}
+
+function getJobData(getType) {
+    var chooseEnv = $('#chooseEnv option:selected').val();
+    if (chooseEnv) {
+        var patt = /(.*)-(.*)/;
+        var proType = chooseEnv.replace(patt, '$1');
+        var proId = chooseEnv.replace(patt, '$2');
+        var profileData = getProfileData(proType, proId);
+        var allProSett = {};
+        if (profileData) {
+            allProSett.job_queue = profileData[0].job_queue;
+            allProSett.job_memory = profileData[0].job_memory;
+            allProSett.job_cpu = profileData[0].job_cpu;
+            allProSett.job_time = profileData[0].job_time;
+            allProSett.job_clu_opt = profileData[0].job_clu_opt;
+            if (getType === "job") {
+                return profileData;
+            } else if (getType === "both") {
+                return [allProSett, profileData];
+            }
+        } else {
+            return [allProSett, profileData];
+        }
+    }
 }
 
 // to execute autofill function, binds event handlers to chooseEnv
@@ -3088,6 +3170,73 @@ function insertInRow(inRow, paramGivenName, rowType, insertType) {
     }
 }
 
+function showHideColumnRunSett(colList, type) {
+    for (var k = 0; k < colList.length; k++) {
+        var processTableCol = colList[k] + 2;
+        if (type == "hide") {
+            $('#allProcessSettTable').find('th:nth-child(' + colList[k] + ')').hide();
+            $('#allProcessSettTable').find('td:nth-child(' + colList[k] + ')').hide();
+            var doCall = function (processTableCol) {
+                setTimeout(function () {
+                    $('#processTable').find('th:nth-child(' + processTableCol + ')').hide();
+                    $('#processTable').find('tr >td:nth-child(' + processTableCol + ')').hide();
+                }, 100);
+            }
+            doCall(processTableCol);
+        } else {
+            $('#allProcessSettTable').find('th:nth-child(' + colList[k] + ')').show();
+            $('#allProcessSettTable').find('td:nth-child(' + colList[k] + ')').show();
+            var doCall = function (processTableCol) {
+                setTimeout(function () {
+                    $('#processTable').find('th:nth-child(' + processTableCol + ')').show();
+                    $('#processTable').find('tr >td:nth-child(' + processTableCol + ')').show();
+                }, 100);
+            }
+            doCall(processTableCol);
+        }
+    }
+}
+
+function showhideOnEnv(allProSett, profileData){
+    var perms = profileData[0].perms;
+    var executor_job = profileData[0].executor_job;
+    // shared run environments
+    if (perms == "15"){
+        $('#rOut_dirDiv').css("display", "none");
+        $('#publishDirHide').css("display", "none");
+        $('#jobSettingsDiv').css("display", "none");
+        $('#runCmdDiv').css("display", "none");
+        $('#intermeDelDiv').css("display", "none");
+        $('#target_dir_div').css("display", "none");
+        $('#archive_dir_geo_div').css("display", "none");
+        $('#archive_dir_div').css("display", "none");
+    } else {
+        $('#rOut_dirDiv').css("display", "block");
+        $('#publishDirHide').css("display", "block");
+        $('#jobSettingsDiv').css("display", "block");
+        $('#runCmdDiv').css("display", "block");
+        $('#intermeDelDiv').css("display", "block");
+        $('#target_dir_div').css("display", "block");
+        $('#archive_dir_geo_div').css("display", "block");
+        $('#archive_dir_div').css("display", "block");
+    }
+    if (executor_job === 'ignite') {
+        showHideColumnRunSett([1, 4, 5], "show")
+        showHideColumnRunSett([1, 4], "hide")
+    } else if (executor_job === 'local') {
+        showHideColumnRunSett([1, 4, 5], "hide")
+    } else {
+        showHideColumnRunSett([1, 4, 5], "show")
+    }
+    if (executor_job === "slurm"){
+        $('#eachProcessQueue').text('Partition');
+        $('#allProcessQueue').text('Partition');
+    }else {
+        $('#eachProcessQueue').text('Queue');
+        $('#allProcessQueue').text('Queue');
+    }
+}
+
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix, second) {
@@ -3718,32 +3867,7 @@ function refreshCreatorData(project_pipeline_id) {
 
 
 
-function showHideColumnRunSett(colList, type) {
-    for (var k = 0; k < colList.length; k++) {
-        var processTableCol = colList[k] + 2;
-        if (type == "hide") {
-            $('#allProcessSettTable').find('th:nth-child(' + colList[k] + ')').hide();
-            $('#allProcessSettTable').find('td:nth-child(' + colList[k] + ')').hide();
-            var doCall = function (processTableCol) {
-                setTimeout(function () {
-                    $('#processTable').find('th:nth-child(' + processTableCol + ')').hide();
-                    $('#processTable').find('tr >td:nth-child(' + processTableCol + ')').hide();
-                }, 100);
-            }
-            doCall(processTableCol);
-        } else {
-            $('#allProcessSettTable').find('th:nth-child(' + colList[k] + ')').show();
-            $('#allProcessSettTable').find('td:nth-child(' + colList[k] + ')').show();
-            var doCall = function (processTableCol) {
-                setTimeout(function () {
-                    $('#processTable').find('th:nth-child(' + processTableCol + ')').show();
-                    $('#processTable').find('tr >td:nth-child(' + processTableCol + ')').show();
-                }, 100);
-            }
-            doCall(processTableCol);
-        }
-    }
-}
+
 
 
 function loadProjectPipeline(pipeData) {
@@ -3835,23 +3959,8 @@ function loadProjectPipeline(pipeData) {
     // fill executor settings:
     if (pipeData[0].profile !== "" && chooseEnv) {
         var [allProSett, profileData] = getJobData("both");
-        var executor_job = profileData[0].executor_job;
-        if (executor_job === 'ignite') {
-            showHideColumnRunSett([1, 4, 5], "show")
-            showHideColumnRunSett([1, 4], "hide")
-        } else if (executor_job === 'local') {
-            showHideColumnRunSett([1, 4, 5], "hide")
-        } else {
-            showHideColumnRunSett([1, 4, 5], "show")
-        }
-        if (executor_job === "slurm"){
-            $('#eachProcessQueue').text('Partition');
-            $('#allProcessQueue').text('Partition');
-        }else {
-            $('#eachProcessQueue').text('Queue');
-            $('#allProcessQueue').text('Queue');
-        }
-        $('#jobSettingsDiv').css('display', 'inline');
+        showhideOnEnv(allProSett, profileData)
+
         //insert exec_all_settings data into allProcessSettTable table
         if (IsJsonString(decodeHtml(pipeData[0].exec_all_settings))) {
             var exec_all_settings = JSON.parse(decodeHtml(pipeData[0].exec_all_settings));
@@ -3888,20 +3997,35 @@ function loadRunOptions(type) {
     var selectedOpt = $('#chooseEnv').find(":selected").val();
     $('#chooseEnv').find('option').not(':disabled').remove();
     //get profiles for user
-    var proCluData = getValues({ p: "getProfileCluster" });
-    var proAmzData = getValues({ p: "getProfileAmazon" });
+    var proCluData = getValues({ p: "getProfileCluster", type:"run" });
+    var proAmzData = getValues({ p: "getProfileAmazon", type:"run" });
     if (proCluData && proAmzData) {
         if (proCluData.length + proAmzData.length !== 0) {
             $.each(proCluData, function (el) {
-                var option = new Option(proCluData[el].name + ' (Remote machine: ' + proCluData[el].username + '@' + proCluData[el].hostname + ')', 'cluster-' + proCluData[el].id)
+                var option = "";
+                if (proCluData[el].perms == "15"){
+                    option = new Option(proCluData[el].name, 'cluster-' + proCluData[el].id)
+                } else{
+                    option = new Option(proCluData[el].name + ' (Remote machine: ' + proCluData[el].username + '@' + proCluData[el].hostname + ')', 'cluster-' + proCluData[el].id)
+                }
                 option.setAttribute("host", proCluData[el].hostname);
+                option.setAttribute("perms", proCluData[el].perms);
+                option.setAttribute("auto_workdir", proCluData[el].auto_workdir);
                 $("#chooseEnv").append(option);
             });
             $.each(proAmzData, function (el) {
-                var option = new Option(proAmzData[el].name + ' (Amazon: Status:' + proAmzData[el].status + ' Image id:' + proAmzData[el].image_id + ' Instance type:' + proAmzData[el].instance_type + ')', 'amazon-' + proAmzData[el].id)
+                var option = "";
+                if (proAmzData[el].perms == "15"){
+                    option = new Option(proAmzData[el].name, 'amazon-' + proAmzData[el].id)
+                } else{
+                    option = new Option(proAmzData[el].name + ' (Amazon: Status:' + proAmzData[el].status + ' Image id:' + proAmzData[el].image_id + ' Instance type:' + proAmzData[el].instance_type + ')', 'amazon-' + proAmzData[el].id)
+                }
                 option.setAttribute("host", proAmzData[el].shared_storage_id);
+                option.setAttribute("perms", proAmzData[el].perms);
                 option.setAttribute("status", proAmzData[el].status);
                 option.setAttribute("amz_key", proAmzData[el].amazon_cre_id);
+                option.setAttribute("auto_workdir", proAmzData[el].auto_workdir);
+
                 $("#chooseEnv").append(option);
             });
         }
@@ -4207,12 +4331,12 @@ function checkReadytoRun(type) {
             var amzStatus = profileNextText.replace(patt, '$2');
         }
     }
-    var output_dir = $.trim($('#rOut_dir').val());
+    var output_dir = $runscope.getPubVal("work");
 
     var publishReady = false;
     var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
     if (publish_dir_check === "true") {
-        var publish_dir = $('#publish_dir').val();
+        var publish_dir = $runscope.getPubVal("publish");
         if (publish_dir !== "") {
             publishReady = true;
         } else {
@@ -4309,7 +4433,7 @@ function checkShub() {
 function checkWorkDir(){
     var showInfoM = false
     var infoModalText = "Please check your work directory:"
-    var output_dir = $.trim($('#rOut_dir').val());
+    var output_dir = $runscope.getPubVal("work")
     if (output_dir){
         // full path should start with slash
         if (output_dir[0] != "/"){
@@ -4393,7 +4517,7 @@ function checkS3filePath(inputID,showDivId) {
     var s3pattern = 's3:';
     var pathCheck = false;
     if (file_path !== '') {
-        if (file_path.indexOf(s3pattern) > -1) {
+        if (file_path.toLowerCase().indexOf(s3pattern) > -1) {
             $(showDivId).css('display', "block");
             pathCheck = true;
         } 
@@ -4410,7 +4534,7 @@ function checkS3(path, getProPipeInputs) {
     var s3pattern = 's3:';
     var pathCheck = false;
     if (path !== '') {
-        if (path.indexOf(s3pattern) > -1) {
+        if (path.toLowerCase().indexOf(s3pattern) > -1) {
             $("#mRunAmzKeyDiv").css('display', "inline");
             pathCheck = true;
         } else {
@@ -4629,7 +4753,7 @@ function removeCollectionFromInputs(col_id){
 
 function getPathArray() {
     var pathArray = [];
-    var workDir = $('#rOut_dir').val();
+    var workDir = $runscope.getPubVal("work");
     if (workDir) {
         pathArray.push(workDir);
     }
@@ -4642,7 +4766,7 @@ function getPathArray() {
                 var colFiles = getValues({ "id": collection_id, "p": "getCollectionFiles" })
                 for (var i = 0; i < colFiles.length; i++) {
                     if (colFiles[i].file_dir){
-                        if (!colFiles[i].file_dir.match(/s3:/)){
+                        if (!colFiles[i].file_dir.match(/s3:/i)){
                             var inputPath = colFiles[i].file_dir;
                             if (pathArray.indexOf(inputPath) === -1) {
                                 pathArray.push(inputPath)
@@ -5185,7 +5309,7 @@ function readNextLog(proType, proId, type) {
 
 function showOutputPath() {
     var outTableRow = $('#outputsTable > tbody > >:last-child').find('span');
-    var output_dir = $('#rOut_dir').val();
+    var output_dir = $runscope.getPubVal("work");
     //add slash if outputdir not ends with slash
     if (output_dir && output_dir.substr(-1) !== '/') {
         output_dir = output_dir + "/";
@@ -5475,14 +5599,14 @@ function saveRun() {
     } else {
         var amazon_cre_id = "";
     }
-    var output_dir = $.trim($('#rOut_dir').val());
-    var publish_dir = $('#publish_dir').val();
+    var output_dir = $runscope.getPubVal("work");
+    var publish_dir = $runscope.getPubVal("publish");
     var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
     var profile = $('#chooseEnv').val();
     var perms = $('#perms').val();
     var interdel = $('#intermeDel').is(":checked").toString();
     var groupSel = $('#groupSel').val();
-    var cmd = encodeURIComponent($('#runCmd').val());
+    var cmd = encodeURIComponent($runscope.getPubVal("runcmd"));
     var exec_each = $('#exec_each').is(":checked").toString();
     var exec_all = $('#exec_all').is(":checked").toString();
     var exec_all_settingsRaw = $('#allProcessSettTable').find('input');
@@ -5559,37 +5683,14 @@ function saveRun() {
 
 function getProfileData(proType, proId) {
     if (proType === 'cluster') {
-        var profileData = getValues({ p: "getProfileCluster", id: proId });
+        var profileData = getValues({ p: "getProfileCluster", id: proId, type:"run" });
     } else if (proType === 'amazon') {
-        var profileData = getValues({ p: "getProfileAmazon", id: proId });
+        var profileData = getValues({ p: "getProfileAmazon", id: proId, type:"run" });
     }
     return profileData;
 }
 
-function getJobData(getType) {
-    var chooseEnv = $('#chooseEnv option:selected').val();
-    if (chooseEnv) {
-        var patt = /(.*)-(.*)/;
-        var proType = chooseEnv.replace(patt, '$1');
-        var proId = chooseEnv.replace(patt, '$2');
-        var profileData = getProfileData(proType, proId);
-        var allProSett = {};
-        if (profileData) {
-            allProSett.job_queue = profileData[0].job_queue;
-            allProSett.job_memory = profileData[0].job_memory;
-            allProSett.job_cpu = profileData[0].job_cpu;
-            allProSett.job_time = profileData[0].job_time;
-            allProSett.job_clu_opt = profileData[0].job_clu_opt;
-            if (getType === "job") {
-                return profileData;
-            } else if (getType === "both") {
-                return [allProSett, profileData];
-            }
-        } else {
-            return [allProSett, profileData];
-        }
-    }
-}
+
 
 function updateSideBarProPipe(project_id, project_pipeline_id, project_pipeline_name, type) {
     if (type === "edit") {
@@ -5878,6 +5979,8 @@ function updateRunVerNavBar() {
     }
 }
 
+
+
 //use array of item to fill select element
 function fillArray2Select(arr, id, clean) {
     if (clean === true) {
@@ -5887,6 +5990,107 @@ function fillArray2Select(arr, id, clean) {
         var param = arr[i];
         var optionGroup = new Option(param, param);
         $(id).append(optionGroup);
+    }
+}
+
+function resetPatternList() {
+    fillArray2Select([], "#singleList", true)
+    fillArray2Select([], "#reverseList", true)
+    fillArray2Select([], "#forwardList", true)
+}
+
+
+function viewDirButSearch(dir){
+    var amazon_cre_id = "";
+    var warnUser = false;
+    if (dir) {
+        if (dir.match(/s3:/i)){
+            var lastChr = dir.slice(-1);
+            if (lastChr == "/"){
+                dir = dir.substring(0, dir.length - 1);
+            }
+            amazon_cre_id = $('#mRunAmzKeyS3').val()
+            if (!amazon_cre_id){
+                showInfoModal("#infoModal", "#infoModalText", "Please select Amazon Keys to search files in your S3 storage.");
+                warnUser = true;
+            } 
+        } else if (dir.match(/:\/\//)){
+            var lastChr = dir.slice(-1);
+            if (lastChr == "/"){
+                dir = dir.substring(0, dir.length - 1);
+            }  
+        }
+        if (!warnUser){
+            var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id, project_pipeline_id:project_pipeline_id });
+            if (dirList) {
+                dirList = $.trim(dirList)
+                console.log(dirList)
+                var fileArr = [];
+                var errorAr = [];
+                if (dir.match(/s3:/i)){
+                    var raw = dirList.split('\n');
+                    for (var i = 0; i < raw.length; i++) {
+                        var filePath = raw[i].split(" ").pop();
+                        if (filePath){
+                            if (filePath.match(/s3:/i)){
+                                var allBlock = filePath.split("/");
+                                if (filePath.substr(-1) == "/"){
+                                    var lastBlock = allBlock[allBlock.length-2]
+                                    } else {
+                                        var lastBlock = allBlock[allBlock.length-1]
+                                        }
+                                fileArr.push(lastBlock)
+                            } else {
+                                errorAr.push(raw[i])
+                            }
+                        } else {
+                            errorAr.push(raw[i])
+                        }
+                    }
+                } else if (dir.match(/:\/\//)){
+                    fileArr = dirList.split('\n');
+                    errorAr = fileArr.filter(line => line.match(/:/));
+                    fileArr = fileArr.filter(line => !line.match(/:/));
+                } else {
+                    fileArr = dirList.split('\n');
+                    errorAr = fileArr.filter(line => line.match(/ls:/));
+                    fileArr = fileArr.filter(line => !line.match(/:/));
+                }
+                console.log(fileArr)
+                console.log(errorAr)
+                if (fileArr.length > 0) {
+                    fillArray2Select(fileArr, "#viewDir", true)
+                    $("#viewDir").data("fileArr", fileArr)
+                    $("#viewDir").data("fileDir", dir)
+                    var amzKey = ""
+                    if (dir.match(/s3:/i)){
+                        amzKey= $("#mRunAmzKeyS3").val()
+                    }
+                    $("#viewDir").data("amzKey", amzKey)
+
+                    $('#collection_type').trigger("change");
+                } else {
+                    if (errorAr.length > 0) {
+                        var errTxt = errorAr.join(' ')
+                        showInfoModal("#infoModal", "#infoModalText", errTxt)
+                        resetPatternList()
+                    } else {
+                        fillArray2Select(["Files Not Found."], "#viewDir", true)
+                        resetPatternList()
+                    }
+                }
+            } else {
+                fillArray2Select(["Files Not Found."], "#viewDir", true)
+                resetPatternList()
+            }
+        } else {
+            fillArray2Select(["Files Not Found."], "#viewDir", true)
+            resetPatternList()
+        }
+        $("#viewDir > option").attr("style", "pointer-events: none;");
+        $("#viewDir").css("display", "inline")
+    } else {
+        showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Directory' to search files in your host.")
     }
 }
 
@@ -6075,6 +6279,7 @@ $(document).ready(function () {
             $('#mRunAmzKeyS3Div').css("display", "none")
             $('#mArchAmzKeyS3Div_GEO').css("display", "none")
             $('#mArchAmzKeyS3Div').css("display", "none")
+            $('#file_dir_div').css("display","block");
             var renderMenu = {
                 option: function (data, escape) {
                     return '<div class="option">' +
@@ -6100,105 +6305,14 @@ $(document).ready(function () {
                 $(selectizeIDs[i])[0].selectize.clear()
             }
             //#uploadFiles tab:
-            var workDir = $("#rOut_dir").val();
-            if (workDir){
-                $("#target_dir").val(workDir+"/run"+project_pipeline_id+"/upload")
-            }
+            $("#target_dir").val($runscope.getUploadDir("new"));
         });
+
+
 
         $('#viewDirBut').click(function () {
             var dir = $('#file_dir').val();
-            var amazon_cre_id = "";
-            var warnUser = false;
-            if (dir) {
-                if (dir.match(/s3:/)){
-                    var lastChr = dir.slice(-1);
-                    if (lastChr == "/"){
-                        dir = dir.substring(0, dir.length - 1);
-                    }
-                    amazon_cre_id = $('#mRunAmzKeyS3').val()
-                    if (!amazon_cre_id){
-                        showInfoModal("#infoModal", "#infoModalText", "Please select Amazon Keys to search files in your S3 storage.");
-                        warnUser = true;
-                    } 
-                } else if (dir.match(/:\/\//)){
-                    var lastChr = dir.slice(-1);
-                    if (lastChr == "/"){
-                        dir = dir.substring(0, dir.length - 1);
-                    }  
-                }
-                if (!warnUser){
-                    var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
-                    if (dirList) {
-                        dirList = $.trim(dirList)
-                        console.log(dirList)
-                        var fileArr = [];
-                        var errorAr = [];
-                        if (dir.match(/s3:/)){
-                            var raw = dirList.split('\n');
-                            for (var i = 0; i < raw.length; i++) {
-                                var filePath = raw[i].split(" ").pop();
-                                if (filePath){
-                                    if (filePath.match(/s3:/)){
-                                        var allBlock = filePath.split("/");
-                                        if (filePath.substr(-1) == "/"){
-                                            var lastBlock = allBlock[allBlock.length-2]
-                                            } else {
-                                                var lastBlock = allBlock[allBlock.length-1]
-                                                }
-                                        fileArr.push(lastBlock)
-                                    } else {
-                                        errorAr.push(raw[i])
-                                    }
-                                } else {
-                                    errorAr.push(raw[i])
-                                }
-                            }
-                        } else if (dir.match(/:\/\//)){
-                            fileArr = dirList.split('\n');
-                            errorAr = fileArr.filter(line => line.match(/:/));
-                            fileArr = fileArr.filter(line => !line.match(/:/));
-                        } else {
-                            fileArr = dirList.split('\n');
-                            errorAr = fileArr.filter(line => line.match(/ls:/));
-                            fileArr = fileArr.filter(line => !line.match(/:/));
-                        }
-                        console.log(fileArr)
-                        console.log(errorAr)
-                        if (fileArr.length > 0) {
-                            fillArray2Select(fileArr, "#viewDir", true)
-                            $("#viewDir").data("fileArr", fileArr)
-                            $("#viewDir").data("fileDir", dir)
-                            var amzKey = ""
-                            if (dir.match(/s3:/i)){
-                                amzKey= $("#mRunAmzKeyS3").val()
-                            }
-                            $("#viewDir").data("amzKey", amzKey)
-
-                            $('#collection_type').trigger("change");
-                        } else {
-                            if (errorAr.length > 0) {
-                                var errTxt = errorAr.join(' ')
-                                showInfoModal("#infoModal", "#infoModalText", errTxt)
-                                resetPatternList()
-                            } else {
-                                fillArray2Select(["Files Not Found."], "#viewDir", true)
-                                resetPatternList()
-                            }
-                        }
-                    } else {
-                        fillArray2Select(["Files Not Found."], "#viewDir", true)
-                        resetPatternList()
-                    }
-                } else {
-                    fillArray2Select(["Files Not Found."], "#viewDir", true)
-                    resetPatternList()
-                }
-                $("#viewDir > option").attr("style", "pointer-events: none;");
-                $("#viewDir").css("display", "inline")
-            } else {
-                showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Directory' to search files in your host.")
-            }
+            viewDirButSearch(dir)
         });
 
         removeSRA = function (name, srr_id, collection_type, button) {
@@ -6498,7 +6612,7 @@ $(document).ready(function () {
                 for (var i = 0; i < rowData.length; i++) {
                     var file_dir = rowData[i][2];
                     var amzKey = rowData[i][4];
-                    if (file_dir.match("s3:")){
+                    if (file_dir.match(/s3:/i)){
                         file_dir = file_dir+"\t"+amzKey
                     }
                     fileDirArr.push(file_dir);
@@ -6513,7 +6627,7 @@ $(document).ready(function () {
                 var s3_archive_dir  = $.trim($("#s3_archive_dir").val());
                 var amzArchKey  = $("#mArchAmzKeyS3").val();
 
-                if (!warnUser && s3_archive_dir.match(/s3:/)){
+                if (!warnUser && s3_archive_dir.match(/s3:/i)){
                     if (!amzArchKey){
                         infoModalText += " * Please select Amazon Archive Keys to save files into your S3 storage.";
                         warnUser = true;
@@ -6538,7 +6652,7 @@ $(document).ready(function () {
 
                     formObj.file_dir = fileDirArr;
 
-                    if (s3_archive_dir.match("s3:")){
+                    if (s3_archive_dir.match(/s3:/i)){
                         formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
                     }
                     formObj.file_array = ret.file_array;
@@ -6577,7 +6691,7 @@ $(document).ready(function () {
                 }
                 var s3_archive_dir_geo  = $.trim($("#s3_archive_dir_geo").val());
                 var amzArchKey  = $("#mArchAmzKeyS3_GEO").val();
-                if (s3_archive_dir_geo.match(/s3:/)){
+                if (s3_archive_dir_geo.match(/s3:/i)){
                     if (!amzArchKey){
                         infoModalText += " * Please select Amazon Keys to save files into your S3 storage.";
                         warnUser = true;
@@ -6606,7 +6720,7 @@ $(document).ready(function () {
                     } else if (collection_type[0][2] == "Single") {
                         formObj.collection_type = "single";
                     }
-                    if (s3_archive_dir_geo.match("s3:")){
+                    if (s3_archive_dir_geo.match(/s3:/i)){
                         formObj.s3_archive_dir = s3_archive_dir_geo+"\t"+amzArchKey
                     }
                     formObj.file_array = ret.file_array
@@ -6638,6 +6752,9 @@ $(document).ready(function () {
 
     createMultiselect = function (id,columnToSearch, apiColumn) {
         $(id).multiselect({
+            maxHeight: 500,
+            enableFiltering: true,
+            enableCaseInsensitiveFiltering: true,
             includeResetOption: true,
             resetText: "Clear filters",
             includeResetDivider: true,
@@ -6656,6 +6773,8 @@ $(document).ready(function () {
             }
         });
     }
+    
+    
     createMultiselectBinder = function (id) {
         var resetBut = $(id).find("a.btn-block");
         resetBut.click(function () {
@@ -6716,6 +6835,7 @@ $(document).ready(function () {
     });
 
     selectedSamplesTable = $('#selectedSamples').dataTable({
+        sScrollX: "100%",
         "columnDefs": [
             {
                 'targets': [4],
@@ -6723,8 +6843,10 @@ $(document).ready(function () {
             },
         ]
     });
-    selectedGeoSamplesTable = $('#selectedGeoSamples').dataTable();
-    searchedGeoSamplesTable = $('#searchedGeoSamples').dataTable();
+    selectedGeoSamplesTable = $('#selectedGeoSamples').dataTable({
+        sScrollX: "100%"});
+    searchedGeoSamplesTable = $('#searchedGeoSamples').dataTable({
+        sScrollX: "100%"});
 
     //xxx
     $(document).on('click', '.showDetailSample', function (e) {
@@ -6809,11 +6931,7 @@ $(document).ready(function () {
         }
     } );
 
-    function resetPatternList() {
-        fillArray2Select([], "#singleList", true)
-        fillArray2Select([], "#reverseList", true)
-        fillArray2Select([], "#forwardList", true)
-    }
+
 
     $(function () {
         $(document).on('change', '#collection_type', function () {
@@ -7056,7 +7174,7 @@ $(document).ready(function () {
             button_div.appendChild(remove_button);
             var fileDir = $("#viewDir").data("fileDir")
             var mRunAmzKeyS3 = "";
-            if (fileDir.match(/s3:/)){
+            if (fileDir.match(/s3:/i)){
                 mRunAmzKeyS3 = $("#viewDir").data("amzKey")
             }
 
@@ -7117,7 +7235,7 @@ $(document).ready(function () {
                 button_div.appendChild(remove_button);
                 var fileDir = $("#viewDir").data("fileDir")
                 var mRunAmzKeyS3 = "";
-                if (fileDir.match(/s3:/)){
+                if (fileDir.match(/s3:/i)){
                     mRunAmzKeyS3 = $("#viewDir").data("amzKey")
                 }
 
@@ -7211,35 +7329,21 @@ $(document).ready(function () {
             checkReadytoRun();
         })
     });
+
+
     $(function () {
         $(document).on('change', '#chooseEnv', function () {
             //reset before autofill feature actived for #runCmd
             changeOnchooseEnv = true;
             $('#runCmd').val("");
             var [allProSett, profileData] = getJobData("both");
-            var executor_job = profileData[0].executor_job;
-            if (executor_job === 'ignite') {
-                showHideColumnRunSett([1, 4, 5], "show")
-                showHideColumnRunSett([1, 4], "hide")
-            } else if (executor_job === 'local') {
-                showHideColumnRunSett([1, 4, 5], "hide")
-            } else {
-                showHideColumnRunSett([1, 4, 5], "show")
-            }
-            if (executor_job === "slurm"){
-                $('#eachProcessQueue').text('Partition');
-                $('#allProcessQueue').text('Partition');
-            }else {
-                $('#eachProcessQueue').text('Queue');
-                $('#allProcessQueue').text('Queue');
-            }
+            showhideOnEnv(allProSett, profileData);
             var profileTypeId = $('#chooseEnv').find(":selected").val();
             var patt = /(.*)-(.*)/;
             var proType = profileTypeId.replace(patt, '$1');
             var proId = profileTypeId.replace(patt, '$2');
             proTypeWindow = proType;
             proIdWindow = proId;
-            $('#jobSettingsDiv').css('display', 'inline');
             fillForm('#allProcessSettTable', 'input', allProSett);
             selectAmzKey();
             checkShub()
@@ -7964,7 +8068,7 @@ $(document).ready(function () {
             $("#pluploader").pluploadQueue({
                 runtimes : 'html5,html4', //flash,silverlight
                 url : "ajax/upload.php",
-                chunk_size : '3mb', 
+                chunk_size : '2mb', 
                 // to enable chunk_size larger than 2mb: "ajax/.htaccess file should have "php_value post_max_size 12M", "php_value upload_max_filesize 12M"
                 // test for 320mb file : 
                 // chunk_size=10mb :take 130sec
@@ -7979,7 +8083,7 @@ $(document).ready(function () {
                 //multipart_params : {'target_dir': "old"},
                 filters : {
                     // Maximum file size
-                    max_file_size : '2gb'
+                    max_file_size : '3gb'
                 },
                 // PreInit events, bound before any internal events
                 preinit : {
@@ -8024,7 +8128,7 @@ $(document).ready(function () {
                         //Called right before the upload for a given file starts, can be used to cancel it if required
                         log('[BeforeUpload]', 'File: ', file);
                         updateTransferedFiles()
-                        var target_dir = $("#target_dir").val();
+                        var target_dir = $runscope.getUploadDir("exist");
                         var run_env = $('#chooseEnv').find(":selected").val();
                         if (target_dir && run_env){
                             up.settings.multipart_params.target_dir = target_dir;
@@ -8043,9 +8147,9 @@ $(document).ready(function () {
                         // Called when files are added to queue
                         log('[FilesAdded]');
                         //get files in the target directory
-                        var target_dir = $("#target_dir").val();
+                        var target_dir = $runscope.getUploadDir("exist");
                         var amazon_cre_id = "";
-                        var dirList = getValues({ "p": "getLsDir", dir: target_dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id });
+                        var dirList = getValues({ "p": "getLsDir", dir: target_dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id, project_pipeline_id: project_pipeline_id });
                         console.log(dirList)
                         var fileArr = [];
                         var errorAr = [];
@@ -8160,7 +8264,7 @@ $(document).ready(function () {
         initPlupload();
 
         $('#addFileModal').on('click', '.plupload_start_dummy', function (e) {
-            var target_dir = $("#target_dir").val();
+            var target_dir = $runscope.getUploadDir("exist");
             var run_env = $('#chooseEnv').find(":selected").val();
             var warning = ""
             if (target_dir && run_env){
@@ -8197,7 +8301,7 @@ $(document).ready(function () {
                     break;
                 }
             }
-            var target_dir = $("#target_dir").val();
+            var target_dir = $runscope.getUploadDir("exist");
             var run_env = $('#chooseEnv').find(":selected").val();
             if (fileName && target_dir && run_env){
                 var retryRsync = getValues({ p: "retryRsync", dir: target_dir, run_env:run_env, filename: fileName  });
@@ -8260,10 +8364,24 @@ $(document).ready(function () {
 
 
     $('#addFileModal').on('click', '#showHostFiles', function (e) {
-        var target_dir = $('#target_dir').val();
-        $('#file_dir').val(target_dir);
-        $('#viewDirBut').trigger("click");
-        $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
+        var perms = $("#chooseEnv").find(":selected").attr('perms');
+        var sharedProfile = false;
+        if (perms){
+            if (perms == "15"){
+                sharedProfile = true;
+            }
+        }
+        if (sharedProfile){
+            viewDirButSearch($runscope.getUploadDir("exist"));
+            $('#file_dir_div').css("display","none");
+            $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
+        } else {
+            var target_dir = $runscope.getUploadDir("exist");
+            $('#file_dir').val(target_dir);
+            $('#viewDirBut').trigger("click");
+            $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
+        }
+
     });
 
 

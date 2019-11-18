@@ -13,6 +13,7 @@
     $SHOW_SSH_KEYS=SHOW_SSH_KEYS;
     $SHOW_GROUPS=SHOW_GROUPS;
     $SHOW_GIT=SHOW_GITHUB;
+
 ?>
 
 <section class="content" style="max-width: 1500px; ">
@@ -524,6 +525,22 @@
                             </div>
                         </div>
                     </div>
+                    <?php
+                        if ($login == 1 && (!empty($admin_id) || $role == "admin")){
+                            echo '<div id="shareRunEnvDiv" class="form-group" style="display:none">
+                        <label class="col-sm-3 control-label">
+                        <input type="checkbox" id="shareRunEnv"> Share with Group </input></label>
+                        <div class="col-sm-3">
+                            <select id="groupSel" style="width:100%;" class="fbtn btn-default form-control" name="group_id">
+                            <option value="" disabled selected>Choose group </option>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <input type="text" class="form-control" id="auto_workdir" name="auto_workdir" placeholder="Please enter generic work directory">
+                        </div>
+                    </div>';
+                        }
+                    ?>
                 </form>
             </div>
             <div class="modal-footer">

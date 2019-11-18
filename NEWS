@@ -1,3 +1,15 @@
+13.11.2019 Version 1.0.1
+Wizard feature added. Admin might define test server by using .sec file:
+    SHOW_WIZARD=true
+    SHOW_TEST_PROFILE=true
+    TEST_PROFILE_GROUP_ID=18
+    Please define a run environment and share with group.
+    Use shared group id to define TEST_PROFILE_GROUP_ID.
+Overflow of file tables fixed.
+Uppercase s3 path recognition fixed for run page.
+Collection search box added in run page.
+UpdateDN command updated with absolute path.
+
 12.11.2019 Version 1.0.0
 Sign out button bug fixed.
 
