@@ -1,3 +1,7 @@
+-- ------------------------------------------------------
+-- ## This file is used for unit testing purposes.     ##
+-- ------------------------------------------------------
+
 -- MySQL dump 10.13  Distrib 5.7.21, for Linux (x86_64)
 --
 -- Host: localhost    Database: biocorepipe
