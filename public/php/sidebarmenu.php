@@ -33,7 +33,7 @@ function getShowLi($items){
     $count_not_admin_only = 0;
     foreach ($items as $item):
         $admin_only = isset($item->{'admin_only'}) ? $item->{'admin_only'} : 0;
-        settype($not_admin_only, "integer");
+        settype($admin_only, "integer");
         if ($admin_only < 1){
             $count_not_admin_only += 1;
         }

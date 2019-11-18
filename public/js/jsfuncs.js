@@ -110,6 +110,18 @@ function fillDropdownArrObj(arr, val, name, dropdownId, clean, first) {
     }
 }
 
+function combineLinuxCmd(cmdAr){
+    var ret = ""
+    for (var i = 0; i < cmdAr.length; i++) {
+        var cmd = cmdAr[i];
+        if (cmd && ret){
+            ret += " && ";
+        }
+        ret += cmd;
+    }
+    return ret;
+}
+
 function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
     $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /></div>');
@@ -429,42 +441,59 @@ function getWizardLi(name, mode, type, href, wid){
     return '<li><a class="col-sm-11" wid="'+wid+'" mode="'+mode+'"  type="'+type+'"  data-toggle="modal" href="'+href+'"><i class="fa fa-user text-yellow"></i> '+name+'</a><a class="col-sm-1 delete_wizard" style="position:static" data-toggle="tooltip" data-placement="bottom" title="Delete"><i style="padding:5px;" class="fa fa-trash pull-right"></i></a></li>';
 }
 
-function loadOngoingWizard (){
-    $.ajax({
-        type: "POST",
-        url: "ajax/ajaxquery.php",
-        data: {p: "getWizard"},
-        async: true,
-        cache: false,
-        success: function (data) {
-            var countActive = 0;
-            $("#ongoingwizard").empty();
-            if(data){
-                for (var k = 0; k < data.length; k++) {
-                    if(data[k]){
-                        if(data[k].id && data[k].name){
+function loadOngoingWizard (type){
+    type = type || ""; //default ""
+    //check if #manageProfileWizard is exist
+    if ($('#manageProfileWizard').length > 0) {
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {p: "getWizard", type:"all"},
+            async: true,
+            cache: false,
+            success: function (data) {
+                var countActive = 0;
+                $("#ongoingwizard").empty();
+                if(data){
+                    for (var k = 0; k < data.length; k++) {
+                        if(data[k]){
+                            if(data[k].id && data[k].name && data[k].status == "active" && data[k].deleted === "0"){
                                 countActive++
-                            $("#ongoingwizard").append(getWizardLi(data[k].name, "edit", "runenv", "#profilewizardmodal", data[k].id));
+                                $("#ongoingwizard").append(getWizardLi(data[k].name, "edit", "runenv", "#profilewizardmodal", data[k].id));
+                            }
                         }
                     }
                 }
+                if (countActive > 0) {
+                    $('#wizAmount').css('display', 'inline');
+                    $('#wizAmount').text(countActive);
+                    $('[data-toggle="tooltip"]').tooltip();
+                } else {
+                    $('#wizAmount').text(countActive);
+                    $('#wizAmount').css('display', 'none');
+                    if (type == "onload"){
+                        // check if user has seen any wizard before
+                        if (data.length < 1) {
+                            //check if user has any run environment. if not-> show wizard
+                            var proCluData = getValues({ p: "getProfileCluster", type:"run" });
+                            var proAmzData = getValues({ p: "getProfileAmazon", type:"run" });
+                            if (proCluData && proAmzData) {
+                                if (proCluData.length + proAmzData.length < 1) {
+                                    $("#addProfileWizard").trigger("click");
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            error: function (jqXHR, exception) {
+                console.log("#Error:")
+                console.log(jqXHR.status)
+                console.log(exception)
             }
-            if (countActive > 0) {
-                $('#wizAmount').css('display', 'inline');
-                $('#wizAmount').text(countActive);
-                $('[data-toggle="tooltip"]').tooltip();
-            } else {
-                $('#wizAmount').text(countActive);
-                $('#wizAmount').css('display', 'none');
-            }
+        });
+    }
 
-        },
-        error: function (jqXHR, exception) {
-            console.log("#Error:")
-            console.log(jqXHR.status)
-            console.log(exception)
-        }
-    });
 }   
 
 $(document).ready(function () {
@@ -672,7 +701,7 @@ $(document).ready(function () {
         });
     });
     //check active wizard and fill the dropdown and show warning
-    loadOngoingWizard ()
+    loadOngoingWizard("onload")
 
 });
 
@@ -730,8 +759,6 @@ function filterSideBar(options) {
                 group_idArr.push(group_id);
             }
         }
-        console.log($(tagElems))
-
         for (var i = 0; i < tagElems.length; i++) {
             var tagElems2 = $(tagElems).eq(i).children().eq(1).children()
             $(tagElems2).hide()
@@ -1050,7 +1077,6 @@ function getValues(data, async) {
 }
 
 function getValuesErr(data, async) {
-    async = async ||false; //default false
     var result = null;
     $.ajax({
         url: "ajax/ajaxquery.php",
@@ -1458,8 +1484,6 @@ function createFormObj(formValues, requiredFields) {
         } else {
             val = $(formValues[i]).val();
         }
-        console.log(name)
-        console.log(val)
         if (requiredFields.includes(name)) {
             if (val != "") {
                 $(formValues[i]).parent().parent().removeClass("has-error")
@@ -1513,7 +1537,6 @@ function fillFormByName(formId, find, data) {
         var nameAttr = $(formValues[k]).attr("name");
         var radioCheck = $(formValues[k]).is(':radio');
         var checkboxCheck = $(formValues[k]).is(':checkbox');
-        console.log(radioCheck)
         var keys = Object.keys(data);
         if (data[nameAttr]) {
             if (radioCheck){

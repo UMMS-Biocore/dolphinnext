@@ -537,7 +537,12 @@ class dbfuncs {
     function getMemory($next_memory, $executor){
         $memoryText = "";
         if (!empty($next_memory)){
-            if ($executor == "sge"){
+            if ($executor == "lsf"){
+                //convert gb to mb
+                settype($next_memory, 'integer');
+                $next_memory = $next_memory*1000;
+                $memoryText = "#BSUB -R rusage[mem=".$next_memory."]\\n";
+            } else if ($executor == "sge"){
                 $memoryText = "#$ -l h_vmem=".$next_memory."G\\n";
             } else if ($executor == "slurm") {
                 //#SBATCH --mem 100 # memory pool for all cores default GB
@@ -550,7 +555,9 @@ class dbfuncs {
         $jobname = $this->cleanName($jobname, 9);
         $jobNameText = "";
         if (!empty($jobname)){
-            if ($executor == "sge"){
+            if ($executor == "lsf"){
+                $jobNameText = "#BSUB -J $jobname\\n";
+            } else if ($executor == "sge"){
                 $jobNameText = "#$ -N $jobname\\n";
             } else if ($executor == "slurm"){
                 $jobNameText = "#SBATCH --job-name=$jobname\\n";
@@ -561,7 +568,11 @@ class dbfuncs {
     function getTime($next_time, $executor){
         $timeText = "";
         if (!empty($next_time)){
-            if ($executor == "sge"){
+            if ($executor == "lsf"){
+                //$next_time is in minutes convert into hours and minutes.
+                $next_time = $this->convertToHoursMins($next_time);
+                $timeText = "#BSUB -W $next_time\\n";
+            } else if ($executor == "sge"){
                 //$next_time is in minutes convert into hours and minutes.
                 $next_time = $this->convertToHoursMins($next_time);
                 $timeText = "#$ -l h_rt=$next_time:00\\n";
@@ -576,7 +587,9 @@ class dbfuncs {
     function getQueue($next_queue, $executor){
         $queueText = "";
         if (!empty($next_queue)){
-            if ($executor == "sge"){
+            if ($executor == "lsf"){
+                $queueText = "#BSUB -q $next_queue\\n";
+            }  else if ($executor == "sge"){
                 $queueText = "#$ -q $next_queue\\n";
             }  else if ($executor == "slurm"){
                 //#SBATCH --partition=defq
@@ -599,7 +612,9 @@ class dbfuncs {
     function getCPU($next_cpu, $executor){
         $cpuText = "";
         if (!empty($next_cpu)){
-            if ($executor == "sge"){
+            if ($executor == "lsf"){
+                $cpuText = "#BSUB -n $next_cpu\\n";
+            } else if ($executor == "sge"){
                 $cpuText = "#$ -l slots=$next_cpu\\n";
             } else if ($executor == "slurm"){
                 $cpuText = "#SBATCH --nodes=$next_cpu\\n#SBATCH --ntasks=$next_cpu\\n";
@@ -636,12 +651,12 @@ class dbfuncs {
         if ($executor == "local"){
             $exec_next_all = "$mainNextCmd ";
         } else if ($executor == "lsf"){
-            //convert gb to mb
-            settype($next_memory, 'integer');
-            $next_memory = $next_memory*1000;
-            //-J $jobname
-            $jobname = $this->cleanName($jobname, 9);
-            $lsfRunFile = "printf '#!/bin/bash \\n#BSUB -q $next_queue\\n#BSUB -J $jobname\\n#BSUB -n $next_cpu\\n#BSUB -W $next_time\\n#BSUB -R rusage[mem=$next_memory]\\n$mainNextCmd'> $dolphin_path_real/.dolphinnext.run";
+            $jobnameText = $this->getJobName($jobname, $executor);
+            $memoryText = $this->getMemory($next_memory, $executor);
+            $timeText = $this->getTime($next_time, $executor);
+            $queueText = $this->getQueue($next_queue, $executor);
+            $cpuText = $this->getCPU($next_cpu, $executor);
+            $lsfRunFile = "printf '#!/bin/bash \\n".$queueText.$jobnameText.$cpuText.$timeText.$memoryText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
             $exec_string = "bsub -e $dolphin_path_real/err.log $next_clu_opt < $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $lsfRunFile && $exec_string";
         } else if ($executor == "sge"){
@@ -664,7 +679,6 @@ class dbfuncs {
             $cpuText = $this->getCPU($next_cpu, $executor);
             $errText = "#SBATCH -e $dolphin_path_real/err.log\\n";
             $outText = "#SBATCH -o $dolphin_path_real/.dolphinnext.log\\n";
-
             $runFile= "printf '#!/bin/bash \\n".$outText.$errText.$jobnameText.$memoryText.$timeText.$queueText.$clu_optText.$cpuText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
             $exec_string = "sbatch $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $runFile && $exec_string";
@@ -1133,7 +1147,6 @@ class dbfuncs {
         if (file_exists($run_path_real."/.aws_cred")) {
             unlink($run_path_real."/.aws_cred");
         }
-        error_log($uuid);
         return array($targz_file, $dolphin_path_real, $runCmdAll);
     }
 
@@ -1208,6 +1221,60 @@ class dbfuncs {
             $this->insertRun($project_pipeline_id, $status, "1", $ownerID);
         }
         $data = $this->insertRunLog($project_pipeline_id, $uuid, $status, $ownerID);
+    }
+
+    function parseKeyLine($txt, $key){
+        $txt = trim($txt);
+        $lines = explode("\n", $txt);
+        for ($i = 0; $i < count($lines); $i++) {
+            if (preg_match("/$key/i",$lines[$i])){
+                return $lines[$i];
+            }
+        }
+        return "";
+    }
+
+    function validateSSH($connect, $ssh_id, $ssh_port, $type, $cmd, $path, $ownerID) {
+        $ret = array();
+        if (!empty($cmd)){
+            $cmd = $cmd." && ";
+        }
+        $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+        $ssh_port = !empty($ssh_port) ? " -p ".$ssh_port : "";
+        $subcmd = "";
+        $precmd = "source /etc/profile "; 
+        if ($type == "ssh"){
+            $subcmd = "$precmd && ls ";
+        } else if ($type == "java"){
+            $subcmd = "$precmd && which java ";
+        } else if ($type == "nextflow"){
+            if (!empty($path)){
+                $subcmd = "$precmd && which $path/nextflow ";
+            } else {
+                $subcmd = "$precmd && which nextflow ";
+            }
+        } else if ($type == "docker"){
+            $subcmd = "$precmd && docker --version ";
+        } else if ($type == "singularity"){
+            $subcmd = "$precmd && singularity --version ";
+        } 
+        $runcmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$cmd $subcmd && echo 'query_validated'\" 2>&1 &";
+        $ret = $this->execute_cmd($runcmd, $ret, "cmd_log", "cmd");
+        $ret["validation"] = "success";
+        $ret["version"] = "";
+        if (empty($ret["cmd_log"])){
+            $ret["validation"] = "failed";
+        } else if (!preg_match("/query_validated/i", $ret["cmd_log"])){
+            $ret["validation"] = "failed";
+        } else if (preg_match("/command not found/i", $ret["cmd_log"])){
+            $ret["validation"] = "failed";
+        } else {
+            if ($type == "java" || $type == "nextflow" || $type == "docker" || $type == "singularity"){
+                $ret["version"] = $this->parseKeyLine($ret["cmd_log"], "version");
+            } 
+        }
+
+        return json_encode($ret);
     }
 
     function generateKeys($ownerID) {
@@ -1746,7 +1813,6 @@ class dbfuncs {
                                 $txt = trim($nextflowLog);
                                 $lines = explode("\n", $txt);
                                 for ($i = 0; $i < count($lines); $i++) {
-
                                     if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i]) && !preg_match("/WARN: One or more errors/i", $lines[$i])){
                                         error_log("WARN: One or more errors");
                                         error_log($lines[$i]);
@@ -2040,11 +2106,15 @@ class dbfuncs {
         $sql = "UPDATE amazon_credentials SET name='$name', amz_def_reg='$amz_def_reg', amz_acc_key='$amz_acc_key', amz_suc_key='$amz_suc_key', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function getWizardAll($ownerID) {
+        $sql = "SELECT id, name, status, deleted FROM wizard WHERE owner_id ='$ownerID' ";
+        return self::queryTable($sql);
+    }
     function checkActiveWizard($ownerID) {
         $sql = "SELECT id, name, status FROM wizard WHERE owner_id ='$ownerID' AND status = 'active' AND deleted = 0 ";
         return self::queryTable($sql);
     }
-    function getWizard($id, $ownerID) {
+    function getWizardByID($id, $ownerID) {
         $sql = "SELECT * FROM wizard WHERE id = '$id' AND owner_id ='$ownerID' AND deleted = 0";
         return self::queryTable($sql);
     }
@@ -2082,7 +2152,7 @@ class dbfuncs {
         $sql = "SELECT * FROM amazon_credentials WHERE owner_id = '$ownerID' and id = '$id'";
         return self::queryTable($sql);
     }
-    public function getSSH($userRole, $admin_id, $type, $ownerID) {
+    function getSSH($userRole, $admin_id, $type, $ownerID) {
         $hide = " hide = 'false' AND";
         if ($userRole == "admin" || !empty($admin_id) || $type == "hidden"){
             $hide="";
@@ -2090,12 +2160,20 @@ class dbfuncs {
         $sql = "SELECT * FROM ssh WHERE $hide owner_id = '$ownerID'";
         return self::queryTable($sql);
     }
-    public function getSSHbyID($id, $userRole, $admin_id, $ownerID) {
+    function getSSHbyID($id, $userRole, $admin_id, $ownerID) {
         $hide = " hide = 'false' AND";
         if ($userRole == "admin" || !empty($admin_id)){
             $hide="";
         }
         $sql = "SELECT * FROM ssh WHERE $hide owner_id = '$ownerID' AND id = '$id'";
+        return self::queryTable($sql);
+    }
+    function getSSHbyName($name, $userRole, $admin_id, $ownerID) {
+        $hide = " hide = 'false' AND";
+        if ($userRole == "admin" || !empty($admin_id)){
+            $hide="";
+        }
+        $sql = "SELECT * FROM ssh WHERE $hide owner_id = '$ownerID' AND name = BINARY '$name'";
         return self::queryTable($sql);
     }
     public function getProfileClusterbyID($id, $ownerID) {

@@ -1,3 +1,8 @@
+13.11.2019 Version 1.0.2
+Wizard feature upgraded for host option:
+    - Connection validation
+    - Java, Nextflow, Docker, Singularity validation added.
+
 13.11.2019 Version 1.0.1
 Wizard feature added. Admin might define test server by using .sec file:
     SHOW_WIZARD=true

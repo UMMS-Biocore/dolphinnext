@@ -876,6 +876,15 @@ else if ($p=="updateAmzShutdownCheck"){
         $db->triggerShutdown($id,$ownerID, "fast");
     }
 }
+else if ($p=="validateSSH"){
+    $connect = $_REQUEST['connect'];
+    $ssh_port = $_REQUEST['ssh_port'];
+    $ssh_id = $_REQUEST['ssh_id'];
+    $type = $_REQUEST['type'];
+    $cmd = $_REQUEST['cmd'];
+    $path = $_REQUEST['path'];
+    $data = $db->validateSSH($connect, $ssh_id, $ssh_port, $type, $cmd, $path, $ownerID);
+}
 else if ($p=="saveSSHKeys"){
     $name = $_REQUEST['name'];
     $hide = $_REQUEST['hide'];
@@ -902,21 +911,29 @@ else if ($p=="getAutoPublicKey"){
     $data = "";
     if(!empty($ownerID)){
         $name = "Auto-Generated Keys";
-        $hide = "false";
-        $check_userkey = "";
-        $check_ourkey = "on";
-        $sshkeys = $db->generateKeys($ownerID);
-        $sshkeysAr = json_decode($sshkeys,true);
-        $pubkey = $sshkeysAr['$keyPub'];
-        $prikey = $sshkeysAr['$keyPri'];
-        $insertSSH = $db->insertSSH($name, $hide, $check_userkey,$check_ourkey, $ownerID);
-        $idArray = json_decode($insertSSH,true);
-        $id = $idArray["id"];
-        $db->insertKey($id, $prikey, "ssh_pri", $ownerID);
-        $db->insertKey($id, $pubkey, "ssh_pub", $ownerID);
-        $idArray['$keyPub'] = $pubkey;
-        $data = json_encode($idArray);
-        
+        $checkSSH = $db->getSSHbyName($name, $userRole, $admin_id, $ownerID);
+        $checkSSHData = json_decode($checkSSH,true);
+        if (isset($checkSSHData[0])){
+            $id = $checkSSHData[0]["id"];
+            $ret['id'] = $id;
+            $ret['$keyPub'] = $db->readKey($id, 'ssh_pub', $ownerID);
+            $data=json_encode($ret);
+        } else {
+            $hide = "false";
+            $check_userkey = "";
+            $check_ourkey = "on";
+            $sshkeys = $db->generateKeys($ownerID);
+            $sshkeysAr = json_decode($sshkeys,true);
+            $pubkey = $sshkeysAr['$keyPub'];
+            $prikey = $sshkeysAr['$keyPri'];
+            $insertSSH = $db->insertSSH($name, $hide, $check_userkey,$check_ourkey, $ownerID);
+            $idArray = json_decode($insertSSH,true);
+            $id = $idArray["id"];
+            $db->insertKey($id, $prikey, "ssh_pri", $ownerID);
+            $db->insertKey($id, $pubkey, "ssh_pub", $ownerID);
+            $idArray['$keyPub'] = $pubkey;
+            $data = json_encode($idArray);
+        }
     }
 }
 else if ($p=="saveAmzKeys"){
@@ -993,10 +1010,15 @@ else if ($p=="removeWizard"){
     $data = $db -> removeWizard($id, $ownerID);
 }
 else if ($p=="getWizard"){
+    $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     if (!empty($id)) {
-        $data = $db->getWizard($id, $ownerID);
+        $data = $db->getWizardByID($id, $ownerID);
     } else {
-        $data = $db->checkActiveWizard($ownerID);
+        if ($type == "active") {
+            $data = $db->checkActiveWizard($ownerID);
+        } else if ($type == "all") {
+            $data = $db->getWizardAll($ownerID);
+        }
     }
 }
 
@@ -1051,7 +1073,7 @@ else if ($p=="saveProfileCluster"){
     $auto_workdir = isset($_REQUEST['auto_workdir']) ? $_REQUEST['auto_workdir'] : "";
     $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
     settype($perms, 'integer');
-    
+
     if (!empty($id)) {
         $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID);
     } else {
