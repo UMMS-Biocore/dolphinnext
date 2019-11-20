@@ -1370,6 +1370,7 @@ else if ($p=="saveProcessGroup"){
         $proGrId = "";
     }
     if (!empty($id)) {
+        //first check if $proGrId is found -> then return with warning -> this group already found in menu group
         $data = $db->updateProcessGroup($id, $group_name, $ownerID);
     } else {
         if (empty($proGrId)){

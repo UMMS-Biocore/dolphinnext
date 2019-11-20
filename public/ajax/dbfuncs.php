@@ -1,6 +1,9 @@
 <?php
 require_once(__DIR__."/../api/funcs.php");
 require_once(__DIR__."/../../config/config.php");
+
+
+
 class dbfuncs {
     private $nf_path = __DIR__."/../../nf"; 
     private $dbhost = DBHOST;
@@ -3960,6 +3963,7 @@ class dbfuncs {
     }
 
     public function tsvConvert($tsv, $format){
+        ini_set('memory_limit','900M');
         $tsv = trim($tsv);
         $lines = explode("\n", $tsv);
         $header = explode("\t", $lines[0]);
