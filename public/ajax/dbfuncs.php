@@ -1,6 +1,9 @@
 <?php
 require_once(__DIR__."/../api/funcs.php");
 require_once(__DIR__."/../../config/config.php");
+
+
+
 class dbfuncs {
     private $nf_path = __DIR__."/../../nf"; 
     private $dbhost = DBHOST;
@@ -3964,14 +3967,19 @@ class dbfuncs {
         $lines = explode("\n", $tsv);
         $header = explode("\t", $lines[0]);
         $data = array();
+        error_log("count_lines".count($lines));
+        $obj = new stdClass();
         for ($i = 1; $i < count($lines); $i++) {
-            $obj = new stdClass();
             $currentline = explode("\t", $lines[$i]);
             for ($j = 0; $j < count($header); $j++) {
                 $name = $header[$j];
                 $obj->$name = $currentline[$j];
             }
             $data[] = $obj;
+            foreach ($obj as $key => $value) {
+                $obj->$key = null;  //set to null instead of unsetting
+                unset($obj->$key);
+            }
         }
         return $data;
     }
