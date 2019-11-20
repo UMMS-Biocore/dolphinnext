@@ -3963,23 +3963,19 @@ class dbfuncs {
     }
 
     public function tsvConvert($tsv, $format){
+        ini_set('memory_limit','900M');
         $tsv = trim($tsv);
         $lines = explode("\n", $tsv);
         $header = explode("\t", $lines[0]);
         $data = array();
-        error_log("count_lines".count($lines));
-        $obj = new stdClass();
         for ($i = 1; $i < count($lines); $i++) {
+            $obj = new stdClass();
             $currentline = explode("\t", $lines[$i]);
             for ($j = 0; $j < count($header); $j++) {
                 $name = $header[$j];
                 $obj->$name = $currentline[$j];
             }
             $data[] = $obj;
-            foreach ($obj as $key => $value) {
-                $obj->$key = null;  //set to null instead of unsetting
-                unset($obj->$key);
-            }
         }
         return $data;
     }
