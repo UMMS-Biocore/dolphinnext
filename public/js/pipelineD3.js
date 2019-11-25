@@ -172,7 +172,6 @@ $('#editorPipeHeader').keyup(function () {
     autosave();
 });
 $('#pipelineFiles').keyup(function () {
-    console.log("keyUP")
     autosave();
 });
 
@@ -2386,23 +2385,35 @@ function modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, type) {
     $('#pipeGr-' + pipeline_group_id).append('<li><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" draggable="false" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
 }
 
-function modifyPipelineParentSideBar(name, groupID, type) {
-    if (type == "insert") {
+function modifyPipelineParentSideBar(name, groupID) {
+    //check if item exist:
+    var checkSideBar = $("span.pipelineParent").filter(function() {
+        //case insensitive search 
+        return $(this).attr('origin').toLowerCase() == name.toLowerCase();
+    });
+    checkSideBar.closest("li").css("display","block")
+    if (checkSideBar.length === 0) {
         $('#processSideHeader').before('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-spinner"></i> <span class="pipelineParent" origin="' + name + '">' + truncateName(name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="pipeGr-' + groupID + '" class="treeview-menu"></ul></li>');
-    } else if (type == "update") {
-        $('#pipeGr-' + groupID).parent().find('span').html(name);
+    } else {
+        checkSideBar.html(name);
     }
 }
 
-function modifyProcessParentSideBar(name, groupID, type) {
-    if (type == "insert") {
+function modifyProcessParentSideBar(name, groupID) {
+    //check if item exist:
+    var checkGroupExist = $("span.processParent").filter(function() {
+        //case insensitive search 
+        return $(this).attr('origin').toLowerCase() == name.toLowerCase();
+    });
+    checkGroupExist.closest("li").css("display","block")
+    if (checkGroupExist.length === 0) {
+        //insert
         $('#autocompletes1').append('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span class="processParent" origin="' + name + '">' + truncateName(name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="side-' + groupID + '" class="treeview-menu"></ul></li>');
-
-    } else if (type == "update") {
-        $('#side-' + groupID).parent().find('span').html(name);
+    } else {
+        //update
+        checkGroupExist.html(name);
     }
 }
-
 
 
 function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, pObj) {

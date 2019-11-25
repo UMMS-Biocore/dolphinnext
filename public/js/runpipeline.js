@@ -4775,6 +4775,7 @@ function getPathArray() {
                     }
                 }
             } else {
+                var inputPath = $(inputPaths[el]).text();
                 if (inputPath) {
                     if (pathArray.indexOf(inputPath) === -1) {
                         pathArray.push(inputPath)
@@ -4800,6 +4801,7 @@ function getPathArray() {
 
 //Autofill runOptions of singularity and docker image
 function autofillMountPathImage(pathArrayL1){
+    console.log(pathArrayL1)
     // docker.runOptions = -v /export:/export
     // singularity.runOptions = -B /export:/export
     var newRunOpt = "";

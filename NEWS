@@ -1,3 +1,8 @@
+24.11.2019 Version 1.0.5
+Bug fixed while binding paths to containers.
+Bug fixed while choosing empty process and pipeline menu groups.
+Menu group editing feature limited for user to avoid duplicate names.
+
 20.11.2019 Version 1.0.4
 Memory handing improved in tsv conversion for Debrowser.
 
