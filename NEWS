@@ -2,6 +2,7 @@
 Bug fixed while binding paths to containers.
 Bug fixed while choosing empty process and pipeline menu groups.
 Menu group editing feature limited for user to avoid duplicate names.
+Left sidebar scroll feature added to facilitate drag and drop of processes.
 
 20.11.2019 Version 1.0.4
 Memory handing improved in tsv conversion for Debrowser.

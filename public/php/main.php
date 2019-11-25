@@ -403,7 +403,7 @@ folder instead of downloading all of them to reduce the load. -->
 
     </head>
 
-    <body class="hold-transition skin-blue sidebar-mini">
+    <body class="hold-transition skin-blue fixed">
         <div class="wrapper" style="position:static">
             <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
             <header class="main-header">
@@ -538,7 +538,7 @@ folder instead of downloading all of them to reduce the load. -->
             <!-- Left side column. contains the logo and sidebar -->
             <aside class="main-sidebar">
                 <!-- sidebar: style can be found in sidebar.less -->
-                <section class="sidebar">
+                <section class="sidebar" >
                     <!-- Sidebar user panel -->
                     <div class="user-panel" style="padding-bottom:5px;">
                         <div id="userAvatar" style="display:inline" class="pull-left image">
@@ -586,7 +586,6 @@ folder instead of downloading all of them to reduce the load. -->
                     <?php
     print getSidebarMenu($np, $login);
                     ?>
-
                     </aside>
                 <!-- Content Wrapper. Contains page content -->
                 <div class="content-wrapper">
@@ -815,6 +814,8 @@ immediately after the control sidebar -->
     <script type="text/javascript" src="bower_components/DataTables/datatables.min.js"></script>
     <!-- jquery loading -->
     <script src="dist/jquery_loading/jquery.loading.min.js"></script>
+    <!-- SlimScroll -->
+    <script src="bower_components/jQuery-slimScroll-1.3.8/jquery.slimscroll.min.js"></script>
     <!-- d3 pdf export -->
     <script src="dist/css_to_pdf/xepOnline.jqPlugin.js"></script>
     <script src="dist/ace/ace.js"></script>
