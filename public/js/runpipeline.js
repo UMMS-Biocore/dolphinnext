@@ -4802,6 +4802,7 @@ function getPathArray() {
 //Autofill runOptions of singularity and docker image
 function autofillMountPathImage(pathArrayL1){
     console.log(pathArrayL1)
+    var excludePaths = ["/lib", "/opt", "/bin", "/boot", "/dev", "/lib64", "/media", "/proc", "/root", "/sbin", "/srv", "/sys", "/usr", "/var"]
     // docker.runOptions = -v /export:/export
     // singularity.runOptions = -B /export:/export
     var newRunOpt = "";
@@ -4818,7 +4819,7 @@ function autofillMountPathImage(pathArrayL1){
         //combine items as /path -> /path:/path
         newRunOpt = oldRunOpt;
         for (var k = 0; k < pathArrayL1.length; k++) {
-            if (!oldRunOpt.match(pathArrayL1[k])){
+            if (!oldRunOpt.match(pathArrayL1[k]) && $.inArray(pathArrayL1[k], excludePaths) === -1){
                 newRunOpt += " "+ bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
             }
         }
@@ -4891,6 +4892,7 @@ function getPathArrayL1(pathArray){
 
 //initial run run-options to send with ajax
 function getInitRunOptions(pathArrayL1) {
+    var excludePaths = ["/lib", "/opt", "/bin", "/boot", "/dev", "/lib64", "/media", "/proc", "/root", "/sbin", "/srv", "/sys", "/usr", "/var"]
     // docker.runOptions = -v /export:/export
     // singularity.runOptions = -B /export:/export
     var runOptions = "";
@@ -4912,7 +4914,9 @@ function getInitRunOptions(pathArrayL1) {
         runOptions += conType+".runOptions='";
         //combine items as /path -> /path:/path
         for (var k = 0; k < pathArrayL1.length; k++) {
-            runOptions += bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
+            if ($.inArray(pathArrayL1[k], excludePaths) === -1){
+                runOptions += bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
+            }
         }
         runOptions += "'\n";
     } 

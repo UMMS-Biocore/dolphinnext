@@ -802,7 +802,6 @@ immediately after the control sidebar -->
     <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
     <script>
         $.widget.bridge('uibutton', $.ui.button);
-
     </script>
     <!-- AdminLTE App -->
     <script src="dist/js/adminlte.min.js"></script>
