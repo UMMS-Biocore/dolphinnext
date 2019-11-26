@@ -71,7 +71,8 @@ return $html;
 
 $parentMenus = json_decode($db->getParentSideBar($ownerID));
 $parentMenusPipeline = json_decode($db->getParentSideBarPipeline($ownerID));
-$menuhtml='<ul id="autocompletes1" class="sidebar-menu" data-widget="tree">';
+//style="overflow-y: scroll; width: auto; height: calc(100vh - 250px);"
+$menuhtml='<ul id="autocompletes1" class="sidebar-menu" data-widget="tree" >';
 //add input/output parameters
 $menuhtml.='<li class="header">INPUT/OUTPUT PARAMETER</li>';
 $menuhtml.='<li id="inputs" >  <a ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="inputparam@inPro" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please drag & drop to use it"> <i class="fa fa-circle"  style="color:#F2AA3A;" ></i>  <text id="text-inPro" font-family="FontAwesome" font-size="0.9em" x="-6" y="15"></text> <span> Input Parameter </span> </a></li>';  

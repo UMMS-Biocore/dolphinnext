@@ -1342,13 +1342,20 @@ else if ($p=="savePipelineGroup"){
     $group_name = $_REQUEST['group_name'];
     $pipeGrData = $db->getPipelineGroupByName($group_name);
     $pipeGrData = json_decode($pipeGrData,true);
+    $pipeGrId = "";
     if (isset($pipeGrData[0])){
         $pipeGrId = $pipeGrData[0]["id"];
-    } else {
-        $pipeGrId = "";
-    }
+    } 
     if (!empty($id)) {
-        $data = $db->updatePipelineGroup($id, $group_name, $ownerID);
+        if (empty($pipeGrId)){
+            $data = $db->updatePipelineGroup($id, $group_name, $ownerID);
+        } else {
+            if ($userRole == "admin" && $pipeGrId == $id){
+                $data = $db->updatePipelineGroup($id, $group_name, $ownerID);
+            } else {
+                $data = json_encode(array('id' => $pipeGrId, 'message' => "Defined name already found in the menu groups."));
+            }
+        }
     } else {
         if (empty($pipeGrId)){
             $data = $db->insertPipelineGroup($group_name, $ownerID);
@@ -1364,14 +1371,22 @@ else if ($p=="saveProcessGroup"){
     $group_name = $_REQUEST['group_name'];
     $proGrData = $db->getProcessGroupByName($group_name);
     $proGrData = json_decode($proGrData,true);
+    $proGrId = "";
     if (isset($proGrData[0])){
         $proGrId = $proGrData[0]["id"];
-    } else {
-        $proGrId = "";
-    }
+    } 
     if (!empty($id)) {
         //first check if $proGrId is found -> then return with warning -> this group already found in menu group
-        $data = $db->updateProcessGroup($id, $group_name, $ownerID);
+        if (empty($proGrId)){
+            $data = $db->updateProcessGroup($id, $group_name, $ownerID);
+        } else {
+            //prevents duplicate names
+            if ($userRole == "admin" && $proGrId == $id){
+                $data = $db->updateProcessGroup($id, $group_name, $ownerID);
+            } else{
+                $data = json_encode(array('id' => $proGrId, 'message' => "Defined name already found in the menu groups."));
+            }
+        }
     } else {
         if (empty($proGrId)){
             $data = $db->insertProcessGroup($group_name, $ownerID);

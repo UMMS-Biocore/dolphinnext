@@ -25,7 +25,6 @@
             elems.data('settings', settings);
             elems.data("tooglescreen","expand")
             var data = getData(settings);
-            console.log(data)
             if (data === undefined || data == null || data == "") {
                 elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to show</div>')
             } else {
@@ -283,7 +282,6 @@
 
     var createAceEditor = function (editorId, script_modeId) {
         //ace process editor
-        console.log(editorId)
         window[editorId] = ace.edit(editorId);
         window[editorId].setTheme("ace/theme/tomorrow");
         window[editorId].getSession().setMode("ace/mode/sh");
@@ -409,7 +407,6 @@
                             var liAr = $("#fileListDiv_"+elemsID).find('li[tabid]');
                             if (liAr.length >0){
                                 var a = $(liAr[0]).find("a");
-                                console.log(a)
                                 if (a.length){
                                     a.click()
                                 }
@@ -641,7 +638,14 @@ function loadModalProGro() {
                 var optionGroup = new Option(param.group_name, param.id);
                 $("#mProcessGroup").append(optionGroup);
             }
-            $('#mProcessGroup').selectize({});
+            $('#mProcessGroup').selectize({
+                onChange:function(value){
+                    var selProGroupName = $("#mProcessGroup").text();
+                    var selProGroupID = value
+                    if (selProGroupName && selProGroupID){
+                        modifyProcessParentSideBar(selProGroupName, selProGroupID)
+                    }
+                }});
         },
         error: function (errorThrown) {
             alert("Error: " + errorThrown);
@@ -670,7 +674,16 @@ function loadPipeMenuGroup(newPipe) {
                 var optionGroup = new Option(param.group_name, param.id);
                 $("#pipeGroupAll").append(optionGroup);
             }
-            $('#pipeGroupAll').selectize({ dropdownParent: "body" });
+            $('#pipeGroupAll').selectize({ 
+                dropdownParent: "body",
+                onChange:function(value){
+                    var name = $("#pipeGroupAll").text();
+                    var groupID = value
+                    if (name && groupID){
+                        modifyPipelineParentSideBar(name, groupID)
+                    }
+                }
+            });
             $($("#pipeGroupAll").next().css("display", "inline-block").children()[0]).css("overflow", "unset");
 
         },
@@ -945,7 +958,6 @@ function checkProParameters(inputProParams, outputProParams, proID) {
 //-----Add input output parameters to process_parameters
 // startpoint: first object in data array where inputparameters starts.
 function addProParatoDB(data, startPoint, process_id, perms, group) {
-    console.log(data)
     var ppIDinputList = [];
     var ppIDoutputList = [];
     for (var i = startPoint; i < data.length; i++) {
@@ -3660,6 +3672,7 @@ $(document).ready(function () {
         }
     });
 
+
     //process group modal save button
     $('#processGroupModal').on('click', '#saveProcessGroup', function (event) {
         event.preventDefault();
@@ -3673,8 +3686,6 @@ $(document).ready(function () {
         }
         var selProGroupName = data[1].value;
         data.push({ name: "p", value: "saveProcessGroup" });
-
-
         if ((savetype === "edit" && selProGroupID !== '' && selProGroupName !== '') || (savetype === "add" && selProGroupName !== '')) {
             $.ajax({
                 type: "POST",
@@ -3682,29 +3693,17 @@ $(document).ready(function () {
                 data: data,
                 async: false,
                 success: function (s) {
-                    if (savetype === 'edit') { //Edit Process Group
-                        var allProBox = $('#proGroup').find('select');
-                        var proGroBoxId = allProBox[0].getAttribute('id');
-                        $('#' + proGroBoxId)[0].selectize.updateOption(selProGroupID, {
-                            value: selProGroupID,
-                            text: selProGroupName
-                        });
-                        modifyProcessParentSideBar(selProGroupName, selProGroupID, "update")
-                    } else { //Add process group
-                        var allProBox = $('#proGroup').find('select');
-                        var proGroBoxId = allProBox[0].getAttribute('id');
+                    if (s.id){
                         selProGroupID = s.id;
-                        $('#' + proGroBoxId)[0].selectize.addOption({
-                            value: selProGroupID,
-                            text: selProGroupName
-                        });
-                        var checkGroupExist = $("span.processParent[origin='" + selProGroupName + "']")
-                        if (checkGroupExist.length === 0) {
-                            modifyProcessParentSideBar(selProGroupName, selProGroupID, "insert")
-                        }
                     }
+                    $('#mProcessGroup').selectize()[0].selectize.destroy();
+                    loadModalProGro()
+                    modifyProcessParentSideBar(selProGroupName, selProGroupID);
                     $('#mProcessGroup')[0].selectize.setValue(selProGroupID, false);
                     $('#processGroupModal').modal('hide');
+                    if (s.message){
+                        showInfoModal("#infoMod", "#infoModText", s.message)
+                    }
 
                 },
                 error: function (errorThrown) {
@@ -4005,6 +4004,7 @@ $(document).ready(function () {
             savetype = "edit";
         }
         var selPipeGroupName = data[1].value;
+        var pipeGroupID = "";
         data.push({ name: "p", value: "savePipelineGroup" });
         if ((savetype === "edit" && selPipeGroupID !== '' && selPipeGroupName !== '') || (savetype === "add" && selPipeGroupName !== '')) {
             $.ajax({
@@ -4013,31 +4013,18 @@ $(document).ready(function () {
                 data: data,
                 async: false,
                 success: function (s) {
-                    if (savetype === 'edit') { //Edit Group
-                        $('#pipeGroupAll')[0].selectize.updateOption(selPipeGroupID, {
-                            value: selPipeGroupID,
-                            text: selPipeGroupName
-                        });
-                        //sidebar menu update
-                        modifyPipelineParentSideBar(selPipeGroupName, selPipeGroupID, "update")
-                    } else { //Add group
-                        var pipeGroupID = s.id;
-                        $("#pipeGroupAll").val(pipeGroupID);
-                        $('#pipeGroupAll')[0].selectize.addOption({
-                            value: pipeGroupID,
-                            text: selPipeGroupName
-                        });
-                        //sidebar menu add
-                        //check if item exist:
-                        var checkSideBar = $("span.pipelineParent[origin='" + selPipeGroupName + "']")
-                        if (checkSideBar.length === 0) {
-                            modifyPipelineParentSideBar(selPipeGroupName, pipeGroupID, "insert")
-                        }
-                        $('#pipeGroupAll')[0].selectize.setValue(pipeGroupID, false);
-
+                    if (s.id){
+                        selPipeGroupID = s.id;
                     }
+                    //refresh dropdown incase item not loaded.
+                    $('#pipeGroupAll').selectize()[0].selectize.destroy();
+                    loadPipeMenuGroup(true)
+                    modifyPipelineParentSideBar(selPipeGroupName, selPipeGroupID)
+                    $('#pipeGroupAll')[0].selectize.setValue(selPipeGroupID, false);
                     $('#pipeGroupModal').modal('hide');
-
+                    if (s.message){
+                        showInfoModal("#infoMod", "#infoModText", s.message)
+                    }
                 },
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -4107,13 +4094,7 @@ $(document).ready(function () {
         }
     });
 
-    //  ---- Pipiline Group Modals ends ---
-
-
-
-
-
-
+    //  ---- Pipeline Group Modals ends ---
 
 
 });
