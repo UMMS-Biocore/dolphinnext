@@ -248,42 +248,7 @@ function resetSingleParam(paramId) {
     }
     return false
 }
-//edges-> all edge list, nullId-> process input/output id that not exist in the d3 diagrams 
-function getNewNodeId(edges, nullId, MainGNum) {
-    //nullId: i-24-14-20-1
-    var nullProcessInOut = nullId.split("-")[0];
-    var nullProcessId = nullId.split("-")[1];
-    var nullProcessParId = nullId.split("-")[3];
-    var nullProcessGnum = nullId.split("-")[4];
-    var nodes;
-    //check is parameter is unique:
-    if (nullProcessInOut === "i") {
-        if (window.pipeObj["pro_para_inputs_" + nullProcessId]){
-            nodes = JSON.parse(window.pipeObj["pro_para_inputs_" + nullProcessId]);
-        }
-    } else if (nullProcessInOut === "o") {
-        if (window.pipeObj["pro_para_inputs_" + nullProcessId]){
-            nodes = JSON.parse(window.pipeObj["pro_para_outputs_" + nullProcessId]);
-        }
-    }
-    if (nodes) {
-        var paraData = nodes.filter(function (el) { return el.parameter_id == nullProcessParId });
-        //get newNodeID  
-        if (paraData.length === 1 && nullProcessId !== "inPro" && nullProcessId !== "outPro") {
-            var patt = /(.*)-(.*)-(.*)-(.*)-(.*)/;
-            var nullIdRegEx = new RegExp(nullId.replace(patt, '$1-$2-' + '(.*)' + '-$4-$5'), 'g')
-            var newNode = $('#g' + MainGNum + "-" + nullProcessGnum).find("circle").filter(function () {
-                return this.id.match(nullIdRegEx);
-            })
-            if (newNode.length === 1) {
-                var newNodeId = newNode.attr("id");
-                nullIDList["p"+MainGNum+nullId]=newNodeId
-                return newNodeId;
-            }
-        }
-    }
-    return "";
-}
+
 
 function openSubPipeline(piID, pObj) {
     var sData = pObj.sData[0];
@@ -455,6 +420,7 @@ function openPipeline(id) {
             for (var ee = 0; ee < ed.length; ee++) {
                 eds = ed[ee].split("_")
                 if (!document.getElementById(eds[0]) && document.getElementById(eds[1])) {
+                    console.log(eds)
                     //if process is updated through process modal, reconnect the uneffected one based on their parameter_id.
                     var newID = getNewNodeId(ed, eds[0], "")
                     if (newID) {
@@ -1659,10 +1625,10 @@ function addCandidates2Dict() {
 
 function updateSecClassName(second, inputParamLocF) {
     if (inputParamLocF === 0) {
-        var candi = "output"
-        } else {
-            var candi = "input"
-            }
+        var candi = "output";
+    } else {
+        var candi = "input";
+    }
 
     secClassName = document.getElementById(second).className.baseVal.split("-")[0].split(" ")[0] + " " + candi
     return secClassName
@@ -1685,7 +1651,7 @@ function createEdges(first, second, pObj) {
 
 
     if (pObj.inputParamLocS === 0 || pObj.outputParamLocS === 0) { //second click is done on the circle of inputparam//outputparam
-        //swap elements and treat as fırst click was done on
+        //swap elements and treat as first click was done on
         pObj.tem = second
         second = first
         first = pObj.tem
@@ -1699,13 +1665,20 @@ function createEdges(first, second, pObj) {
         d3.selectAll("#" + prefix + first).attr("class", pObj.secClassName)
         //update the parameter of the inputparam based on selected second circle
         var firGnum = document.getElementById(prefix + first).id.split("-")[4] //first g-number
+        var firPI = document.getElementById(prefix + first).id.split("-")[3] //first parameter id
         var secGnum = document.getElementById(prefix + second).id.split("-")[4] //first g-number
         pObj.secPI = document.getElementById(prefix + second).id.split("-")[3] //second parameter id
         var secProI = document.getElementById(prefix + second).id.split("-")[1] //second process id
-        pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
-        pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5')
+        if (firPI == "inPara" || firPI == "outPara" ){
+            pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
+            pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5') 
+            d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
+        } else {
+            //don't update input/output param id after first connection
+            pObj.secID = first;
+        }
+        
 
-        d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
         pObj.fClickOrigin = first
         pObj.fClick = pObj.secID
         pObj.sClick = second
@@ -2208,7 +2181,7 @@ function save() {
         id = $("#pipeline-title").attr('pipelineid');
     } else if (sName !== "" && dupliPipe === true) {
         id = '';
-        sName = sName + '-copy'
+        sName = sName + '_copy'
         perms = "3";
     }
 

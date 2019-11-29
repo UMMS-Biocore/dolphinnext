@@ -38,14 +38,14 @@ function getJS($np, $login, $id)
   $js = "<script src=\"js/jsfuncs.js\"></script><script src=\"js/wizard.js\"></script>";
     
   if ($np==1 && $login==1){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
-  <script src=\"js/pipelineModal.js\"></script>
-  <script src=\"js/pipelineD3.js\"></script><script src=\"js/import.js\"></script><script src=\"js/nextflowText.js\"></script>";}
+  <script src=\"js/pipelineD3core.js\"></script><script src=\"js/pipelineD3.js\"></script><script src=\"js/pipelineModal.js\"></script>
+  <script src=\"js/import.js\"></script><script src=\"js/nextflowText.js\"></script>";}
   else if ($np==1 && $login!=1 && !empty($id)){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
   <script src=\"js/publicpipeline.js\"></script>";}
   else if ($np==2 && $login==1 && empty($id)){$js .= "<script src=\"js/projects.js\"></script>"; }
   else if ($np==2 && $login==1 && !empty($id)){$js .= "<script src=\"js/projectsDetail.js\"></script>"; }
   else if ($np==3 && $login==1 && !empty($id)){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
-  <script src=\"js/runpipeline.js\"></script><script src=\"js/nextflowText.js\"></script>";}
+  <script src=\"js/pipelineD3core.js\"></script><script src=\"js/runpipeline.js\"></script><script src=\"js/nextflowText.js\"></script>";}
   else if ($np==4 && $login==1){$js .= "<script src=\"js/profile.js\"></script>"; }
   else if ($np==5 && $login==1){$js .= "<script src=\"js/runstatus.js\"></script>"; }
     else {$js .= "<script src=\"js/public.js\"></script>";}

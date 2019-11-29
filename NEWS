@@ -1,3 +1,6 @@
+28.11.2019 Version 1.0.6
+Channel factory algorithm and workflow connection approach in D3 updated to support multiple qualifiers with single input parameter.
+
 24.11.2019 Version 1.0.5
 Bug fixed while binding paths to containers.
 Bug fixed while choosing empty process and pipeline menu groups.
