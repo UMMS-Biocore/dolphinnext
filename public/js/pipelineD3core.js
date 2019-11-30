@@ -1,5 +1,4 @@
-// function that are used in both pipelineD3.js and runpipeline.js
-
+// function that are used in pipelineD3.js, runpipeline.js, nextflowText.js
 
 //edges-> all edge list, nullId-> process input/output id that not exist in the d3 diagrams 
 function getNewNodeId(edges, nullId, MainGNum) {
@@ -51,4 +50,12 @@ function getNewNodeId(edges, nullId, MainGNum) {
         }
     }
     return "";
+}
+
+function splitEdges(edge) {
+    //p2_7o-48-2-47-12_p2_7i-51-0-47-8 separate into p2_7o-48-2-47-12 and p2_7i-51-0-47-8 by ungreedy regex
+    var patt = /(.*)-(.*)-(.*)-(.*)-(.*?)_(.*)-(.*)-(.*)-(.*)-(.*)/
+    var first = edge.replace(patt, '$1-$2-$3-$4-$5')
+    var sec = edge.replace(patt, '$6-$7-$8-$9-$10')
+    return [first, sec]
 }

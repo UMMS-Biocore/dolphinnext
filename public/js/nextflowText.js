@@ -51,13 +51,7 @@ var fillJsonPattern = function (tx, run_log_uuid) {
     return fi
 }
 
-function splitEdges(edge) {
-    //p2_7o-48-2-47-12_p2_7i-51-0-47-8 separate into p2_7o-48-2-47-12 and p2_7i-51-0-47-8 by ungreedy regex
-    var patt = /(.*)-(.*)-(.*)-(.*)-(.*?)_(.*)-(.*)-(.*)-(.*)-(.*)/
-    var first = edge.replace(patt, '$1-$2-$3-$4-$5')
-    var sec = edge.replace(patt, '$6-$7-$8-$9-$10')
-    return [first, sec]
-}
+
 //check if pipeline Module Id is defined as ccID
 function checkCopyId(edgelist) {
     var edges = edgelist.slice()

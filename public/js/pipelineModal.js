@@ -2220,7 +2220,9 @@ $(document).ready(function () {
             var translateY = d3main.translate[1];
             var xCor = $('#selectProcess').attr("xCoor") * scale + 30 - r - ior + translateX;
             var yCor = $('#selectProcess').attr("yCoor") * scale + 10 - r - ior + translateY;
+            var lastGNum = gNum;
             addProcess(processDat, xCor, yCor);
+            recoverEdges(firstProID, lastProID, lastGNum);
         }
         autosave();
         $('#addProcessModal').modal('hide');

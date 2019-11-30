@@ -2816,9 +2816,7 @@ function scMouseOut() {
 }
 
 
-function removeDelCircle(lineid) {
-    d3.select("#c--" + lineid).remove()
-}
+
 var tooltip = d3.select("body")
 .append("div").attr("class", "tooltip-svg")
 .style("position", "absolute")

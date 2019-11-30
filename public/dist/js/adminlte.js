@@ -644,8 +644,7 @@ throw new Error('AdminLTE requires jQuery')
         // Add slimscroll
         $(Selector.sidebar).slimScroll({
           height: ($(window).height() - $(Selector.mainHeader).height()) + 'px',
-          color : 'rgba(0,0,0,0.2)',
-          size  : '3px'
+          color:'#E7E7E7',size:'5px',railVisible: true
         })
       }
     }
