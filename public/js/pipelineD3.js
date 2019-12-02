@@ -1608,188 +1608,149 @@ function createEdges(first, second, pObj) {
     }
 
     if (!document.getElementById(prefix + first) && document.getElementById(prefix + second)) {
-        var newID = getNewNodeId(first+"_"+second, first, MainGNum)
+        var newID = getNewNodeId(first, pObj);
         if (newID) {
-        if (document.getElementById(newID)) {
-            
-            newID = newID.replace(prefix, "")
-            first = newID;
+            first = newID.replace(prefix, "")
         }
-        }
-    } else if (!document.getElementById(prefix + second) && document.getElementById(prefix + first)) {
-        var newID = getNewNodeId(first+"_"+second, second, MainGNum);
+    } else if (document.getElementById(prefix + first) && !document.getElementById(prefix + second)) {
+        var newID = getNewNodeId(second, pObj);
         if (newID) {
-        if (document.getElementById(newID)) {
-            newID = newID.replace(prefix, "")
-            second = newID;
+            second = newID.replace(prefix, "")
         }
+    } 
+
+    if (document.getElementById(prefix + second) && document.getElementById(prefix + first)) {
+        addCandidates2DictForLoad(first, pObj);
+        d3.selectAll("#" + prefix + first).attr("connect", 'mate')
+        d3.selectAll("#" + prefix + second).attr("connect", 'mate')
+        pObj.inputParamLocF = first.indexOf("o-inPro") //-1: inputparam not exist //0: first click is done on the inputparam
+        pObj.inputParamLocS = second.indexOf("o-inPro")
+        pObj.outputParamLocF = first.indexOf("i-outPro") //-1: outputparam not exist //0: first click is done on the inputparam
+        pObj.outputParamLocS = second.indexOf("i-outPro")
+
+
+        if (pObj.inputParamLocS === 0 || pObj.outputParamLocS === 0) { //second click is done on the circle of inputparam//outputparam
+            //swap elements and treat as first click was done on
+            pObj.tem = second
+            second = first
+            first = pObj.tem
+            pObj.inputParamLocF = 0
+            pObj.outputParamLocF = 0
         }
-    } else if (!document.getElementById(prefix + second) && !document.getElementById(prefix + first)) {
-        return;
+        //first click is done on the circle of inputparam
+        if (pObj.inputParamLocF === 0 || pObj.outputParamLocF === 0) {
+            //update the class of inputparam based on selected second circle
+            pObj.secClassName = updateSecClassName(prefix + second, pObj.inputParamLocF)
+            d3.selectAll("#" + prefix + first).attr("class", pObj.secClassName)
+            //update the parameter of the inputparam based on selected second circle
+            var firGnum = document.getElementById(prefix + first).id.split("-")[4] //first g-number
+            var firPI = document.getElementById(prefix + first).id.split("-")[3] //first parameter id
+            var secGnum = document.getElementById(prefix + second).id.split("-")[4] //first g-number
+            pObj.secPI = document.getElementById(prefix + second).id.split("-")[3] //second parameter id
+            var secProI = document.getElementById(prefix + second).id.split("-")[1] //second process id
+            if (firPI == "inPara" || firPI == "outPara" ){
+                pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
+                pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5') 
+                d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
+            } else {
+                //don't update input/output param id after first connection
+                pObj.secID = first;
+            }
+
+
+            pObj.fClickOrigin = first
+            pObj.fClick = pObj.secID
+            pObj.sClick = second
+            var rowType = '';
+            //Pipeline details table 
+            if (pObj.inputParamLocF === 0) {
+                rowType = 'input';
+            } else if (pObj.outputParamLocF === 0) {
+                rowType = 'output';
+            }
+            var paramGivenName = document.getElementById('text' + MainGNum + "-" + firGnum).getAttribute("name");
+            var paraData = parametersData.filter(function (el) { return el.id == pObj.secPI });
+            //        var procData = processData.filter(function (el) { return el.id == secProI });
+            var paraFileType = "";
+            var paraQualifier = "";
+            var paraIdentifier = "";
+            if (paraData && paraData != '') {
+                var paraFileType = paraData[0].file_type;
+                var paraQualifier = paraData[0].qualifier;
+                var paraIdentifier = paraData[0].name;
+            }
+            var processName = $('#text' + MainGNum + "-" + secGnum).attr('name');
+            var rowExist = ''
+            rowExist = document.getElementById(rowType + 'Ta-' + firGnum);
+            if (rowExist) {
+                var preProcess = '';
+                $('#' + rowType + 'Ta-' + firGnum + '> :last-child').append('<span id=proGcomma-' + secGnum + '>, </span>');
+                $('#' + rowType + 'Ta-' + firGnum + '> :last-child').append('<span id=proGName-' + secGnum + '>' + processName + '</span>');
+            } else {
+                var inRow = insertRowTable(rowType, firGnum, secGnum, paramGivenName, paraIdentifier, paraFileType, paraQualifier, processName);
+                $('#' + rowType + 'sTable > tbody:last-child').append(inRow);
+            }
+
+        } else { //process to process connection
+            pObj.fClickOrigin = first
+            pObj.fClick = first
+            pObj.sClick = second
+        }
+        d3.select("#mainG" + MainGNum).append("line")
+            .attr("id", prefix + pObj.fClick + "_" + prefix + pObj.sClick)
+            .attr("class", "line")
+            .attr("type", "standard")
+            .style("stroke", "#B0B0B0").style("stroke-width", 4)
+            .attr("x1", pObj.candidates[prefix + pObj.fClickOrigin][0])
+            .attr("y1", pObj.candidates[prefix + pObj.fClickOrigin][1])
+            .attr("x2", pObj.candidates[prefix + pObj.sClick][0])
+            .attr("y2", pObj.candidates[prefix + pObj.sClick][1])
+            .attr("g_from", pObj.candidates[prefix + pObj.fClickOrigin][2])
+            .attr("g_to", pObj.candidates[prefix + pObj.sClick][2])
+            .attr("IO_from", prefix + pObj.fClick)
+            .attr("IO_to", prefix + pObj.sClick)
+            .attr("stroke-width", 2)
+            .attr("stroke", "black")
+        if (pObj == window) {
+            d3.select("#mainG").append("g")
+                .attr("id", "c--" + fClick + "_" + sClick)
+                .attr("transform", "translate(" + (candidates[fClickOrigin][0] + candidates[sClick][0]) / 2 + "," + (candidates[fClickOrigin][1] + candidates[sClick][1]) / 2 + ")")
+                .attr("g_from", candidates[fClickOrigin][2])
+                .attr("g_to", candidates[sClick][2])
+                .attr("IO_from", fClick)
+                .attr("IO_to", sClick)
+                .on("mousedown", removeElement)
+                .on("mouseover", delMouseOver)
+                .on("mouseout", delMouseOut)
+                .append("circle")
+                .attr("id", "delc--" + fClick + "_" + sClick)
+                .attr("class", "del")
+                .attr("cx", 0)
+                .attr("cy", 0)
+                .attr("r", ior)
+                .attr("fill", "#E0E0E0")
+                .attr('fill-opacity', 0.4)
+
+            d3.select("#c--" + fClick + "_" + sClick)
+                .append("text")
+                .attr("id", "del--" + fClick + "_" + sClick)
+                .attr('font-family', "FontAwesome, sans-serif")
+                .attr('font-size', '1em')
+                .attr("x", -5)
+                .attr("y", 5)
+                .text('\uf014')
+                .style("opacity", 0.4)
+        }
+
+        pObj.edges.push(prefix + pObj.fClick + "_" + prefix + pObj.sClick);
+    } else {
+        console.log("prefix",prefix)
+        console.log("MainGNum",MainGNum)
+        console.log(first)
+        console.log(second)
     }
-    console.log("MainGNum",MainGNum)
-    console.log(first)
-    console.log(second)
-
-    addCandidates2DictForLoad(first, pObj);
-    d3.selectAll("#" + prefix + first).attr("connect", 'mate')
-    d3.selectAll("#" + prefix + second).attr("connect", 'mate')
-    pObj.inputParamLocF = first.indexOf("o-inPro") //-1: inputparam not exist //0: first click is done on the inputparam
-    pObj.inputParamLocS = second.indexOf("o-inPro")
-    pObj.outputParamLocF = first.indexOf("i-outPro") //-1: outputparam not exist //0: first click is done on the inputparam
-    pObj.outputParamLocS = second.indexOf("i-outPro")
-
-
-    if (pObj.inputParamLocS === 0 || pObj.outputParamLocS === 0) { //second click is done on the circle of inputparam//outputparam
-        //swap elements and treat as first click was done on
-        pObj.tem = second
-        second = first
-        first = pObj.tem
-        pObj.inputParamLocF = 0
-        pObj.outputParamLocF = 0
-    }
-    //first click is done on the circle of inputparam
-    if (pObj.inputParamLocF === 0 || pObj.outputParamLocF === 0) {
-        //update the class of inputparam based on selected second circle
-        pObj.secClassName = updateSecClassName(prefix + second, pObj.inputParamLocF)
-        d3.selectAll("#" + prefix + first).attr("class", pObj.secClassName)
-        //update the parameter of the inputparam based on selected second circle
-        var firGnum = document.getElementById(prefix + first).id.split("-")[4] //first g-number
-        var firPI = document.getElementById(prefix + first).id.split("-")[3] //first parameter id
-        var secGnum = document.getElementById(prefix + second).id.split("-")[4] //first g-number
-        pObj.secPI = document.getElementById(prefix + second).id.split("-")[3] //second parameter id
-        var secProI = document.getElementById(prefix + second).id.split("-")[1] //second process id
-        if (firPI == "inPara" || firPI == "outPara" ){
-            pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
-            pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5') 
-            d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
-        } else {
-            //don't update input/output param id after first connection
-            pObj.secID = first;
-        }
-
-
-        pObj.fClickOrigin = first
-        pObj.fClick = pObj.secID
-        pObj.sClick = second
-        var rowType = '';
-        //Pipeline details table 
-        if (pObj.inputParamLocF === 0) {
-            rowType = 'input';
-        } else if (pObj.outputParamLocF === 0) {
-            rowType = 'output';
-        }
-        var paramGivenName = document.getElementById('text' + MainGNum + "-" + firGnum).getAttribute("name");
-        var paraData = parametersData.filter(function (el) { return el.id == pObj.secPI });
-        //        var procData = processData.filter(function (el) { return el.id == secProI });
-        var paraFileType = "";
-        var paraQualifier = "";
-        var paraIdentifier = "";
-        if (paraData && paraData != '') {
-            var paraFileType = paraData[0].file_type;
-            var paraQualifier = paraData[0].qualifier;
-            var paraIdentifier = paraData[0].name;
-        }
-        var processName = $('#text' + MainGNum + "-" + secGnum).attr('name');
-        var rowExist = ''
-        rowExist = document.getElementById(rowType + 'Ta-' + firGnum);
-        if (rowExist) {
-            var preProcess = '';
-            $('#' + rowType + 'Ta-' + firGnum + '> :last-child').append('<span id=proGcomma-' + secGnum + '>, </span>');
-            $('#' + rowType + 'Ta-' + firGnum + '> :last-child').append('<span id=proGName-' + secGnum + '>' + processName + '</span>');
-        } else {
-            var inRow = insertRowTable(rowType, firGnum, secGnum, paramGivenName, paraIdentifier, paraFileType, paraQualifier, processName);
-            $('#' + rowType + 'sTable > tbody:last-child').append(inRow);
-        }
-
-    } else { //process to process connection
-        pObj.fClickOrigin = first
-        pObj.fClick = first
-        pObj.sClick = second
-    }
-    d3.select("#mainG" + MainGNum).append("line")
-        .attr("id", prefix + pObj.fClick + "_" + prefix + pObj.sClick)
-        .attr("class", "line")
-        .attr("type", "standard")
-        .style("stroke", "#B0B0B0").style("stroke-width", 4)
-        .attr("x1", pObj.candidates[prefix + pObj.fClickOrigin][0])
-        .attr("y1", pObj.candidates[prefix + pObj.fClickOrigin][1])
-        .attr("x2", pObj.candidates[prefix + pObj.sClick][0])
-        .attr("y2", pObj.candidates[prefix + pObj.sClick][1])
-        .attr("g_from", pObj.candidates[prefix + pObj.fClickOrigin][2])
-        .attr("g_to", pObj.candidates[prefix + pObj.sClick][2])
-        .attr("IO_from", prefix + pObj.fClick)
-        .attr("IO_to", prefix + pObj.sClick)
-        .attr("stroke-width", 2)
-        .attr("stroke", "black")
-    if (pObj == window) {
-        d3.select("#mainG").append("g")
-            .attr("id", "c--" + fClick + "_" + sClick)
-            .attr("transform", "translate(" + (candidates[fClickOrigin][0] + candidates[sClick][0]) / 2 + "," + (candidates[fClickOrigin][1] + candidates[sClick][1]) / 2 + ")")
-            .attr("g_from", candidates[fClickOrigin][2])
-            .attr("g_to", candidates[sClick][2])
-            .attr("IO_from", fClick)
-            .attr("IO_to", sClick)
-            .on("mousedown", removeElement)
-            .on("mouseover", delMouseOver)
-            .on("mouseout", delMouseOut)
-            .append("circle")
-            .attr("id", "delc--" + fClick + "_" + sClick)
-            .attr("class", "del")
-            .attr("cx", 0)
-            .attr("cy", 0)
-            .attr("r", ior)
-            .attr("fill", "#E0E0E0")
-            .attr('fill-opacity', 0.4)
-
-        d3.select("#c--" + fClick + "_" + sClick)
-            .append("text")
-            .attr("id", "del--" + fClick + "_" + sClick)
-            .attr('font-family', "FontAwesome, sans-serif")
-            .attr('font-size', '1em')
-            .attr("x", -5)
-            .attr("y", 5)
-            .text('\uf014')
-            .style("opacity", 0.4)
-    }
-
-    pObj.edges.push(prefix + pObj.fClick + "_" + prefix + pObj.sClick)
 
 }
-
-
-function recoverEdges(firstProID, lastProID, lastGNum){
-    console.log(garbageLines)
-    var patt = /(.*)-(.*)-(.*)-(.*)-(.*)/;
-    for (var i = 0; i < garbageLines.length; i++) {
-        var line = garbageLines[i];
-        console.log(line);
-        var fNode = "";
-        var sNode = "";
-        [fNode, sNode] = splitEdges(garbageLines[i]);
-        var fProId = fNode.split("-")[1];
-        var fProGnum = fNode.split("-")[4];
-        var sProId = sNode.split("-")[1];
-        var sProGnum = sNode.split("-")[4];
-        // replace process-id and gnum
-        if (fProId == firstProID){
-            fNode = fNode.replace(patt, '$1-'+lastProID+'-$3-$4-'+lastGNum)
-        }
-        if (sProId == firstProID){
-            sNode = sNode.replace(patt, '$1-'+lastProID+'-$3-$4-'+lastGNum)
-        }
-        if (fProId == "inPro" || fProId == "outPro"){
-            //id's of input/output parameter are changing after connection, so get currect id based on gnum.
-            fNode = d3.select("#g-" + fProGnum).selectAll("circle[type ='I/O']")[0][0].id;
-        }
-        if (sProId == "inPro" || sProId == "outPro"){
-            sNode = d3.select("#g-" + sProGnum).selectAll("circle[type ='I/O']")[0][0].id;
-        }
-        console.log(fNode)
-        console.log(sNode)
-        createEdges(fNode, sNode, window)
-    }
-} 
 
 
 

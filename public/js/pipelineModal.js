@@ -2047,7 +2047,6 @@ function loadSelectedPipeline(pipeline_id) {
                     }
                 }
             }
-            console.log(pDataTable)
             $('#selectPipeTable').DataTable({
                 destroy: true,
                 "data": pDataTable,
@@ -2112,7 +2111,7 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         var translateY = d3main.translate[1];
         var xPos = $('#selectPipeline').attr("xCoor")
         var yPos = $('#selectPipeline').attr("yCoor")
-        piID = lastPipeID
+        piID = lastPipeID;
         var newMainGnum = "pObj" + gNum;
         window[newMainGnum] = {};
         window[newMainGnum].piID = piID;
@@ -2122,10 +2121,13 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         $.extend(window.pipeObj, newPipeObj);
         window[newMainGnum].sData = [window.pipeObj["main_pipeline_" + piID]]
         window[newMainGnum].lastPipeName = pName;
+        var lastGNum = gNum;
         // create new SVG workplace inside panel, if not added before
         openSubPipeline(piID, window[newMainGnum]);
         // add pipeline circle to main workplace
         addPipeline(piID, xPos, yPos, pName, window, window[newMainGnum]);
+        recoverEdges(gNumInfo, "", lastGNum);
+        autosave();
     }
     $('#selectPipelineModal').modal('hide');
 });
@@ -2222,7 +2224,7 @@ $(document).ready(function () {
             var yCor = $('#selectProcess').attr("yCoor") * scale + 10 - r - ior + translateY;
             var lastGNum = gNum;
             addProcess(processDat, xCor, yCor);
-            recoverEdges(firstProID, lastProID, lastGNum);
+            recoverEdges(gNumInfo, lastProID, lastGNum);
         }
         autosave();
         $('#addProcessModal').modal('hide');
@@ -2594,10 +2596,6 @@ $(document).ready(function () {
         var checkEditprocess = button.is('a.processItems') === true;
         var checkPipeModuleModal = button.is('a.pipeMode') === true;
         var checkSettingsIcon = !checkAddprocess && !checkEditprocess && !checkPipeModuleModal;
-        console.log("checkAddprocess",checkAddprocess)
-        console.log("checkEditprocess",checkEditprocess)
-        console.log("checkPipeModuleModal",checkPipeModuleModal)
-        console.log("checkSettingsIcon",checkSettingsIcon)
         if (checkAddprocess) {
             $('#processmodaltitle').html('Add New Process');
             $('#proPermGroPubDiv').css('display', "inline");
@@ -3024,67 +3022,69 @@ $(document).ready(function () {
     $(function () {
         $(document).on('change', '.mParChange', function () {
             var id = $(this).attr("id");
-            var Patt = /m(.*)puts-(.*)/;
-            var type = id.replace(Patt, '$1'); //In or Out
-            var col1init = "m" + type + "puts"; //column1 initials
-            var col2init = "m" + type + "Name";
-            var col3init = "m" + type + "Namedel";
-            var col4init = "m" + type + "OptBut";
-            var col5init = "m" + type + "Opt";
-            var col6init = "m" + type + "Closure";
-            var col7init = "m" + type + "Optdel";
-            var col8init = "m" + type + "Optional";
-            var col9init = "m" + type + "RegBut";
-            var col10init = "m" + type + "Reg";
-            var col11init = "m" + type + "Regdel";
+            if (id){
+                var Patt = /m(.*)puts-(.*)/;
+                var type = id.replace(Patt, '$1'); //In or Out
+                var col1init = "m" + type + "puts"; //column1 initials
+                var col2init = "m" + type + "Name";
+                var col3init = "m" + type + "Namedel";
+                var col4init = "m" + type + "OptBut";
+                var col5init = "m" + type + "Opt";
+                var col6init = "m" + type + "Closure";
+                var col7init = "m" + type + "Optdel";
+                var col8init = "m" + type + "Optional";
+                var col9init = "m" + type + "RegBut";
+                var col10init = "m" + type + "Reg";
+                var col11init = "m" + type + "Regdel";
 
-            var num = id.replace(Patt, '$2');
-            var prevParId = $("#" + id).attr("prev");
-            var selParId = $("#" + id + " option:selected").val();
+                var num = id.replace(Patt, '$2');
+                var prevParId = $("#" + id).attr("prev");
+                var selParId = $("#" + id + " option:selected").val();
 
-            if (prevParId === '-1' && selParId !== '-1') {
+                if (prevParId === '-1' && selParId !== '-1') {
 
-                if (type === 'In') {
-                    numInputs++
-                    var idRows = numInputs; // numInputs or numOutputs
-                } else if (type === 'Out') {
-                    numOutputs++
-                    var idRows = numOutputs; // numInputs or numOutputs
+                    if (type === 'In') {
+                        numInputs++
+                        var idRows = numInputs; // numInputs or numOutputs
+                    } else if (type === 'Out') {
+                        numOutputs++
+                        var idRows = numOutputs; // numInputs or numOutputs
+                    }
+                    $("#" + col1init).append('<select id="' + col1init + '-' + idRows + '" num="' + idRows + '" class="fbtn btn-default form-control mParChange" style ="margin-bottom: 5px;" prev ="-1"  name="' + col1init + '-' + idRows + '"></select>');
+                    $("#" + col2init).append('<input type="text" ppID="" placeholder="Enter name" class="form-control " style ="margin-bottom: 6px;" id="' + col2init + '-' + String(idRows - 1) + '" name="' + col2init + '-' + String(idRows - 1) + '">');
+                    $("#" + col3init).append('<button  type="button" class="btn btn-default form-control delRow" style ="margin-bottom: 6px;" id="' + col3init + '-' + String(idRows - 1) + '" name="' + col3init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Row"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
+                    $("#" + col4init).append('<button  type="button" class="btn btn-default form-control addOpt" style ="margin-bottom: 6px;" id="' + col4init + '-' + String(idRows - 1) + '" name="' + col4init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove operator"><span><i class="fa fa-wrench"></i></span></a></button>');
+                    $("#" + col5init).append('<select class="form-control" style ="visibility:hidden; margin-bottom: 6px;" id="' + col5init + '-' + String(idRows - 1) + '" name="' + col5init + '-' + String(idRows - 1) + '"></button>');
+                    $("#" + col6init).append('<input type="text" ppID="" placeholder="Operator content" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col6init + '-' + String(idRows - 1) + '" name="' + col6init + '-' + String(idRows - 1) + '">');
+                    $("#" + col7init).append('<button type="submit" class="btn btn-default form-control delOpt" style ="visibility:hidden; margin-bottom: 6px;" id="' + col7init + '-' + String(idRows - 1) + '" name="' + col7init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove operator"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
+                    $("#" + col8init).append('<button  type="button" class="btn btn-default form-control addOptional" style ="margin-bottom: 6px;" id="' + col8init + '-' + String(idRows - 1) + '" name="' + col8init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check for Optional parameter"><span><i class="fa fa-square-o"></i></span></a></button>');
+                    $("#" + col9init).append('<button  type="button" class="btn btn-default form-control addRegEx" style ="margin-bottom: 6px;" id="' + col9init + '-' + String(idRows - 1) + '" name="' + col9init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove Output RegEx"><span><i class="fa fa-code"></i></span></a></button>');
+                    $("#" + col10init).append('<input type="text" ppID="" placeholder="Enter RegEx" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col10init + '-' + String(idRows - 1) + '" name="' + col10init + '-' + String(idRows - 1) + '">');
+                    $("#" + col11init).append('<button type="submit" class="btn btn-default form-control delRegEx" style ="visibility:hidden; margin-bottom: 6px;" id="' + col11init + '-' + String(idRows - 1) + '" name="' + col11init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove Output RegEx"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
+                    //refresh tooltips
+                    $('[data-toggle="tooltip"]').tooltip();
+                    //load closure options
+                    var closureOpt = $('#mOutOpt-0 option').each(function () {
+                        var val = $(this).val()
+                        var optionClo = new Option(val, val);
+                        $('#' + col5init + '-' + String(idRows - 1)).append(optionClo);
+                    });
+                    $('#' + col5init + '-' + String(idRows - 1) + ' option:first').attr('disabled', "disabled");
+                    var opt = $('#mInputs > :first-child')[0].selectize.options;
+                    var newOpt = [];
+                    $.each(opt, function (element) {
+                        delete opt[element].$order;
+                        newOpt.push(opt[element]);
+                    });
+                    $("#" + id).attr("prev", selParId)
+                    $("#" + col1init + "-" + idRows).selectize({
+                        valueField: 'id',
+                        searchField: 'name',
+                        placeholder: "Add input...",
+                        options: newOpt,
+                        render: renderParam
+                    });
                 }
-                $("#" + col1init).append('<select id="' + col1init + '-' + idRows + '" num="' + idRows + '" class="fbtn btn-default form-control mParChange" style ="margin-bottom: 5px;" prev ="-1"  name="' + col1init + '-' + idRows + '"></select>');
-                $("#" + col2init).append('<input type="text" ppID="" placeholder="Enter name" class="form-control " style ="margin-bottom: 6px;" id="' + col2init + '-' + String(idRows - 1) + '" name="' + col2init + '-' + String(idRows - 1) + '">');
-                $("#" + col3init).append('<button  type="button" class="btn btn-default form-control delRow" style ="margin-bottom: 6px;" id="' + col3init + '-' + String(idRows - 1) + '" name="' + col3init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Row"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
-                $("#" + col4init).append('<button  type="button" class="btn btn-default form-control addOpt" style ="margin-bottom: 6px;" id="' + col4init + '-' + String(idRows - 1) + '" name="' + col4init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove operator"><span><i class="fa fa-wrench"></i></span></a></button>');
-                $("#" + col5init).append('<select class="form-control" style ="visibility:hidden; margin-bottom: 6px;" id="' + col5init + '-' + String(idRows - 1) + '" name="' + col5init + '-' + String(idRows - 1) + '"></button>');
-                $("#" + col6init).append('<input type="text" ppID="" placeholder="Operator content" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col6init + '-' + String(idRows - 1) + '" name="' + col6init + '-' + String(idRows - 1) + '">');
-                $("#" + col7init).append('<button type="submit" class="btn btn-default form-control delOpt" style ="visibility:hidden; margin-bottom: 6px;" id="' + col7init + '-' + String(idRows - 1) + '" name="' + col7init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove operator"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
-                $("#" + col8init).append('<button  type="button" class="btn btn-default form-control addOptional" style ="margin-bottom: 6px;" id="' + col8init + '-' + String(idRows - 1) + '" name="' + col8init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check for Optional parameter"><span><i class="fa fa-square-o"></i></span></a></button>');
-                $("#" + col9init).append('<button  type="button" class="btn btn-default form-control addRegEx" style ="margin-bottom: 6px;" id="' + col9init + '-' + String(idRows - 1) + '" name="' + col9init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove Output RegEx"><span><i class="fa fa-code"></i></span></a></button>');
-                $("#" + col10init).append('<input type="text" ppID="" placeholder="Enter RegEx" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col10init + '-' + String(idRows - 1) + '" name="' + col10init + '-' + String(idRows - 1) + '">');
-                $("#" + col11init).append('<button type="submit" class="btn btn-default form-control delRegEx" style ="visibility:hidden; margin-bottom: 6px;" id="' + col11init + '-' + String(idRows - 1) + '" name="' + col11init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove Output RegEx"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
-                //refresh tooltips
-                $('[data-toggle="tooltip"]').tooltip();
-                //load closure options
-                var closureOpt = $('#mOutOpt-0 option').each(function () {
-                    var val = $(this).val()
-                    var optionClo = new Option(val, val);
-                    $('#' + col5init + '-' + String(idRows - 1)).append(optionClo);
-                });
-                $('#' + col5init + '-' + String(idRows - 1) + ' option:first').attr('disabled', "disabled");
-                var opt = $('#mInputs > :first-child')[0].selectize.options;
-                var newOpt = [];
-                $.each(opt, function (element) {
-                    delete opt[element].$order;
-                    newOpt.push(opt[element]);
-                });
-                $("#" + id).attr("prev", selParId)
-                $("#" + col1init + "-" + idRows).selectize({
-                    valueField: 'id',
-                    searchField: 'name',
-                    placeholder: "Add input...",
-                    options: newOpt,
-                    render: renderParam
-                });
             }
         })
 
