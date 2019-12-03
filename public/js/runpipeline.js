@@ -6498,7 +6498,7 @@ $(document).ready(function () {
                         }
                     }
                 }
-                //what for all async calls to finish
+                //wait for all async calls to finish
                 $.when.apply($, deferreds).always(function(){
                     for (var i = 0; i < deferredsRes.length; i++) {
                         var collectionType = ""
@@ -6559,7 +6559,7 @@ $(document).ready(function () {
                                                     if (keyLen-1 == i){
                                                         onCompleteCall(geo_id, geoList) 
                                                     }
-                                                }, 2000*i);
+                                                }, 2500*i);
                                             }
                                             doCall(i,keyLen, geo_id, geoList, queryDB);
                                         }
@@ -6581,7 +6581,7 @@ $(document).ready(function () {
             if (geo_id) {
                 //onstart:
                 showLoadingDivText("viewGeoButDiv","")
-                var retmax = 100; 
+                var retmax = 10000; 
                 var retstart = 0;
                 //show the precent complete based on queryDB
                 // if queryDB equals to sra show it inside sraQuery function
@@ -6591,7 +6591,7 @@ $(document).ready(function () {
                         var queryDB = "gds"
                         setTimeout( function () { 
                             gdsQuery(geo_id, retstart, retmax, geoList, queryDB);
-                        }, 2000)
+                        }, 2500)
                     } else {
                         setTimeout( function () { onCompleteCall(geo_id, geoList) }, 1000) 
                     }

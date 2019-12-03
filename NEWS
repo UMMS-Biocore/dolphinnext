@@ -1,3 +1,7 @@
+03.12.2019 Version 1.0.7
+GEO download queueSize set to 4 by default.
+GEO query algorithm timeout increased to 2.5 seconds.
+
 02.12.2019 Version 1.0.6
 GEO download queueSize set to 10 by default.
 
