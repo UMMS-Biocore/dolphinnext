@@ -6559,7 +6559,7 @@ $(document).ready(function () {
                                                     if (keyLen-1 == i){
                                                         onCompleteCall(geo_id, geoList) 
                                                     }
-                                                }, 3000*i);
+                                                }, 2500*i);
                                             }
                                             doCall(i,keyLen, geo_id, geoList, queryDB);
                                         }
