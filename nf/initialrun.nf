@@ -506,7 +506,7 @@ process downloadUrl {
 
 process createCollection {
     errorStrategy 'retry'
-    maxRetries 2
+    maxRetries 3
 
     input:
         each failedFile from failedFile.flatten()
@@ -1055,7 +1055,7 @@ process createCollection {
             ## --split-3: For each spot, if there are two biological reads  satisfying filter conditions, the first is  placed in the `*_1.fastq` file,  
             ## and the second is placed in the `*_2.fastq` file. If there is only one biological read satisfying the filter conditions, it is 
             ## placed in the `*.fastq` file.All other reads in the spot are ignored.
-            runCommand("rm -f $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fastq-dump -O $outDir --split-3 --skip-technical $srrID");
+            runCommand("rm -f ${outDir}/sra/sra/${srrID}.sra.cache ${outDir}/sra/sra/${srrID}.sra $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fastq-dump -O $outDir --split-3 --skip-technical $srrID");
             
             ## fasterq-dump
             ## runCommand("rm -f $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID} $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O $outDir -t ${outDir}/sra --split-3 --skip-technical -o $srrID $srrID");

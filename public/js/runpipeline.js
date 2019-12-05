@@ -6358,59 +6358,100 @@ $(document).ready(function () {
         }
 
         $('#viewGeoBut').click(function () {
-            var onCompleteCall = function(geo_id, geoList){
+            //GSE78274
+            //GSE55190
+
+            function showGEOErrorModal(duplicateList, geoFailedList) {
+                //true if modal is open
+                $("#errGeoModal").off();
+                $("#errGeoModal").on('show.bs.modal', function (event) {
+                    $(this).find('form').trigger('reset');
+                    var dup_text = "";
+                    var dup_list = duplicateList.join(" ");
+                    var err_text = "";
+                    var err_list = geoFailedList.join(" ");
+                    if (duplicateList.length > 0){
+                        $("#errGeoModalDupDiv").css("display","block");
+                        $("#errGeoModalDupText").html("Following geo terms already added into table.");
+                        $("#errGeoModalDupList").val(dup_list);
+                    } else {
+                        $("#errGeoModalDupDiv").css("display","none");
+                    }
+                    if (geoFailedList.length > 0){
+                        $("#errGeoModalErrDiv").css("display","block");
+                        $("#errGeoModalErrText").html("Following geo terms couldn't be loaded because of a connection error. If you click 'retry' button, only those terms will be searched again.");
+                        $("#errGeoModalErrList").removeData();
+                        $("#errGeoModalErrList").val(err_list);
+                        $("#errGeoModalErrList").data("geoFailedList", geoFailedList);
+                        $("#retry_geo_search").css("display","inline");
+                    } else {
+                        $("#errGeoModalErrDiv").css("display","none");
+                        $("#retry_geo_search").css("display","none");
+                    }
+                });
+
+                $("#errGeoModal").on('click', "#retry_geo_search", function (event) {
+                    var geoFailList = $("#errGeoModalErrList").data("geoFailedList");
+                    $("#errGeoModalErrList").removeData();
+                    console.log(geoFailList)
+                });
+                $("#errGeoModal").modal('show'); 
+
+            }
+
+
+            var onCompleteCall = function(geo_id, geoList, geoFailedList){
                 console.log(geoList)
+                console.log(geoFailedList)
                 //oncomplete:
                 $("#seaGeoSamplesDiv").css("display", "block");
                 hideLoadingDiv("viewGeoButDiv");
                 //fill the table based on geoList
-                if (geoList.length == 0) {
-                    showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
-                } else {
-                    var errCount = 0;
-                    if (geoList.length) {
-                        for (var i = 0; i < geoList.length; i++) {
-                            if (geoList[i].srr_id && geoList[i].collection_type) {
-                                var name = geoList[i].srr_id;
-                                if (geoList[i].name) {
-                                    name = geoList[i].name;
-                                }
-                                var srr_id = geoList[i].srr_id;
-                                var collection_type = geoList[i].collection_type;
-                                if (collection_type == "single") {
-                                    collection_type = "Single";
-                                } else if (collection_type == "pair") {
-                                    collection_type = "Paired";
-                                }
-                                var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
-                                //check table data before adding.
-                                var selected_data = selectedGeoSamplesTable.fnGetData();
-                                var checkSelectedUniqueData = selected_data.filter(function (el) { return el[1] == srr_id });
-                                var table_data = searchedGeoSamplesTable.fnGetData();
-                                var checkTableUniqueData = table_data.filter(function (el) { return el[1] == srr_id });
-                                if (checkTableUniqueData.length == 0 && checkSelectedUniqueData.length == 0) {
-                                    searchedGeoSamplesTable.fnAddData([name, srr_id, collection_type, select_button]);
-                                } else {
-                                    if (errCount < 1) {
-                                        showInfoModal("#infoModal", "#infoModalText", "Search term " + srr_id + " already added into table.")
-                                    } else {
-                                        var oldtext = $("#infoModalText").html();
-                                        $("#infoModalText").html(oldtext + "</br>" + "Search term " + srr_id + " already added into table.");
-                                    }
-                                    errCount += 1
-                                }
+                var duplicateList = [];
+                if (geoList.length) {
+                    for (var i = 0; i < geoList.length; i++) {
+                        if (geoList[i].srr_id && geoList[i].collection_type) {
+                            var name = geoList[i].srr_id;
+                            if (geoList[i].name) {
+                                name = geoList[i].name;
+                            }
+                            var srr_id = geoList[i].srr_id;
+                            var collection_type = geoList[i].collection_type;
+                            if (collection_type == "single") {
+                                collection_type = "Single";
+                            } else if (collection_type == "pair") {
+                                collection_type = "Paired";
+                            }
+                            var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
+                            //check table data before adding.
+                            var selected_data = selectedGeoSamplesTable.fnGetData();
+                            var checkSelectedUniqueData = selected_data.filter(function (el) { return el[1] == srr_id });
+                            var table_data = searchedGeoSamplesTable.fnGetData();
+                            var checkTableUniqueData = table_data.filter(function (el) { return el[1] == srr_id });
+                            if (checkTableUniqueData.length == 0 && checkSelectedUniqueData.length == 0) {
+                                searchedGeoSamplesTable.fnAddData([name, srr_id, collection_type, select_button]);
+                            } else {
+                                duplicateList.push(srr_id)
                             }
                         }
                     }
-                } 
+                }
+
+
+                if (geoList.length == 0 && geoFailedList.length == 0) {
+                    showInfoModal("#infoModal", "#infoModalText", "There was an error in your GEO query. Search term " + geo_id + " cannot be found")
+                } else if (duplicateList.length > 0 || geoFailedList.length > 0){
+                    showGEOErrorModal(duplicateList, geoFailedList);
+                }
             }
-            var sraQuery = function(geo_id, retstart, retmax, geoList, queryDB, callback){
+            var sraQuery = function(geo_id, retstart, retmax, geoList, geoFailedList, queryDB, callback){
                 var searchURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&usehistory=y&retmode=json&term='+geo_id;
                 var res = apiCallUrl(searchURL)
+                console.log(res)
+                console.log(geo_id)
                 var deferreds = [];
                 var deferredsRes = [];
                 var deferredsData = [];
-                console.log(res)
                 if (res){
                     if (res.esearchresult){
                         if (res.esearchresult.webenv && res.esearchresult.querykey){
@@ -6463,6 +6504,7 @@ $(document).ready(function () {
                                                                             deferredsRes.push(res)
                                                                         },
                                                                         error: function (jqXHR, exception) {
+
                                                                             var msg = '';
                                                                             if (jqXHR.status === 0) {
                                                                                 msg = 'Not connect.\n Verify Network.';
@@ -6494,9 +6536,13 @@ $(document).ready(function () {
                                     });
 
                                 }
+                            } else {
+                                geoFailedList.push (geo_id)
                             }
                         }
                     }
+                } else {
+                    geoFailedList.push (geo_id)
                 }
                 //wait for all async calls to finish
                 $.when.apply($, deferreds).always(function(){
@@ -6524,16 +6570,18 @@ $(document).ready(function () {
                     }
                     if (typeof callback === "function") {
                         console.log(geoList)
+                        console.log(geoFailedList)
                         callback(geoList)
                     }
                 });
             }
 
-            var gdsQuery = function(geo_id, retstart, retmax, geoList, queryDB){
+            var gdsQuery = function(geo_id, retstart, retmax, geoList, geoFailedList, queryDB){
                 var searchURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gds&usehistory=y&retmode=json&term='+geo_id;
                 var res = apiCallUrl(searchURL)
                 var reachToLastLevel=false
                 console.log(res);
+                console.log(geo_id);
                 if (res){
                     if (res.esearchresult){
                         if (res.esearchresult.webenv && res.esearchresult.querykey){
@@ -6553,31 +6601,36 @@ $(document).ready(function () {
                                             reachToLastLevel = true
                                             var doCall = function (i, keyLen, geo_id, geoList, queryDB) {
                                                 setTimeout(function () {
-                                                    sraQuery(res2_res[el]["accession"], retstart, retmax, geoList, queryDB, "");
+                                                    sraQuery(res2_res[el]["accession"], retstart, retmax, geoList, geoFailedList, queryDB, "");
                                                     var percent = Math.floor(100*i/(keyLen-1)); 
                                                     showLoadingDivText("viewGeoButDiv",percent+"%")
                                                     if (keyLen-1 == i){
-                                                        onCompleteCall(geo_id, geoList) 
+                                                        onCompleteCall(geo_id, geoList, geoFailedList) 
                                                     }
-                                                }, 2500*i);
+                                                }, 2000*i);
                                             }
                                             doCall(i,keyLen, geo_id, geoList, queryDB);
                                         }
                                     });
                                 }
+                            } else {
+                                geoFailedList.push (geo_id)
                             }
                         }
                     }
+                }else {
+                    geoFailedList.push (geo_id)
                 }
                 if (!reachToLastLevel){
                     console.log(geoList)
-                    onCompleteCall(geo_id, geoList)
+                    onCompleteCall(geo_id, geoList, geoFailedList)
                 }
             }
 
             //GSM1331276 GSE30567 GSE55190 ERP009109 PRJEB8073
             var geo_id = $('#geo_id').val()
             var geoList = [];
+            var geoFailedList = [];
             if (geo_id) {
                 //onstart:
                 showLoadingDivText("viewGeoButDiv","")
@@ -6590,15 +6643,15 @@ $(document).ready(function () {
                     if (geoList.length == 0 ) {
                         var queryDB = "gds"
                         setTimeout( function () { 
-                            gdsQuery(geo_id, retstart, retmax, geoList, queryDB);
-                        }, 2500)
+                            gdsQuery(geo_id, retstart, retmax, geoList, geoFailedList, queryDB);
+                        }, 2000)
                     } else {
-                        setTimeout( function () { onCompleteCall(geo_id, geoList) }, 1000) 
+                        setTimeout( function () { onCompleteCall(geo_id, geoList, geoFailedList) }, 1000) 
                     }
                 }
 
                 var queryDB = "sra" 
-                sraQuery(geo_id, retstart, retmax, geoList, queryDB, callback)
+                sraQuery(geo_id, retstart, retmax, geoList, geoFailedList, queryDB, callback)
             }
         });
 
@@ -6779,8 +6832,8 @@ $(document).ready(function () {
             }
         });
     }
-    
-    
+
+
     createMultiselectBinder = function (id) {
         var resetBut = $(id).find("a.btn-block");
         resetBut.click(function () {
