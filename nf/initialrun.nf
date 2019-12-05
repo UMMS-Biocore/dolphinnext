@@ -1075,7 +1075,7 @@ process createCollection {
                 runCommand("gzip  $outDir/${file_name}.fastq ");
               }
             }
-            runCommand("rm -f ${outDir}/sra/sra/${srrID}.sra.cache");
+            runCommand("rm -f ${outDir}/sra/sra/${srrID}.sra ${outDir}/sra/sra/${srrID}.sra.cache");
           }
 
 
