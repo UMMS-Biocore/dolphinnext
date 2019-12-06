@@ -767,7 +767,7 @@ class dbfuncs {
                 $configText .= "executor.queueSize = 4 \n";
             } else if ($checkGeoFiles == "true"){
                 $configText .= "\n//parallel download limit for GEO files:\n";
-                $configText .= "executor.queueSize = 4 \n";
+                $configText .= "executor.queueSize = 2 \n";
             }
         }
         $configText .= "\n//Initial Run Parameters\n".$initialRunParams;

@@ -506,7 +506,7 @@ process downloadUrl {
 
 process createCollection {
     errorStrategy 'retry'
-    maxRetries 2
+    maxRetries 4
 
     input:
         each failedFile from failedFile.flatten()
