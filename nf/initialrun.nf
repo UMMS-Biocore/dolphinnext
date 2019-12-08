@@ -278,7 +278,7 @@ process initialCheck {
             if   ($error) { die "Command failed: $error $com\\n"; }
             else          { print "Command successful: $com\\n"; }
           }
-
+          
           sub checkFile {
             my ($file) = @_;
             print "checkFile: $file\\n";
@@ -506,7 +506,7 @@ process downloadUrl {
 
 process createCollection {
     errorStrategy 'retry'
-    maxRetries 4
+    maxRetries 3
 
     input:
         each failedFile from failedFile.flatten()
@@ -822,6 +822,18 @@ process createCollection {
             if   ($error) { die "Command failed: $error $com\\n"; }
             else          { print "Command successful: $com\\n"; }
           }
+          
+          sub runCommandSilent {
+            my ($com) = @_;
+            my $error = system($com);
+            if ($error) { 
+                print "Command failed: $error $com\\n";
+                return(0); 
+            } else { 
+                print "Command successful: $com\\n";
+                return(1); 
+            }
+          }
 
           sub checkFile {
             my ($file) = @_;
@@ -1051,32 +1063,45 @@ process createCollection {
 
           sub fasterqDump {
             my ( $gzip, $outDir, $srrID, $file_name,  $collection_type) = @_;
-            ## fastq-dump
-            ## --split-3: For each spot, if there are two biological reads  satisfying filter conditions, the first is  placed in the `*_1.fastq` file,  
-            ## and the second is placed in the `*_2.fastq` file. If there is only one biological read satisfying the filter conditions, it is 
-            ## placed in the `*.fastq` file.All other reads in the spot are ignored.
-            runCommand("rm -f ${outDir}/sra/sra/${srrID}.sra.cache ${outDir}/sra/sra/${srrID}.sra $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fastq-dump -O $outDir --split-3 --skip-technical $srrID");
-            
+            my $success = 0;
+            my $c;
+            for ( $c = 1 ; $c <= 3 ; $c++ ) {
+                ## fastq-dump
+                ## --split-3: For each spot, if there are two biological reads  satisfying filter conditions, the first is  placed in the `*_1.fastq` file,  
+                ## and the second is placed in the `*_2.fastq` file. If there is only one biological read satisfying the filter conditions, it is 
+                ## placed in the `*.fastq` file.All other reads in the spot are ignored.
+                $success = runCommandSilent("rm -f ${outDir}/sra/sra/${srrID}.sra.cache ${outDir}/sra/sra/${srrID}.sra $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fastq-dump -O $outDir --split-3 --skip-technical $srrID");
+                if ($success == 1){
+                    print "fastq-dump download successfully completed.\\n";
+                    last;
+                } else {
+                    sleep(60);
+                    print "fastq-dump download failed for $srrID.\\n";
+                }
+            }
+            if ($success != 1){
+                die "fastq-dump download failed for $c times for file:${file_name} - SRRID: $srrID";
+            }
             ## fasterq-dump
             ## runCommand("rm -f $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID} $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O $outDir -t ${outDir}/sra --split-3 --skip-technical -o $srrID $srrID");
             if ($collection_type eq "pair"){
-              runCommand("mv $outDir/${srrID}_1.fastq  $outDir/${file_name}.R1.fastq ");
-              runCommand("mv $outDir/${srrID}_2.fastq  $outDir/${file_name}.R2.fastq ");
-              if ($gzip ne ""){
+                runCommand("mv $outDir/${srrID}_1.fastq  $outDir/${file_name}.R1.fastq ");
+                runCommand("mv $outDir/${srrID}_2.fastq  $outDir/${file_name}.R2.fastq ");
+            if ($gzip ne ""){
                 runCommand("gzip  $outDir/${file_name}.R1.fastq ");
                 runCommand("gzip  $outDir/${file_name}.R2.fastq ");
-              }
-            }elsif ($collection_type eq "single"){
-              unless (-e "${outDir}/${srrID}.fastq") { die "fastq-dump failed for ${srrID}\\n"; }
-              if ( $srrID ne $file_name){
-                runCommand("mv $outDir/${srrID}.fastq  $outDir/${file_name}.fastq ");
-              }
-              if ($gzip ne ""){
-                runCommand("gzip  $outDir/${file_name}.fastq ");
-              }
+            }
+            } elsif ($collection_type eq "single"){
+                unless (-e "${outDir}/${srrID}.fastq") { die "fastq-dump failed for ${srrID}\\n"; }
+                if ( $srrID ne $file_name){
+                    runCommand("mv $outDir/${srrID}.fastq  $outDir/${file_name}.fastq ");
+                }
+                if ($gzip ne ""){
+                     runCommand("gzip  $outDir/${file_name}.fastq ");
+                }
             }
             runCommand("rm -f ${outDir}/sra/sra/${srrID}.sra ${outDir}/sra/sra/${srrID}.sra.cache");
-          }
+        }
 
 
           '''
@@ -1165,6 +1190,8 @@ process cleanUp {
             if   ($error) { die "Command failed: $com\\n"; }
             else          { print "Command successful: $com\\n"; }
           }
+          
+          
 
           '''
 

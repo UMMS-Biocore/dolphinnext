@@ -765,10 +765,7 @@ class dbfuncs {
             if ($checkGeoFiles == "true" && (($executor == "local" && $executor_job == "local") || $profileType == "amazon")){
                 $configText .= "\n//parallel download limit for GEO files on local executor:\n";
                 $configText .= "executor.queueSize = 4 \n";
-            } else if ($checkGeoFiles == "true"){
-                $configText .= "\n//parallel download limit for GEO files:\n";
-                $configText .= "executor.queueSize = 2 \n";
-            }
+            } 
         }
         $configText .= "\n//Initial Run Parameters\n".$initialRunParams;
         return array($configText,$initialRunParams);
