@@ -1,3 +1,7 @@
+07.12.2019 Version 1.0.10
+Default GEO download queueSize removed.
+Fast-dump retry command added into initial run.
+
 06.12.2019 Version 1.0.9
 GEO download queueSize set to 2 by default.
 Initial run max retry amount increase to 4.
