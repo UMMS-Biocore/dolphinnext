@@ -1,3 +1,6 @@
+07.12.2019 Version 1.0.11
+Retry button added for GEO search.
+
 07.12.2019 Version 1.0.10
 Default GEO download queueSize removed.
 Fast-dump retry command added into initial run.
