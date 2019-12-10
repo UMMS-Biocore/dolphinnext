@@ -799,6 +799,8 @@ immediately after the control sidebar -->
     <script src="bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js"></script>
     <!-- Selectize 0.12.4.  -->
     <script src="dist/selectize/selectize.js"></script>
+    <!-- jquery.ajax-cross-origin-->
+    <script src="bower_components/jquery.ajax-cross-origin/jquery.ajax-cross-origin.min.js"></script>
     <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
     <script>
         $.widget.bridge('uibutton', $.ui.button);

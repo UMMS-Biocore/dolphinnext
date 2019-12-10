@@ -1037,6 +1037,30 @@ function tsvConvert(tsv, format, fixHeader) {
     }
 }
 
+function reportAjaxError(jqXHR, exception, query){
+    var msg = '';
+    if (jqXHR.status === 0) {
+        msg = 'Not connect.\n Verify Network.';
+    } else if (jqXHR.status == 404) {
+        msg = 'Requested page not found. [404]';
+    } else if (jqXHR.status == 500) {
+        msg = 'Internal Server Error [500].';
+    } else if (exception === 'parsererror') {
+        msg = 'Requested JSON parse failed.';
+    } else if (exception === 'timeout') {
+        msg = 'Time out error.';
+    } else if (exception === 'abort') {
+        msg = 'Ajax request aborted.';
+    } else {
+        if (jqXHR.responseText) {
+            msg = 'Uncaught Error.\n' + jqXHR.responseText;
+        }
+    }
+    console.log("#Query: ");
+    console.log(query);
+    console.log("#Ajax Error: "+msg);
+}
+
 function getValues(data, async) {
     async = async ||false; //default false
     var result = null;
@@ -1050,27 +1074,7 @@ function getValues(data, async) {
             result = data;
         },
         error: function (jqXHR, exception) {
-            var msg = '';
-            if (jqXHR.status === 0) {
-                msg = 'Not connect.\n Verify Network.';
-            } else if (jqXHR.status == 404) {
-                msg = 'Requested page not found. [404]';
-            } else if (jqXHR.status == 500) {
-                msg = 'Internal Server Error [500].';
-            } else if (exception === 'parsererror') {
-                msg = 'Requested JSON parse failed.';
-            } else if (exception === 'timeout') {
-                msg = 'Time out error.';
-            } else if (exception === 'abort') {
-                msg = 'Ajax request aborted.';
-            } else {
-                if (jqXHR.responseText) {
-                    msg = 'Uncaught Error.\n' + jqXHR.responseText;
-                }
-            }
-            console.log(data);
-            console.log("#Ajax Error: ");
-            console.log(msg);
+            reportAjaxError(jqXHR, exception, data)
         }
     });
     return result;
@@ -1088,29 +1092,27 @@ function getValuesErr(data, async) {
             result = data;
         },
         error: function (jqXHR, exception) {
-            var msg = '';
-            if (jqXHR.status === 0) {
-                msg = 'Not connect.\n Verify Network.';
-            } else if (jqXHR.status == 404) {
-                msg = 'Requested page not found. [404]';
-            } else if (jqXHR.status == 500) {
-                msg = 'Internal Server Error [500].';
-            } else if (exception === 'parsererror') {
-                msg = 'Requested JSON parse failed.';
-            } else if (exception === 'timeout') {
-                msg = 'Time out error.';
-            } else if (exception === 'abort') {
-                msg = 'Ajax request aborted.';
-            } else {
-                if (jqXHR.responseText) {
-                    msg = 'Uncaught Error.\n' + jqXHR.responseText;
-                }
-            }
-            alert("#Ajax Error: "+msg);
+            reportAjaxError(jqXHR, exception, data)
         }
     });
     return result;
 }
+
+//function crossOriginCall(url) { 
+//    var result = null;
+//    $.ajax({
+//        crossOrigin: true,
+//        url: url,
+//        //dataType: "json", //no need. if you use crossOrigin, the dataType will be override with "json"
+//        //charset: 'ISO-8859-1', //use it to define the charset of the target url
+//        context: {},
+//        success: function(data) {
+//            result = data;
+//        }
+//    })
+//    console.log(result)
+//    return result;
+//}
 
 
 function apiCallUrl(url) { 
@@ -1123,25 +1125,7 @@ function apiCallUrl(url) {
             result = data;
         },
         error: function (jqXHR, exception) {
-            var msg = '';
-            if (jqXHR.status === 0) {
-                msg = 'Not connect.\n Verify Network.';
-            } else if (jqXHR.status == 404) {
-                msg = 'Requested page not found. [404]';
-            } else if (jqXHR.status == 500) {
-                msg = 'Internal Server Error [500].';
-            } else if (exception === 'parsererror') {
-                msg = 'Requested JSON parse failed.';
-            } else if (exception === 'timeout') {
-                msg = 'Time out error.';
-            } else if (exception === 'abort') {
-                msg = 'Ajax request aborted.';
-            } else {
-                if (jqXHR.responseText) {
-                    msg = 'Uncaught Error.\n' + jqXHR.responseText;
-                }
-            }
-            console.log("#Ajax Error: "+msg);
+            reportAjaxError(jqXHR, exception, url)
         }
     });
     return result;
