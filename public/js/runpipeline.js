@@ -6452,13 +6452,9 @@ $(document).ready(function () {
                     }
                     initGEOsearch(geoList, geoFailedList);
                 } else {
-                    console.log("retryFailed1",retryFailed)
-                    console.log("geoFailedList1",geoFailedList)
-                    console.log(geoFailedList.length >0)
-                    console.log(retryFailed >0)
                     if (geoFailedList.length >0 && retryFailed>0){
                         retryFailed--;
-                        console.log("retryFailed2",retryFailed)
+                        console.log("retryFailed",retryFailed)
                         $('#viewGeoBut').data("retryFailed", retryFailed);
                         $('#viewGeoBut').data("searchList", geoFailedList);
                         $('#viewGeoBut').data("searchIndex", 0);
