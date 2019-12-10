@@ -262,36 +262,6 @@ function resetOriginal(paramType, firstParamId) {
     }
 }
 
-//edges-> all edge list, nullId-> process input/output id that not exist in the d3 diagrams 
-function getNewNodeId(edges, nullId, MainGNum) {
-    //nullId: i-24-14-20-1
-    var nullProcessInOut = nullId.split("-")[0];
-    var nullProcessId = nullId.split("-")[1];
-    var nullProcessParId = nullId.split("-")[3];
-    var nullProcessGnum = nullId.split("-")[4];
-    //check is parameter is unique:
-    if (nullProcessInOut === "i") {
-        var nodes = JSON.parse(window.pipeObj["pro_para_inputs_" + nullProcessId]);
-    } else if (nullProcessInOut === "o") {
-        var nodes = JSON.parse(window.pipeObj["pro_para_outputs_" + nullProcessId]);
-    }
-    if (nodes) {
-        var paraData = nodes.filter(function (el) { return el.parameter_id == nullProcessParId });
-        //get newNodeID  
-        if (paraData.length === 1 && nullProcessId !== "inPro" && nullProcessId !== "outPro") {
-            var patt = /(.*)-(.*)-(.*)-(.*)-(.*)/;
-            var nullIdRegEx = new RegExp(nullId.replace(patt, '$1-$2-' + '(.*)' + '-$4-$5'), 'g')
-            var newNode = $('#g' + MainGNum + "-" + nullProcessGnum).find("circle").filter(function () {
-                return this.id.match(nullIdRegEx);
-            })
-            if (newNode.length === 1) {
-                var newNodeId = newNode.attr("id");
-                nullIDList["p"+MainGNum+nullId]=newNodeId
-                return newNodeId;
-            }
-        }
-    }
-}
 
 function translateSVG(mG, pObj) {
     var MainGNum = "";
@@ -463,6 +433,7 @@ function openPipeline(id) {
             for (var ee = 0; ee < ed.length; ee++) {
                 eds = ed[ee].split("_")
                 if (!document.getElementById(eds[0]) && document.getElementById(eds[1])) {
+                    console.log(eds)
                     //if process is updated through process modal, reconnect the uneffected one based on their parameter_id.
                     var newID = getNewNodeId(ed, eds[0], "")
                     if (newID) {
@@ -2845,9 +2816,7 @@ function scMouseOut() {
 }
 
 
-function removeDelCircle(lineid) {
-    d3.select("#c--" + lineid).remove()
-}
+
 var tooltip = d3.select("body")
 .append("div").attr("class", "tooltip-svg")
 .style("position", "absolute")
@@ -3398,13 +3367,18 @@ function createEdges(first, second, pObj) {
         d3.selectAll("#" + prefix + first).attr("class", pObj.secClassName)
         //update the parameter of the inputparam based on selected second circle
         var firGnum = document.getElementById(prefix + first).id.split("-")[4] //first g-number
+        var firPI = document.getElementById(prefix + first).id.split("-")[3] //first parameter id
         var secGnum = document.getElementById(prefix + second).id.split("-")[4] //first g-number
         pObj.secPI = document.getElementById(prefix + second).id.split("-")[3] //second parameter id
         var secProI = document.getElementById(prefix + second).id.split("-")[1] //second process id
-        pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
-        pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5')
-
-        d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
+        if (firPI == "inPara" || firPI == "outPara" ){
+            pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
+            pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5') 
+            d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
+        } else {
+            //don't update input/output param id after first connection
+            pObj.secID = first;
+        }
         pObj.fClickOrigin = first
         pObj.fClick = pObj.secID
         pObj.sClick = second

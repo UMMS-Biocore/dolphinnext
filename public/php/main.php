@@ -807,6 +807,7 @@ immediately after the control sidebar -->
     </script>
     <!-- AdminLTE App -->
     <script src="dist/js/adminlte.min.js"></script>
+<!--    <script src="dist/js/adminlte.js"></script>-->
     <!-- AdminLTE for demo purposes -->
     <script src="dist/js/demo.js"></script>
     <!-- pagination 2.1.2 -->

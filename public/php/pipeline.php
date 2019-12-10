@@ -730,8 +730,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-info" style="display:none" id="selectProcess">Select Revision</button>
                 <button type="button" class="btn btn-primary" id="saveprocess">Save changes</button>
-                <button type="button" class="btn btn-primary" style="display:none" id="selectProcess">Select Revision</button>
                 <button type="button" class="btn btn-primary" style="display:none" id="createRevisionBut" onclick="createRevision()">Create Revision</button>
             </div>
         </div>
