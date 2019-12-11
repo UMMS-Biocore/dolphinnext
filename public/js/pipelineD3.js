@@ -235,19 +235,7 @@ function delPipeline() {
     window.location.replace("index.php?np=1");
 }
 
-//resets input/output param if its single
-function resetSingleParam(paramId) {
-    if ($('#' + paramId).attr("connect") === "single") {
-        if ($('#' + paramId).parent().attr("class") === "g-inPro") {
-            resetOriginal("inPro", paramId)
-            return true
-        } else if ($('#' + paramId).parent().attr("class") === "g-outPro") {
-            resetOriginal("outPro", paramId)
-            return true
-        }
-    }
-    return false
-}
+
 
 
 function openSubPipeline(piID, pObj) {
@@ -401,6 +389,8 @@ function openPipeline(id) {
                 eds = ed[ee].split("_")
                 createEdges(eds[0], eds[1], window)
             }
+            //resets input/output param if its not connected
+            resetSingleParam()
         }
     }
 }
@@ -1656,8 +1646,6 @@ function createEdges(first, second, pObj) {
                 //don't update input/output param id after first connection
                 pObj.secID = first;
             }
-
-
             pObj.fClickOrigin = first
             pObj.fClick = pObj.secID
             pObj.sClick = second
@@ -1744,29 +1732,9 @@ function createEdges(first, second, pObj) {
 
         pObj.edges.push(prefix + pObj.fClick + "_" + prefix + pObj.sClick);
     } else {
-        console.log("prefix",prefix)
-        console.log("MainGNum",MainGNum)
-        console.log(first)
-        console.log(second)
+        console.log("EDGE FAILED: prefix:",prefix +" MainGNum:"+ MainGNum + "Edge" + first + "_" +second)
     }
 
-}
-
-
-
-//resets input/output parameters to original state
-//paramType:outPro or inPro
-function resetOriginal(paramType, firstParamId) {
-    var patt = /(.*)-(.*)-(.*)-(.*)-(.*)/;
-    if (paramType === 'outPro') {
-        var originalID = firstParamId.replace(patt, '$1-$2-$3-' + "outPara" + '-$5')
-        d3.selectAll("#" + firstParamId).attr("id", originalID);
-        d3.selectAll("#" + originalID).attr("class", "connect_to_output input");
-    } else if (paramType === 'inPro') {
-        var originalID = firstParamId.replace(patt, '$1-$2-$3-' + "inPara" + '-$5')
-        d3.selectAll("#" + firstParamId).attr("id", originalID);
-        d3.selectAll("#" + originalID).attr("class", "connect_to_input output");
-    }
 }
 
 function removeEdge(delID) {

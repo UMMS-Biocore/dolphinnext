@@ -111,6 +111,34 @@ function getNewNodeId(nullId, pObj) {
     return "";
 }
 
+//resets input/output parameters to original state
+//paramType:outPro or inPro
+function resetOriginal(paramType, firstParamId) {
+    var patt = /(.*)-(.*)-(.*)-(.*)-(.*)/;
+    if (paramType === 'outPro') {
+        var originalID = firstParamId.replace(patt, '$1-$2-$3-' + "outPara" + '-$5')
+        d3.selectAll("#" + firstParamId).attr("id", originalID);
+        d3.selectAll("#" + originalID).attr("class", "connect_to_output input");
+    } else if (paramType === 'inPro') {
+        var originalID = firstParamId.replace(patt, '$1-$2-$3-' + "inPara" + '-$5')
+        d3.selectAll("#" + firstParamId).attr("id", originalID);
+        d3.selectAll("#" + originalID).attr("class", "connect_to_input output");
+    }
+}
+
+//resets input/output param if its single
+function resetSingleParam() {
+    var types = ["inPro", "outPro"]
+    for (var i = 0; i < types.length; i++) {
+        var singleNodes = $('#mainG').find("g.g-"+types[i]+" > circle[parentG]").filter(function () {
+            return $(this).attr("connect") == "single"
+        });
+        for (var k = 0; k < singleNodes.length; k++) {
+            resetOriginal(types[i], singleNodes[k].id)
+        }
+    }
+}
+
 function splitEdges(edge) {
     //p2_7o-48-2-47-12_p2_7i-51-0-47-8 separate into p2_7o-48-2-47-12 and p2_7i-51-0-47-8 by ungreedy regex
     var patt = /(.*)-(.*)-(.*)-(.*)-(.*?)_(.*)-(.*)-(.*)-(.*)-(.*)/

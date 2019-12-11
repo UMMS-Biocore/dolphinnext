@@ -235,32 +235,7 @@ var timeoutId = 0;
 
 
 
-function resetSingleParam(paramId) {
-    if ($('#' + paramId).attr("connect") === "single") {
-        if ($('#' + paramId).parent().attr("class") === "g-inPro") {
-            resetOriginal("inPro", paramId)
-        } else if ($('#' + paramId).parent().attr("class") === "g-outPro") {
-            resetOriginal("outPro", paramId)
-            return true
-        }
-    }
-    return false
-}
 
-//resets input/output parameters to original state
-//paramType:outPro or inPro
-function resetOriginal(paramType, firstParamId) {
-    var patt = /(.*)-(.*)-(.*)-(.*)-(.*)/;
-    if (paramType === 'outPro') {
-        var originalID = firstParamId.replace(patt, '$1-$2-$3-' + "outPara" + '-$5')
-        d3.selectAll("#" + firstParamId).attr("id", originalID);
-        d3.selectAll("#" + originalID).attr("class", "connect_to_output input");
-    } else if (paramType === 'inPro') {
-        var originalID = firstParamId.replace(patt, '$1-$2-$3-' + "inPara" + '-$5')
-        d3.selectAll("#" + firstParamId).attr("id", originalID);
-        d3.selectAll("#" + originalID).attr("class", "connect_to_input output");
-    }
-}
 
 
 function translateSVG(mG, pObj) {
@@ -367,27 +342,7 @@ function openSubPipeline(piID, pObj) {
         pObj.ed = JSON.parse(pObj.ed.replace(/'/gi, "\""))["edges"]
         for (var ee = 0; ee < pObj.ed.length; ee++) {
             pObj.eds = pObj.ed[ee].split("_")
-            //specific to module panel
-            //if process is updated through process modal, reconnect the uneffected one based on their parameter_id.
-            if (!document.getElementById(prefix + pObj.eds[0]) && document.getElementById(prefix + pObj.eds[1])) {
-                var newID = getNewNodeId(pObj.ed, pObj.eds[0], MainGNum)
-                if (newID) {
-                    newID = newID.replace(prefix, "")
-                    pObj.eds[0] = newID;
-                    createEdges(pObj.eds[0], pObj.eds[1], pObj)
-                }
-                //if process is updated through process modal, reset the edge of input/output parameter and reset the single circles.
-            } else if (!document.getElementById(prefix + pObj.eds[1]) && document.getElementById(prefix + pObj.eds[0])) {
-                var newID = getNewNodeId(pObj.ed, pObj.eds[1], MainGNum);
-                if (newID) {
-                    newID = newID.replace(prefix, "")
-                    pObj.eds[1] = newID;
-                    createEdges(pObj.eds[0], pObj.eds[1], pObj)
-                }
-            } else if (document.getElementById(prefix + pObj.eds[1]) && document.getElementById(prefix + pObj.eds[0])) {
-                addCandidates2DictForLoad(pObj.eds[0], pObj)
-                createEdges(pObj.eds[0], pObj.eds[1], pObj)
-            }
+            createEdges(pObj.eds[0], pObj.eds[1], pObj)
         }
     }
 }
@@ -432,32 +387,10 @@ function openPipeline(id) {
             ed = JSON.parse(ed.replace(/'/gi, "\""))["edges"]
             for (var ee = 0; ee < ed.length; ee++) {
                 eds = ed[ee].split("_")
-                if (!document.getElementById(eds[0]) && document.getElementById(eds[1])) {
-                    console.log(eds)
-                    //if process is updated through process modal, reconnect the uneffected one based on their parameter_id.
-                    var newID = getNewNodeId(ed, eds[0], "")
-                    if (newID) {
-                        eds[0] = newID;
-                        addCandidates2DictForLoad(eds[0], window)
-                        createEdges(eds[0], eds[1], window)
-                    }
-                    //if process is updated through process modal, reset the edge of input/output parameter and reset the single circles.
-                    resetSingleParam(eds[1]);
-
-                } else if (!document.getElementById(eds[1]) && document.getElementById(eds[0])) {
-                    var newID = getNewNodeId(ed, eds[1], "");
-                    if (newID) {
-                        eds[1] = newID;
-                        addCandidates2DictForLoad(eds[0], window)
-                        createEdges(eds[0], eds[1], window)
-                    }
-                    resetSingleParam(eds[0]);
-
-                } else if (document.getElementById(eds[1]) && document.getElementById(eds[0])) {
-                    addCandidates2DictForLoad(eds[0], window)
-                    createEdges(eds[0], eds[1], window)
-                }
+                createEdges(eds[0], eds[1], window)
             }
+            //resets input/output param if its not connected
+            resetSingleParam()
         }
     }
 }
@@ -3344,78 +3277,95 @@ function createEdges(first, second, pObj) {
         MainGNum = pObj.MainGNum;
         prefix = "p" + MainGNum;
     }
-    d3.selectAll("#" + prefix + first).attr("connect", 'mate')
-    d3.selectAll("#" + prefix + second).attr("connect", 'mate')
-    pObj.inputParamLocF = first.indexOf("o-inPro") //-1: inputparam not exist //0: first click is done on the inputparam
-    pObj.inputParamLocS = second.indexOf("o-inPro")
-    pObj.outputParamLocF = first.indexOf("i-outPro") //-1: outputparam not exist //0: first click is done on the inputparam
-    pObj.outputParamLocS = second.indexOf("i-outPro")
+    if (!document.getElementById(prefix + first) && document.getElementById(prefix + second)) {
+        var newID = getNewNodeId(first, pObj);
+        if (newID) {
+            first = newID.replace(prefix, "")
+        }
+    } else if (document.getElementById(prefix + first) && !document.getElementById(prefix + second)) {
+        var newID = getNewNodeId(second, pObj);
+        if (newID) {
+            second = newID.replace(prefix, "")
+        }
+    } 
+
+    if (document.getElementById(prefix + second) && document.getElementById(prefix + first)) {
+        addCandidates2DictForLoad(first, pObj);
+        d3.selectAll("#" + prefix + first).attr("connect", 'mate')
+        d3.selectAll("#" + prefix + second).attr("connect", 'mate')
+        pObj.inputParamLocF = first.indexOf("o-inPro") //-1: inputparam not exist //0: first click is done on the inputparam
+        pObj.inputParamLocS = second.indexOf("o-inPro")
+        pObj.outputParamLocF = first.indexOf("i-outPro") //-1: outputparam not exist //0: first click is done on the inputparam
+        pObj.outputParamLocS = second.indexOf("i-outPro")
 
 
-    if (pObj.inputParamLocS === 0 || pObj.outputParamLocS === 0) { //second click is done on the circle of inputparam//outputparam
-        //swap elements and treat as fırst click was done on
-        pObj.tem = second
-        second = first
-        first = pObj.tem
-        pObj.inputParamLocF = 0
-        pObj.outputParamLocF = 0
+        if (pObj.inputParamLocS === 0 || pObj.outputParamLocS === 0) { //second click is done on the circle of inputparam//outputparam
+            //swap elements and treat as fırst click was done on
+            pObj.tem = second
+            second = first
+            first = pObj.tem
+            pObj.inputParamLocF = 0
+            pObj.outputParamLocF = 0
+        }
+        //first click is done on the circle of inputparam
+        if (pObj.inputParamLocF === 0 || pObj.outputParamLocF === 0) {
+            //update the class of inputparam based on selected second circle
+            pObj.secClassName = updateSecClassName(prefix + second, pObj.inputParamLocF)
+            d3.selectAll("#" + prefix + first).attr("class", pObj.secClassName)
+            //update the parameter of the inputparam based on selected second circle
+            var firGnum = document.getElementById(prefix + first).id.split("-")[4] //first g-number
+            var firPI = document.getElementById(prefix + first).id.split("-")[3] //first parameter id
+            var secGnum = document.getElementById(prefix + second).id.split("-")[4] //first g-number
+            pObj.secPI = document.getElementById(prefix + second).id.split("-")[3] //second parameter id
+            var secProI = document.getElementById(prefix + second).id.split("-")[1] //second process id
+            if (firPI == "inPara" || firPI == "outPara" ){
+                pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
+                pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5') 
+                d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
+            } else {
+                //don't update input/output param id after first connection
+                pObj.secID = first;
+            }
+            pObj.fClickOrigin = first
+            pObj.fClick = pObj.secID
+            pObj.sClick = second
+            var rowType = '';
+            //Pipeline details table 
+            if (pObj.inputParamLocF === 0) {
+                rowType = 'input';
+            } else if (pObj.outputParamLocF === 0) {
+                rowType = 'output';
+            }
+            if (pObj == window) {
+                insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix, second);
+            }
+
+        } else { //process to process connection
+            pObj.fClickOrigin = first
+            pObj.fClick = first
+            pObj.sClick = second
+        }
+
+        d3.select("#mainG" + MainGNum).append("line")
+            .attr("id", prefix + pObj.fClick + "_" + prefix + pObj.sClick)
+            .attr("class", "line")
+            .attr("type", "standard")
+            .style("stroke", "#B0B0B0").style("stroke-width", 4)
+            .attr("x1", pObj.candidates[prefix + pObj.fClickOrigin][0])
+            .attr("y1", pObj.candidates[prefix + pObj.fClickOrigin][1])
+            .attr("x2", pObj.candidates[prefix + pObj.sClick][0])
+            .attr("y2", pObj.candidates[prefix + pObj.sClick][1])
+            .attr("g_from", pObj.candidates[prefix + pObj.fClickOrigin][2])
+            .attr("g_to", pObj.candidates[prefix + pObj.sClick][2])
+            .attr("IO_from", prefix + pObj.fClick)
+            .attr("IO_to", prefix + pObj.sClick)
+            .attr("stroke-width", 2)
+            .attr("stroke", "black")
+
+        pObj.edges.push(prefix + pObj.fClick + "_" + prefix + pObj.sClick)
+    }else {
+        console.log("EDGE FAILED: prefix:",prefix +" MainGNum:"+ MainGNum + "Edge" + first + "_" +second)
     }
-    //first click is done on the circle of inputparam
-    if (pObj.inputParamLocF === 0 || pObj.outputParamLocF === 0) {
-        //update the class of inputparam based on selected second circle
-        pObj.secClassName = updateSecClassName(prefix + second, pObj.inputParamLocF)
-        d3.selectAll("#" + prefix + first).attr("class", pObj.secClassName)
-        //update the parameter of the inputparam based on selected second circle
-        var firGnum = document.getElementById(prefix + first).id.split("-")[4] //first g-number
-        var firPI = document.getElementById(prefix + first).id.split("-")[3] //first parameter id
-        var secGnum = document.getElementById(prefix + second).id.split("-")[4] //first g-number
-        pObj.secPI = document.getElementById(prefix + second).id.split("-")[3] //second parameter id
-        var secProI = document.getElementById(prefix + second).id.split("-")[1] //second process id
-        if (firPI == "inPara" || firPI == "outPara" ){
-            pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
-            pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5') 
-            d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
-        } else {
-            //don't update input/output param id after first connection
-            pObj.secID = first;
-        }
-        pObj.fClickOrigin = first
-        pObj.fClick = pObj.secID
-        pObj.sClick = second
-        var rowType = '';
-        //Pipeline details table 
-        if (pObj.inputParamLocF === 0) {
-            rowType = 'input';
-        } else if (pObj.outputParamLocF === 0) {
-            rowType = 'output';
-        }
-        if (pObj == window) {
-            insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix, second);
-        }
-
-    } else { //process to process connection
-        pObj.fClickOrigin = first
-        pObj.fClick = first
-        pObj.sClick = second
-    }
-
-    d3.select("#mainG" + MainGNum).append("line")
-        .attr("id", prefix + pObj.fClick + "_" + prefix + pObj.sClick)
-        .attr("class", "line")
-        .attr("type", "standard")
-        .style("stroke", "#B0B0B0").style("stroke-width", 4)
-        .attr("x1", pObj.candidates[prefix + pObj.fClickOrigin][0])
-        .attr("y1", pObj.candidates[prefix + pObj.fClickOrigin][1])
-        .attr("x2", pObj.candidates[prefix + pObj.sClick][0])
-        .attr("y2", pObj.candidates[prefix + pObj.sClick][1])
-        .attr("g_from", pObj.candidates[prefix + pObj.fClickOrigin][2])
-        .attr("g_to", pObj.candidates[prefix + pObj.sClick][2])
-        .attr("IO_from", prefix + pObj.fClick)
-        .attr("IO_to", prefix + pObj.sClick)
-        .attr("stroke-width", 2)
-        .attr("stroke", "black")
-
-    pObj.edges.push(prefix + pObj.fClick + "_" + prefix + pObj.sClick)
 
 }
 
@@ -6412,7 +6362,7 @@ $(document).ready(function () {
                 if (!retryFailed){
                     retryFailed = 0;
                 }
-                
+
                 searchIndex ++;
                 $('#viewGeoBut').data("searchIndex", searchIndex);
                 if (typeof searchList === 'undefined') { return;}

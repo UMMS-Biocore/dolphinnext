@@ -1,6 +1,7 @@
 10.12.2019 Version 1.0.12
 Channel factory algorithm and workflow connection approach in D3 updated to support multiple qualifiers with single input parameter.
 Process editing allowed after clicking process settings icon.
+Edge reconnection feature after changing version of the process/module is added.
 
 10.12.2019 Version 1.0.11
 GEO search window improved and bugs are fixed.
