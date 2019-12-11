@@ -390,7 +390,7 @@ function openPipeline(id) {
                 createEdges(eds[0], eds[1], window)
             }
             //resets input/output param if its not connected
-            resetSingleParam()
+//            resetSingleParam()
         }
     }
 }

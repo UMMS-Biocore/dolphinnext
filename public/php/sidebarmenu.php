@@ -53,7 +53,7 @@ foreach ($obj as $item):
     $tooltip = "";
     if (strlen($orgName) >20){
         $showName = substr($orgName, 0, 20);
-        $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
+        $tooltip = ' data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
     }
     $admin_only = isset($item->{'admin_only'}) ? 'admin="'.$item->{'admin_only'}.'"' : "";
     $publish = isset($item->{'publish'}) ? 'pub="'.$item->{'publish'}.'"' : "";
