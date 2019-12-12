@@ -117,7 +117,7 @@ $(document).ready(function () {
         if (mode === 'add') {
             $('.wizard .nav-tabs li').addClass("disabled")
             $('.wizard .nav-tabs li').first().removeClass("disabled").addClass("active");
-            $(".profilewizard input[name='profiletype'][value='test']").attr('checked',true); 
+            $(".profilewizard input[name='profiletype'][value='host']").attr('checked',true); 
             var currentdate = new Date(); 
             var datetime = " on " + currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/"  + currentdate.getFullYear();
             var name = "Run Environment" + datetime

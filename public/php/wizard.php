@@ -206,7 +206,11 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                         <div class="tab-content">
                             <div class="tab-pane active" role="tabpanel" id="pw-step-profiletype" style="min-height:400px;">
                                 <h3>Profile Type</h3>
-                                <p>Profile wizard will guide you to create your run environment. If you have an access to High Performance Computing (HPC) environments, or personal workstations please choose <b>Host</b>. If you have an Amazon Web Services (AWS) account or planning to create one then please choose <b>Amazon</b>. Finally, if you want to use our MASS cluster please choose <b>MASS cluster</b> option. </p>
+                                <p>Profile wizard will guide you to create your run environment. If you have an access to High Performance Computing (HPC) environments, or personal workstations please choose <b>Host</b>. If you have an Amazon Web Services (AWS) account or planning to create one then please choose <b>Amazon</b>. <?php
+                                        if ($SHOW_TEST_PROFILE && !empty($TEST_PROFILE_GROUP_ID)){
+                                            echo 'Finally, if you want to use our MASS cluster please choose <b>MASS cluster</b> option.';
+                                        }
+                                    ?> </p>
                                 <div class="form-group" style="margin:20px;">
                                     <div id="pw_profiletype" class="form-group">
                                         <div class="radio">
@@ -253,7 +257,7 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                     <div class="col-md-12" style="margin-top:20px;" id="pw-usesshkeys_checkdiv">
                                         <div class="form-group">
                                             <div class="col-sm-12">
-                                                <input type="checkbox" id="pw-usesshkeys_check" name="usesshkeys_check"> Click here to indicate that you have read and agree to the terms presented in the <a href="php/terms.php" class="text-aqua" target="_blank">Terms & Privacy Policy.</a></input>
+                                                <input type="checkbox" id="pw-usesshkeys_check" name="usesshkeys_check"> Click here to indicate that you have read and agree to the terms presented in the <a href="php/terms.php" class="text-aqua" target="_blank">Terms and Conditions</a> & <a href="php/privacy.php" class="text-aqua" target="_blank">Privacy Policy.</a></input>
                                             </div>
                                         </div>
                                         <div class="form-horizontal col-md-12" id="pw-validatepublickey">
