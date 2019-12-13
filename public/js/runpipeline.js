@@ -6535,6 +6535,8 @@ $(document).ready(function () {
                                                                             runsJSON.Run = [runsJSON.Run];
                                                                         }
                                                                         for(var i = 0; i < runsJSON.Run.length; i++){
+                                                                            console.log(expJSON.Summary.Title)
+                                                                            console.log(runsJSON.Run[i].attributes)
                                                                             if (expJSON.Summary.Title && runsJSON.Run[i].attributes){
                                                                                 if (expJSON.Summary.Title.text && runsJSON.Run[i].attributes.acc){
                                                                                     var srr_id = runsJSON.Run[i].attributes.acc
@@ -6754,6 +6756,8 @@ $(document).ready(function () {
             //GSE78274(96sample, gds) 
             //GSE55190(24sample gds) 
             //ERP009109 PRJEB8073
+            //SRR10095965
+            //
             $('#viewGeoBut').click(function () {
                 var geo_id = $('#geo_id').val()
                 if (geo_id){

@@ -133,7 +133,7 @@ class dbfuncs {
         } else if ($type == 'singularity'){
             preg_match("/shub:\/\/(.*)/", $img, $matches);
             if (!empty($matches[1])){
-                $singuPath = '\\$NXF_SINGULARITY_CACHEDIR';
+                $singuPath = '$NXF_SINGULARITY_CACHEDIR';
                 if ($profileType == "amazon"){
                     $amzData=$this->getProfileAmazonbyID($profileId, $ownerID);
                     $amzDataArr=json_decode($amzData,true);
