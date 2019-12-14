@@ -1776,10 +1776,12 @@ class dbfuncs {
                 $errorLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/err.log", $ownerID));
                 $initialLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/initial.log", $ownerID));
                 $nextflowLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/log.txt", $ownerID));
+                $dotNextflowLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/.nextflow.log", $ownerID));
                 $serverLog = isset($serverLog) ? trim($serverLog) : "";
                 $errorLog = isset($errorLog) ? trim($errorLog) : "";
                 $initialLog = isset($initialLog) ? trim($initialLog) : "";
                 $nextflowLog = isset($nextflowLog) ? trim($nextflowLog) : "";
+                $dotNextflowLog = isset($dotNextflowLog) ? trim($dotNextflowLog) : "";
                 if (!empty($errorLog)) { $serverLog = $serverLog . "\n" . $errorLog; }
                 if (!empty($initialLog)) { $nextflowLog = $initialLog . "\n" . $nextflowLog; }
                 $out["serverLog"] = $serverLog;
@@ -1796,12 +1798,12 @@ class dbfuncs {
                 } else if (!empty($nextflowLog)){
                     if (preg_match("/N E X T F L O W/",$nextflowLog)){
                         //run completed with error
-                        if (preg_match("/##Success: failed/",$nextflowLog)){
+                        if (preg_match("/##Success: failed/",$nextflowLog) && preg_match("/DEBUG nextflow.script.ScriptRunner - > Execution complete/",$dotNextflowLog)){
                             preg_match("/##Duration:(.*)\n/",$nextflowLog, $matchDur);
                             $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
                             $newRunStatus = "NextErr";
                             //run completed with success
-                        } else if (preg_match("/##Success: OK/",$nextflowLog)){
+                        } else if (preg_match("/##Success: OK/",$nextflowLog) && preg_match("/DEBUG nextflow.script.ScriptRunner - > Execution complete/",$dotNextflowLog)){
                             preg_match("/##Duration:(.*)/",$nextflowLog, $matchDur);
                             $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
                             $newRunStatus = "NextSuc";

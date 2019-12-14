@@ -3990,7 +3990,7 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
         if (url || urlzip){
             showUrlIcon = "";
         }
-        var urlIcon = '<button type="button" class="btn"  url="'+urlData+'" urlzip="'+urlzipData+'" checkpath="'+checkPathData+'" style="'+showUrlIcon+' padding:0px; margin-right:2px;" id="urlBut-'+rowID+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Info"><span><i style="font-size: 16px;" class="fa fa-cloud-download"></i></span></a></button>'
+        var urlIcon = '<button type="button" class="btn"  url="'+urlData+'" urlzip="'+urlzipData+'" checkpath="'+checkPathData+'" style="'+showUrlIcon+' background:none; padding:0px; margin-right:2px;" id="urlBut-'+rowID+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Info"><span><i style="font-size: 16px;" class="fa fa-cloud-download"></i></span></a></button>'
 
         filePath = escapeHtml(filePath);
         var collectionAttr = ' collection_id="" ';
@@ -4208,7 +4208,7 @@ function checkMissingVar(){
         var egText = ""
         var undefinedVarAr = []
         var warnText = "Undefined variables found in your system inputs: ";
-        var icon ='<button type="button" class="btn" data-backdrop="false" onclick="refreshEnv()" style="padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Refresh Environments"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>';
+        var icon ='<button type="button" class="btn" data-backdrop="false" onclick="refreshEnv()" style="background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Refresh Environments"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>';
         $.each(window["undefinedVarObj"], function (el) {
             undefinedVarAr.push(el);
             egText += el + ' = "/yourpath"</br>'

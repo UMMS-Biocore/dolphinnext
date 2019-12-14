@@ -45,16 +45,16 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
     <i style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px;">|</i>
 
     <!--        Save and delete icons-->
-    <button type="submit" id="saveRunIcon" class="btn" name="button" data-backdrop="false" onclick="saveRunIcon()" style=" margin:0px; padding:0px;  ">
+    <button type="submit" id="saveRunIcon" class="btn" name="button" data-backdrop="false" onclick="saveRunIcon()" style="background:none;  margin:0px; padding:0px;  ">
         <a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Run">
             <i class="fa fa-save" style="font-size: 17px;"></i></a></button>
-    <button type="button" id="downPipeline" class="btn" name="button" onclick="download(createNextflowFile(&quot;run&quot;))" data-backdrop="false" style=" margin:0px; padding:0px;">
+    <button type="button" id="downPipeline" class="btn" name="button" onclick="download(createNextflowFile(&quot;run&quot;))" data-backdrop="false" style=" background:none; margin:0px; padding:0px;">
         <a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Pipeline">
             <i class="glyphicon glyphicon-save"></i></a></button>
-    <button type="submit" id="copyRun" class="btn" name="button" data-backdrop="false" onclick="duplicateProPipe(&#34;copy&#34;);return false;" style=" margin:0px; padding:0px;">
+    <button type="submit" id="copyRun" class="btn" name="button" data-backdrop="false" onclick="duplicateProPipe(&#34;copy&#34;);return false;" style=" background:none; margin:0px; padding:0px;">
         <a data-toggle="tooltip" data-placement="bottom" data-original-title="Copy Run ">
             <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
-    <button type="button" id="delRun" class="btn" name="button" data-backdrop="false" data-toggle="modal" href="#confirmModal" style=" margin:0px; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Run">
+    <button type="button" id="delRun" class="btn" name="button" data-backdrop="false" data-toggle="modal" href="#confirmModal" style=" margin:0px; background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Run">
         <i class="glyphicon glyphicon-trash"></i></a></button>
     <!--        Save and delete icons ends-->
 
@@ -219,7 +219,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         <div class="col-md-12">
                             <div class="form-group">
                                 <label>Run Environment </label>
-                                <button type="button" class="btn" data-backdrop="false" onclick="refreshEnv()" style="padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Refresh Environments"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>
+                                <button type="button" class="btn" data-backdrop="false" onclick="refreshEnv()" style="background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Refresh Environments"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>
                                 <select id="chooseEnv" style="width: 100%;" class="fbtn btn-default form-control" name="runEnv">
                                     <option value="" disabled selected>Choose environment </option>
                                 </select>
