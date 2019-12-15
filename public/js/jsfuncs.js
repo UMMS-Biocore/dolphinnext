@@ -177,6 +177,22 @@ function removeDoubleQuote(script) {
     return script
 }
 
+
+//refreshSession every 10 minutes
+window.setInterval( function() {
+    console.log("refreshSession")
+    $.ajax({
+        cache: false,
+        type: "GET",
+        url: "ajax/refreshSession.php",
+        success: function(data) {
+            console.log("session refreshed")
+        }
+    });
+}, 600000 );
+
+
+
 // check the amazon profiles activity each 40 sec.
 checkAmzProfiles("timer");
 
@@ -911,13 +927,13 @@ function getDropdownDef(id, attr, optionArr, defText) {
 
 function getIconButtonModal(name, buttons, icon) {
     var buttonId = buttons.split(' ')[0];
-    var button = '<button type="submit" style="padding:0px;" class="btn" title="' + buttons + '" id="' + name + buttonId + '" data-toggle="modal" data-target="#' + name + 'modal"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' + name + '"><i class="' + icon + '" style="font-size: 17px;"></i></a></button>';
+    var button = '<button type="submit" style="background:none; padding:0px;" class="btn" title="' + buttons + '" id="' + name + buttonId + '" data-toggle="modal" data-target="#' + name + 'modal"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' + name + '"><i class="' + icon + '" style="font-size: 17px;"></i></a></button>';
     return button;
 }
 
 function getIconButton(name, buttons, icon) {
     var buttonId = buttons.split(' ')[0];
-    var button = '<button type="submit" style="padding:0px;" class="btn" title="' + buttons + '" id="' + name + buttonId + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' + name + '"><i class="' + icon + '" style="font-size: 17px;"></i></a></button>';
+    var button = '<button type="submit" style="background:none; padding:0px;" class="btn" title="' + buttons + '" id="' + name + buttonId + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' + name + '"><i class="' + icon + '" style="font-size: 17px;"></i></a></button>';
     return button;
 }
 
@@ -1288,22 +1304,24 @@ function createElement(type, fields, options) {
 }
 
 function cleanProcessName(proName) {
-    proName = proName.replace(/ /g, "_");
-    proName = proName.replace(/-/g, "_");
-    proName = proName.replace(/:/g, "_");
-    proName = proName.replace(/,/g, "_");
-    proName = proName.replace(/\$/g, "_");
-    proName = proName.replace(/\!/g, "_");
-    proName = proName.replace(/\</g, "_");
-    proName = proName.replace(/\>/g, "_");
-    proName = proName.replace(/\?/g, "_");
-    proName = proName.replace(/\(/g, "_");
-    proName = proName.replace(/\"/g, "_");
-    proName = proName.replace(/\'/g, "_");
-    proName = proName.replace(/\./g, "_");
-    proName = proName.replace(/\//g, "_");
-    proName = proName.replace(/\\/g, "_");
-    proName = proName.replace(/@/g, "_");
+    if (proName){
+        proName = proName.replace(/ /g, "_");
+        proName = proName.replace(/-/g, "_");
+        proName = proName.replace(/:/g, "_");
+        proName = proName.replace(/,/g, "_");
+        proName = proName.replace(/\$/g, "_");
+        proName = proName.replace(/\!/g, "_");
+        proName = proName.replace(/\</g, "_");
+        proName = proName.replace(/\>/g, "_");
+        proName = proName.replace(/\?/g, "_");
+        proName = proName.replace(/\(/g, "_");
+        proName = proName.replace(/\"/g, "_");
+        proName = proName.replace(/\'/g, "_");
+        proName = proName.replace(/\./g, "_");
+        proName = proName.replace(/\//g, "_");
+        proName = proName.replace(/\\/g, "_");
+        proName = proName.replace(/@/g, "_"); 
+    }
     return proName;
 }
 

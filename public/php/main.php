@@ -820,7 +820,7 @@ immediately after the control sidebar -->
     <script src="bower_components/jQuery-slimScroll-1.3.8/jquery.slimscroll.min.js"></script>
     <!-- d3 pdf export -->
     <script src="dist/css_to_pdf/xepOnline.jqPlugin.js"></script>
-    <script src="dist/ace/ace.js"></script>
+    <script src="bower_components/ace/ace.js"></script>
     <!-- crypto-js -->
     <script src="bower_components/crypto-js/aes.js"></script>
     <!-- dropzone -->
