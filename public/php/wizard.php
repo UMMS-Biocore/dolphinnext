@@ -157,18 +157,17 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
 
 <!-- Modal -->
 <div class="modal fade fullscreen profilewizard" data-keyboard="false" id="profilewizardmodal" tabindex="-1" role="dialog" aria-labelledby="profilewizardLabel" aria-hidden="true" style="padding-right:0px;">
-    <div class="modal-dialog fullscreen">
+    <div class="modal-dialog fullscreen" style="overflow-y: initial">
         <div class="modal-content fullscreen">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="profilewizardLabel">Profile Wizard</h4>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="height: calc(100vh - 150px); overflow-y: auto;">
                 <div class="wizard">
                     <div class="wizard-inner">
                         <div class="connecting-line"></div>
                         <ul class="nav nav-tabs" role="tablist">
-
                             <li role="presentation" class="active">
                                 <a href="#pw-step-profiletype" data-toggle="tab" aria-controls="pw-step-profiletype" role="tab" title="Profile Type">
                                     <span class="round-tab">
@@ -176,7 +175,6 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                     </span>
                                 </a>
                             </li>
-
                             <li role="presentation" class="disabled">
                                 <a href="#pw-step-connectiontype" data-toggle="tab" aria-controls="pw-step-profiletype" role="tab" title="Connection Type">
                                     <span class="round-tab">
@@ -191,7 +189,6 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                     </span>
                                 </a>
                             </li>
-
                             <li role="presentation" class="disabled">
                                 <a href="#pw-step-complete" data-toggle="tab" aria-controls="pw-step-complete" role="tab" title="Complete">
                                     <span class="round-tab">
@@ -201,7 +198,7 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                             </li>
                         </ul>
                     </div>
-
+                
                     <form role="form">
                         <div class="tab-content">
                             <div class="tab-pane active" role="tabpanel" id="pw-step-profiletype" style="min-height:400px;">
@@ -450,10 +447,10 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                             <div class="clearfix"></div>
                         </div>
                     </form>
-                </div>
+                    </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary " data-dismiss="modal">Save and Close</button>
+                <button type="button" class="btn btn-primary " data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>

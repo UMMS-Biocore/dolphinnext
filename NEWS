@@ -1,3 +1,8 @@
+23.12.2019 Version 1.0.15
+Style of wizard window updated.
+Extension of exported DN file fixed.
+Minor bug fixed regarding to autofilling.
+
 13.12.2019 Version 1.0.14
 Nextflow status update feature upgraded to support uploading file to s3.
 Session refresh script added to prevent 30 min. session timeout.

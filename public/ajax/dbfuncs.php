@@ -3589,7 +3589,7 @@ class dbfuncs {
                             INNER JOIN {$type}_group pg ON p.{$type}_group_id = pg.id
                             INNER JOIN (
                               SELECT pr.{$type}_gid, MAX(pr.rev_id) rev_id
-                              FROM $table pr
+                              FROM $table pr WHERE pr.deleted = 0
                               GROUP BY pr.{$type}_gid
                               ) b ON p.rev_id = b.rev_id AND p.{$type}_gid=b.{$type}_gid AND p.deleted = 0 AND p.{$type}_uuid = '$id'";
                 return self::queryTable($sql);
