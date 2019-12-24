@@ -491,7 +491,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
             sendJSON[i].closure = encodeURIComponent(importJSON[i].closure);
             sendJSON[i].reg_ex = encodeURIComponent(importJSON[i].reg_ex);
             if (importJSON[i].optional){
-            sendJSON[i].optional = importJSON[i].optional;
+                sendJSON[i].optional = importJSON[i].optional;
             }
             sendJSON[i].operator = importJSON[i].operator;
             sendJSON[i].process_id = "" //modify later
@@ -718,6 +718,9 @@ function checkImport(optObj) {
             uuid: pipeline_uuid,
             rev_uuid: pipeline_rev_uuid
         });
+        console.log("pipeline_rev_uuid", pipeline_rev_uuid)
+        console.log("pipeline_uuid", pipeline_uuid)
+        console.log("pipeUUID", pipeUUID)
         sendJSONpipeline = prepareSendJSON("pipeline", sendJSONpipeline, importJSON, null, fileId, rowID, decodeElement("pipeline", pipeUUID.pipeline_rev_uuid))
         if (pipeUUID) {
             //if pipeline_rev_uuid is found then check if contents of pipeline are the same
@@ -821,6 +824,7 @@ function getFileBlock(fileId, fileName, importJSON, allParameters) {
             pipeModuleBlock += getRowImportTable("pipeModule", "Pipeline", fileId, i, checkPipeModule[i].name, checkPipeModule[i].pipeline_group_name, checkPipeModule[i].pipeline_uuid);
             checkPipeModule[i] = decodeElement("pipeline", checkPipeModule[i])
             optObj = { rowType: "pipeModule", fileId: fileId, blockID: i, importJSON: checkPipeModule[i] };
+            console.log(optObj)
             var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
             doCall(optObj);
         }

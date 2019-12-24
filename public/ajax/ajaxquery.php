@@ -787,7 +787,7 @@ else if ($p=="getProfileVariables"){
                 for ($i = 0; $i < count($merged_obj); $i++) {
                     $variable = isset($merged_obj[$i]["variable"]) ? $merged_obj[$i]["variable"] : "";
                     $hostname = isset($merged_obj[$i]["hostname"]) ? $merged_obj[$i]["hostname"] : "";
-                    if (!empty($variable) && !empty($hostname)){
+                    if (!empty($hostname)){
                         $tmpObj = array();
                         $tmpObj["variable"]=$variable;
                         $tmpObj["hostname"]=$hostname;

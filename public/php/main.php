@@ -453,7 +453,7 @@ folder instead of downloading all of them to reduce the load. -->
 
                                         </ul>
                                     </li>
-                                    <li class="header"> Ongoing Wizards</li>
+                                    <li class="header" id="savedWizardHeader"> Saved Wizards</li>
                                     <li>
                                         <ul class="menu" id="ongoingwizard">
                                         </ul>

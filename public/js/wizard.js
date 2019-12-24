@@ -432,6 +432,10 @@ $(document).ready(function () {
         var $activeTabId = $('.wizard .tab-pane.active').attr("id");
         if ($activeTabId == "pw-step-profiletype"){
             var profiletype = $(".profilewizard input[name='profiletype']:checked").val()
+            if (!profiletype){
+                showInfoModal("#infoMod","#infoModText", "Please choose one of the profile types to continue.");
+                return;
+            }
             if (profiletype == "test" || profiletype == "amazon"){
                 var $tabs = $('.wizard .nav-tabs li');
                 $tabs.last().removeClass('disabled');

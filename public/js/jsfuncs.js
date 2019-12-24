@@ -481,10 +481,12 @@ function loadOngoingWizard (type){
                     }
                 }
                 if (countActive > 0) {
+                    $('#savedWizardHeader').css('display', 'inline');
                     $('#wizAmount').css('display', 'inline');
                     $('#wizAmount').text(countActive);
                     $('[data-toggle="tooltip"]').tooltip();
                 } else {
+                    $('#savedWizardHeader').css('display', 'none');
                     $('#wizAmount').text(countActive);
                     $('#wizAmount').css('display', 'none');
                     if (type == "onload"){
@@ -1391,7 +1393,7 @@ function download_file(fileURL, fileName) {
 
 function downloadText(text, filename) {
     var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(text));
     element.setAttribute('download', filename);
     element.style.display = 'none';
     document.body.appendChild(element);
