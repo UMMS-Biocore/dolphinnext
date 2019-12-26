@@ -51,7 +51,7 @@ Why not just write a Nextflow pipeline?
 
 In many cases, building a static nextflow pipeline is sufficient for our goals. However, it is hard to maintain the process and module revisions in simple text editors. By the help of DolphinNext user interface, you can easily **track the evolution of each process and module** by clicking their previous revisions. And when it comes to upgrading existing pipelines, it's much easy to update each process since all of the process related scripts are isolated in process circle and you don't need to deal with other parameters or channel operations which are defined in the other part of the nextflow script. This **modular structure** gives us more flexibility and dynamism to create very complex pipelines with little effort. 
 
-Moreover, we have a built-in **form creator** which dynamically updates the run page according to defined parameters in the process. This tool become so powerfull when it comes to creating complex pipelines which has hundreds of optional parameters. As seen at the figure below, you can easily isole the process related parameters in their process specific windows.
+Moreover, we have a built-in **form creator** which dynamically updates the run page according to defined parameters in the process. This tool become so powerfull when it comes to creating complex pipelines which has hundreds of optional parameters. As seen at the figure below, you can easily isolate the process related parameters in their process specific windows.
 
 .. image:: dolphinnext_images/overview_form.png
 	:align: center
