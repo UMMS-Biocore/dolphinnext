@@ -5,7 +5,7 @@ Short Overview
 What is DolphinNext?
 ====================
 
-`DolphinNext <https://dolphinnext.umassmed.edu/>`_, an intuitive web interface designed to simplify pipeline design and maintenance which allows to analyze and manage large numbers of samples on High Performance Computing (HPC) environments, cloud services or on a personal workstations. It automatically builds `Nextflow <https://www.nextflow.io/>`_, pipelines by assembling components such as process or modules. 
+`DolphinNext <https://dolphinnext.umassmed.edu/>`_ is an intuitive web interface designed to simplify pipeline design, development and maintenance which allows to analyze and manage large numbers of samples on High Performance Computing (HPC) environments, cloud services or on a personal workstations. It automatically builds `Nextflow <https://www.nextflow.io/>`_, pipelines by assembling components such as process or modules. 
 
 .. raw:: html
 
