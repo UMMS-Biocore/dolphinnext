@@ -220,7 +220,7 @@ $(document).ready(function () {
 
             }
         }
-        var proAmzData = getValues({ p: "getProfileAmazon" });
+        var proAmzData = getValues({ p: "getProfileCloud", cloud:"amazon" });
         if (proAmzData) {
             if (proAmzData.length !== 0) {
                 $.each(proAmzData, function (el) {

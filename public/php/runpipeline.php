@@ -217,6 +217,18 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     </div>
                     <div class="row">
                         <div class="col-md-12">
+                            <div id="mRunGoogKeyDiv" class="form-group" style="display:none;">
+                                <label>Select Google Keys <span><a data-toggle="tooltip" data-placement="bottom" title="Google Keys to connect and access your Google storage"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
+                                <div style="padding-bottom:15px;">
+                                    <select id="mRunGoogKey" class="fbtn btn-default form-control" name="google_cre_id">
+                                        <option value="" disabled selected>Select Google Keys </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
                             <div class="form-group">
                                 <label>Run Environment </label>
                                 <button type="button" class="btn" data-backdrop="false" onclick="refreshEnv()" style="background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Refresh Environments"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>
@@ -867,6 +879,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             </select>
                         </div>
                     </div>
+                    <div class="form-group" id="mRunGoogKeyGSDiv" style="display:none; ">
+                        <label class="col-sm-3 control-label text-left" style="padding-left:45px; color:#a7a218;">Select Google Keys (for GS) <span><a data-toggle="tooltip" data-placement="bottom" title="Google Keys to access your GS storage"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
+                        <div class="col-sm-7">
+                            <select id="mRunGoogKeyGS" class="fbtn btn-default form-control" name="google_cre_id">
+                                <option value="" disabled selected>Select Google Keys </option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group" id="file_dir_div">
                         <label class="col-sm-3 control-label text-left" style="padding-left:30px;">1. File Directory (Full Path) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the directory in your host. eg. /share/data/umw_biocore/ genome_data/mousetest/mm10/gz"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                         <div class="col-sm-7">
@@ -971,6 +991,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                         <th scope="col">Directory</th>
                                         <th scope="col" style="width:20px;">Remove</th>
                                         <th scope="col">Amz_key</th>
+                                        <th scope="col">Goog_key</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -991,10 +1012,16 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             <input type="text" class="form-control" id="archive_dir" name="archive_dir">
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="mArchAmzS3Div">
                         <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                         <div class="col-sm-7">
                             <input type="text" class="form-control" id="s3_archive_dir" name="s3_archive_dir">
+                        </div>
+                    </div>
+                    <div class="form-group" id="mArchGoogGSDiv">
+                        <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Google Storage Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Google Storage bucket where all of the entered files will be published after merging/renaming operation eg. gs://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        <div class="col-sm-7">
+                            <input type="text" class="form-control" id="gs_archive_dir" name="gs_archive_dir">
                         </div>
                     </div>
                     <div class="form-group" id="mArchAmzKeyS3Div" style="display:none; ">
@@ -1002,6 +1029,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         <div class="col-sm-7">
                             <select id="mArchAmzKeyS3" class="fbtn btn-default form-control" name="amazon_cre_id">
                                 <option value="" disabled selected>Select Amazon Keys </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="mArchGoogKeyGSDiv" style="display:none; ">
+                        <label class="col-sm-3 control-label text-left" style="padding-left:45px; color:#a7a218;">Select Google Keys(GS Archive) <span><a data-toggle="tooltip" data-placement="bottom" title="Google Keys to access your GS archive directory"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
+                        <div class="col-sm-7">
+                            <select id="mArchGoogKeyGS" class="fbtn btn-default form-control" name="google_cre_id">
+                                <option value="" disabled selected>Select Google Keys </option>
                             </select>
                         </div>
                     </div>
@@ -1078,10 +1113,16 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     <input type="text" class="form-control" id="archive_dir_geo" name="archive_dir">
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="mArchAmzS3Div_GEO">
                 <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                 <div class="col-sm-7">
                     <input type="text" class="form-control" id="s3_archive_dir_geo" name="s3_archive_dir">
+                </div>
+            </div>
+            <div class="form-group" id="mArchGoogGSDiv_GEO">
+                <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Google Storage Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Google Cloud bucket where all of the entered files will be published after merging/renaming operation eg. gs://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                <div class="col-sm-7">
+                    <input type="text" class="form-control" id="gs_archive_dir_geo" name="gs_archive_dir">
                 </div>
             </div>
             <div class="form-group" id="mArchAmzKeyS3Div_GEO" style="display:none; ">
@@ -1089,6 +1130,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <div class="col-sm-7">
                     <select id="mArchAmzKeyS3_GEO" class="fbtn btn-default form-control" name="amazon_cre_id">
                         <option value="" disabled selected>Select Amazon Keys </option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" id="mArchGoogKeyGSDiv_GEO" style="display:none; ">
+                <label class="col-sm-3 control-label text-left" style="padding-left:30px; color:#a7a218;">Select Google Keys(GS Archive) <span><a data-toggle="tooltip" data-placement="bottom" title="Google Keys to access your GS archive directory"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
+                <div class="col-sm-7">
+                    <select id="mArchGoogKeyGS_GEO" class="fbtn btn-default form-control" name="google_cre_id">
+                        <option value="" disabled selected>Select Google Keys </option>
                     </select>
                 </div>
             </div>

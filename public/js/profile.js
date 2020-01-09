@@ -1,3 +1,25 @@
+// Configuriation of dropzone of id:mgoogkeyform in googleKeysModal
+window.googObj = {};
+window.googObj.filename = "";
+Dropzone.options.mgoogkeyform = {
+    paramName: "goog", // The name that will be used to transfer the file
+    maxFilesize: 1, // MB
+    maxFiles:1,
+    createImageThumbnails: false,
+    dictDefaultMessage: 'Drop JSON file here or <button type="button" class="btn btn-default" >Select File </button>',
+    accept: function (file, done) {
+        window.googObj.filename= file.name
+        done();
+        $('#key_name_span').text(file.name)
+    },
+    init: function() {
+        this.on("maxfilesexceeded", function(file) {
+            this.removeAllFiles();
+            this.addFile(file);
+        });
+    }
+};  
+
 function generateKeys() {
     var genKeys = getValues({ p: "generateKeys" });
     if (genKeys) {
@@ -16,6 +38,49 @@ function generateKeys() {
 }
 
 
+function getProfTableOptions(type) {
+    var editClass = "";
+    var editHref = "";
+    var delClass = "";
+    var delHref = "";
+    if (type == "amazon"){
+        editClass = "editAmzKeys";
+        editHref = "#amzKeyModal";
+        delClass = "deleteAmzKeys";
+        delHref = "#confirmDelAmzModal";
+    } else if (type == "github"){
+        editClass = "editGithub";
+        editHref = "#githubModal";
+        delClass = "deleteGithub";
+        delHref = "#confirmDelModal";
+    } else if (type == "ssh"){
+        editClass = "editSSHKeys";
+        editHref = "#sshKeyModal";
+        delClass = "deleteSSHKeys";
+        delHref = "#confirmDelModal";
+    } else if (type == "google"){
+        editClass = "editGoogleKeys";
+        editHref = "#googleKeysModal";
+        delClass = "deleteGoogleKeys";
+        delHref = "#confirmDelModal";
+    }
+    var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href='+editHref+' data-toggle="modal" class="'+editClass+'">Edit</a></li><li><a href="'+delHref+'" data-toggle="modal" class="'+delClass+'">Delete</a></li></ul></div>';
+    return button;
+}
+
+function prepareGoogModal(data){
+    console.log(data)
+    if (data.key_name){
+        $('#key_name_div').css("display","block");
+        $('#key_import_div').css("display","none");
+        $('#key_name_span').text(data.key_name)
+    } else {
+        $('#key_name_div').css("display","none");
+        $('#key_import_div').css("display","block");
+        $('#key_name_span').text("")
+    }
+}
+
 $(document).ready(function () {
     var profileTable = $('#profilesTable').DataTable({
         sScrollX: "100%",
@@ -31,8 +96,10 @@ $(document).ready(function () {
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                 if (oData.hostname != undefined) {
                     $(nTd).html("Host");
-                } else {
+                } else if (oData.amazon_cre_id != undefined){
                     $(nTd).html("Amazon");
+                } else if (oData.google_cre_id != undefined){
+                    $(nTd).html("Google");
                 }
             }
         }, {
@@ -50,18 +117,17 @@ $(document).ready(function () {
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                 if (oData.hostname != undefined) {
                     $(nTd).html(getProfileButton('cluster'));
-                } else {
+                } else if (oData.amazon_cre_id != undefined){
                     $(nTd).html(getProfileButton('amazon'));
+                } else if (oData.google_cre_id != undefined){
+                    $(nTd).html(getProfileButton('google'));
                 }
             }
         }],
         'order': [[2, 'desc']]
     });
 
-    function getGithubTableOptions() {
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#githubModal" data-toggle="modal" class="editGithub">Edit</a></li><li><a href="#confirmDelModal" data-toggle="modal" class="deleteGithub">Delete</a></li></ul></div>';
-        return button;
-    }
+
 
     var githubTable = $('#githubTable').DataTable({
         "ajax": {
@@ -79,7 +145,7 @@ $(document).ready(function () {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                $(nTd).html(getGithubTableOptions());
+                $(nTd).html(getProfTableOptions("github"));
             }
         }]
     });
@@ -87,10 +153,13 @@ $(document).ready(function () {
 
 
     function getProfileButton(type) {
+        var button = "";
         if (type === "amazon") {
-            var button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="profileedit" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="profileremove" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>&nbsp;<button type="button" class="btn btn-primary btn-sm" title="start/stop" id="amzStartStop" data-toggle="modal" data-target="#amzModal">Start/Stop</button> &nbsp;</div>';
+            button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="profileedit" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="profileremove" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>&nbsp;<button type="button" class="btn btn-primary btn-sm" title="start/stop" id="amzStartStop" data-toggle="modal" data-target="#amazonModal">Start/Stop</button> &nbsp;</div>';
         } else if (type === "cluster" || type === "local") {
-            var button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="profileedit" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="profileremove" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>';
+            button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="profileedit" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="profileremove" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>';
+        } else if (type === "google" ) {
+            button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="profileedit" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="profileremove" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>&nbsp;<button type="button" class="btn btn-primary btn-sm" title="start/stop" id="googStartStop" data-toggle="modal" data-target="#googleModal">Start/Stop</button> &nbsp;</div>';
         }
         return button;
     }
@@ -115,6 +184,13 @@ $(document).ready(function () {
                 var optionGroup = new Option(param.name, param.id);
                 $("#mEnvAmzKey").append(optionGroup);
             }
+        } else if (type === "goog") {
+            var data = getValues({ p: "getGoogle" });
+            for (var i = 0; i < data.length; i++) {
+                var param = data[i];
+                var optionGroup = new Option(param.name, param.id);
+                $("#mEnvGoogKey").append(optionGroup);
+            }
         }
     }
 
@@ -133,9 +209,12 @@ $(document).ready(function () {
                 "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                     if (oData.hostname != undefined) {
                         $(nTd).html("Host");
-                    } else {
+                    } else if (oData.amazon_cre_id != undefined){
                         $(nTd).html("Amazon");
+                    } else if (oData.google_cre_id != undefined){
+                        $(nTd).html("Google");
                     }
+
                 }
             }, {
                 "data": null,
@@ -210,8 +289,10 @@ $(document).ready(function () {
                     delete cpOptions[valueID]["id"]; //to prevent profile update
                     if (cpOptions[valueID].hostname != undefined) {
                         $('#chooseEnv').val('cluster').trigger('change');
-                    } else {
+                    } else if (cpOptions[valueID].amazon_cre_id != undefined){
                         $('#chooseEnv').val('amazon').trigger('change');
+                    } else if (cpOptions[valueID].google_cre_id != undefined){
+                        $('#chooseEnv').val('google').trigger('change');
                     }
                     fillFormByName('#profilemodal', 'input, select, textarea', cpOptions[valueID]);
                     $('#mExec').trigger('change');
@@ -235,6 +316,7 @@ $(document).ready(function () {
             $('#mAddEnvTitle').html('Add Environment');
             loadOptions("ssh");
             loadOptions("amz");
+            loadOptions("goog");
         } else if (button.attr('id') === 'addPublicProfile') {
             $('#mAddEnvTitle').html('Add Public Environment');
         } else if (button.attr('id') === 'editPublicProfile' || button.attr('id') === 'profileedit') {
@@ -248,14 +330,18 @@ $(document).ready(function () {
                 var rowData = profileTable.row(clickedRow).data();
                 loadOptions("ssh");
                 loadOptions("amz");
+                loadOptions("goog");
             }
             $('#saveEnv').data('clickedrow', clickedRow);
             var proType = "";
             if (rowData.hostname != undefined) {
                 proType = "cluster";
-            } else {
+            } else if (rowData.amazon_cre_id != undefined){
                 proType = "amazon";
+            } else if (rowData.google_cre_id != undefined){
+                proType = "google";
             }
+
             var proId = rowData.id;
             if (proType === "cluster") {
                 var data = getValues({ p: "getProfileCluster", id: proId });
@@ -264,9 +350,15 @@ $(document).ready(function () {
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             } else if (proType === "amazon") {
-                var data = getValues({ p: "getProfileAmazon", id: proId });
+                var data = getValues({ p: "getProfileCloud", cloud: "amazon", id: proId });
                 data[0].variable =decodeHtml(data[0].variable)
                 $('#chooseEnv').val('amazon').trigger('change');
+                fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
+                $('#mExec').trigger('change');
+            } else if (proType === "google") {
+                var data = getValues({ p: "getProfileCloud", cloud: "google", id: proId });
+                data[0].variable =decodeHtml(data[0].variable)
+                $('#chooseEnv').val('google').trigger('change');
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             }
@@ -311,19 +403,27 @@ $(document).ready(function () {
             var title = $('#mAddEnvTitle').html();
             var noneList = [];
             var blockList = [];
+            
             if (selEnvType === "cluster" && !title.match(/Public/)) {
-                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv"];
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv","mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
                 var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv", "shareRunEnvDiv"];
             } else if (selEnvType === "amazon" && !title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv"];
-                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "shareRunEnvDiv"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv"];
+                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "shareRunEnvDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "cluster" && title.match(/Public/)) {
-                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvUsernameDiv", "mEnvSSHKeyDiv","shareRunEnvDiv"];
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvUsernameDiv", "mEnvSSHKeyDiv","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
                 var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv"];
             } else if (selEnvType === "amazon" && title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","shareRunEnvDiv"];
-                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv"];
+                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+            } else if (selEnvType === "google" && !title.match(/Public/)) {
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv"];
+                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv",  "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+            } else if (selEnvType === "google" && title.match(/Public/)) {
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","shareRunEnvDiv", "mSharedStorageMountDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSubnetIdDiv","mEnvGoogKeyDiv"];
+                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             }
+
             $.each(noneList, function (element) {
                 $('#' + noneList[element]).css('display', 'none');
             });
@@ -381,13 +481,14 @@ $(document).ready(function () {
     });
 
     $('#profilemodal').on('hide.bs.modal', function (event) {
-        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "shareRunEnvDiv"];
+        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
         $.each(noneList, function (element) {
             $('#' + noneList[element]).css('display', 'none');
         });
         $('#chooseEnv').removeAttr('disabled');
         $('#mExecJob').removeAttr('disabled');
         $('#mEnvAmzKey').find('option').not(':eq(0)').remove()
+        $('#mEnvGoogKey').find('option').not(':eq(0)').remove()
         $('#mEnvSSHKey').find('option').not(':eq(0)').remove()
         $('#mEnvName')[0].selectize.destroy();
         cleanHasErrorClass("#profilemodal")
@@ -403,8 +504,12 @@ $(document).ready(function () {
         var stop = "";
         var title = $('#mAddEnvTitle').html();
         var clickedRow = $('#saveEnv').data('clickedrow');
-        [formObj, stop] = createFormObj(formValues, ["name"]);
         var selEnvType = $('#chooseEnv option:selected').val();
+        if (selEnvType == "google"){
+            [formObj, stop] = createFormObj(formValues, ["name", "def_workdir", "def_publishdir", "mEnvZone", "mEnvImageId", "mEnvInsType"]);
+        } else {
+            [formObj, stop] = createFormObj(formValues, ["name"]);
+        }
         var nameID = $("#mEnvName")[0].selectize.getValue()
         if (nameID) {
             if ($("#mEnvName")[0].selectize.options[nameID]) {
@@ -440,6 +545,8 @@ $(document).ready(function () {
                 formObj.p = "saveProfileCluster";
             } else if (selEnvType === "amazon") {
                 formObj.p = "saveProfileAmazon";
+            } else if (selEnvType === "google") {
+                formObj.p = "saveProfileGoogle";
             }
             console.log(formObj)
             $.ajax({
@@ -456,7 +563,9 @@ $(document).ready(function () {
                     if (selEnvType === "cluster") {
                         var newProfileData = getValues({ p: "getProfileCluster", id: proId });
                     } else if (selEnvType === "amazon") {
-                        var newProfileData = getValues({ p: "getProfileAmazon", id: proId });
+                        var newProfileData = getValues({ p: "getProfileCloud", cloud: "amazon", id: proId });
+                    } else if (selEnvType === "google") {
+                        var newProfileData = getValues({ p: "getProfileCloud", cloud: "google", id: proId });
                     }
                     if (newProfileData[0]) {
                         if (title.match(/Public/)) {
@@ -464,9 +573,10 @@ $(document).ready(function () {
                         } else {
                             profileTable.ajax.reload(null, false);
                             if (!savetype.length) { //insert
-                                if (selEnvType === "amazon") {
-                                    checkAmazonTimer(s.id, 40000);
-                                }
+                                if (selEnvType === "amazon" || selEnvType === "google") {
+                                    checkCloudProfiles("notimer", selEnvType);
+                                    checkCloudTimer(s.id, 40000, selEnvType);
+                                } 
                             }
                         }
                     }
@@ -507,8 +617,10 @@ $(document).ready(function () {
         var proType = "";
         if (rowData.hostname != undefined) {
             proType = "cluster";
-        } else {
+        } else if (rowData.amazon_cre_id != undefined){
             proType = "amazon";
+        } else if (rowData.google_cre_id != undefined){
+            proType = "google";
         }
         var proId = rowData.id;
         var data = {};
@@ -516,6 +628,8 @@ $(document).ready(function () {
             data = { "id": proId, "p": "removeProCluster" };
         } else if (proType === "amazon") {
             data = { "id": proId, "p": "removeProAmazon" };
+        } else if (proType === "google") {
+            data = { "id": proId, "p": "removeProGoogle" };
         }
         if (proId !== '') {
             var warnUser = false;
@@ -536,11 +650,18 @@ $(document).ready(function () {
                             profileTable.row(clickedRow).remove().draw();
                         }
                         // check the amazon profiles
+                        var intervalName = 'interval_'+proType+'Status_' + proId;
                         if (proType === "amazon") {
-                            clearInterval(window['interval_amzStatus_' + proId]);
-                            var proAmzData = getValues({ p: "getProfileAmazon" });
+                            clearInterval(window[intervalName]);
+                            var proAmzData = getValues({ p: "getProfileCloud", cloud:proType });
                             if (proAmzData.length < 1) {
                                 $('#manageAmz').css('display', 'none');
+                            }
+                        } else if (proType === "google") {
+                            clearInterval(window[intervalName]);
+                            var proGoogData = getValues({ p: "getProfileCloud", cloud:proType  });
+                            if (proGoogData.length < 1) {
+                                $('#manageGoog').css('display', 'none');
                             }
                         }
                     },
@@ -874,10 +995,7 @@ $(document).ready(function () {
         $('#ourKeyCheck').removeAttr('onclick');
     });
 
-    function getSSHTableOptions() {
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#sshKeyModal" data-toggle="modal" class="editSSHKeys">Edit</a></li><li><a href="#confirmDelModal" data-toggle="modal" class="deleteSSHKeys">Delete</a></li></ul></div>';
-        return button;
-    }
+
 
     var sshTable = $('#sshKeyTable').DataTable({
         "ajax": {
@@ -893,7 +1011,7 @@ $(document).ready(function () {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                $(nTd).html(getSSHTableOptions());
+                $(nTd).html(getProfTableOptions("ssh"));
             }
         }]
     });
@@ -924,6 +1042,45 @@ $(document).ready(function () {
             $('#mDelBtn').attr('remove_id', remove_id);
             $('#mDelBtn').attr('class', 'btn btn-primary deleteGithub');
             $('#confirmDelModalText').html('Are you sure you want to delete?');
+        } else if (button.attr('class') === 'deleteGoogleKeys') {
+            var googleTab = $('#googleKeyTable').DataTable()
+            var rowData = googleTab.row(clickedRow).data();
+            var remove_id = rowData.id;
+            $('#mDelBtn').attr('remove_id', remove_id);
+            $('#mDelBtn').attr('class', 'btn btn-primary deleteGoogleKeys');
+            $('#confirmDelModalText').html('Are you sure you want to delete Google key?');
+        } else if (button.attr('id') === 'delGoogKeyIcon') {
+            $('#mDelBtn').attr('class', 'btn btn-primary delGoogKeyIcon');
+            $('#confirmDelModalText').html('Are you sure you want to delete Google key?');
+        }
+    });
+
+    $('#confirmDelModal').on('click', '.delGoogKeyIcon', function (event) {
+        prepareGoogModal({})
+        $('#confirmDelModal').modal('hide');
+    });
+
+    $('#confirmDelModal').on('click', '.deleteGoogleKeys', function (event) {
+        var remove_id = $('#mDelBtn').attr('remove_id');
+        var clickedRow = $('#mDelBtn').data('clickedrow');
+        if (remove_id !== '') {
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    id: remove_id,
+                    p: "removeGoogle"
+                },
+                async: true,
+                success: function (s) {
+                    var googleTab = $('#googleKeyTable').DataTable()
+                    googleTab.row(clickedRow).remove().draw();
+                    $('#confirmDelModal').modal('hide');
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
         }
     });
 
@@ -1154,10 +1311,7 @@ $(document).ready(function () {
     //------------   ssh keys section ends -------------
 
     //------------ amazon keys section-------------
-    function getAmzTableOptions() {
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#amzKeyModal" data-toggle="modal" class="editAmzKeys">Edit</a></li><li><a href="#confirmDelAmzModal" data-toggle="modal" class="deleteAmzKeys">Delete</a></li></ul></div>';
-        return button;
-    }
+
     var amzTable = $('#amzKeyTable').DataTable({
         "ajax": {
             url: "ajax/ajaxquery.php",
@@ -1172,7 +1326,7 @@ $(document).ready(function () {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
-                $(nTd).html(getAmzTableOptions());
+                $(nTd).html(getProfTableOptions("amazon"));
             }
         }]
     });
@@ -1332,7 +1486,107 @@ $(document).ready(function () {
         }
     });
 
-    //------------   amazon keys section ends -------------
+    //------------ amazon keys section ends   -------------
+    //------------ google keys section starts -------------
+
+    var googleTable = $('#googleKeyTable').DataTable({
+        "ajax": {
+            url: "ajax/ajaxquery.php",
+            data: { "p": "getGoogle" },
+            "dataSrc": ""
+        },
+        "columns": [{
+            "data": "name"
+        }, {
+            "data": "date_modified"
+        }, {
+            data: null,
+            className: "center",
+            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                $(nTd).html(getProfTableOptions("google"));
+            }
+        }]
+    });
+
+
+
+
+    $('#googleKeysModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        window.googObj = {};
+        window.googObj.filename = ""
+        var myDropzone = Dropzone.forElement("#mgoogkeyform");
+        myDropzone.removeAllFiles();
+
+        $(this).find('form').trigger('reset');
+        if (button.attr('id') === 'addGoogleKey') {
+            prepareGoogModal({})
+            $('#googleKeysModalTitle').html('Add Google Key');
+        } else {
+            $('#googleKeysModalTitle').html('Edit Google Key');
+            var clickedRow = button.closest('tr');
+            var rowData = googleTable.row(clickedRow).data();
+            var data = getValues({ p: "getGoogle", id: rowData.id })[0];
+            prepareGoogModal(data)
+            $('#saveGoogle').data('clickedrow', clickedRow);
+            fillFormByName('#googleKeysModal', 'input, select', data);
+        }
+    });
+
+    $('#googleKeysModal').on('hide.bs.modal', function (event) {
+        cleanHasErrorClass("#googleKeysModal")
+    });
+
+    $('#googleKeysModal').on('click', '#saveGoogle', function (event) {
+        event.preventDefault();
+        var formValues = $('#googleKeysModal').find('input, select');
+        var requiredFields = ["name", "project_id"];
+        var clickedRow = $('#saveGoogle').data('clickedrow')
+        var formObj = {};
+        var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+        console.log(formObj)
+        formObj.key_name = $('#key_name_span').text();
+        var savetype = $('#mGoogID').val();
+        if (stop === false) {
+            formObj.p = "saveGoogle"
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: formObj,
+                async: true,
+                success: function (s) {
+                    if (savetype.length) { //edit
+                        var newData = getValues({ p: "getGoogle", id: savetype })
+                        if (newData[0]) {
+                            googleTable.row(clickedRow).remove().draw();
+                            googleTable.row.add(newData[0]).draw();
+                        }
+                    } else { //insert
+                        var newData = getValues({ p: "getGoogle", id: s.id })
+                        if (newData[0]) {
+                            googleTable.row.add(newData[0]).draw();
+                        }
+                    }
+                    if (s.error){
+                        showInfoModal("#infoMod","#infoModText", s.error)
+                    } else {
+                        $('#googleKeysModal').modal('hide');
+                    }
+
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
+    });
+
+    //------------   google keys section ends -------------
+
+
+
+
     //------------   adminTab starts -------------
     function getAdminUserTableOptions(active, role) {
         if (active && active == 1) {

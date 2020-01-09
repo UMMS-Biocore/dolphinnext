@@ -392,12 +392,12 @@ folder instead of downloading all of them to reduce the load. -->
             .disp_none{
                 display: none !important;
             }
-/*
+            /*
             .tooltip-inner {
-                max-width: none;
-                white-space: nowrap;
+            max-width: none;
+            white-space: nowrap;
             }
-*/
+            */
 
         </style>
 
@@ -433,14 +433,19 @@ folder instead of downloading all of them to reduce the load. -->
                     </div>
                     <div class="navbar-custom-menu pull-right">
                         <ul class="nav navbar-nav">
-                            <li id="manageAmz" style="display:none"  >
-                                <a href="#amzModal" data-toggle="modal"><i style="padding:4px;" data-toggle="tooltip" data-placement="bottom" title="Amazon Web Services" class="fa fa-amazon"></i>
+                            <li id="manageAmz" style="display:none">
+                                <a href="#amazonModal" data-toggle="modal"><i style="padding:4px;" data-toggle="tooltip" data-placement="bottom" title="Amazon Web Services" class="fa fa-amazon"></i>
                                     <small id="amzAmount" style="display:none" class="label pull-right bg-green"></small>
+                                </a>
+                            </li>
+                            <li id="manageGoog" style="display:none">
+                                <a href="#googleModal" data-toggle="modal"><i style="padding:4px;" data-toggle="tooltip" data-placement="bottom" title="Google Cloud" class="fa fa-google"></i>
+                                    <small id="googAmount" style="display:none" class="label pull-right bg-green"></small>
                                 </a>
                             </li>
                             <?php 
                             if ($login == 1 && $SHOW_WIZARD){
-                            echo '<li id="manageProfileWizard" class="dropdown notifications-menu" >
+                                echo '<li id="manageProfileWizard" class="dropdown notifications-menu" >
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" >
                                     <i data-toggle="tooltip" data-placement="bottom" title="Wizards" style="padding:3px; padding-left:0px; padding-right:5px;" class="fa fa-magic"></i>
                                     <small id="wizAmount" style="display:none" class="label pull-right label-warning"></small>
@@ -461,7 +466,7 @@ folder instead of downloading all of them to reduce the load. -->
                                 </ul>
                             </li>';
                             }
-                            
+
                             if ($login == 1){
                                 echo '<li><a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" title="Profiles"><i class="glyphicon glyphicon-user"></i> </a></li>';
                             }
@@ -656,27 +661,27 @@ immediately after the control sidebar -->
                 </div>
                 <div id="feedback-tab">Feedback</div>
             </div>
-            <!--        feedback modal ends-->
+            <!--  feedback modal ends-->
 
-            <!-- Add Amazon Modal Starts-->
-            <div id="amzModal" class="modal fade" tabindex="-1" role="dialog">
+            <!-- Add google Modal Starts-->
+            <div id="googleModal" class="modal fade" tabindex="-1" role="dialog">
                 <div class="modal-dialog modal-xl" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title">Amazon (AWS) Management Console</h4>
+                            <h4 class="modal-title">Google Cloud Console</h4>
                         </div>
                         <div class="modal-body">
                             <form class="form-horizontal">
                                 <div class="panel panel-default">
                                     <div>
                                         </br>
-                                    <table id="amzTable" class="table">
+                                    <table id="googleTable" class="table">
                                         <thead>
                                             <tr>
                                                 <th scope="col">Profile Name</th>
                                                 <th scope="col">Details</th>
-                                                <th scope="col">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></th>
+                                                <th scope="col">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Google instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></th>
                                                 <th style="width:300px;" scope="col">Status</th>
                                                 <th scope="col">Actions</th>
                                             </tr>
@@ -693,147 +698,236 @@ immediately after the control sidebar -->
                 </div>
             </div>
         </div>
-        <!-- Add Amazon Modal Ends-->
+        <!-- Add Google Modal Ends-->
 
-        <!-- Add Amazon Node Modal Starts-->
-        <div id="addAmzNodeModal" class="modal fade" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">Configuration</h4>
-                    </div>
-                    <div class="modal-body">
-                        <form class="form-horizontal">
-                            <div class="form-group" style="display:none">
-                                <div class="col-sm-10">
-                                    <input type="text" class="form-control" id="profileID" name="id">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="numNodes" class="col-sm-3 control-label">Nodes</label>
-                                <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="numNodes" required name="nodes" placeholder="Enter the number of nodes">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">Use Autoscale</label>
-                                <div class="col-sm-9">
-                                    <input type="checkbox" id="autoscale_check" name="autoscale_check" data-toggle="collapse" data-target="#autoscaleDiv">
-                                </div>
-                            </div>
-                            <div id="autoscaleDiv" class="collapse">
-                                <div class="form-group row">
-                                    <label for="autoscale_maxIns" class="col-sm-3 control-label">Maximum instances <span><a data-toggle="tooltip" data-placement="bottom" title="Maximum number of instances on the cluster"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                                    <div class="col-sm-9">
-                                        <input type="text" class="form-control" id="autoscale_maxIns" value="4" name="autoscale_maxIns" placeholder="Enter the number of maximum instances">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="numNodes" class="col-sm-3 control-label">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></label> 
-                                <div class="col-sm-9">
-                                    <input id="autoshut_check"type="checkbox"  name="autoshutdown_check" >
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" id="activateAmz">Activate Cluster</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Add Amazon Node Modal Ends-->
-        <!--Info Modal Starts-->
-        <div id="infoMod" class="modal fade" tabindex="-1" role="dialog">
+        <!-- Add Amazon Modal Starts-->
+        <div id="amazonModal" class="modal fade" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">Information</h4>
+                        <h4 class="modal-title">Amazon Web Services Console</h4>
                     </div>
                     <div class="modal-body">
-                        <span id="infoModText">Text</span>
-                        </br>
+                        <form class="form-horizontal">
+                            <div class="panel panel-default">
+                                <div>
+                                    </br>
+                                <table id="amazonTable" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Profile Name</th>
+                                            <th scope="col">Details</th>
+                                            <th scope="col">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></th>
+                                            <th style="width:300px;" scope="col">Status</th>
+                                            <th scope="col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                            </div>
+                        </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
         </div>
-    <!--Info Modal ENDs-->
+    <!-- Add Amazon Modal Ends-->
 
-    <!--Confirm Delete Modal-->
-    <div id="confirmDelWizardModal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <!-- Add Amazon Node Modal Starts-->
+    <div id="addamazonNodeModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" >Confirm</h4>
+                    <h4 class="modal-title">Configuration</h4>
                 </div>
-                <div class="modal-body" id="confirmDelWizardModalText">Text</div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group" style="display:none">
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="id">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Nodes</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="amazonnumNodes" required name="nodes" placeholder="Enter the number of nodes">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Use Autoscale</label>
+                            <div class="col-sm-9">
+                                <input type="checkbox" id="amazonautoscale_check" name="autoscale_check" data-toggle="collapse" data-target="#amazonautoscaleDiv">
+                            </div>
+                        </div>
+                        <div id="amazonautoscaleDiv" class="collapse">
+                            <div class="form-group row">
+                                <label class="col-sm-3 control-label">Maximum instances <span><a data-toggle="tooltip" data-placement="bottom" title="Maximum number of instances on the cluster"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" id="autoscale_maxIns" value="4" name="autoscale_maxIns" placeholder="Enter the number of maximum instances">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></label> 
+                            <div class="col-sm-9">
+                                <input id="amazonautoshut_check"type="checkbox"  name="autoshutdown_check" >
+                            </div>
+                        </div>
+                    </form>
+                </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary delete" data-dismiss="modal" >Delete</button>
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="amazonActivate">Activate Cluster</button>
                 </div>
             </div>
         </div>
     </div>
-    <!--Confirm Delete Modal Ends-->
+    <!-- Add Amazon Node Modal Ends-->
+    <!-- Add Google Node Modal Starts-->
+    <div id="addgoogleNodeModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Configuration</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group" style="display:none">
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" name="id">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Nodes</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="googlenumNodes" required name="nodes" placeholder="Enter the number of nodes">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Use Autoscale</label>
+                            <div class="col-sm-9">
+                                <input type="checkbox" id="googleautoscale_check" name="autoscale_check" data-toggle="collapse" data-target="#googleautoscaleDiv">
+                            </div>
+                        </div>
+                        <div id="googleautoscaleDiv" class="collapse">
+                            <div class="form-group row">
+                                <label for="autoscale_maxIns" class="col-sm-3 control-label">Maximum instances <span><a data-toggle="tooltip" data-placement="bottom" title="Maximum number of instances on the cluster"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" id="googleautoscale_maxIns" value="4" name="autoscale_maxIns" placeholder="Enter the number of maximum instances">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></label> 
+                            <div class="col-sm-9">
+                                <input id="googleautoshut_check" type="checkbox"  name="autoshutdown_check" >
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="googleActivate">Activate Cluster</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Add Google Node Modal Ends-->
+    
+    <!--Info Modal Starts-->
+    <div id="infoMod" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">Information</h4>
+                </div>
+                <div class="modal-body">
+                    <span id="infoModText">Text</span>
+                    </br>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+    </div>
+<!--Info Modal ENDs-->
+
+<!--Confirm Delete Modal-->
+<div id="confirmDelWizardModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" >Confirm</h4>
+            </div>
+            <div class="modal-body" id="confirmDelWizardModalText">Text</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary delete" data-dismiss="modal" >Delete</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Confirm Delete Modal Ends-->
 
 
-    <!--Google Platform Library on your web pages that integrate Google Sign-In-->
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <!-- jQuery 3 -->
-    <script src="bower_components/jquery/dist/jquery.min.js"></script>
-    <!-- jquery-ui-1.9.2.custom.min-->
-    <script src="bower_components/jquery-ui-bootstrap/assets/js/jquery-ui-1.10.0.custom.min.js"></script>
-    <!-- Bootstrap 3.3.7 -->
-    <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-    <!-- jquery-migrate-3.0.0-->
-    <script src="bower_components/jquery-ui-bootstrap/js/jquery-migrate-3.0.0.js"></script>
-    <!-- bootstrap-multiselect-->
-    <script src="bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js"></script>
-    <!-- Selectize 0.12.4.  -->
-    <script src="dist/selectize/selectize.js"></script>
-    <!-- jquery.ajax-cross-origin-->
-    <script src="bower_components/jquery.ajax-cross-origin/jquery.ajax-cross-origin.min.js"></script>
-    <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
-    <script>
-        $.widget.bridge('uibutton', $.ui.button);
-    </script>
-    <!-- AdminLTE App -->
-    <script src="dist/js/adminlte.min.js"></script>
+<!--Google Platform Library on your web pages that integrate Google Sign-In-->
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+<!-- jQuery 3 -->
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<!-- jquery-ui-1.9.2.custom.min-->
+<script src="bower_components/jquery-ui-bootstrap/assets/js/jquery-ui-1.10.0.custom.min.js"></script>
+<!-- Bootstrap 3.3.7 -->
+<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<!-- jquery-migrate-3.0.0-->
+<script src="bower_components/jquery-ui-bootstrap/js/jquery-migrate-3.0.0.js"></script>
+<!-- bootstrap-multiselect-->
+<script src="bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js"></script>
+<!-- Selectize 0.12.4.  -->
+<script src="dist/selectize/selectize.js"></script>
+<!-- jquery.ajax-cross-origin-->
+<script src="bower_components/jquery.ajax-cross-origin/jquery.ajax-cross-origin.min.js"></script>
+<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+<script>
+    $.widget.bridge('uibutton', $.ui.button);
+</script>
+<!-- AdminLTE App -->
+<script src="dist/js/adminlte.min.js"></script>
 <!--    <script src="dist/js/adminlte.js"></script>-->
-    <!-- AdminLTE for demo purposes -->
-    <script src="dist/js/demo.js"></script>
-    <!-- pagination 2.1.2 -->
-    <script src="dist/js/pagination.min.js"></script>
-    <!--   Datatables-->
-    <script type="text/javascript" src="bower_components/DataTables/datatables.min.js"></script>
-    <!-- jquery loading -->
-    <script src="dist/jquery_loading/jquery.loading.min.js"></script>
-    <!-- SlimScroll -->
-    <script src="bower_components/jQuery-slimScroll-1.3.8/jquery.slimscroll.min.js"></script>
-    <!-- d3 pdf export -->
-    <script src="dist/css_to_pdf/xepOnline.jqPlugin.js"></script>
-    <script src="bower_components/ace/ace.js"></script>
-    <!-- crypto-js -->
-    <script src="bower_components/crypto-js/aes.js"></script>
-    <!-- dropzone -->
-    <script src="bower_components/dropzone/dropzone.js"></script>
-    <!-- showdownjs -->
-    <script src="bower_components/showdownjs/dist/showdown.min.js"></script>
-    <!-- plupload -->
-    <script src="bower_components/plupload/js/plupload.full.min.js"></script>
-    <script src="bower_components/plupload/js/jquery.ui.plupload/jquery.ui.plupload.min.js"></script>
-    <script src="bower_components/plupload/js/jquery.plupload.queue/jquery.plupload.queue.js"></script>
-    <script type="text/javascript" src="dist/js/dataTables.checkboxes.js"></script>
-    <?php print getJS($np, $login, $id); ?>
+<!-- AdminLTE for demo purposes -->
+<script src="dist/js/demo.js"></script>
+<!-- pagination 2.1.2 -->
+<script src="dist/js/pagination.min.js"></script>
+<!--   Datatables-->
+<script type="text/javascript" src="bower_components/DataTables/datatables.min.js"></script>
+<!-- jquery loading -->
+<script src="dist/jquery_loading/jquery.loading.min.js"></script>
+<!-- SlimScroll -->
+<script src="bower_components/jQuery-slimScroll-1.3.8/jquery.slimscroll.min.js"></script>
+<!-- d3 pdf export -->
+<script src="dist/css_to_pdf/xepOnline.jqPlugin.js"></script>
+<script src="bower_components/ace/ace.js"></script>
+<!-- crypto-js -->
+<script src="bower_components/crypto-js/aes.js"></script>
+<!-- dropzone -->
+<script src="bower_components/dropzone/dropzone.js"></script>
+<!-- showdownjs -->
+<script src="bower_components/showdownjs/dist/showdown.min.js"></script>
+<!-- plupload -->
+<script src="bower_components/plupload/js/plupload.full.min.js"></script>
+<script src="bower_components/plupload/js/jquery.ui.plupload/jquery.ui.plupload.min.js"></script>
+<script src="bower_components/plupload/js/jquery.plupload.queue/jquery.plupload.queue.js"></script>
+<script type="text/javascript" src="dist/js/dataTables.checkboxes.js"></script>
+<?php print getJS($np, $login, $id); ?>
 
-    </body>
+</body>
 
 </html>

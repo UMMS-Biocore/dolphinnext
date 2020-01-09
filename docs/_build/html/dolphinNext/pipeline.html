@@ -384,10 +384,12 @@ if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
 </div>
 <p>Here, <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code> is DolphinNext specific variable that recalls the hostname which is selected in the run as <strong>Run Environment</strong>. Therefore, in this example, all <code class="docutils literal notranslate"><span class="pre">&lt;executor</span> <span class="pre">properties&gt;</span></code> will be automatically filled in case of pipeline is going to run on <strong>ghpcc06.umassrc.org</strong>.</p>
 <p><strong>Executor Properties:</strong></p>
-<p>Five type of executor properties are available to autofill <strong>Executor Settings for All Processes</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue/Partition and Other Options. See the example below:</p>
+<p>Five type of executor properties are available to autofill <strong>Executor Settings for All Processes</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue/Partition and Other Options. You can set pipeline defaults by using <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span> <span class="pre">==</span> <span class="pre">&quot;default&quot;</span></code> condition. See the example below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
-$MEMORY = 32
-$CPU  = 1
+if ($HOSTNAME == &quot;default&quot;){
+    $MEMORY = 32
+    $CPU  = 1
+}
 if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
     $TIME = 3000
     $CPU  = 4
@@ -414,26 +416,47 @@ if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
 if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
     $SINGULARITY_IMAGE = &quot;shub://UMMS-Biocore/singularity&quot;
-        $SINGULARITY_OPTIONS = &quot;--bind /project&quot;
+    $SINGULARITY_OPTIONS = &quot;--bind /project&quot;
 }
 //* autofill
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/pipeline_autofill_singu.png"><img alt="../_images/pipeline_autofill_singu.png" class="align-center" src="../_images/pipeline_autofill_singu.png" style="width: 99%;" /></a>
+<p>When you want to define both singularity and docker images, you can set <code class="docutils literal notranslate"><span class="pre">$DEFAULT_IMAGE</span></code> tag as well. Options of <code class="docutils literal notranslate"><span class="pre">$DEFAULT_IMAGE</span></code> could be <code class="docutils literal notranslate"><span class="pre">&quot;docker&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;singularity&quot;</span></code>. Please check the example at below where by default docker image is set for the profiles, however if user connects to “ghpcc06.umassrc.org”, it will be set as singularity image:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;default&quot;){
+    $DEFAULT_IMAGE = &quot;docker&quot;
+    $DOCKER_IMAGE = &quot;dolphinnext/rnaseq:1.0&quot;
+    $SINGULARITY_IMAGE = &quot;https://galaxyweb.umassmed.edu/pub/dnext_data/singularity/UMMS-Biocore-rna-seq-1.0.img&quot;
+}
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    $DEFAULT_IMAGE = &quot;singularity&quot;
+    $DOCKER_IMAGE = &quot;dolphinnext/rnaseq:1.0&quot;
+    $SINGULARITY_IMAGE = &quot;https://galaxyweb.umassmed.edu/pub/dnext_data/singularity/UMMS-Biocore-rna-seq-1.0.img&quot;
+}
+//* autofill
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Please note that Google cloud will overwrite <code class="docutils literal notranslate"><span class="pre">$DEFAULT_IMAGE</span></code> tag, since only docker image is available for google cloud.</p>
+</div>
 <p><strong>Platform Tag :</strong></p>
 <p>Optionally, you can isolate platform dependent paramaters by using <strong>platform</strong> tag. This way, exported pipeline won’t have the platform dependent parameters and similarly when pipeline is imported, exisiting platform dependent parameters won’t be overwritten. Please check the the example usage at below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
-$MEMORY = 32
-$CPU  = 1
-    //* platform
-    if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
-        $TIME = 3000
-        $CPU  = 4
-        $MEMORY = 100
-        $QUEUE = &quot;long&quot;
-        $EXEC_OPTIONS = &#39;-E &quot;file /home/garberlab&quot;&#39;
-    }
-    //* platform
+if ($HOSTNAME == &quot;default&quot;){
+    $MEMORY = 32
+    $CPU  = 1
+}
+//* platform
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    $TIME = 3000
+    $CPU  = 4
+    $MEMORY = 100
+    $QUEUE = &quot;long&quot;
+    $EXEC_OPTIONS = &#39;-E &quot;file /home/garberlab&quot;&#39;
+}
+//* platform
 //* autofill
 </pre></div>
 </div>
