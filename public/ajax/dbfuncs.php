@@ -1711,6 +1711,7 @@ class dbfuncs {
                 error_log("remaining:".$remaining);
                 if ($remaining < 1){
                     error_log("autoshutdown triggered");
+                    $newStatus = "";
                     $stopProCloud = $this->stopProCloud($id,$ownerID,$usernameCl, $cloud);
                     //track termination of instance
                     if ($type == "slow"){
@@ -2003,7 +2004,8 @@ class dbfuncs {
                 } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
                     //log file might be deleted or couldn't read the log file
                     $newRunStatus = "Aborted";
-                } else if (preg_match("/[^A-Za-z]error[^A-Za-z]/i",$serverLog) || preg_match("/command not found/i",$serverLog)) {
+                } else if (preg_match("/[\n\r\s]error[\n\r\s:]/i",$serverLog) || preg_match("/command not found/i",$serverLog)) {
+                    error_log("err1");
                     $newRunStatus = "Error";
                     // otherwise parse nextflow file to get status
                 } else if (!empty($nextflowLog)){
@@ -2021,7 +2023,7 @@ class dbfuncs {
                             // run error
                             //"WARN: Failed to publish file" gives error
                             //|| preg_match("/failed/i",$nextflowLog) removed 
-                        } else if (preg_match("/[^A-Za-z]error[^A-Za-z]/i",$nextflowLog) || preg_match("/\n -- Check script /",$nextflowLog)){
+                        } else if (preg_match("/[\n\r\s]error[\n\r\s:]/i",$nextflowLog) || preg_match("/\n -- Check script /",$nextflowLog)){
                             $confirmErr=true;
                             if (preg_match("/-- Execution is retried/i",$nextflowLog) || preg_match("/WARN: One or more errors/i", $nextflowLog)){
                                 //if only process retried, status shouldn't set as error.

@@ -799,7 +799,6 @@ function publishDir(id, currgid, mainPipeEdges) {
         }
         closePar = false
     }
-
     return oText;
 }
 
@@ -835,7 +834,7 @@ function getOptionalInText(optionalInAr, optionalInNameAr) {
     var optText = "";
     for (var i = 0; i < optionalInAr.length; i++) {
 
-        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([]) \n";
+        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
     }
     return optText;
 }
