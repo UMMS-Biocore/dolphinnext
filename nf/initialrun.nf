@@ -822,7 +822,7 @@ process createCollection {
                     arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
                 runCommand("touch $input_dir/.success_$file_name[$i]");
-                uploadCloudWorkdir();
+                uploadCloudWorkdir($profile);
                 $passHash{ $file_name[$i] } = "passed";
             }
             ## if $s3_archiveDirCheck eq "true" && $archiveDirCheck eq "false" && $profile eq "amazon": no need to check input file existance. Download s3 file and call it as archived file.
@@ -849,7 +849,7 @@ process createCollection {
                     arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
                 runCommand("touch $input_dir/.success_$file_name[$i]");
-                uploadCloudWorkdir();
+                uploadCloudWorkdir($profile);
                 $passHash{ $file_name[$i] } = "passed";
             }
             ##create new collection files
@@ -961,7 +961,7 @@ process createCollection {
                 }
               }
               runCommand("touch $input_dir/.success_$file_name[$i]");
-              uploadCloudWorkdir();
+              uploadCloudWorkdir($profile);
               $passHash{ $file_name[$i] } = "passed";
             } 
             elsif ($inputDirCheck eq "true" && $archiveDirCheck eq "false" && $archiveDir eq "" ){
@@ -1222,23 +1222,26 @@ process createCollection {
             GSUpload($archFileMd5sum, $gsPath);
           }
           
-          sub uploadCloudWorkdir {
-            print "uploadCloudWorkdir started\\n";
-            my $bucket=$cloud_input_dir;
-            $bucket=~ s/(gs:\\/\\/)|(GS:\\/\\/)|(Gs:\\/\\/)|(gS:\\/\\/)//;
-            my @arr = split('/', $bucket);
-            my $bucketName = shift @arr;
-            $bucket = 'gs://'.$bucketName;
-            ##make bucket if not exist
-            makeGSBucket($bucket);
-            if ( $collection_type[$i] eq "single" ) {
-                GSUpload($inputFile, $cloud_input_dir);
-                GSUpload("$input_dir/.success_$file_name[$i]", $cloud_input_dir);
-            } elsif ( $collection_type[$i] eq "pair" ) {
-                GSUpload($inputFile1, $cloud_input_dir);
-                GSUpload($inputFile2, $cloud_input_dir);
-                GSUpload("$input_dir/.success_$file_name[$i]", $cloud_input_dir);
-            }
+          sub uploadCloudWorkdir{
+            my ( $profile ) = @_;
+            if ($profile eq "google"){
+                print "uploadCloudWorkdir started\\n";
+                my $bucket=$cloud_input_dir;
+                $bucket=~ s/(gs:\\/\\/)|(GS:\\/\\/)|(Gs:\\/\\/)|(gS:\\/\\/)//;
+                my @arr = split('/', $bucket);
+                my $bucketName = shift @arr;
+                $bucket = 'gs://'.$bucketName;
+                ##make bucket if not exist
+                makeGSBucket($bucket);
+                if ( $collection_type[$i] eq "single" ) {
+                    GSUpload($inputFile, $cloud_input_dir);
+                    GSUpload("$input_dir/.success_$file_name[$i]", $cloud_input_dir);
+                } elsif ( $collection_type[$i] eq "pair" ) {
+                    GSUpload($inputFile1, $cloud_input_dir);
+                    GSUpload($inputFile2, $cloud_input_dir);
+                    GSUpload("$input_dir/.success_$file_name[$i]", $cloud_input_dir);
+                }
+             }
           }
 
           ## copy files from achive directory to input directory and extract them in input_dir
