@@ -3204,10 +3204,10 @@ class dbfuncs {
         return $cmd_log;
     }
 
-    function getRsyncStatus($fileName, $email, $ownerID){
+    function getRsyncStatus($fileName, $ownerID){
         $log = "";
         $tmp_path = $this->tmp_path;
-        $upload_dir = "$tmp_path/uploads/{$email}";
+        $upload_dir = "$tmp_path/uploads/{$ownerID}";
         $logfile = $upload_dir."/.".$fileName;
         if (file_exists($logfile)){
             $log = $this->readFile($logfile);
@@ -3215,9 +3215,9 @@ class dbfuncs {
         return json_encode($log);
     }
 
-    function resetUpload($fileName, $email, $ownerID){
+    function resetUpload($fileName, $ownerID){
         $tmp_path = $this->tmp_path;
-        $upload_dir = "$tmp_path/uploads/{$email}";
+        $upload_dir = "$tmp_path/uploads/{$ownerID}";
         $rsyncPidFile = $upload_dir."/.".$fileName.".rsyncPid";
         if (file_exists($rsyncPidFile)){
             $rsyncPid = $this->readFile($rsyncPidFile);
