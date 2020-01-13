@@ -1198,7 +1198,6 @@ class dbfuncs {
     }
 
     function getAmazonConfig($amazon_cre_id,$ownerID){
-        //if  $amazon_cre_id is defined append the aws credentials into nextflow.config
         $configText = "";
         if ($amazon_cre_id != "" ){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
@@ -1211,8 +1210,9 @@ class dbfuncs {
             $access_key = $amz_data[0]->{'amz_acc_key'};
             $secret_key = $amz_data[0]->{'amz_suc_key'};
             $default_region = $amz_data[0]->{'amz_def_reg'};
-            $configText = "export AWS_ACCESS_KEY_ID=$access_key && export AWS_SECRET_ACCESS_KEY=$access_key && export AWS_DEFAULT_REGION=$default_region";
+            $configText = "export AWS_ACCESS_KEY_ID=$access_key && export AWS_SECRET_ACCESS_KEY=$secret_key && export AWS_DEFAULT_REGION=$default_region";
         }
+        error_log($configText);
         return $configText;
     }
 
