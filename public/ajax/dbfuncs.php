@@ -1212,7 +1212,6 @@ class dbfuncs {
             $default_region = $amz_data[0]->{'amz_def_reg'};
             $configText = "export AWS_ACCESS_KEY_ID=$access_key && export AWS_SECRET_ACCESS_KEY=$secret_key && export AWS_DEFAULT_REGION=$default_region";
         }
-        error_log($configText);
         return $configText;
     }
 
