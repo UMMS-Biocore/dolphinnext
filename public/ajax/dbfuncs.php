@@ -3007,18 +3007,16 @@ class dbfuncs {
         return self::queryTable($sql);
     }
 
-    public function getUpload($name,$email) {
-        $email = str_replace("'", "__", $email);
-        $filename= "{$this->tmp_path}/uploads/$email/$name";
+    public function getUpload($name,$ownerID) {
+        $filename= "{$this->tmp_path}/uploads/$ownerID/$name";
         // get contents of a file into a string
         $handle = fopen($filename, "r");
         $content = fread($handle, filesize($filename));
         fclose($handle);
         return json_encode($content);
     }
-    public function removeUpload($name,$email) {
-        $email = str_replace("'", "__", $email);
-        $filename= "{$this->tmp_path}/uploads/$email/$name";
+    public function removeUpload($name,$ownerID) {
+        $filename= "{$this->tmp_path}/uploads/$ownerID/$name";
         unlink($filename);
         return json_encode("file deleted");
     }

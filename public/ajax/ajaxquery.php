@@ -337,11 +337,11 @@ else if ($p=="savefeedback"){
 }
 else if ($p=="getUpload"){
     $name = $_REQUEST['name'];
-    $data = $db -> getUpload($name,$email);
+    $data = $db -> getUpload($name,$ownerID);
 }
 else if ($p=="removeUpload"){
     $name = $_REQUEST['name'];
-    $data = $db -> removeUpload($name,$email);
+    $data = $db -> removeUpload($name,$ownerID);
 }
 else if ($p=="getAllGroups"){
     $data = $db -> getAllGroups();
