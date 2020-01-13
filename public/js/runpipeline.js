@@ -1,7 +1,9 @@
 $runscope = {
     //get work OR publish dir OR runcmd
     getPubVal : function(type){
+        var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
         var perms = $("#chooseEnv").find(":selected").attr('perms');
+        var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
         var dir = "";
         if (type == "work"){
             dir = $.trim($("#rOut_dir").val());
@@ -9,13 +11,21 @@ $runscope = {
             dir = $.trim($("#publish_dir").val());
         } else if (type == "runcmd"){
             dir = $.trim($("#runCmd").val());
-        } 
+        } else if (type == "report"){
+            if (publish_dir_check === "true" && $.trim($("#publish_dir").val())) {
+                dir = $.trim($("#publish_dir").val())+"/report"+project_pipeline_id;
+            } else {
+                dir = $.trim($("#rOut_dir").val())+"/report"+project_pipeline_id;
+            }
+        }
         if (perms){
             if (perms == "15"){
-                if (type == "work"){
-                    var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                if (type == "work" || type == "report"){
                     var auto_workdir = $("#chooseEnv").find(":selected").attr('auto_workdir');
                     dir = auto_workdir+"/id"+project_pipeline_id;
+                    if (type == "report"){
+                        dir = dir+"/report"+project_pipeline_id;
+                    }
                 } else if (type == "publish" || type == "runcmd"){
                     dir = "";
                 }

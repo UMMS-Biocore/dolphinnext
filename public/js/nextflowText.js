@@ -439,12 +439,8 @@ function createNextflowFile(nxf_runmode, uuid) {
             }
         }
 
-        var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
-        if (publish_dir_check === "true") {
-            var output_dir = $runscope.getPubVal("publish");
-        } else {
-            var output_dir = $runscope.getPubVal("work");
-        }
+        
+        var output_dir = $runscope.getPubVal("report");
         if (output_dir) {
             nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
         }

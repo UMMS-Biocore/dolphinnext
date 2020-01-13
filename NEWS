@@ -2,7 +2,7 @@
 Google cloud feature added.
 $DEFAULT_IMAGE parameter added to autofill feature and documentation is updated.
 Delete intermediate files function updated to delete work directory in the cloud.
-
+Delete report files on rerun added.
 
 23.12.2019 Version 1.0.15
 Style of wizard window updated.

@@ -137,8 +137,8 @@ class dbfuncs {
             $prefix = "";
             preg_match("/(shub|docker):\/\/(.*)/", $img, $matches);
             //docker or singularity image
-            if (!empty($matches[1])){
-                $prefix = str_replace("/","-",$matches[1]);
+            if (!empty($matches[2])){
+                $prefix = str_replace("/","-",$matches[2]);
                 //docker image if doesn't start with shub|docker
             } else if (substr($img,0,1) != "/") {
                 $prefix = str_replace("/","-",$img);
@@ -357,18 +357,51 @@ class dbfuncs {
     }
 
 
-    function initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID){
+    function getReportDir($proPipeAll){
+        $project_pipeline_id = $proPipeAll[0]->{'id'};
+        $reportDir = $proPipeAll[0]->{'output_dir'}."/report".$project_pipeline_id;
+        $publish_dir = isset($proPipeAll[0]->{'publish_dir'}) ? $proPipeAll[0]->{'publish_dir'} : "";
+        $publish_dir_check = isset($proPipeAll[0]->{'publish_dir_check'}) ? $proPipeAll[0]->{'publish_dir_check'} : "";
+        if ($publish_dir_check == "true" && !empty($publish_dir)){
+            $reportDir = $publish_dir."/report".$project_pipeline_id;
+        }
+        $reportDir = trim($reportDir);
+        return $reportDir;
+    }
+    //should end with && if not empty
+    function getCleanReportCmd($proPipeAll){
+        $cmd = "";
+        $repDir = $this->getReportDir($proPipeAll);
+        if (!empty($repDir)){
+            if (substr($repDir,0,1) == "/") {
+                $cmd = "rm -rf $repDir &&";
+            } else if (preg_match("/gs:/i", $repDir)){
+                $cmd = "gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS && gsutil -m rm -rf $repDir 2> /dev/null || true &&";
+            } else if (preg_match("/s3:/i", $repDir)){
+                $cmd = "aws s3 rm $repDir --recursive 2> /dev/null || true &&";
+            }
+        }
+        return $cmd;
+    }
+
+    function getDolphinPathReal($proPipeAll){
+        $project_pipeline_id = $proPipeAll[0]->{'id'};
+        $outdir = $proPipeAll[0]->{'output_dir'};
+        $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
+        $publish_dir = !empty($proPipeAll[0]->{'publish_dir'}) ? $proPipeAll[0]->{'publish_dir'} : "";
+        $publish_dir_check = isset($proPipeAll[0]->{'publish_dir_check'}) ? $proPipeAll[0]->{'publish_dir_check'} : "";
+        $dolphin_publish_real = "";
+        if ($publish_dir_check == "true" && !empty($publish_dir)){
+            $dolphin_publish_real = "$publish_dir/run{$project_pipeline_id}";
+        }
+        return array($dolphin_path_real,$dolphin_publish_real);
+    }
+
+    function initialRunParams($proPipeAll, $project_pipeline_id, $attempt, $profileId, $profileType, $ownerID){
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $params = "";
         $checkGeoFiles = "false";
-        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $outdir = $proPipeAll[0]->{'output_dir'};
-        $dolphin_publish_real = "";
-        if (!empty($proPipeAll[0]->{'publish_dir'})){
-            $publish_dir = $proPipeAll[0]->{'publish_dir'};
-            $dolphin_publish_real = "$publish_dir/run{$project_pipeline_id}";
-        }
-        $run_dir = "$outdir/run{$project_pipeline_id}";
+        list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $collection = array();
         $file_name = array();
@@ -418,7 +451,7 @@ class dbfuncs {
         if (!empty($file_name) || !empty($url) || !empty($urlzip)) {
             $params  = "params {\n";
             $params .= "  attempt = '".$attempt."'\n";
-            $params .= "  run_dir = '".$run_dir."'\n";
+            $params .= "  run_dir = '".$dolphin_path_real."'\n";
             $params .= "  cloud_run_dir = '".$dolphin_publish_real."'\n";
             //if $profile eq "amazon" then allow s3 backupdir download.
             $params .= "  profile = '".$profileType."'\n";
@@ -437,7 +470,7 @@ class dbfuncs {
     }
 
     //get nextflow input parameters
-    function getMainRunInputs ($project_pipeline_id, $outdir, $ownerID ){
+    function getMainRunInputs ($project_pipeline_id, $dolphin_path_real, $ownerID ){
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $next_inputs="";
         if (!empty($allinputs)){
@@ -446,7 +479,7 @@ class dbfuncs {
             $inputName = $inputitem->{'name'};
             $collection_id = $inputitem->{'collection_id'};
             if (!empty($collection_id)){
-                $inputsPath = "$outdir/run{$project_pipeline_id}/inputs/$collection_id";
+                $inputsPath = "$dolphin_path_real/inputs/$collection_id";
                 $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
                 $file_type = $allfiles[0]->{'file_type'};
                 $collection_type = $allfiles[0]->{'collection_type'};
@@ -464,14 +497,7 @@ class dbfuncs {
 
     }
 
-    function getDolphinPathReal($proPipeAll){
-        $project_pipeline_id = $proPipeAll[0]->{'id'};
-        $outdir = $proPipeAll[0]->{'output_dir'};
-        $publish_dir = !empty($proPipeAll[0]->{'publish_dir'}) ? $proPipeAll[0]->{'publish_dir'} : ""; 
-        $dolphin_path_real = "$outdir/run{$project_pipeline_id}";
-        $dolphin_publish_real = "$publish_dir/run{$project_pipeline_id}";
-        return array($dolphin_path_real,$dolphin_publish_real);
-    }
+
 
     function getInitialImageCmdPath($proPipeAll, $profileType,$profileId, $ownerID){
         $initImageCmd  = "";
@@ -571,7 +597,7 @@ class dbfuncs {
         if ($interdel == "true"){
             if ($profileType == "google" && !empty($dolphin_publish_real)) {
                 $nxf_work = "$dolphin_publish_real/work"; 
-                $interdelCmd = "gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS && gsutil rm -r $nxf_work";
+                $interdelCmd = "gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS && gsutil -m rm -rf $nxf_work 2> /dev/null || true";
             } else if (!empty($dolphin_path_real)) {
                 $nxf_work = "$dolphin_path_real/work";
                 $interdelCmd = "rm -rf $nxf_work";
@@ -605,7 +631,7 @@ class dbfuncs {
         $singu_cachedir = 'NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$HOME/.dolphinnext/singularity}" && export NXF_SINGULARITY_CACHEDIR=$NXF_SINGULARITY_CACHEDIR';
         // combine pre-run cmd
         // should start without && and end with &&
-        
+
         $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd , $initImageCmd);
         $preCmd="";
         for ($i=0; $i<count($arr); $i++) {
@@ -749,11 +775,13 @@ class dbfuncs {
     }
 
     //get all nextflow executor text
-    function getExecNextAll($executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, $logName, $initialRunParams, $postCmd, $ownerID) {
+    function getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, $logName, $initialRunParams, $postCmd, $ownerID) {
+        $cleanReportCmd = "";
         if ($runType == "resumerun"){
             $runType = "-resume";
         } else {
             $runType = "";
+            $cleanReportCmd = $this->getCleanReportCmd($proPipeAll);
         }
         $initialRunCmd = "";
         $igniteExec = "-process.executor ignite";
@@ -782,7 +810,7 @@ class dbfuncs {
             }
             $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $nxf_work_init $igniteCmd $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
-        $mainNextCmd = "$initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $nxf_work $igniteCmd $runType $reportOptions > $dolphin_path_real/$logName $postCmd";
+        $mainNextCmd = "$cleanReportCmd $initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $nxf_work $igniteCmd $runType $reportOptions > $dolphin_path_real/$logName $postCmd";
 
         //for lsf "bsub -q short -n 1  -W 100 -R rusage[mem=32024]";
         if ($executor == "local"){
@@ -874,10 +902,10 @@ class dbfuncs {
 
         $configText = "// Process Config:\n\n{$containerConfig}{$containerRunOpt}{$configText}";
         // get outputdir
-        $outdir = $proPipeAll[0]->{'output_dir'};
+        list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
         $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
-        if ($profileType == "google" && !empty($proPipeAll[0]->{'publish_dir'})){
-            $outdir = $proPipeAll[0]->{'publish_dir'};
+        if ($profileType == "google" && !empty($dolphin_publish_real)){
+            $dolphin_path_real = $dolphin_publish_real;
         }
 
         //get nextflow.config from pipeline.
@@ -893,7 +921,7 @@ class dbfuncs {
         $configText .= "$variable\n";
         $configText .= "$script_pipe_config\n";
         //get main run input parameters
-        $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $outdir, $ownerID);
+        $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $dolphin_path_real, $ownerID);
         $configText .= "\n// Run Parameters:\n\n".$mainRunParams;
         //get main run local variable parameters:
         $configText = $this->getProcessParams($proVarObj, $configText);
@@ -920,7 +948,7 @@ class dbfuncs {
         $configText = "// Process Config:\n\n{$containerConfig}{$initRunOptions}\n";
 
         //get initial run input paramaters
-        list($initialRunParams,$checkGeoFiles) = $this->initialRunParams($project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
+        list($initialRunParams,$checkGeoFiles) = $this->initialRunParams($proPipeAll, $project_pipeline_id, $attempt, $profileId, $profileType, $ownerID);
         if (isset($checkGeoFiles)){
             $executor = $cluDataArr[0]['executor'];
             $executor_job = $cluDataArr[0]['executor_job'];
@@ -1289,7 +1317,7 @@ class dbfuncs {
 
         //get command for renaming previous log file
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
-        $exec_next_all = $this->getExecNextAll($executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $ownerID);
+        $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $ownerID);
         $amzCmd = "";
         //temporary copy s3/gs config file into initialrun folder 
         if (!empty($getCloudConfigFileDir)){

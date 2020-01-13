@@ -183,15 +183,10 @@ else if ($p=="savePubWeb"){
     if (!empty($pubWebDir)){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $outdir = $proPipeAll[0]->{'output_dir'};
-        $publish_dir = isset($proPipeAll[0]->{'publish_dir'}) ? $proPipeAll[0]->{'publish_dir'} : "";
-        $publish_dir_check = isset($proPipeAll[0]->{'publish_dir_check'}) ? $proPipeAll[0]->{'publish_dir_check'} : "";
-        if ($publish_dir_check == "true" && !empty($publish_dir)){
-            $outdir = $publish_dir;
-        }
+        $reportDir = $db->getReportDir($proPipeAll);
         $down_file_list = explode(',', $pubWebDir);
         foreach ($down_file_list as &$value) {
-            $value = $outdir."/".$value;
+            $value = $reportDir."/".$value;
         }
         unset($value);
         $data = $db -> saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $ownerID);
@@ -305,7 +300,7 @@ else if ($p=="startProCloud"){
     $nodes = $_REQUEST['nodes'];
     $cloud = $_REQUEST['cloud'];
     $autoscale_check = $_REQUEST['autoscale_check'];
-    $autoscale_maxIns = $_REQUEST['autoscale_maxIns'];
+    $autoscale_maxIns = isset($_REQUEST['autoscale_maxIns']) ? $_REQUEST['autoscale_maxIns'] : "";
     $autoscale_minIns = isset($_REQUEST['autoscale_minIns']) ? $_REQUEST['autoscale_minIns'] : "";
     $autoshutdown_check = $_REQUEST['autoshutdown_check'];
     //reset on startup
