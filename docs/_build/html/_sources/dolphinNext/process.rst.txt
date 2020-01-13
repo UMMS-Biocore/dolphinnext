@@ -87,22 +87,13 @@ If you want use optional input parameter, you can check the optional checkbox. T
 .. image:: dolphinnext_images/process_optional_input.png
 	:align: center
 
-Here, ``filter`` parameter will be defined as blank string in case input parameter ``genome`` is empty. Otherwise, when input parameter ``genome`` is found, ``filter`` parameter will be defined as "---filter ${genome}".
+Here, ``filter`` parameter will be defined as blank string in case input parameter ``genome`` is empty. Otherwise, when input parameter ``genome`` is found, ``filter`` parameter will be defined as ``---filter ${genome}"``.
 
-Note that the condition is defined based on the "Input Name" of the parameter. Please check the other possibilities of condition scripts and their input parameters at below.
+Note that the existance of ``genome`` variable is required to be checked after using ``toString()`` operator::
 
-========================== =========================================
-Input name                 Condition in the Script for Empty Channel
-========================== =========================================
-genome                     genome.name == 'genome'
-script                     script.name == 'script'
-val(name), file(index)     index.name == 'index'
-val(path)                  path.name == 'path'
-========================== =========================================
-
-Note that if ``file()`` or ``val()`` parameters are used, DolphinNext parse their content and use these parts in the condition. If both type are used, then content of the first file parameter will be used.
-
-
+    filter = genome.toString() == "" ? "" : "--filter ${genome}"
+    
+    
 Outputs
 =======
 

@@ -439,12 +439,8 @@ function createNextflowFile(nxf_runmode, uuid) {
             }
         }
 
-        var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
-        if (publish_dir_check === "true") {
-            var output_dir = $runscope.getPubVal("publish");
-        } else {
-            var output_dir = $runscope.getPubVal("work");
-        }
+        
+        var output_dir = $runscope.getPubVal("report");
         if (output_dir) {
             nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
         }
@@ -799,7 +795,6 @@ function publishDir(id, currgid, mainPipeEdges) {
         }
         closePar = false
     }
-
     return oText;
 }
 
@@ -829,20 +824,13 @@ function getWhenCond(script) {
     return whenCond;
 }
 
-//g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum'))
+//g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum')) // depricated
+//g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty([])
 function getOptionalInText(optionalInAr, optionalInNameAr) {
     var optText = "";
     for (var i = 0; i < optionalInAr.length; i++) {
-        var inputName = optionalInNameAr[i];
-        var inputNameOptional = "";
-        if (inputName.match(/file\((.*)\)/)) {
-            inputNameOptional = $.trim(inputName.match(/file\((.*)\)/i)[1])
-        } else if (inputName.match(/val\((.*)\)/)) {
-            inputNameOptional = $.trim(inputName.match(/val\((.*)\)/i)[1])
-        } else {
-            inputNameOptional = $.trim(inputName);
-        }
-        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(file('" + inputNameOptional + "', type: 'any')) \n";
+
+        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
     }
     return optText;
 }

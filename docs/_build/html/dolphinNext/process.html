@@ -319,34 +319,11 @@
 </ul>
 <p>If you want use optional input parameter, you can check the optional checkbox. This feature allows flexibility for the user while defining process since the process will be executed in spite of the absence of the input parameter. Please check the example below for the use case:</p>
 <img alt="../_images/process_optional_input.png" class="align-center" src="../_images/process_optional_input.png" />
-<p>Here, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as blank string in case input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is empty. Otherwise, when input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is found, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as “—filter ${genome}”.</p>
-<p>Note that the condition is defined based on the “Input Name” of the parameter. Please check the other possibilities of condition scripts and their input parameters at below.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="39%" />
-<col width="61%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Input name</th>
-<th class="head">Condition in the Script for Empty Channel</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>genome</td>
-<td>genome.name == ‘genome’</td>
-</tr>
-<tr class="row-odd"><td>script</td>
-<td>script.name == ‘script’</td>
-</tr>
-<tr class="row-even"><td>val(name), file(index)</td>
-<td>index.name == ‘index’</td>
-</tr>
-<tr class="row-odd"><td>val(path)</td>
-<td>path.name == ‘path’</td>
-</tr>
-</tbody>
-</table>
-<p>Note that if <code class="docutils literal notranslate"><span class="pre">file()</span></code> or <code class="docutils literal notranslate"><span class="pre">val()</span></code> parameters are used, DolphinNext parse their content and use these parts in the condition. If both type are used, then content of the first file parameter will be used.</p>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as blank string in case input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is empty. Otherwise, when input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is found, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as <code class="docutils literal notranslate"><span class="pre">---filter</span> <span class="pre">${genome}&quot;</span></code>.</p>
+<p>Note that the existance of <code class="docutils literal notranslate"><span class="pre">genome</span></code> variable is required to be checked after using <code class="docutils literal notranslate"><span class="pre">toString()</span></code> operator:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>filter = genome.toString() == &quot;&quot; ? &quot;&quot; : &quot;--filter ${genome}&quot;
+</pre></div>
+</div>
 </div>
 <div class="section" id="outputs">
 <h2>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h2>

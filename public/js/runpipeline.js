@@ -1,8 +1,9 @@
 $runscope = {
     //get work OR publish dir OR runcmd
     getPubVal : function(type){
-        console.log("getPubVal")
+        var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
         var perms = $("#chooseEnv").find(":selected").attr('perms');
+        var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
         var dir = "";
         if (type == "work"){
             dir = $.trim($("#rOut_dir").val());
@@ -10,13 +11,21 @@ $runscope = {
             dir = $.trim($("#publish_dir").val());
         } else if (type == "runcmd"){
             dir = $.trim($("#runCmd").val());
-        } 
+        } else if (type == "report"){
+            if (publish_dir_check === "true" && $.trim($("#publish_dir").val())) {
+                dir = $.trim($("#publish_dir").val())+"/report"+project_pipeline_id;
+            } else {
+                dir = $.trim($("#rOut_dir").val())+"/report"+project_pipeline_id;
+            }
+        }
         if (perms){
             if (perms == "15"){
-                if (type == "work"){
-                    var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                if (type == "work" || type == "report"){
                     var auto_workdir = $("#chooseEnv").find(":selected").attr('auto_workdir');
                     dir = auto_workdir+"/id"+project_pipeline_id;
+                    if (type == "report"){
+                        dir = dir+"/report"+project_pipeline_id;
+                    }
                 } else if (type == "publish" || type == "runcmd"){
                     dir = "";
                 }
@@ -25,7 +34,6 @@ $runscope = {
         return dir;
     },
     getUploadDir : function(type){
-        console.log("getUploadDir")
         //type:new or type:exist
         var perms = $("#chooseEnv").find(":selected").attr('perms');
         var uploadDir = "";
@@ -1473,12 +1481,25 @@ function autofillEmptyInputs(autoFillJSON) {
 }
 
 
-
+function getDefaultImage(states){
+    var $DEFAULT_IMAGE = "";
+    $.each(states, function (st) {
+        var defName = states[st] ; // expected Value
+        if (st.match(/\$(.*)/)) {
+            var varName = st.match(/\$(.*)/)[1]; //variable Name
+            if (varName === "DEFAULT_IMAGE") {
+                $DEFAULT_IMAGE = defName;
+            }
+        }
+    });
+    return $DEFAULT_IMAGE;
+}
 
 
 //change propipeinputs in case all conds are true
 function fillStates(states, url, urlzip, checkPath) {
     $("#inputsTab").loading('start');
+    var $DEFAULT_IMAGE = getDefaultImage(states);
     $.each(states, function (st) {
         var defName = states[st] ; // expected Value
         var defUrl = url[st] || null;; // expected Value
@@ -1495,21 +1516,28 @@ function fillStates(states, url, urlzip, checkPath) {
                     autoFillButton(varNameButAr[0], defName, keepExist, defUrl, defUrlzip, defcheckPath);
                 }
             }
-            //if variable starts with "$" then run parameters for pipeline are defined. Fill run parameters. $SINGULARITY_IMAGE, $SINGULARITY_OPTIONS, $DOCKER_IMAGE, $DOCKER_OPTIONS, $MEMORY, $TIME, $QUEUE, $CPU, $EXEC_OPTIONS 
+            //if variable starts with "$" then run parameters for pipeline are defined. Fill run parameters. $SINGULARITY_IMAGE, $SINGULARITY_OPTIONS, $DOCKER_IMAGE, $DOCKER_OPTIONS, $MEMORY, $TIME, $QUEUE, $CPU, $EXEC_OPTIONS $DEFAULT_IMAGE
         } else if (st.match(/\$(.*)/)) {
+            var cloudType = $("#chooseEnv").find(":selected").val();
+            var patt = /(.*)-(.*)/;
+            var proType = cloudType.replace(patt, '$1');
             var varName = st.match(/\$(.*)/)[1]; //variable Name
+            // if $DEFAULT_IMAGE is defined then it must be validated before updateCheckBox
+            // if google cloud is selected then it must be DOCKER_IMAGE -> $DEFAULT_IMAGE will be overwritten
             if (varName === "SINGULARITY_IMAGE") {
                 $('#singu_img').val(defName);
-                updateCheckBox('#singu_check', "true");
+                if (proType != "google" && (!$DEFAULT_IMAGE || $DEFAULT_IMAGE == "singularity")){
+                    updateCheckBox('#singu_check', "true");
+                }
             } else if (varName === "DOCKER_IMAGE") {
                 $('#docker_img').val(defName);
-                updateCheckBox('#docker_check', "true");
+                if (proType == "google" || !$DEFAULT_IMAGE || $DEFAULT_IMAGE == "docker"){
+                    updateCheckBox('#docker_check', "true");
+                }
             } else if (varName === "SINGULARITY_OPTIONS") {
                 $('#singu_opt').val(defName);
-                updateCheckBox('#singu_check', "true");
             } else if (varName === "DOCKER_OPTIONS") {
                 $('#docker_opt').val(defName);
-                updateCheckBox('#docker_check', "true");
             } else if (varName === "TIME") {
                 fillExecSettings("#job_time", defName, "pipeline");
             } else if (varName === "QUEUE") {
@@ -1587,6 +1615,24 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
     if (jsonType == "pipeline"){
         $("#chooseEnv").bindFirst("change", function(){
             var [allProSett, profileData] = getJobData("both");
+            // autofill def_publishdir and def_workdir
+            var def_publishdir = "";
+            var def_workdir = "";
+            var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+            if (profileData) {
+                if (profileData[0]) {
+                    if (profileData[0].def_publishdir){
+                        def_publishdir = profileData[0].def_publishdir + "/work"+project_pipeline_id ; 
+                        $("#publish_dir").val(def_publishdir);
+                        updateCheckBox('#publish_dir_check', "true");
+                    }
+                    if (profileData[0].def_workdir){
+                        def_workdir = profileData[0].def_workdir + "/work"+project_pipeline_id;
+                        $("#rOut_dir").val(def_workdir)
+                    }
+                }
+            }
+            
             $("input.execcheckbox").each(function(){
                 $(this).prop('checked', false);
             })
@@ -1615,6 +1661,9 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                     $(this).val(allProSett.job_clu_opt);
                 })
             }
+            
+            
+            
         });
     }
     $("#chooseEnv").change(autoFillJSON, function () {
@@ -1650,10 +1699,11 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                                     if (filled_el in not_filled_checkPath){
                                         delete not_filled_checkPath[filled_el]; 
                                     }
+                                    // if one of the following parameter is filled than don't use container info coming from default condition 
                                     if (filled_el == "$SINGULARITY_IMAGE" || filled_el == "$DOCKER_IMAGE" || filled_el == "$SINGULARITY_OPTIONS" || filled_el == "$DOCKER_OPTIONS"){
                                         delete not_filled_states["$SINGULARITY_IMAGE"]; 
-                                        delete not_filled_states["$DOCKER_IMAGE"]; 
                                         delete not_filled_states["$SINGULARITY_OPTIONS"]; 
+                                        delete not_filled_states["$DOCKER_IMAGE"]; 
                                         delete not_filled_states["$DOCKER_OPTIONS"]; 
                                     }
                                 });
@@ -3119,7 +3169,11 @@ function showhideOnEnv(allProSett, profileData){
         $('#archive_dir_geo_div').css("display", "none");
         $('#archive_dir_div').css("display", "none");
     } else {
-        $('#rOut_dirDiv').css("display", "block");
+        if (profileData[0].google_cre_id != undefined){
+            $('#rOut_dirDiv').css("display", "none");
+        } else {
+            $('#rOut_dirDiv').css("display", "block");
+        }
         $('#publishDirHide').css("display", "block");
         $('#jobSettingsDiv').css("display", "block");
         $('#runCmdDiv').css("display", "block");
@@ -3827,6 +3881,7 @@ function loadProjectPipeline(pipeData) {
     updateCheckBox('#withDag', pipeData[0].withDag);
     updateCheckBox('#withTimeline', pipeData[0].withTimeline);
     checkShub()
+
     //load process options 
     if (pipeData[0].process_opt) {
         //fill process options table
@@ -3846,12 +3901,19 @@ function loadProjectPipeline(pipeData) {
             }
         }
     }, 1000);
-    //load amazon keys for possible s3 connection
-    loadAmzKeys();
+    checkCloudType()
+    //load cloud keys for possible s3/gs connection
+    loadCloudKeys();
     if (pipeData[0].amazon_cre_id !== "0") {
         $('#mRunAmzKey').val(pipeData[0].amazon_cre_id);
     } else {
-        selectAmzKey();
+        selectCloudKey("amazon");
+    }
+
+    if (pipeData[0].google_cre_id !== "0") {
+        $('#mRunGoogKey').val(pipeData[0].google_cre_id);
+    } else {
+        selectCloudKey("google");
     }
 
     //load user groups
@@ -3927,37 +3989,50 @@ function loadRunOptions(type) {
     var selectedOpt = $('#chooseEnv').find(":selected").val();
     $('#chooseEnv').find('option').not(':disabled').remove();
     //get profiles for user
-    var proCluData = getValues({ p: "getProfileCluster", type:"run" });
-    var proAmzData = getValues({ p: "getProfileAmazon", type:"run" });
-    if (proCluData && proAmzData) {
-        if (proCluData.length + proAmzData.length !== 0) {
-            $.each(proCluData, function (el) {
+    var proData = getValues({ p: "getProfiles", type:"run" });
+    if (proData) {
+        for (var c = 0; c < proData.length; c++) {
+            var data = proData[c]
+            if (data.hostname != undefined){
                 var option = "";
-                if (proCluData[el].perms == "15"){
-                    option = new Option(proCluData[el].name, 'cluster-' + proCluData[el].id)
+                if (data.perms == "15"){
+                    option = new Option(data.name, 'cluster-' + data.id)
                 } else{
-                    option = new Option(proCluData[el].name + ' (Remote machine: ' + proCluData[el].username + '@' + proCluData[el].hostname + ')', 'cluster-' + proCluData[el].id)
+                    option = new Option(data.name + ' (Remote machine: ' + data.username + '@' + data.hostname + ')', 'cluster-' + data.id)
                 }
-                option.setAttribute("host", proCluData[el].hostname);
-                option.setAttribute("perms", proCluData[el].perms);
-                option.setAttribute("auto_workdir", proCluData[el].auto_workdir);
+                option.setAttribute("host", data.hostname);
+                option.setAttribute("perms", data.perms);
+                option.setAttribute("auto_workdir", data.auto_workdir);
                 $("#chooseEnv").append(option);
-            });
-            $.each(proAmzData, function (el) {
+            } else if (data.amazon_cre_id != undefined){
                 var option = "";
-                if (proAmzData[el].perms == "15"){
-                    option = new Option(proAmzData[el].name, 'amazon-' + proAmzData[el].id)
+                if (data.perms == "15"){
+                    option = new Option(data.name, 'amazon-' + data.id)
                 } else{
-                    option = new Option(proAmzData[el].name + ' (Amazon: Status:' + proAmzData[el].status + ' Image id:' + proAmzData[el].image_id + ' Instance type:' + proAmzData[el].instance_type + ')', 'amazon-' + proAmzData[el].id)
+                    option = new Option(data.name + ' (Amazon: Status:' + data.status + ' Image id:' + data.image_id + ' Instance type:' + data.instance_type + ')', 'amazon-' + data.id)
                 }
-                option.setAttribute("host", proAmzData[el].shared_storage_id);
-                option.setAttribute("perms", proAmzData[el].perms);
-                option.setAttribute("status", proAmzData[el].status);
-                option.setAttribute("amz_key", proAmzData[el].amazon_cre_id);
-                option.setAttribute("auto_workdir", proAmzData[el].auto_workdir);
-
+                // check ajaxquery.php getProfileVariables-> for host definitions
+                option.setAttribute("host", data.shared_storage_id);
+                option.setAttribute("perms", data.perms);
+                option.setAttribute("status", data.status);
+                option.setAttribute("amz_key", data.amazon_cre_id);
+                option.setAttribute("auto_workdir", data.auto_workdir);
                 $("#chooseEnv").append(option);
-            });
+            } else if (data.google_cre_id != undefined){
+                var option = "";
+                if (data.perms == "15"){
+                    option = new Option(data.name, 'google-' + data.id)
+                } else{
+                    option = new Option(data.name + ' (Google: Status:' + data.status + ' Image id:' + data.image_id + ' Instance type:' + data.instance_type + ')', 'google-' + data.id)
+                }
+                // check ajaxquery.php getprofilevariables-> for host definitions
+                option.setAttribute("host", data.image_id);
+                option.setAttribute("perms", data.perms);
+                option.setAttribute("status", data.status);
+                option.setAttribute("goog_key", data.google_cre_id);
+                option.setAttribute("auto_workdir", data.auto_workdir);
+                $("#chooseEnv").append(option);
+            }
         }
     }
     if (selectedOpt) {
@@ -4254,13 +4329,7 @@ function checkReadytoRun(type) {
     });
     var numInputRows = $('#inputsTable > tbody').find('tr[id*=input]').length; //find input rows
     var profileNext = $('#chooseEnv').find(":selected").val();
-    var profileNextText = $('#chooseEnv').find(":selected").html();
-    if (profileNextText) {
-        if (profileNextText.match(/Amazon: Status:/)) {
-            var patt = /(.*)Amazon: Status:(.*) Image(.*)/;
-            var amzStatus = profileNextText.replace(patt, '$2');
-        }
-    }
+    var cloudStatus = $('#chooseEnv').find(":selected").attr("status")
     var output_dir = $runscope.getPubVal("work");
 
     var publishReady = false;
@@ -4277,22 +4346,16 @@ function checkReadytoRun(type) {
         publishReady = true;
     }
     //check if s3: is defined in publish_dir and getProPipeInputs
-    var s3check = checkS3(publish_dir, getProPipeInputs);
-    var s3value = $('#mRunAmzKey').val();
-    if (s3check === true && s3value !== null) {
-        var s3status = true;
-    } else if (s3check === false) {
-        var s3status = true;
-    } else {
-        var s3status = false;
-    }
+    var s3Status = checkCloudPatt("s3:", "#mRunAmzKeyDiv", '#mRunAmzKey', publish_dir, getProPipeInputs);
+//    var gsStatus = checkCloudPatt("gs:", "#mRunGoogKeyDiv", '#mRunGoogKey', publish_dir, getProPipeInputs);
+
     //if ready and not running/waits/error
-    if (publishReady && s3status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
+    if (publishReady && s3Status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
         console.log("initial runStatus")
         console.log(runStatus)
         if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun") {
-            if (amzStatus) {
-                if (amzStatus === "running") {
+            if (cloudStatus) {
+                if (cloudStatus === "running") {
                     console.log(checkType)
                     if (checkType === "rerun" || checkType === "resumerun") {
                         runStatus = "aboutToStart"
@@ -4359,6 +4422,29 @@ function checkShub() {
     }
 }
 
+function checkCloudType(){
+    var cloudType = $("#chooseEnv").find(":selected").val();
+    var patt = /(.*)-(.*)/;
+    var proType = cloudType.replace(patt, '$1');
+    if (proType){
+        if (proType == "amazon"){
+            $("#mArchAmzS3Div_GEO").css('display', "block");
+            $("#mArchAmzS3Div").css('display', "block");
+            $("#mArchGoogGSDiv").css('display', "none");
+            $("#mArchGoogGSDiv_GEO").css('display', "none");
+        } else if (proType == "google"){
+            $("#mArchAmzS3Div_GEO").css('display', "none");
+            $("#mArchAmzS3Div").css('display', "none");
+            $("#mArchGoogGSDiv").css('display', "block");
+            $("#mArchGoogGSDiv_GEO").css('display', "block");
+        } else{
+            $("#mArchAmzS3Div_GEO").css('display', "block");
+            $("#mArchAmzS3Div").css('display', "block");
+            $("#mArchGoogGSDiv").css('display', "block");
+            $("#mArchGoogGSDiv_GEO").css('display', "block");
+        }
+    }
+}
 
 function checkWorkDir(){
     var showInfoM = false
@@ -4395,14 +4481,27 @@ $("#publish_dir_check").click(function () {
 //file import modal
 $("#file_dir").keyup(function () {
     autoCheckS3("#file_dir", "#mRunAmzKeyS3Div");
+//    autoCheckGS("#file_dir", "#mRunGoogKeyGSDiv");
 });
 $("#s3_archive_dir_geo").keyup(function () {
     autoCheckS3("#s3_archive_dir_geo", "#mArchAmzKeyS3Div_GEO");
 });
 
+
 $("#s3_archive_dir").keyup(function () {
     autoCheckS3("#s3_archive_dir", "#mArchAmzKeyS3Div");
 });
+
+//$("#gs_archive_dir").keyup(function () {
+//    autoCheckGS("#gs_archive_dir", "#mArchGoogKeyGSDiv");
+//});
+//
+//$("#gs_archive_dir_geo").keyup(function () {
+//    autoCheckGS("#gs_archive_dir_geo", "#mArchGoogKeyGSDiv_GEO");
+//});
+
+
+
 
 var timeoutCheck = 0;
 function autoCheck(type) {
@@ -4425,29 +4524,33 @@ function autoCheck(type) {
     }
 }
 
-var timeoutCheckS3 = 0;
-function autoCheckS3(inputID,showDivId) {
-    if (timeoutCheckS3) {
-        clearTimeout(timeoutCheckS3);
-    }
-    timeoutCheckS3 = setTimeout(function () { checkS3filePath(inputID,showDivId) }, 2000);
+
+timeoutCheckGS = 0;
+function autoCheckGS(inputID,showDivId) {
+    var pattern ="gs:";
+    if (timeoutCheckGS) { clearTimeout(timeoutCheckGS); }
+    timeoutCheckGS = setTimeout(function () { checkCloudfilePath(pattern, inputID,showDivId) }, 2000);
 }
 
-var timeoutCheckWorkDir = 0;
+timeoutCheckS3 = 0;
+function autoCheckS3(inputID,showDivId) {
+    var pattern ="s3:";
+    if (timeoutCheckS3) { clearTimeout(timeoutCheckS3); }
+    timeoutCheckS3 = setTimeout(function () { checkCloudfilePath(pattern, inputID,showDivId) }, 2000);
+}
+
+timeoutCheckWorkDir = 0;
 function autoCheckWorkDir() {
-    if (timeoutCheckWorkDir) {
-        clearTimeout(timeoutCheckWorkDir);
-    }
+    if (timeoutCheckWorkDir) { clearTimeout(timeoutCheckWorkDir); }
     timeoutCheckWorkDir = setTimeout(function () { checkWorkDir() }, 3000);
 }
 
 //check if file import path contains s3:// pattern and shows aws menu
-function checkS3filePath(inputID,showDivId) {
+function checkCloudfilePath(pattern, inputID,showDivId) {
     var file_path = $(inputID).val();
-    var s3pattern = 's3:';
     var pathCheck = false;
     if (file_path !== '') {
-        if (file_path.toLowerCase().indexOf(s3pattern) > -1) {
+        if (file_path.toLowerCase().indexOf(pattern) > -1) {
             $(showDivId).css('display', "block");
             pathCheck = true;
         } 
@@ -4459,13 +4562,13 @@ function checkS3filePath(inputID,showDivId) {
 
 
 //check if path contains s3:// pattern and shows aws menu
-function checkS3(path, getProPipeInputs) {
+function checkCloudPatt(pattern, div, key, path, getProPipeInputs) {
+    var pattCheck;
     //path part
-    var s3pattern = 's3:';
     var pathCheck = false;
     if (path !== '') {
-        if (path.toLowerCase().indexOf(s3pattern) > -1) {
-            $("#mRunAmzKeyDiv").css('display', "inline");
+        if (path.toLowerCase().indexOf(pattern) > -1) {
+            $(div).css('display', "inline");
             pathCheck = true;
         } else {
             pathCheck = false;
@@ -4478,21 +4581,30 @@ function checkS3(path, getProPipeInputs) {
     $.each(getProPipeInputs, function (el) {
         var inputName = getProPipeInputs[el].name;
         if (inputName) {
-            if (inputName.indexOf(s3pattern) > -1) {
-                $("#mRunAmzKeyDiv").css('display', "inline");
+            if (inputName.indexOf(pattern) > -1) {
+                $(div).css('display', "inline");
                 nameCheck = nameCheck + 1;
             }
         }
     });
     if (nameCheck === 0 && pathCheck === false) {
-        $("#mRunAmzKeyDiv").css('display', "none");
-        return false;
+        $(div).css('display', "none");
+        pattCheck = false;
     } else {
-        return true;
+        pattCheck = true;
     }
+
+    var keyvalue = $(key).val();
+    var status = false;
+    if (pattCheck === true && keyvalue !== null) {
+        status = true;
+    } else if (pattCheck === false) {
+        status = true;
+    }
+    return status;
 }
 
-function loadAmzKeys() {
+function loadCloudKeys() {
     var data = getValues({ p: "getAmz" });
     if (data && data != "") {
         $.each(data, function (i, item) {
@@ -4502,20 +4614,46 @@ function loadAmzKeys() {
             $('#mArchAmzKeyS3_GEO').append($('<option>', { value: item.id, text : item.name }));
         });
     }
+    var dataG = getValues({ p: "getGoogle" });
+    if (dataG && dataG != "") {
+        $.each(dataG, function (i, item) {
+            $('#mRunGoogKey').append($('<option>', { value: item.id, text : item.name }));
+            $('#mRunGoogKeyGS').append($('<option>', { value: item.id, text : item.name }));
+            $('#mArchGoogKeyGS').append($('<option>', { value: item.id, text : item.name }));
+            $('#mArchGoogKeyGS_GEO').append($('<option>', { value: item.id, text : item.name }));
+        });
+    }
 }
-//autoselect mRunAmzKey based on selected profile
-function selectAmzKey() {
-    var amzKeyId = $("#chooseEnv").find(":selected").attr('amz_key')
-    if (amzKeyId) {
-        $("#mRunAmzKey").val(parseInt(amzKeyId));
-        $("#mRunAmzKeyS3").val(parseInt(amzKeyId));
-        $("#mArchAmzKeyS3").val(parseInt(amzKeyId));
-        $("#mArchAmzKeyS3_GEO").val(parseInt(amzKeyId));
-        $("#mRunAmzKey").trigger("change");
-        $("#mRunAmzKeyS3").trigger("change");
-        $("#mArchAmzKeyS3").trigger("change");
-        $("#mArchAmzKeyS3_GEO").trigger("change");
+
+
+//autoselect selectCloudKey based on selected profile
+function selectCloudKey(cloud) {
+    if (cloud == "amazon"){
+        var amzKeyId = $("#chooseEnv").find(":selected").attr('amz_key')
+        if (amzKeyId) {
+            $("#mRunAmzKey").val(parseInt(amzKeyId));
+            $("#mRunAmzKeyS3").val(parseInt(amzKeyId));
+            $("#mArchAmzKeyS3").val(parseInt(amzKeyId));
+            $("#mArchAmzKeyS3_GEO").val(parseInt(amzKeyId));
+            $("#mRunAmzKey").trigger("change");
+            $("#mRunAmzKeyS3").trigger("change");
+            $("#mArchAmzKeyS3").trigger("change");
+            $("#mArchAmzKeyS3_GEO").trigger("change");
+        }  
+    } else if (cloud == "google"){
+        var googKeyId = $("#chooseEnv").find(":selected").attr('goog_key')
+        if (googKeyId) {
+            $("#mRunGoogKey").val(parseInt(googKeyId));
+            $("#mRunGoogKeyGS").val(parseInt(googKeyId));
+            $("#mArchGoogKeyGS").val(parseInt(googKeyId));
+            $("#mArchGoogKeyGS_GEO").val(parseInt(googKeyId));
+            $("#mRunGoogKey").trigger("change");
+            $("#mRunGoogKeyGS").trigger("change");
+            $("#mArchGoogKeyGS").trigger("change");
+            $("#mArchGoogKeyGS_GEO").trigger("change");
+        }  
     } 
+
 }
 
 function configTextAllProcess(confText, exec_all_settings, type, proName, executor_job) {
@@ -4700,7 +4838,7 @@ function getPathArray() {
                 var colFiles = getValues({ "id": collection_id, "p": "getCollectionFiles" })
                 for (var i = 0; i < colFiles.length; i++) {
                     if (colFiles[i].file_dir){
-                        if (!colFiles[i].file_dir.match(/s3:/i)){
+                        if (!colFiles[i].file_dir.match(/s3:/i) || !colFiles[i].file_dir.match(/gs:/i)){
                             var inputPath = colFiles[i].file_dir;
                             if (pathArray.indexOf(inputPath) === -1) {
                                 pathArray.push(inputPath)
@@ -4826,11 +4964,20 @@ function getPathArrayL1(pathArray){
 
 //initial run run-options to send with ajax
 function getInitRunOptions(pathArrayL1) {
+    var pathArrayL1Clone = pathArrayL1.slice();
+    //default add /home to initial run binding list if google cloud is used. (credential file is required in the image)
+    var cloudType = $("#chooseEnv").find(":selected").val();
+    var patt = /(.*)-(.*)/;
+    var proType = cloudType.replace(patt, '$1');
+    if (proType == "google" && pathArrayL1Clone.indexOf("/home") === -1) {
+        pathArrayL1Clone.push("/home")
+    }
+
     var excludePaths = ["/lib", "/opt", "/bin", "/boot", "/dev", "/lib64", "/media", "/proc", "/root", "/sbin", "/srv", "/sys", "/usr", "/var"]
     // docker.runOptions = -v /export:/export
     // singularity.runOptions = -B /export:/export
     var runOptions = "";
-    if (pathArrayL1.length > 0) {
+    if (pathArrayL1Clone.length > 0) {
         //default for initial run
         var conType = "";
         var bindParam = "";
@@ -4847,9 +4994,9 @@ function getInitRunOptions(pathArrayL1) {
         }
         runOptions += conType+".runOptions='";
         //combine items as /path -> /path:/path
-        for (var k = 0; k < pathArrayL1.length; k++) {
-            if ($.inArray(pathArrayL1[k], excludePaths) === -1){
-                runOptions += bindParam+" "+pathArrayL1[k]+":"+pathArrayL1[k]+" " 
+        for (var k = 0; k < pathArrayL1Clone.length; k++) {
+            if ($.inArray(pathArrayL1Clone[k], excludePaths) === -1){
+                runOptions += bindParam+" "+pathArrayL1Clone[k]+":"+pathArrayL1Clone[k]+" " 
             }
         }
         runOptions += "'\n";
@@ -4930,61 +5077,20 @@ function runProPipeCall(checkType, uuid) {
     proIdWindow = proId;
     window.configTextRaw = '';
 
+    var amazon_cre_id = "";
+    var google_cre_id = "";
     //check if s3 path is defined in output or file paths
-    var checkAmzKeysDiv = $("#mRunAmzKeyDiv").css('display');
-    if (checkAmzKeysDiv === "inline") {
-        var amazon_cre_id = $("#mRunAmzKey").val();
-    } else {
-        var amazon_cre_id = "";
-    }
+    if ($("#mRunAmzKeyDiv").css('display') === "inline") {
+        amazon_cre_id = $("#mRunAmzKey").val();
+    } 
+    google_cre_id = $("#mRunGoogKey").val();
     //check if Deletion for intermediate files  is checked
-    if ($('#intermeDel').is(":checked") === true) {
-        window.configTextRaw  += "cleanup = true \n";
-        window.initRunOptions += "cleanup = true \n";
-    }
+//    if ($('#intermeDel').is(":checked") === true) {
+//        window.configTextRaw  += "cleanup = true \n";
+//        window.initRunOptions += "cleanup = true \n";
+//    }
     var [allProSett, profileData] = getJobData("both");
     var docker_check = $('#docker_check').is(":checked").toString();
-    if ($('#docker_check').is(":checked") === true) {
-        var docker_img = $('#docker_img').val();
-        var docker_opt = $('#docker_opt').val();
-        window.configTextRaw += 'process.container = \'' + docker_img + '\'\n';
-        window.configTextRaw += 'docker.enabled = true\n';
-        if (docker_opt !== '') {
-            window.configTextRaw += 'docker.runOptions = \'' + docker_opt + '\'\n';
-        }
-    }
-    if ($('#singu_check').is(":checked") === true) {
-        var singu_img = $('#singu_img').val();
-        var patt = /^shub:\/\/(.*)/g;
-        var singuPath = singu_img.replace(patt, '$1');
-        var mntPath = "";
-        if (profileData[0].shared_storage_mnt) {
-            mntPath = profileData[0].shared_storage_mnt + '/.dolphinnext/singularity';
-        } else {
-            mntPath = "//$NXF_SINGULARITY_CACHEDIR";
-        }
-        if (profileData[0].singu_cache) {
-            mntPath = profileData[0].singu_cache;
-        }
-
-        if (patt.test(singu_img)) {
-            singuPath = singuPath.replace(/\//g, '-')
-            var downSingu_img = mntPath + '/' + singuPath + '.simg';
-        } else if (singu_img.match(/http:/) || singu_img.match(/https:/) || singu_img.match(/ftp:/)){
-            var singuPathAr = singuPath.split('/')
-            singuPath = singuPathAr[singuPathAr.length-1]
-            var downSingu_img = mntPath + '/'+ singuPath;
-        } else {
-            var downSingu_img = singu_img;
-        }
-
-        var singu_opt = $('#singu_opt').val();
-        window.configTextRaw += 'process.container = \'' + downSingu_img + '\'\n';
-        window.configTextRaw += 'singularity.enabled = true\n';
-        if (singu_opt !== '') {
-            window.configTextRaw += 'singularity.runOptions = \'' + singu_opt + '\'\n';
-        }
-    }
     var executor_job = profileData[0].executor_job;
     var executor = profileData[0].executor;
     //if executor is local check cpu and memory fields in profile.
@@ -5054,6 +5160,7 @@ function runProPipeCall(checkType, uuid) {
         profileId: proId,
         initRunOptions: initRunOptions,
         docker_check: docker_check,
+        google_cre_id: google_cre_id,
         amazon_cre_id: amazon_cre_id,
         project_pipeline_id: project_pipeline_id,
         runType: checkType,
@@ -5532,13 +5639,14 @@ function saveRun() {
             onload = "refreshEnv";
         }
     }
-    //checkAmzKeysDiv
-    var checkAmzKeysDiv = $("#mRunAmzKeyDiv").css('display');
-    if (checkAmzKeysDiv === "inline") {
-        var amazon_cre_id = $("#mRunAmzKey").val();
-    } else {
-        var amazon_cre_id = "";
+    //check cloud keys
+    var amazon_cre_id = "";
+    var google_cre_id = "";
+    if ($("#mRunAmzKeyDiv").css('display') === "inline") {
+        amazon_cre_id = $("#mRunAmzKey").val();
     }
+    google_cre_id = $("#mRunGoogKey").val();
+
     var output_dir = $runscope.getPubVal("work");
     var publish_dir = $runscope.getPubVal("publish");
     var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
@@ -5570,6 +5678,7 @@ function saveRun() {
         data.push({ name: "project_id", value: project_id });
         data.push({ name: "pipeline_id", value: newpipelineID });
         data.push({ name: "amazon_cre_id", value: amazon_cre_id });
+        data.push({ name: "google_cre_id", value: google_cre_id });
         data.push({ name: "summary", value: runSummary });
         data.push({ name: "output_dir", value: output_dir });
         data.push({ name: "publish_dir", value: publish_dir });
@@ -5624,9 +5733,9 @@ function saveRun() {
 function getProfileData(proType, proId) {
     if (proType === 'cluster') {
         var profileData = getValues({ p: "getProfileCluster", id: proId, type:"run" });
-    } else if (proType === 'amazon') {
-        var profileData = getValues({ p: "getProfileAmazon", id: proId, type:"run" });
-    }
+    } else if (proType === 'amazon' || proType === 'google') {
+        var profileData = getValues({ p: "getProfileCloud", cloud:proType, id: proId, type:"run" });
+    } 
     return profileData;
 }
 
@@ -5942,43 +6051,53 @@ function resetPatternList() {
 
 function viewDirButSearch(dir){
     var amazon_cre_id = "";
+    var google_cre_id = "";
     var warnUser = false;
     if (dir) {
-        if (dir.match(/s3:/i)){
-            var lastChr = dir.slice(-1);
-            if (lastChr == "/"){
+        if (dir.match(/:\/\//)){
+            var lastChr1 = dir.slice(-1);
+            var lastChr2 = dir.slice(-2);
+            if (lastChr1 == "/" && lastChr2 != "//"){
                 dir = dir.substring(0, dir.length - 1);
-            }
+            }  
+        }
+        console.log(dir)
+        if (dir.match(/s3:/i)){
             amazon_cre_id = $('#mRunAmzKeyS3').val()
             if (!amazon_cre_id){
                 showInfoModal("#infoModal", "#infoModalText", "Please select Amazon Keys to search files in your S3 storage.");
                 warnUser = true;
             } 
-        } else if (dir.match(/:\/\//)){
-            var lastChr = dir.slice(-1);
-            if (lastChr == "/"){
-                dir = dir.substring(0, dir.length - 1);
-            }  
-        }
+        } else if (dir.match(/gs:/i)){
+            google_cre_id = $('#mRunGoogKeyGS').val()
+            if (!google_cre_id){
+                showInfoModal("#infoModal", "#infoModalText", "Please select Google Keys to search files in your Google storage.");
+                warnUser = true;
+            } 
+        } 
         if (!warnUser){
-            var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id, project_pipeline_id:project_pipeline_id });
+            var dirList = getValues({ "p": "getLsDir", dir: dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id, google_cre_id:google_cre_id,  project_pipeline_id:project_pipeline_id });
             if (dirList) {
                 dirList = $.trim(dirList)
                 console.log(dirList)
                 var fileArr = [];
                 var errorAr = [];
-                if (dir.match(/s3:/i)){
+                if (dir.match(/s3:/i) || dir.match(/gs:/i)){
                     var raw = dirList.split('\n');
                     for (var i = 0; i < raw.length; i++) {
                         var filePath = raw[i].split(" ").pop();
                         if (filePath){
-                            if (filePath.match(/s3:/i)){
+                            if (filePath.toLowerCase() === dir.toLowerCase() || filePath.toLowerCase() === dir.toLowerCase()+"/"){
+                                console.log("skip", filePath)
+                                continue;
+                            }
+                            if (filePath.match(/s3:/i) || filePath.match(/gs:/i)) {
                                 var allBlock = filePath.split("/");
                                 if (filePath.substr(-1) == "/"){
-                                    var lastBlock = allBlock[allBlock.length-2]
-                                    } else {
-                                        var lastBlock = allBlock[allBlock.length-1]
-                                        }
+                                    var lastBlock = allBlock[allBlock.length-2];
+                                } else {
+                                    var lastBlock = allBlock[allBlock.length-1];
+                                }
                                 fileArr.push(lastBlock)
                             } else {
                                 errorAr.push(raw[i])
@@ -6003,10 +6122,11 @@ function viewDirButSearch(dir){
                     $("#viewDir").data("fileArr", fileArr)
                     $("#viewDir").data("fileDir", dir)
                     var amzKey = ""
-                    if (dir.match(/s3:/i)){
-                        amzKey= $("#mRunAmzKeyS3").val()
-                    }
-                    $("#viewDir").data("amzKey", amzKey)
+                    var googKey = ""
+                    if (dir.match(/s3:/i)){ amzKey= $("#mRunAmzKeyS3").val(); }
+                    if (dir.match(/gs:/i)){ googKey= $("#mRunGoogKeyGS").val(); }
+                    $("#viewDir").data("amzKey", amzKey);
+                    $("#viewDir").data("googKey", googKey);
 
                     $('#collection_type').trigger("change");
                 } else {
@@ -6202,12 +6322,14 @@ $(document).ready(function () {
             $("#viewDir").removeData("fileArr");
             $("#viewDir").removeData("fileDir");
             $("#viewDir").removeData("amzKey");
+            $("#viewDir").removeData("googKey");
             fillArray2Select([], "#viewDir", true)
             resetPatternList()
             clearSelection()
             selectedGeoSamplesTable.fnClearTable();
             searchedGeoSamplesTable.fnClearTable();
-            selectAmzKey()
+            selectCloudKey("amazon")
+            selectCloudKey("google")
             $('.forwardpatternDiv').css("display", "none")
             $('.reversepatternDiv').css("display", "none")
             $('.singlepatternDiv').css("display", "none")
@@ -6789,9 +6911,6 @@ $(document).ready(function () {
         });
         //--GEO SEARCH ENDS--
 
-
-
-
         $('#addFileModal').on('click', '#mSaveFiles', function (event) {
             event.preventDefault();
             var checkTab = $('#addFileModal').find('.active.tab-pane')[0].getAttribute('id');
@@ -6807,8 +6926,12 @@ $(document).ready(function () {
                 for (var i = 0; i < rowData.length; i++) {
                     var file_dir = rowData[i][2];
                     var amzKey = rowData[i][4];
+                    var googKey = rowData[i][5];
                     if (file_dir.match(/s3:/i)){
                         file_dir = file_dir+"\t"+amzKey
+                    }
+                    if (file_dir.match(/gs:/i)){
+                        file_dir = file_dir+"\t"+googKey
                     }
                     fileDirArr.push(file_dir);
                 }
@@ -6817,17 +6940,26 @@ $(document).ready(function () {
                     infoModalText += ret.warnUser;
                 } 
                 if (!ret.file_array.length) {
-                    infoModalText += " * Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons."
+                    infoModalText += " * Please fill table by clicking 'Add All Files' or 'Add Selected Files' buttons.\n"
                 } 
                 var s3_archive_dir  = $.trim($("#s3_archive_dir").val());
                 var amzArchKey  = $("#mArchAmzKeyS3").val();
-
                 if (!warnUser && s3_archive_dir.match(/s3:/i)){
                     if (!amzArchKey){
-                        infoModalText += " * Please select Amazon Archive Keys to save files into your S3 storage.";
+                        infoModalText += " * Please select Amazon Archive Keys to save files into your S3 storage.\n";
                         warnUser = true;
                     } 
                 }
+                var gs_archive_dir  = $.trim($("#gs_archive_dir").val());
+                var googArchKey  = $("#mArchGoogKeyGS").val();
+                if (!warnUser && gs_archive_dir.match(/gs:/i)){
+                    if (!googArchKey){
+                        infoModalText += " * Please select Google Archive Keys to save files into your Google storage.\n";
+                        warnUser = true;
+                    } 
+                }
+
+
                 if (infoModalText){
                     showInfoModal("#infoModal", "#infoModalText", infoModalText);
                 }
@@ -6849,6 +6981,9 @@ $(document).ready(function () {
 
                     if (s3_archive_dir.match(/s3:/i)){
                         formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
+                    }
+                    if (gs_archive_dir.match(/gs:/i)){
+                        formObj.gs_archive_dir = gs_archive_dir+"\t"+googArchKey
                     }
                     formObj.file_array = ret.file_array;
                     formObj.run_env = $('#chooseEnv').find(":selected").val();
@@ -6882,13 +7017,21 @@ $(document).ready(function () {
                     infoModalText += ret.warnUser;
                 }
                 if (!ret.file_array.length) {
-                    infoModalText += " * Please fill 'Selected GEO Files' table by clicking 'Select' buttons in the 'Searched GEO Files' table."
+                    infoModalText += " * Please fill 'Selected GEO Files' table by clicking 'Select' buttons in the 'Searched GEO Files' table.\n"
                 }
                 var s3_archive_dir_geo  = $.trim($("#s3_archive_dir_geo").val());
                 var amzArchKey  = $("#mArchAmzKeyS3_GEO").val();
                 if (s3_archive_dir_geo.match(/s3:/i)){
                     if (!amzArchKey){
-                        infoModalText += " * Please select Amazon Keys to save files into your S3 storage.";
+                        infoModalText += " * Please select Amazon Keys to save files into your S3 storage.\n";
+                        warnUser = true;
+                    } 
+                }
+                var gs_archive_dir_geo  = $.trim($("#gs_archive_dir_geo").val());
+                var googArchKey  = $("#mArchGoogKeyGS_GEO").val();
+                if (gs_archive_dir_geo.match(/gs:/i)){
+                    if (!googArchKey){
+                        infoModalText += " * Please select Google Keys to save files into your Google storage.\n";
                         warnUser = true;
                     } 
                 }
@@ -6917,6 +7060,9 @@ $(document).ready(function () {
                     }
                     if (s3_archive_dir_geo.match(/s3:/i)){
                         formObj.s3_archive_dir = s3_archive_dir_geo+"\t"+amzArchKey
+                    }
+                    if (gs_archive_dir_geo.match(/gs:/i)){
+                        formObj.gs_archive_dir = gs_archive_dir_geo+"\t"+googArchKey
                     }
                     formObj.file_array = ret.file_array
                     formObj.run_env = $('#chooseEnv').find(":selected").val();
@@ -7033,7 +7179,7 @@ $(document).ready(function () {
         sScrollX: "100%",
         "columnDefs": [
             {
-                'targets': [4],
+                'targets': [4,5],
                 visible: false
             },
         ]
@@ -7058,10 +7204,10 @@ $(document).ready(function () {
             }
             return '<tbody><tr><td>'+text+'</td></tr></tbody>';
         }
-        var s3Clean = function (text){
+        var pattClean = function (text){
             if (!text){
                 text = "";
-            } else if (text.match(/s3:/i)){
+            } else if (text.match(/s3:/i) || text.match(/gs:/i) ){
                 var textPath = $.trim(text).split("\t")[0]
                 if (textPath){
                     text = textPath;
@@ -7076,7 +7222,7 @@ $(document).ready(function () {
             tableRows += getBodyRow(data.name);
             if (data.file_dir){
                 tableRows += getHeaderRow("Input File(s) Directory:")
-                tableRows += getBodyRow(s3Clean(data.file_dir))
+                tableRows += getBodyRow(pattClean(data.file_dir))
                 tableRows += getHeaderRow("Input File(s):")
                 tableRows += getBodyRow(data.files_used.replace(/\|/g, '<br/>'))
             } else {
@@ -7096,7 +7242,9 @@ $(document).ready(function () {
             tableRows += getHeaderRow("Local Archive Directory:")
             tableRows += getBodyRow(data.archive_dir)
             tableRows += getHeaderRow("Amazon S3 Backup:")
-            tableRows += getBodyRow(s3Clean(data.s3_archive_dir))
+            tableRows += getBodyRow(pattClean(data.s3_archive_dir))
+            tableRows += getHeaderRow("Google Storage Backup:")
+            tableRows += getBodyRow(pattClean(data.gs_archive_dir))
             if (data.run_env){
                 tableRows += getHeaderRow("Run Environment:")
                 tableRows += getBodyRow(data.run_env) 
@@ -7373,12 +7521,18 @@ $(document).ready(function () {
                 mRunAmzKeyS3 = $("#viewDir").data("amzKey")
             }
 
+            var mRunGoogKeyGS = "";
+            if (fileDir.match(/gs:/i)){
+                mRunGoogKeyGS = $("#viewDir").data("googKey")
+            }
+
             selectedSamplesTable.fnAddData([
                 input.outerHTML,
                 file_string,
                 fileDir,
                 button_div.outerHTML,
-                mRunAmzKeyS3
+                mRunAmzKeyS3,
+                mRunGoogKeyGS
             ]);
         }
     }
@@ -7433,13 +7587,18 @@ $(document).ready(function () {
                 if (fileDir.match(/s3:/i)){
                     mRunAmzKeyS3 = $("#viewDir").data("amzKey")
                 }
+                var mRunGoogKeyGS = "";
+                if (fileDir.match(/gs:/i)){
+                    mRunGoogKeyGS = $("#viewDir").data("googKey")
+                }
 
                 selectedSamplesTable.fnAddData([
                     input.outerHTML,
                     file_string,
                     fileDir,
                     button_div.outerHTML,
-                    mRunAmzKeyS3
+                    mRunAmzKeyS3,
+                    mRunGoogKeyGS
                 ]);
             }
         }
@@ -7523,6 +7682,9 @@ $(document).ready(function () {
         $(document).on('change', '#mRunAmzKey', function () {
             checkReadytoRun();
         })
+        $(document).on('change', '#mRunGoogKey', function () {
+            checkReadytoRun();
+        })
     });
 
 
@@ -7540,8 +7702,10 @@ $(document).ready(function () {
             proTypeWindow = proType;
             proIdWindow = proId;
             fillForm('#allProcessSettTable', 'input', allProSett);
-            selectAmzKey();
+            selectCloudKey("amazon");
+            selectCloudKey("google");
             checkShub()
+            checkCloudType()
             checkReadytoRun();
             //save run in change 
             saveRun();
@@ -8344,7 +8508,8 @@ $(document).ready(function () {
                         //get files in the target directory
                         var target_dir = $runscope.getUploadDir("exist");
                         var amazon_cre_id = "";
-                        var dirList = getValues({ "p": "getLsDir", dir: target_dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id, project_pipeline_id: project_pipeline_id });
+                        var google_cre_id = "";
+                        var dirList = getValues({ "p": "getLsDir", dir: target_dir, profileType: proTypeWindow, profileId: proIdWindow, amazon_cre_id:amazon_cre_id, google_cre_id:google_cre_id, project_pipeline_id: project_pipeline_id });
                         console.log(dirList)
                         var fileArr = [];
                         var errorAr = [];

@@ -1,6 +1,14 @@
 //global data libraries
 window.ajaxData = {};
 
+function initCloudData(cloud){
+    window[cloud+"Data"] = {};
+    window[cloud+"Data"].stop = false;
+}
+
+initCloudData("amazon");
+initCloudData("google");
+
 //user role
 function callusRole() {
     var userRole = getValues({ p: "getUserRole" });
@@ -180,223 +188,241 @@ function removeDoubleQuote(script) {
 
 //refreshSession every 10 minutes
 window.setInterval( function() {
-    console.log("refreshSession")
     $.ajax({
         cache: false,
         type: "GET",
         url: "ajax/refreshSession.php",
         success: function(data) {
-            console.log("session refreshed")
         }
     });
 }, 600000 );
 
 
 
-// check the amazon profiles activity each 40 sec.
-checkAmzProfiles("timer");
+// check the cloud profiles activity each 40 sec.
+checkCloudProfiles("timer", "amazon");
+checkCloudProfiles("timer", "google");
 
 //to start timer, enter "timer" as input
-function checkAmzProfiles(timer) {
-    var proAmzData = getValues({ p: "getProfileAmazon" });
-    if (proAmzData) {
-        if (proAmzData.length > 0) {
-            $('#manageAmz').css('display', 'inline');
+function checkCloudProfiles(timer, cloud) {
+    if (cloud == "amazon"){
+        var icon = '#manageAmz';
+        var amountIcon = '#amzAmount';
+    } else if (cloud == "google"){
+        var icon = '#manageGoog';
+        var amountIcon = '#googAmount';
+    }
+    var proData = getValues({ p: "getProfileCloud", cloud:cloud });
+    if (proData) {
+        if (proData.length > 0) {
+            $(icon).css('display', 'inline');
             var countActive = 0;
-            for (var k = 0; k < proAmzData.length; k++) {
-                if (proAmzData[k].status === "running" || proAmzData[k].status === "waiting" || proAmzData[k].status === "initiated" || proAmzData[k].status === "retry") {
+            for (var k = 0; k < proData.length; k++) {
+                if (proData[k].status === "running" || proData[k].status === "waiting" || proData[k].status === "initiated" || proData[k].status === "retry") {
                     countActive++;
                 }
                 if (timer === "timer") {
-                    checkAmazonTimer(proAmzData[k].id, 60000);
+                    checkCloudTimer(proData[k].id, 60000, cloud);
                 }
                 window.modalRec = {};
-                window.modalRec['last_status_log_' + proAmzData[k].id] = "";
-                window.modalRec['last_status_' + proAmzData[k].id] = proAmzData[k].status;
+                window.modalRec[cloud+'last_status_log_' + proData[k].id] = "";
+                window.modalRec[cloud+'last_status_' + proData[k].id] = proData[k].status;
             }
             if (countActive > 0) {
-                $('#amzAmount').css('display', 'inline');
-                $('#amzAmount').text(countActive);
+                $(amountIcon).css('display', 'inline');
+                $(amountIcon).text(countActive);
             } else {
-                $('#amzAmount').text(countActive);
-                $('#amzAmount').css('display', 'none');
+                $(amountIcon).text(countActive);
+                $(amountIcon).css('display', 'none');
             }
         }
     }
 }
 
 //interval will decide the check period: default: 20 sec. for termination 5 sec
-function checkAmazonTimer(proId, interval) {
-    window['interval_amzStatus_' + proId] = setInterval(function () {
-        var runAmzCloudCheck = runAmazonCloudCheck(proId);
-        setTimeout(function () { checkAmazonStatus(proId); }, 5000);
+function checkCloudTimer(proId, interval, cloud) {
+    var intervalName = 'interval_'+cloud+'Status_' + proId;
+    window[intervalName] = setInterval(function () {
+        //run CloudCheck command which creates log file in apprx. 3 seconds. 
+        getValues({ p: "runCloudCheck", cloud: cloud, profileId: proId });
+        setTimeout(function () { checkCloudStatus(proId, cloud); }, 5000);
     }, interval);
 }
 
-//run CloudCheck command which creates log file in apprx. 3 seconds. 
-function runAmazonCloudCheck(proId) {
-    var runAmzCloudCheck = getValues({ p: "runAmazonCloudCheck", profileId: proId });
-    return runAmzCloudCheck;
-}
-stopAmz = false;
+
+
 retryTimer = 5000;
 //read CloudCheck log file
-function checkAmazonStatus(proId) {
-    var checkAmazonStatusLog = getValues({ p: "checkAmazonStatus", profileId: proId });
-    console.log(checkAmazonStatusLog)
-    var logAmzStart = "";
-    var logAmzCloudList = "";
-    if (checkAmazonStatusLog.logAmzStart){
-        logAmzStart = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" data="amzLogStart" id="amzLogStart-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Log"><span><i class="fa fa-file-text-o"></i></span></a></button>'
+function checkCloudStatus(proId, cloud) {
+    var intervalName = 'interval_'+cloud+'Status_' + proId;
+    var checkCloudStatusLog = getValues({ p: "checkCloudStatus", cloud:cloud , profileId: proId });
+    console.log(checkCloudStatusLog)
+    var logStart = "";
+    var logCloudList = "";
+    if (checkCloudStatusLog.logStart){
+        logStart = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" cloud='+cloud+' data="cloudLogStart" id="'+cloud+'LogStart-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Log"><span><i class="fa fa-file-text-o"></i></span></a></button>'
     }
-    if (checkAmazonStatusLog.logAmzCloudList){
-        logAmzCloudList = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" data="AmzCloudListLog" id="AmzCloudListLog-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Cloud List"><span><i class="fa fa-file-text-o"></i></span></a></button>'
+    if (checkCloudStatusLog.logCloudList){
+        logCloudList = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" cloud='+cloud+' data="cloudListLog" id="'+cloud+'CloudListLog-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Cloud List"><span><i class="fa fa-file-text-o"></i></span></a></button>'
     }
 
 
-    if (stopAmz && checkAmazonStatusLog.status !== "terminated") {
-        window.modalRec['last_status_log_' + proId] = "Waiting for termination..";
-        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
-        clearInterval(window['interval_amzStatus_' + proId]);
-        checkAmazonTimer(proId, 5500);
-    } else if (checkAmazonStatusLog.status === "waiting") {
-        window.modalRec['last_status_log_' + proId] = "Waiting for reply..";
-        $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
-        clearInterval(window['interval_amzStatus_' + proId]);
-        checkAmazonTimer(proId, 20000);
-    } else if (checkAmazonStatusLog.status === "initiated") {
-        window.modalRec['last_status_log_' + proId] = "Initializing..";
-        window.modalRec['last_status_' + proId] = checkAmazonStatusLog.status;
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> Initializing..' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
-        clearInterval(window['interval_amzStatus_' + proId]);
-        checkAmazonTimer(proId, 20000);
-    } else if (checkAmazonStatusLog.status === "retry") { //could not read the log file
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'none');
-        var tempLog = window.modalRec['last_status_log_' + proId]
+    if (window[cloud+"Data"].stop && checkCloudStatusLog.status !== "terminated") {
+        window.modalRec[cloud+'last_status_log_' + proId] = "Waiting for termination..";
+        $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..' + "<p>" + logStart + logCloudList + "</p>");
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
+        clearInterval(window[intervalName]);
+        checkCloudTimer(proId, 5500, cloud);
+    } else if (checkCloudStatusLog.status === "waiting") {
+        window.modalRec[cloud+'last_status_log_' + proId] = "Waiting for reply..";
+        $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..' + "<p>" + logStart + logCloudList + "</p>");
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').attr('disabled', 'disabled');
+        clearInterval(window[intervalName]);
+        checkCloudTimer(proId, 20000, cloud);
+    } else if (checkCloudStatusLog.status === "initiated") {
+        window.modalRec[cloud+'last_status_log_' + proId] = "Initializing..";
+        window.modalRec[cloud+'last_status_' + proId] = checkCloudStatusLog.status;
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-half"></i> Initializing..' + "<p>" + logStart + logCloudList + "</p>");
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
+        clearInterval(window[intervalName]);
+        checkCloudTimer(proId, 20000, cloud);
+    } else if (checkCloudStatusLog.status === "retry") { //could not read the log file
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'none');
+        var tempLog = window.modalRec[cloud+'last_status_log_' + proId]
         if (tempLog) {
-            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + tempLog + "<p>" + logAmzStart + logAmzCloudList + "</p>");
+            $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-half"></i> ' + tempLog + "<p>" + logStart + logCloudList + "</p>");
         } else {
-            $('#status-' + proId).html('<i class="fa fa-hourglass-half"></i> ' + "<p>" + logAmzStart + logAmzCloudList + "</p>");
+            $('#status-'+ cloud + proId).html('<i class="fa fa-hourglass-half"></i> ' + "<p>" + logStart + logCloudList + "</p>");
         }
-        clearInterval(window['interval_amzStatus_' + proId]);
-        checkAmazonTimer(proId, retryTimer);
+        clearInterval(window[intervalName]);
+        checkCloudTimer(proId, retryTimer, cloud);
         if (retryTimer <= 19000) {
             retryTimer += 1000;
         }
-        var lastStat = window.modalRec['last_status_' + proId];
+        var lastStat = window.modalRec[cloud+'last_status_' + proId];
         if (lastStat === "running" || lastStat === "initiated") {
-            $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-            $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
+            $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+            $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
         }
 
 
-    } else if (checkAmazonStatusLog.status === "running") {
-        window.modalRec['last_status_' + proId] = checkAmazonStatusLog.status;
+    } else if (checkCloudStatusLog.status === "running") {
+        window.modalRec[cloud+'last_status_' + proId] = checkCloudStatusLog.status;
         //check if run env. in run page is amazon and status is not running (then activate loadRunOptions()
         var chooseEnv = $('#chooseEnv').find(":selected").val();
         if (chooseEnv) {
             var status = $('#chooseEnv').find(":selected").attr("status");
             if (status) {
-                if (chooseEnv === "amazon-" + proId && status !== "running") {
+                if (chooseEnv === cloud+"-" + proId && status !== "running") {
                     loadRunOptions("silent"); //used from runpipeline.js
                 }
             }
-
         }
-        if (checkAmazonStatusLog.sshText) {
-            var sshText = "(" + checkAmazonStatusLog.sshText + ")";
+        if (checkCloudStatusLog.sshText) {
+            var sshText = "(" + checkCloudStatusLog.sshText + ")";
         } else {
             var sshText = "";
         }
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#status-' + proId).html('Running <br/>' + sshText + "<p>" + logAmzStart + logAmzCloudList + "</p>");
-        window.modalRec['last_status_log_' + proId] = 'Running <br/>' + sshText;
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        $('#status-' + cloud + proId).html('Running <br/>' + sshText + "<p>" + logStart + logCloudList + "</p>");
+        window.modalRec[cloud+'last_status_log_' + proId] = 'Running <br/>' + sshText;
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
 
-    } else if (checkAmazonStatusLog.status === "inactive") {
-        clearInterval(window['interval_amzStatus_' + proId]);
-        $('#status-' + proId).text('Inactive');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'inline');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-    } else if (checkAmazonStatusLog.status === "terminated") {
-        stopAmz = false;
-        clearInterval(window['interval_amzStatus_' + proId]);
-        window.modalRec['last_status_log_' + proId] = "";
-        window.modalRec['last_status_' + proId] = checkAmazonStatusLog.status;
-        if (checkAmazonStatusLog.logAmzCloudList) {
-            var logText = checkAmazonStatusLog.logAmzCloudList;
+    } else if (checkCloudStatusLog.status === "inactive") {
+        clearInterval(window[intervalName]);
+        $('#status-' + cloud + proId).text('Inactive');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').attr('disabled', 'disabled');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'inline');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+    } else if (checkCloudStatusLog.status === "terminated") {
+        var chooseEnv = $('#chooseEnv').find(":selected").val();
+        if (chooseEnv) {
+            var status = $('#chooseEnv').find(":selected").attr("status");
+            if (status) {
+                if (chooseEnv === cloud+"-" + proId && status !== "terminated") {
+                    loadRunOptions("silent"); //used from runpipeline.js
+                }
+            }
+        }
+
+        window[cloud+"Data"].stop = false;
+        clearInterval(window[intervalName]);
+        window.modalRec[cloud+'last_status_log_' + proId] = "";
+        window.modalRec[cloud+'last_status_' + proId] = checkCloudStatusLog.status;
+        var errorText = "";
+        if (checkCloudStatusLog.logCloudList) {
+            var logText = checkCloudStatusLog.logCloudList;
             if (logText.match(/INSTANCE ID ADDRESS STATUS ROLE(.*)/)) {
-                var errorText = logText.match(/INSTANCE ID ADDRESS STATUS ROLE(.*)/)[1];
-                if (errorText !== "") {
-                    errorText = "(" + errorText + ")";
+                var errorT = logText.match(/INSTANCE ID ADDRESS STATUS ROLE(.*)/)[1];
+                if (errorT !== "" && !errorT.match(/stopping/i)) {
+                    errorText = "(" + errorT + ")";
                 }
             } else {
-                errorText = "(" + logText + ")";
+                if (!logText.match(/stopping/i)) {
+                    errorText = "(" + logText + ")";
+                }
             }
-        } else {
-            var errorText = "";
-        }
-        if (errorText === "" && checkAmazonStatusLog.logAmzStart) {
-            var logTextStart = checkAmazonStatusLog.logAmzStart;
+        } 
+        if (errorText === "" && checkCloudStatusLog.logStart) {
+            var logTextStart = checkCloudStatusLog.logStart;
             //WARN: One or more errors have been detected parsing EC2 prices
-            if ((logTextStart.match(/error/i) && !logTextStart.match(/WARN: One or more errors/i)) || logTextStart.match(/denied/i) || logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
+            if ((logTextStart.match(/ERROR/) && !logTextStart.match(/WARN: One or more errors/i)) || logTextStart.match(/denied/i) || logTextStart.match(/invalid/i)|| logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
                 errorText = "(" + logTextStart + ")";
         }
-        $('#status-' + proId).html('Terminated <br/>' + errorText );
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'inline');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
+        $('#status-' + cloud + proId).html('Terminated <br/>' + errorText );
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'inline');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').attr('disabled', 'disabled');
     } else {
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').css('display', 'inline');
-        $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').removeAttr('disabled');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
     }
     $('[data-toggle="tooltip"]').tooltip();
-    if (checkAmazonStatusLog.logAmzStart){
-        $('#amzLogStart-'+proId).data("logData", checkAmazonStatusLog.logAmzStart)
+    if (checkCloudStatusLog.logStart){
+        $('#'+cloud+'LogStart-'+proId).data("logData", checkCloudStatusLog.logStart)
     }
-    if (checkAmazonStatusLog.logAmzCloudList){
-        $('#AmzCloudListLog-'+proId).data("logData", checkAmazonStatusLog.logAmzCloudList)
+    if (checkCloudStatusLog.logCloudList){
+        $('#'+cloud+'CloudListLog-'+proId).data("logData", checkCloudStatusLog.logCloudList)
     }
 
     // set autoshutdown counter
-    var proAmzData = getValues({ p: "getProfileAmazon", id:proId });
-    var autoshutdown_check = proAmzData[0].autoshutdown_check;
-    var autoshutdown_active = proAmzData[0].autoshutdown_active;
-    var autoshutdown_date = proAmzData[0].autoshutdown_date;
-    var pro_status = proAmzData[0].status;
+    var proData = getValues({ p: "getProfileCloud", cloud:cloud, id:proId });
+    var autoshutdown_check = proData[0].autoshutdown_check;
+    var autoshutdown_active = proData[0].autoshutdown_active;
+    var autoshutdown_date = proData[0].autoshutdown_date;
+    var pro_status = proData[0].status;
 
     if (autoshutdown_check == "true" && autoshutdown_active == "true" && autoshutdown_date && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")){
-        if (!window['countdown_' + proId]){
-            console.log("countdown_"+proId+"setInterval")
-            window['elapsed_' + proId]  = 0;
-            window['countdown_' + proId] = setInterval(function () {
-                window['elapsed_' + proId] ++;
-                var remaining = autoshutdown_date-window['elapsed_' + proId];
-                var autoshutdown_check = $('#autoshutdown-' + proId).is(":checked").toString();
+        if (!window[cloud+'countdown_' + proId]){
+            window[cloud+'elapsed_' + proId]  = 0;
+            window[cloud+'countdown_' + proId] = setInterval(function () {
+                window[cloud+'elapsed_' + proId] ++;
+                var remaining = autoshutdown_date-window[cloud+'elapsed_' + proId];
+                var autoshutdown_check = $('#'+cloud+'autoshutdown-' + proId).is(":checked").toString();
                 if (autoshutdown_check == "true"){
                     if (remaining < 1) {
-                        clearInterval(window['countdown_' + proId]);
-                        window['countdown_' + proId] = null;
-                        window['elapsed_' + proId] = 0;
-                        stopAmzByAjax(proId)
-                        $('#shutdownTimer-' + proId).text("Terminated")
+                        clearInterval(window[cloud+'countdown_' + proId]);
+                        window[cloud+'countdown_' + proId] = null;
+                        window[cloud+'elapsed_' + proId] = 0;
+                        stopCloudByAjax(proId, cloud)
+                        $('#'+cloud+'shutdownLog-'+proId).text("");
+                        $('#'+cloud+'shutdownTimer-' + proId).text("Shutdown Triggered")
                     } else {
-                        $('#shutdownTimer-' + proId).text(remaining+" sec.")
+                        $('#'+cloud+'shutdownTimer-' + proId).text(remaining+" sec.")
                     }
                 } else {
-                    $('#shutdownTimer-' + proId).text("");
-                    clearInterval(window['countdown_' + proId]);
-                    window['countdown_' + proId] = null;
-                    window['elapsed_' + proId] = 0;
+                    $('#'+cloud+'shutdownTimer-' + proId).text("");
+                    clearInterval(window[cloud+'countdown_' + proId]);
+                    window[cloud+'countdown_' + proId] = null;
+                    window[cloud+'elapsed_' + proId] = 0;
                 }
             }, 1000); 
         }
@@ -404,40 +430,41 @@ function checkAmazonStatus(proId) {
 
 }
 
-function stopAmzByAjax(proId){
-    var data = { "id": proId, "p": "stopProAmazon" };
+function stopCloudByAjax(proId, cloud){
+    var intervalName = 'interval_'+cloud+'Status_' + proId;
     $.ajax({
         type: "POST",
         url: "ajax/ajaxquery.php",
-        data: data,
+        data: { "id": proId, cloud: cloud, "p": "stopProCloud" },
         async: true,
         success: function (s) {
             if (s.stop_cloud) {
-                stopAmz = true;
-                $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
+                window[cloud+"Data"].stop = true;
+                $('#status-'+ cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
                 //clear previous interval and set new one(with faster check interval).
-                clearInterval(window['interval_amzStatus_' + proId]);
-                setTimeout(function () { checkAmazonTimer(proId, 5500); }, 1000);
+                clearInterval(window[intervalName]);
+                setTimeout(function () { checkCloudTimer(proId, 5500, cloud); }, 1000);
             }
         }
     });
 }
 
-function updAmzActive(proId, proAmzData) {
-    if (!proAmzData){
-        proAmzData = getValues({ p: "getProfileAmazon", id:proId });
-        if (proAmzData){
-            proAmzData = proAmzData[0];
+function updCloudActive(proId, proData, cloud) {
+    if (!proData){
+        proData = getValues({ p: "getProfileCloud", cloud: cloud, id:proId });
+        if (proData){
+            proData = proData[0];
         }
     }
-    var autoshutdown_check = proAmzData.autoshutdown_check;
-    var autoshutdown_active = proAmzData.autoshutdown_active;
-    var autoshutdown_date = proAmzData.autoshutdown_date;
-    var pro_status = proAmzData.status;
+    var autoshutdown_check = proData.autoshutdown_check;
+    var autoshutdown_active = proData.autoshutdown_active;
+    var autoshutdown_date = proData.autoshutdown_date;
+    var pro_status = proData.status;
     if (autoshutdown_check == null){ autoshutdown_check = ""; }
     if (autoshutdown_active == null){ autoshutdown_active = ""; }
     if (autoshutdown_date == null){ autoshutdown_date = ""; }
     var activeTxt = "";
+
     if (autoshutdown_check == "true" && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")){
         if (autoshutdown_active == "true"){
             if (autoshutdown_date !== ""){
@@ -449,7 +476,7 @@ function updAmzActive(proId, proAmzData) {
             activeTxt = "Idle - Waiting for the initial run";
         }
     }
-    $('#shutdownLog-'+proId).text(activeTxt);
+    $('#'+cloud+'shutdownLog-'+proId).text(activeTxt);
 }
 
 //mode: edit/add , type: runenv
@@ -493,10 +520,9 @@ function loadOngoingWizard (type){
                         // check if user has seen any wizard before
                         if (data.length < 1) {
                             //check if user has any run environment. if not-> show wizard
-                            var proCluData = getValues({ p: "getProfileCluster", type:"run" });
-                            var proAmzData = getValues({ p: "getProfileAmazon", type:"run" });
-                            if (proCluData && proAmzData) {
-                                if (proCluData.length + proAmzData.length < 1) {
+                            var proData = getValues({ p: "getProfiles" });
+                            if (proData) {
+                                if (proData.length < 1) {
                                     $("#addProfileWizard").trigger("click");
                                 }
                             }
@@ -511,120 +537,81 @@ function loadOngoingWizard (type){
             }
         });
     }
-
 }   
 
-$(document).ready(function () {
-
-    $(function () {
-        $(document).on('change', '.autoShutCheck', function (event) {
-            var autoShutCheck = $(this).is(":checked").toString();
-            var amzProfileId = $(this).attr("id").split("-")[1];
-            var proAmzData = getValuesErr({ p: "updateAmzShutdownCheck", autoshutdown_check:autoShutCheck, id: amzProfileId });
-            if (autoShutCheck == "false"){
-                $('#shutdownLog-'+amzProfileId).empty();
-                $('#shutdownTimer-'+amzProfileId).empty();
-            } else {
-                updAmzActive(amzProfileId, "")
-                checkAmazonStatus(amzProfileId);
-            }
-        });
-        $(document).on('click', 'button[data=amzLogStart]', function (e) {
-            e.preventDefault();
-            var amzProfileId = $(this).attr("id").split("-")[1];
-            var logData = $('#amzLogStart-'+amzProfileId).data("logData")
-            if (logData.match(/Downloading nextflow dependencies(.*)Fetching EC2 prices/)){
-                logData = logData.replace(/Downloading nextflow dependencies(.*)Fetching EC2 prices/,'')
-            }
-            logData = logData.replace(/\n/g, '<br/>');
-            showInfoModal("#infoMod","#infoModText", logData)
-        });
-        $(document).on('click', 'button[data=AmzCloudListLog]', function (e) {
-            e.preventDefault();
-            var amzProfileId = $(this).attr("id").split("-")[1];
-            var logData = $('#AmzCloudListLog-'+amzProfileId).data("logData")
-            logData = logData.replace(/\n/g, '<br/>');
-            showInfoModal("#infoMod","#infoModText", logData)
-        });
-
-
-    });
-    function addAmzRow(id, name, executor, instance_type, image_id, subnet_id, autoshutdown_check, autoshutdown_active, autoshutdown_date, status, proAmzData) {
-        if (autoshutdown_check == null){ autoshutdown_check = ""; }
-        var checked = "";
-        if (autoshutdown_check == "true"){
-            checked = "checked";
-        }
-        var checkBox = '<input id="autoshutdown-' + id + '" class="autoShutCheck" type="checkbox"  name="autoshutdown_check" '+checked+'><p id="shutdownLog-' + id + '"></p><p id="shutdownTimer-' + id + '"></p>';
-
-        $('#amzTable > tbody').append('<tr id="amazon-' + id + '"> <td>' + name + '</td><td>Instance_type: ' + instance_type + '<br>  Image id: ' + image_id + '<br>  Subnet Id: ' + subnet_id + '<br> Executor: ' + executor + '<br>  </td><td>'+checkBox+'</td><td id="status-' + id + '"><i class="fa fa-hourglass-half"></i></td><td>' + getButtonsDef('amz', 'Start') + getButtonsDef('amz', 'Stop') + '</td></tr>');
-        updAmzActive(id, proAmzData)
-
+function addCloudRow(cloud, id, name, executor, instance_type, image_id, subnet_id, autoshutdown_check, autoshutdown_active, autoshutdown_date, status, proData) {
+    if (autoshutdown_check == null){ autoshutdown_check = ""; }
+    var checked = "";
+    if (autoshutdown_check == "true"){
+        checked = "checked";
     }
+    var checkBox = '<input id="'+cloud+'autoshutdown-' + id + '" cloud="'+cloud+'" class="autoShutCheck" type="checkbox"  name="autoshutdown_check" '+checked+'><p id="'+cloud+'shutdownLog-' + id + '"></p><p id="'+cloud+'shutdownTimer-' + id + '"></p>';
 
+    $('#'+cloud+'Table > tbody').append('<tr id="'+cloud+'-' + id + '"> <td>' + name + '</td><td>Instance_type: ' + instance_type + '<br>  Image id: ' + image_id + '<br>  Executor: ' + executor + '<br>  </td><td>'+checkBox+'</td><td id="status-'+ cloud + id + '"><i class="fa fa-hourglass-half"></i></td><td>' + getButtonsDef(cloud, 'Start') + getButtonsDef(cloud, 'Stop') + '</td></tr>');
+    updCloudActive(id, proData, cloud)
 
+}
 
-    $('#amzModal').on('show.bs.modal', function (event) {
+function initCloudConsole(cloud){
+    $('#'+cloud+'Modal').on('show.bs.modal', function (event) {
         $(this).find('form').trigger('reset');
-        var proAmzData = getValues({ p: "getProfileAmazon" });
-        $('#amzTable > tbody').empty();
-        $.each(proAmzData, function (el) {
-            addAmzRow(proAmzData[el].id, proAmzData[el].name, proAmzData[el].executor, proAmzData[el].instance_type, proAmzData[el].image_id, proAmzData[el].subnet_id, proAmzData[el].autoshutdown_check, proAmzData[el].autoshutdown_active, proAmzData[el].autoshutdown_date, proAmzData[el].status, proAmzData[el]);
-            checkAmazonStatus(proAmzData[el].id);
+        var proData = getValues({ p: "getProfileCloud", cloud:cloud});
+        $('#'+cloud+'Table > tbody').empty();
+        $.each(proData, function (el) {
+            addCloudRow(cloud, proData[el].id, proData[el].name, proData[el].executor, proData[el].instance_type, proData[el].image_id, proData[el].subnet_id, proData[el].autoshutdown_check, proData[el].autoshutdown_active, proData[el].autoshutdown_date, proData[el].status, proData[el]);
+            checkCloudStatus(proData[el].id, cloud);
         });
     });
 
-    //close amzModal
-    $('#amzModal').on('hide.bs.modal', function (event) {
-        $('#amzTable td ').remove();
-        checkAmzProfiles("notimer");
+    $('#'+cloud+'Modal').on('hide.bs.modal', function (event) {
+        $('#'+cloud+'Table td ').remove();
+        checkCloudProfiles("notimer", cloud);
     });
 
-    $('#amzModal').on('click', '#amzStart', function (e) {
+    $('#'+cloud+'Modal').on('click', '#'+cloud+'Start', function (e) {
         e.preventDefault();
         var clickedRowId = $(this).closest('tr').attr('id'); //local-20
         var patt = /(.*)-(.*)/;
         var proId = clickedRowId.replace(patt, '$2');
-        if (window['countdown_' + proId]){
-            window['countdown_' + proId] = null;
+        if (window[cloud+'countdown_' + proId]){
+            window[cloud+'countdown_' + proId] = null;
         }
-        //enter amazon details modal
-        $('#addAmzNodeModal').off();
-        $('#addAmzNodeModal').on('show.bs.modal', function (event) {
+        //enter cloud details modal
+        $('#add'+cloud+'NodeModal').off();
+        $('#add'+cloud+'NodeModal').on('show.bs.modal', function (event) {
             $(this).find('form').trigger('reset');
-            if ($('#autoshutdown-'+proId).is(":checked").toString() == "true"){
-                $('#autoshut_check').prop('checked', true)
+            if ($('#'+cloud+'autoshutdown-'+proId).is(":checked").toString() == "true"){
+                $('#'+cloud+'autoshut_check').prop('checked', true)
             }
         });
-        //close addAmzNodeModal
-        $('#addAmzNodeModal').on('hide.bs.modal', function (event) {
-            $('#autoscaleDiv').attr('class', 'collapse');
+        $('#add'+cloud+'NodeModal').on('hide.bs.modal', function (event) {
+            $('#'+cloud+'autoscaleDiv').attr('class', 'collapse');
         });
-        $('#addAmzNodeModal').on('click', '#activateAmz', function (event) {
+        $('#add'+cloud+'NodeModal').on('click', '#'+cloud+'Activate', function (event) {
             event.preventDefault();
             var data = {};
-            var numNodes = $('#numNodes').val();
-            var autoshutdown_check = $('#autoshut_check').is(":checked").toString();
+            var numNodes = $('#'+cloud+'numNodes').val();
+            var autoshutdown_check = $('#'+cloud+'autoshut_check').is(":checked").toString();
 
-
-            $('#shutdownLog-'+proId).empty();
-            $('#shutdownTimer-'+proId).empty();
+            $('#'+cloud+'shutdownLog-'+proId).empty();
+            $('#'+cloud+'shutdownTimer-'+proId).empty();
             if (autoshutdown_check == "true"){
-                $('#autoshutdown-'+proId).prop('checked', true);
-                updAmzActive(proId, "")
+                $('#'+cloud+'autoshutdown-'+proId).prop('checked', true);
+                updCloudActive(proId, "", cloud)
             } else {
-                $('#autoshutdown-'+proId).prop('checked', false);
+                $('#'+cloud+'autoshutdown-'+proId).prop('checked', false);
             }
-            var autoscale_check = $('#autoscale_check').is(":checked").toString();
-            var autoscale_maxIns = $('#autoscale_maxIns').val();
+            var autoscale_check = $('#'+cloud+'autoscale_check').is(":checked").toString();
+            var autoscale_maxIns = $('#'+cloud+'autoscale_maxIns').val();
             if (numNodes !== '') {
                 data = {
                     "id": proId,
                     "nodes": numNodes,
+                    "cloud": cloud,
                     "autoshutdown_check": autoshutdown_check,
                     "autoscale_check": autoscale_check,
                     "autoscale_maxIns": autoscale_maxIns,
-                    "p": "startProAmazon"
+                    "p": "startProCloud"
                 };
                 $.ajax({
                     type: "POST",
@@ -634,36 +621,78 @@ $(document).ready(function () {
                     success: function (s) {
                         if (s.start_cloud) {
                             // check the amazon profiles activity each minute.
-                            $('#status-' + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..');
-                            $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStart').css('display', 'none');
-                            $('#amzTable > tbody > #amazon-' + proId + ' > > #amzStop').attr('disabled', 'disabled');
-                            $('#addAmzNodeModal').modal('hide');
-                            clearInterval(window['interval_amzStatus_' + proId]);
-                            checkAmazonTimer(proId, 20000);
+                            $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..');
+                            $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
+                            $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').attr('disabled', 'disabled');
+                            $('#add'+cloud+'NodeModal').modal('hide');
+                            var intervalName = 'interval_'+cloud+'Status_' + proId;
+                            clearInterval(window[intervalName]);
+                            checkCloudTimer(proId, 20000, cloud);
                         }
                     }
                 });
             }
         });
-        $('#addAmzNodeModal').modal('show');
+        $('#add'+cloud+'NodeModal').modal('show');
     });
 
-    $('#amzModal').on('click', '#amzStop', function (e) {
+    $('#'+cloud+'Modal').on('click', '#'+cloud+'Stop', function (e) {
         e.preventDefault();
         var clickedRowId = $(this).closest('tr').attr('id'); //local-20
         var patt = /(.*)-(.*)/;
         var proId = clickedRowId.replace(patt, '$2');
-        var data = { "id": proId, "p": "stopProAmazon" };
-        stopAmzByAjax(proId);
-        if (window['countdown_' + proId]){
-            clearInterval(window['countdown_' + proId]);
+        stopCloudByAjax(proId,cloud);
+        if (window[cloud+'countdown_' + proId]){
+            clearInterval(window[cloud+'countdown_' + proId]);
         }
-        $('#shutdownTimer-' + proId).text("");
-        //        window['countdown_' + proId] = null;
-        window['elapsed_' + proId] = 0;
-        $('#shutdownLog-'+proId).empty();
-        $('#shutdownTimer-'+proId).empty();
+        $('#'+cloud+'shutdownTimer-' + proId).text("");
+        window[cloud+'elapsed_' + proId] = 0;
+        $('#'+cloud+'shutdownLog-'+proId).empty();
+        $('#'+cloud+'shutdownTimer-'+proId).empty();
     });
+
+}
+
+$(document).ready(function () {
+    initCloudConsole("amazon");
+    initCloudConsole("google");
+
+    $(function () {
+        $(document).on('change', '.autoShutCheck', function (event) {
+            var cloud = $(this).attr("cloud");
+            var autoShutCheck = $(this).is(":checked").toString();
+            var profileId = $(this).attr("id").split("-")[1];
+            var proData = getValuesErr({ p: "updateCloudShutdownCheck", cloud:cloud, autoshutdown_check:autoShutCheck, id: profileId });
+            if (autoShutCheck == "false"){
+                $('#'+cloud+'shutdownLog-'+profileId).empty();
+                $('#'+cloud+'shutdownTimer-'+profileId).empty();
+            } else {
+                updCloudActive(profileId, "", cloud)
+                checkCloudStatus(profileId, cloud);
+            }
+        });
+        $(document).on('click', 'button[data=cloudLogStart]', function (e) {
+            e.preventDefault();
+            var cloud = $(this).attr("cloud");
+            var profileId = $(this).attr("id").split("-")[1];
+            var logData = $('#'+cloud+'LogStart-'+profileId).data("logData")
+            if (logData.match(/Downloading nextflow dependencies(.*)Fetching EC2 prices/)){
+                logData = logData.replace(/Downloading nextflow dependencies(.*)Fetching EC2 prices/,'')
+            }
+            logData = logData.replace(/\n/g, '<br/>');
+            showInfoModal("#infoMod","#infoModText", logData)
+        });
+        $(document).on('click', 'button[data=cloudListLog]', function (e) {
+            e.preventDefault();
+            var profileId = $(this).attr("id").split("-")[1];
+            var cloud = $(this).attr("cloud");
+            var logData = $('#'+cloud+'CloudListLog-'+profileId).data("logData")
+            logData = logData.replace(/\n/g, '<br/>');
+            showInfoModal("#infoMod","#infoModText", logData)
+        });
+    });
+
+
     $(function () {
         //check latest release and warn admin
         if (usRole == "admin"){
