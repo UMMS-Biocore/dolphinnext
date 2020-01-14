@@ -1210,7 +1210,7 @@ class dbfuncs {
             $access_key = $amz_data[0]->{'amz_acc_key'};
             $secret_key = $amz_data[0]->{'amz_suc_key'};
             $default_region = $amz_data[0]->{'amz_def_reg'};
-            $configText = "export AWS_ACCESS_KEY_ID=$access_key && export AWS_SECRET_ACCESS_KEY=$secret_key && export AWS_DEFAULT_REGION=$default_region";
+            $configText = "export AWS_ACCESS_KEY_ID=$access_key\nexport AWS_SECRET_ACCESS_KEY=$secret_key\nexport AWS_DEFAULT_REGION=$default_region";
         }
         return $configText;
     }
@@ -1325,7 +1325,7 @@ class dbfuncs {
         //.aws_cred file to export credentials to remote machine
         if (!empty($amzConfigText)){
             $this->createDirFile ($run_path_real, ".aws_cred", 'w', $amzConfigText );
-            $amzCmd = "bash $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
+            $amzCmd = "source $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
         }
         //create run cmd file (.dolphinnext.init)
         $runCmdAll = $amzCmd." ".$renameLog." ".$preCmd." ".$exec_next_all;
