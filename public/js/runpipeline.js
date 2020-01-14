@@ -1632,7 +1632,7 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                     }
                 }
             }
-            
+
             $("input.execcheckbox").each(function(){
                 $(this).prop('checked', false);
             })
@@ -1661,9 +1661,9 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                     $(this).val(allProSett.job_clu_opt);
                 })
             }
-            
-            
-            
+
+
+
         });
     }
     $("#chooseEnv").change(autoFillJSON, function () {
@@ -3901,7 +3901,7 @@ function loadProjectPipeline(pipeData) {
             }
         }
     }, 1000);
-    checkCloudType()
+    checkCloudType(pipeData[0].profile)
     //load cloud keys for possible s3/gs connection
     loadCloudKeys();
     if (pipeData[0].amazon_cre_id !== "0") {
@@ -4347,7 +4347,7 @@ function checkReadytoRun(type) {
     }
     //check if s3: is defined in publish_dir and getProPipeInputs
     var s3Status = checkCloudPatt("s3:", "#mRunAmzKeyDiv", '#mRunAmzKey', publish_dir, getProPipeInputs);
-//    var gsStatus = checkCloudPatt("gs:", "#mRunGoogKeyDiv", '#mRunGoogKey', publish_dir, getProPipeInputs);
+    //    var gsStatus = checkCloudPatt("gs:", "#mRunGoogKeyDiv", '#mRunGoogKey', publish_dir, getProPipeInputs);
 
     //if ready and not running/waits/error
     if (publishReady && s3Status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
@@ -4422,28 +4422,30 @@ function checkShub() {
     }
 }
 
-function checkCloudType(){
-    var cloudType = $("#chooseEnv").find(":selected").val();
-    var patt = /(.*)-(.*)/;
-    var proType = cloudType.replace(patt, '$1');
-    if (proType){
-        if (proType == "amazon"){
-            $("#mArchAmzS3Div_GEO").css('display', "block");
-            $("#mArchAmzS3Div").css('display', "block");
-            $("#mArchGoogGSDiv").css('display', "none");
-            $("#mArchGoogGSDiv_GEO").css('display', "none");
-        } else if (proType == "google"){
-            $("#mArchAmzS3Div_GEO").css('display', "none");
-            $("#mArchAmzS3Div").css('display', "none");
-            $("#mArchGoogGSDiv").css('display', "block");
-            $("#mArchGoogGSDiv_GEO").css('display', "block");
-        } else{
-            $("#mArchAmzS3Div_GEO").css('display', "block");
-            $("#mArchAmzS3Div").css('display', "block");
-            $("#mArchGoogGSDiv").css('display', "block");
-            $("#mArchGoogGSDiv_GEO").css('display', "block");
-        }
+function checkCloudType(profileTypeId){
+    if (profileTypeId){
+        var patt = /(.*)-(.*)/;
+        var proType = profileTypeId.replace(patt, '$1');
+        if (proType){
+            if (proType == "amazon"){
+                $("#mArchAmzS3Div_GEO").css('display', "block");
+                $("#mArchAmzS3Div").css('display', "block");
+                $("#mArchGoogGSDiv").css('display', "none");
+                $("#mArchGoogGSDiv_GEO").css('display', "none");
+            } else if (proType == "google"){
+                $("#mArchAmzS3Div_GEO").css('display', "none");
+                $("#mArchAmzS3Div").css('display', "none");
+                $("#mArchGoogGSDiv").css('display', "block");
+                $("#mArchGoogGSDiv_GEO").css('display', "block");
+            } else{
+                $("#mArchAmzS3Div_GEO").css('display', "block");
+                $("#mArchAmzS3Div").css('display', "block");
+                $("#mArchGoogGSDiv").css('display', "block");
+                $("#mArchGoogGSDiv_GEO").css('display', "block");
+            }
+        }  
     }
+
 }
 
 function checkWorkDir(){
@@ -4481,7 +4483,7 @@ $("#publish_dir_check").click(function () {
 //file import modal
 $("#file_dir").keyup(function () {
     autoCheckS3("#file_dir", "#mRunAmzKeyS3Div");
-//    autoCheckGS("#file_dir", "#mRunGoogKeyGSDiv");
+    //    autoCheckGS("#file_dir", "#mRunGoogKeyGSDiv");
 });
 $("#s3_archive_dir_geo").keyup(function () {
     autoCheckS3("#s3_archive_dir_geo", "#mArchAmzKeyS3Div_GEO");
@@ -5085,10 +5087,10 @@ function runProPipeCall(checkType, uuid) {
     } 
     google_cre_id = $("#mRunGoogKey").val();
     //check if Deletion for intermediate files  is checked
-//    if ($('#intermeDel').is(":checked") === true) {
-//        window.configTextRaw  += "cleanup = true \n";
-//        window.initRunOptions += "cleanup = true \n";
-//    }
+    //    if ($('#intermeDel').is(":checked") === true) {
+    //        window.configTextRaw  += "cleanup = true \n";
+    //        window.initRunOptions += "cleanup = true \n";
+    //    }
     var [allProSett, profileData] = getJobData("both");
     var docker_check = $('#docker_check').is(":checked").toString();
     var executor_job = profileData[0].executor_job;
@@ -7705,7 +7707,7 @@ $(document).ready(function () {
             selectCloudKey("amazon");
             selectCloudKey("google");
             checkShub()
-            checkCloudType()
+            checkCloudType(profileTypeId)
             checkReadytoRun();
             //save run in change 
             saveRun();

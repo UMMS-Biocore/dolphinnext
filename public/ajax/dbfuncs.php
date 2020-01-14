@@ -1318,7 +1318,7 @@ class dbfuncs {
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
         $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $ownerID);
         $amzCmd = "";
-        //temporary copy s3/gs config file into initialrun folder 
+        //temporarily copy s3/gs config file into initialrun folder 
         if (!empty($getCloudConfigFileDir)){
             $this->recurse_copy($getCloudConfigFileDir, $run_path_real."/initialrun");
         }
