@@ -1198,7 +1198,6 @@ class dbfuncs {
     }
 
     function getAmazonConfig($amazon_cre_id,$ownerID){
-        //if  $amazon_cre_id is defined append the aws credentials into nextflow.config
         $configText = "";
         if ($amazon_cre_id != "" ){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
@@ -1211,7 +1210,7 @@ class dbfuncs {
             $access_key = $amz_data[0]->{'amz_acc_key'};
             $secret_key = $amz_data[0]->{'amz_suc_key'};
             $default_region = $amz_data[0]->{'amz_def_reg'};
-            $configText = "export AWS_ACCESS_KEY_ID=$access_key && export AWS_SECRET_ACCESS_KEY=$access_key && export AWS_DEFAULT_REGION=$default_region";
+            $configText = "export AWS_ACCESS_KEY_ID=$access_key\nexport AWS_SECRET_ACCESS_KEY=$secret_key\nexport AWS_DEFAULT_REGION=$default_region";
         }
         return $configText;
     }
@@ -1319,14 +1318,14 @@ class dbfuncs {
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
         $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $ownerID);
         $amzCmd = "";
-        //temporary copy s3/gs config file into initialrun folder 
+        //temporarily copy s3/gs config file into initialrun folder 
         if (!empty($getCloudConfigFileDir)){
             $this->recurse_copy($getCloudConfigFileDir, $run_path_real."/initialrun");
         }
         //.aws_cred file to export credentials to remote machine
         if (!empty($amzConfigText)){
             $this->createDirFile ($run_path_real, ".aws_cred", 'w', $amzConfigText );
-            $amzCmd = "bash $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
+            $amzCmd = "source $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
         }
         //create run cmd file (.dolphinnext.init)
         $runCmdAll = $amzCmd." ".$renameLog." ".$preCmd." ".$exec_next_all;
@@ -3204,10 +3203,10 @@ class dbfuncs {
         return $cmd_log;
     }
 
-    function getRsyncStatus($fileName, $email, $ownerID){
+    function getRsyncStatus($fileName, $ownerID){
         $log = "";
         $tmp_path = $this->tmp_path;
-        $upload_dir = "$tmp_path/uploads/{$email}";
+        $upload_dir = "$tmp_path/uploads/{$ownerID}";
         $logfile = $upload_dir."/.".$fileName;
         if (file_exists($logfile)){
             $log = $this->readFile($logfile);
@@ -3215,9 +3214,9 @@ class dbfuncs {
         return json_encode($log);
     }
 
-    function resetUpload($fileName, $email, $ownerID){
+    function resetUpload($fileName, $ownerID){
         $tmp_path = $this->tmp_path;
-        $upload_dir = "$tmp_path/uploads/{$email}";
+        $upload_dir = "$tmp_path/uploads/{$ownerID}";
         $rsyncPidFile = $upload_dir."/.".$fileName.".rsyncPid";
         if (file_exists($rsyncPidFile)){
             $rsyncPid = $this->readFile($rsyncPidFile);

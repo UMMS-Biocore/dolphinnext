@@ -109,11 +109,11 @@ else if ($p=="getFileList"){
 }
 else if ($p=="getRsyncStatus"){
     $filename  = $_REQUEST['filename'];
-    $data = $db->getRsyncStatus($filename, $email, $ownerID);
+    $data = $db->getRsyncStatus($filename, $ownerID);
 }
 else if ($p=="resetUpload"){
     $filename  = $_REQUEST['filename'];
-    $data = $db->resetUpload($filename, $email, $ownerID);
+    $data = $db->resetUpload($filename, $ownerID);
 }
 else if ($p=="retryRsync"){
     $fileName  = $_REQUEST['filename'];

@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 // Uncomment this one to fake upload time
 // usleep(5000);
 $tmp_path = TEMPPATH;
-$upload_dir = "$tmp_path/uploads/{$email}";
+$upload_dir = "$tmp_path/uploads/{$ownerID}";
 if (!file_exists($upload_dir)) {
     mkdir($upload_dir, 0755, true);
 }
