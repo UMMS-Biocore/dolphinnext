@@ -140,6 +140,7 @@ class updates
             foreach ($data as $runData):
             $ownerID = $runData["owner_id"];
             $project_pipeline_id = $runData["id"];
+            $output_dir = $runData["output_dir"];
             $profile = $runData["profile"];
             $profileAr = explode("-", $profile);
             $profileType = $profileAr[0];
@@ -169,7 +170,8 @@ class updates
                         $value = $outdir."/".$value;
                     }
                     unset($value);
-                    $data = $dbfun -> saveNextflowLog($down_file_list,  $last_run_uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $outdir, $ownerID);
+                    $dolphin_path_real = "$output_dir/run{$project_pipeline_id}";
+                    $data = $dbfun -> saveNextflowLog($down_file_list,  $last_run_uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $outdir, $dolphin_path_real, $ownerID);
                 }
             }
             endforeach;
