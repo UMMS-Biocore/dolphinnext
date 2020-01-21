@@ -384,6 +384,11 @@ class dbfuncs {
         return $cmd;
     }
 
+    function getServerRunPath($uuid){
+        $run_path_real = "{$this->run_path}/$uuid/run";
+        return $run_path_real;
+    }
+    
     function getDolphinPathReal($proPipeAll){
         $project_pipeline_id = $proPipeAll[0]->{'id'};
         $outdir = $proPipeAll[0]->{'output_dir'};
@@ -498,6 +503,23 @@ class dbfuncs {
     }
 
 
+    function getDownCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType){
+        $cacheCmd = "";
+        if ($profileType == "google" && !empty($dolphin_publish_real) && preg_match("/gs:/i", $dolphin_publish_real)) {
+            $cacheCmd = "if [ ! -d $dolphin_path_real/.nextflow ]; then mkdir -p $dolphin_path_real && gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS && gsutil -o GSUtil:parallel_composite_upload_threshold=150M -m cp -r $dolphin_publish_real/.nextflow $dolphin_path_real 2> /dev/null || true; fi";
+        }
+        return $cacheCmd;
+    }
+
+    function getUploadCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType){
+        $cacheCmd = "";
+        if ($profileType == "google" && !empty($dolphin_publish_real) && preg_match("/gs:/i", $dolphin_publish_real)) {
+            $cacheCmd = "if [ -d $dolphin_path_real/.nextflow ]; then gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS && gsutil -m rm -rf $dolphin_publish_real/.nextflow 2> /dev/null || true && gsutil -o GSUtil:parallel_composite_upload_threshold=150M -m cp -r $dolphin_path_real/.nextflow $dolphin_publish_real; fi";
+        }
+        return $cacheCmd;
+    }
+
+
 
     function getInitialImageCmdPath($proPipeAll, $profileType,$profileId, $ownerID){
         $initImageCmd  = "";
@@ -595,7 +617,7 @@ class dbfuncs {
         $interdel = $proPipeAll[0]->{'interdel'};
         $interdelCmd = "";
         if ($interdel == "true"){
-            if ($profileType == "google" && !empty($dolphin_publish_real)) {
+            if ($profileType == "google" && !empty($dolphin_publish_real) && preg_match("/gs:/i", $dolphin_publish_real)) {
                 $nxf_work = "$dolphin_publish_real/work"; 
                 $interdelCmd = "gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS && gsutil -m rm -rf $nxf_work 2> /dev/null || true";
             } else if (!empty($dolphin_path_real)) {
@@ -603,7 +625,7 @@ class dbfuncs {
                 $interdelCmd = "rm -rf $nxf_work";
             }
         }
-        // combine post-run cmd
+        // ### combine post-run cmd
         // should start with && and end without &&
         $arr = array($interdelCmd);
         $postCmd="";
@@ -613,10 +635,28 @@ class dbfuncs {
             }
             $postCmd .= $arr[$i];
         }
-        return $postCmd;
+
+
+        // ### combine fail commands
+        //copy .nextflow folder to cloud anycase
+        $upCacheCmd = $this->getUploadCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType); 
+        // $failCmd should start with ; and use && inbetween and end without &&
+        $failarr = array($upCacheCmd);
+        $failCmd="";
+        for ($i=0; $i<count($failarr); $i++) {
+            if (!empty($failarr[$i]) && !empty($failCmd)){
+                $failCmd .= " && ";
+            } else if (!empty($failarr[$i]) && empty($failCmd)){
+                $failCmd .= " ; ";
+            }
+            $failCmd .= $failarr[$i];
+        }
+
+
+        return $postCmd.$failCmd;
     }
 
-    function getPreCmd($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd){
+    function getPreCmd($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd){
         $profile_def = "";
         if ($profileType == "amazon" || $profileType == "google"){
             $profile_def = "source /etc/profile && source ~/.bash_profile";
@@ -632,7 +672,7 @@ class dbfuncs {
         // combine pre-run cmd
         // should start without && and end with &&
 
-        $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd , $initImageCmd);
+        $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd , $initImageCmd, $downCacheCmd);
         $preCmd="";
         for ($i=0; $i<count($arr); $i++) {
             if (!empty($arr[$i]) && !empty($preCmd)){
@@ -961,6 +1001,15 @@ class dbfuncs {
         return array($configText,$initialRunParams);
     }
 
+    function createUUIDCmd($dolphin_path_real,$uuid){
+        $uuidCmd = "";
+        if (!empty($dolphin_path_real)){
+            $uuidCmd = "mkdir -p $dolphin_path_real/.dolphinnext/uuid && touch $dolphin_path_real/.dolphinnext/uuid/$uuid &&";
+        }
+        return $uuidCmd;
+            
+    }
+    
     function getRenameCmd($dolphin_path_real,$attempt){
         $renameLog = "";
         $pathArr = array($dolphin_path_real, "$dolphin_path_real/initialrun");
@@ -1309,13 +1358,15 @@ class dbfuncs {
         //get username and hostname and exec info for connection
         list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port)=$this->getNextConnectExec($profileId,$ownerID, $profileType);
         //get cmd before run
-        $preCmd = $this->getPreCmd($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd); 
+        $downCacheCmd = $this->getDownCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType); 
+        $preCmd = $this->getPreCmd($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd); 
         $next_path_real = $this->getNextPathReal($next_path); //eg. /project/umw_biocore/bin
         $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType); 
 
 
         //get command for renaming previous log file
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
+        $createUUID = $this->createUUIDCmd($dolphin_path_real, $uuid);
         $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $ownerID);
         $amzCmd = "";
         //temporarily copy s3/gs config file into initialrun folder 
@@ -1328,7 +1379,7 @@ class dbfuncs {
             $amzCmd = "source $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
         }
         //create run cmd file (.dolphinnext.init)
-        $runCmdAll = $amzCmd." ".$renameLog." ".$preCmd." ".$exec_next_all;
+        $runCmdAll = "$amzCmd $renameLog $createUUID $preCmd $exec_next_all";
         $this->createDirFile ($run_path_real, ".dolphinnext.init", 'w', $runCmdAll);
 
         // compress run folder
@@ -1355,7 +1406,7 @@ class dbfuncs {
         if (!file_exists($userpky)) {
             $this->triggerRunErr('ERROR: Private key is not found!', $uuid,$project_pipeline_id,$ownerID);
         }
-        $run_path_real = "{$this->run_path}/$uuid/run";
+        $run_path_real = $this->getServerRunPath($uuid);
         // 1. Mkdir $dolphin_path_real
         $mkdir_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"mkdir -p $dolphin_path_real && echo 'INFO: Run directory created.'\" 2>&1";
         $ret = $this->execute_cmd_logfile($mkdir_cmd, $ret, "mkdir_cmd_log", "mkdir_cmd", "$run_path_real/serverlog.txt", "a");
@@ -1666,7 +1717,7 @@ class dbfuncs {
         }
         $nextModeText = "";
         if ($cloud == "google"){
-            $nextModeText = "export NXF_MODE=$cloud && export GOOGLE_APPLICATION_CREDENTIALS=$credFile &&";
+            $nextModeText = "export NXF_MODE=$cloud && export GOOGLE_APPLICATION_CREDENTIALS=$credFile && nextflow info &&";
         }
 
         //start cloud cluster
@@ -1700,7 +1751,7 @@ class dbfuncs {
             $data = json_decode($this->getProfileCloudbyID($id, $cloud, $ownerID));
             $google_cre_id = $data[0]->{'google_cre_id'};
             $credFile = "{$this->goog_path}/{$ownerID}_{$google_cre_id}_goog.json";
-            $nextModeText = "export NXF_MODE=$cloud && export GOOGLE_APPLICATION_CREDENTIALS=$credFile &&";
+            $nextModeText = "export NXF_MODE=$cloud && export GOOGLE_APPLICATION_CREDENTIALS=$credFile && nextflow info &&";
         }
         //stop cluster
         $cmd = "cd {$main_path}/pro_{$profileName} && $nextVerText $nextModeText yes | nextflow cloud shutdown $cloudName > logStop.txt 2>&1 & echo $! &";
@@ -1718,7 +1769,7 @@ class dbfuncs {
         $autoshutdown_active = $cloudData["autoshutdown_active"];
         $autoshutdown_check = $cloudData["autoshutdown_check"];
         // get list of active runs using this profile 
-        $activeRun=json_decode($this->getActiveRunbyProID($id, $ownerID),true);
+        $activeRun=json_decode($this->getActiveRunbyProID($id, $cloud, $ownerID),true);
         if (count($activeRun) > 0){ return "Active run is found"; }
         //if process comes to this checkpoint it has to be activated
         if ($autoshutdown_check == "true" && $autoshutdown_active == "true"){
@@ -1801,7 +1852,7 @@ class dbfuncs {
                 $log_array['status'] = "terminated";
                 return json_encode($log_array);
                 //Downloading dependency com.google.errorprone:error_prone
-            }else if (preg_match("/Invalid/i", $log_array['logStart']) || preg_match("/Missing/i", $log_array['logStart']) || preg_match("/denied/i", $log_array['logStart']) || (preg_match("/ERROR/", $log_array['logStart']) && !preg_match("/WARN: One or more errors/i", $log_array['logStart'])) || preg_match("/couldn't/i", $log_array['logStart'])  || preg_match("/help/i", $log_array['logStart']) || preg_match("/wrong/i", $log_array['logStart'])){
+            }else if (preg_match("/Unknow cloud/i", $log_array['logStart']) || preg_match("/Invalid/i", $log_array['logStart']) || preg_match("/Missing/i", $log_array['logStart']) || preg_match("/denied/i", $log_array['logStart']) || (preg_match("/ERROR/", $log_array['logStart']) && !preg_match("/WARN: One or more errors/i", $log_array['logStart'])) || preg_match("/couldn't/i", $log_array['logStart'])  || preg_match("/help/i", $log_array['logStart']) || preg_match("/wrong/i", $log_array['logStart'])){
                 $this->updateCloudProStatus($id, "terminated", $cloud, $ownerID);
                 $log_array['status'] = "terminated";
                 return json_encode($log_array);
@@ -1909,7 +1960,7 @@ class dbfuncs {
             $data = json_decode($this->getProfileCloudbyID($id, $cloud, $ownerID));
             $google_cre_id = $data[0]->{'google_cre_id'};
             $credFile = "{$this->goog_path}/{$ownerID}_{$google_cre_id}_goog.json";
-            $nextModeText = "export NXF_MODE=$cloud && export GOOGLE_APPLICATION_CREDENTIALS=$credFile &&";
+            $nextModeText = "export NXF_MODE=$cloud && export GOOGLE_APPLICATION_CREDENTIALS=$credFile && nextflow info &&";
         }
         $cmd = "cd {$main_path}/pro_$profileName && rm -f logCloudList.txt && $nextVerText $nextModeText nextflow cloud list $cloudName >> logCloudList.txt 2>&1 & echo $! &";
         $log_array = $this->runCommand ($cmd, 'cloudlist', '');
@@ -1998,15 +2049,15 @@ class dbfuncs {
             $profileType = $profileAr[0];
             $profileId = $profileAr[1];
             if (!empty($last_run_uuid)){
-                $run_path_real = "$output_dir/run{$project_pipeline_id}";
+                $dolphin_path_real = "$output_dir/run{$project_pipeline_id}";
                 $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
                 foreach ($down_file_list as &$value) {
-                    $value = $run_path_real."/".$value;
+                    $value = $dolphin_path_real."/".$value;
                 }
                 unset($value);
                 //wait for the downloading logs
                 if ($loadtype == "slow"){
-                    $saveNextLog = $this -> saveNextflowLog($down_file_list, $last_run_uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
+                    $saveNextLog = $this -> saveNextflowLog($down_file_list, $last_run_uuid, "run", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
                     sleep(5);
                     $out["saveNextLog"] = $saveNextLog;
                 }
@@ -2031,7 +2082,7 @@ class dbfuncs {
                 } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
                     //log file might be deleted or couldn't read the log file
                     $newRunStatus = "Aborted";
-                } else if (preg_match("/[\n\r\s]error[\n\r\s:]/i",$serverLog) || preg_match("/command not found/i",$serverLog)) {
+                } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i",$serverLog) || preg_match("/command not found/i",$serverLog)) {
                     error_log("err1");
                     $newRunStatus = "Error";
                     // otherwise parse nextflow file to get status
@@ -2050,7 +2101,7 @@ class dbfuncs {
                             // run error
                             //"WARN: Failed to publish file" gives error
                             //|| preg_match("/failed/i",$nextflowLog) removed 
-                        } else if (preg_match("/[\n\r\s]error[\n\r\s:]/i",$nextflowLog) || preg_match("/\n -- Check script /",$nextflowLog)){
+                        } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i",$nextflowLog) || preg_match("/\n -- Check script /",$nextflowLog)){
                             $confirmErr=true;
                             if (preg_match("/-- Execution is retried/i",$nextflowLog) || preg_match("/WARN: One or more errors/i", $nextflowLog)){
                                 //if only process retried, status shouldn't set as error.
@@ -2523,11 +2574,11 @@ class dbfuncs {
                 WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
         return self::queryTable($sql);
     }
-    function getActiveRunbyProID($id, $ownerID) {
+    function getActiveRunbyProID($id, $cloud, $ownerID) {
         $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
             FROM project_pipeline pp
             INNER JOIN run_log r
-            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.owner_id = '$ownerID' AND pp.profile = 'amazon-$id' AND (r.run_status = 'init' OR r.run_status = 'Waiting' OR r.run_status = 'NextRun' OR r.run_status = 'Aborted')";
+            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.owner_id = '$ownerID' AND pp.profile = '$cloud-$id' AND (r.run_status = 'init' OR r.run_status = 'Waiting' OR r.run_status = 'NextRun' OR r.run_status = 'Aborted')";
         return self::queryTable($sql);
     }
     function insertProfileLocal($name, $executor,$next_path, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ownerID) {
@@ -3040,6 +3091,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     function sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID) {
+        $ret = array();
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $ssh_id = $cluDataArr[0]["ssh_id"];
         $executor = $cluDataArr[0]['executor'];
@@ -3050,9 +3102,13 @@ class dbfuncs {
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         $proPipeCmd = $proPipeAll[0]->{'cmd'};
         $profileCmd = $cluDataArr[0]["cmd"];
-        $imageCmd = "";
-        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, "");
-
+        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, "", "", "");
+        list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
+        $upCacheCmd = $this->getUploadCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType); 
+        if (!empty($upCacheCmd)){
+            $upCacheCmd = str_replace('$', '\$', $upCacheCmd);
+            $upCacheCmd = "; $upCacheCmd";
+        }
         if ($executor == "lsf" && $commandType == "checkRunPid"){
             $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd bjobs\" 2>&1 &");
             if (preg_match("/$pid/",$check_run)){
@@ -3077,17 +3133,19 @@ class dbfuncs {
                 return json_encode('done');
             }
         } else if ($executor == "sge" && $commandType == "terminateRun"){
-            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd qdel $pid\" 2>&1 &");
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd qdel $pid $upCacheCmd\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "lsf" && $commandType == "terminateRun"){
-            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd bkill $pid\" 2>&1 &");
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd bkill $pid $upCacheCmd\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "slurm" && $commandType == "terminateRun"){
-            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd scancel $pid\" 2>&1 &");
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd scancel $pid $upCacheCmd\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "local" && $commandType == "terminateRun"){
-            $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash \" 2>&1 &";
-            $terminate_run = shell_exec($cmd);
+            $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash $upCacheCmd\" 2>&1 &";
+            $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
+            $run_path_real = $this->getServerRunPath($uuid);
+            $ret = $this->execute_cmd_logfile($cmd, $ret, "terminate_cmd_log", "terminate_cmd", "$run_path_real/serverlog.txt", "a");
             return json_encode('terminateCommandExecuted');
         } else if ($commandType == "getRemoteFileList"){
             $target_dir = $pid;
@@ -3097,15 +3155,12 @@ class dbfuncs {
         }
 
     }
-    function terminateRun($pid, $project_pipeline_id, $ownerID) {
-        $sql = "SELECT attempt FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
-        return self::queryTable($sql);
-    }
+    
     function file_get_contents_utf8($fn) {
         $content = file_get_contents($fn);
         return mb_convert_encoding($content, 'UTF-8', mb_detect_encoding($content, 'UTF-8, ISO-8859-1', true));
     }
-    public function getFileContent($uuid, $filename, $ownerID) {
+    function getFileContent($uuid, $filename, $ownerID) {
         $file = "{$this->run_path}/$uuid/$filename";
         $content = "";
         if (file_exists($file)) {
@@ -3113,7 +3168,7 @@ class dbfuncs {
         }
         return json_encode($content);
     }
-    public function saveFileContent($text, $uuid, $filename, $ownerID) {
+    function saveFileContent($text, $uuid, $filename, $ownerID) {
         $file = fopen("{$this->run_path}/$uuid/$filename", "w");
         $res = fwrite($file, $text);
         fclose($file);
@@ -3121,7 +3176,9 @@ class dbfuncs {
     }
 
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
-    public function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$project_pipeline_id,$ownerID) {
+    function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$project_pipeline_id,$dolphin_path_real,$ownerID) {
+        $nextflow_log = "";
+        $ret = array();
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         if (!empty($cluDataArr)){
             $ssh_id = $cluDataArr[0]["ssh_id"];
@@ -3131,54 +3188,56 @@ class dbfuncs {
             if (!file_exists("{$this->run_path}/$uuid/$last_server_dir")) {
                 mkdir("{$this->run_path}/$uuid/$last_server_dir", 0755, true);
             }
-            if (preg_match("/s3:/i", $files[0])){
-                $fileList="";
-                foreach ($files as $item):
-                $fileList.="$item ";
-                endforeach;
-                $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-                $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
-                if (!empty($amazon_cre_id)){
-                    $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
-                    foreach($amz_data as $d){
-                        $access = $d->amz_acc_key;
-                        $d->amz_acc_key = trim($this->amazonDecode($access));
-                        $secret = $d->amz_suc_key;
-                        $d->amz_suc_key = trim($this->amazonDecode($secret));
+            // check uuid_file before downloading file
+            $uuid_exist_cmd= "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \" test  -f '$dolphin_path_real/.dolphinnext/uuid/$uuid' && echo 'INFO: Run package for $uuid exists.'\" 2>&1";
+            $ret = $this->execute_cmd($uuid_exist_cmd, $ret, "uuid_exist_cmd_log", "uuid_exist_cmd");  
+            if (preg_match("/INFO: Run package for $uuid exists\./", $ret["uuid_exist_cmd_log"])){
+                if (preg_match("/s3:/i", $files[0])){
+                    $fileList="";
+                    foreach ($files as $item):
+                    $fileList.="$item ";
+                    endforeach;
+                    $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+                    $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
+                    if (!empty($amazon_cre_id)){
+                        $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
+                        foreach($amz_data as $d){
+                            $access = $d->amz_acc_key;
+                            $d->amz_acc_key = trim($this->amazonDecode($access));
+                            $secret = $d->amz_suc_key;
+                            $d->amz_suc_key = trim($this->amazonDecode($secret));
+                        }
+                        $access_key = $amz_data[0]->{'amz_acc_key'};
+                        $secret_key = $amz_data[0]->{'amz_suc_key'};
+                        $cmd="s3cmd sync --access_key $access_key  --secret_key $secret_key $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
                     }
-                    $access_key = $amz_data[0]->{'amz_acc_key'};
-                    $secret_key = $amz_data[0]->{'amz_suc_key'};
-                    $cmd="s3cmd sync --access_key $access_key  --secret_key $secret_key $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                } else if (preg_match("/gs:/i", $files[0])){
+                    $fileList="";
+                    foreach ($files as $item):
+                    $fileList.="$item ";
+                    endforeach;
+                    $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+                    $google_cre_id = $proPipeAll[0]->{'google_cre_id'};
+                    if (!empty($google_cre_id)){
+                        $goog_data = json_decode($this->getGooglebyID($google_cre_id, $ownerID));
+                        $project_id = $goog_data[0]->{'project_id'};
+                        $credFile = "{$this->goog_path}/{$ownerID}_{$google_cre_id}_goog.json";
+                        $cmd = "gcloud auth activate-service-account --project=$project_id --key-file=$credFile && gsutil cp -rcn $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                    }
+                } else {
+                    $fileList="";
+                    foreach ($files as $item):
+                    $fileList.="$connect:$item ";
+                    endforeach;
+                    $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &"; 
                 }
-            } else if (preg_match("/gs:/i", $files[0])){
-                $fileList="";
-                foreach ($files as $item):
-                $fileList.="$item ";
-                endforeach;
-                $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-                $google_cre_id = $proPipeAll[0]->{'google_cre_id'};
-                if (!empty($google_cre_id)){
-                    $goog_data = json_decode($this->getGooglebyID($google_cre_id, $ownerID));
-                    $project_id = $goog_data[0]->{'project_id'};
-                    $credFile = "{$this->goog_path}/{$ownerID}_{$google_cre_id}_goog.json";
-                    $cmd = "gcloud auth activate-service-account --project=$project_id --key-file=$credFile && gsutil cp -rcn $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
-                }
-            } else {
-                $fileList="";
-                foreach ($files as $item):
-                $fileList.="$connect:$item ";
-                endforeach;
-                $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &"; 
+                $nextflow_log = shell_exec($cmd);
             }
-            $nextflow_log = shell_exec($cmd);
-            //error_log($nextflow_log);
-
-            // save $nextflow_log to a file
-            if (!is_null($nextflow_log) && isset($nextflow_log) && $nextflow_log != "" && !empty($nextflow_log)){
-                return json_encode("nextflow log saved");
-            } else {
-                return json_encode("logNotFound");
-            }
+        }
+        if (!is_null($nextflow_log) && !empty($nextflow_log)){
+            return json_encode("nextflow log saved");
+        } else {
+            return json_encode("logNotFound");
         }
     }
 

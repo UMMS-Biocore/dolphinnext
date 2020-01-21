@@ -31,12 +31,14 @@ if (!empty($secConf)){
     $EMAIL_SENDER= isset($secConf['EMAIL_SENDER']) ? $secConf['EMAIL_SENDER'] : "";
     $EMAIL_ADMIN= isset($secConf['EMAIL_ADMIN']) ? $secConf['EMAIL_ADMIN'] : "";
     $CENTRAL_API_URL = isset($secConf['CENTRAL_API_URL']) ? $secConf['CENTRAL_API_URL'] : "";
+    $ENV_PATH = isset($secConf['ENV_PATH']) ? $secConf['ENV_PATH'] : "";
     date_default_timezone_set($secConf['TIMEZONE']);
 
     define('RUNPATH', $secConf['RUNPATH']);
     define('TEMPPATH', $secConf['TEMPPATH']);
     define('API_URL', $secConf['API_URL']);
     define('CENTRAL_API_URL', $CENTRAL_API_URL);
+    define('ENV_PATH', $ENV_PATH);
     define('BASE_PATH', $secConf['BASE_PATH']);
     define('OCPU_URL', $OCPU_URL);
     define('DEBROWSER_URL', $DEBROWSER_URL);
@@ -84,14 +86,14 @@ if (!empty($secUiconfig)){
     define('SHOW_RUN_NEXTFLOWLOG', $SHOW_RUN_NEXTFLOWLOG);
     define('SHOW_RUN_NEXTFLOWNF', $SHOW_RUN_NEXTFLOWNF);
     define('SHOW_RUN_NEXTFLOWCONFIG', $SHOW_RUN_NEXTFLOWCONFIG);
-//  WIZARD CONFIG
+    //  WIZARD CONFIG
     $SHOW_WIZARD= isset($secUiconfig['SHOW_WIZARD']) ? $secUiconfig['SHOW_WIZARD'] : false;
     $SHOW_TEST_PROFILE= isset($secUiconfig['SHOW_TEST_PROFILE']) ? $secUiconfig['SHOW_TEST_PROFILE'] : false;
     $TEST_PROFILE_GROUP_ID= isset($secUiconfig['TEST_PROFILE_GROUP_ID']) ? $secUiconfig['TEST_PROFILE_GROUP_ID'] : "";
     define('SHOW_WIZARD', $SHOW_WIZARD);
     define('SHOW_TEST_PROFILE', $SHOW_TEST_PROFILE);
     define('TEST_PROFILE_GROUP_ID', $TEST_PROFILE_GROUP_ID);
-    
+
 }
 
 $line = fgets(fopen(__DIR__."/../NEWS", 'r'));
@@ -108,6 +110,9 @@ if (!empty($line)){
     define('DN_VERSION', "");
 }
 
-
+//source ENV_PATH
+if (!empty(ENV_PATH)){
+    system(". ".ENV_PATH);
+}
 
 ?>

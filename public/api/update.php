@@ -169,7 +169,7 @@ class updates
                         $value = $outdir."/".$value;
                     }
                     unset($value);
-                    $data = $dbfun -> saveNextflowLog($down_file_list,  $last_run_uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $ownerID);
+                    $data = $dbfun -> saveNextflowLog($down_file_list,  $last_run_uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $outdir, $ownerID);
                 }
             }
             endforeach;

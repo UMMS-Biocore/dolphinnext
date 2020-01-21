@@ -143,7 +143,7 @@ process initialCheck {
             if ($profile eq "google"){
                 if ( $collection_type[$i] eq "single" ) {
                     $cloud_inputFile      = "$cloud_input_dir/$file_name[$i].$fileType";
-                    if ( checkGSFile($cloud_inputFile) && checkGSFile("$cloud_input_dir/.success_$file_name[$i]")) {
+                    if ( checkGSFile($cloud_inputFile)) {
                         $inputDirCheck = "true";
                     } else {
                         $inputDirCheck = "false";
@@ -153,7 +153,7 @@ process initialCheck {
                 elsif ( $collection_type[$i] eq "pair" ) {
                     $cloud_inputFile1     = "$cloud_input_dir/$file_name[$i].R1.$fileType";
                     $cloud_inputFile2     = "$cloud_input_dir/$file_name[$i].R2.$fileType";
-                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2) && checkGSFile("$cloud_input_dir/.success_$file_name[$i]")) {
+                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2)) {
                         $inputDirCheck = "true";
                     } else {
                         $inputDirCheck = "false";
@@ -699,7 +699,7 @@ process createCollection {
             if ($profile eq "google"){
                 if ( $collection_type[$i] eq "single" ) {
                     $cloud_inputFile      = "$cloud_input_dir/$file_name[$i].$fileType";
-                    if ( checkGSFile($cloud_inputFile) && checkGSFile("$cloud_input_dir/.success_$file_name[$i]")) {
+                    if ( checkGSFile($cloud_inputFile)) {
                         $inputDirCheck = "true";
                     } else {
                         $inputDirCheck = "false";
@@ -709,7 +709,7 @@ process createCollection {
                 elsif ( $collection_type[$i] eq "pair" ) {
                     $cloud_inputFile1     = "$cloud_input_dir/$file_name[$i].R1.$fileType";
                     $cloud_inputFile2     = "$cloud_input_dir/$file_name[$i].R2.$fileType";
-                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2) && checkGSFile("$cloud_input_dir/.success_$file_name[$i]")) {
+                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2)) {
                         $inputDirCheck = "true";
                     } else {
                         $inputDirCheck = "false";
@@ -1065,6 +1065,8 @@ process createCollection {
             print "GS File Not Found: $file\\n";
             return 0;
           }
+          
+          
 
           sub makeS3Bucket{
             my ( $bucket, $confID) = @_;
@@ -1099,8 +1101,6 @@ process createCollection {
             my ( $file, $target ) = @_;
             runCommand("rsync -vazu $file $target");
           }
-
-
 
           sub countMd5sum {
             my ($inputFile ) = @_;
@@ -1235,11 +1235,9 @@ process createCollection {
                 makeGSBucket($bucket);
                 if ( $collection_type[$i] eq "single" ) {
                     GSUpload($inputFile, $cloud_input_dir);
-                    GSUpload("$input_dir/.success_$file_name[$i]", $cloud_input_dir);
                 } elsif ( $collection_type[$i] eq "pair" ) {
                     GSUpload($inputFile1, $cloud_input_dir);
                     GSUpload($inputFile2, $cloud_input_dir);
-                    GSUpload("$input_dir/.success_$file_name[$i]", $cloud_input_dir);
                 }
              }
           }
@@ -1436,9 +1434,14 @@ process cleanUp {
           my @collection          = (!{collection});
           my @file_type_all       = (!{file_type_all});
           my @collection_type_all = (!{collection_type_all});
-
+          my $cloud_run_dir       = "!{params.cloud_run_dir}";
+          my $profile             = "!{params.profile}";
+          my $upload_dir          = "$run_dir/inputs/.up";
+          
           my %validInputHash; ## Keep record of files as fullpath
+          my %validCloudInputHash; ## Keep record of files in the cloud
           my @validCollection; ## Keep record of valid Collections
+          my @validCloudCollection; ## Keep record of valid Collections
           
           for ( my $i = 0 ; $i <= $#file_name_all ; $i++ ) {
             my $collection  = $collection[$i];
@@ -1456,9 +1459,44 @@ process cleanUp {
               $validInputHash{$inputFile2} = 1;
             }
           }
+          
+          if ($profile eq "google"){
+            for ( my $i = 0 ; $i <= $#file_name_all ; $i++ ) {
+                my $collection  = $collection[$i];
+                my $cloud_input_dir     = "$cloud_run_dir/inputs/$collection";
+                push(@validCloudCollection, "$cloud_input_dir") unless grep{$_ eq "$cloud_input_dir"} @validCloudCollection;
+                my $fileType    = $file_type_all[$i];
+                if ( $collection_type_all[$i] eq "single" ) {
+                    my $cloud_inputFile      = "$cloud_input_dir/$file_name_all[$i].$fileType";
+                    $validCloudInputHash{$cloud_inputFile} = 1;
+                }
+                elsif ( $collection_type_all[$i] eq "pair" ) {
+                    my $cloud_inputFile1      = "$cloud_input_dir/$file_name_all[$i].R1.$fileType";
+                    my $cloud_inputFile2      = "$cloud_input_dir/$file_name_all[$i].R2.$fileType";
+                    $validCloudInputHash{$cloud_inputFile1} = 1;
+                    $validCloudInputHash{$cloud_inputFile2} = 1;
+                }
+            }
+            
+            print Dumper \\\\@validCloudCollection;
+            
+            for ( my $i = 0 ; $i <= $#validCloudCollection ; $i++ ) {
+                my $cloud_input_dir = $validCloudCollection[$i];
+                ##remove invalid files (not found in %validInputHash) from $input_dir
+                my @inputDirFiles = checkGSDir($cloud_input_dir);
+                print Dumper \\@inputDirFiles;
+                foreach my $file (@inputDirFiles) {
+                    if ( !exists( $validCloudInputHash{$file} ) ) {
+                        print "Invalid file $file will be removed from input directory\\n";
+                        removeGSFile($file);
+                    }
+                }   
+            }
+          }
 
           print Dumper \\\\%validInputHash;
           print Dumper \\\\@validCollection;
+          
           
           ## remove invalid collections from inputs folder:
           my @inputCollections = <$run_dir/inputs/*>;
@@ -1486,6 +1524,8 @@ process cleanUp {
             runCommand("rm -rf $run_dir/initialrun/.conf*");
             system('touch success.!{params.attempt}');
           }
+          
+          
 
           sub runCommand {
             my ($com) = @_;
@@ -1494,7 +1534,35 @@ process cleanUp {
             else          { print "Command successful: $com\\n"; }
           }
           
+          sub removeGSFile {
+            my ( $file) = @_;
+            runCommand("gcloud auth activate-service-account --key-file=!{googCred} && gsutil -m rm -f $file");
+          }
           
+          sub checkGSDir{
+            my ( $dir) = @_;
+            my $tmpSufx = $dir;
+            $tmpSufx =~ s/[^A-Za-z0-9]/_/g;
+            runCommand ("mkdir -p $upload_dir && > $upload_dir/.info.$tmpSufx ");
+            my $err = system ("gcloud auth activate-service-account --key-file=!{googCred} && gsutil ls $dir >$upload_dir/.info.$tmpSufx 2>&1 ");
+            ## if file not found then it will give error
+            my $checkMD5 = 'false';
+            my @ret = ();
+            if ($err){
+                print "GS Directory Not Found: $dir\\n";
+                return 0;
+            } else {
+                open IN, "$upload_dir/.info.$tmpSufx";
+                while( my $line = <IN>)  {   
+                    chomp($line);
+                    if ($dir ne $line && "$dir/" ne $line){
+                        push @ret, $line;
+                    }
+                }
+                close IN;
+            }
+            return @ret;
+          }
 
           '''
 
