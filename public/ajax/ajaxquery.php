@@ -183,13 +183,14 @@ else if ($p=="savePubWeb"){
     if (!empty($pubWebDir)){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
         $reportDir = $db->getReportDir($proPipeAll);
         $down_file_list = explode(',', $pubWebDir);
         foreach ($down_file_list as &$value) {
             $value = $reportDir."/".$value;
         }
         unset($value);
-        $data = $db -> saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $ownerID);
+        $data = $db -> saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
     } else {
         $data = json_encode("pubweb is not defined");
     }
@@ -204,14 +205,13 @@ else if ($p=="saveNextflowLog"){
     if (!empty($uuid)){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $outdir = $proPipeAll[0]->{'output_dir'};
-        $run_path_real = "$outdir/run{$project_pipeline_id}";
+        list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
         $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
         foreach ($down_file_list as &$value) {
-            $value = $run_path_real."/".$value;
+            $value = $dolphin_path_real."/".$value;
         }
         unset($value);
-        $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
+        $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
     }
 }
 else if ($p=="getLsDir"){
@@ -247,7 +247,7 @@ else if ($p=="terminateRun"){
     $profileId = $_REQUEST['profileId'];
     $executor = $_REQUEST['executor'];
     if ($executor != 'local') {
-        $pid = json_decode($db -> getRunPid($project_pipeline_id))[0]->{'pid'};
+        $pid = json_decode($db->getRunPid($project_pipeline_id))[0]->{'pid'};
         if (!empty($pid)){
             $data = $db -> sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID);
         } else {
@@ -286,7 +286,7 @@ else if ($p=="updateRunStatus"){
         $profileAr = explode("-", $profile);
         $profileType = $profileAr[0];
         $profileId = $profileAr[1];
-        if (($profileType == "amazon" || $profileType == "google") && ($run_status =="Terminated" || $run_status == "Aborted")){
+        if (($profileType == "amazon" || $profileType == "google") && ($run_status =="Terminated")){
             error_log("triggerShutdown fast2");
             $db->triggerShutdown($profileId,$profileType, $ownerID, "fast");
         }

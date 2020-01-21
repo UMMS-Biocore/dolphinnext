@@ -1,3 +1,9 @@
+09.01.2020 Version 1.0.17
+Google cloud autoshutdown feature fixed.
+Proxy.php validation transfered to BASE_PATH in the .sec file.
+ENV_PATH variable added to .sec file to source optional scripts before executing any commands.
+UUID validation step added before saving logs.
+
 09.01.2020 Version 1.0.16
 Google cloud feature added.
 $DEFAULT_IMAGE parameter added to autofill feature and documentation is updated.

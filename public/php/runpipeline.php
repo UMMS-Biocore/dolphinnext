@@ -136,6 +136,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
+            <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
             <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
             <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
             <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>

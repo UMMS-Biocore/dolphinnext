@@ -545,6 +545,7 @@ function addCloudRow(cloud, id, name, executor, instance_type, image_id, subnet_
     if (autoshutdown_check == "true"){
         checked = "checked";
     }
+    
     var checkBox = '<input id="'+cloud+'autoshutdown-' + id + '" cloud="'+cloud+'" class="autoShutCheck" type="checkbox"  name="autoshutdown_check" '+checked+'><p id="'+cloud+'shutdownLog-' + id + '"></p><p id="'+cloud+'shutdownTimer-' + id + '"></p>';
 
     $('#'+cloud+'Table > tbody').append('<tr id="'+cloud+'-' + id + '"> <td>' + name + '</td><td>Instance_type: ' + instance_type + '<br>  Image id: ' + image_id + '<br>  Executor: ' + executor + '<br>  </td><td>'+checkBox+'</td><td id="status-'+ cloud + id + '"><i class="fa fa-hourglass-half"></i></td><td>' + getButtonsDef(cloud, 'Start') + getButtonsDef(cloud, 'Stop') + '</td></tr>');

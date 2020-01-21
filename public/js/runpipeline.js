@@ -5191,7 +5191,7 @@ function readNextflowLogTimer(proType, proId, type) {
     }
     interval_readNextlog = setInterval(function () {
         readNextLog(proType, proId, "no_reload")
-    }, 13000);
+    }, 7000);
     interval_readPubWeb = setInterval(function () {
         readPubWeb(proType, proId, "no_reload")
     }, 60000);
@@ -7739,21 +7739,23 @@ $(document).ready(function () {
             // Get the input id of proPipeInput;
             var proInputGet = getValues({ "p": "getProjectPipelineInputs", "id": proPipeInputID });
             if (proInputGet) {
-                var input_id = proInputGet[0].input_id;
-                var collection_id = proInputGet[0].collection_id;
-                var collection_name = proInputGet[0].collection_name;
-                if (collection_id && collection_id != "0" && collection_name) {
-                    selectMultiselect("#select-Collection", [collection_name]);
-                    sampleTable.rows({ search: 'applied' }).select();
-                    $('.nav-tabs a[href="#importedFilesTab"]').tab('show');
-                } else if (input_id) {
-                    var inputGet = getValues({ "p": "getInputs", "id": input_id })[0];
-                    if (inputGet) {
-                        //insert data (input_id) into form
-                        var formValues = $('#manualTab').find('input');
-                        var keys = Object.keys(inputGet);
-                        for (var i = 0; i < keys.length; i++) {
-                            $(formValues[i]).val(inputGet[keys[i]]);
+                if (proInputGet[0]) {
+                    var input_id = proInputGet[0].input_id;
+                    var collection_id = proInputGet[0].collection_id;
+                    var collection_name = proInputGet[0].collection_name;
+                    if (collection_id && collection_id != "0" && collection_name) {
+                        selectMultiselect("#select-Collection", [collection_name]);
+                        sampleTable.rows({ search: 'applied' }).select();
+                        $('.nav-tabs a[href="#importedFilesTab"]').tab('show');
+                    } else if (input_id) {
+                        var inputGet = getValues({ "p": "getInputs", "id": input_id })[0];
+                        if (inputGet) {
+                            //insert data (input_id) into form
+                            var formValues = $('#manualTab').find('input');
+                            var keys = Object.keys(inputGet);
+                            for (var i = 0; i < keys.length; i++) {
+                                $(formValues[i]).val(inputGet[keys[i]]);
+                            }
                         }
                     }
                 }
