@@ -171,7 +171,7 @@ class updates
                     }
                     unset($value);
                     $dolphin_path_real = "$output_dir/run{$project_pipeline_id}";
-                    $data = $dbfun -> saveNextflowLog($down_file_list,  $last_run_uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $outdir, $dolphin_path_real, $ownerID);
+                    $data = $dbfun -> saveNextflowLog($down_file_list,  $last_run_uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
                 }
             }
             endforeach;
