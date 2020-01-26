@@ -2224,6 +2224,7 @@ function save() {
             if (warnUserPipe === false || saveOnExist === true) {
                 sl = JSON.stringify(savedList);
                 var ret = getValues({ p: "saveAllPipeline", dat: sl });
+                console.log(ret)
                 pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
                 refreshCreatorData(pipeline_id);
                 var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
@@ -2264,6 +2265,8 @@ function save() {
                 $('#confirmRevision').on('click', '#saveOnExist', function (event) {
                     sl = JSON.stringify(savedList);
                     var ret = getValues({ p: "saveAllPipeline", dat: sl });
+                console.log(ret)
+                    
                     pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
                     refreshCreatorData(pipeline_id);
                     var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");

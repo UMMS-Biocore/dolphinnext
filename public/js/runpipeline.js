@@ -5715,6 +5715,14 @@ function saveRun() {
             async: true,
             success: function (s) {
                 if (dupliProPipe === false) {
+                    if (s){
+                        if ($.isArray(s)){
+                            var infoModalText = s.join("</br>");
+                            if (infoModalText){
+                                showInfoModal("#infoModal", "#infoModalText", "Permission of the pipeline needs to be updated in order to share this run. However, it couldn't be changed because of the following reason:</br></br>"+infoModalText)
+                            }
+                        }
+                    }
                     refreshCreatorData(project_pipeline_id);
                     updateSideBarProPipe("", project_pipeline_id, run_name, "edit")
                 } else if (dupliProPipe === true) {
