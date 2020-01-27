@@ -388,7 +388,7 @@ class dbfuncs {
         $run_path_real = "{$this->run_path}/$uuid/run";
         return $run_path_real;
     }
-    
+
     function getDolphinPathReal($proPipeAll){
         $project_pipeline_id = $proPipeAll[0]->{'id'};
         $outdir = $proPipeAll[0]->{'output_dir'};
@@ -1007,9 +1007,9 @@ class dbfuncs {
             $uuidCmd = "mkdir -p $dolphin_path_real/.dolphinnext/uuid && touch $dolphin_path_real/.dolphinnext/uuid/$uuid &&";
         }
         return $uuidCmd;
-            
+
     }
-    
+
     function getRenameCmd($dolphin_path_real,$attempt){
         $renameLog = "";
         $pathArr = array($dolphin_path_real, "$dolphin_path_real/initialrun");
@@ -2011,7 +2011,28 @@ class dbfuncs {
         return $ret;
     }
 
-    public function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
+    function savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID){
+        $data = json_encode("pubweb is not defined");
+        $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
+        //get pubWebDir
+        $pipeData = json_decode($this->loadPipeline($pipeline_id,$ownerID));
+        $pubWebDir = $pipeData[0]->{'publish_web_dir'};
+        if (!empty($pubWebDir)){
+            // get outputdir
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+            list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
+            $reportDir = $this->getReportDir($proPipeAll);
+            $down_file_list = explode(',', $pubWebDir);
+            foreach ($down_file_list as &$value) {
+                $value = $reportDir."/".$value;
+            }
+            unset($value);
+            $data = $this->saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
+        } 
+        return $data;
+    }
+
+    function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
         // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted, Manual
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
         $out = array();
@@ -3155,7 +3176,7 @@ class dbfuncs {
         }
 
     }
-    
+
     function file_get_contents_utf8($fn) {
         $content = file_get_contents($fn);
         return mb_convert_encoding($content, 'UTF-8', mb_detect_encoding($content, 'UTF-8, ISO-8859-1', true));
