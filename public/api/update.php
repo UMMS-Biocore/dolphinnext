@@ -140,39 +140,19 @@ class updates
             foreach ($data as $runData):
             $ownerID = $runData["owner_id"];
             $project_pipeline_id = $runData["id"];
-            $output_dir = $runData["output_dir"];
             $profile = $runData["profile"];
             $profileAr = explode("-", $profile);
             $profileType = $profileAr[0];
             $profileId = $profileAr[1];
             $pipeline_id = $runData["pipeline_id"];
-            $publish_dir = isset($runData["publish_dir"]) ? $runData["publish_dir"] : "";
-            $publish_dir_check = isset($runData['publish_dir_check']) ? $runData['publish_dir_check'] : "";
-            $last_run_uuid = $runData["last_run_uuid"];
-            $outdir = $runData["output_dir"];
-            if ($publish_dir_check == "true" && !empty($publish_dir)){
-                $outdir = $publish_dir;
-            }
             $loadtype = "slow";
             $outJS = $dbfun -> updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID);
             $out = json_decode($outJS,true);
             $finalRunStatus = $out["runStatus"];
             $ret .= "$time runId:$project_pipeline_id status:$finalRunStatus\n";
 
-            //save pubweb
-            if (!empty($profile)){
-                //get pubWebDir
-                $pipeData = json_decode($dbfun->loadPipeline($pipeline_id,$ownerID));
-                $pubWebDir = $pipeData[0]->{'publish_web_dir'};
-                if (!empty($pubWebDir)){
-                    $down_file_list = explode(',', $pubWebDir);
-                    foreach ($down_file_list as &$value) {
-                        $value = $outdir."/".$value;
-                    }
-                    unset($value);
-                    $dolphin_path_real = "$output_dir/run{$project_pipeline_id}";
-                    $data = $dbfun -> saveNextflowLog($down_file_list,  $last_run_uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
-                }
+            if (!empty($profile) && !empty($project_pipeline_id)){
+                $data = $dbfun->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID);
             }
             endforeach;
         }

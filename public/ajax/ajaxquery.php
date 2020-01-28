@@ -176,25 +176,7 @@ else if ($p=="savePubWeb"){
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $pipeline_id = $_REQUEST['pipeline_id'];
-    $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
-    //get pubWebDir
-    $pipeData = json_decode($db->loadPipeline($pipeline_id,$ownerID));
-    $pubWebDir = $pipeData[0]->{'publish_web_dir'};
-    if (!empty($pubWebDir)){
-        // get outputdir
-        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
-        $reportDir = $db->getReportDir($proPipeAll);
-        $down_file_list = explode(',', $pubWebDir);
-        foreach ($down_file_list as &$value) {
-            $value = $reportDir."/".$value;
-        }
-        unset($value);
-        $data = $db -> saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
-    } else {
-        $data = json_encode("pubweb is not defined");
-    }
-
+    $data = $db->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID);
 }
 else if ($p=="saveNextflowLog"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
