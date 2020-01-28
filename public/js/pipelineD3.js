@@ -1946,6 +1946,17 @@ function refreshCreatorData(pipeline_id) {
 }
 
 
+function warnUserSave(res){
+    if (res){
+        if ($.isArray(res)){
+            var infoModalText = res.join("</br>");
+            if (infoModalText){
+                showInfoModal("#infoMod", "#infoModText", "Permission of the pipeline couldn't be changed because of the following reason:</br></br>"+infoModalText)
+            }
+        }
+    } 
+}
+
 //Revision is not required for advanced options, description
 function saveDetails() {
     var id = $("#pipeline-title").attr('pipelineid');
@@ -2224,7 +2235,7 @@ function save() {
             if (warnUserPipe === false || saveOnExist === true) {
                 sl = JSON.stringify(savedList);
                 var ret = getValues({ p: "saveAllPipeline", dat: sl });
-                console.log(ret)
+                warnUserSave(ret)
                 pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
                 refreshCreatorData(pipeline_id);
                 var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
@@ -2265,8 +2276,7 @@ function save() {
                 $('#confirmRevision').on('click', '#saveOnExist', function (event) {
                     sl = JSON.stringify(savedList);
                     var ret = getValues({ p: "saveAllPipeline", dat: sl });
-                console.log(ret)
-                    
+
                     pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
                     refreshCreatorData(pipeline_id);
                     var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
@@ -2282,7 +2292,7 @@ function save() {
                     saveOnExist = true;
                     $('#autosave').text('All changes saved');
                     $('#confirmRevision').modal('hide');
-
+                    warnUserSave(ret)
                 });
 
 
