@@ -184,7 +184,7 @@ else if ($p=="saveNextflowLog"){
     $profileId = $_REQUEST['profileId'];
     $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
     $data = "";
-    if (!empty($uuid)){
+    if (!empty($uuid) && !empty($ownerID)){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
@@ -261,16 +261,18 @@ else if ($p=="updateRunStatus"){
     $db -> updateRunLog($project_pipeline_id, $run_status, $duration, $ownerID);
     $data = $db -> updateRunStatus($project_pipeline_id, $run_status, $ownerID);
     // cloud check triggerShutdown
-    $runDataJS = $db->getLastRunData($project_pipeline_id,$ownerID);
-    $runData = json_decode($runDataJS,true)[0];
-    $profile = $runData["profile"];
-    if (!empty($profile)){
-        $profileAr = explode("-", $profile);
-        $profileType = $profileAr[0];
-        $profileId = $profileAr[1];
-        if (($profileType == "amazon" || $profileType == "google") && ($run_status =="Terminated")){
-            error_log("triggerShutdown fast2");
-            $db->triggerShutdown($profileId,$profileType, $ownerID, "fast");
+    $runDataJS = $db->getLastRunData($project_pipeline_id);
+    if (!empty(json_decode($runDataJS,true))){
+        $runData = json_decode($runDataJS,true)[0];
+        $profile = $runData["profile"];
+        if (!empty($profile)){
+            $profileAr = explode("-", $profile);
+            $profileType = $profileAr[0];
+            $profileId = $profileAr[1];
+            if (($profileType == "amazon" || $profileType == "google") && ($run_status =="Terminated")){
+                error_log("triggerShutdown fast2");
+                $db->triggerShutdown($profileId,$profileType, $ownerID, "fast");
+            }
         }
     }
 }
