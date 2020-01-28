@@ -1967,11 +1967,11 @@ class dbfuncs {
         return json_encode($log_array);
     }
 
-    public function getLastRunData($project_pipeline_id, $ownerID){
+    function getLastRunData($project_pipeline_id){
         $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
             FROM project_pipeline pp
             INNER JOIN run_log r
-            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.id='$project_pipeline_id' AND pp.owner_id='$ownerID'";
+            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.id='$project_pipeline_id'";
         return self::queryTable($sql);
     }
     function cleanlist($list, $ret){
@@ -2054,7 +2054,7 @@ class dbfuncs {
             }
         } else {
             // latest last_uuid format exist
-            $runDataJS = $this->getLastRunData($project_pipeline_id,$ownerID);
+            $runDataJS = $this->getLastRunData($project_pipeline_id);
             if (!empty(json_decode($runDataJS,true))){
                 $runData = json_decode($runDataJS,true)[0];
                 $runStatus = $runData["run_status"];
