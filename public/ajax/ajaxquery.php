@@ -172,11 +172,14 @@ else if ($p=="getReportData"){
     $data = json_encode($data);
 }
 else if ($p=="savePubWeb"){
+    $data = "";
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $pipeline_id = $_REQUEST['pipeline_id'];
-    $data = $db->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID);
+    if (!empty($ownerID)){
+        $data = $db->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID);
+    } 
 }
 else if ($p=="saveNextflowLog"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -258,22 +261,24 @@ else if ($p=="updateRunStatus"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $run_status = $_REQUEST['run_status'];
     $duration = isset($_REQUEST['duration']) ? $_REQUEST['duration'] : "";
-    $db -> updateRunLog($project_pipeline_id, $run_status, $duration, $ownerID);
-    $data = $db -> updateRunStatus($project_pipeline_id, $run_status, $ownerID);
-    // cloud check triggerShutdown
-    $runDataJS = $db->getLastRunData($project_pipeline_id);
-    if (!empty(json_decode($runDataJS,true))){
-        $runData = json_decode($runDataJS,true)[0];
-        $profile = $runData["profile"];
-        if (!empty($profile)){
-            $profileAr = explode("-", $profile);
-            $profileType = $profileAr[0];
-            $profileId = $profileAr[1];
-            if (($profileType == "amazon" || $profileType == "google") && ($run_status =="Terminated")){
-                error_log("triggerShutdown fast2");
-                $db->triggerShutdown($profileId,$profileType, $ownerID, "fast");
+    if (!empty($ownerID)){
+        $db -> updateRunLog($project_pipeline_id, $run_status, $duration, $ownerID);
+        $data = $db -> updateRunStatus($project_pipeline_id, $run_status, $ownerID);
+        // cloud check triggerShutdown
+        $runDataJS = $db->getLastRunData($project_pipeline_id);
+        if (!empty(json_decode($runDataJS,true))){
+            $runData = json_decode($runDataJS,true)[0];
+            $profile = $runData["profile"];
+            if (!empty($profile)){
+                $profileAr = explode("-", $profile);
+                $profileType = $profileAr[0];
+                $profileId = $profileAr[1];
+                if (($profileType == "amazon" || $profileType == "google") && ($run_status =="Terminated")){
+                    error_log("triggerShutdown fast2");
+                    $db->triggerShutdown($profileId,$profileType, $ownerID, "fast");
+                }
             }
-        }
+        } 
     }
 }
 else if ($p=="getRunStatus"){
