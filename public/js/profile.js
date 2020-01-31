@@ -1905,8 +1905,6 @@ $(document).ready(function () {
             var formObj = {};
             var stop = "";
             [formObj, stop] = createFormObj(formValues, requiredFields)
-            console.log(formObj)
-            console.log(stop)
             var savetype = $('#mGitID').val();
             if (stop === false) {
                 formObj.p = "saveGithub"
