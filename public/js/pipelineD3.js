@@ -2230,7 +2230,8 @@ function save() {
             var warnPipeText = '';
             var numOfProject = '';
             var numOfProjectPublic = '';
-            [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic] = checkRevisionPipe(id);
+            var warnUserAllPipePerm = "";
+            [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic, warnUserAllPipePerm] = checkRevisionPipe(id);
             //B.1 allow updating on existing pipeline
             if (warnUserPipe === false || saveOnExist === true) {
                 sl = JSON.stringify(savedList);
@@ -2260,7 +2261,7 @@ function save() {
                     $('#confirmYesNoText').html(warnPipeText);
                     if (numOfProjectPublic === 0 || usRole === "admin") {
                         $('#saveOnExist').css('display', 'inline');
-                        if (usRole == "admin" && !(numOfProjectPublic === 0)) {
+                        if (usRole == "admin" && (numOfProjectPublic > 0 || warnUserAllPipePerm === true)) {
                             $('#saveOnExist').attr('class', 'btn btn-danger');
                         }
                     }

@@ -1318,31 +1318,37 @@ function checkRevisionPipe(pipeline_id) {
     var checkProj = checkProject(pipeline_id);
     //has selected pipeline ever used in projects that user not owns?
     var checkProjPublic = checkProjectPublic(pipeline_id);
+    // pipeline has any module/process that not allowed to change?
+    var [warnUserAllPipePerm, infoAllPipePerm] = checkAllPipelinePerm(pipeline_id);
     var numOfProject = checkProj.length;
     var numOfProjectPublic = checkProjPublic.length;
+    if (warnUserAllPipePerm === true){
+        warnUserPipe = true;
+        warnPipeText += infoAllPipePerm;
+    }
     if (numOfProject > 0 && numOfProjectPublic === 0) {
         warnUserPipe = true;
-        warnPipeText = warnPipeText + 'This revision of pipeline already used in following project/projects: ';
+        warnPipeText += 'This revision of pipeline already used in following project/projects: ';
         $.each(checkProj, function (element) {
             if (element !== 0) {
-                warnPipeText = warnPipeText + ', ';
+                warnPipeText += ', ';
             }
-            warnPipeText = warnPipeText + '"' + checkProj[element].name + '"';
+            warnPipeText +=  '"' + checkProj[element].name + '"';
         });
         warnPipeText = warnPipeText + '</br></br>Your changes may effect the current run/runs. If you still want to save on existing revision, please click on "save on existing" button. </br></br>Otherwise you can save as a new revision by entering revision comment at below and clicking the save button.'
     } else if (numOfProjectPublic > 0) {
         warnUserPipe = true;
-        warnPipeText = warnPipeText + 'This revision of pipeline already used in following group/public projects: ';
+        warnPipeText +=  'This revision of pipeline already used in following group/public projects: ';
         $.each(checkProjPublic, function (element) {
             if (element !== 0) {
-                warnPipeText = warnPipeText + ', ';
+                warnPipeText += ', ';
             }
-            warnPipeText = warnPipeText + '"' + checkProjPublic[element].name + '"';
+            warnPipeText +=  '"' + checkProjPublic[element].name + '"';
         });
-        warnPipeText = warnPipeText + '</br></br>You can save as a new revision by entering revision comment at below and clicking the save button.'
+        warnPipeText += '</br></br>You can save as a new revision by entering revision comment at below and clicking the save button.'
     }
 
-    return [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic];
+    return [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic, warnUserAllPipePerm];
 }
 
 function checkRevisionProc(data, proID) {
@@ -1405,6 +1411,26 @@ function checkPermissionProc(proID) {
 
     return [warnUser, infoText, numOfPipelines];
 }
+
+// check if pipeline has any module/process that not allowed to change?
+function checkAllPipelinePerm(pipeline_id){
+    var warnUser = false;
+    var infoText = '';
+    //has pipeline ever used in other project_pipeline which are group or public?
+    var group_id = $('#groupSelPipe').val();
+    var perms = $('#permsPipe').val();
+    var checkAllPipelinePerm = getValues({ p: "checkAllPipelinePerm", "pipeline_id": pipeline_id,group_id: group_id, perms: perms });
+    console.log(checkAllPipelinePerm)
+    var numOfPermDenied = checkAllPipelinePerm.length;
+    if (numOfPermDenied > 0) {
+        warnUser = true;
+        var infoModalText = checkAllPipelinePerm.join("</br>");
+        infoText = infoText + "Permission warnings:</br></br>"+infoModalText+"</br></br>"
+    }
+
+    return [warnUser, infoText];
+}
+
 
 function checkPermissionPipe(pipeline_id) {
     var warnUser = false;
