@@ -1871,8 +1871,9 @@ $(document).ready(function () {
             }
         });
         //---user modal section ends---
-
-        //---github section starts---
+    }
+    
+    //---github section starts---
 
 
 
@@ -1934,9 +1935,5 @@ $(document).ready(function () {
             }
         });
         //---github section ends---
-
-
-
-    }
 
 });

@@ -1,3 +1,6 @@
+31.01.2020 Version 1.0.18
+Github feature opened to public.
+
 09.01.2020 Version 1.0.17
 Google cloud autoshutdown feature fixed.
 Proxy.php validation transfered to BASE_PATH in the .sec file.
