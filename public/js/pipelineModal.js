@@ -910,11 +910,7 @@ function checkProject(pipeline_id) {
 
     return checkProj
 }
-//Check if pipeline is ever used in projects that are group or public
-function checkProjectPublic(pipeline_id) {
-    var checkProj = getValues({ p: "checkProjectPublic", "pipeline_id": pipeline_id });
-    return checkProj
-}
+
 //Check if parameter is ever used in processes 
 function checkParameter(parameter_id) {
     var checkPara = getValues({ p: "checkParameter", "parameter_id": parameter_id });
@@ -1290,7 +1286,7 @@ function checkDeletionPipe(pipeline_id) {
     //has selected pipeline ever used in projects?
     var checkProj = checkProject(pipeline_id);
     //has selected pipeline ever used in projects that user not owns?
-    var checkProjPublic = checkProjectPublic(pipeline_id);
+    var checkProjPublic = getValues({ p: "checkProjectPublic", "pipeline_id": pipeline_id }); 
     var numOfProject = checkProj.length;
     var numOfProjectPublic = checkProjPublic.length;
     if (numOfProject > 0 && numOfProjectPublic === 0) {
@@ -1317,15 +1313,9 @@ function checkRevisionPipe(pipeline_id) {
     //has selected pipeline ever used in projects?
     var checkProj = checkProject(pipeline_id);
     //has selected pipeline ever used in projects that user not owns?
-    var checkProjPublic = checkProjectPublic(pipeline_id);
-    // pipeline has any module/process that not allowed to change?
-    var [warnUserAllPipePerm, infoAllPipePerm] = checkAllPipelinePerm(pipeline_id);
+    var checkProjPublic = getValues({ p: "checkProjectPublic", "pipeline_id": pipeline_id });
     var numOfProject = checkProj.length;
     var numOfProjectPublic = checkProjPublic.length;
-    if (warnUserAllPipePerm === true){
-        warnUserPipe = true;
-        warnPipeText += infoAllPipePerm;
-    }
     if (numOfProject > 0 && numOfProjectPublic === 0) {
         warnUserPipe = true;
         warnPipeText += 'This revision of pipeline already used in following project/projects: ';
@@ -1348,7 +1338,7 @@ function checkRevisionPipe(pipeline_id) {
         warnPipeText += '</br></br>You can save as a new revision by entering revision comment at below and clicking the save button.'
     }
 
-    return [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic, warnUserAllPipePerm];
+    return [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic];
 }
 
 function checkRevisionProc(data, proID) {
@@ -1391,67 +1381,6 @@ function checkRevisionProc(data, proID) {
     }
     return [warnUser, infoText, numOfProcess, numOfProcessPublic, numOfProPipePublic];
 }
-
-function checkPermissionProc(proID) {
-    var warnUser = false;
-    var infoText = '';
-    //has process ever used in other pipelines which are group or public?
-    var checkPipe = getValues({ p: "checkPipelinePerm", "process_id": proID });
-    var numOfPipelines = checkPipe.length;
-    if (numOfPipelines > 0) {
-        warnUser = true;
-        infoText = infoText + 'It is not allowed to change permission of current revision since this revision of process exists in following group/public pipelines: '
-        $.each(checkPipe, function (element) {
-            if (element !== 0) {
-                infoText = infoText + ', ';
-            }
-            infoText = infoText + '"' + checkPipe[element].name + '"';
-        });
-    }
-
-    return [warnUser, infoText, numOfPipelines];
-}
-
-// check if pipeline has any module/process that not allowed to change?
-function checkAllPipelinePerm(pipeline_id){
-    var warnUser = false;
-    var infoText = '';
-    //has pipeline ever used in other project_pipeline which are group or public?
-    var group_id = $('#groupSelPipe').val();
-    var perms = $('#permsPipe').val();
-    var checkAllPipelinePerm = getValues({ p: "checkAllPipelinePerm", "pipeline_id": pipeline_id,group_id: group_id, perms: perms });
-    console.log(checkAllPipelinePerm)
-    var numOfPermDenied = checkAllPipelinePerm.length;
-    if (numOfPermDenied > 0) {
-        warnUser = true;
-        var infoModalText = checkAllPipelinePerm.join("</br>");
-        infoText = infoText + "Permission warnings:</br></br>"+infoModalText+"</br></br>"
-    }
-
-    return [warnUser, infoText];
-}
-
-
-function checkPermissionPipe(pipeline_id) {
-    var warnUser = false;
-    var infoText = '';
-    //has pipeline ever used in other project_pipeline which are group or public?
-    var checkProjectPipeline = getValues({ p: "checkProjectPipePerm", "pipeline_id": pipeline_id });
-    var numOfProjects = checkProjectPipeline.length;
-    if (numOfProjects > 0) {
-        warnUser = true;
-        infoText = infoText + 'It is not allowed to change permission of current revision since this revision of pipeline exists in following group/public runs: '
-        $.each(checkProjectPipeline, function (element) {
-            if (element !== 0) {
-                infoText = infoText + ', ';
-            }
-            infoText = infoText + '"' + checkProjectPipeline[element].name + '"';
-        });
-    }
-
-    return [warnUser, infoText, numOfProjects];
-}
-
 
 function prepareProParam(data, startPoint, typeInOut) {
     if (typeInOut === 'inputs') {
@@ -2294,42 +2223,7 @@ $(document).ready(function () {
         }
     };
 
-    $("#permsPro").click(function () {
-        lastSel = $("#permsPro option:selected");
-    });
-    $("#permsPipe").click(function () {
-        lastSelPipe = $("#permsPipe option:selected");
-    });
-    $(function () {
-        $(document).on('change', '#permsPipe', function (event) {
-            var selPerm = $(this).val();
-            var pipeline_id = $('#pipeline-title').attr('pipelineid');
-            if (pipeline_id !== "" && selPerm == "3") {
-                var warnUser = false;
-                var infoText = '';
-                var numOfRuns = '';
-                //check if pipeline ever used in projects_pipelines that and have permission higher than 3
-                //then not allowed to change
-                [warnUser, infoText, numOfRuns] = checkPermissionPipe(pipeline_id);
-                if (warnUser === true) {
-                    lastSelPipe.prop("selected", true);
-                    // warnDelete process modal 
-                    $('#warnDelete').off();
-                    $('#warnDelete').on('show.bs.modal', function (event) {
-                        $(this).find('form').trigger('reset');
-                        $('#warnDelText').html(infoText);
-                    });
-                    $('#warnDelete').modal('show');
-                } else {
-                    autosaveDetails();
-                }
-            } else {
-                autosaveDetails();
-            }
-        })
-    });
 
-    //xxxxx
     $(function () {
         $('#gitConsoleModal').on('show.bs.modal', function (e) {
             $(this).find('form').trigger('reset');
@@ -2502,30 +2396,6 @@ $(document).ready(function () {
         });
     });
 
-    $(function () {
-        $(document).on('change', '#permsPro', function (event) {
-            var selPerm = $(this).val();
-            var proID = $('#mIdPro').val();
-            if (proID !== "" && selPerm == "3") {
-                var warnUser = false;
-                var infoText = '';
-                var numOfPipelines = '';
-                //check if process ever used in pipelines that and have permission higher than 3
-                //then not allowed to change
-                [warnUser, infoText, numOfPipelines] = checkPermissionProc(proID);
-                if (warnUser === true) {
-                    lastSel.prop("selected", true);
-                    // warnDelete process modal 
-                    $('#warnDelete').off();
-                    $('#warnDelete').on('show.bs.modal', function (event) {
-                        $(this).find('form').trigger('reset');
-                        $('#warnDelText').html(infoText);
-                    });
-                    $('#warnDelete').modal('show');
-                }
-            }
-        })
-    });
 
     $(function () {
         $(document).on('change', '.mRevChange', function (event) {

@@ -1700,12 +1700,9 @@ else if ($p=="saveProjectPipeline"){
             $db->updateProjectGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updateProjectInputGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
-            $checkPermMet = $db->checkPermConditions($pipeline_id, $group_id, $perms, $ownerID);
-            if (!empty($checkPermMet)){
-                $type = "default";
-                $listPermsDenied = $db->updatePipelineProcessGroupPerm($type, $pipeline_id, $group_id, $perms, $ownerID);
-                $data = json_encode($listPermsDenied);  
-            }
+            $listPermsDenied = array();
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+            $data = json_encode($listPermsDenied);  
         }
     } else {
         $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
@@ -1795,24 +1792,30 @@ else if ($p=="checkProjectPipelinePublic")
     $process_id = $_REQUEST['process_id'];
     $data = $db->checkProjectPipelinePublic($process_id, $ownerID);
 }
-else if ($p=="checkPipelinePerm")
-{
+else if ($p=="checkPermUpdtProcess"){
+    $listPermsDenied = array();
     $process_id = $_REQUEST['process_id'];
-    $data = $db->checkPipelinePerm($process_id);
-}
-else if ($p=="checkAllPipelinePerm")
-{
-    $pipeline_id = $_REQUEST['pipeline_id'];
-    $group_id = $_REQUEST['group_id'];
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
     $perms = $_REQUEST['perms'];
-    $type = "dry-run";
-    $listPermsDenied = $db->updatePipelineProcessGroupPerm($type, $pipeline_id, $group_id, $perms, $ownerID);
+    $process_data = json_decode($db->getProcessDataById($process_id, $ownerID),true);
+    if (!empty($process_data[0])){
+        $pro_group_id = $process_data[0]["group_id"];
+        $pro_perms = $process_data[0]["perms"];
+        settype($group_id, 'integer');
+        settype($perms, 'integer');
+        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $ownerID);
+    }
     $data = json_encode($listPermsDenied);
 }
-else if ($p=="checkProjectPipePerm")
-{
+else if ($p=="checkPermUpdtPipeline"){
     $pipeline_id = $_REQUEST['pipeline_id'];
-    $data = $db->checkProjectPipePerm($pipeline_id);
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    $perms = $_REQUEST['perms'];
+    settype($group_id, 'integer');
+    settype($perms, 'integer');
+    $listPermsDenied = array();
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+    $data = json_encode($listPermsDenied);
 }
 else if ($p=="checkProject")
 {
@@ -1922,7 +1925,6 @@ else if ($p=="saveAllPipeline")
     endforeach;
 
     $data = $db->saveAllPipeline($newObj,$ownerID);
-    $nodesRaw = $newObj->{"nodes"};
     $id = $newObj->{"id"};
     $group_id = $newObj->{"group_id"};
     settype($group_id, 'integer');
@@ -1930,8 +1932,7 @@ else if ($p=="saveAllPipeline")
     //update
     if (!empty($id)){
         $listPermsDenied = array();
-        $type = "default";
-        $listPermsDenied = $db->updatePipelinePerms($type, $listPermsDenied, $nodesRaw, $group_id, $perms, $ownerID);
+        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
         $data = json_encode($listPermsDenied);
         //insert
     } else {
@@ -1966,8 +1967,7 @@ else if ($p=="savePipelineDetails")
     //update permissions
     if (!empty($nodesRaw)){
         $listPermsDenied = array();
-        $type = "default";
-        $listPermsDenied = $db->updatePipelinePerms($type, $listPermsDenied, $nodesRaw, $group_id, $perms, $ownerID);
+        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
     }
 }
 else if ($p=="getSavedPipelines") {

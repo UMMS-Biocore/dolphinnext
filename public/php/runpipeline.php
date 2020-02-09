@@ -451,7 +451,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 <div class="col-md-6">
     <div class="form-group">
         <label>Permissions to View</label>
-        <select id="perms" style="width:100%;" class="fbtn btn-default form-control" name="perms">
+        <select id="permsRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="perms">
             <option value="3" selected>Only me </option>
             <option value="15">Only my group</option>
         </select>
@@ -460,8 +460,8 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 <div class="col-md-6">
     <div class="form-group">
         <label>Group Selection </label>
-        <select id="groupSel" style="width:100%;" class="fbtn btn-default form-control" name="group_id">
-            <option value="" disabled selected>Choose group </option>
+        <select id="groupSelRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="group_id">
+            <option value="" selected>Choose group </option>
         </select>
     </div>
 </div>

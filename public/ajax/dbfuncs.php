@@ -4046,7 +4046,7 @@ class dbfuncs {
     }
 
 
-    public function getProcessDataById($id, $ownerID) {
+    function getProcessDataById($id, $ownerID) {
         if ($ownerID == ""){
             $ownerID ="''";
         }else {
@@ -4127,32 +4127,27 @@ class dbfuncs {
         $sql = "SELECT id FROM project_input WHERE input_id = '$input_id' AND project_id = '$project_id'";
         return self::queryTable($sql);
     }
-    public function checkFileProject($project_id, $file_id) {
+    function checkFileProject($project_id, $file_id) {
         $sql = "SELECT id FROM file_project WHERE deleted=0 AND f_id = '$file_id' AND p_id = '$project_id'";
         return self::queryTable($sql);
     }
-    public function checkProPipeInput($project_id, $input_id, $pipeline_id, $project_pipeline_id) {
+    function checkProPipeInput($project_id, $input_id, $pipeline_id, $project_pipeline_id) {
         $sql = "SELECT id FROM project_pipeline_input WHERE deleted =0 AND input_id = '$input_id' AND project_id = '$project_id' AND pipeline_id = '$pipeline_id' AND project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
-    public function checkPipelinePublic($process_id, $ownerID) {
-        $sql = "SELECT id, name FROM biocorepipe_save WHERE deleted = 0 AND owner_id != '$ownerID' AND nodes LIKE '%\"$process_id\",\"%'";
+    function checkPipelinePublic($process_id, $ownerID) {
+        $sql = "SELECT id, name 
+                FROM biocorepipe_save 
+                WHERE deleted = 0 AND owner_id != '$ownerID' AND 
+                CONCAT(',', process_list , ',')  LIKE '%,$process_id,%'";
         return self::queryTable($sql);
     }
-    public function checkProjectPipelinePublic($process_id, $ownerID) {
+    function checkProjectPipelinePublic($process_id, $ownerID) {
         $sql = "SELECT DISTINCT p.id, p.name
-                            FROM biocorepipe_save p
-                            INNER JOIN project_pipeline pp ON p.id = pp.pipeline_id
-                            WHERE p.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id != '$ownerID') AND p.nodes LIKE '%\"$process_id\",\"%'";
-        return self::queryTable($sql);
-    }
-    function checkPipelinePerm($process_id) {
-        $sql = "SELECT id, name FROM biocorepipe_save WHERE deleted = 0 AND perms>3 AND nodes LIKE '%\"$process_id\",\"%'";
-        return self::queryTable($sql);
-    }
-
-    function checkProjectPipePerm($pipeline_id) {
-        $sql = "SELECT id, name FROM project_pipeline WHERE deleted = 0 && perms>3 AND pipeline_id='$pipeline_id'";
+                FROM biocorepipe_save p
+                INNER JOIN project_pipeline pp ON p.id = pp.pipeline_id
+                WHERE p.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id != '$ownerID') 
+                AND CONCAT(',', p.process_list , ',')  LIKE '%,$process_id,%'";
         return self::queryTable($sql);
     }
     function checkParameter($parameter_id, $ownerID) {
@@ -4178,19 +4173,21 @@ class dbfuncs {
     }
     function checkProject($pipeline_id, $ownerID) {
         $sql = "SELECT DISTINCT pp.id, p.name
-                            FROM project_pipeline pp
-                            INNER JOIN project p ON pp.project_id = p.id
-                            WHERE pp.deleted = 0 AND pp.owner_id = '$ownerID' AND pp.pipeline_id = '$pipeline_id'";
+                FROM project_pipeline pp
+                INNER JOIN project p ON pp.project_id = p.id
+                WHERE pp.deleted = 0 AND pp.owner_id = '$ownerID' AND pp.pipeline_id = '$pipeline_id'";
         return self::queryTable($sql);
     }
     //Check if pipeline is ever used in projects that are group or public
     function checkProjectPublic($pipeline_id, $ownerID) {
-        $sql = "SELECT DISTINCT pp.id, p.name
-                            FROM project_pipeline pp
-                            INNER JOIN project p ON pp.project_id = p.id
-                            WHERE pp.deleted = 0 AND pp.owner_id != '$ownerID' AND pp.pipeline_id = '$pipeline_id'";
+        $sql = "SELECT DISTINCT pp.id, p.name, pip.pipeline_list
+                FROM project_pipeline pp
+                INNER JOIN project p ON pp.project_id = p.id
+                INNER JOIN biocorepipe_save pip ON pp.pipeline_id = pip.id
+                WHERE pp.deleted = 0 AND pp.owner_id != '$ownerID' AND (pp.pipeline_id = '$pipeline_id' OR CONCAT(',', pip.pipeline_list , ',')  LIKE '%,$pipeline_id,%' )";
         return self::queryTable($sql);
     }
+
     function getMaxProcess_gid() {
         $sql = "SELECT MAX(process_gid) process_gid FROM process";
         return self::queryTable($sql);
@@ -4257,46 +4254,48 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
+
+
     //3 -> user r+w
     //11-> user r+w, group r
     //15-> user r+w, group r+w 
     //43=> user r+w, group r,   and other r
     //47=> user r+w, group r+w, and other r
-    //check if pipeline permission is needed to update:
+    //check if permission is needed to update:
     //return 1 if one of these conditions are met
-    //expected(run)       current(pipeline)
+    //expected(pipeline/run)       current(pipeline)
     //group A 11/15       group B 11/15 ->change only group_id
     //group A 11/15       3
     //everyone            3, group A 11/15
-    function checkPermConditions($pipeline_id, $group_id, $perms, $ownerID){
+    function validateUpdtNeed($curr_group_id, $curr_perms, $group_id, $perms){
         $ret = 0;
-        $pipe = $this->loadPipeline($pipeline_id,$ownerID);
-        $pipeData = json_decode($pipe,true);
-        if (!empty($pipeData[0])){
-            $pipe_group_id = $pipeData[0]["group_id"];
-            $pipe_perms = $pipeData[0]["perms"];
-            if ($pipe_perms == 15 && $perms == 15 && $pipe_group_id != $group_id && !empty($group_id)){
-                $ret = 1;
-            } else if ($pipe_perms == 3 && $perms == 15 && !empty($group_id)){
-                $ret = 1;
-            } else if ($perms >15 &&  $pipe_perms < 16){
-                $ret = 1;
-            }
-        }
+        if ($curr_perms == 15 && $perms == 15 && $curr_group_id != $group_id && !empty($group_id)){
+            $ret = 1;
+        } else if ($curr_perms == 3 && $perms == 15 && !empty($group_id)){
+            $ret = 1;
+        } else if ($perms >15 &&  $curr_perms < 16){
+            $ret = 1;
+        } 
         return $ret;
     }
 
-    function updatePipelineProcessGroupPerm($type, $pipeline_id, $group_id, $perms, $ownerID) {
-        $sql = "SELECT pip.nodes
-                FROM biocorepipe_save pip
-                WHERE pip.deleted=0 AND pip.id = '$pipeline_id'";
-        $nodesArr = json_decode(self::queryTable($sql));
-        $listPermsDenied = array();
-        if (!empty($nodesArr[0])){
-            $nodes = json_decode($nodesArr[0]->{"nodes"});
-            $listPermsDenied = $this->updatePipelinePerms($type, $listPermsDenied, $nodes, $group_id, $perms, $ownerID);
+
+    function checkUpdtNeed($type, $id, $group_id, $perms, $ownerID){
+        $ret = 0;
+        $dataCheck = 0;
+        if ($type == "pipeline"){
+            $pipe = $this->loadPipeline($id,$ownerID);
+            $pipeData = json_decode($pipe,true);
+            if (!empty($pipeData[0])){
+                $dataCheck = 1;
+                $curr_group_id = $pipeData[0]["group_id"];
+                $curr_perms = $pipeData[0]["perms"];
+            } 
         }
-        return $listPermsDenied;
+        if (!empty($dataCheck)){
+            $ret = $this->validateUpdtNeed($curr_group_id, $curr_perms, $group_id, $perms);
+        }
+        return $ret;
     }
 
     //update if user owns the process
@@ -4317,7 +4316,6 @@ class dbfuncs {
         $warn = "";
         if ($table == "biocorepipe_save"){
             $data = json_decode($this->checkProjectPublic($id, $userID));
-            //check pipeline modules
             if (!empty($data[0])){
                 $ret = 1;
                 $warn .= "Pipeline: $name already used in group/public projects.\n";
@@ -4345,12 +4343,7 @@ class dbfuncs {
     //63=> user r+w, group r+w, and other r (depricated)
     function checkUserPermission($table, $id, $userID, $mode){
         $ret = 0;
-        $warn = "";
-        $role = $this->getUserRoleVal($userID);
-//        if ($role == "admin"){
-//            $ret = 1;
-//            return array($ret, $warn);
-//        }
+        $name = "";
         if ($mode == "w"){
             $where = "(pip.owner_id='$userID' OR (ug.u_id ='$userID' and pip.perms = 15))";
         } else if ($mode == "r"){
@@ -4363,64 +4356,91 @@ class dbfuncs {
                 WHERE pip.deleted = 0 AND pip.id = '$id' AND $where ";
         $data = json_decode(self::queryTable($sql));
         if (!empty($data[0])){
-            if ($mode == "w"){
-                $name = $data[0]->{'name'};
-                list($checkUsed,$warn) = $this->checkUsed($table, $name, $id, $userID);
-                if (empty($checkUsed)){
-                    $ret = 1; 
-                } else {
-                    error_log($name.$warn);
-                }
-            }
+            $ret = 1; 
+            $name = $data[0]->{'name'};
         }
-        return array($ret, $warn);
+        return array($ret, $name);
     }
 
-    function updatePipelinePerms($type, $listPermsDenied, $nodesRaw, $group_id, $perms, $ownerID) {
-        foreach ($nodesRaw as $item):
-        if ($item[2] !== "inPro" && $item[2] !== "outPro" ){
-            //pipeline modules
-            if (preg_match("/p(.*)/", $item[2], $matches)){
-                $pipeModId = $matches[1];
-                if (!empty($pipeModId)){
-                    settype($pipeModId, "integer");
-                    list($permCheck,$warn) = $this->checkUserPermission("biocorepipe_save", $pipeModId, $ownerID, "w");
-                    if (!empty($permCheck)){
-                        if ($type != "dry-run"){
-                            $this->updatePipelineGroupPermByPipeId($pipeModId, $group_id, $perms, $ownerID);
-                        }
-                        $pipe = $this->loadPipeline($pipeModId,$ownerID);
-                        $pipeData = json_decode($pipe,true);
-                        if (!empty($pipeData[0])){
-                            if (!empty($pipeData[0]["nodes"])){
-                                $nodes = json_decode($pipeData[0]["nodes"]);
-                                $listPermsDenied = $this->updatePipelinePerms($type, $listPermsDenied, $nodes, $group_id, $perms, $ownerID);
-                            }
-                        }
-                    } else {
-                        if (!empty($warn)){
-                            $listPermsDenied[] = $warn;
-                        }
+    function checkPermGroupEq($curr_group_id, $curr_perms, $exp_group_id, $exp_perms){
+        $ret = 0;
+        settype($curr_group_id, "integer");
+        settype($curr_perms, "integer");
+        settype($exp_group_id, "integer");
+        settype($exp_perms, "integer");
+        if ($curr_group_id == $exp_group_id && $curr_perms == $exp_perms){
+            $ret = 1;
+        }
+        return $ret;
+    }
+
+    function permUpdtModule($listPermsDenied, $type, $table, $id, $curr_group_id, $curr_perms, $group_id, $perms, $ownerID){
+        // check if current value of the group and perm are same as expected values
+        $checkEq = $this->checkPermGroupEq($curr_group_id, $curr_perms, $group_id, $perms);
+        if ($checkEq != 1){
+            list($permCheck,$warnName) = $this->checkUserPermission($table, $id, $ownerID, "w");
+            list($checkUsed,$warn) = $this->checkUsed($table, $warnName, $id, $ownerID);
+            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms)){
+                if ($type != "dry-run" && $type != "dry-run-strict"){
+                    if ($table == "biocorepipe_save"){
+                        $this->updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID);
+                    } else if ($table == "process"){
+                        $this->updateProcessGroupPerm($id, $group_id, $perms, $ownerID);
+                        $this->updateProcessParameterGroupPerm($id, $group_id, $perms, $ownerID);
                     }
                 }
-                //processes
             } else {
-                $proId = $item[2];
-                list($permCheck,$warn) = $this->checkUserPermission("process", $proId, $ownerID, "w");
-                if (!empty($permCheck)){
-                    if ($type != "dry-run"){
-//                        $this->updateProcessGroupPerm($proId, $group_id, $perms, $ownerID);
-                        $this->updateProcessParameterGroupPerm($proId, $group_id, $perms, $ownerID);
-                    }
-                } else {
-                    if (!empty($warn)){
+                if (!empty($warn)){
+                    //allows skipping in case update not needed
+                    if ($type != "strict" && $type != "dry-run-strict"){
+                        $validateUpdtNeed = $this->validateUpdtNeed($curr_group_id, $curr_perms, $group_id, $perms);
+                        if (!empty($validateUpdtNeed)){
+                            $listPermsDenied[] = $warn;
+                        } 
+                    } else {
                         $listPermsDenied[] = $warn;
                     }
                 }
             }
         }
-        endforeach;
-        return array_unique($listPermsDenied);
+        return $listPermsDenied;
+    }
+
+    function recursivePermUpdtPipeline($type, $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID) {
+        settype($pipeline_id, "integer");
+        $pipe = $this->loadPipeline($pipeline_id,$ownerID);
+        $pipeData = json_decode($pipe,true);
+        if (!empty($pipeData[0])){
+            $nodes = json_decode($pipeData[0]["nodes"]);
+            $pipe_group_id = $pipeData[0]["group_id"];
+            $pipe_perms = $pipeData[0]["perms"];
+            $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "biocorepipe_save", $pipeline_id, $pipe_group_id, $pipe_perms, $group_id, $perms, $ownerID);
+            if (!empty($nodes)){
+                foreach ($nodes as $item):
+                if ($item[2] !== "inPro" && $item[2] !== "outPro" ){
+                    //pipeline modules
+                    if (preg_match("/p(.*)/", $item[2], $matches)){
+                        $pipeModId = $matches[1];
+                        if (!empty($pipeModId)){
+                            $listPermsDenied = $this->recursivePermUpdtPipeline($type, $listPermsDenied, $pipeModId, $group_id, $perms, $ownerID);
+                        }
+                    //processes
+                    } else {
+                        $proId = $item[2];
+                        $process_data = json_decode($this->getProcessDataById($proId, $ownerID),true);
+                        if (!empty($process_data[0])){
+                            $pro_group_id = $process_data[0]["group_id"];
+                            $pro_perms = $process_data[0]["perms"];
+                            $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "process", $proId, $pro_group_id, $pro_perms, $group_id, $perms, $ownerID);
+                        }
+                    }
+                }
+                endforeach;
+            }
+        }
+        $listPermsDeniedUniq = array_unique($listPermsDenied);
+        sort($listPermsDeniedUniq);
+        return $listPermsDeniedUniq;
     }
 
     public function updateUUID ($id, $type, $res){
