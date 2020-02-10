@@ -1,12 +1,16 @@
 #!/share/bin/python
 
 from optparse import OptionParser
-import ConfigParser, os, argparse
+import os, argparse
+try:
+    import configparser
+except:
+    from six.moves import configparser
 
 
 def getConf():
     ret = dict();  
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.readfp(open('../config/.sec'))
     ret['DB']     = config.get('Dolphinnext', 'DB')
     ret['DBUSER'] = config.get('Dolphinnext', 'DBUSER')
