@@ -1740,7 +1740,7 @@ function createEdges(first, second, pObj) {
 
         pObj.edges.push(prefix + pObj.fClick + "_" + prefix + pObj.sClick);
     } else {
-        console.log("EDGE FAILED: prefix:",prefix +" MainGNum:"+ MainGNum + "Edge" + first + "_" +second)
+        console.log("EDGE FAILED: prefix: ",prefix +" MainGNum: "+ MainGNum + "Edge: " + first + "_" +second)
     }
 }
 
