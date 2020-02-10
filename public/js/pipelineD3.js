@@ -1946,6 +1946,17 @@ function refreshCreatorData(pipeline_id) {
 }
 
 
+function warnUserSave(res){
+    if (res){
+        if ($.isArray(res)){
+            var infoModalText = res.join("</br>");
+            if (infoModalText){
+                showInfoModal("#infoMod", "#infoModText", "Permission of the following components of the pipeline couldn't be changed:</br></br>"+infoModalText)
+            }
+        }
+    } 
+}
+
 //Revision is not required for advanced options, description
 function saveDetails() {
     var id = $("#pipeline-title").attr('pipelineid');
@@ -2057,10 +2068,46 @@ $('#pipeline-title').change(function () {
     cleanRedBorder('#pipeline-title', checkVal)
 });
 
+function getAllPipelineID(){
+    var pipelineListDb = [];
+    for (var p = 0; p < piGnumList.length; p++) {
+        var pipeID = window["pObj" + piGnumList[p]].piID;
+        if (!pipelineListDb.includes(pipeID)) {
+            pipelineListDb.push(pipeID);
+        }
+    }
+    return pipelineListDb;
+}
+
+function getAllProcessID(){
+    var processListDb = [];
+    var addIds2processList = function (processListPipeMod){
+        if (processListPipeMod) {
+            for (var key in processListPipeMod) {
+                var gClass = document.getElementById(key).className.baseVal
+                if (gClass){
+                    var prosessID = gClass.split("-")[1];
+                    if (!processListDb.includes(prosessID)) {
+                        processListDb.push(prosessID);
+                    }
+                }
+            }
+        }
+    }
+    addIds2processList(window.processListMain);
+    for (var p = 0; p < piGnumList.length; p++) {
+        var processListPipeMod = {};
+        processListPipeMod = window["pObj" + piGnumList[p]].processListMain;
+        addIds2processList(processListPipeMod);
+    }
+return processListDb;
+}
+
 function createSaveNodes() {
     saveNodes = {}
-    processListDb = [];
-    pipelineListDb = [];
+    createPiGnumList(); // execute once before getAllProcessID() and getAllPipelineID()
+    processListDb = getAllProcessID();
+    pipelineListDb = getAllPipelineID();
     pubWebDirListDb = [];
     for (var key in processList) {
         t = d3.transform(d3.select('#' + key).attr("transform")),
@@ -2094,12 +2141,7 @@ function createSaveNodes() {
         }
         processName = processList[key]
         saveNodes[key] = [x, y, prosessID, processName, processModule]
-        if (prosessID.match(/^p(.*)/)) {
-            var pipeID = prosessID.match(/^p(.*)/)[1];
-            pipelineListDb.push(pipeID);
-        } else if (!prosessID.match(/(.*)Pro/)) {
-            processListDb.push(prosessID);
-        } else if (!prosessID.match(/^inPro$/) && processModule.pubWeb) {
+        if (prosessID.match(/^outPro$/) && processModule.pubWeb) {
             pubWebDirListDb.push(processName);
         }
     }
@@ -2224,6 +2266,7 @@ function save() {
             if (warnUserPipe === false || saveOnExist === true) {
                 sl = JSON.stringify(savedList);
                 var ret = getValues({ p: "saveAllPipeline", dat: sl });
+                warnUserSave(ret)
                 pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
                 refreshCreatorData(pipeline_id);
                 var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
@@ -2248,7 +2291,7 @@ function save() {
                     $('#confirmYesNoText').html(warnPipeText);
                     if (numOfProjectPublic === 0 || usRole === "admin") {
                         $('#saveOnExist').css('display', 'inline');
-                        if (usRole == "admin" && !(numOfProjectPublic === 0)) {
+                        if (usRole == "admin" && numOfProjectPublic > 0) {
                             $('#saveOnExist').attr('class', 'btn btn-danger');
                         }
                     }
@@ -2264,6 +2307,7 @@ function save() {
                 $('#confirmRevision').on('click', '#saveOnExist', function (event) {
                     sl = JSON.stringify(savedList);
                     var ret = getValues({ p: "saveAllPipeline", dat: sl });
+
                     pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
                     refreshCreatorData(pipeline_id);
                     var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
@@ -2279,7 +2323,7 @@ function save() {
                     saveOnExist = true;
                     $('#autosave').text('All changes saved');
                     $('#confirmRevision').modal('hide');
-
+                    warnUserSave(ret)
                 });
 
 

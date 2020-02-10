@@ -236,7 +236,7 @@
                 <div id="permsPipeDiv" class="col-md-4">
                     <div class="form-group">
                         <label class="col-sm-12 control-label">Permissions to View</label>
-                        <select id="permsPipe" class="fbtn btn-default form-control" name="perms">
+                        <select id="permsPipe" class="fbtn btn-default form-control permscheck" name="perms">
                             <option value="3" selected="">Only me </option>
                             <option value="15">Only my group</option>
                             <option disabled value="63">Everyone </option>
@@ -246,7 +246,7 @@
                 <div id="groupSelPipeDiv" class="col-md-4">
                     <div class="form-group">
                         <label class="col-sm-12 control-label">Group Selection</label>
-                        <select id="groupSelPipe" class="fbtn btn-default form-control" name="group_id">
+                        <select id="groupSelPipe" class="fbtn btn-default form-control permscheck" name="group_id">
                             <option value="" selected>Choose group </option>
                         </select>
                     </div>
@@ -692,7 +692,7 @@
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Permissions to View</label>
                                         <div class="col-sm-6">
-                                            <select id="permsPro" class="fbtn btn-default form-control" name="perms">
+                                            <select id="permsPro" class="fbtn btn-default form-control permscheck" name="perms">
                                                 <option value="3" selected="">Only me </option>
                                                 <option value="15">Only my groups</option>
                                                 <option disabled value="63">Everyone </option>
@@ -704,7 +704,7 @@
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Group Selection</label>
                                         <div class="col-sm-6">
-                                            <select id="groupSelPro" class="fbtn btn-default form-control" name="group_id">
+                                            <select id="groupSelPro" class="fbtn btn-default form-control permscheck" name="group_id">
                                                 <option value="" selected>Choose group </option>
                                             </select>
                                         </div>

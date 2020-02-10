@@ -545,7 +545,7 @@ function addCloudRow(cloud, id, name, executor, instance_type, image_id, subnet_
     if (autoshutdown_check == "true"){
         checked = "checked";
     }
-    
+
     var checkBox = '<input id="'+cloud+'autoshutdown-' + id + '" cloud="'+cloud+'" class="autoShutCheck" type="checkbox"  name="autoshutdown_check" '+checked+'><p id="'+cloud+'shutdownLog-' + id + '"></p><p id="'+cloud+'shutdownTimer-' + id + '"></p>';
 
     $('#'+cloud+'Table > tbody').append('<tr id="'+cloud+'-' + id + '"> <td>' + name + '</td><td>Instance_type: ' + instance_type + '<br>  Image id: ' + image_id + '<br>  Executor: ' + executor + '<br>  </td><td>'+checkBox+'</td><td id="status-'+ cloud + id + '"><i class="fa fa-hourglass-half"></i></td><td>' + getButtonsDef(cloud, 'Start') + getButtonsDef(cloud, 'Stop') + '</td></tr>');
@@ -750,6 +750,95 @@ $(document).ready(function () {
     });
     //check active wizard and fill the dropdown and show warning
     loadOngoingWizard("onload")
+
+
+    //--------- permission control for process/pipeline/run starts-------
+    $(function () {
+        var previousOpt;
+        var checkPermissionUpdt = function (id,perms,group_id,format) {
+            var warnUser = false;
+            var infoText = '';
+            if (format == "pipeline" || format == "run" ){
+                var checkPermissionUpdt = getValues({ p: "checkPermUpdtPipeline", "pipeline_id": id, perms:perms,  group_id:group_id}); 
+            } else if (format == "process"){
+                var checkPermissionUpdt = getValues({ p: "checkPermUpdtProcess", "process_id": id, perms:perms,  group_id:group_id}); 
+            }
+            console.log(checkPermissionUpdt);
+            var warnAr = $.map(checkPermissionUpdt, function(value, index) {
+                return [value];
+            });
+            var numOfErr = warnAr.length;
+            if (numOfErr > 0) {
+                warnUser = true;
+                if (format == "pipeline" || format == "process" ){
+                    infoText += 'It is not allowed to change permission/group of current revision because of the following reason(s): </br></br>'
+                } else if (format == "run"){
+                    infoText += "Permission of the pipeline needs to be updated in order to share this run. However, it couldn't be changed because of the following reason(s): </br></br>"
+                } 
+                $.each(warnAr, function (element) {
+                    infoText += warnAr[element]+"</br>";
+                });
+            }
+            return [warnUser, infoText];
+        }
+
+        $(document).on('focus', '.permscheck', function () {
+            previousOpt = $(this).children("option:selected");
+        }).on('change', '.permscheck', function (event) {
+            var dropdownID = this.id;
+            if (dropdownID == "permsPipe" || dropdownID == "groupSelPipe"){
+                var selGroup = $("#groupSelPipe").val();
+                var selPerm = $("#permsPipe").val();
+                var pipeline_id = $('#pipeline-title').attr('pipelineid');
+                if (pipeline_id) {
+                    var warnUser = false;
+                    var infoText = '';
+                    //check if pipeline permission is allowed to change
+                    [warnUser, infoText] = checkPermissionUpdt(pipeline_id,selPerm,selGroup, "pipeline");
+                    if (warnUser === true) {
+                        previousOpt.prop("selected", true);
+                        showInfoModal("#infoMod","#infoModText", infoText);
+                    } else {
+                        autosaveDetails();
+                    }
+                } else {
+                    autosaveDetails();
+                }
+            } else if (dropdownID == "permsRun" || dropdownID == "groupSelRun"){
+                var selGroup = $("#groupSelRun").val();
+                var selPerm = $("#permsRun").val();
+                var pipeline_id = $('#pipeline-title').attr('pipeline_id');
+                if (pipeline_id){
+                    var warnUser = false;
+                    var infoText = '';
+                    //check if pipeline permission is allowed to change
+                    [warnUser, infoText] = checkPermissionUpdt(pipeline_id,selPerm,selGroup, "run");
+                    if (warnUser === true) {
+                        previousOpt.prop("selected", true);
+                        showInfoModal("#infoMod","#infoModText", infoText);
+                    } 
+                }
+            } else if (dropdownID == "permsPro" || dropdownID == "groupSelPro"){
+                var selGroup = $("#groupSelPro").val();
+                var selPerm = $("#permsPro").val();
+                var process_id = $('#mIdPro').val()
+                if (process_id){
+                    var warnUser = false;
+                    var infoText = '';
+                    var numOfRuns = '';
+                    //check if process permission is allowed to change
+                    [warnUser, infoText] = checkPermissionUpdt(process_id,selPerm,selGroup, "process");
+                    if (warnUser === true) {
+                        previousOpt.prop("selected", true);
+                        showInfoModal("#infoMod","#infoModText", infoText);
+                    } 
+                }
+            }
+            //reasign previousOpt value after change
+            previousOpt = $(this).children("option:selected");
+        });
+    });
+    //---- permission control for process/pipeline/run ends
 
 });
 

@@ -1700,8 +1700,9 @@ else if ($p=="saveProjectPipeline"){
             $db->updateProjectGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updateProjectInputGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
-            $db->updatePipelineGroupPerm($id, $group_id, $perms, $ownerID);
-            $db->updatePipelineProcessGroupPerm($id, $group_id, $perms, $ownerID);
+            $listPermsDenied = array();
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+            $data = json_encode($listPermsDenied);  
         }
     } else {
         $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
@@ -1791,15 +1792,30 @@ else if ($p=="checkProjectPipelinePublic")
     $process_id = $_REQUEST['process_id'];
     $data = $db->checkProjectPipelinePublic($process_id, $ownerID);
 }
-else if ($p=="checkPipelinePerm")
-{
+else if ($p=="checkPermUpdtProcess"){
+    $listPermsDenied = array();
     $process_id = $_REQUEST['process_id'];
-    $data = $db->checkPipelinePerm($process_id);
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    $perms = $_REQUEST['perms'];
+    $process_data = json_decode($db->getProcessDataById($process_id, $ownerID),true);
+    if (!empty($process_data[0])){
+        $pro_group_id = $process_data[0]["group_id"];
+        $pro_perms = $process_data[0]["perms"];
+        settype($group_id, 'integer');
+        settype($perms, 'integer');
+        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $ownerID);
+    }
+    $data = json_encode($listPermsDenied);
 }
-else if ($p=="checkProjectPipePerm")
-{
+else if ($p=="checkPermUpdtPipeline"){
     $pipeline_id = $_REQUEST['pipeline_id'];
-    $data = $db->checkProjectPipePerm($pipeline_id);
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    $perms = $_REQUEST['perms'];
+    settype($group_id, 'integer');
+    settype($perms, 'integer');
+    $listPermsDenied = array();
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+    $data = json_encode($listPermsDenied);
 }
 else if ($p=="checkProject")
 {
@@ -1902,23 +1918,38 @@ else if ($p=="getOutputsPP")
 else if ($p=="saveAllPipeline")
 {
     $dat = $_REQUEST['dat'];
-    $data = $db->saveAllPipeline($dat,$ownerID);
-    $idArray = json_decode($data,true);
-    $new_pipe_id = $idArray["id"];
-    if (!empty($new_pipe_id)){
-        $obj = json_decode($dat);
-        $newObj = new stdClass();
-        foreach ($obj as $item):
-        foreach($item as $k => $v) $newObj->$k = $v;
-        endforeach;
-        $pipeline_uuid = isset($newObj->{"pipeline_uuid"}) ? $newObj->{"pipeline_uuid"} : "";
-        $pipeline_rev_uuid = isset($newObj->{"pipeline_rev_uuid"}) ? $newObj->{"pipeline_rev_uuid"} : "";
-        if (empty($pipeline_uuid)) {
-            $db->getUUIDAPI($data,"pipeline", $new_pipe_id);
-        } else if (empty($pipeline_rev_uuid)){
-            $db->getUUIDAPI($data,"pipeline_rev", $new_pipe_id);
-        }
+    $obj = json_decode($dat);
+    $newObj = new stdClass();
+    foreach ($obj as $item):
+    foreach($item as $k => $v) $newObj->$k = $v;
+    endforeach;
+
+    $data = $db->saveAllPipeline($newObj,$ownerID);
+    $id = $newObj->{"id"};
+    $group_id = $newObj->{"group_id"};
+    settype($group_id, 'integer');
+    $perms = $newObj->{"perms"};
+    //update
+    if (!empty($id)){
+        $listPermsDenied = array();
+        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
+        $data = json_encode($listPermsDenied);
+        //insert
+    } else {
+        $idArray = json_decode($data,true);
+        $new_pipe_id = $idArray["id"];
+        if (!empty($new_pipe_id)){
+            $pipeline_uuid = isset($newObj->{"pipeline_uuid"}) ? $newObj->{"pipeline_uuid"} : "";
+            $pipeline_rev_uuid = isset($newObj->{"pipeline_rev_uuid"}) ? $newObj->{"pipeline_rev_uuid"} : "";
+            if (empty($pipeline_uuid)) {
+                $db->getUUIDAPI($data,"pipeline", $new_pipe_id);
+            } else if (empty($pipeline_rev_uuid)){
+                $db->getUUIDAPI($data,"pipeline_rev", $new_pipe_id);
+            }
+        } 
     }
+
+
 }
 else if ($p=="savePipelineDetails")
 {
@@ -1935,7 +1966,8 @@ else if ($p=="savePipelineDetails")
     $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publish,$pipeline_group_id,$ownerID);
     //update permissions
     if (!empty($nodesRaw)){
-        $db->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
+        $listPermsDenied = array();
+        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
     }
 }
 else if ($p=="getSavedPipelines") {

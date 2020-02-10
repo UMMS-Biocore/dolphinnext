@@ -1,5 +1,7 @@
 10.02.2020 Version 1.1.1
 runUpdate script updated.
+Pipeline process and module id's started to save recursively in pipeline data.
+Pipeline/process permission/group change algorithm updated.
 
 10.02.2020 Version 1.1.0
 Minor bug fixed in updateDN.py script.
