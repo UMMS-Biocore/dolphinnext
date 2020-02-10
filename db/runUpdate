@@ -14,15 +14,9 @@ not_exist_db=$(printf "${exist_db}\n${exist_patch}"  | sort | uniq -u | sort -V)
 printf "INFO: Checking db patches that are not applied:\n$not_exist_db\n"
 
 for i in $not_exist_db; do
-    success="f"
     if [ -f patch/${i} ]; then
         echo "INFO: Database patch ${i} will be executed."
-        mysql -u${user} ${pass} $db < patch/${i} && success="t" && echo "INFO: Database patch ${i} successfully executed."
-    fi
-    ## if update_db table exist then add as new line
-    if [ "$exist_table" -eq 1 ] && [ $success == "t" ]; then
-        echo "INFO: update_db will be updated for ${i}."
-        mysql -u${user} ${pass} $db -sse "INSERT INTO update_db (name, owner_id, date_created, date_modified, last_modified_user) VALUES (\"${i}\", \"${user_id}\", NOW(), NOW(), \"${user_id}\");" && echo "INFO: update_db table successfully updated" 
+        mysql -u${user} ${pass} $db < patch/${i} && echo "INFO: Database patch ${i} successfully executed."
     fi
 done
 echo "INFO: runUpdate Completed."
@@ -32,3 +26,4 @@ echo "INFO: runUpdate Completed."
 
 
 
+    
