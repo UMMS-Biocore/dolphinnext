@@ -1,12 +1,16 @@
 #!/share/bin/python
 
 from optparse import OptionParser
-import ConfigParser, os, argparse
+import os, argparse
+try:
+    import configparser
+except:
+    from six.moves import configparser
 
 
 def getConf():
     ret = dict();  
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.readfp(open('../config/.sec'))
     ret['DB']     = config.get('Dolphinnext', 'DB')
     ret['DBUSER'] = config.get('Dolphinnext', 'DBUSER')
@@ -21,14 +25,14 @@ def main():
     conf=getConf()
     ownerID = "1"
     pull_cmd = "cd .. && git pull https://github.com/UMMS-Biocore/dolphinnext.git " + args.version + " 2>&1"
-    print "INFO: Pulling"+ "\nRUN : "+ pull_cmd
+    print ("INFO: Pulling"+"\nRUN : "+ pull_cmd)
     pull_cmd_log = os.popen(pull_cmd).read()
-    print "\n" + "LOG :\n" + pull_cmd_log
+    print ("\n"+"LOG :\n" + pull_cmd_log)
     runUpdateCmd = "cd ../db/ && bash ./runUpdate " + conf['DB'] + " " + ownerID + " " + conf['DBUSER'] + " " + conf['DBPASS'] + " 2>&1"
     runUpdateCmdLog = "cd ../db/ && bash ./runUpdate " + conf['DB'] + " " + ownerID + " " + conf['DBUSER'] + " " + "*****" + " 2>&1"
-    print "\nINFO:" + " Database Update\nRUN : " + runUpdateCmdLog
+    print ("\nINFO:"+ " Database Update\nRUN : " + runUpdateCmdLog)
     runUpdateCmd_log = os.popen(runUpdateCmd).read()
-    print "LOG :\n" + runUpdateCmd_log
+    print ("LOG :\n"+ runUpdateCmd_log)
     
     
 if __name__ == "__main__":
