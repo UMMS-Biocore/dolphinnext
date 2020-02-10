@@ -74,3 +74,7 @@ ADD `google_cre_id` int(11) DEFAULT 0 AFTER `amazon_cre_id`;
 
 ALTER TABLE `file`
 ADD `gs_archive_dir` varchar(500) DEFAULT NULL AFTER `s3_archive_dir`;
+
+INSERT INTO `update_db` (`name`, `owner_id`, `date_created`, `date_modified`, `last_modified_user`) VALUES 
+("updateVersion1.0.16.sql", "1", NOW(), NOW(), "1");
+

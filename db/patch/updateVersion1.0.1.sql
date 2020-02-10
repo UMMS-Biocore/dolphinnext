@@ -21,3 +21,6 @@ ADD `auto_workdir` VARCHAR(500) DEFAULT NULL after `variable`;
 ALTER TABLE `profile_amazon`
 ADD `group_id` int(11) DEFAULT 0 after `owner_id`,
 ADD `auto_workdir` VARCHAR(500) DEFAULT NULL after `variable`;
+
+INSERT INTO `update_db` (`name`, `owner_id`, `date_created`, `date_modified`, `last_modified_user`) VALUES 
+("updateVersion1.0.1.sql", "1", NOW(), NOW(), "1");

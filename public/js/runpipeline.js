@@ -3863,7 +3863,7 @@ function loadProjectPipeline(pipeData) {
     $('#rOut_dir').val(pipeData[0].output_dir);
     $('#publish_dir').val(pipeData[0].publish_dir);
     $('#chooseEnv').val(pipeData[0].profile);
-    $('#perms').val(pipeData[0].perms);
+    $('#permsRun').val(pipeData[0].perms);
     $('#runCmd').val(pipeData[0].cmd);
     $('#docker_img').val(pipeData[0].docker_img);
     $('#docker_opt').val(pipeData[0].docker_opt);
@@ -3922,11 +3922,11 @@ function loadProjectPipeline(pipeData) {
         for (var i = 0; i < allUserGrp.length; i++) {
             var param = allUserGrp[i];
             var optionGroup = new Option(param.name, param.id);
-            $("#groupSel").append(optionGroup);
+            $("#groupSelRun").append(optionGroup);
         }
     }
     if (pipeData[0].group_id !== "0") {
-        $('#groupSel').val(pipeData[0].group_id);
+        $('#groupSelRun').val(pipeData[0].group_id);
     }
 
     var chooseEnv = $('#chooseEnv option:selected').val();
@@ -5653,9 +5653,9 @@ function saveRun() {
     var publish_dir = $runscope.getPubVal("publish");
     var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
     var profile = $('#chooseEnv').val();
-    var perms = $('#perms').val();
+    var perms = $('#permsRun').val();
     var interdel = $('#intermeDel').is(":checked").toString();
-    var groupSel = $('#groupSel').val();
+    var groupSel = $('#groupSelRun').val();
     var cmd = encodeURIComponent($runscope.getPubVal("runcmd"));
     var exec_each = $('#exec_each').is(":checked").toString();
     var exec_all = $('#exec_all').is(":checked").toString();
@@ -5714,7 +5714,16 @@ function saveRun() {
             data: data,
             async: true,
             success: function (s) {
+                console.log(s)
                 if (dupliProPipe === false) {
+                    if (s){
+                        if ($.isArray(s)){
+                            var infoModalText = s.join("</br>");
+                            if (infoModalText){
+                                showInfoModal("#infoModal", "#infoModalText", "Permission of the pipeline needs to be updated in order to share this run. However, it couldn't be changed because of the following reason:</br></br>"+infoModalText)
+                            }
+                        }
+                    }
                     refreshCreatorData(project_pipeline_id);
                     updateSideBarProPipe("", project_pipeline_id, run_name, "edit")
                 } else if (dupliProPipe === true) {
