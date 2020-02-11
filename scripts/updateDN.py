@@ -27,7 +27,6 @@ def getConf():
         ret['DBPASS'] = ''
         ret['DBHOST'] = 'localhost'
         ret['DBPORT'] = '3306'
-    print ret
     return ret
 
 def executeScriptsFromFile(filename, cursor):
