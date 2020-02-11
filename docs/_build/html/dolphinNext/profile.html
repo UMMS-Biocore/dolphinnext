@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Profile Guide &mdash; DolphinNext 1.0 documentation</title>
+  <title>Profile Guide &mdash; DolphinNext 0.3.64 documentation</title>
   
 
   
@@ -35,8 +35,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="DolphinNext 1.0 documentation" href="../index.html"/>
-        <link rel="up" title="DolphinNext" href="DolphinNext.html"/>
+    <link rel="top" title="DolphinNext 0.3.64 documentation" href="../index.html"/>
         <link rel="next" title="Amazon Cloud Guide" href="amazon.html"/>
         <link rel="prev" title="Run Guide" href="run.html"/> 
 
@@ -67,7 +66,7 @@
             
             
               <div class="version">
-                1.0
+                0.3.64
               </div>
             
           
@@ -91,27 +90,35 @@
               
             
             
-              <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="DolphinNext.html">DolphinNext</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="process.html">Process Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project.html">Project Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="run.html">Run Guide</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Profile Guide</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#profile-page">Profile Page</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#ssh-keys">SSH Keys</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#amazon-keys">Amazon Keys</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#groups">Groups</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#run-environments">Run Environments</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#a-defining-host-profile">A. Defining Host Profile:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#b-defining-amazon-profile">B. Defining Amazon Profile:</a></li>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Short Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Profile Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#profile-page">Profile Page</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ssh-keys">SSH Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#amazon-keys">Amazon Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#groups">Groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-environments">Run Environments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-defining-host-profile">A. Defining Host Profile:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#b-defining-amazon-profile">B. Defining Amazon Profile:</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
 </ul>
-</li>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
 </ul>
 
             
@@ -155,8 +162,6 @@
   <ul class="wy-breadcrumbs">
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="DolphinNext.html">DolphinNext</a> &raquo;</li>
         
       <li>Profile Guide</li>
     
@@ -217,7 +222,7 @@
 <p class="first admonition-title">Warning</p>
 <p class="last">In both of the cases, private key will be used for submiting jobs in the host. Therefore, public key required to be added into <code class="docutils literal notranslate"><span class="pre">~/.ssh/authorized_keys</span></code> in the host by user.</p>
 </div>
-<p>In order to add you private key to the host, you might use the following command:</p>
+<p>In order to add you public key to the host, you might use the following command:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cat</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa</span><span class="o">.</span><span class="n">pub</span> <span class="o">|</span> <span class="n">ssh</span> <span class="n">USERNAME</span><span class="nd">@HOSTNAME</span> <span class="s2">&quot;mkdir -p ~/.ssh &amp;&amp; cat &gt;&gt; ~/.ssh/authorized_keys&quot;</span>
 </pre></div>
 </div>
@@ -249,19 +254,29 @@
 </div>
 <div class="section" id="a-defining-host-profile">
 <h2>A. Defining Host Profile:<a class="headerlink" href="#a-defining-host-profile" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect.  For instance, in order to connect <code class="docutils literal notranslate"><span class="pre">us2r&#64;ghpcc06.umassrc.org</span></code>, you would enter <code class="docutils literal notranslate"><span class="pre">us2r</span></code> as username and <code class="docutils literal notranslate"><span class="pre">ghpcc06.umassrc.org</span></code> as hostname.</li>
-</ul>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">You don’t need to add <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> sign while entering this information.</p>
-</div>
 <ul>
+<li><p class="first"><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect. You don’t need to add <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> sign while entering this information. For instance, for <a class="reference external" href="mailto:us2r&#37;&#52;&#48;ghpcc06&#46;umassrc&#46;org">us2r<span>&#64;</span>ghpcc06<span>&#46;</span>umassrc<span>&#46;</span>org</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Username</span><span class="p">:</span> <span class="n">us2r</span>
+<span class="n">Hostname</span><span class="p">:</span> <span class="n">ghpcc06</span><span class="o">.</span><span class="n">umassrc</span><span class="o">.</span><span class="n">org</span>
+</pre></div>
+</div>
+</li>
 <li><p class="first"><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</p>
 </li>
-<li><p class="first"><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></p>
+<li><p class="first"><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">bashrc</span> <span class="o">&amp;&amp;</span> <span class="n">module</span> <span class="n">load</span> <span class="n">java</span><span class="o">/</span><span class="mf">1.8</span><span class="o">.</span><span class="mi">0</span><span class="n">_77</span> <span class="o">&amp;&amp;</span> <span class="n">module</span> <span class="n">load</span> <span class="n">singularity</span><span class="o">/</span><span class="n">singularity</span><span class="o">-</span><span class="mf">3.4</span><span class="o">.</span><span class="mi">0</span>
+</pre></div>
+</div>
 </li>
-<li><p class="first"><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg.``/project/umw_biocore/bin``</p>
+<li><p class="first"><strong>Profile Variables:</strong> Since most of the pipelines uses genome reference and index files, you can define a download directory to keep these files. If multiple people are going to use DolphinNext, we would suggest using a shared path in your cluster. e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">DOWNDIR</span><span class="o">=</span><span class="s2">&quot;/share/dolphinnext/downloads&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">project</span><span class="o">/</span><span class="n">umw_biocore</span><span class="o">/</span><span class="nb">bin</span>
+</pre></div>
+</div>
 </li>
 <li><p class="first"><strong>Executor Settings:</strong></p>
 <blockquote>
@@ -380,7 +395,7 @@ e.g. suggested parameters: long 20GB 4CPU 1000-5000min</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.0',
+            VERSION:'0.3.64',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

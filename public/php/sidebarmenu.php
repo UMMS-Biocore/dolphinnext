@@ -1,13 +1,13 @@
 <!-- sidebar menu: : style can be found in sidebar.less -->
 <!--        Control Sidebar-->
 <div class=" dropdown messages-menu ">
-    <a id="newPipeline" class="btn btn-warning" style=" margin-left:15px;" href="index.php?np=1" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="New Pipeline">
+    <a id="newPipeline" class="btn btn-primary" style=" margin-left:15px;" href="index.php?np=1" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="New Pipeline">
                   <span class="glyphicon-stack">
                     <i class="fa fa-plus-circle glyphicon-stack-2x" style="color:white;"></i>
                       <i class="fa fa-spinner glyphicon-stack-1x" style="color:white;"></i>
                   </span>
               </a>
-    <button type="button" id="addprocess" class="btn btn-default btn-success" data-toggle="modal" name="button" data-target="#addProcessModal" data-backdrop="false" style=" margin-left:0px;">
+    <button type="button" id="addprocess" class="btn btn-primary" data-toggle="modal" name="button" data-target="#addProcessModal" data-backdrop="false" style=" margin-left:0px;">
               <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="New Process">
                   <span class="glyphicon-stack">
                     <i class="fa fa-plus-circle glyphicon-stack-2x" style="color:white;"></i>
@@ -20,7 +20,7 @@ if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
 session_write_close();
 if ($ownerID != ''){
-echo '<button type="button" class="btn btn-primary dropdown-toggle" style="float:right; margin-right:10px;" data-toggle="dropdown"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Filter"><span class="glyphicon glyphicon-filter" style="color:white;"></span> </a><span class="caret"></span></button><ul id="filterMenu" class="dropdown-menu dropdown-menu-right filterM"></ul>"';                    } 
+echo '<button type="button" class="btn btn-primary dropdown-toggle" style="float:right; margin-right:10px;" data-toggle="dropdown"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Filter"><span class="glyphicon glyphicon-filter" style="color:white;"></span> </a><span class="caret"></span></button><ul id="filterMenu" class="dropdown-menu dropdown-menu-right filterM"></ul>"';                    } 
 ?>
 </div>
 
@@ -28,44 +28,73 @@ echo '<button type="button" class="btn btn-primary dropdown-toggle" style="float
 require_once(__DIR__."/../ajax/dbfuncs.php");
 $db = new dbfuncs();
 
-function getSideMenuItem($obj)
+function getShowLi($items){
+    $showLi = "";
+    $count_not_admin_only = 0;
+    foreach ($items as $item):
+        $admin_only = isset($item->{'admin_only'}) ? $item->{'admin_only'} : 0;
+        settype($admin_only, "integer");
+        if ($admin_only < 1){
+            $count_not_admin_only += 1;
+        }
+    endforeach;
+    if ($count_not_admin_only < 1){
+        $showLi = ' style="display:none;"';
+    }
+    return $showLi;
+}
+
+function getSideMenuItem($obj, $type)
 {
 $html="";
 foreach ($obj as $item):
-    $nameSub = substr($item->{'name'}, 0, 20);
-    $html.='<li pub="'.$item->{'publish'}.'" p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"><a data-toggle="modal" data-target="#addProcessModal" class="processItems" origin="'.$item->{'name'}.'" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="'.$item->{'name'}.'@'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$nameSub.'</a></li>';
+    $orgName = $item->{'name'};
+    $showName = $orgName;
+    $tooltip = "";
+    if (strlen($orgName) >20){
+        $showName = substr($orgName, 0, 20);
+        $tooltip = ' data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
+    }
+    $admin_only = isset($item->{'admin_only'}) ? 'admin="'.$item->{'admin_only'}.'"' : "";
+    $publish = isset($item->{'publish'}) ? 'pub="'.$item->{'publish'}.'"' : "";
+    
+    if ($type == "process"){
+        $html.='<li '.$admin_only.' '.$publish.' p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"'.$tooltip.'><a data-toggle="modal" data-target="#addProcessModal" class="processItems" origin="'.$orgName.'" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="'.$orgName.'@'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$showName.'</a></li>';
+    } else if ($type == "pipeline"){
+        $html.='<li '.$admin_only.'  pin="'.$item->{'pin'}.'"  p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"'.$tooltip.'><a href="index.php?np=1&id='.$item->{'id'}.'" class="pipelineItems"  origin="'.$orgName.'" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="pipeline-'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$showName.'</a></li>';
+    }
+    
 endforeach;
 return $html;
 }
 
-function getSideMenuPipelineItem($obj)
-{
-$html="";
-foreach ($obj as $item):
-    $nameSub = substr($item->{'name'}, 0, 20);
-    $html.='<li pin="'.$item->{'pin'}.'"  p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"><a href="index.php?np=1&id='.$item->{'id'}.'" class="pipelineItems"  origin="'.$item->{'name'}.'" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="pipeline-'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$nameSub.'</a></li>';
-endforeach;
-return $html;
-}
 
 $parentMenus = json_decode($db->getParentSideBar($ownerID));
 $parentMenusPipeline = json_decode($db->getParentSideBarPipeline($ownerID));
-$menuhtml='<ul id="autocompletes1" class="sidebar-menu" data-widget="tree">';
+//style="overflow-y: scroll; width: auto; height: calc(100vh - 250px);"
+$menuhtml='<ul id="autocompletes1" class="sidebar-menu" data-widget="tree" >';
 //add input/output parameters
-$menuhtml.='<li class="header">INPUT/OUTPUT PARAMETERS</li>';
-$menuhtml.='<li id="inputs" >  <a ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="inputparam@inPro"> <i class="fa fa-plus"></i>  <text id="text-inPro" font-family="FontAwesome" font-size="0.9em" x="-6" y="15"></text> <span> Input Parameters </span> </a></li>';  
-$menuhtml.='<li id="outputs" class="treeview">  <a ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="outputparam@outPro"> <i class="fa fa-plus"></i>  <text id="text-outPro" font-family="FontAwesome" font-size="0.9em" x="-6" y="15"></text> <span> Output Parameters </span> </a></li>'; 
+$menuhtml.='<li class="header">INPUT/OUTPUT PARAMETER</li>';
+$menuhtml.='<li id="inputs" >  <a ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="inputparam@inPro" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please drag & drop to use it"> <i class="fa fa-circle"  style="color:#F2AA3A;" ></i>  <text id="text-inPro" font-family="FontAwesome" font-size="0.9em" x="-6" y="15"></text> <span> Input Parameter </span> </a></li>';  
+$menuhtml.='<li id="outputs" class="treeview">  <a ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="outputparam@outPro" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please drag & drop to use it"> <i class="fa fa-circle" style="color:#2D8C2E;"></i>  <text id="text-outPro" font-family="FontAwesome" font-size="0.9em" x="-6" y="15"></text> <span> Output Parameter </span> </a></li>'; 
 //Add pipelines
 $menuhtml.='<li class="header">PIPELINES</li>';
 foreach ($parentMenusPipeline as $parentitem):
-    $nameSub = substr($parentitem->{'name'}, 0, 20);
+    $orgName = $parentitem->{'name'};
+    $showName = $orgName;
+    $tooltip = "";
+    if (strlen($orgName) >19){
+        $showName = substr($orgName, 0, 19);
+        $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
+    }
     $items = json_decode($db->getSubMenuFromSideBarPipe($parentitem->{'name'}, $ownerID));
     if (count($items) > 0){
-        $menuhtml.='<li class="treeview">';
-        $menuhtml.='<a href="" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
+        $showLi= getShowLi($items);
+        $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
+        $menuhtml.='<a href="" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
 	   $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
         $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
-        $menuhtml.= getSideMenuPipelineItem($items);
+        $menuhtml.= getSideMenuItem($items, "pipeline");
         $menuhtml.='</ul>';
         $menuhtml.='</li>';
     }
@@ -73,15 +102,21 @@ endforeach;
  
 $menuhtml.='<li id="processSideHeader" class="header">PROCESSES</li>';
 foreach ($parentMenus as $parentitem):
-    $nameSub = substr($parentitem->{'name'}, 0, 15);
+    $orgName = $parentitem->{'name'};
+    $showName = $orgName;
+    $tooltip = "";
+    if (strlen($orgName) >15){
+        $showName = substr($orgName, 0, 15);
+        $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
+    }
     $items = json_decode($db->getSubMenuFromSideBar($parentitem->{'name'}, $ownerID));
     if (count($items) > 0){
-        $menuhtml.='<li class="treeview">';
-        $menuhtml.='<a href="" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
-
+        $showLi= getShowLi($items);
+        $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
+        $menuhtml.='<a href="" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
         $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
         $menuhtml.='<ul id="side-'.$parentitem->{'id'}.'" class="treeview-menu">';
-        $menuhtml.= getSideMenuItem($items);
+        $menuhtml.= getSideMenuItem($items, "process");
         $menuhtml.='</ul>';
         $menuhtml.='</li>';
     }

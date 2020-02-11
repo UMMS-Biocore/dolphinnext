@@ -1,7 +1,160 @@
+10.02.2020 Version 1.1.2
+runUpdate script removed and updateDN.py script updated.
+
+10.02.2020 Version 1.1.1
+runUpdate script updated.
+Pipeline process and module id's started to save recursively in pipeline data.
+Pipeline/process permission/group change algorithm updated.
+
+10.02.2020 Version 1.1.0
+Minor bug fixed in updateDN.py script.
+
+31.01.2020 Version 1.0.18
+Github feature opened to public.
+
+09.01.2020 Version 1.0.17
+Google cloud autoshutdown feature fixed.
+Proxy.php validation transfered to BASE_PATH in the .sec file.
+ENV_PATH variable added to .sec file to source optional scripts before executing any commands.
+UUID validation step added before saving logs.
+
+09.01.2020 Version 1.0.16
+Google cloud feature added.
+$DEFAULT_IMAGE parameter added to autofill feature and documentation is updated.
+Delete intermediate files function updated to delete work directory in the cloud.
+Delete report files on rerun added.
+
+23.12.2019 Version 1.0.15
+Style of wizard window updated.
+Extension of exported DN file fixed.
+Minor bug fixed regarding to autofilling.
+
+13.12.2019 Version 1.0.14
+Nextflow status update feature upgraded to support uploading file to s3.
+Session refresh script added to prevent 30 min. session timeout.
+Ace editor selectall bug fix for firefox browser.
+Grey background of run and pipeline page icons fixed for firefox/safari browser.
+
+11.12.2019 Version 1.0.13
+Minor error on $NXF_SINGULARITY_CACHEDIR path fixed.
+Terms and Conditions & Privacy Policy added to wizard.
+
+10.12.2019 Version 1.0.12
+Channel factory algorithm and workflow connection approach in D3 updated to support multiple qualifiers with single input parameter.
+Process editing allowed after clicking process settings icon.
+Edge reconnection feature after changing version of the process/module is added.
+
+10.12.2019 Version 1.0.11
+GEO search window improved and bugs are fixed.
+Retry button added for GEO search to warn user about failed queries.
+
+07.12.2019 Version 1.0.10
+Default GEO download queueSize removed.
+Fast-dump retry command added into initial run.
+
+06.12.2019 Version 1.0.9
+GEO download queueSize set to 2 by default.
+Initial run max retry amount increase to 4.
+
+04.12.2019 Version 1.0.8
+GEO download cache clean command added.
+
+03.12.2019 Version 1.0.7
+GEO download queueSize set to 4 by default.
+GEO query algorithm timeout increased to 2.5 seconds.
+
+02.12.2019 Version 1.0.6
+GEO download queueSize set to 10 by default.
+
+24.11.2019 Version 1.0.5
+Bug fixed while binding paths to containers.
+Bug fixed while choosing empty process and pipeline menu groups.
+Menu group editing feature limited for user to avoid duplicate names.
+Left sidebar scroll feature added to facilitate drag and drop of processes.
+
+20.11.2019 Version 1.0.4
+Memory handing improved in tsv conversion for Debrowser.
+
+18.11.2019 Version 1.0.3
+Default parameter set added to dolphinnext.sql.
+
+13.11.2019 Version 1.0.2
+Wizard feature upgraded for host option:
+    - Connection validation
+    - Java, Nextflow, Docker, Singularity validation added.
+
+13.11.2019 Version 1.0.1
+Wizard feature added. Admin might define test server by using .sec file:
+    SHOW_WIZARD=true
+    SHOW_TEST_PROFILE=true
+    TEST_PROFILE_GROUP_ID=18
+    Please define a run environment and share with group.
+    Use shared group id to define TEST_PROFILE_GROUP_ID.
+Overflow of file tables fixed.
+Uppercase s3 path recognition fixed for run page.
+Collection search box added in run page.
+UpdateDN command updated with absolute path.
+
+12.11.2019 Version 1.0.0
+Sign out button bug fixed.
+
+18.10.2019 Version 0.3.75
+GEO file download limit added for initial run when local executor is selected. 
+Autoscale error is fixed for AWS-ignite by increasing tcp.socketTimeout value.
+
+18.10.2019 Version 0.3.74
+Pipeline/process search feature upgraded to search within full name.
+Tooltip added for long item names in the pipeline and project page.
+Filter feature upgraded for admin.
+Run status table sql query updated to increase its performance.
+Minor bug fixed in bindEveHandler function in runpipeline.js.
+
+17.10.2019 Version 0.3.73
+Run status table updated: 
+    - sorting feature fixed
+    - pipeline revision added
+    - Not submitted runs added.
+
+17.10.2019 Version 0.3.72
+Autofill feature will be executed in case "use new revision" is clicked when copying run. It will update executor settings, container options and system inputs.
+Bug fixed in autofill function.
+
+16.10.2019 Version 0.3.71
+Executor settings first filled with profile defaults on change.
+
+15.10.2019 Version 0.3.70
+GEO search bug fixed.
+
+14.10.2019 Version 0.3.69
+GEO search improved with web queries and progress information.
+
+11.10.2019 Version 0.3.68
+Manual run execution feature added which allows to execute run without defining SSH keys.
+
+10.10.2019 Version 0.3.67
+Minor bug fixed regarding to process executors in the run page.
+
+09.10.2019 Version 0.3.66
+Job submission code updated.
+Minor bugs fixed in the initial run.
+Minor bug fix in the add collection modal.
+Initial run image updated and fasterq-dump replaced with fastq-dump.
+clientFailureDetectionTimeout and FailureDetectionTimeout limits are increased for apache ignite.
+
+02.10.2019 Version 0.3.65
+Version logs will be shown when the "version button" clicked.
+Warning will be shown when new release of DolphinNext is available.
+
+30.09.2019 Version 0.3.64
+Documentation is updated:
+    - Short Overview, About, Support, Developer Tutorial sections added.
+    - Quick Start Guide updated.
+
 26.09.2019 Version 0.3.63
 Autofill feature for singularity and docker image added to auto-mount paths based on the selected inputs.
 Initial run paths auto-mounted based on selected inputs.
-Run update feature added to admin console.
+Run update command to apply db patches updated.
+Run update feature added to admin console (experimental feature and hidden for this revision).
 
 11.09.2019 Version 0.3.62
 Warnings added into run page, to show undefined variables in the system inputs.

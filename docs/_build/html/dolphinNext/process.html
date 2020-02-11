@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Process Guide &mdash; DolphinNext 1.0 documentation</title>
+  <title>Process Guide &mdash; DolphinNext 0.3.64 documentation</title>
   
 
   
@@ -35,10 +35,9 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="DolphinNext 1.0 documentation" href="../index.html"/>
-        <link rel="up" title="DolphinNext" href="DolphinNext.html"/>
+    <link rel="top" title="DolphinNext 0.3.64 documentation" href="../index.html"/>
         <link rel="next" title="Pipeline Guide" href="pipeline.html"/>
-        <link rel="prev" title="Quick Start Guide" href="quick.html"/> 
+        <link rel="prev" title="Developer Tutorial" href="dev_quick.html"/> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -67,7 +66,7 @@
             
             
               <div class="version">
-                1.0
+                0.3.64
               </div>
             
           
@@ -91,55 +90,63 @@
               
             
             
-              <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="DolphinNext.html">DolphinNext</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Process Guide</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#process-window">Process Window</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#basics">Basics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#parameters">Parameters</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#inputs">Inputs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#outputs">Outputs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id4">Scripts</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id5">Operators</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id6">Regular Expressions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#header-script">Header Script</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#process-options">Process Options</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#input">&#64;input</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#textbox">&#64;textbox</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#checkbox">&#64;checkbox</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#dropdown">&#64;dropdown</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#description">&#64;description</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#tooltip">&#64;tooltip</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#title">&#64;title</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#options">&#64;options</a></li>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Short Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Process Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#process-window">Process Window</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basics">Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#inputs">Inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#outputs">Outputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">Operators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">Regular Expressions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#header-script">Header Script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#process-options">Process Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#input">&#64;input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#textbox">&#64;textbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#checkbox">&#64;checkbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dropdown">&#64;dropdown</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#description">&#64;description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tooltip">&#64;tooltip</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#title">&#64;title</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#options">&#64;options</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#styles-for-process-options">Styles for Process Options</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#a-multicolumn">A. &#64;multicolumn</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#b-array">B. &#64;array</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#c-condition">C. &#64;condition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#styles-for-process-options">Styles for Process Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-multicolumn">A. &#64;multicolumn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#b-array">B. &#64;array</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c-condition">C. &#64;condition</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#autofill-feature-for-process">Autofill Feature for Process</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#hostname-independent-autofill">Hostname Independent Autofill:</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#hostname-dependent-autofill">Hostname Dependent Autofill:</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#executor-properties">Executor Properties:</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#platform-tag">Platform Tag:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#autofill-feature-for-process">Autofill Feature for Process</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hostname-independent-autofill">Hostname Independent Autofill:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hostname-dependent-autofill">Hostname Dependent Autofill:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#executor-properties">Executor Properties:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#platform-tag">Platform Tag:</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#permissions-groups-and-publish">Permissions, Groups and Publish</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#copying-and-revisions">Copying and Revisions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#permissions-groups-and-publish">Permissions, Groups and Publish</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#copying-and-revisions">Copying and Revisions</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project.html">Project Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="run.html">Run Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="profile.html">Profile Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
 </ul>
 
             
@@ -183,8 +190,6 @@
   <ul class="wy-breadcrumbs">
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="DolphinNext.html">DolphinNext</a> &raquo;</li>
         
       <li>Process Guide</li>
     
@@ -314,34 +319,11 @@
 </ul>
 <p>If you want use optional input parameter, you can check the optional checkbox. This feature allows flexibility for the user while defining process since the process will be executed in spite of the absence of the input parameter. Please check the example below for the use case:</p>
 <img alt="../_images/process_optional_input.png" class="align-center" src="../_images/process_optional_input.png" />
-<p>Here, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as blank string in case input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is empty. Otherwise, when input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is found, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as “—filter ${genome}”.</p>
-<p>Note that the condition is defined based on the “Input Name” of the parameter. Please check the other possibilities of condition scripts and their input parameters at below.</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="39%" />
-<col width="61%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Input name</th>
-<th class="head">Condition in the Script for Empty Channel</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>genome</td>
-<td>genome.name == ‘genome’</td>
-</tr>
-<tr class="row-odd"><td>script</td>
-<td>script.name == ‘script’</td>
-</tr>
-<tr class="row-even"><td>val(name), file(index)</td>
-<td>index.name == ‘index’</td>
-</tr>
-<tr class="row-odd"><td>val(path)</td>
-<td>path.name == ‘path’</td>
-</tr>
-</tbody>
-</table>
-<p>Note that if <code class="docutils literal notranslate"><span class="pre">file()</span></code> or <code class="docutils literal notranslate"><span class="pre">val()</span></code> parameters are used, DolphinNext parse their content and use these parts in the condition. If both type are used, then content of the first file parameter will be used.</p>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as blank string in case input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is empty. Otherwise, when input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is found, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as <code class="docutils literal notranslate"><span class="pre">---filter</span> <span class="pre">${genome}&quot;</span></code>.</p>
+<p>Note that the existance of <code class="docutils literal notranslate"><span class="pre">genome</span></code> variable is required to be checked after using <code class="docutils literal notranslate"><span class="pre">toString()</span></code> operator:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>filter = genome.toString() == &quot;&quot; ? &quot;&quot; : &quot;--filter ${genome}&quot;
+</pre></div>
+</div>
 </div>
 <div class="section" id="outputs">
 <h2>Outputs<a class="headerlink" href="#outputs" title="Permalink to this headline">¶</a></h2>
@@ -786,7 +768,7 @@ $CPU  = 1
         <a href="pipeline.html" class="btn btn-neutral float-right" title="Pipeline Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="quick.html" class="btn btn-neutral" title="Quick Start Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="dev_quick.html" class="btn btn-neutral" title="Developer Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -817,7 +799,7 @@ $CPU  = 1
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.0',
+            VERSION:'0.3.64',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

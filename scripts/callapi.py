@@ -38,7 +38,7 @@ def getToken():
 def main():
     basePath=getBasePath()
     token=getToken()
-    url = basePath + "/api/service.php?upd=updateAmzInst&token=" + token
+    url = basePath + "/api/service.php?upd=updateCloudInst&token=" + token
     print url
     resAmz=callApi(url)
     url = basePath + "/api/service.php?upd=updateRunStat&token=" + token

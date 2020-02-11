@@ -195,7 +195,7 @@ Each report row corresponds to output parameter in the pipeline workflow and you
 
 * **DEBrowser:**
 
-DEBrowser is a R library to provide an easy way to perform and visualize DE analysis. This module takes count matrices as input and allows interactive exploration of the resulting data. You can reach their documentation by clicking `this link <https://bioconductor.org/packages/release/bioc/vignettes/debrowser/inst/doc/DEBrowser.html>`_. 
+DEBrowser is a R library to provide an easy way to perform and visualize DE analysis. This module takes count matrices as input and allows interactive exploration of the resulting data. You can reach their documentation by clicking `DEBrowser link <https://bioconductor.org/packages/release/bioc/vignettes/debrowser/inst/doc/DEBrowser.html>`_. 
 
 .. image:: dolphinnext_images/report_debrowser.png
     :align: center
@@ -209,7 +209,7 @@ R Markdown feature provides interactive analysis of the produced data. We have p
     :align: center
     :width: 99%
 
-You can reach the details about R Markdown in their web page by clicking `this link <https://rmarkdown.rstudio.com/>`_. 
+You can reach the details about R Markdown in their web page by clicking `rmarkdown link <https://rmarkdown.rstudio.com/>`_. 
 
 At the top of R-Markdown module, there are several icons which will help you to edit your rmd file, save as a new file and download in various formats such as RMD, PDF or HTML. In order to facilitate the review process, you can click "full screen" icon to fit the module in your screen. Besides you can adjust **Auto Updating Output** and **Autosave** features by clicking settings icon.
 

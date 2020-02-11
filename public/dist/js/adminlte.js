@@ -639,13 +639,12 @@ throw new Error('AdminLTE requires jQuery')
     if (this.options.slimscroll) {
       if (typeof $.fn.slimScroll !== 'undefined') {
         // Destroy if it exists
-        $(Selector.sidebar).slimScroll({ destroy: true }).height('auto')
-
+        // it jumps to top on destroy since layout is fixed.
+//        $(Selector.sidebar).slimScroll({ destroy: true }).height('auto')
         // Add slimscroll
         $(Selector.sidebar).slimScroll({
           height: ($(window).height() - $(Selector.mainHeader).height()) + 'px',
-          color : 'rgba(0,0,0,0.2)',
-          size  : '3px'
+          color:'#E7E7E7',size:'5px',railVisible: true
         })
       }
     }

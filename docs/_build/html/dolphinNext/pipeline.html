@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Pipeline Guide &mdash; DolphinNext 1.0 documentation</title>
+  <title>Pipeline Guide &mdash; DolphinNext 0.3.64 documentation</title>
   
 
   
@@ -35,9 +35,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="DolphinNext 1.0 documentation" href="../index.html"/>
-        <link rel="up" title="DolphinNext" href="DolphinNext.html"/>
-        <link rel="next" title="Project Guide" href="project.html"/>
+    <link rel="top" title="DolphinNext 0.3.64 documentation" href="../index.html"/>
         <link rel="prev" title="Process Guide" href="process.html"/> 
 
   
@@ -67,7 +65,7 @@
             
             
               <div class="version">
-                1.0
+                0.3.64
               </div>
             
           
@@ -91,30 +89,38 @@
               
             
             
-              <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="DolphinNext.html">DolphinNext</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="process.html">Process Guide</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Pipeline Guide</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#basics">Basics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#processes">Processes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#input-parameters">Input Parameters</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#output-parameters">Output Parameters</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#edges">Edges</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#pipeline-header-script">Pipeline Header Script</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#adding-pipeline-inputs-by-pipeline-header-script">Adding Pipeline Inputs by Pipeline Header Script</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#autofill-feature-for-pipeline-inputs">Autofill Feature for Pipeline Inputs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#autofill-feature-for-pipeline-properties">Autofill Feature for Pipeline Properties</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#pipeline-details">Pipeline Details</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#permissions-groups-and-publish">Permissions, Groups and Publish</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#copying-and-revisions">Copying and Revisions</a></li>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Short Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
 </ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="project.html">Project Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="run.html">Run Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="profile.html">Profile Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
-<li class="toctree-l2"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<p class="caption"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Pipeline Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basics">Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#processes">Processes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-parameters">Input Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#output-parameters">Output Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#edges">Edges</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pipeline-header-script">Pipeline Header Script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-pipeline-inputs-by-pipeline-header-script">Adding Pipeline Inputs by Pipeline Header Script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#autofill-feature-for-pipeline-inputs">Autofill Feature for Pipeline Inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#autofill-feature-for-pipeline-properties">Autofill Feature for Pipeline Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pipeline-details">Pipeline Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#permissions-groups-and-publish">Permissions, Groups and Publish</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#copying-and-revisions">Copying and Revisions</a></li>
 </ul>
 </li>
 </ul>
@@ -160,8 +166,6 @@
   <ul class="wy-breadcrumbs">
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
-        
-          <li><a href="DolphinNext.html">DolphinNext</a> &raquo;</li>
         
       <li>Pipeline Guide</li>
     
@@ -380,10 +384,12 @@ if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
 </div>
 <p>Here, <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span></code> is DolphinNext specific variable that recalls the hostname which is selected in the run as <strong>Run Environment</strong>. Therefore, in this example, all <code class="docutils literal notranslate"><span class="pre">&lt;executor</span> <span class="pre">properties&gt;</span></code> will be automatically filled in case of pipeline is going to run on <strong>ghpcc06.umassrc.org</strong>.</p>
 <p><strong>Executor Properties:</strong></p>
-<p>Five type of executor properties are available to autofill <strong>Executor Settings for All Processes</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue/Partition and Other Options. See the example below:</p>
+<p>Five type of executor properties are available to autofill <strong>Executor Settings for All Processes</strong>: <code class="docutils literal notranslate"><span class="pre">$TIME</span></code>, <code class="docutils literal notranslate"><span class="pre">$CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">$MEMORY</span></code>, <code class="docutils literal notranslate"><span class="pre">$QUEUE</span></code>, <code class="docutils literal notranslate"><span class="pre">$EXEC_OPTIONS</span></code> which defines Time, CPU, Memory, Queue/Partition and Other Options. You can set pipeline defaults by using <code class="docutils literal notranslate"><span class="pre">$HOSTNAME</span> <span class="pre">==</span> <span class="pre">&quot;default&quot;</span></code> condition. See the example below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
-$MEMORY = 32
-$CPU  = 1
+if ($HOSTNAME == &quot;default&quot;){
+    $MEMORY = 32
+    $CPU  = 1
+}
 if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
     $TIME = 3000
     $CPU  = 4
@@ -410,26 +416,47 @@ if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
 if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
     $SINGULARITY_IMAGE = &quot;shub://UMMS-Biocore/singularity&quot;
-        $SINGULARITY_OPTIONS = &quot;--bind /project&quot;
+    $SINGULARITY_OPTIONS = &quot;--bind /project&quot;
 }
 //* autofill
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/pipeline_autofill_singu.png"><img alt="../_images/pipeline_autofill_singu.png" class="align-center" src="../_images/pipeline_autofill_singu.png" style="width: 99%;" /></a>
+<p>When you want to define both singularity and docker images, you can set <code class="docutils literal notranslate"><span class="pre">$DEFAULT_IMAGE</span></code> tag as well. Options of <code class="docutils literal notranslate"><span class="pre">$DEFAULT_IMAGE</span></code> could be <code class="docutils literal notranslate"><span class="pre">&quot;docker&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;singularity&quot;</span></code>. Please check the example at below where by default docker image is set for the profiles, however if user connects to “ghpcc06.umassrc.org”, it will be set as singularity image:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
+if ($HOSTNAME == &quot;default&quot;){
+    $DEFAULT_IMAGE = &quot;docker&quot;
+    $DOCKER_IMAGE = &quot;dolphinnext/rnaseq:1.0&quot;
+    $SINGULARITY_IMAGE = &quot;https://galaxyweb.umassmed.edu/pub/dnext_data/singularity/UMMS-Biocore-rna-seq-1.0.img&quot;
+}
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    $DEFAULT_IMAGE = &quot;singularity&quot;
+    $DOCKER_IMAGE = &quot;dolphinnext/rnaseq:1.0&quot;
+    $SINGULARITY_IMAGE = &quot;https://galaxyweb.umassmed.edu/pub/dnext_data/singularity/UMMS-Biocore-rna-seq-1.0.img&quot;
+}
+//* autofill
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Please note that Google cloud will overwrite <code class="docutils literal notranslate"><span class="pre">$DEFAULT_IMAGE</span></code> tag, since only docker image is available for google cloud.</p>
+</div>
 <p><strong>Platform Tag :</strong></p>
 <p>Optionally, you can isolate platform dependent paramaters by using <strong>platform</strong> tag. This way, exported pipeline won’t have the platform dependent parameters and similarly when pipeline is imported, exisiting platform dependent parameters won’t be overwritten. Please check the the example usage at below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>//* autofill
-$MEMORY = 32
-$CPU  = 1
-    //* platform
-    if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
-        $TIME = 3000
-        $CPU  = 4
-        $MEMORY = 100
-        $QUEUE = &quot;long&quot;
-        $EXEC_OPTIONS = &#39;-E &quot;file /home/garberlab&quot;&#39;
-    }
-    //* platform
+if ($HOSTNAME == &quot;default&quot;){
+    $MEMORY = 32
+    $CPU  = 1
+}
+//* platform
+if ($HOSTNAME == &quot;ghpcc06.umassrc.org&quot;){
+    $TIME = 3000
+    $CPU  = 4
+    $MEMORY = 100
+    $QUEUE = &quot;long&quot;
+    $EXEC_OPTIONS = &#39;-E &quot;file /home/garberlab&quot;&#39;
+}
+//* platform
 //* autofill
 </pre></div>
 </div>
@@ -460,8 +487,6 @@ $CPU  = 1
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="project.html" class="btn btn-neutral float-right" title="Project Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="process.html" class="btn btn-neutral" title="Process Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -495,7 +520,7 @@ $CPU  = 1
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.0',
+            VERSION:'0.3.64',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

@@ -12,32 +12,32 @@
             <div id="pipeGroupFloatLeft" style="float:left;">
                 <i class="fa fa-spinner " style="margin-left:0px; margin-right:0px;"></i> Pipeline:
                 <input class="box-dynamic width-dynamic" type="text" pipelineid="<?php echo $id;?>" name="pipelineTitle" autocomplete="off" placeholder="Enter Pipeline Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="pipeline-title"><span class="width-dynamic" style="display:none"></span></input>
-                <button type="submit" id="savePipeline" class="btn" name="button" data-backdrop="false" onclick="save()" style=" margin:0px; padding:0px;">
+                <button type="submit" id="savePipeline" class="btn" name="button" data-backdrop="false" onclick="save()" style="background:none; margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Pipeline">
                         <i class="fa fa-save" style="font-size: 17px;"></i></a></button>
-                <button type="button" id="dupPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style=" margin:0px; padding:0px;">
+                <button type="button" id="dupPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Duplicate Pipeline">
                         <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
-                <button type="submit" id="createRevPipeIcon" class="btn" name="button" data-backdrop="false" onclick="createRevPipeline()" style=" margin:0px; padding:0px; display:none;">
+                <button type="submit" id="createRevPipeIcon" class="btn" name="button" data-backdrop="false" onclick="createRevPipeline()" style=" background:none; margin:0px; padding:0px; display:none;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Create Revision">
                         <i class="fa fa-chain" style="font-size: 16px;"></i></a></button>
 
-                <button type="button" id="downPipeline" class="btn" name="button" data-backdrop="false" style=" margin:0px; padding:0px;">
+                <button type="button" id="downPipeline" class="btn" name="button" data-backdrop="false" style="background:none;  margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Pipeline">
                         <i class="glyphicon glyphicon-save"></i></a></button>
-                <button type="button" id="importPipeline" class="btn" name="button" data-toggle="modal" data-target="#importModal" data-backdrop="false" style=" display:none; margin:0px; padding:0px;">
+                <button type="button" id="importPipeline" class="btn" name="button" data-toggle="modal" data-target="#importModal" data-backdrop="false" style="background:none;  display:none; margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Import Pipeline"><i class="glyphicon glyphicon-import"></i></a></button>
-                <button type="button" id="exportPipeline" class="btn" name="button" onclick="download(exportPipeline(),&quot;exportPipe&quot;)" data-backdrop="false" style=" margin:0px; padding:0px; display:none;">
+                <button type="button" id="exportPipeline" class="btn" name="button" onclick="download(exportPipeline(),&quot;exportPipe&quot;)" data-backdrop="false" style="background:none;  margin:0px; padding:0px; display:none;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Export Pipeline"><i class="glyphicon glyphicon-export"></i></a></button>
-                <button type="button" id="savePDF" class="btn" name="button" data-backdrop="false" style=" margin:0px; padding:0px; padding-bottom:2px;">
+                <button type="button" id="savePDF" class="btn" name="button" data-backdrop="false" style="background:none;  margin:0px; padding:0px; padding-bottom:2px;">
                     <a href="#" download data-toggle="tooltip" data-placement="bottom" data-original-title="Download Workflow as PDF" onclick="return downloadPdf()">
                         <i class="fa fa-file-pdf-o"></i>
                     </a>
                 </button>
-                <button type="button" id="gitConsoleBtn" class="btn" name="button" data-backdrop="false" style="margin:0px; padding:0px; padding-bottom:2px;" data-toggle="modal" data-target="#gitConsoleModal">
+                <button type="button" id="gitConsoleBtn" class="btn" name="button" data-backdrop="false" style="background:none; margin:0px; padding:0px; padding-bottom:2px;" data-toggle="modal" data-target="#gitConsoleModal">
                     <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Git Console"><span><i class="fa fa-git"></i></span></a>
                 </button>
-                <button type="button" id="delPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style=" margin:0px; padding:0px;">
+                <button type="button" id="delPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Pipeline">
                         <i class="glyphicon glyphicon-trash"></i></a>
                 </button>
@@ -174,7 +174,7 @@
         </div>
         <!--       end of descriptionTab-->
         <div id="workflowTab" class="tab-pane fade">
-            <div class="col-md-12" style="margin-top:5px;" >
+            <div class="col-md-12" style="margin-top:5px;">
                 <div class="panel panel-default" style="margin-bottom:10px;  padding-bottom:0px;">
                     <div style="height:500px; " id="container" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
                 </div>
@@ -196,8 +196,8 @@
 
         <div id="advancedTab" class="tab-pane fade">
             <div id="advOpt" style="margin-top:15px;">
-               <div class="col-md-12" style="float:none; margin-bottom:30px;">
-                        <label class="col-sm-12 control-label">Pipeline Files</label>
+                <div class="col-md-12" style="float:none; margin-bottom:30px;">
+                    <label class="col-sm-12 control-label">Pipeline Files</label>
                 </div>
                 <div id="pipelineFiles" style="margin-bottom:15px;"></div>
                 <div class="col-md-12" style="margin-bottom:15px;">
@@ -236,7 +236,7 @@
                 <div id="permsPipeDiv" class="col-md-4">
                     <div class="form-group">
                         <label class="col-sm-12 control-label">Permissions to View</label>
-                        <select id="permsPipe" class="fbtn btn-default form-control" name="perms">
+                        <select id="permsPipe" class="fbtn btn-default form-control permscheck" name="perms">
                             <option value="3" selected="">Only me </option>
                             <option value="15">Only my group</option>
                             <option disabled value="63">Everyone </option>
@@ -246,7 +246,7 @@
                 <div id="groupSelPipeDiv" class="col-md-4">
                     <div class="form-group">
                         <label class="col-sm-12 control-label">Group Selection</label>
-                        <select id="groupSelPipe" class="fbtn btn-default form-control" name="group_id">
+                        <select id="groupSelPipe" class="fbtn btn-default form-control permscheck" name="group_id">
                             <option value="" selected>Choose group </option>
                         </select>
                     </div>
@@ -692,7 +692,7 @@
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Permissions to View</label>
                                         <div class="col-sm-6">
-                                            <select id="permsPro" class="fbtn btn-default form-control" name="perms">
+                                            <select id="permsPro" class="fbtn btn-default form-control permscheck" name="perms">
                                                 <option value="3" selected="">Only me </option>
                                                 <option value="15">Only my groups</option>
                                                 <option disabled value="63">Everyone </option>
@@ -704,7 +704,7 @@
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Group Selection</label>
                                         <div class="col-sm-6">
-                                            <select id="groupSelPro" class="fbtn btn-default form-control" name="group_id">
+                                            <select id="groupSelPro" class="fbtn btn-default form-control permscheck" name="group_id">
                                                 <option value="" selected>Choose group </option>
                                             </select>
                                         </div>
@@ -730,8 +730,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-info" style="display:none" id="selectProcess">Select Revision</button>
                 <button type="button" class="btn btn-primary" id="saveprocess">Save changes</button>
-                <button type="button" class="btn btn-primary" style="display:none" id="selectProcess">Select Revision</button>
                 <button type="button" class="btn btn-primary" style="display:none" id="createRevisionBut" onclick="createRevision()">Create Revision</button>
             </div>
         </div>
@@ -1098,14 +1098,29 @@
                 <h4 class="modal-title" id="importModalTitle">Import Tool</h4>
             </div>
             <div class="modal-body">
-                <div id="importModalPart1">
-                    <form id="importArea" action="ajax/import.php" class="dropzone">
-                        <div class="fallback">
-                            <input name="file" type="file" multiple />
+                    <div id="importModalOptions" role="tabpanel">
+                        <!-- Nav tabs -->
+                        <ul id="importNav" class="nav nav-tabs" role="tablist">
+                            <li id="manualImportBut" class="active"><a class="nav-item" data-toggle="tab" href="#manualImportTab">Manually</a></li>
+                            <li id="publicImportBut" class="nav-item"><a class="nav-item" data-toggle="tab" href="#publicImportTab">Public</a></li>
+                        </ul>
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div role="tabpanel" class="tab-pane active" searchtab="true" id="manualImportTab">
+                                <div id="importModalPart1">
+                                    <form id="importArea" action="ajax/import.php" class="dropzone">
+                                        <div class="fallback">
+                                            <input name="file" type="file" multiple />
+                                        </div>
+                                    </form>
+                                </div>
+                                <div id="importModalPart2"></div>
+                            </div>
+                            <div role="tabpanel" class="tab-pane" searchtab="true" id="publicImportTab">
+                            <p>This section is under development.</p>
+                            </div>
                         </div>
-                    </form>
-                </div>
-                <div id="importModalPart2"></div>
+                    </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal" id="cancelButton">Cancel</button>

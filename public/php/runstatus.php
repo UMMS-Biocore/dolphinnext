@@ -10,7 +10,6 @@
             <thead>
                 <tr>
                     <th style="width:5%;">ID</th>
-                    <th style="display:none;">Date</th>
                     <th style="width:15%;">Run Name</th>
                     <th style="width:15%;">Pipeline</th>
                     <th style="width:15%;">Work Directory</th>

@@ -23,19 +23,19 @@ if (isset($_REQUEST['id'])) {
     $id = $_REQUEST['id'];
 }
 
-
-
 if ($p=="saveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $docker_check = $_REQUEST['docker_check'];
     $amazon_cre_id = $_REQUEST['amazon_cre_id'];
+    $google_cre_id = $_REQUEST['google_cre_id'];
     $nextText = urldecode($_REQUEST['nextText']);
     $runConfig = urldecode($_REQUEST['configText']);
     $proVarObj = json_decode(urldecode($_REQUEST['proVarObj']));
     $initRunOptions = urldecode($_REQUEST['initRunOptions']);
     $runType = $_REQUEST['runType'];
+    $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
     $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
     $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
@@ -43,31 +43,35 @@ if ($p=="saveRun"){
     if (empty($attempt) || $attempt == 0 || $attempt == "0"){
         $attempt = "0";
     }
-    $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-24.07.2019.simg"; //default
-    if ($docker_check == "true"){
-        $initialrun_img = "ummsbiocore/initialrun-docker:1.0";
-    }
-    $amzConfigText = $db->getAmazonConfig($amazon_cre_id);
-    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($project_pipeline_id, $attempt, $amzConfigText, $profileType,$profileId, $initialrun_img, $docker_check, $initRunOptions, $ownerID);
-    $mainConfigText = $db->getMainRunConfig($amzConfigText.$runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
-    $s3configFileDir = $db->getS3config($project_pipeline_id, $attempt, $ownerID);
+    $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+    $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
+    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
+    $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+    $getCloudConfigFileDir = $db->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
     //create file and folders
-    $log_array = $db->initRun($project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $amazon_cre_id, $uuid, $initialRunParams, $s3configFileDir, $ownerID);
-    //run the script
-    $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $log_array, $runType, $uuid, $initialRunParams, $attempt, $initialrun_img, $ownerID);
-    //activate autoshutdown feature for amazon
-    if  ($profileType == "amazon"){
-        $autoshutdown_active = "true";
-        $db->updateAmzShutdownActive($profileId, $autoshutdown_active, $ownerID);
-        $db->updateAmzShutdownDate($profileId, NULL, $ownerID);
+    list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
+    if ($manualRun == "true"){
+        $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
+    } else {
+        //run the script in remote machine
+        $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
+        //activate autoshutdown feature for cloud
+        if  ($profileType == "amazon" || $profileType == "google"){
+            $autoshutdown_active = "true";
+            $db->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
+            $db->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
+        } 
     }
+
 }
 else if ($p=="updateRunAttemptLog") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : "";
     $res= $db->getUUIDLocal("run_log");
     $uuid = $res->rev_uuid;
+    $status = ($manualRun == "true") ? "Manual" : "init";
     //add run into run table and increase the run attempt. $status = "init";
-    $db->updateRunAttemptLog("init", $project_pipeline_id, $uuid, $ownerID);
+    $db->updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID);
     $data = json_encode($uuid);
 }
 else if ($p=="updateProPipeStatus") {
@@ -105,11 +109,11 @@ else if ($p=="getFileList"){
 }
 else if ($p=="getRsyncStatus"){
     $filename  = $_REQUEST['filename'];
-    $data = $db->getRsyncStatus($filename, $email, $ownerID);
+    $data = $db->getRsyncStatus($filename, $ownerID);
 }
 else if ($p=="resetUpload"){
     $filename  = $_REQUEST['filename'];
-    $data = $db->resetUpload($filename, $email, $ownerID);
+    $data = $db->resetUpload($filename, $ownerID);
 }
 else if ($p=="retryRsync"){
     $fileName  = $_REQUEST['filename'];
@@ -168,33 +172,14 @@ else if ($p=="getReportData"){
     $data = json_encode($data);
 }
 else if ($p=="savePubWeb"){
+    $data = "";
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $pipeline_id = $_REQUEST['pipeline_id'];
-    $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
-    //get pubWebDir
-    $pipeData = json_decode($db->loadPipeline($pipeline_id,$ownerID));
-    $pubWebDir = $pipeData[0]->{'publish_web_dir'};
-    if (!empty($pubWebDir)){
-        // get outputdir
-        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $outdir = $proPipeAll[0]->{'output_dir'};
-        $publish_dir = isset($proPipeAll[0]->{'publish_dir'}) ? $proPipeAll[0]->{'publish_dir'} : "";
-        $publish_dir_check = isset($proPipeAll[0]->{'publish_dir_check'}) ? $proPipeAll[0]->{'publish_dir_check'} : "";
-        if ($publish_dir_check == "true" && !empty($publish_dir)){
-            $outdir = $publish_dir;
-        }
-        $down_file_list = explode(',', $pubWebDir);
-        foreach ($down_file_list as &$value) {
-            $value = $outdir."/".$value;
-        }
-        unset($value);
-        $data = $db -> saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $ownerID);
-    } else {
-        $data = json_encode("pubweb is not defined");
-    }
-
+    if (!empty($ownerID)){
+        $data = $db->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID);
+    } 
 }
 else if ($p=="saveNextflowLog"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -202,25 +187,26 @@ else if ($p=="saveNextflowLog"){
     $profileId = $_REQUEST['profileId'];
     $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
     $data = "";
-    if (!empty($uuid)){
+    if (!empty($uuid) && !empty($ownerID)){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $outdir = $proPipeAll[0]->{'output_dir'};
-        $run_path_real = "$outdir/run{$project_pipeline_id}";
+        list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
         $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
         foreach ($down_file_list as &$value) {
-            $value = $run_path_real."/".$value;
+            $value = $dolphin_path_real."/".$value;
         }
         unset($value);
-        $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $ownerID);
+        $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
     }
 }
 else if ($p=="getLsDir"){
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $dir = $_REQUEST['dir'];
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
-    $data = $db -> getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $ownerID);
+    $google_cre_id = isset($_REQUEST['google_cre_id']) ? $_REQUEST['google_cre_id'] : "";
+    $data = $db -> getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $google_cre_id, $project_pipeline_id, $ownerID);
 }
 else if ($p=="chkRmDirWritable"){
     $dir = $_REQUEST['dir'];
@@ -246,7 +232,7 @@ else if ($p=="terminateRun"){
     $profileId = $_REQUEST['profileId'];
     $executor = $_REQUEST['executor'];
     if ($executor != 'local') {
-        $pid = json_decode($db -> getRunPid($project_pipeline_id))[0]->{'pid'};
+        $pid = json_decode($db->getRunPid($project_pipeline_id))[0]->{'pid'};
         if (!empty($pid)){
             $data = $db -> sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID);
         } else {
@@ -275,50 +261,56 @@ else if ($p=="updateRunStatus"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $run_status = $_REQUEST['run_status'];
     $duration = isset($_REQUEST['duration']) ? $_REQUEST['duration'] : "";
-    $db -> updateRunLog($project_pipeline_id, $run_status, $duration, $ownerID);
-    $data = $db -> updateRunStatus($project_pipeline_id, $run_status, $ownerID);
-    // amazon check triggerShutdown
-    $runDataJS = $db->getLastRunData($project_pipeline_id,$ownerID);
-    $runData = json_decode($runDataJS,true)[0];
-    $profile = $runData["profile"];
-    if (!empty($profile)){
-        $profileAr = explode("-", $profile);
-        $profileType = $profileAr[0];
-        $profileId = $profileAr[1];
-        if ($profileType == "amazon" && ($run_status =="Terminated" || $run_status == "Aborted")){
-            $db->triggerShutdown($profileId,$ownerID, "fast");
-        }
+    if (!empty($ownerID)){
+        $db -> updateRunLog($project_pipeline_id, $run_status, $duration, $ownerID);
+        $data = $db -> updateRunStatus($project_pipeline_id, $run_status, $ownerID);
+        // cloud check triggerShutdown
+        $runDataJS = $db->getLastRunData($project_pipeline_id);
+        if (!empty(json_decode($runDataJS,true))){
+            $runData = json_decode($runDataJS,true)[0];
+            $profile = $runData["profile"];
+            if (!empty($profile)){
+                $profileAr = explode("-", $profile);
+                $profileType = $profileAr[0];
+                $profileId = $profileAr[1];
+                if (($profileType == "amazon" || $profileType == "google") && ($run_status =="Terminated")){
+                    error_log("triggerShutdown fast2");
+                    $db->triggerShutdown($profileId,$profileType, $ownerID, "fast");
+                }
+            }
+        } 
     }
 }
 else if ($p=="getRunStatus"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $data = $db -> getRunStatus($project_pipeline_id, $ownerID);
 }
-else if ($p=="startProAmazon"){
+else if ($p=="startProCloud"){
     $nodes = $_REQUEST['nodes'];
+    $cloud = $_REQUEST['cloud'];
     $autoscale_check = $_REQUEST['autoscale_check'];
-    $autoscale_maxIns = $_REQUEST['autoscale_maxIns'];
+    $autoscale_maxIns = isset($_REQUEST['autoscale_maxIns']) ? $_REQUEST['autoscale_maxIns'] : "";
     $autoscale_minIns = isset($_REQUEST['autoscale_minIns']) ? $_REQUEST['autoscale_minIns'] : "";
     $autoshutdown_check = $_REQUEST['autoshutdown_check'];
     //reset on startup
     $autoshutdown_active = "";
     $autoshutdown_date = NULL;
-    $db -> updateProfileAmazonOnStart($id,$nodes,$autoscale_check, $autoscale_maxIns,$autoscale_minIns, $autoshutdown_date, $autoshutdown_active, $autoshutdown_check, $ownerID);
-    $data = $db -> startProAmazon($id,$ownerID,$usernameCl);
+    $db -> updateProfileCloudOnStart($id,$nodes,$autoscale_check, $autoscale_maxIns,$autoscale_minIns, $autoshutdown_date, $autoshutdown_active, $autoshutdown_check, $cloud, $ownerID);
+    $data = $db -> startProCloud($id, $cloud, $ownerID, $usernameCl);
 }
-else if ($p=="stopProAmazon"){
-    $data = $db -> stopProAmazon($id,$ownerID, $usernameCl);
+else if ($p=="stopProCloud"){
+    $cloud = $_REQUEST['cloud'];
+    $data = $db -> stopProCloud($id,$ownerID, $usernameCl, $cloud);
 }
-else if ($p=="checkAmzStopLog"){
-    $data = $db -> checkAmzStopLog($id,$ownerID,$usernameCl);
-}
-else if ($p=="checkAmazonStatus"){
+else if ($p=="checkCloudStatus"){
     $profileId = $_REQUEST['profileId'];
-    $data = $db -> checkAmazonStatus($profileId,$ownerID,$usernameCl);
+    $cloud = $_REQUEST['cloud'];
+    $data = $db -> checkCloudStatus($profileId,$ownerID,$usernameCl, $cloud);
 }
-else if ($p=="runAmazonCloudCheck"){
+else if ($p=="runCloudCheck"){
     $profileId = $_REQUEST['profileId'];
-    $data = $db -> runAmazonCloudCheck($profileId,$ownerID, $usernameCl);
+    $cloud = $_REQUEST['cloud'];
+    $data = $db -> runCloudCheck($profileId,$cloud, $ownerID, $usernameCl);
 }
 else if ($p=="getAllParameters"){
     $data = $db -> getAllParameters($ownerID);
@@ -334,11 +326,11 @@ else if ($p=="savefeedback"){
 }
 else if ($p=="getUpload"){
     $name = $_REQUEST['name'];
-    $data = $db -> getUpload($name,$email);
+    $data = $db -> getUpload($name,$ownerID);
 }
 else if ($p=="removeUpload"){
     $name = $_REQUEST['name'];
-    $data = $db -> removeUpload($name,$email);
+    $data = $db -> removeUpload($name,$ownerID);
 }
 else if ($p=="getAllGroups"){
     $data = $db -> getAllGroups();
@@ -677,6 +669,9 @@ else if ($p=="removeProCluster"){
 else if ($p=="removeProAmazon"){   
     $data = $db -> removeProAmazon($id);
 }
+else if ($p=="removeProGoogle"){   
+    $data = $db -> removeProGoogle($id);
+}
 else if ($p=="removeProjectPipelineInput"){   
     $data = $db -> removeProjectPipelineInput($id);
 }
@@ -723,8 +718,27 @@ else if ($p=="getAmz")
         $data = $db->getAmz($ownerID);
     }
 }
-else if ($p=="getSSH")
-{
+else if ($p=="saveGoogle"){
+    $name = $_REQUEST['name'];
+    $project_id = $_REQUEST['project_id'];
+    $key_name = $_REQUEST['key_name'];
+    if (!empty($id)) {
+        $data = $db->updateGoogle($id, $name, $project_id, $key_name, $ownerID);
+    } else {
+        $data = $db->insertGoogle($name, $project_id, $key_name, $ownerID);
+        $newData = json_decode($data,true);
+        $id = $newData["id"];
+    }
+    $ret = $db->insertGoogKey($id, $key_name, $ownerID);
+}
+else if ($p=="getGoogle"){
+    if (!empty($id)) {
+        $data = $db->getGooglebyID($id, $ownerID);
+    } else {
+        $data = $db->getGoogle($ownerID);
+    }
+}
+else if ($p=="getSSH"){
     $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     if (!empty($id)) {
         $data = json_decode($db->getSSHbyID($id, $userRole, $admin_id, $ownerID));
@@ -755,6 +769,10 @@ else if ($p=="removeGithub")
 {
     $data = $db->removeGithub($id,$ownerID);
 }
+else if ($p=="removeGoogle")
+{
+    $data = $db->removeGoogle($id,$ownerID);
+}
 else if ($p=="generateKeys")
 {
     $data = $db->generateKeys($ownerID);
@@ -765,22 +783,32 @@ else if ($p=="getProfileVariables"){
     if (!empty($id) && !empty($proType)) {
         if ($proType == "cluster"){
             $data = $db->getProfileClusterbyID($id, $ownerID);
-        } else if ($proType == "amazon"){
-            $data = $db->getProfileAmazonbyID($id, $ownerID);
+        } else if ($proType == "amazon" || $proType == "google"){
+            $data = $db->getProfileCloudbyID($id, $proType, $ownerID);
         }
     } else {
-        $proClu = $db->getProfileCluster($ownerID);
-        $proAmz = $db->getProfileAmazon($ownerID);
+        $proClu = $db->getRunProfileCluster($ownerID);
+        $proAmz = $db->getRunProfileAmazon($ownerID);
+        $proGoog = $db->getRunProfileGoogle($ownerID);
         $clu_obj = json_decode($proClu,true);
         $amz_obj = json_decode($proAmz,true);
-        $merged_obj = array_merge($clu_obj, $amz_obj);
+        $goog_obj = json_decode($proGoog,true);
+        $merged = array_merge($clu_obj, $amz_obj);
+        $merged_obj = array_merge($goog_obj, $merged);
         $new_obj = array();
         if (isset($merged_obj)){
             if (!empty($merged_obj[0])){
                 for ($i = 0; $i < count($merged_obj); $i++) {
                     $variable = isset($merged_obj[$i]["variable"]) ? $merged_obj[$i]["variable"] : "";
-                    $hostname = isset($merged_obj[$i]["hostname"]) ? $merged_obj[$i]["hostname"] : "";
-                    if (!empty($variable) && !empty($hostname)){
+                    $hostname = "";
+                    if (isset($merged_obj[$i]["hostname"])){
+                        $hostname = $merged_obj[$i]["hostname"];
+                    } else if (isset($merged_obj[$i]["shared_storage_id"])){
+                        $hostname = $merged_obj[$i]["shared_storage_id"];
+                    } else if (isset($merged_obj[$i]["image_id"])){
+                        $hostname = $merged_obj[$i]["image_id"];
+                    }
+                    if (!empty($hostname)){
                         $tmpObj = array();
                         $tmpObj["variable"]=$variable;
                         $tmpObj["hostname"]=$hostname;
@@ -799,13 +827,21 @@ else if ($p=="getProfiles")
     if (empty($type)){
         $proClu = $db->getProfileCluster($ownerID);
         $proAmz = $db->getProfileAmazon($ownerID);
-    } else {
+        $proGoog = $db->getProfileGoogle($ownerID);
+    } else if ($type == "public"){
         $proClu = $db->getPublicProfileCluster($ownerID);
         $proAmz = $db->getPublicProfileAmazon($ownerID);
+        $proGoog = $db->getPublicProfileGoogle($ownerID);
+    } else if ($type == "run"){
+        $proClu = $db->getRunProfileCluster($ownerID);
+        $proAmz = $db->getRunProfileAmazon($ownerID);
+        $proGoog = $db->getRunProfileGoogle($ownerID);
     }
     $clu_obj = json_decode($proClu,true);
     $amz_obj = json_decode($proAmz,true);
-    $result = array_merge($clu_obj, $amz_obj);
+    $goog_obj = json_decode($proGoog,true);
+    $merged = array_merge($clu_obj, $amz_obj);
+    $result = array_merge($goog_obj, $merged);
     $data = json_encode($result);
 }
 else if ($p=="getProfileCluster")
@@ -816,22 +852,40 @@ else if ($p=="getProfileCluster")
     } else {
         if (empty($type)){
             $data = $db->getProfileCluster($ownerID);
-        } else {
+        } else if ($type == "public"){
             $data = $db->getPublicProfileCluster($ownerID);
+        } else if ($type == "run"){
+            $data = $db->getRunProfileCluster($ownerID);
         }
     }
 }
-else if ($p=="getProfileAmazon")
-{
+else if ($p=="getProfileCloud"){
+    $cloud = $_REQUEST['cloud'];
     $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
-    if (!empty($id)) {
-        $data = $db->getProfileAmazonbyID($id, $ownerID);
-    } else {
-        if (empty($type)){
-            $data = $db->getProfileAmazon($ownerID); 
+    if ($cloud == "amazon"){
+        if (!empty($id)) {
+            $data = $db->getProfileCloudbyID($id, $cloud, $ownerID);
         } else {
-            $data = $db->getPublicProfileAmazon($ownerID);
-        }
+            if (empty($type)){
+                $data = $db->getProfileAmazon($ownerID); 
+            } else if ($type == "public"){
+                $data = $db->getPublicProfileAmazon($ownerID);
+            } else if ($type == "run"){
+                $data = $db->getRunProfileAmazon($ownerID);
+            }
+        }  
+    } else if ($cloud == "google"){
+        if (!empty($id)) {
+            $data = $db->getProfileCloudbyID($id, $cloud, $ownerID);
+        } else {
+            if (empty($type)){
+                $data = $db->getProfileGoogle($ownerID); 
+            } else if ($type == "public"){
+                $data = $db->getPublicProfileGoogle($ownerID);
+            } else if ($type == "run"){
+                $data = $db->getRunProfileGoogle($ownerID);
+            }
+        }  
     }
     // convert autoshutdown_date time to seconds
     $new_obj = json_decode($data,true);
@@ -847,20 +901,32 @@ else if ($p=="getProfileAmazon")
         $data= json_encode($new_obj); 
     }
 }
-else if ($p=="updateAmazonProStatus"){
+else if ($p=="updateCloudProStatus"){
     $status = $_REQUEST['status'];
-    $data = $db->updateAmazonProStatus($id, $status, $ownerID);
+    $cloud = $_REQUEST['cloud'];
+    $data = $db->updateCloudProStatus($id, $status, $cloud, $ownerID);
 }
-else if ($p=="updateAmzShutdownCheck"){
+else if ($p=="updateCloudShutdownCheck"){
     $autoshutdown_check = $_REQUEST['autoshutdown_check'];
+    $cloud = $_REQUEST['cloud'];
     if ($autoshutdown_check == "false"){
-        $db->updateAmzShutdownDate($id, NULL, $ownerID);
+        $db->updateCloudShutdownDate($id, NULL, $cloud, $ownerID);
     }
-    $data = $db->updateAmzShutdownCheck($id, $autoshutdown_check, $ownerID);
+    $data = $db->updateCloudShutdownCheck($id, $autoshutdown_check, $cloud, $ownerID);
     if ($autoshutdown_check == "true"){
         //to set timer
-        $db->triggerShutdown($id,$ownerID, "fast");
+        error_log("triggerShutdown fast3 updateCloudShutdownCheck");
+        $db->triggerShutdown($id,$cloud, $ownerID, "fast");
     }
+}
+else if ($p=="validateSSH"){
+    $connect = $_REQUEST['connect'];
+    $ssh_port = $_REQUEST['ssh_port'];
+    $ssh_id = $_REQUEST['ssh_id'];
+    $type = $_REQUEST['type'];
+    $cmd = $_REQUEST['cmd'];
+    $path = $_REQUEST['path'];
+    $data = $db->validateSSH($connect, $ssh_id, $ssh_port, $type, $cmd, $path, $ownerID);
 }
 else if ($p=="saveSSHKeys"){
     $name = $_REQUEST['name'];
@@ -882,6 +948,35 @@ else if ($p=="saveSSHKeys"){
         $id = $idArray["id"];
         $db->insertKey($id, $prikey, "ssh_pri", $ownerID);
         $db->insertKey($id, $pubkey, "ssh_pub", $ownerID);
+    }
+}
+else if ($p=="getAutoPublicKey"){
+    $data = "";
+    if(!empty($ownerID)){
+        $name = "Auto-Generated Keys";
+        $checkSSH = $db->getSSHbyName($name, $userRole, $admin_id, $ownerID);
+        $checkSSHData = json_decode($checkSSH,true);
+        if (isset($checkSSHData[0])){
+            $id = $checkSSHData[0]["id"];
+            $ret['id'] = $id;
+            $ret['$keyPub'] = $db->readKey($id, 'ssh_pub', $ownerID);
+            $data=json_encode($ret);
+        } else {
+            $hide = "false";
+            $check_userkey = "";
+            $check_ourkey = "on";
+            $sshkeys = $db->generateKeys($ownerID);
+            $sshkeysAr = json_decode($sshkeys,true);
+            $pubkey = $sshkeysAr['$keyPub'];
+            $prikey = $sshkeysAr['$keyPri'];
+            $insertSSH = $db->insertSSH($name, $hide, $check_userkey,$check_ourkey, $ownerID);
+            $idArray = json_decode($insertSSH,true);
+            $id = $idArray["id"];
+            $db->insertKey($id, $prikey, "ssh_pri", $ownerID);
+            $db->insertKey($id, $pubkey, "ssh_pub", $ownerID);
+            $idArray['$keyPub'] = $pubkey;
+            $data = json_encode($idArray);
+        }
     }
 }
 else if ($p=="saveAmzKeys"){
@@ -939,9 +1034,44 @@ else if ($p=="saveGithub"){
         $data = $db->insertGithub($username, $email, $password, $ownerID);
     }
 }
-else if ($p=="pullLatestVer"){
-    $pullLatestVer = $db->pullLatestVer($ownerID);
-    $data= json_encode($pullLatestVer);
+else if ($p=="checkNewRelease"){
+    $version = $_REQUEST['version'];
+    $checkNewRelease = $db->checkNewRelease($version, $ownerID);
+    $data= json_encode($checkNewRelease);
+}
+else if ($p=="saveWizard"){
+    $name = $_REQUEST['name'];
+    $status = $_REQUEST['status'];
+    $data =  addslashes(htmlspecialchars(urldecode($_REQUEST['data']), ENT_QUOTES));
+    if (!empty($id)) {
+        $data = $db->updateWizard($id, $name, $data, $status, $ownerID);
+    } else {
+        $data = $db->insertWizard($name, $data, $status, $ownerID);
+    }
+}
+else if ($p=="removeWizard"){   
+    $data = $db -> removeWizard($id, $ownerID);
+}
+else if ($p=="getWizard"){
+    $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
+    if (!empty($id)) {
+        $data = $db->getWizardByID($id, $ownerID);
+    } else {
+        if ($type == "active") {
+            $data = $db->checkActiveWizard($ownerID);
+        } else if ($type == "all") {
+            $data = $db->getWizardAll($ownerID);
+        }
+    }
+}
+
+else if ($p=="getChangeLog"){
+    $file = __DIR__."/../../NEWS";
+    $content = "";
+    if (file_exists($file)) {
+        $content = $db->file_get_contents_utf8($file);
+    }
+    $data= json_encode($content);
 }
 else if ($p=="getGithub")
 {
@@ -981,10 +1111,16 @@ else if ($p=="saveProfileCluster"){
     $variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
     $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
     settype($ssh_id, 'integer');
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    settype($group_id, 'integer');
+    $auto_workdir = isset($_REQUEST['auto_workdir']) ? $_REQUEST['auto_workdir'] : "";
+    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
+    settype($perms, 'integer');
+
     if (!empty($id)) {
-        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $ownerID);
+        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID);
     } else {
-        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $ownerID);
+        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID);
     }
 }
 else if ($p=="saveProfileAmazon"){
@@ -1018,10 +1154,58 @@ else if ($p=="saveProfileAmazon"){
     $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
     $security_group = $_REQUEST['security_group'];
     settype($amazon_cre_id, 'integer');
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    settype($group_id, 'integer');
+    $auto_workdir = isset($_REQUEST['auto_workdir']) ? $_REQUEST['auto_workdir'] : "";
+    $def_publishdir = isset($_REQUEST['def_publishdir']) ? $_REQUEST['def_publishdir'] : "";
+    $def_workdir = isset($_REQUEST['def_workdir']) ? $_REQUEST['def_workdir'] : "";
+    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
+    settype($perms, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $ownerID);
+        $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
     } else {
-        $data = $db->insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $ownerID);
+        $data = $db->insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
+    }
+}
+else if ($p=="saveProfileGoogle"){
+    $public = isset($_REQUEST['public']) ? $_REQUEST['public'] : "";
+    settype($public, 'integer');
+    $name = $_REQUEST['name'];
+    $executor = $_REQUEST['executor'];
+    $cmd = $_REQUEST['cmd'];
+    $next_memory = $_REQUEST['next_memory'];
+    $next_queue = $_REQUEST['next_queue'];
+    $next_time = $_REQUEST['next_time'];
+    $next_cpu = $_REQUEST['next_cpu'];
+    $next_clu_opt = $_REQUEST['next_clu_opt'];
+    $executor_job = $_REQUEST['executor_job'];
+    $job_memory = $_REQUEST['job_memory'];
+    $job_queue = $_REQUEST['job_queue'];
+    $job_time = $_REQUEST['job_time'];
+    $job_cpu = $_REQUEST['job_cpu'];
+    $job_clu_opt = $_REQUEST['job_clu_opt'];
+    $ins_type = $_REQUEST['instance_type'];
+    $image_id = $_REQUEST['image_id'];
+    $next_path = $_REQUEST['next_path'];
+    $port = $_REQUEST['port'];
+    $singu_cache = $_REQUEST['singu_cache'];
+    $variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
+    $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
+    settype($ssh_id, 'integer');
+    $google_cre_id = isset($_REQUEST['google_cre_id']) ? $_REQUEST['google_cre_id'] : "";
+    $zone = isset($_REQUEST['zone']) ? $_REQUEST['zone'] : "";
+    settype($google_cre_id, 'integer');
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    settype($group_id, 'integer');
+    $auto_workdir = isset($_REQUEST['auto_workdir']) ? $_REQUEST['auto_workdir'] : "";
+    $def_publishdir = isset($_REQUEST['def_publishdir']) ? $_REQUEST['def_publishdir'] : "";
+    $def_workdir = isset($_REQUEST['def_workdir']) ? $_REQUEST['def_workdir'] : "";
+    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
+    settype($perms, 'integer');
+    if (!empty($id)) {
+        $data = $db->updateProfileGoogle($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
+    } else {
+        $data = $db->insertProfileGoogle($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
     }
 }
 else if ($p=="saveInput"){
@@ -1096,6 +1280,7 @@ else if ($p=="saveFile"){
     $archive_dir = isset($_REQUEST['archive_dir']) ? $_REQUEST['archive_dir'] : "";
     $file_dir = isset($_REQUEST['file_dir']) ? $_REQUEST['file_dir'] : "";
     $s3_archive_dir = isset($_REQUEST['s3_archive_dir']) ? $_REQUEST['s3_archive_dir'] : "";
+    $gs_archive_dir = isset($_REQUEST['gs_archive_dir']) ? $_REQUEST['gs_archive_dir'] : "";
     $file_type = $_REQUEST['file_type'];
     $file_array = $_REQUEST['file_array'];
     $project_id = $_REQUEST['project_id'];
@@ -1105,6 +1290,8 @@ else if ($p=="saveFile"){
     $profileId = $profileAr[1];
     if ($profileType == "amazon"){
         $run_env = "amazon";
+    } else if ($profileType == "google"){
+        $run_env = "google";
     } else if ($profileType == "cluster"){
         if (!empty($profileId)) {
             $proData = $db->getProfileClusterbyID($profileId, $ownerID);
@@ -1117,12 +1304,12 @@ else if ($p=="saveFile"){
 
     for ($i = 0; $i < count($file_array); $i++) {
         $item = $file_array[$i];
-        $item_file_dir = $file_dir[$i];
+        $item_file_dir = isset($file_dir[$i]) ? $file_dir[$i] : ""; 
         $p = explode(" ", $item);
         $name = $p[0];
         unset($p[0]);
         $files_used = join(' ', $p);
-        $insert = $db->insertFile($name, $item_file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $run_env, $ownerID);
+        $insert = $db->insertFile($name, $item_file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID);
         $fileData = json_decode($insert,true);
         $file_id = $fileData["id"];
         settype($file_id, 'integer');
@@ -1244,13 +1431,20 @@ else if ($p=="savePipelineGroup"){
     $group_name = $_REQUEST['group_name'];
     $pipeGrData = $db->getPipelineGroupByName($group_name);
     $pipeGrData = json_decode($pipeGrData,true);
+    $pipeGrId = "";
     if (isset($pipeGrData[0])){
         $pipeGrId = $pipeGrData[0]["id"];
-    } else {
-        $pipeGrId = "";
-    }
+    } 
     if (!empty($id)) {
-        $data = $db->updatePipelineGroup($id, $group_name, $ownerID);
+        if (empty($pipeGrId)){
+            $data = $db->updatePipelineGroup($id, $group_name, $ownerID);
+        } else {
+            if ($userRole == "admin" && $pipeGrId == $id){
+                $data = $db->updatePipelineGroup($id, $group_name, $ownerID);
+            } else {
+                $data = json_encode(array('id' => $pipeGrId, 'message' => "Defined name already found in the menu groups."));
+            }
+        }
     } else {
         if (empty($pipeGrId)){
             $data = $db->insertPipelineGroup($group_name, $ownerID);
@@ -1266,13 +1460,22 @@ else if ($p=="saveProcessGroup"){
     $group_name = $_REQUEST['group_name'];
     $proGrData = $db->getProcessGroupByName($group_name);
     $proGrData = json_decode($proGrData,true);
+    $proGrId = "";
     if (isset($proGrData[0])){
         $proGrId = $proGrData[0]["id"];
-    } else {
-        $proGrId = "";
-    }
+    } 
     if (!empty($id)) {
-        $data = $db->updateProcessGroup($id, $group_name, $ownerID);
+        //first check if $proGrId is found -> then return with warning -> this group already found in menu group
+        if (empty($proGrId)){
+            $data = $db->updateProcessGroup($id, $group_name, $ownerID);
+        } else {
+            //prevents duplicate names
+            if ($userRole == "admin" && $proGrId == $id){
+                $data = $db->updateProcessGroup($id, $group_name, $ownerID);
+            } else{
+                $data = json_encode(array('id' => $proGrId, 'message' => "Defined name already found in the menu groups."));
+            }
+        }
     } else {
         if (empty($proGrId)){
             $data = $db->insertProcessGroup($group_name, $ownerID);
@@ -1379,6 +1582,9 @@ else if ($p=="saveGroup"){
     $g_id = $idArray["id"];
     $db->insertUserGroup($g_id, $ownerID, $ownerID);
 }
+else if ($p=="saveTestGroup"){
+    $data = $db->saveTestGroup($ownerID);
+}
 else if ($p=="saveUserGroup"){
     $u_id = $_REQUEST['u_id'];
     $g_id = $_REQUEST['g_id'];
@@ -1478,24 +1684,28 @@ else if ($p=="saveProjectPipeline"){
     $singu_img = isset($_REQUEST['singu_img']) ? $_REQUEST['singu_img'] : "";
     $singu_opt = isset($_REQUEST['singu_opt']) ? $_REQUEST['singu_opt'] : "";
     $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
+    $google_cre_id = isset($_REQUEST['google_cre_id']) ? $_REQUEST['google_cre_id'] : "";
     $withReport = isset($_REQUEST['withReport']) ? $_REQUEST['withReport'] : "";
     $withTrace = isset($_REQUEST['withTrace']) ? $_REQUEST['withTrace'] : "";
     $withTimeline = isset($_REQUEST['withTimeline']) ? $_REQUEST['withTimeline'] : "";
     $withDag = isset($_REQUEST['withDag']) ? $_REQUEST['withDag'] : "";
     $process_opt = isset($_REQUEST['process_opt']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['process_opt']), ENT_QUOTES)) : "";
+    $onload = isset($_REQUEST['onload']) ? $_REQUEST['onload'] : "";
     settype($group_id, 'integer');
     settype($amazon_cre_id, 'integer');
+    settype($google_cre_id, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $ownerID);
+        $data = $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
         if ($perms !== "3"){
             $db->updateProjectGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updateProjectInputGroupPerm($id, $group_id, $perms, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
-            $db->updatePipelineGroupPerm($id, $group_id, $perms, $ownerID);
-            $db->updatePipelineProcessGroupPerm($id, $group_id, $perms, $ownerID);
+            $listPermsDenied = array();
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+            $data = json_encode($listPermsDenied);  
         }
     } else {
-        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $ownerID);
+        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
     }
 }
 else if ($p=="saveProcessParameter"){
@@ -1582,15 +1792,30 @@ else if ($p=="checkProjectPipelinePublic")
     $process_id = $_REQUEST['process_id'];
     $data = $db->checkProjectPipelinePublic($process_id, $ownerID);
 }
-else if ($p=="checkPipelinePerm")
-{
+else if ($p=="checkPermUpdtProcess"){
+    $listPermsDenied = array();
     $process_id = $_REQUEST['process_id'];
-    $data = $db->checkPipelinePerm($process_id);
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    $perms = $_REQUEST['perms'];
+    $process_data = json_decode($db->getProcessDataById($process_id, $ownerID),true);
+    if (!empty($process_data[0])){
+        $pro_group_id = $process_data[0]["group_id"];
+        $pro_perms = $process_data[0]["perms"];
+        settype($group_id, 'integer');
+        settype($perms, 'integer');
+        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $ownerID);
+    }
+    $data = json_encode($listPermsDenied);
 }
-else if ($p=="checkProjectPipePerm")
-{
+else if ($p=="checkPermUpdtPipeline"){
     $pipeline_id = $_REQUEST['pipeline_id'];
-    $data = $db->checkProjectPipePerm($pipeline_id);
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    $perms = $_REQUEST['perms'];
+    settype($group_id, 'integer');
+    settype($perms, 'integer');
+    $listPermsDenied = array();
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+    $data = json_encode($listPermsDenied);
 }
 else if ($p=="checkProject")
 {
@@ -1693,23 +1918,38 @@ else if ($p=="getOutputsPP")
 else if ($p=="saveAllPipeline")
 {
     $dat = $_REQUEST['dat'];
-    $data = $db->saveAllPipeline($dat,$ownerID);
-    $idArray = json_decode($data,true);
-    $new_pipe_id = $idArray["id"];
-    if (!empty($new_pipe_id)){
-        $obj = json_decode($dat);
-        $newObj = new stdClass();
-        foreach ($obj as $item):
-        foreach($item as $k => $v) $newObj->$k = $v;
-        endforeach;
-        $pipeline_uuid = isset($newObj->{"pipeline_uuid"}) ? $newObj->{"pipeline_uuid"} : "";
-        $pipeline_rev_uuid = isset($newObj->{"pipeline_rev_uuid"}) ? $newObj->{"pipeline_rev_uuid"} : "";
-        if (empty($pipeline_uuid)) {
-            $db->getUUIDAPI($data,"pipeline", $new_pipe_id);
-        } else if (empty($pipeline_rev_uuid)){
-            $db->getUUIDAPI($data,"pipeline_rev", $new_pipe_id);
-        }
+    $obj = json_decode($dat);
+    $newObj = new stdClass();
+    foreach ($obj as $item):
+    foreach($item as $k => $v) $newObj->$k = $v;
+    endforeach;
+
+    $data = $db->saveAllPipeline($newObj,$ownerID);
+    $id = $newObj->{"id"};
+    $group_id = $newObj->{"group_id"};
+    settype($group_id, 'integer');
+    $perms = $newObj->{"perms"};
+    //update
+    if (!empty($id)){
+        $listPermsDenied = array();
+        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
+        $data = json_encode($listPermsDenied);
+        //insert
+    } else {
+        $idArray = json_decode($data,true);
+        $new_pipe_id = $idArray["id"];
+        if (!empty($new_pipe_id)){
+            $pipeline_uuid = isset($newObj->{"pipeline_uuid"}) ? $newObj->{"pipeline_uuid"} : "";
+            $pipeline_rev_uuid = isset($newObj->{"pipeline_rev_uuid"}) ? $newObj->{"pipeline_rev_uuid"} : "";
+            if (empty($pipeline_uuid)) {
+                $db->getUUIDAPI($data,"pipeline", $new_pipe_id);
+            } else if (empty($pipeline_rev_uuid)){
+                $db->getUUIDAPI($data,"pipeline_rev", $new_pipe_id);
+            }
+        } 
     }
+
+
 }
 else if ($p=="savePipelineDetails")
 {
@@ -1726,7 +1966,8 @@ else if ($p=="savePipelineDetails")
     $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publish,$pipeline_group_id,$ownerID);
     //update permissions
     if (!empty($nodesRaw)){
-        $db->updatePipelinePerms($nodesRaw, $group_id, $perms, $ownerID);
+        $listPermsDenied = array();
+        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
     }
 }
 else if ($p=="getSavedPipelines") {

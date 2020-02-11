@@ -232,11 +232,13 @@ Here, ``$HOSTNAME`` is DolphinNext specific variable that recalls the hostname w
 
 **Executor Properties:**
 
-Five type of executor properties are available to autofill **Executor Settings for All Processes**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue/Partition and Other Options. See the example below::
+Five type of executor properties are available to autofill **Executor Settings for All Processes**: ``$TIME``, ``$CPU``, ``$MEMORY``, ``$QUEUE``, ``$EXEC_OPTIONS`` which defines Time, CPU, Memory, Queue/Partition and Other Options. You can set pipeline defaults by using ``$HOSTNAME == "default"`` condition. See the example below::
     
     //* autofill
-    $MEMORY = 32
-    $CPU  = 1
+    if ($HOSTNAME == "default"){
+        $MEMORY = 32
+        $CPU  = 1
+    }
     if ($HOSTNAME == "ghpcc06.umassrc.org"){
         $TIME = 3000
         $CPU  = 4
@@ -270,30 +272,49 @@ Singularity image example::
     //* autofill
     if ($HOSTNAME == "ghpcc06.umassrc.org"){
         $SINGULARITY_IMAGE = "shub://UMMS-Biocore/singularity"
-	    $SINGULARITY_OPTIONS = "--bind /project"
+        $SINGULARITY_OPTIONS = "--bind /project"
     }
     //* autofill
 
 .. image:: dolphinnext_images/pipeline_autofill_singu.png
 	:align: center
 	:width: 99%
+    
+When you want to define both singularity and docker images, you can set ``$DEFAULT_IMAGE`` tag as well. Options of ``$DEFAULT_IMAGE`` could be ``"docker"`` or ``"singularity"``. Please check the example at below where by default docker image is set for the profiles, however if user connects to "ghpcc06.umassrc.org", it will be set as singularity image::
+
+    //* autofill
+    if ($HOSTNAME == "default"){
+        $DEFAULT_IMAGE = "docker"
+        $DOCKER_IMAGE = "dolphinnext/rnaseq:1.0"
+        $SINGULARITY_IMAGE = "https://galaxyweb.umassmed.edu/pub/dnext_data/singularity/UMMS-Biocore-rna-seq-1.0.img"
+    }
+    if ($HOSTNAME == "ghpcc06.umassrc.org"){
+        $DEFAULT_IMAGE = "singularity"
+        $DOCKER_IMAGE = "dolphinnext/rnaseq:1.0"
+        $SINGULARITY_IMAGE = "https://galaxyweb.umassmed.edu/pub/dnext_data/singularity/UMMS-Biocore-rna-seq-1.0.img"
+    }
+    //* autofill
+    
+.. note:: Please note that Google cloud will overwrite ``$DEFAULT_IMAGE`` tag, since only docker image is available for google cloud.
 
 **Platform Tag :**
 
 Optionally, you can isolate platform dependent paramaters by using **platform** tag. This way, exported pipeline won't have the platform dependent parameters and similarly when pipeline is imported, exisiting platform dependent parameters won't be overwritten. Please check the the example usage at below::
 
     //* autofill
-    $MEMORY = 32
-    $CPU  = 1
-        //* platform
-        if ($HOSTNAME == "ghpcc06.umassrc.org"){
-            $TIME = 3000
-            $CPU  = 4
-            $MEMORY = 100
-            $QUEUE = "long"
-            $EXEC_OPTIONS = '-E "file /home/garberlab"'
-        }
-        //* platform
+    if ($HOSTNAME == "default"){
+        $MEMORY = 32
+        $CPU  = 1
+    }
+    //* platform
+    if ($HOSTNAME == "ghpcc06.umassrc.org"){
+        $TIME = 3000
+        $CPU  = 4
+        $MEMORY = 100
+        $QUEUE = "long"
+        $EXEC_OPTIONS = '-E "file /home/garberlab"'
+    }
+    //* platform
     //* autofill
 
 In the example, since run environment is selected as ghpcc06.umassrc.org, autofill feature overwrited the default ``$TIME`` value (1000) and filled with 3000.

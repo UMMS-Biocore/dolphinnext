@@ -26,9 +26,17 @@ Channel.from(params.file_dir).into{file_dir1; file_dir2}
 Channel.from(params.files_used).into{files_used1; files_used2}
 Channel.from(params.archive_dir).into{archive_dir1; archive_dir2}
 Channel.from(params.s3_archive_dir).into{s3_archive_dir1; s3_archive_dir2}
+Channel.from(params.gs_archive_dir).into{gs_archive_dir1; gs_archive_dir2}
 Channel.from(params.file_name).into{file_name1; file_name2; file_name3}
 Channel.from(params.file_type).into{file_type1; file_type2; file_type3}
 Channel.from(params.collection_type).into{collection_type1; collection_type2; collection_type3}
+
+
+def env(String name) {
+  System.getenv().containsKey(name) ? System.getenv(name) : "" 
+}
+googCred = env('GOOGLE_APPLICATION_CREDENTIALS')
+
 
 process initialCheck {
     input:
@@ -39,6 +47,7 @@ process initialCheck {
         val files_used from files_used1
         val archive_dir from archive_dir1
         val s3_archive_dir from s3_archive_dir1
+        val gs_archive_dir from gs_archive_dir1
         val collection_type from collection_type1
         val checkpath from checkpath1
         val urlzip from urlzip1
@@ -53,6 +62,7 @@ process initialCheck {
     
     shell:
         lastVal = "successInitialCheck.${params.attempt}"
+    
         '''
           #!/usr/bin/env perl
           use strict;
@@ -65,6 +75,7 @@ process initialCheck {
           use File::Compare;
 
           my $run_dir = "!{params.run_dir}";
+          my $cloud_run_dir = "!{params.cloud_run_dir}";
           my $profile = "!{params.profile}";
           my @collection = (!{collection});
           my @file_name = (!{file_name});
@@ -73,37 +84,44 @@ process initialCheck {
           my @files_used = (!{files_used});
           my @archive_dir = (!{archive_dir});
           my @s3_archive_dir = (!{s3_archive_dir});
+          my @gs_archive_dir = (!{gs_archive_dir});
           my @collection_type = (!{collection_type});
 
           my %passHash;        ## Keep record of completed operation
           my @failArray=();    ## pass id's to createCollection process
-          my $s3upload_dir;
+          my $upload_dir;
           
           ############ Collection Data Check ############
           for ( my $i = 0 ; $i <= $#file_name ; $i++ ) {
             my $collection      = $collection[$i];
             my $input_dir       = "$run_dir/inputs/$collection";
-            $s3upload_dir       = "$input_dir/.s3up";
+            my $cloud_input_dir = "$cloud_run_dir/inputs/$collection";
+            $upload_dir         = "$input_dir/.up";
             my $fileType        = $file_type[$i];
             my $archiveDir      = trim( $archive_dir[$i] );
             my $s3_archiveDir   = trim( $s3_archive_dir[$i] );
+            my $gs_archiveDir   = trim( $gs_archive_dir[$i] );
             my @fileAr          = split( / \\| /, $files_used[$i], -1 );
             my $inputDirCheck   = "false";
             my $archiveDirCheck = "false";
             my $s3_archiveDirCheck = "";
-            my $inputFile       = "";
-            my $inputFile1      = "";
-            my $inputFile2      = "";
-            my $archFile        = "";
-            my $archFile1       = "";
-            my $archFile2       = "";
+            my $gs_archiveDirCheck = "";
+            my $inputFile          = "";
+            my $inputFile1         = "";
+            my $inputFile2         = "";
+            my $cloud_inputFile    = "";
+            my $cloud_inputFile1   = "";
+            my $cloud_inputFile2   = "";
+            my $archFile           = "";
+            my $archFile1          = "";
+            my $archFile2          = "";
             
             if ( !-d $input_dir ) {
                 runCommand("mkdir -p $input_dir");
                 if ( !-d $input_dir ) { die "Failed to create input_dir: $input_dir"; }
             }
           
-            ## first check input folder, archive_dir and s3_archivedir for expected files
+            ## first check input folder, archive_dir, s3_archivedir and gs_archivedir for expected files
             if ( $collection_type[$i] eq "single" ) {
               $inputFile = "$input_dir/$file_name[$i].$fileType";
               if ( checkFile($inputFile) && checkFile("$input_dir/.success_$file_name[$i]")) {
@@ -121,34 +139,79 @@ process initialCheck {
                 runCommand("rm -f $inputFile1 $inputFile2 $input_dir/.success_$file_name[$i]");
               }
             }
+            ## if $profile eq "google" inputs located at the cloud. overwrite $inputDirCheck
+            if ($profile eq "google"){
+                if ( $collection_type[$i] eq "single" ) {
+                    $cloud_inputFile      = "$cloud_input_dir/$file_name[$i].$fileType";
+                    if ( checkGSFile($cloud_inputFile)) {
+                        $inputDirCheck = "true";
+                    } else {
+                        $inputDirCheck = "false";
+                        runCommand("rm -f $inputFile $input_dir/.success_$file_name[$i]");
+                    }
+                }
+                elsif ( $collection_type[$i] eq "pair" ) {
+                    $cloud_inputFile1     = "$cloud_input_dir/$file_name[$i].R1.$fileType";
+                    $cloud_inputFile2     = "$cloud_input_dir/$file_name[$i].R2.$fileType";
+                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2)) {
+                        $inputDirCheck = "true";
+                    } else {
+                        $inputDirCheck = "false";
+                        runCommand("rm -f $inputFile1 $inputFile2 $input_dir/.success_$file_name[$i]");
+                    }
+                }
+            }
+            
+            
             if ( $s3_archiveDir ne "" ) {
                 my @s3_archiveDirData = split( /	/, $s3_archiveDir);
                 my $s3Path = $s3_archiveDirData[0]; 
                 my $confID = $s3_archiveDirData[1];
                 if ( $collection_type[$i] eq "single" ) {
-                $archFile = "$s3Path/$file_name[$i].$fileType";
-                if ( checkS3File("$archFile.gz", $confID) && checkS3File("$archFile.gz.count", $confID) && checkS3File("$archFile.gz.md5sum", $confID)) {
-                    $s3_archiveDirCheck = "true";
-                } else {
-                    $s3_archiveDirCheck = "false";
+                    $archFile = "$s3Path/$file_name[$i].$fileType";
+                    if ( checkS3File("$archFile.gz", $confID) && checkS3File("$archFile.gz.count", $confID) && checkS3File("$archFile.gz.md5sum", $confID)) {
+                        $s3_archiveDirCheck = "true";
+                    } else {
+                        $s3_archiveDirCheck = "false";
+                    }
                 }
-              }
-              elsif ( $collection_type[$i] eq "pair" ) {
-                $archFile1 = "$s3Path/$file_name[$i].R1.$fileType";
-                $archFile2 = "$s3Path/$file_name[$i].R2.$fileType";
-                if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID)) {
-                    $s3_archiveDirCheck = "true";
-                } else {
-                    $s3_archiveDirCheck = "false";
+                elsif ( $collection_type[$i] eq "pair" ) {
+                    $archFile1 = "$s3Path/$file_name[$i].R1.$fileType";
+                    $archFile2 = "$s3Path/$file_name[$i].R2.$fileType";
+                    if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID)) {
+                        $s3_archiveDirCheck = "true";
+                    } else {
+                        $s3_archiveDirCheck = "false";
+                    }
                 }
-              }
+            }
+            if ( $gs_archiveDir ne "" ) {
+                my @gs_archiveDirData = split( /	/, $gs_archiveDir);
+                my $gsPath = $gs_archiveDirData[0]; 
+                if ( $collection_type[$i] eq "single" ) {
+                    $archFile = "$gsPath/$file_name[$i].$fileType";
+                    if ( checkGSFile("$archFile.gz") && checkGSFile("$archFile.gz.count") && checkGSFile("$archFile.gz.md5sum")) {
+                        $gs_archiveDirCheck = "true";
+                    } else {
+                        $gs_archiveDirCheck = "false";
+                    }
+                }
+                elsif ( $collection_type[$i] eq "pair" ) {
+                    $archFile1 = "$gsPath/$file_name[$i].R1.$fileType";
+                    $archFile2 = "$gsPath/$file_name[$i].R2.$fileType";
+                    if ( checkGSFile("$archFile1.gz") && checkGSFile("$archFile1.gz.count") && checkGSFile("$archFile1.gz.md5sum") && checkGSFile("$archFile2.gz") && checkGSFile("$archFile2.gz.count") && checkGSFile("$archFile2.gz.md5sum")) {
+                        $gs_archiveDirCheck = "true";
+                    } else {
+                        $gs_archiveDirCheck = "false";
+                    }
+                }
             }
             ## if s3_archiveDirCheck is false (not '') and $archiveDir eq "" then act as if $archiveDir defined as s3upload_dir
             ## for s3 upload first archive files need to be prepared. 
-            ## If $archiveDir is not empty then copy these files to $s3upload_dir.
-            ## else $archiveDir is empty create archive files in $s3upload_dir.
-            if ( $archiveDir eq "" && $s3_archiveDirCheck eq "false") {
-                $archiveDir = "$s3upload_dir";
+            ## If $archiveDir is not empty then copy these files to $upload_dir.
+            ## else $archiveDir is empty create archive files in $upload_dir.
+            if ( $archiveDir eq "" && ($s3_archiveDirCheck eq "false" || $gs_archiveDirCheck eq "false")) {
+                $archiveDir = "$upload_dir";
             }
 
             if ( $archiveDir ne "" ) {
@@ -180,11 +243,11 @@ process initialCheck {
             if (   $inputDirCheck eq "true" && $archiveDirCheck eq "false" && $archiveDir ne "" ){
               ## remove inputDir files and cleanstart
               if ( $collection_type[$i] eq "single" ) {
-                runCommand("rm $inputFile");
+                runCommand("rm -f $inputFile");
               }
               elsif ( $collection_type[$i] eq "pair" ) {
-                runCommand("rm $inputFile1");
-                runCommand("rm $inputFile2");
+                runCommand("rm -f $inputFile1");
+                runCommand("rm -f $inputFile2");
               }
               $inputDirCheck = "false";
             }
@@ -194,12 +257,16 @@ process initialCheck {
             print "archiveDirCheck for $file_name[$i]: $archiveDirCheck\\n";
             print "archiveDir for $file_name[$i]: $archiveDir\\n";
             print "s3_archiveDirCheck for $file_name[$i]: $s3_archiveDirCheck\\n";
+            print "gs_archiveDirCheck for $file_name[$i]: $gs_archiveDirCheck\\n";
 
 
             if ( $inputDirCheck eq "false" && $archiveDirCheck eq "true" ) {
                 failedCheck($i);
             }
             elsif ( $inputDirCheck eq "false" && $archiveDirCheck eq "false" && $s3_archiveDirCheck eq "true" && $profile eq "amazon") {
+                failedCheck($i);
+            }
+            elsif ( $inputDirCheck eq "false" && $archiveDirCheck eq "false" && $gs_archiveDirCheck eq "true" && $profile eq "google") {
                 failedCheck($i);
             }
             elsif ( $inputDirCheck eq "false" && $archiveDirCheck eq "false" ) {
@@ -209,7 +276,7 @@ process initialCheck {
                 $passHash{ $file_name[$i] } = "passed";
             }
             elsif ( $inputDirCheck eq "true" && $archiveDirCheck eq "true" ) {
-                if ($s3_archiveDirCheck eq "false"){
+                if ($s3_archiveDirCheck eq "false" || $gs_archiveDirCheck eq "false"){
                     failedCheck($i);
                 } else {
                     $passHash{ $file_name[$i] } = "passed";
@@ -278,7 +345,7 @@ process initialCheck {
             if   ($error) { die "Command failed: $error $com\\n"; }
             else          { print "Command successful: $com\\n"; }
           }
-
+          
           sub checkFile {
             my ($file) = @_;
             print "checkFile: $file\\n";
@@ -306,15 +373,15 @@ process initialCheck {
             my ( $file, $confID) = @_;
             my $tmpSufx = $file;
             $tmpSufx =~ s/[^A-Za-z0-9]/_/g;
-            runCommand ("mkdir -p $s3upload_dir && > $s3upload_dir/.info.$tmpSufx ");
-            my $err = system ("s3cmd info --config=$run_dir/initialrun/.conf.$confID $file >$s3upload_dir/.info.$tmpSufx 2>&1 ");
+            runCommand ("mkdir -p $upload_dir && > $upload_dir/.info.$tmpSufx ");
+            my $err = system ("s3cmd info --config=$run_dir/initialrun/.conf.$confID $file >$upload_dir/.info.$tmpSufx 2>&1 ");
             ## if file not found then it will give error
             my $checkMD5 = 'false';
             if ($err){
                 print "S3File Not Found: $file\\n";
                 return 0;
             } else {
-                open(FILE,"$s3upload_dir/.info.$tmpSufx");
+                open(FILE,"$upload_dir/.info.$tmpSufx");
                 if (grep{/MD5/} <FILE>){
                     $checkMD5 = 'true';
                 }
@@ -322,6 +389,29 @@ process initialCheck {
             }
             return 1 if ( $checkMD5 eq 'true' );
             print "S3File Not Found: $file\\n";
+            return 0;
+          }
+          
+          sub checkGSFile{
+            my ( $file) = @_;
+            my $tmpSufx = $file;
+            $tmpSufx =~ s/[^A-Za-z0-9]/_/g;
+            runCommand ("mkdir -p $upload_dir && > $upload_dir/.info.$tmpSufx ");
+            my $err = system ("gcloud auth activate-service-account --key-file=!{googCred} && gsutil ls -L $file >$upload_dir/.info.$tmpSufx 2>&1 ");
+            ## if file not found then it will give error
+            my $checkMD5 = 'false';
+            if ($err){
+                print "GS File Not Found: $file\\n";
+                return 0;
+            } else {
+                open(FILE,"$upload_dir/.info.$tmpSufx");
+                if (grep{/md5/} <FILE>){
+                    $checkMD5 = 'true';
+                }
+                close FILE;
+            }
+            return 1 if ( $checkMD5 eq 'true' );
+            print "GS File Not Found: $file\\n";
             return 0;
           }
           
@@ -506,7 +596,7 @@ process downloadUrl {
 
 process createCollection {
     errorStrategy 'retry'
-    maxRetries 2
+    maxRetries 3
 
     input:
         each failedFile from failedFile.flatten()
@@ -517,6 +607,7 @@ process createCollection {
         val files_used from files_used2
         val archive_dir from archive_dir2
         val s3_archive_dir from s3_archive_dir2
+        val gs_archive_dir from gs_archive_dir2
         val collection_type from collection_type2
 
     output:
@@ -524,6 +615,7 @@ process createCollection {
     
     shell:
         fileID = failedFile.baseName
+        
         '''
             #!/usr/bin/env perl
             use strict;
@@ -536,6 +628,7 @@ process createCollection {
             use File::Compare;
 
             my $run_dir = "!{params.run_dir}";
+            my $cloud_run_dir = "!{params.cloud_run_dir}";
             my $profile = "!{params.profile}";
             my @collection = (!{collection});
             my @file_name = (!{file_name});
@@ -544,6 +637,7 @@ process createCollection {
             my @files_used = (!{files_used});
             my @archive_dir = (!{archive_dir});
             my @s3_archive_dir = (!{s3_archive_dir});
+            my @gs_archive_dir = (!{gs_archive_dir});
             my @collection_type = (!{collection_type});
             my %passHash;    ## Keep record of completed operation
             my %validInputHash; ## Keep record of files as fullpath
@@ -551,12 +645,15 @@ process createCollection {
             my $i = !{fileID};
             my $collection         = $collection[$i];
             my $input_dir          = "$run_dir/inputs/$collection";
+            my $cloud_input_dir    = "$cloud_run_dir/inputs/$collection";
             my $s3down_dir_prefix  = "$input_dir/.tmp";
+            my $gsdown_dir_prefix  = "$input_dir/.tmpGS";
             my $urldown_dir_prefix = "$input_dir/.tmpUrl";
-            my $s3upload_dir       = "$input_dir/.s3up";
+            my $upload_dir         = "$input_dir/.up";
             my $fileType        = $file_type[$i];
             my $archiveDir      = trim( $archive_dir[$i] );
             my $s3_archiveDir   = trim( $s3_archive_dir[$i] );
+            my $gs_archiveDir   = trim( $gs_archive_dir[$i] );
             my @fileAr          = split( / \\| /, $files_used[$i], -1 );
             my @fullfileAr      = ();
             my @fullfileArR1    = ();
@@ -564,13 +661,17 @@ process createCollection {
             my $inputDirCheck   = "false";
             my $archiveDirCheck = "false";
             my $s3_archiveDirCheck = "";
-            my $inputFile       = "";
-            my $inputFile1      = "";
-            my $inputFile2      = "";
-            my $archFile        = "";
-            my $archFile1       = "";
-            my $archFile2       = "";
-
+            my $gs_archiveDirCheck = "";
+            my $inputFile          = "";
+            my $inputFile1         = "";
+            my $inputFile2         = "";
+            my $cloud_inputFile    = "";
+            my $cloud_inputFile1   = "";
+            my $cloud_inputFile2   = "";
+            my $archFile           = "";
+            my $archFile1          = "";
+            my $archFile2          = "";
+            
             if ( !-d $input_dir ) {
                 runCommand("mkdir -p $input_dir");
                 if ( !-d $input_dir ) { die "Failed to create input_dir: $input_dir"; }
@@ -594,6 +695,29 @@ process createCollection {
                 runCommand("rm -f $inputFile1 $inputFile2 $input_dir/.success_$file_name[$i]");
               }
             }
+            ## if $profile eq "google" inputs located at the cloud. overwrite $inputDirCheck
+            if ($profile eq "google"){
+                if ( $collection_type[$i] eq "single" ) {
+                    $cloud_inputFile      = "$cloud_input_dir/$file_name[$i].$fileType";
+                    if ( checkGSFile($cloud_inputFile)) {
+                        $inputDirCheck = "true";
+                    } else {
+                        $inputDirCheck = "false";
+                        runCommand("rm -f $inputFile $input_dir/.success_$file_name[$i]");
+                    }
+                }
+                elsif ( $collection_type[$i] eq "pair" ) {
+                    $cloud_inputFile1     = "$cloud_input_dir/$file_name[$i].R1.$fileType";
+                    $cloud_inputFile2     = "$cloud_input_dir/$file_name[$i].R2.$fileType";
+                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2)) {
+                        $inputDirCheck = "true";
+                    } else {
+                        $inputDirCheck = "false";
+                        runCommand("rm -f $inputFile1 $inputFile2 $input_dir/.success_$file_name[$i]");
+                    }
+                }
+            }
+            
             if ( $s3_archiveDir ne "" ) {
                 my @s3_archiveDirData = split( /	/, $s3_archiveDir);
                 my $s3Path = $s3_archiveDirData[0]; 
@@ -616,12 +740,34 @@ process createCollection {
                 }
               }
             }
+            if ( $gs_archiveDir ne "" ) {
+                my @gs_archiveDirData = split( /	/, $gs_archiveDir);
+                my $gsPath = $gs_archiveDirData[0]; 
+                if ( $collection_type[$i] eq "single" ) {
+                    $archFile = "$gsPath/$file_name[$i].$fileType";
+                    if ( checkGSFile("$archFile.gz") && checkGSFile("$archFile.gz.count") && checkGSFile("$archFile.gz.md5sum")) {
+                        $gs_archiveDirCheck = "true";
+                    } else {
+                        $gs_archiveDirCheck = "false";
+                    }
+                }
+                elsif ( $collection_type[$i] eq "pair" ) {
+                    $archFile1 = "$gsPath/$file_name[$i].R1.$fileType";
+                    $archFile2 = "$gsPath/$file_name[$i].R2.$fileType";
+                    if ( checkGSFile("$archFile1.gz") && checkGSFile("$archFile1.gz.count") && checkGSFile("$archFile1.gz.md5sum") && checkGSFile("$archFile2.gz") && checkGSFile("$archFile2.gz.count") && checkGSFile("$archFile2.gz.md5sum")) {
+                        $gs_archiveDirCheck = "true";
+                    } else {
+                        $gs_archiveDirCheck = "false";
+                    }
+                }
+            }
+            
             ## if s3_archiveDirCheck is false (not '') and $archiveDir eq "" then act as if $archiveDir defined as s3upload_dir
             ## for s3 upload first archive files need to be prepared. 
-            ## If $archiveDir is not empty then copy these files to $s3upload_dir.
-            ## else $archiveDir is empty create archive files in $s3upload_dir.
-            if ( $archiveDir eq "" && $s3_archiveDirCheck eq "false") {
-                $archiveDir = "$s3upload_dir";
+            ## If $archiveDir is not empty then copy these files to $upload_dir.
+            ## else $archiveDir is empty create archive files in $upload_dir.
+            if ( $archiveDir eq "" && ($s3_archiveDirCheck eq "false" || $gs_archiveDirCheck eq "false")) {
+                $archiveDir = "$upload_dir";
             }
 
             if ( $archiveDir ne "" ) {
@@ -654,44 +800,56 @@ process createCollection {
             print "archiveDirCheck for $file_name[$i]: $archiveDirCheck\\n";
             print "archiveDir for $file_name[$i]: $archiveDir\\n";
             print "s3_archiveDirCheck for $file_name[$i]: $s3_archiveDirCheck\\n";
+            print "gs_archiveDirCheck for $file_name[$i]: $gs_archiveDirCheck\\n";
 
             if (   $inputDirCheck eq "true" && $archiveDirCheck eq "false" && $archiveDir ne "" ){
               ## remove inputDir files and cleanstart
               if ( $collection_type[$i] eq "single" ) {
-                runCommand("rm $inputFile");
+                runCommand("rm -f $inputFile");
               }
               elsif ( $collection_type[$i] eq "pair" ) {
-                runCommand("rm $inputFile1");
-                runCommand("rm $inputFile2");
+                runCommand("rm -f $inputFile1");
+                runCommand("rm -f $inputFile2");
               }
               $inputDirCheck = "false";
             }
 
             if ( $inputDirCheck eq "false" && $archiveDirCheck eq "true" ) {
                 if ( $collection_type[$i] eq "single" ) {
-                    arch2Input ("$archFile.gz", "$inputFile.gz", $s3_archiveDirCheck, $s3_archiveDir);
+                    arch2Input ("$archFile.gz", "$inputFile.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 } elsif ( $collection_type[$i] eq "pair" ) {
-                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir);
-                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir);
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
                 runCommand("touch $input_dir/.success_$file_name[$i]");
+                uploadCloudWorkdir($profile);
                 $passHash{ $file_name[$i] } = "passed";
             }
-            ## if $s3_archiveDirCheck eq "true" && $archiveDirCheck eq "false" && $profile eq "amazon": no need to check input file existance. Download s3 file and call it archived file.
-            elsif ( $inputDirCheck eq "false" && $archiveDirCheck eq "false" && $s3_archiveDirCheck eq "true" && $profile eq "amazon") {
+            ## if $s3_archiveDirCheck eq "true" && $archiveDirCheck eq "false" && $profile eq "amazon": no need to check input file existance. Download s3 file and call it as archived file.
+            elsif ( $inputDirCheck eq "false" && $archiveDirCheck eq "false" && (($s3_archiveDirCheck eq "true" && $profile eq "amazon") || ($gs_archiveDirCheck eq "true" && $profile eq "google")) ) {
+                my $cloud = "";
+                my $arcDir = "";
+                if ($s3_archiveDirCheck eq "true"){
+                    $cloud = "s3";
+                    $arcDir = $s3_archiveDir;
+                } elsif ($gs_archiveDirCheck eq "true"){
+                    $cloud = "gs";
+                    $arcDir = $gs_archiveDir;
+                }
                 if ( $collection_type[$i] eq "single" ) {
-                    my $s3tmp_dir_sufx = s3downCheck($s3_archiveDir, "$file_name[$i].$fileType.gz");
-                    my $archFile = $s3tmp_dir_sufx . "/" . "$file_name[$i].$fileType";
-                    arch2Input ("$archFile.gz", "$inputFile.gz", $s3_archiveDirCheck, $s3_archiveDir);
+                    my $tmp_dir_sufx = cloudDownCheck($arcDir, "$file_name[$i].$fileType.gz", $cloud);
+                    my $archFile = $tmp_dir_sufx . "/" . "$file_name[$i].$fileType";
+                    arch2Input ("$archFile.gz", "$inputFile.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 } elsif ( $collection_type[$i] eq "pair" ) {
-                    my $s3tmp_dir_sufx1 = s3downCheck($s3_archiveDir, "$file_name[$i].R1.$fileType.gz");
-                    my $archFile1 = $s3tmp_dir_sufx1 . "/" . "$file_name[$i].R1.$fileType";
-                    my $s3tmp_dir_sufx2 = s3downCheck($s3_archiveDir, "$file_name[$i].R2.$fileType.gz");
-                    my $archFile2 = $s3tmp_dir_sufx2 . "/" . "$file_name[$i].R2.$fileType";
-                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir);
-                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir);
+                    my $tmp_dir_sufx1 = cloudDownCheck($arcDir, "$file_name[$i].R1.$fileType.gz", $cloud);
+                    my $archFile1 = $tmp_dir_sufx1 . "/" . "$file_name[$i].R1.$fileType";
+                    my $tmp_dir_sufx2 = cloudDownCheck($arcDir, "$file_name[$i].R2.$fileType.gz", $cloud);
+                    my $archFile2 = $tmp_dir_sufx2 . "/" . "$file_name[$i].R2.$fileType";
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
                 runCommand("touch $input_dir/.success_$file_name[$i]");
+                uploadCloudWorkdir($profile);
                 $passHash{ $file_name[$i] } = "passed";
             }
             ##create new collection files
@@ -701,8 +859,12 @@ process createCollection {
                 if ( $collection_type[$i] eq "single" ) {
                   ## for GEO files: file_dir will be empty so @fullfileAr will be empty.
                   if ($file_dir[$i] =~ m/s3:/i ){
-                    my $s3tmp_dir_sufx = s3downCheck($file_dir[$i], $fileAr[$k]);
+                    my $s3tmp_dir_sufx = cloudDownCheck($file_dir[$i], $fileAr[$k], "s3");
                     push @fullfileAr, $s3tmp_dir_sufx . "/" . $fileAr[$k];
+                  
+                  } elsif ($file_dir[$i] =~ m/gs:/i ){
+                    my $gstmp_dir_sufx = cloudDownCheck($file_dir[$i], $fileAr[$k], "gs");
+                    push @fullfileAr, $gstmp_dir_sufx . "/" . $fileAr[$k];
                   
                   } elsif (($file_dir[$i] =~ m/http:/i ) || ($file_dir[$i] =~ m/https:/i ) || ($file_dir[$i] =~ m/ftp:/i )){
                     my $urltmp_dir_sufx = urldown("$file_dir[$i]/$fileAr[$k]", $fileAr[$k]);
@@ -715,12 +877,20 @@ process createCollection {
                 elsif ( $collection_type[$i] eq "pair" ) {
                   if ($file_dir[$i] =~ m/s3:/i ){
                     my @pair = split( /,/, $fileAr[$k], -1 );
-                    my $s3tmp_dir_sufx1 = s3downCheck($file_dir[$i], $pair[0]);
-                    my $s3tmp_dir_sufx2 = s3downCheck($file_dir[$i], $pair[1]);
+                    my $s3tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $pair[0], "s3");
+                    my $s3tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $pair[1], "s3");
                     print "$s3tmp_dir_sufx1\\n";
                     push @fullfileArR1, $s3tmp_dir_sufx1 . "/" . $pair[0];
                     push @fullfileArR2, $s3tmp_dir_sufx2 . "/" . $pair[1];
                   
+                  } elsif ($file_dir[$i] =~ m/gs:/i ){
+                    my @pair = split( /,/, $fileAr[$k], -1 );
+                    my $tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $pair[0], "gs");
+                    my $tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $pair[1], "gs");
+                    print "$tmp_dir_sufx1\\n";
+                    push @fullfileArR1, $tmp_dir_sufx1 . "/" . $pair[0];
+                    push @fullfileArR2, $tmp_dir_sufx2 . "/" . $pair[1];
+                    
                   } elsif (($file_dir[$i] =~ m/http:/i ) || ($file_dir[$i] =~ m/https:/i ) || ($file_dir[$i] =~ m/ftp:/i )){
                     my @pair = split( /,/, $fileAr[$k], -1 );
                     my $urltmp_dir_sufx1 = urldown("$file_dir[$i]/$pair[0]", $pair[0]);
@@ -764,11 +934,11 @@ process createCollection {
                   }
                 }
                 if ( $collection_type[$i] eq "single" ) {
-                    arch2Input ("$archFile.gz", "$inputFile.gz", $s3_archiveDirCheck, $s3_archiveDir);
+                    arch2Input ("$archFile.gz", "$inputFile.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
                 elsif ( $collection_type[$i] eq "pair" ) {
-                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir);
-                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir);
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
               }
               else {
@@ -791,19 +961,27 @@ process createCollection {
                 }
               }
               runCommand("touch $input_dir/.success_$file_name[$i]");
+              uploadCloudWorkdir($profile);
               $passHash{ $file_name[$i] } = "passed";
             } 
             elsif ($inputDirCheck eq "true" && $archiveDirCheck eq "false" && $archiveDir eq "" ){
               $passHash{ $file_name[$i] } = "passed";
             } 
             elsif ( $inputDirCheck eq "true" && $archiveDirCheck eq "true" ) {
-                if ($s3_archiveDirCheck eq "false"){
-                    if ( $collection_type[$i] eq "single" ) {
+                if ( $collection_type[$i] eq "single" ) {
+                    if ($s3_archiveDirCheck eq "false"){
                         prepS3Upload ("$archFile.gz", "$archFile.gz.count", "$archFile.gz.md5sum", $s3_archiveDir);
+                    } elsif ( $gs_archiveDirCheck eq "false" ) {
+                        prepGSUpload ("$archFile.gz", "$archFile.gz.count", "$archFile.gz.md5sum", $gs_archiveDir);
                     }
-                    elsif ( $collection_type[$i] eq "pair" ) {
+                }
+                elsif ( $collection_type[$i] eq "pair" ) {
+                    if ($s3_archiveDirCheck eq "false"){
                         prepS3Upload ("$archFile1.gz", "$archFile1.gz.count", "$archFile1.gz.md5sum", $s3_archiveDir);
                         prepS3Upload ("$archFile2.gz", "$archFile2.gz.count", "$archFile2.gz.md5sum", $s3_archiveDir);
+                    } elsif ($gs_archiveDirCheck eq "false"){
+                        prepGSUpload ("$archFile1.gz", "$archFile1.gz.count", "$archFile1.gz.md5sum", $gs_archiveDir);
+                        prepGSUpload ("$archFile2.gz", "$archFile2.gz.count", "$archFile2.gz.md5sum", $gs_archiveDir);
                     }
                 }
               $passHash{ $file_name[$i] } = "passed";
@@ -822,6 +1000,18 @@ process createCollection {
             if   ($error) { die "Command failed: $error $com\\n"; }
             else          { print "Command successful: $com\\n"; }
           }
+          
+          sub runCommandSilent {
+            my ($com) = @_;
+            my $error = system($com);
+            if ($error) { 
+                print "Command failed: $error $com\\n";
+                return(0); 
+            } else { 
+                print "Command successful: $com\\n";
+                return(1); 
+            }
+          }
 
           sub checkFile {
             my ($file) = @_;
@@ -834,15 +1024,15 @@ process createCollection {
             my ( $file, $confID) = @_;
             my $tmpSufx = $file;
             $tmpSufx =~ s/[^A-Za-z0-9]/_/g;
-            runCommand ("mkdir -p $s3upload_dir && > $s3upload_dir/.info.$tmpSufx ");
-            my $err = system ("s3cmd info --config=$run_dir/initialrun/.conf.$confID $file >$s3upload_dir/.info.$tmpSufx 2>&1 ");
+            runCommand ("mkdir -p $upload_dir && > $upload_dir/.info.$tmpSufx ");
+            my $err = system ("s3cmd info --config=$run_dir/initialrun/.conf.$confID $file >$upload_dir/.info.$tmpSufx 2>&1 ");
             ## if file not found then it will give error
             my $checkMD5 = 'false';
             if ($err){
                 print "S3File Not Found: $file\\n";
                 return 0;
             } else {
-                open(FILE,"$s3upload_dir/.info.$tmpSufx");
+                open(FILE,"$upload_dir/.info.$tmpSufx");
                 if (grep{/MD5/} <FILE>){
                     $checkMD5 = 'true';
                 }
@@ -852,6 +1042,31 @@ process createCollection {
             print "S3File Not Found: $file\\n";
             return 0;
           }
+          
+          sub checkGSFile{
+            my ( $file) = @_;
+            my $tmpSufx = $file;
+            $tmpSufx =~ s/[^A-Za-z0-9]/_/g;
+            runCommand ("mkdir -p $upload_dir && > $upload_dir/.info.$tmpSufx ");
+            my $err = system ("gcloud auth activate-service-account --key-file=!{googCred} && gsutil ls -L $file >$upload_dir/.info.$tmpSufx 2>&1 ");
+            ## if file not found then it will give error
+            my $checkMD5 = 'false';
+            if ($err){
+                print "GS File Not Found: $file\\n";
+                return 0;
+            } else {
+                open(FILE,"$upload_dir/.info.$tmpSufx");
+                if (grep{/md5/} <FILE>){
+                    $checkMD5 = 'true';
+                }
+                close FILE;
+            }
+            return 1 if ( $checkMD5 eq 'true' );
+            print "GS File Not Found: $file\\n";
+            return 0;
+          }
+          
+          
 
           sub makeS3Bucket{
             my ( $bucket, $confID) = @_;
@@ -861,6 +1076,18 @@ process createCollection {
             if ($err){
                 print "S3bucket Not Found: $bucket\\n";
                 runCommand("s3cmd mb --config=$run_dir/initialrun/.conf.$confID $bucket ");
+            } 
+          }
+          
+          sub makeGSBucket{
+            my ( $bucket) = @_;
+            my $err = system ("gcloud auth activate-service-account --key-file=!{googCred} && gsutil ls $bucket 2>&1 ");
+            ## if bucket is not found then it will give error
+            my $check = 'false';
+            if ($err){
+                print "GS bucket Not Found: $bucket\\n";
+                my $project_id = system ("jq -r '.project_id' !{googCred}");
+                runCommand("gcloud auth activate-service-account --project=$project_id --key-file=!{googCred} && gsutil mb $bucket ");
             } 
           }
 
@@ -874,8 +1101,6 @@ process createCollection {
             my ( $file, $target ) = @_;
             runCommand("rsync -vazu $file $target");
           }
-
-
 
           sub countMd5sum {
             my ($inputFile ) = @_;
@@ -919,10 +1144,10 @@ process createCollection {
               runCommand("mkdir -p $upload_path/$file.chkS3Up && cd $upload_path/$file.chkS3Up && s3cmd get --force --config=$upload_path/.conf.$confID $s3Path/$file");
               runCommand("cd $upload_path/$file.chkS3Up && md5sum $upload_path/$file.chkS3Up/$file > $upload_path/$file.chkS3Up/$file.md5sum  ");
               if (md5sumCompare($archFileMd5sum, "$upload_path/$file.chkS3Up/$file.md5sum") eq 'true') {
-                 runCommand("rm -f ${s3upload_dir}/.s3fail_$file && touch ${s3upload_dir}/.s3success_$file");
+                 runCommand("rm -f ${upload_dir}/.s3fail_$file && touch ${upload_dir}/.s3success_$file");
                  return 'true';
               } else {
-                 runCommand("rm -f ${s3upload_dir}/.s3success_$file && touch ${s3upload_dir}/.s3fail_$file");
+                 runCommand("rm -f ${upload_dir}/.s3success_$file && touch ${upload_dir}/.s3fail_$file");
                  return 'false';
               }
 
@@ -948,7 +1173,7 @@ process createCollection {
             my @data = split( /	/, $s3_archiveDir);
             my $s3Path = $data[0]; 
             my $confID = $data[1];
-            my $upload_path = ${s3upload_dir};
+            my $upload_path = $upload_dir;
             print "upload_path: $upload_path\\n";
             runCommand("mkdir -p $upload_path && cd $upload_path && rsync -vazu $archFile $archFileCount $archFileMd5sum . && rsync -vazu $run_dir/initialrun/.conf.$confID . ");
             my $bucket=$s3Path;
@@ -963,14 +1188,70 @@ process createCollection {
             S3Upload($archFileCount, $bucketName, $s3PathRest, $confID, $upload_path);
             S3Upload($archFileMd5sum, $bucketName, $s3PathRest, $confID, $upload_path);
           }
+          
+          sub GSUpload{
+          my ( $path, $gsPath) = @_;
+              my $file = basename($path); 
+              my $md5sumCmd = "openssl md5 -binary $path | base64";
+              runCommand($md5sumCmd); ## to check that cmd is working.
+              my $md5checksum = `$md5sumCmd`;
+              chomp($md5checksum);
+              print "file to upload: $path\\n";
+              print "gsPath: $gsPath\\n";
+              print "md5checksum: $md5checksum\\n";
+              runCommand("gcloud auth activate-service-account --key-file=!{googCred} && gsutil -h Content-MD5:$md5checksum cp $path $gsPath/$file"    );
+          }
+          
+          sub prepGSUpload{
+          my ( $archFile, $archFileCount, $archFileMd5sum, $gs_archiveDir ) = @_;
+            my @data = split( /	/, $gs_archiveDir);
+            my $gsPath = $data[0]; 
+            my $confID = $data[1];
+            my $upload_path = $upload_dir;
+            print "upload_path: $upload_path\\n";
+            runCommand("mkdir -p $upload_path && cd $upload_path && rsync -vazu $archFile $archFileCount $archFileMd5sum .");
+            my $bucket=$gsPath;
+            $bucket=~ s/(gs:\\/\\/)|(GS:\\/\\/)|(Gs:\\/\\/)|(gS:\\/\\/)//;
+            my @arr = split('/', $bucket);
+            my $bucketName = shift @arr;
+            $bucket = 'gs://'.$bucketName;
+            ##make bucket if not exist
+            makeGSBucket($bucket);
+            GSUpload($archFile, $gsPath);
+            GSUpload($archFileCount, $gsPath);
+            GSUpload($archFileMd5sum, $gsPath);
+          }
+          
+          sub uploadCloudWorkdir{
+            my ( $profile ) = @_;
+            if ($profile eq "google"){
+                print "uploadCloudWorkdir started\\n";
+                my $bucket=$cloud_input_dir;
+                $bucket=~ s/(gs:\\/\\/)|(GS:\\/\\/)|(Gs:\\/\\/)|(gS:\\/\\/)//;
+                my @arr = split('/', $bucket);
+                my $bucketName = shift @arr;
+                $bucket = 'gs://'.$bucketName;
+                ##make bucket if not exist
+                makeGSBucket($bucket);
+                if ( $collection_type[$i] eq "single" ) {
+                    GSUpload($inputFile, $cloud_input_dir);
+                } elsif ( $collection_type[$i] eq "pair" ) {
+                    GSUpload($inputFile1, $cloud_input_dir);
+                    GSUpload($inputFile2, $cloud_input_dir);
+                }
+             }
+          }
 
           ## copy files from achive directory to input directory and extract them in input_dir
           sub arch2Input {
-            my ( $archFile, $inputFile, $s3_archiveDirCheck, $s3_archiveDir ) = @_;
+            my ( $archFile, $inputFile, $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir ) = @_;
             copyFile( "$archFile", "$inputFile" );
             runCommand("gunzip $inputFile");
             if ($s3_archiveDirCheck eq "false"){
                 prepS3Upload("$archFile", "$archFile.count", "$archFile.md5sum", $s3_archiveDir);
+            }
+            if ($gs_archiveDirCheck eq "false"){
+                prepGSUpload("$archFile", "$archFile.count", "$archFile.md5sum", $gs_archiveDir);
             }
           }
 
@@ -988,25 +1269,57 @@ process createCollection {
             return $down_path;
           }
           
-          sub s3downCheck {
-            my ( $s3PathConf, $file_name ) = @_;
+          sub gsdown {
+            my ( $pathConf, $file_name ) = @_;
+            ##first remove tmp files?
+            my @data = split( /	/, $pathConf);
+            my $cloudPath = $data[0];
+            my $tmpSufx = $cloudPath;
+            $tmpSufx =~ s/[^A-Za-z0-9]/_/g; 
+            my $confID = $data[1];
+            my $down_path = ${gsdown_dir_prefix}.${tmpSufx};
+            runCommand("mkdir -p $down_path && cd $down_path && gcloud auth activate-service-account --key-file=!{googCred} && gsutil -m cp $cloudPath/$file_name .");
+            print "down_path: $down_path\\n";
+            return $down_path;
+          }
+          
+          sub cloudDownCheck {
+            # $cloud:"s3","gs"
+            my ($pathConf, $file_name, $cloud) = @_;
             my $downCheck = 'false';
-            my $down_path = s3down($s3PathConf, $file_name);
+            my $down_path = "";
+            my $err = "";
+            if ($cloud eq "s3"){
+                $down_path = s3down($pathConf, $file_name);
+            } elsif ($cloud eq "gs"){
+                $down_path = gsdown($pathConf, $file_name);
+            }
+            
             ## check if md5sum is exist
-            my @data = split( /	/, $s3PathConf);
-            my $s3Path = $data[0];
+            my @data = split( /	/, $pathConf);
+            my $cloudPath = $data[0];
             my $confID = $data[1];
             for ( my $c = 1 ; $c <= 3 ; $c++ ) {
-                print "##s3downCheck $c started: $down_path\\n";
-                my $err = system ("s3cmd info --config=$run_dir/initialrun/.conf.$confID $s3Path/$file_name.md5sum 2>&1 ");
-                ## if error occurs, md5sum file is not found in s3. So md5sum-check will be skipped.
+                print "## $cloud downCheck $c started: $down_path\\n";
+                if ($cloud eq "s3"){
+                    $err = system ("s3cmd info --config=$run_dir/initialrun/.conf.$confID $cloudPath/$file_name.md5sum 2>&1 ");
+                } elsif ($cloud eq "gs"){
+                    $err = system ("gcloud auth activate-service-account --key-file=!{googCred} && gsutil ls -L $cloudPath/$file_name.md5sum 2>&1 ");
+                }
+                ## if error occurs, md5sum file is not found in cloud. So md5sum-check will be skipped.
                 if ($err){
                     $downCheck = 'true';
                 } else {
-                    ## if error not occurs, md5sum file is found in s3. So download and check md5sum.
-                    my $down_path_md5 = s3down($s3PathConf, "$file_name.md5sum");
-                    print "##s3downCheck down_path: $down_path\\n";
-                    print "##s3downCheck down_path_md5: $down_path_md5\\n";
+                    ## if error not occurs, md5sum file is found in cloud. So download and check md5sum.
+                    my $down_path_md5 = "";
+                    if ($cloud eq "s3"){
+                        $down_path_md5 = s3down($pathConf, "$file_name.md5sum");
+                    } elsif ($cloud eq "gs"){
+                        $down_path_md5 = gsdown($pathConf, "$file_name.md5sum");
+                    }
+                    
+                    print "## $cloud downCheck down_path: $down_path\\n";
+                    print "## $cloud downCheck down_path_md5: $down_path_md5\\n";
                     runCommand("md5sum $down_path/$file_name > $down_path/$file_name.md5sum.checkup  ");
                     if (md5sumCompare("$down_path_md5/$file_name.md5sum", "$down_path/$file_name.md5sum.checkup") eq 'true') {
                         $downCheck = 'true';
@@ -1017,7 +1330,7 @@ process createCollection {
                 if ($downCheck eq 'true'){
                     last;
                 } else {
-                    die "S3 download failed for 3 times. MD5sum not matched. ";
+                    die "$cloud download failed for 3 times. MD5sum not matched. ";
                 }
             }
             return $down_path;
@@ -1051,22 +1364,45 @@ process createCollection {
 
           sub fasterqDump {
             my ( $gzip, $outDir, $srrID, $file_name,  $collection_type) = @_;
-            runCommand("rm -f $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID} $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O $outDir -t ${outDir}/sra --split-3 --skip-technical -o $srrID $srrID");
+            my $success = 0;
+            my $c;
+            for ( $c = 1 ; $c <= 3 ; $c++ ) {
+                ## fastq-dump
+                ## --split-3: For each spot, if there are two biological reads  satisfying filter conditions, the first is  placed in the `*_1.fastq` file,  
+                ## and the second is placed in the `*_2.fastq` file. If there is only one biological read satisfying the filter conditions, it is 
+                ## placed in the `*.fastq` file.All other reads in the spot are ignored.
+                $success = runCommandSilent("rm -f ${outDir}/sra/sra/${srrID}.sra.cache ${outDir}/sra/sra/${srrID}.sra $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fastq-dump -O $outDir --split-3 --skip-technical $srrID");
+                if ($success == 1){
+                    print "fastq-dump download successfully completed.\\n";
+                    last;
+                } else {
+                    sleep(60);
+                    print "fastq-dump download failed for $srrID.\\n";
+                }
+            }
+            if ($success != 1){
+                die "fastq-dump download failed for $c times for file:${file_name} - SRRID: $srrID";
+            }
+            ## fasterq-dump
+            ## runCommand("rm -f $outDir/${file_name}.R1.fastq $outDir/${file_name}.R2.fastq $outDir/${file_name}.fastq $outDir/${srrID}_1.fastq $outDir/${srrID}_2.fastq $outDir/${srrID} $outDir/${srrID}.fastq && mkdir -p \\\$HOME/.ncbi && mkdir -p ${outDir}/sra && echo '/repository/user/main/public/root = \\"$outDir/sra\\"' > \\\$HOME/.ncbi/user-settings.mkfg && fasterq-dump -O $outDir -t ${outDir}/sra --split-3 --skip-technical -o $srrID $srrID");
             if ($collection_type eq "pair"){
-              runCommand("mv $outDir/${srrID}_1.fastq  $outDir/${file_name}.R1.fastq ");
-              runCommand("mv $outDir/${srrID}_2.fastq  $outDir/${file_name}.R2.fastq ");
-              if ($gzip ne ""){
+                runCommand("mv $outDir/${srrID}_1.fastq  $outDir/${file_name}.R1.fastq ");
+                runCommand("mv $outDir/${srrID}_2.fastq  $outDir/${file_name}.R2.fastq ");
+            if ($gzip ne ""){
                 runCommand("gzip  $outDir/${file_name}.R1.fastq ");
                 runCommand("gzip  $outDir/${file_name}.R2.fastq ");
-              }
-            } elsif ($collection_type eq "single"){
-              runCommand("mv $outDir/${srrID}  $outDir/${file_name}.fastq ");
-              if ($gzip ne ""){
-                runCommand("gzip  $outDir/${file_name}.fastq ");
-              }
             }
-            runCommand("rm -f ${outDir}/sra/sra/${srrID}.sra.cache");
-          }
+            } elsif ($collection_type eq "single"){
+                unless (-e "${outDir}/${srrID}.fastq") { die "fastq-dump failed for ${srrID}\\n"; }
+                if ( $srrID ne $file_name){
+                    runCommand("mv $outDir/${srrID}.fastq  $outDir/${file_name}.fastq ");
+                }
+                if ($gzip ne ""){
+                     runCommand("gzip  $outDir/${file_name}.fastq ");
+                }
+            }
+            runCommand("rm -f ${outDir}/sra/sra/${srrID}.sra ${outDir}/sra/sra/${srrID}.sra.cache");
+        }
 
 
           '''
@@ -1098,9 +1434,14 @@ process cleanUp {
           my @collection          = (!{collection});
           my @file_type_all       = (!{file_type_all});
           my @collection_type_all = (!{collection_type_all});
-
+          my $cloud_run_dir       = "!{params.cloud_run_dir}";
+          my $profile             = "!{params.profile}";
+          my $upload_dir          = "$run_dir/inputs/.up";
+          
           my %validInputHash; ## Keep record of files as fullpath
+          my %validCloudInputHash; ## Keep record of files in the cloud
           my @validCollection; ## Keep record of valid Collections
+          my @validCloudCollection; ## Keep record of valid Collections
           
           for ( my $i = 0 ; $i <= $#file_name_all ; $i++ ) {
             my $collection  = $collection[$i];
@@ -1118,16 +1459,51 @@ process cleanUp {
               $validInputHash{$inputFile2} = 1;
             }
           }
+          
+          if ($profile eq "google"){
+            for ( my $i = 0 ; $i <= $#file_name_all ; $i++ ) {
+                my $collection  = $collection[$i];
+                my $cloud_input_dir     = "$cloud_run_dir/inputs/$collection";
+                push(@validCloudCollection, "$cloud_input_dir") unless grep{$_ eq "$cloud_input_dir"} @validCloudCollection;
+                my $fileType    = $file_type_all[$i];
+                if ( $collection_type_all[$i] eq "single" ) {
+                    my $cloud_inputFile      = "$cloud_input_dir/$file_name_all[$i].$fileType";
+                    $validCloudInputHash{$cloud_inputFile} = 1;
+                }
+                elsif ( $collection_type_all[$i] eq "pair" ) {
+                    my $cloud_inputFile1      = "$cloud_input_dir/$file_name_all[$i].R1.$fileType";
+                    my $cloud_inputFile2      = "$cloud_input_dir/$file_name_all[$i].R2.$fileType";
+                    $validCloudInputHash{$cloud_inputFile1} = 1;
+                    $validCloudInputHash{$cloud_inputFile2} = 1;
+                }
+            }
+            
+            print Dumper \\\\@validCloudCollection;
+            
+            for ( my $i = 0 ; $i <= $#validCloudCollection ; $i++ ) {
+                my $cloud_input_dir = $validCloudCollection[$i];
+                ##remove invalid files (not found in %validInputHash) from $input_dir
+                my @inputDirFiles = checkGSDir($cloud_input_dir);
+                print Dumper \\@inputDirFiles;
+                foreach my $file (@inputDirFiles) {
+                    if ( !exists( $validCloudInputHash{$file} ) ) {
+                        print "Invalid file $file will be removed from input directory\\n";
+                        removeGSFile($file);
+                    }
+                }   
+            }
+          }
 
           print Dumper \\\\%validInputHash;
           print Dumper \\\\@validCollection;
+          
           
           ## remove invalid collections from inputs folder:
           my @inputCollections = <$run_dir/inputs/*>;
             foreach my $dir (@inputCollections) {
                 print "dirs: $dir"; 
                 if ( !grep( /^$dir$/, @validCollection)) {
-                    print "Invalid directory $dir will be removed from inputs directory\\n";
+                    print "\\nInvalid directory $dir will be removed from inputs directory\\n";
                     runCommand("rm -rf $dir");
                 }
             }
@@ -1136,7 +1512,7 @@ process cleanUp {
             my $input_dir = $validCollection[$i];
             ##remove invalid files (not found in %validInputHash) from $input_dir
             my @inputDirFiles = <$input_dir/*>;
-            runCommand("rm -rf $input_dir/.s3up/.conf*");
+            runCommand("rm -rf $input_dir/.up/.conf*");
             foreach my $file (@inputDirFiles) {
                 if ( !exists( $validInputHash{$file} ) ) {
                     print "Invalid file $file will be removed from input directory\\n";
@@ -1148,12 +1524,44 @@ process cleanUp {
             runCommand("rm -rf $run_dir/initialrun/.conf*");
             system('touch success.!{params.attempt}');
           }
+          
+          
 
           sub runCommand {
             my ($com) = @_;
             my $error = system($com);
             if   ($error) { die "Command failed: $com\\n"; }
             else          { print "Command successful: $com\\n"; }
+          }
+          
+          sub removeGSFile {
+            my ( $file) = @_;
+            runCommand("gcloud auth activate-service-account --key-file=!{googCred} && gsutil -m rm -f $file");
+          }
+          
+          sub checkGSDir{
+            my ( $dir) = @_;
+            my $tmpSufx = $dir;
+            $tmpSufx =~ s/[^A-Za-z0-9]/_/g;
+            runCommand ("mkdir -p $upload_dir && > $upload_dir/.info.$tmpSufx ");
+            my $err = system ("gcloud auth activate-service-account --key-file=!{googCred} && gsutil ls $dir >$upload_dir/.info.$tmpSufx 2>&1 ");
+            ## if file not found then it will give error
+            my $checkMD5 = 'false';
+            my @ret = ();
+            if ($err){
+                print "GS Directory Not Found: $dir\\n";
+                return 0;
+            } else {
+                open IN, "$upload_dir/.info.$tmpSufx";
+                while( my $line = <IN>)  {   
+                    chomp($line);
+                    if ($dir ne $line && "$dir/" ne $line){
+                        push @ret, $line;
+                    }
+                }
+                close IN;
+            }
+            return @ret;
           }
 
           '''

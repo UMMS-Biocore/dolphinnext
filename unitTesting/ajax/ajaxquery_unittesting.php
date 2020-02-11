@@ -690,7 +690,8 @@ class ajaxQueryTest extends TestCase
      */
     public function testgetProfileAmazonById() {
 		ob_start();
-		$_REQUEST['p'] = 'getProfileAmazon';
+		$_REQUEST['p'] = 'getProfileCloud';
+		$_REQUEST['cloud'] = 'amazon';
 		$_REQUEST['id'] = '1';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->id,'1');
@@ -730,7 +731,8 @@ class ajaxQueryTest extends TestCase
         $_REQUEST['port'] = "22";
 		$_REQUEST['singu_cache'] = "";
 		include('ajaxquery.php');
-        $_REQUEST['p'] = 'getProfileAmazon';
+        $_REQUEST['p'] = 'getProfileCloud';
+        $_REQUEST['cloud'] = 'amazon';
 		$_REQUEST['id'] = '1';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->id,'1');
@@ -742,7 +744,8 @@ class ajaxQueryTest extends TestCase
      */
     public function testgetProfileAmazon() {
 		ob_start();
-		$_REQUEST['p'] = 'getProfileAmazon';
+		$_REQUEST['p'] = 'getProfileCloud';
+        $_REQUEST['cloud'] = 'amazon';
         $_REQUEST['id'] = '';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->id,'1');
@@ -752,25 +755,28 @@ class ajaxQueryTest extends TestCase
     /**
      * @depends testgetProfileAmazon
      */
-    public function testgetAmazonStatus() {
+    public function testgetCloudStatus() {
 		ob_start();
         require_once("../ajax/dbfuncs.php");
         $db = new dbfuncs();
         $id = '1';
         $ownerID = '1';
-		$this->assertEquals(json_decode($db->getAmazonStatus($id,$ownerID))[0]->status,null);
+        $cloud="amazon";
+		$this->assertEquals(json_decode($db->getCloudStatus($id,$cloud,$ownerID))[0]->status,null);
 		ob_end_clean();
 	}
     /**
-     * @depends testgetAmazonStatus
+     * @depends testgetCloudStatus
      */
-    public function testupdateAmazonProStatus() {
+    public function testupdateCloudProStatus() {
 		ob_start();
-		$_REQUEST['p'] = 'updateAmazonProStatus';
+		$_REQUEST['p'] = 'updateCloudProStatus';
+		$_REQUEST['cloud'] = 'amazon';
 		$_REQUEST['id'] = '1';
 		$_REQUEST['status'] = 'update';
 		include('ajaxquery.php');
-        $this->assertEquals(json_decode($db->getAmazonStatus($id,$ownerID))[0]->status,'update');
+        $cloud="amazon";
+        $this->assertEquals(json_decode($db->getCloudStatus($id,$cloud,$ownerID))[0]->status,'update');
 		ob_end_clean();
 	}
     public function testInsertProjectInput() {
@@ -1080,6 +1086,7 @@ class ajaxQueryTest extends TestCase
         $_REQUEST['singu_img'] = "";
         $_REQUEST['singu_opt'] = "";
         $_REQUEST['amazon_cre_id'] = "";
+        $_REQUEST['google_cre_id'] = "";
         $_REQUEST['withReport']= "";
         $_REQUEST['withTrace']= "";
         $_REQUEST['withTimeline']= "";
@@ -1467,18 +1474,6 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)[0]->name, 'test_pipeline');
 		ob_end_clean();
 	}
-	/**
-     * @depends testcheckPipeline
-     */
-    public function testcheckPipelinePerm() {
-		ob_start();
-		$_REQUEST['p'] = 'checkPipelinePerm';
-		$_REQUEST['process_id'] = '1';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->id, '1');
-		$this->assertEquals(json_decode($data)[0]->name, 'test_pipeline');
-		ob_end_clean();
-	}
 	
 	/**
      * @depends testsaveAllPipeline2
@@ -1568,22 +1563,6 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)[0]->id, '1');
 		ob_end_clean();
 	}
-	/**
-     * @depends testcheckProPipeInput
-     */
-    public function testcheckProjectPipePerm() {
-		ob_start();
-		$_REQUEST['p'] = 'checkProjectPipePerm';
-		$_REQUEST['pipeline_id'] = '1';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->id, '1');
-		$this->assertEquals(json_decode($data)[0]->name, 'test_run');
-		ob_end_clean();
-	}
-	
-
-	
-	
 
 	/**
      * @depends testsaveAllPipeline2

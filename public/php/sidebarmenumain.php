@@ -5,13 +5,35 @@ session_write_close();
 require_once(__DIR__."/../ajax/dbfuncs.php");
 $db = new dbfuncs();
 
+function getShowLi($items){
+    $showLi = "";
+    $count_not_admin_only = 0;
+    foreach ($items as $item):
+        $admin_only = isset($item->{'admin_only'}) ? $item->{'admin_only'} : 0;
+        settype($admin_only, "integer");
+        if ($admin_only < 1){
+            $count_not_admin_only += 1;
+        }
+    endforeach;
+    if ($count_not_admin_only < 1){
+        $showLi = ' style="display:none;"';
+    }
+    return $showLi;
+}
 
 function getSideMenuPipelineItem($obj)
 {
 $html="";
 foreach ($obj as $item):
-    $nameSub = substr($item->{'name'}, 0, 20);
-    $html.='<li pin="'.$item->{'pin'}.'" p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"><a href="index.php?np=1&id='.$item->{'id'}.'" class="pipelineItems"  draggable="false" id="pipeline-'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$nameSub.'</a></li>';
+    $orgName = $item->{'name'};
+    $showName = $orgName;
+    $tooltip = "";
+    if (strlen($orgName) >20){
+        $showName = substr($orgName, 0, 20);
+        $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
+    }
+    $admin_only = isset($item->{'admin_only'}) ? 'admin="'.$item->{'admin_only'}.'"' : "";
+    $html.='<li '.$admin_only.'  pin="'.$item->{'pin'}.'"  p="'.$item->{'perms'}.'" g="'.$item->{'group_id'}.'"'.$tooltip.'><a href="index.php?np=1&id='.$item->{'id'}.'" class="pipelineItems"  origin="'.$orgName.'" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="pipeline-'.$item->{'id'}.'" ><i class="fa fa-angle-double-right"></i>'.$showName.'</a></li>';
 endforeach;
 return $html;
 }
@@ -22,11 +44,18 @@ $menuhtml='<ul id="autocompletes1" class="sidebar-menu" data-widget="tree">';
 //Add pipelines
 $menuhtml.='<li class="header">PIPELINES</li>';
 foreach ($parentMenusPipeline as $parentitem):
-    $nameSub = substr($parentitem->{'name'}, 0, 20);
+    $orgName = $parentitem->{'name'};
+    $showName = $orgName;
+    $tooltip = "";
+    if (strlen($orgName) >19){
+        $showName = substr($orgName, 0, 19);
+        $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
+    }
     $items = json_decode($db->getSubMenuFromSideBarPipe($parentitem->{'name'}, $ownerID));
     if (count($items) > 0){
-        $menuhtml.='<li class="treeview">';
-        $menuhtml.='<a href="" draggable="false"><i class="fa fa-spinner"></i> <span origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$nameSub.'</span>';
+        $showLi= getShowLi($items);
+        $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
+        $menuhtml.='<a href="" draggable="false"><i class="fa fa-spinner"></i> <span origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
 	   $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
         $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
         $menuhtml.= getSideMenuPipelineItem($items);

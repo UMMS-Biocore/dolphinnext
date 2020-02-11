@@ -18,6 +18,7 @@ before_install:
   - sudo apt-get -y install apache2 php-pear curl lynx-cur libreadline-dev libsqlite3-dev libbz2-dev libssl-dev python python-dev libmysqlclient-dev python-pip git expect default-jre libxml2-dev software-properties-common gdebi-core wget tree vim libv8-dev subversion g++ gcc gfortran zlib1g-dev libx11-dev xorg-dev libbz2-dev liblzma-dev libpcre3-dev libcurl4-openssl-dev
   - sudo apt-get -y install python-software-properties
   - sudo apt-get update
+  - sudo pip install mysql-connector
   - git clone https://github.com/UMMS-Biocore/dolphinnext.git /home/travis/build/dolphinnext
   - sudo sudo cp -r /home/travis/build/${TRAVIS_REPO_SLUG} /var/www/html/
   - sudo chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} /var/www
@@ -27,12 +28,12 @@ before_install:
 before_script:
   - sudo service apache2 restart
   - sudo mysql -e "CREATE DATABASE biocorepipe;" -uroot
+  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\nSALT=123test\nPEPPER=456test\nMASTER=test\nVERIFY=verifytest\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=../tmp/logs\nTEMPPATH=../tmp\nAPI_URL=http://localhost/dolphinnext\nCENTRAL_API_URL=https://www.dolphinnext.com\nBASE_PATH=https://www.dolphinnext.com\nPUBWEB_URL=http://localhost:8080/dolphinnext/tmp/pub\nOCPU_URL=http://localhost\nDEBROWSER_URL=https://debrowser.umassmed.edu:444\nOCPU_PUBWEB_URL=http://localhost/dolphinnext/tmp/pub\nNEXTFLOW_VERSION=0.30.0\nLDAP_SERVER=test\nDN_STRING=test\nBIND_USER= SVCLinuxLDAPAuth\nBIND_PASS=test\nEMAIL_SENDER=biocore@umassmed.edu\nEMAIL_ADMIN= onur.yukselen@umassmed.edu\n[UICONFIG]\nSHOW_AMAZON_KEYS=false\nSHOW_SSH_KEYS=false\nSHOW_GROUPS=false\nCOMPANY_NAME=Biocore\nALLOW_SIGNUP=true\nALLOW_SIGNUPGOOGLE=true" > config/.sec
+  
   - cd db
   - sudo mysql -u root biocorepipe < db_structure.sql
-  - sudo ./runUpdate biocorepipe
+  - sudo python ../scripts/updateDN.py
   - cd ..
-
-  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\nSALT=123test\nPEPPER=456test\nMASTER=test\nVERIFY=verifytest\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=../tmp/logs\nTEMPPATH=../tmp\nAPI_URL=http://localhost/dolphinnext\nCENTRAL_API_URL=https://www.dolphinnext.com\nBASE_PATH=https://www.dolphinnext.com\nPUBWEB_URL=http://localhost:8080/dolphinnext/tmp/pub\nOCPU_URL=http://localhost\nDEBROWSER_URL=https://debrowser.umassmed.edu:444\nOCPU_PUBWEB_URL=http://localhost/dolphinnext/tmp/pub\nNEXTFLOW_VERSION=0.30.0\nLDAP_SERVER=test\nDN_STRING=test\nBIND_USER= SVCLinuxLDAPAuth\nBIND_PASS=test\nEMAIL_SENDER=biocore@umassmed.edu\nEMAIL_ADMIN= onur.yukselen@umassmed.edu\n[UICONFIG]\nSHOW_AMAZON_KEYS=false\nSHOW_SSH_KEYS=false\nSHOW_GROUPS=false\nCOMPANY_NAME=Biocore\nALLOW_SIGNUP=true\nALLOW_SIGNUPGOOGLE=true" > config/.sec
 
 
 script:

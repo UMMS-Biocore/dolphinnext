@@ -25,7 +25,6 @@
             elems.data('settings', settings);
             elems.data("tooglescreen","expand")
             var data = getData(settings);
-            console.log(data)
             if (data === undefined || data == null || data == "") {
                 elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to show</div>')
             } else {
@@ -283,7 +282,6 @@
 
     var createAceEditor = function (editorId, script_modeId) {
         //ace process editor
-        console.log(editorId)
         window[editorId] = ace.edit(editorId);
         window[editorId].setTheme("ace/theme/tomorrow");
         window[editorId].getSession().setMode("ace/mode/sh");
@@ -409,7 +407,6 @@
                             var liAr = $("#fileListDiv_"+elemsID).find('li[tabid]');
                             if (liAr.length >0){
                                 var a = $(liAr[0]).find("a");
-                                console.log(a)
                                 if (a.length){
                                     a.click()
                                 }
@@ -551,6 +548,7 @@ $('#advOpt').on('show.bs.collapse', function () {
 
 // cleanProcessModal when modal is closed     
 function cleanProcessModal() {
+    $('#addProcessModal').removeData("prodata");
     $('#mParameters').remove();
     $('#inputGroup').remove();
     $('#inputTitle').remove();
@@ -591,7 +589,6 @@ function cleanProcessModal() {
 }
 
 function cleanInfoModal() {
-    $('#mProRev').removeAttr('info');
     $('#mName').removeAttr('disabled');
     $('#mVersion').removeAttr('disabled');
     $('#mDescription').removeAttr('disabled');
@@ -610,7 +607,7 @@ function cleanInfoModal() {
 }
 
 function refreshProcessModal(selProId) {
-    $(this).find('form').trigger('reset');
+    $("#addProcessModal").find('form').trigger('reset');
     cleanProcessModal();
     $('#mProRev').attr("prev", "-1");
     editor.setValue(templatesh);
@@ -641,7 +638,14 @@ function loadModalProGro() {
                 var optionGroup = new Option(param.group_name, param.id);
                 $("#mProcessGroup").append(optionGroup);
             }
-            $('#mProcessGroup').selectize({});
+            $('#mProcessGroup').selectize({
+                onChange:function(value){
+                    var selProGroupName = $("#mProcessGroup").text();
+                    var selProGroupID = value
+                    if (selProGroupName && selProGroupID){
+                        modifyProcessParentSideBar(selProGroupName, selProGroupID)
+                    }
+                }});
         },
         error: function (errorThrown) {
             alert("Error: " + errorThrown);
@@ -670,7 +674,16 @@ function loadPipeMenuGroup(newPipe) {
                 var optionGroup = new Option(param.group_name, param.id);
                 $("#pipeGroupAll").append(optionGroup);
             }
-            $('#pipeGroupAll').selectize({ dropdownParent: "body" });
+            $('#pipeGroupAll').selectize({ 
+                dropdownParent: "body",
+                onChange:function(value){
+                    var name = $("#pipeGroupAll").text();
+                    var groupID = value
+                    if (name && groupID){
+                        modifyPipelineParentSideBar(name, groupID)
+                    }
+                }
+            });
             $($("#pipeGroupAll").next().css("display", "inline-block").children()[0]).css("overflow", "unset");
 
         },
@@ -750,7 +763,8 @@ function loadSelectedProcess(selProcessId) {
         p: "getProcessData",
         "process_id": selProcessId
     })[0];
-    sMenuProGroupIdFirst = showProcess.process_group_id;
+    $('#addProcessModal').removeData("prodata");
+    $('#addProcessModal').data("prodata", showProcess);
     var processOwn = showProcess.own;
     //insert data into form
     var formValues = $('#addProcessModal').find('input, select, textarea');
@@ -855,16 +869,22 @@ function loadSelectedProcess(selProcessId) {
             }
         }
     }
-    if (showProcess.perms === "63" && usRole !== "admin") {
+    // disable modal based on permissions
+    if (usRole === "admin") {
+        $("#permsPro option[value='63']").attr("disabled", false);
+    } else if (processOwn === "1" && showProcess.perms === "63") {
         $('#permsPro').attr('disabled', "disabled");
         $('#publishPro').attr('disabled', "disabled");
+        //allow to create new revision by showing #createRevisionBut
         disableProModalPublic(selProcessId);
+    } else if (processOwn === "0") {
+        $('#mProActionsDiv').css('display', "none");
+        $('#proPermGroPubDiv').css('display', "none");
+        $('#createRevisionBut').css('display', "none");
+        disableProModal(selProcessId);
     }
     return [showProcess.perms, processOwn];
 };
-
-
-
 
 
 //Check if process is ever used in pipelines 
@@ -890,11 +910,7 @@ function checkProject(pipeline_id) {
 
     return checkProj
 }
-//Check if pipeline is ever used in projects that are group or public
-function checkProjectPublic(pipeline_id) {
-    var checkProj = getValues({ p: "checkProjectPublic", "pipeline_id": pipeline_id });
-    return checkProj
-}
+
 //Check if parameter is ever used in processes 
 function checkParameter(parameter_id) {
     var checkPara = getValues({ p: "checkParameter", "parameter_id": parameter_id });
@@ -945,7 +961,6 @@ function checkProParameters(inputProParams, outputProParams, proID) {
 //-----Add input output parameters to process_parameters
 // startpoint: first object in data array where inputparameters starts.
 function addProParatoDB(data, startPoint, process_id, perms, group) {
-    console.log(data)
     var ppIDinputList = [];
     var ppIDoutputList = [];
     for (var i = startPoint; i < data.length; i++) {
@@ -1271,7 +1286,7 @@ function checkDeletionPipe(pipeline_id) {
     //has selected pipeline ever used in projects?
     var checkProj = checkProject(pipeline_id);
     //has selected pipeline ever used in projects that user not owns?
-    var checkProjPublic = checkProjectPublic(pipeline_id);
+    var checkProjPublic = getValues({ p: "checkProjectPublic", "pipeline_id": pipeline_id }); 
     var numOfProject = checkProj.length;
     var numOfProjectPublic = checkProjPublic.length;
     if (numOfProject > 0 && numOfProjectPublic === 0) {
@@ -1298,29 +1313,29 @@ function checkRevisionPipe(pipeline_id) {
     //has selected pipeline ever used in projects?
     var checkProj = checkProject(pipeline_id);
     //has selected pipeline ever used in projects that user not owns?
-    var checkProjPublic = checkProjectPublic(pipeline_id);
+    var checkProjPublic = getValues({ p: "checkProjectPublic", "pipeline_id": pipeline_id });
     var numOfProject = checkProj.length;
     var numOfProjectPublic = checkProjPublic.length;
     if (numOfProject > 0 && numOfProjectPublic === 0) {
         warnUserPipe = true;
-        warnPipeText = warnPipeText + 'This revision of pipeline already used in following project/projects: ';
+        warnPipeText += 'This revision of pipeline already used in following project/projects: ';
         $.each(checkProj, function (element) {
             if (element !== 0) {
-                warnPipeText = warnPipeText + ', ';
+                warnPipeText += ', ';
             }
-            warnPipeText = warnPipeText + '"' + checkProj[element].name + '"';
+            warnPipeText +=  '"' + checkProj[element].name + '"';
         });
         warnPipeText = warnPipeText + '</br></br>Your changes may effect the current run/runs. If you still want to save on existing revision, please click on "save on existing" button. </br></br>Otherwise you can save as a new revision by entering revision comment at below and clicking the save button.'
     } else if (numOfProjectPublic > 0) {
         warnUserPipe = true;
-        warnPipeText = warnPipeText + 'This revision of pipeline already used in following group/public projects: ';
+        warnPipeText +=  'This revision of pipeline already used in following group/public projects: ';
         $.each(checkProjPublic, function (element) {
             if (element !== 0) {
-                warnPipeText = warnPipeText + ', ';
+                warnPipeText += ', ';
             }
-            warnPipeText = warnPipeText + '"' + checkProjPublic[element].name + '"';
+            warnPipeText +=  '"' + checkProjPublic[element].name + '"';
         });
-        warnPipeText = warnPipeText + '</br></br>You can save as a new revision by entering revision comment at below and clicking the save button.'
+        warnPipeText += '</br></br>You can save as a new revision by entering revision comment at below and clicking the save button.'
     }
 
     return [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic];
@@ -1367,47 +1382,6 @@ function checkRevisionProc(data, proID) {
     return [warnUser, infoText, numOfProcess, numOfProcessPublic, numOfProPipePublic];
 }
 
-function checkPermissionProc(proID) {
-    var warnUser = false;
-    var infoText = '';
-    //has process ever used in other pipelines which are group or public?
-    var checkPipe = getValues({ p: "checkPipelinePerm", "process_id": proID });
-    var numOfPipelines = checkPipe.length;
-    if (numOfPipelines > 0) {
-        warnUser = true;
-        infoText = infoText + 'It is not allowed to change permission of current revision since this revision of process exists in following group/public pipelines: '
-        $.each(checkPipe, function (element) {
-            if (element !== 0) {
-                infoText = infoText + ', ';
-            }
-            infoText = infoText + '"' + checkPipe[element].name + '"';
-        });
-    }
-
-    return [warnUser, infoText, numOfPipelines];
-}
-
-function checkPermissionPipe(pipeline_id) {
-    var warnUser = false;
-    var infoText = '';
-    //has pipeline ever used in other project_pipeline which are group or public?
-    var checkProjectPipeline = getValues({ p: "checkProjectPipePerm", "pipeline_id": pipeline_id });
-    var numOfProjects = checkProjectPipeline.length;
-    if (numOfProjects > 0) {
-        warnUser = true;
-        infoText = infoText + 'It is not allowed to change permission of current revision since this revision of pipeline exists in following group/public runs: '
-        $.each(checkProjectPipeline, function (element) {
-            if (element !== 0) {
-                infoText = infoText + ', ';
-            }
-            infoText = infoText + '"' + checkProjectPipeline[element].name + '"';
-        });
-    }
-
-    return [warnUser, infoText, numOfProjects];
-}
-
-
 function prepareProParam(data, startPoint, typeInOut) {
     if (typeInOut === 'inputs') {
         var searchFpart = 'mInputs';
@@ -1442,15 +1416,36 @@ function prepareProParam(data, startPoint, typeInOut) {
     return proParams;
 }
 
-function updateSideBar(sMenuProIdFirst, sMenuProIdFinal, sMenuProGroupIdFirst, sMenuProGroupIdFinal) {
+function insertSidebarProcess(sideGroupID, proID, name){
+    var shortName = truncateName(name, 'sidebarMenu')
+    $(sideGroupID).append('<li> <a data-toggle="modal" origin="'+name+'" data-target="#addProcessModal" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" class="processItems" draggable="true" id="' + proID + '"> <i class="fa fa-angle-double-right"></i>' + shortName + '</a></li>');
+}
 
-    document.getElementById(sMenuProIdFirst).setAttribute('id', sMenuProIdFinal);
-    var PattMenu = /(.*)@(.*)/; //Map_Tophat2@11
-    var nMenuProName = sMenuProIdFinal.replace(PattMenu, '$1');
-    document.getElementById(sMenuProIdFinal).innerHTML = '<i class="fa fa-angle-double-right"></i>' + truncateName(nMenuProName, 'sidebarMenu');
-    if (sMenuProGroupIdFirst !== sMenuProGroupIdFinal) {
-        document.getElementById(sMenuProIdFinal).remove();
-        $('#side-' + sMenuProGroupIdFinal).append('<li> <a data-toggle="modal" data-target="#addProcessModal" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="' + sMenuProIdFinal + '"> <i class="fa fa-angle-double-right"></i>' + truncateName(nMenuProName, 'sidebarMenu') + '</a></li>');
+function updateSideBar(sMenuProIdFinal, sMenuProGroupIdFinal) {
+    var prodata = $('#addProcessModal').data("prodata");
+    var oldProGroupId = prodata.process_group_id
+    var oldProName = prodata.name 
+    var oldProID = prodata.id;
+    // find process item in the sidebar.
+    // prodata.name + "@" + id should be in the sidebar
+    var sMenuProIdFirst = ""
+    var revisions = getValues({ p: "getProcessRevision", "process_id": oldProID });
+    for (var k = 0; k < revisions.length; k++) {
+        sMenuProIdFirst = oldProName+"@"+revisions[k].id;
+        if ($(document.getElementById(sMenuProIdFirst)).length > 0) {
+            if ($(document.getElementById(sMenuProIdFirst)).hasClass( "processItems" )){
+                $(document.getElementById(sMenuProIdFirst)).attr("id", sMenuProIdFinal);
+                var PattMenu = /(.*)@(.*)/; //Map_Tophat2@11
+                var nMenuProName = sMenuProIdFinal.replace(PattMenu, '$1');
+                $(document.getElementById(sMenuProIdFinal)).html('<i class="fa fa-angle-double-right"></i>' + truncateName(nMenuProName, 'sidebarMenu'));
+                if (oldProGroupId !== sMenuProGroupIdFinal) {
+                    $(document.getElementById(sMenuProIdFinal)).remove();
+                    insertSidebarProcess("#side-"+sMenuProGroupIdFinal, sMenuProIdFinal, nMenuProName)
+                }
+                break; 
+            }
+
+        }
     }
 }
 
@@ -1512,12 +1507,6 @@ function disableProModal(selProcessId) {
     $('#createRevision').css('display', "none");
     $('#createRevisionBut').css('display', "none");
     $('#deleteRevision').css('display', "none");
-    if (gNumInfo.match(/-/)) { //for pipeline module windows
-        $('#selectProcess').css("display", "none")
-    } else {
-        $('#selectProcess').css('display', "inline");
-    }
-
 };
 //disable when it is selected as everyone
 function disableProModalPublic(selProcessId) {
@@ -1656,8 +1645,8 @@ function createRevision() {
                         var newProcess_id = s.id;
                         //update process link into sidebar menu
                         sMenuProIdFinal = proName + '@' + newProcess_id;
-                        updateSideBar(sMenuProIdFirst, sMenuProIdFinal, sMenuProGroupIdFirst, sMenuProGroupIdFinal);
-                        //                        refreshDataset();
+                        updateSideBar(sMenuProIdFinal, sMenuProGroupIdFinal);
+                        refreshDataset();
                         $('#addProcessModal').modal('hide');
                     },
                     error: function (errorThrown) {
@@ -1677,7 +1666,6 @@ function prepareInfoModal() {
     $('#mProActionsDiv').css('display', "none");
     $('#proPermGroPubDiv').css('display', "none");
     $('#mProRevSpan').css('display', "inline");
-    $('#mProRev').attr('info', "info");
     $('#createRevisionBut').css('display', "none");
 }
 
@@ -1918,7 +1906,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
 function duplicateProcessRev() {
     var processID = $('#mIdPro').val();
     if (processID !== '') {
-        var proName = $('#mName').val() + "-copy";
+        var proName = $('#mName').val() + "_copy";
         var proGroId = $('#mProcessGroup').val();
         var maxProcess_gid = getValues({ p: "getMaxProcess_gid" })[0].process_gid;
         var newProcess_gid = parseInt(maxProcess_gid) + 1;
@@ -1931,7 +1919,10 @@ function duplicateProcessRev() {
         if (s) {
             var process_id = s.id;
             //add process link into sidebar menu
-            $('#side-' + proGroId).append('<li> <a data-toggle="modal" data-target="#addProcessModal" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="' + proName + '@' + process_id + '"> <i class="fa fa-angle-double-right"></i>' + truncateName(proName, 'sidebarMenu') + '</a></li>');
+            console.log("#side-"+proGroId)
+            console.log(proName + '@' + process_id)
+            console.log(truncateName(proName, 'sidebarMenu'))
+            insertSidebarProcess("#side-"+proGroId, proName + '@' + process_id, proName)
             refreshDataset();
             $('#addProcessModal').modal('hide');
         }
@@ -2021,7 +2012,7 @@ function loadSelectedPipeline(pipeline_id) {
                         if (oData.process_id.match("p")) {
                             $(nTd).text(oData.process_name);
                         } else {
-                            $(nTd).html("<a data-toggle='modal' data-target='#addProcessModal' data-backdrop='false' href='' pipeMode='true' id='" + oData.process_name + "@" + oData.process_id + "'>" + '<span class="txtlink">' + oData.process_name + "</span>" + "</a>");
+                            $(nTd).html("<a data-toggle='modal' data-target='#addProcessModal' data-backdrop='false' href='' class='pipeMode' pipeMode='true' id='" + oData.process_name + "@" + oData.process_id + "'>" + '<span class="txtlink">' + oData.process_name + "</span>" + "</a>");
                         }
                     }
                 }, {
@@ -2075,7 +2066,7 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         var translateY = d3main.translate[1];
         var xPos = $('#selectPipeline').attr("xCoor")
         var yPos = $('#selectPipeline').attr("yCoor")
-        piID = lastPipeID
+        piID = lastPipeID;
         var newMainGnum = "pObj" + gNum;
         window[newMainGnum] = {};
         window[newMainGnum].piID = piID;
@@ -2085,18 +2076,35 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         $.extend(window.pipeObj, newPipeObj);
         window[newMainGnum].sData = [window.pipeObj["main_pipeline_" + piID]]
         window[newMainGnum].lastPipeName = pName;
+        var lastGNum = gNum;
         // create new SVG workplace inside panel, if not added before
         openSubPipeline(piID, window[newMainGnum]);
         // add pipeline circle to main workplace
         addPipeline(piID, xPos, yPos, pName, window, window[newMainGnum]);
+        recoverEdges(gNumInfo, "", lastGNum);
+        autosave();
     }
     $('#selectPipelineModal').modal('hide');
 });
 
-
+function saveCircleCoordinates(selProcessId){
+    if (gNumInfo.match(/-/)) { //for pipeline module windows
+        var coorProRaw = d3.select("#g" + gNumInfo)[0][0].attributes.transform.value;
+    } else {
+        var coorProRaw = d3.select("#g-" + gNumInfo)[0][0].attributes.transform.value;
+    }
+    var PattCoor = /translate\((.*),(.*)\)/; //417.6,299.6
+    var xProCoor = coorProRaw.replace(PattCoor, '$1');
+    var yProCoor = coorProRaw.replace(PattCoor, '$2');
+    $('#selectProcess').attr("fProID", selProcessId);
+    $('#selectProcess').attr("gNum", gNumInfo);
+    $('#selectProcess').attr("xCoor", xProCoor);
+    $('#selectProcess').attr("yCoor", yProCoor);
+}
 
 
 $(document).ready(function () {
+    filterSideBar([]); //trigger filter function of sidebar for admin filtering
     var usRole = callusRole();
     pipeline_id = $('#pipeline-title').attr('pipelineid');
     //fill pipeline groups
@@ -2134,7 +2142,7 @@ $(document).ready(function () {
     }
 
     //Make modal draggable    
-    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amzTable' });
+    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amazonTable, #googleTable' });
 
 
 
@@ -2169,7 +2177,9 @@ $(document).ready(function () {
             var translateY = d3main.translate[1];
             var xCor = $('#selectProcess').attr("xCoor") * scale + 30 - r - ior + translateX;
             var yCor = $('#selectProcess').attr("yCoor") * scale + 10 - r - ior + translateY;
+            var lastGNum = gNum;
             addProcess(processDat, xCor, yCor);
+            recoverEdges(gNumInfo, lastProID, lastGNum);
         }
         autosave();
         $('#addProcessModal').modal('hide');
@@ -2213,42 +2223,7 @@ $(document).ready(function () {
         }
     };
 
-    $("#permsPro").click(function () {
-        lastSel = $("#permsPro option:selected");
-    });
-    $("#permsPipe").click(function () {
-        lastSelPipe = $("#permsPipe option:selected");
-    });
-    $(function () {
-        $(document).on('change', '#permsPipe', function (event) {
-            var selPerm = $(this).val();
-            var pipeline_id = $('#pipeline-title').attr('pipelineid');
-            if (pipeline_id !== "" && selPerm == "3") {
-                var warnUser = false;
-                var infoText = '';
-                var numOfRuns = '';
-                //check if pipeline ever used in projects_pipelines that and have permission higher than 3
-                //then not allowed to change
-                [warnUser, infoText, numOfRuns] = checkPermissionPipe(pipeline_id);
-                if (warnUser === true) {
-                    lastSelPipe.prop("selected", true);
-                    // warnDelete process modal 
-                    $('#warnDelete').off();
-                    $('#warnDelete').on('show.bs.modal', function (event) {
-                        $(this).find('form').trigger('reset');
-                        $('#warnDelText').html(infoText);
-                    });
-                    $('#warnDelete').modal('show');
-                } else {
-                    autosaveDetails();
-                }
-            } else {
-                autosaveDetails();
-            }
-        })
-    });
 
-    //xxxxx
     $(function () {
         $('#gitConsoleModal').on('show.bs.modal', function (e) {
             $(this).find('form').trigger('reset');
@@ -2421,44 +2396,14 @@ $(document).ready(function () {
         });
     });
 
-    $(function () {
-        $(document).on('change', '#permsPro', function (event) {
-            var selPerm = $(this).val();
-            var proID = $('#mIdPro').val();
-            if (proID !== "" && selPerm == "3") {
-                var warnUser = false;
-                var infoText = '';
-                var numOfPipelines = '';
-                //check if process ever used in pipelines that and have permission higher than 3
-                //then not allowed to change
-                [warnUser, infoText, numOfPipelines] = checkPermissionProc(proID);
-                if (warnUser === true) {
-                    lastSel.prop("selected", true);
-                    // warnDelete process modal 
-                    $('#warnDelete').off();
-                    $('#warnDelete').on('show.bs.modal', function (event) {
-                        $(this).find('form').trigger('reset');
-                        $('#warnDelText').html(infoText);
-                    });
-                    $('#warnDelete').modal('show');
-                }
-            }
-        })
-    });
 
     $(function () {
         $(document).on('change', '.mRevChange', function (event) {
-            var infoAttr = $(this).attr("info");
             var id = $(this).attr("id");
             var prevParId = $("#" + id).attr("prev");
             var selProId = $("#" + id + " option:selected").val();
-            if (prevParId !== '-1' && infoAttr === 'info') {
-                refreshProcessModal(selProId);
-                prepareInfoModal();
-                disableProModal(selProId);
-                $('#selectProcess').attr("lastProID", selProId);
-                $('#mProRev').attr('info', "info");
-            } else if (prevParId !== '-1') {
+            $('#selectProcess').attr("lastProID", selProId);
+            if (prevParId !== '-1') {
                 refreshProcessModal(selProId);
             }
             $("#" + id).attr("prev", selProId);
@@ -2543,67 +2488,34 @@ $(document).ready(function () {
         loadModalParam();
 
         var button = $(event.relatedTarget);
-        if (button.attr('id') === 'addprocess') {
+        var checkAddprocess = button.attr('id') === 'addprocess';
+        var checkEditprocess = button.is('a.processItems') === true;
+        var checkPipeModuleModal = button.is('a.pipeMode') === true;
+        var checkSettingsIcon = !checkAddprocess && !checkEditprocess && !checkPipeModuleModal;
+        if (checkAddprocess) {
             $('#processmodaltitle').html('Add New Process');
             $('#proPermGroPubDiv').css('display', "inline");
-
-        } else if (button.is('a') === true) { //Edit/Delete Process
-            $('#processmodaltitle').html('Edit/Delete Process');
+        } else if (checkEditprocess || checkSettingsIcon || checkPipeModuleModal) { //Edit/Delete Process
             $('#mProActionsDiv').css('display', "inline");
             $('#mProRevSpan').css('display', "inline");
             $('#proPermGroPubDiv').css('display', "inline");
-
-            delProMenuID = button.attr('id');
-            sMenuProIdFirst = button.attr('id');
-            var pipeMode = button.attr('pipeMode');
-            var PattPro = /(.*)@(.*)/; //Map_Tophat2@11
-            var selProcessId = button.attr('id').replace(PattPro, '$2');
-            loadModalRevision(selProcessId);
             var processOwn = "";
             var proPerms = "";
-            [proPerms, processOwn] = loadSelectedProcess(selProcessId);
-            if (pipeMode) {
-                $('#permsPro').attr('disabled', "disabled");
-                $('#publishPro').attr('disabled', "disabled");
-                disableProModalPublic(selProcessId);
-                $('#createRevision').css('display', "none");
-                $('#createRevisionBut').css('display', "none");
-                $('#mProActionsDiv').css('display', "none");
-            } else if (usRole === "admin") {
-                $("#permsPro option[value='63']").attr("disabled", false);
-            } else if (processOwn === "1" && proPerms === "63" && usRole !== "admin") {
-                $('#permsPro').attr('disabled', "disabled");
-                $('#publishPro').attr('disabled', "disabled");
-                disableProModalPublic(selProcessId);
-            }
-            // if user is the owner of the process (processOwn=1) allowed for edit and delete.
-            else if (processOwn === "0" && usRole !== "admin") {
-                setTimeout(function () { prepareInfoModal(); }, 0);
-                var pName = $('#mName').val();
-                $('#selectProcess').attr("pName", pName);
-                setTimeout(function () { disableProModal(selProcessId); }, 1);
-            }
-        } else { //Info Modal 
-            prepareInfoModal();
-            var selProcessId = infoID;
-            $('#selectProcess').attr("fProID", selProcessId);
-            $('#selectProcess').attr("gNum", gNumInfo);
-            if (gNumInfo.match(/-/)) { //for pipeline module windows
-                var coorProRaw = d3.select("#g" + gNumInfo)[0][0].attributes.transform.value;
-            } else {
-                var coorProRaw = d3.select("#g-" + gNumInfo)[0][0].attributes.transform.value;
-            }
-            var PattCoor = /translate\((.*),(.*)\)/; //417.6,299.6
-            var xProCoor = coorProRaw.replace(PattCoor, '$1');
-            var yProCoor = coorProRaw.replace(PattCoor, '$2');
-            $('#selectProcess').attr("xCoor", xProCoor);
-            $('#selectProcess').attr("yCoor", yProCoor);
-
+            var selProcessId = "";
+            if (checkEditprocess || checkPipeModuleModal){
+                $('#processmodaltitle').html('Edit/Delete Process');
+                $('#selectProcess').css("display", "none")
+                var PattPro = /(.*)@(.*)/; //Map_Tophat2@11
+                selProcessId = button.attr('id').replace(PattPro, '$2');
+            } else if (checkSettingsIcon){
+                $('#processmodaltitle').html('Select Process Revision');
+                $('#selectProcess').css("display", "inline")
+                selProcessId = infoID;
+                saveCircleCoordinates(selProcessId)
+            } 
             loadModalRevision(selProcessId);
-            loadSelectedProcess(selProcessId);
-            var pName = $('#mName').val();
-            $('#selectProcess').attr("pName", pName);
-            setTimeout(function () { disableProModal(selProcessId); }, 1);
+            [proPerms, processOwn] = loadSelectedProcess(selProcessId);
+            $('#selectProcess').attr("pName", $('#mName').val());
         }
     });
 
@@ -2660,21 +2572,10 @@ $(document).ready(function () {
 
     $('#confirmModal').on('click', '.delprocess', function (event) {
         var processIdDel = $('#mIdPro').val();
-        var disableCheck = $('#mName').attr('disabled');
-        if (disableCheck === 'disabled') {
-            $('#mName').removeAttr('disabled'); //temporary remove disabled attribute for serializeArray().
-            var formValues = $('#addProcessModal').find('input, select, textarea');
-            var data = formValues.serializeArray();
-            $('#mName').attr('disabled', "disabled");
-        } else {
-            var formValues = $('#addProcessModal').find('input, select, textarea');
-            var data = formValues.serializeArray();
-        }
-        var proID = data[1].value;
-        var proName = data[2].value;
+        var proName = $('#mName').val()
         var warnUser = false;
         var infoText = '';
-        [warnUser, infoText] = checkDeletion(proID);
+        [warnUser, infoText] = checkDeletion(processIdDel);
         if (warnUser === true) {
             $('#warnDelete').off();
             $('#warnDelete').on('show.bs.modal', function (event) {
@@ -2683,13 +2584,24 @@ $(document).ready(function () {
             $('#warnDelete').modal('show');
         } else if (warnUser === false) {
             var revisions = getValues({ p: "getProcessRevision", "process_id": processIdDel });
-            var removedRev = [];
+            var delProMenuID = ""
+            var tmp = ""
+            //find process id in the sidebar menu
+            for (var k = 0; k < revisions.length; k++) {
+                tmp = proName+"@"+revisions[k].id;
+                if ($(document.getElementById(tmp)).length > 0) {
+                    if ($(document.getElementById(tmp)).hasClass( "processItems" )){
+                        delProMenuID = tmp;
+                        break; 
+                    }
+                }
+            }
+            var delProc = getValues({ p: "removeProcess", "id": processIdDel });
             if (revisions.length === 1) {
-                var delProce = getValues({ p: "removeProcess", "id": processIdDel });
-                var delSideMenuNode = document.getElementById(delProMenuID).parentNode;
-                delSideMenuNode.parentNode.removeChild(delSideMenuNode);
-                delProMenuID = '';
+                $(document.getElementById(delProMenuID)).parent().remove()
             } else if (revisions.length > 1) {
+                var removedRev = [];
+                var revMaxId = "";
                 //remove the selected revision from list
                 for (var k = 0; k < revisions.length; k++) {
                     if (revisions[k].id !== processIdDel) {
@@ -2705,14 +2617,11 @@ $(document).ready(function () {
                 //find the id of the process which has the maximum rev_id
                 for (var k = 0; k < removedRev.length; k++) {
                     if (removedRev[k].rev_id === max) {
-                        var revMaxId = removedRev[k].id
-                        }
+                        revMaxId = removedRev[k].id
+                    }
                 }
-                var PattPro = /(.*)@(.*)/; //Map_Tophat2@11
-                var delProName = delProMenuID.replace(PattPro, '$1');
-                var newMenuID = delProName + '@' + revMaxId;
-                var delProce = getValues({ p: "removeProcess", "id": processIdDel });
-                document.getElementById(delProMenuID).id = newMenuID;
+                var newMenuID = proName + '@' + revMaxId;
+                $(document.getElementById(delProMenuID)).attr("id",newMenuID)
             }
             $('#addProcessModal').modal('hide');
         }
@@ -2778,7 +2687,7 @@ $(document).ready(function () {
                     success: function (s) {
                         var process_id = s.id;
                         //add process link into sidebar menu
-                        $('#side-' + proGroId).append('<li> <a data-toggle="modal" data-target="#addProcessModal" data-backdrop="false" href="" ondragstart="dragStart(event)" ondrag="dragging(event)" draggable="true" id="' + proName + '@' + process_id + '"> <i class="fa fa-angle-double-right"></i>' + truncateName(proName, 'sidebarMenu') + '</a></li>');
+                        insertSidebarProcess("#side-"+proGroId, proName + '@' + process_id, proName);
                         var startPoint = 5; //first object in data array where inputparameters starts.
                         addProParatoDB(data, startPoint, process_id, perms, group);
                         refreshDataset();
@@ -2847,7 +2756,7 @@ $(document).ready(function () {
                         async: true,
                         success: function (s) {
                             //update process link into sidebar menu
-                            updateSideBar(sMenuProIdFirst, sMenuProIdFinal, sMenuProGroupIdFirst, sMenuProGroupIdFinal);
+                            updateSideBar(sMenuProIdFinal, sMenuProGroupIdFinal);
                             var startPoint = 6; //first object in data array where inputparameters starts.
                             var ppIDinputList;
                             var ppIDoutputList;
@@ -2919,7 +2828,7 @@ $(document).ready(function () {
                             async: true,
                             success: function (s) {
                                 //update process link into sidebar menu
-                                updateSideBar(sMenuProIdFirst, sMenuProIdFinal, sMenuProGroupIdFirst, sMenuProGroupIdFinal);
+                                updateSideBar(sMenuProIdFinal, sMenuProGroupIdFinal);
                                 var startPoint = 6; //first object in data array where inputparameters starts.
                                 var ppIDinputList;
                                 var ppIDoutputList;
@@ -2986,7 +2895,7 @@ $(document).ready(function () {
                                     var newProcess_id = s.id;
                                     //update process link into sidebar menu
                                     sMenuProIdFinal = proName + '@' + newProcess_id;
-                                    updateSideBar(sMenuProIdFirst, sMenuProIdFinal, sMenuProGroupIdFirst, sMenuProGroupIdFinal);
+                                    updateSideBar(sMenuProIdFinal, sMenuProGroupIdFinal);
                                     var startPoint = 6; //first object in data array where inputparameters starts.
                                     addProParatoDBbyRev(data, startPoint, newProcess_id, "3", group);
                                     refreshDataset();
@@ -3009,67 +2918,69 @@ $(document).ready(function () {
     $(function () {
         $(document).on('change', '.mParChange', function () {
             var id = $(this).attr("id");
-            var Patt = /m(.*)puts-(.*)/;
-            var type = id.replace(Patt, '$1'); //In or Out
-            var col1init = "m" + type + "puts"; //column1 initials
-            var col2init = "m" + type + "Name";
-            var col3init = "m" + type + "Namedel";
-            var col4init = "m" + type + "OptBut";
-            var col5init = "m" + type + "Opt";
-            var col6init = "m" + type + "Closure";
-            var col7init = "m" + type + "Optdel";
-            var col8init = "m" + type + "Optional";
-            var col9init = "m" + type + "RegBut";
-            var col10init = "m" + type + "Reg";
-            var col11init = "m" + type + "Regdel";
+            if (id){
+                var Patt = /m(.*)puts-(.*)/;
+                var type = id.replace(Patt, '$1'); //In or Out
+                var col1init = "m" + type + "puts"; //column1 initials
+                var col2init = "m" + type + "Name";
+                var col3init = "m" + type + "Namedel";
+                var col4init = "m" + type + "OptBut";
+                var col5init = "m" + type + "Opt";
+                var col6init = "m" + type + "Closure";
+                var col7init = "m" + type + "Optdel";
+                var col8init = "m" + type + "Optional";
+                var col9init = "m" + type + "RegBut";
+                var col10init = "m" + type + "Reg";
+                var col11init = "m" + type + "Regdel";
 
-            var num = id.replace(Patt, '$2');
-            var prevParId = $("#" + id).attr("prev");
-            var selParId = $("#" + id + " option:selected").val();
+                var num = id.replace(Patt, '$2');
+                var prevParId = $("#" + id).attr("prev");
+                var selParId = $("#" + id + " option:selected").val();
 
-            if (prevParId === '-1' && selParId !== '-1') {
+                if (prevParId === '-1' && selParId !== '-1') {
 
-                if (type === 'In') {
-                    numInputs++
-                    var idRows = numInputs; // numInputs or numOutputs
-                } else if (type === 'Out') {
-                    numOutputs++
-                    var idRows = numOutputs; // numInputs or numOutputs
+                    if (type === 'In') {
+                        numInputs++
+                        var idRows = numInputs; // numInputs or numOutputs
+                    } else if (type === 'Out') {
+                        numOutputs++
+                        var idRows = numOutputs; // numInputs or numOutputs
+                    }
+                    $("#" + col1init).append('<select id="' + col1init + '-' + idRows + '" num="' + idRows + '" class="fbtn btn-default form-control mParChange" style ="margin-bottom: 5px;" prev ="-1"  name="' + col1init + '-' + idRows + '"></select>');
+                    $("#" + col2init).append('<input type="text" ppID="" placeholder="Enter name" class="form-control " style ="margin-bottom: 6px;" id="' + col2init + '-' + String(idRows - 1) + '" name="' + col2init + '-' + String(idRows - 1) + '">');
+                    $("#" + col3init).append('<button  type="button" class="btn btn-default form-control delRow" style ="margin-bottom: 6px;" id="' + col3init + '-' + String(idRows - 1) + '" name="' + col3init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Row"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
+                    $("#" + col4init).append('<button  type="button" class="btn btn-default form-control addOpt" style ="margin-bottom: 6px;" id="' + col4init + '-' + String(idRows - 1) + '" name="' + col4init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove operator"><span><i class="fa fa-wrench"></i></span></a></button>');
+                    $("#" + col5init).append('<select class="form-control" style ="visibility:hidden; margin-bottom: 6px;" id="' + col5init + '-' + String(idRows - 1) + '" name="' + col5init + '-' + String(idRows - 1) + '"></button>');
+                    $("#" + col6init).append('<input type="text" ppID="" placeholder="Operator content" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col6init + '-' + String(idRows - 1) + '" name="' + col6init + '-' + String(idRows - 1) + '">');
+                    $("#" + col7init).append('<button type="submit" class="btn btn-default form-control delOpt" style ="visibility:hidden; margin-bottom: 6px;" id="' + col7init + '-' + String(idRows - 1) + '" name="' + col7init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove operator"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
+                    $("#" + col8init).append('<button  type="button" class="btn btn-default form-control addOptional" style ="margin-bottom: 6px;" id="' + col8init + '-' + String(idRows - 1) + '" name="' + col8init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check for Optional parameter"><span><i class="fa fa-square-o"></i></span></a></button>');
+                    $("#" + col9init).append('<button  type="button" class="btn btn-default form-control addRegEx" style ="margin-bottom: 6px;" id="' + col9init + '-' + String(idRows - 1) + '" name="' + col9init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove Output RegEx"><span><i class="fa fa-code"></i></span></a></button>');
+                    $("#" + col10init).append('<input type="text" ppID="" placeholder="Enter RegEx" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col10init + '-' + String(idRows - 1) + '" name="' + col10init + '-' + String(idRows - 1) + '">');
+                    $("#" + col11init).append('<button type="submit" class="btn btn-default form-control delRegEx" style ="visibility:hidden; margin-bottom: 6px;" id="' + col11init + '-' + String(idRows - 1) + '" name="' + col11init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove Output RegEx"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
+                    //refresh tooltips
+                    $('[data-toggle="tooltip"]').tooltip();
+                    //load closure options
+                    var closureOpt = $('#mOutOpt-0 option').each(function () {
+                        var val = $(this).val()
+                        var optionClo = new Option(val, val);
+                        $('#' + col5init + '-' + String(idRows - 1)).append(optionClo);
+                    });
+                    $('#' + col5init + '-' + String(idRows - 1) + ' option:first').attr('disabled', "disabled");
+                    var opt = $('#mInputs > :first-child')[0].selectize.options;
+                    var newOpt = [];
+                    $.each(opt, function (element) {
+                        delete opt[element].$order;
+                        newOpt.push(opt[element]);
+                    });
+                    $("#" + id).attr("prev", selParId)
+                    $("#" + col1init + "-" + idRows).selectize({
+                        valueField: 'id',
+                        searchField: 'name',
+                        placeholder: "Add input...",
+                        options: newOpt,
+                        render: renderParam
+                    });
                 }
-                $("#" + col1init).append('<select id="' + col1init + '-' + idRows + '" num="' + idRows + '" class="fbtn btn-default form-control mParChange" style ="margin-bottom: 5px;" prev ="-1"  name="' + col1init + '-' + idRows + '"></select>');
-                $("#" + col2init).append('<input type="text" ppID="" placeholder="Enter name" class="form-control " style ="margin-bottom: 6px;" id="' + col2init + '-' + String(idRows - 1) + '" name="' + col2init + '-' + String(idRows - 1) + '">');
-                $("#" + col3init).append('<button  type="button" class="btn btn-default form-control delRow" style ="margin-bottom: 6px;" id="' + col3init + '-' + String(idRows - 1) + '" name="' + col3init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Row"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
-                $("#" + col4init).append('<button  type="button" class="btn btn-default form-control addOpt" style ="margin-bottom: 6px;" id="' + col4init + '-' + String(idRows - 1) + '" name="' + col4init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove operator"><span><i class="fa fa-wrench"></i></span></a></button>');
-                $("#" + col5init).append('<select class="form-control" style ="visibility:hidden; margin-bottom: 6px;" id="' + col5init + '-' + String(idRows - 1) + '" name="' + col5init + '-' + String(idRows - 1) + '"></button>');
-                $("#" + col6init).append('<input type="text" ppID="" placeholder="Operator content" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col6init + '-' + String(idRows - 1) + '" name="' + col6init + '-' + String(idRows - 1) + '">');
-                $("#" + col7init).append('<button type="submit" class="btn btn-default form-control delOpt" style ="visibility:hidden; margin-bottom: 6px;" id="' + col7init + '-' + String(idRows - 1) + '" name="' + col7init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove operator"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
-                $("#" + col8init).append('<button  type="button" class="btn btn-default form-control addOptional" style ="margin-bottom: 6px;" id="' + col8init + '-' + String(idRows - 1) + '" name="' + col8init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check for Optional parameter"><span><i class="fa fa-square-o"></i></span></a></button>');
-                $("#" + col9init).append('<button  type="button" class="btn btn-default form-control addRegEx" style ="margin-bottom: 6px;" id="' + col9init + '-' + String(idRows - 1) + '" name="' + col9init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove Output RegEx"><span><i class="fa fa-code"></i></span></a></button>');
-                $("#" + col10init).append('<input type="text" ppID="" placeholder="Enter RegEx" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col10init + '-' + String(idRows - 1) + '" name="' + col10init + '-' + String(idRows - 1) + '">');
-                $("#" + col11init).append('<button type="submit" class="btn btn-default form-control delRegEx" style ="visibility:hidden; margin-bottom: 6px;" id="' + col11init + '-' + String(idRows - 1) + '" name="' + col11init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove Output RegEx"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
-                //refresh tooltips
-                $('[data-toggle="tooltip"]').tooltip();
-                //load closure options
-                var closureOpt = $('#mOutOpt-0 option').each(function () {
-                    var val = $(this).val()
-                    var optionClo = new Option(val, val);
-                    $('#' + col5init + '-' + String(idRows - 1)).append(optionClo);
-                });
-                $('#' + col5init + '-' + String(idRows - 1) + ' option:first').attr('disabled', "disabled");
-                var opt = $('#mInputs > :first-child')[0].selectize.options;
-                var newOpt = [];
-                $.each(opt, function (element) {
-                    delete opt[element].$order;
-                    newOpt.push(opt[element]);
-                });
-                $("#" + id).attr("prev", selParId)
-                $("#" + col1init + "-" + idRows).selectize({
-                    valueField: 'id',
-                    searchField: 'name',
-                    placeholder: "Add input...",
-                    options: newOpt,
-                    render: renderParam
-                });
             }
         })
 
@@ -3659,6 +3570,7 @@ $(document).ready(function () {
         }
     });
 
+
     //process group modal save button
     $('#processGroupModal').on('click', '#saveProcessGroup', function (event) {
         event.preventDefault();
@@ -3672,8 +3584,6 @@ $(document).ready(function () {
         }
         var selProGroupName = data[1].value;
         data.push({ name: "p", value: "saveProcessGroup" });
-
-
         if ((savetype === "edit" && selProGroupID !== '' && selProGroupName !== '') || (savetype === "add" && selProGroupName !== '')) {
             $.ajax({
                 type: "POST",
@@ -3681,29 +3591,17 @@ $(document).ready(function () {
                 data: data,
                 async: false,
                 success: function (s) {
-                    if (savetype === 'edit') { //Edit Process Group
-                        var allProBox = $('#proGroup').find('select');
-                        var proGroBoxId = allProBox[0].getAttribute('id');
-                        $('#' + proGroBoxId)[0].selectize.updateOption(selProGroupID, {
-                            value: selProGroupID,
-                            text: selProGroupName
-                        });
-                        modifyProcessParentSideBar(selProGroupName, selProGroupID, "update")
-                    } else { //Add process group
-                        var allProBox = $('#proGroup').find('select');
-                        var proGroBoxId = allProBox[0].getAttribute('id');
+                    if (s.id){
                         selProGroupID = s.id;
-                        $('#' + proGroBoxId)[0].selectize.addOption({
-                            value: selProGroupID,
-                            text: selProGroupName
-                        });
-                        var checkGroupExist = $("span.processParent[origin='" + selProGroupName + "']")
-                        if (checkGroupExist.length === 0) {
-                            modifyProcessParentSideBar(selProGroupName, selProGroupID, "insert")
-                        }
                     }
+                    $('#mProcessGroup').selectize()[0].selectize.destroy();
+                    loadModalProGro()
+                    modifyProcessParentSideBar(selProGroupName, selProGroupID);
                     $('#mProcessGroup')[0].selectize.setValue(selProGroupID, false);
                     $('#processGroupModal').modal('hide');
+                    if (s.message){
+                        showInfoModal("#infoMod", "#infoModText", s.message)
+                    }
 
                 },
                 error: function (errorThrown) {
@@ -4004,6 +3902,7 @@ $(document).ready(function () {
             savetype = "edit";
         }
         var selPipeGroupName = data[1].value;
+        var pipeGroupID = "";
         data.push({ name: "p", value: "savePipelineGroup" });
         if ((savetype === "edit" && selPipeGroupID !== '' && selPipeGroupName !== '') || (savetype === "add" && selPipeGroupName !== '')) {
             $.ajax({
@@ -4012,31 +3911,18 @@ $(document).ready(function () {
                 data: data,
                 async: false,
                 success: function (s) {
-                    if (savetype === 'edit') { //Edit Group
-                        $('#pipeGroupAll')[0].selectize.updateOption(selPipeGroupID, {
-                            value: selPipeGroupID,
-                            text: selPipeGroupName
-                        });
-                        //sidebar menu update
-                        modifyPipelineParentSideBar(selPipeGroupName, selPipeGroupID, "update")
-                    } else { //Add group
-                        var pipeGroupID = s.id;
-                        $("#pipeGroupAll").val(pipeGroupID);
-                        $('#pipeGroupAll')[0].selectize.addOption({
-                            value: pipeGroupID,
-                            text: selPipeGroupName
-                        });
-                        //sidebar menu add
-                        //check if item exist:
-                        var checkSideBar = $("span.pipelineParent[origin='" + selPipeGroupName + "']")
-                        if (checkSideBar.length === 0) {
-                            modifyPipelineParentSideBar(selPipeGroupName, pipeGroupID, "insert")
-                        }
-                        $('#pipeGroupAll')[0].selectize.setValue(pipeGroupID, false);
-
+                    if (s.id){
+                        selPipeGroupID = s.id;
                     }
+                    //refresh dropdown incase item not loaded.
+                    $('#pipeGroupAll').selectize()[0].selectize.destroy();
+                    loadPipeMenuGroup(true)
+                    modifyPipelineParentSideBar(selPipeGroupName, selPipeGroupID)
+                    $('#pipeGroupAll')[0].selectize.setValue(selPipeGroupID, false);
                     $('#pipeGroupModal').modal('hide');
-
+                    if (s.message){
+                        showInfoModal("#infoMod", "#infoModText", s.message)
+                    }
                 },
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -4106,13 +3992,7 @@ $(document).ready(function () {
         }
     });
 
-    //  ---- Pipiline Group Modals ends ---
-
-
-
-
-
-
+    //  ---- Pipeline Group Modals ends ---
 
 
 });

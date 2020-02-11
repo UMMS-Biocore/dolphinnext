@@ -10,6 +10,8 @@ if (!empty($sec)){
     define('SSHPATH', $sec['SSHPATH']);
     define('AMAZON', $sec['AMAZON']);
     define('AMZPATH', $sec['AMZPATH']);  
+    $GOOGPATH = isset($sec['GOOGPATH']) ? $sec['GOOGPATH'] : "";
+    define('GOOGPATH', $GOOGPATH);  
     define('SALT', $sec['SALT']);  
     define('PEPPER', $sec['PEPPER']);  
     define('MASTER', $sec['MASTER']);  
@@ -29,12 +31,14 @@ if (!empty($secConf)){
     $EMAIL_SENDER= isset($secConf['EMAIL_SENDER']) ? $secConf['EMAIL_SENDER'] : "";
     $EMAIL_ADMIN= isset($secConf['EMAIL_ADMIN']) ? $secConf['EMAIL_ADMIN'] : "";
     $CENTRAL_API_URL = isset($secConf['CENTRAL_API_URL']) ? $secConf['CENTRAL_API_URL'] : "";
+    $ENV_PATH = isset($secConf['ENV_PATH']) ? $secConf['ENV_PATH'] : "";
     date_default_timezone_set($secConf['TIMEZONE']);
 
     define('RUNPATH', $secConf['RUNPATH']);
     define('TEMPPATH', $secConf['TEMPPATH']);
     define('API_URL', $secConf['API_URL']);
     define('CENTRAL_API_URL', $CENTRAL_API_URL);
+    define('ENV_PATH', $ENV_PATH);
     define('BASE_PATH', $secConf['BASE_PATH']);
     define('OCPU_URL', $OCPU_URL);
     define('DEBROWSER_URL', $DEBROWSER_URL);
@@ -51,6 +55,7 @@ if (!empty($secConf)){
 $secUiconfig = $secRaw['UICONFIG'];
 if (!empty($secUiconfig)){
     $SHOW_AMAZON_KEYS= isset($secUiconfig['SHOW_AMAZON_KEYS']) ? $secUiconfig['SHOW_AMAZON_KEYS'] : "true";
+    $SHOW_GOOGLE_KEYS= isset($secUiconfig['SHOW_GOOGLE_KEYS']) ? $secUiconfig['SHOW_GOOGLE_KEYS'] : "true";
     $SHOW_SSH_KEYS= isset($secUiconfig['SHOW_SSH_KEYS']) ? $secUiconfig['SHOW_SSH_KEYS'] : "true";
     $SHOW_GITHUB= isset($secUiconfig['SHOW_GITHUB']) ? $secUiconfig['SHOW_GITHUB'] : "true";
     $SHOW_GROUPS= isset($secUiconfig['SHOW_GROUPS']) ? $secUiconfig['SHOW_GROUPS'] : "true";
@@ -58,6 +63,7 @@ if (!empty($secUiconfig)){
     $ALLOW_SIGNUP= isset($secUiconfig['ALLOW_SIGNUP']) ? $secUiconfig['ALLOW_SIGNUP'] : "true";
     $ALLOW_SIGNUPGOOGLE= isset($secUiconfig['ALLOW_SIGNUPGOOGLE']) ? $secUiconfig['ALLOW_SIGNUPGOOGLE'] : "true";
     define('SHOW_AMAZON_KEYS', $SHOW_AMAZON_KEYS);
+    define('SHOW_GOOGLE_KEYS', $SHOW_GOOGLE_KEYS);
     define('SHOW_SSH_KEYS', $SHOW_SSH_KEYS);
     define('SHOW_GITHUB', $SHOW_GITHUB);
     define('SHOW_GROUPS', $SHOW_GROUPS);
@@ -80,6 +86,13 @@ if (!empty($secUiconfig)){
     define('SHOW_RUN_NEXTFLOWLOG', $SHOW_RUN_NEXTFLOWLOG);
     define('SHOW_RUN_NEXTFLOWNF', $SHOW_RUN_NEXTFLOWNF);
     define('SHOW_RUN_NEXTFLOWCONFIG', $SHOW_RUN_NEXTFLOWCONFIG);
+    //  WIZARD CONFIG
+    $SHOW_WIZARD= isset($secUiconfig['SHOW_WIZARD']) ? $secUiconfig['SHOW_WIZARD'] : false;
+    $SHOW_TEST_PROFILE= isset($secUiconfig['SHOW_TEST_PROFILE']) ? $secUiconfig['SHOW_TEST_PROFILE'] : false;
+    $TEST_PROFILE_GROUP_ID= isset($secUiconfig['TEST_PROFILE_GROUP_ID']) ? $secUiconfig['TEST_PROFILE_GROUP_ID'] : "";
+    define('SHOW_WIZARD', $SHOW_WIZARD);
+    define('SHOW_TEST_PROFILE', $SHOW_TEST_PROFILE);
+    define('TEST_PROFILE_GROUP_ID', $TEST_PROFILE_GROUP_ID);
 
 }
 
@@ -97,6 +110,9 @@ if (!empty($line)){
     define('DN_VERSION', "");
 }
 
-
+//source ENV_PATH
+if (!empty(ENV_PATH)){
+    system(". ".ENV_PATH);
+}
 
 ?>
