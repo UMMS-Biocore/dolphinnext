@@ -146,15 +146,19 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
     if (type == "process") {
         checkObj = keyChecker(["script", "script_footer", "script_header"], importJSON, dbJSON)
     } else if (type == "process_parameter_in" || type == "process_parameter_out") {
+        console.log(importJSON)
+        console.log(dbJSON)
+        //prep of importJSON and dbJSON
         for (var i = 0; i < importJSON.length; i++) {
             importJSON[i] = decodeElement("process_parameter", importJSON[i]) || {};
             if (importJSON[i].id) {
-                window.importObj[fileID].dict.propara[importJSON[i].id] = "insert"; //default value/ Will be replaced by dbJSONfilt[i].id; If it won't replaced that means it will stay as insert
+                window.importObj[fileID].dict.propara[importJSON[i].id] = "insert"; //default value is insert/ Will be replaced by dbJSONfilt[i].id; If not replaced that means it will stay as "insert"
             }
         }
         for (var i = 0; i < dbJSON.length; i++) {
             dbJSON[i] = decodeElement("process_parameter", dbJSON[i]) || {}
         }
+        //check. order of propara should match
         for (var i = 0; i < importJSON.length; i++) {
             var dbParamId = window.importObj[fileID].dict.parameter[importJSON[i].parameter_id];
             if (dbParamId) {
@@ -173,7 +177,6 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
                     checkObj[type + i] = keyChecker(["sname", "operator", "closure", "reg_ex", "optional", "file_type", "qualifier"], importJSON[i], dbJSONfilt[0])
                 }
             }
-
         }
         //find redundant propara
         for (var k = 0; k < dbJSON.length; k++) {
@@ -187,6 +190,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
                 }
             }
         }
+    console.log(checkObj)
 
     } else if (type == "pipeline") {
         var checkObj2 = {};
