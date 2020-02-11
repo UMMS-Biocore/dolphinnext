@@ -27,7 +27,6 @@ def executeScriptsFromFile(filename, cursor):
     sqlFile = fd.read()
     fd.close()
     sqlCommands = sqlFile.split(';')
-
     for command in sqlCommands:
         try:
             if command.strip() != '':
@@ -40,8 +39,8 @@ def executeScriptsFromFile(filename, cursor):
 def listdir_nohidden(path):
     cmd = "ls -1 "+path+" | sort | uniq -u | sort -V"
     raw = os.popen(cmd).read().split('\n')
+    #remove empty element remained at the end
     clean = [x for x in raw if x]
-    print clean
     return clean
 
 def updateDB(db, user, p, host):
@@ -76,7 +75,6 @@ def updateDB(db, user, p, host):
     elif exist_table == 0:
         ret += "INFO: update_db table not found."
         not_exist_db = listdir_nohidden(scriptDir+'/../db/patch')
-    print not_exist_db
     if len(not_exist_db) > 0:
         ret += "\nINFO: Checking DB patches that are not applied: "
         for sql in not_exist_db:
