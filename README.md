@@ -16,7 +16,7 @@
 
 * **Build:** Easily create new pipelines using a drag and drop interface. No need to write commands from scratch, instead reuse existing processes/modules to create new pipelines
 
-* **Run:** Execute pipelines in any host environment. Seamless Amazon Cloud integration to create a cluster (EC2), execute the pipeline and transfer the results to the storage service (S3).
+* **Run:** Execute pipelines in any host environment. Seamless Amazon Cloud and Google Cloud integration to create a cluster (instance), execute the pipeline and transfer the results to the storage services (S3 or GS).
 
 * **Resume:** A continuous checkpoint mechanism keeps track of each step of the running pipeline. Partially completed pipelines can be resumed at any stage even after parameter changes.
 
