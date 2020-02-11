@@ -23,10 +23,10 @@ def getConf():
         ret['DBPORT'] = config.get('Dolphinnext', 'DBPORT')
     except:
         ret['DB']     = 'dolphinnext'
-        ret['DBUSER'] = 'docker'
-        ret['DBPASS'] = 'docker'
-        ret['DBHOST'] = 'localhost'
-        ret['DBPORT'] = '3306'
+        ret['DBUSER'] = 'root'
+        ret['DBPASS'] = ''
+        ret['DBHOST'] = ''
+        ret['DBPORT'] = ''
     return ret
 
 def executeScriptsFromFile(filename, cursor):
