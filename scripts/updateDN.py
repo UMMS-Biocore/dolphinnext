@@ -14,11 +14,19 @@ scriptDir = os.path.dirname(os.path.realpath(__file__))
 def getConf():
     ret = dict();  
     config = configparser.ConfigParser()
-    config.readfp(open(scriptDir+'/../config/.sec'))
-    ret['DB']     = config.get('Dolphinnext', 'DB')
-    ret['DBUSER'] = config.get('Dolphinnext', 'DBUSER')
-    ret['DBPASS'] = config.get('Dolphinnext', 'DBPASS')
-    ret['DBHOST'] = config.get('Dolphinnext', 'DBHOST')
+    try:
+        config.readfp(open(scriptDir+'/../config/.sec'))
+        ret['DB']     = config.get('Dolphinnext', 'DB')
+        ret['DBUSER'] = config.get('Dolphinnext', 'DBUSER')
+        ret['DBPASS'] = config.get('Dolphinnext', 'DBPASS')
+        ret['DBHOST'] = config.get('Dolphinnext', 'DBHOST')
+        ret['DBPORT'] = config.get('Dolphinnext', 'DBPORT')
+    except:
+        ret['DB']     = 'dolphinnext'
+        ret['DBUSER'] = 'docker'
+        ret['DBPASS'] = 'docker'
+        ret['DBHOST'] = 'localhost'
+        ret['DBPORT'] = '3306'
     return ret
 
 def executeScriptsFromFile(filename, cursor):
