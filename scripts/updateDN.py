@@ -38,11 +38,11 @@ def executeScriptsFromFile(filename, cursor):
     return log
 
 def listdir_nohidden(path):
-    ret = []
-    for f in os.listdir(path):
-        if not f.startswith('.'):
-            ret.append(f)
-    return ret
+    cmd = "ls -1 "+path+" | sort | uniq -u | sort -V"
+    raw = os.popen(cmd).read().split('\n')
+    clean = [x for x in raw if x]
+    print clean
+    return clean
 
 def updateDB(db, user, p, host):
     ret = ""
@@ -76,7 +76,7 @@ def updateDB(db, user, p, host):
     elif exist_table == 0:
         ret += "INFO: update_db table not found."
         not_exist_db = listdir_nohidden(scriptDir+'/../db/patch')
-    not_exist_db.sort(key=lambda s: map(int, s.split('.')))
+    print not_exist_db
     if len(not_exist_db) > 0:
         ret += "\nINFO: Checking DB patches that are not applied: "
         for sql in not_exist_db:
