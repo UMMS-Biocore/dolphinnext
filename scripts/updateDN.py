@@ -14,11 +14,19 @@ scriptDir = os.path.dirname(os.path.realpath(__file__))
 def getConf():
     ret = dict();  
     config = configparser.ConfigParser()
-    config.readfp(open(scriptDir+'/../config/.sec'))
-    ret['DB']     = config.get('Dolphinnext', 'DB')
-    ret['DBUSER'] = config.get('Dolphinnext', 'DBUSER')
-    ret['DBPASS'] = config.get('Dolphinnext', 'DBPASS')
-    ret['DBHOST'] = config.get('Dolphinnext', 'DBHOST')
+    try:
+        config.readfp(open(scriptDir+'/../config/.sec'))
+        ret['DB']     = config.get('Dolphinnext', 'DB')
+        ret['DBUSER'] = config.get('Dolphinnext', 'DBUSER')
+        ret['DBPASS'] = config.get('Dolphinnext', 'DBPASS')
+        ret['DBHOST'] = config.get('Dolphinnext', 'DBHOST')
+        ret['DBPORT'] = config.get('Dolphinnext', 'DBPORT')
+    except:
+        ret['DB']     = 'dolphinnext'
+        ret['DBUSER'] = 'root'
+        ret['DBPASS'] = ''
+        ret['DBHOST'] = 'localhost'
+        ret['DBPORT'] = '3306'
     return ret
 
 def executeScriptsFromFile(filename, cursor):
@@ -43,13 +51,14 @@ def listdir_nohidden(path):
     clean = [x for x in raw if x]
     return clean
 
-def updateDB(db, user, p, host):
+def updateDB(db, user, p, host, port):
     ret = ""
     cnx=mysql.connector.connect(
         database=db,
         host=host,
         user=user,
-        passwd=p
+        passwd=p,
+        port=port
     )
     cursor=cnx.cursor()
     #check if update_db table exists
@@ -104,7 +113,7 @@ def main():
     pull_cmd_log = os.popen(pull_cmd).read()
     print ("\n"+"LOG :\n" + pull_cmd_log)
     print ("\nINFO:"+ " Database update initiated:")
-    runUpdateLog = updateDB(conf['DB'], conf['DBUSER'], conf['DBPASS'], conf['DBHOST'])
+    runUpdateLog = updateDB(conf['DB'], conf['DBUSER'], conf['DBPASS'], conf['DBHOST'], conf['DBPORT'])
     print (runUpdateLog)
     
     
