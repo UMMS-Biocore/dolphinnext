@@ -18,7 +18,7 @@ Run Status
 Run status is monitored at the right part of the header. Initially, orange ``Waiting`` button is shown. In order to initiate run, following data need to be entered:
 
     1. **Work Directory:**  Full path of the directory, where nextflow runs will be executed.
-    2. **Run Environment:** Profile that is created in the `profile <profile.html>`_  page. If `Amazon profile <profile.html#b-defining-amazon-profile>`_  is selected, then status of the profile should to be at the stage of **running**.
+    2. **Run Environment:** Profile that is created in the `profile <profile.html>`_  page. If `Amazon profile <profile.html#b-defining-amazon-profile>`_ or `Google profile <profile.html#c-defining-google-profile>`_ is selected, then status of the profile should to be at the stage of **running**.
     3. **Inputs:** Value and path of the files need to be entered.
     
 .. warning:: If amazon s3 path is entered as a input or publish directory path, amazon keys (which will appear in the **Run Setting** section) need to be also selected.
@@ -45,7 +45,7 @@ Run Settings
     
     /home/newuser/workdir
 
-* **Run Environment:** Profile that is created in the `profile <profile.html>`_  page. If `Amazon profile <profile.html#b-defining-amazon-profile>`_  is selected, then status of the profile should to be at the stage of **running**.
+* **Run Environment:** Profile that is created in the `profile <profile.html>`_  page. If `Amazon profile <profile.html#b-defining-amazon-profile>`_ or `Google profile <profile.html#c-defining-google-profile>`_ is selected, then status of the profile should to be at the stage of **running**.
 
 
 * **Use Docker Image:** Nextflow supports the Docker containers which allows you to create fully reproducible pipelines. Docker image can contain any kind of software that you might need to execute your pipeline. It works transparently and output files are created in the host system without requiring any addition step. The only requirement is the `installation of the Docker <https://docs.docker.com/install/>`_ on the execution platform.  To activate this feature in DolphinNext just click the "Use Docker Image" checkbox and enter following information:
@@ -77,7 +77,7 @@ Advanced Options
 
     source /etc/bashrc && module load java/1.8.0_31 && module load bowtie2/2.3.2
 
-* **Publish Directory:** Work directory is default publish directory for DolphinNext. If you want to enter new publish directory, just click this item and enter the full path of publish directory. Both local paths (eg. ``/home/user/test``) or amazon s3 paths (eg. ``s3://yourbucket/test``) are accepted.
+* **Publish Directory:** Work directory is default publish directory for DolphinNext. If you want to enter new publish directory, just click this item and enter the full path of publish directory. Local paths (eg. ``/home/user/test``), amazon s3 paths (eg. ``s3://yourbucket/test``) or google storage paths (eg. ``gs://yourbucket/test``) are accepted.
 
 
 * **Executor Settings:** 

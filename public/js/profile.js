@@ -105,10 +105,14 @@ $(document).ready(function () {
         }, {
             "data": null,
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                var next_path = "";
+                if (oData.next_path){
+                    next_path = "Nextflow Path:" + oData.next_path + "<br/>";
+                }
                 if (oData.hostname != undefined) {
-                    $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Connection:" + oData.username + "@" + oData.hostname);
+                    $(nTd).html(next_path + "Executor:" + oData.executor + "<br/>Connection:" + oData.username + "@" + oData.hostname);
                 } else {
-                    $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Instance_type:" + oData.instance_type + "<br/>Image_id:" + oData.image_id);
+                    $(nTd).html(next_path + "Executor:" + oData.executor + "<br/>Instance_type:" + oData.instance_type + "<br/>Image_id:" + oData.image_id);
                 }
             }
         }, {
@@ -264,7 +268,6 @@ $(document).ready(function () {
         for (var i = 0; i < allMenuGroup.length; i++) {
             allMenuGroup[i].variable = decodeHtml(allMenuGroup[i].variable);
         }
-        console.log(allMenuGroup)
         $('#mEnvName').selectize({
             valueField: 'id',
             searchField: ['name'],
@@ -275,8 +278,6 @@ $(document).ready(function () {
                 callback({ id: input, name: input });
             }
         });
-
-
     }
 
     $(function () {

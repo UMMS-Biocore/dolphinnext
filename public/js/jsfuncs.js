@@ -539,6 +539,8 @@ function loadOngoingWizard (type){
     }
 }   
 
+
+
 function addCloudRow(cloud, id, name, executor, instance_type, image_id, subnet_id, autoshutdown_check, autoshutdown_active, autoshutdown_date, status, proData) {
     if (autoshutdown_check == null){ autoshutdown_check = ""; }
     var checked = "";
