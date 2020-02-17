@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Quick Start Guide &mdash; DolphinNext 0.3.64 documentation</title>
+  <title>Quick Start Guide &mdash; DolphinNext v1.1.3 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="DolphinNext 0.3.64 documentation" href="../index.html"/>
+    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/>
         <link rel="next" title="Project Guide" href="project.html"/>
         <link rel="prev" title="Support" href="support.html"/> 
 
@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.3.64
+                v1.1.3
               </div>
             
           
@@ -109,6 +109,9 @@
 <li class="toctree-l1"><a class="reference internal" href="run.html">Run Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="profile.html">Profile Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.html">Google Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="public_ssh_key.html">Adding Public SSH Key</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Developer Guide</span></p>
 <ul>
@@ -187,135 +190,77 @@
 </div>
 <div class="section" id="creating-profile">
 <h2>Creating Profile<a class="headerlink" href="#creating-profile" title="Permalink to this headline">¶</a></h2>
-<p>Once you enter DolphinNext platform, you need to complete following steps to submit jobs to specifed hosts.</p>
+<p>Once you enter DolphinNext platform, <strong>Profile Wizard</strong> will open as shown at below.</p>
+<a class="reference internal image-reference" href="../_images/profilewizard_first.png"><img alt="../_images/profilewizard_first.png" class="align-center" src="../_images/profilewizard_first.png" style="width: 99%;" /></a>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>If you need to re-open wizard window, you can simply click wizard button at the top right.</p>
+<a class="last reference internal image-reference" href="../_images/profilewizard_button.png"><img alt="../_images/profilewizard_button.png" class="align-center" src="../_images/profilewizard_button.png" style="width: 45%;" /></a>
+</div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">If you have any issues/questions about creating profiles please contact us on: <a class="reference external" href="mailto:support&#37;&#52;&#48;dolphinnext&#46;com">support<span>&#64;</span>dolphinnext<span>&#46;</span>com</a></p>
 </div>
 <ol class="arabic">
-<li><dl class="first docutils">
-<dt>First install software dependencies in the host machine:</dt>
-<dd><ul class="first last">
-<li><p class="first">Install <a class="reference external" href="https://sylabs.io/guides/3.0/user-guide/installation.html#install-on-linux">Singularity (Version 3)</a> or <a class="reference external" href="https://docs.docker.com/install/linux/docker-ce/ubuntu/">Docker</a> for pipelines:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>## Remove old version of Singularity
-# sudo rm -rf /usr/local/libexec/singularity /usr/local/var/singularity /usr/local/etc/singularity /usr/local/bin/singularity /usr/local/bin/run-singularity /usr/local/etc/bash_completion.d/singularity
-
-## Install Singularity Version 3
-apt-get install -y build-essential libssl-dev uuid-dev libgpgme11-dev libseccomp-dev pkg-config squashfs-tools
-wget https://dl.google.com/go/go1.12.7.linux-amd64.tar.gz
-tar -C /usr/local -xzf go1.12.7.linux-amd64.tar.gz
-export PATH=$PATH:/usr/local/go/bin
-export VERSION=3.2.1
-wget https://github.com/sylabs/singularity/releases/download/v${VERSION}/singularity-${VERSION}.tar.gz
-tar -xzf singularity-${VERSION}.tar.gz
-cd singularity
-./mconfig &amp;&amp; make -C ./builddir
-sudo make -C ./builddir install
-
-## Uninstall Old Versions of Docker
-# sudo apt-get remove docker docker-engine docker.io
-
-## Install Docker
-sudo apt install docker.io
-</pre></div>
-</div>
-</li>
-<li><p class="first">Install <a class="reference external" href="https://www.java.com/en/download/help/linux_x64_install.xml#install">Java v8+</a> for Nextflow:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">openjdk</span><span class="o">-</span><span class="mi">8</span><span class="o">-</span><span class="n">jdk</span> <span class="o">&amp;&amp;</span> \
-<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">ant</span> <span class="o">&amp;&amp;</span> \
-<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">clean</span><span class="p">;</span>
-
-<span class="c1"># Fix certificate issues</span>
-<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">update</span> <span class="o">&amp;&amp;</span> \
-<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">ca</span><span class="o">-</span><span class="n">certificates</span><span class="o">-</span><span class="n">java</span> <span class="o">&amp;&amp;</span> \
-<span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">clean</span> <span class="o">&amp;&amp;</span> \
-<span class="n">update</span><span class="o">-</span><span class="n">ca</span><span class="o">-</span><span class="n">certificates</span> <span class="o">-</span><span class="n">f</span><span class="p">;</span>
-<span class="n">export</span> <span class="n">JAVA_HOME</span><span class="o">=/</span><span class="n">usr</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">jvm</span><span class="o">/</span><span class="n">java</span><span class="o">-</span><span class="mi">8</span><span class="o">-</span><span class="n">openjdk</span><span class="o">-</span><span class="n">amd64</span><span class="o">/</span>
-</pre></div>
-</div>
-</li>
-<li><p class="first">Install <a class="reference external" href="https://www.nextflow.io/">Nextflow</a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">## To install to your ~/bin directory:</span>
-<span class="n">mkdir</span> <span class="o">~/</span><span class="nb">bin</span>
-<span class="n">cd</span> <span class="o">~/</span><span class="nb">bin</span>
-<span class="n">curl</span> <span class="o">-</span><span class="n">fsSL</span> <span class="n">get</span><span class="o">.</span><span class="n">nextflow</span><span class="o">.</span><span class="n">io</span> <span class="o">|</span> <span class="n">bash</span>
-
-<span class="c1"># Add Nextflow binary to your bin PATH or any accessible path in your environment:</span>
-<span class="n">chmod</span> <span class="mi">755</span> <span class="n">nextflow</span>
-<span class="n">mv</span> <span class="n">nextflow</span> <span class="o">~/</span><span class="nb">bin</span><span class="o">/</span>
-<span class="c1"># OR system-wide installation:</span>
-<span class="c1"># sudo mv nextflow /usr/local/bin</span>
-</pre></div>
-</div>
-</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>Second, add SSH Key.</dt>
-<dd><ul class="first last simple">
-<li>Click on the “<strong>Profile</strong>” button at the top right of the screen, and click “<strong>SSH Keys</strong>” tab in profile page.</li>
-<li>Click on “<strong>Add SSH Key</strong>” button.</li>
-<li>You can <strong>Create New</strong> or <strong>Enter Existing</strong> SSH key pairs in the opened window.</li>
-<li>Please check our <a class="reference external" href="https://youtu.be/7wH2NjXSebA">Tutorial Video</a> or <a class="reference external" href="profile.html#ssh-keys">Documention regarding to SSH Keys</a> for details.</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>Go to host machine and paste public SSH key into <code class="docutils literal notranslate"><span class="pre">~/.ssh/authorized_keys</span></code> file.</dt>
-<dd><ul class="first last simple">
-<li>Please check our <a class="reference external" href="https://youtu.be/7wH2NjXSebA">Tutorial Video</a> which shows how to edit <code class="docutils literal notranslate"><span class="pre">authorized_keys</span></code> file.</li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><p class="first">Go to <strong>run environments</strong> section and click add “<strong>Add Environment</strong>” button and specify the hosts you want to use.</p>
+<li><p class="first">First, choose your profile type:</p>
 <blockquote>
-<div><img alt="../_images/profile_tabs2.png" class="align-center" src="../_images/profile_tabs2.png" />
-<ul>
-<li><p class="first"><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect. For instance, for <a class="reference external" href="mailto:us2r&#37;&#52;&#48;ghpcc06&#46;umassrc&#46;org">us2r<span>&#64;</span>ghpcc06<span>&#46;</span>umassrc<span>&#46;</span>org</a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Username</span><span class="p">:</span> <span class="n">us2r</span>
-<span class="n">Hostname</span><span class="p">:</span> <span class="n">ghpcc06</span><span class="o">.</span><span class="n">umassrc</span><span class="o">.</span><span class="n">org</span>
-</pre></div>
-</div>
+<div><ol class="upperalpha simple">
+<li>If you have an access to High Performance Computing (HPC) environments, or personal workstations, then please choose <strong>Host</strong>.</li>
+<li>If you have an Amazon Web Services (AWS) account or planning to create one, then please choose <strong>Amazon</strong> and follow our <a class="reference external" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#b-defining-amazon-profile">Amazon Guide</a>  to create your run environment.</li>
+<li>If you have an Google Cloud account or planning to create one, then please choose <strong>Google</strong> and follow our <a class="reference external" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#c-defining-google-profile">Google Guide</a> to create your run environment.</li>
+</ol>
+</div></blockquote>
 </li>
-<li><p class="first"><strong>SSH Keys:</strong> choose SSH keys defined in the SSH keys tab.</p>
-</li>
-<li><p class="first"><strong>Run Command:</strong> You can run the commands before the nextflow job starts. Please make sure you have added Singularity/Docker and JAVA to $PATH environment before starting nextflow. E.g. You can use following command to load modules:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">bashrc</span> <span class="o">&amp;&amp;</span> <span class="n">module</span> <span class="n">load</span> <span class="n">java</span><span class="o">/</span><span class="mf">1.8</span><span class="o">.</span><span class="mi">0</span><span class="n">_77</span> <span class="o">&amp;&amp;</span> <span class="n">module</span> <span class="n">load</span> <span class="n">singularity</span><span class="o">/</span><span class="n">singularity</span><span class="o">-</span><span class="mf">3.4</span><span class="o">.</span><span class="mi">0</span>
-</pre></div>
-</div>
-</li>
-<li><p class="first"><strong>Nextflow Path:</strong> If nextflow path is not added to $PATH environment, you can define the path in this block. e.g.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">~/</span><span class="nb">bin</span>
-</pre></div>
-</div>
-</li>
-<li><p class="first"><strong>Profile Variables:</strong> Since most of the pipelines uses genome reference and index files, you can define a download directory to keep these files. If multiple people are going to use DolphinNext, we would suggest using a shared path in your cluster. e.g.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">DOWNDIR</span><span class="o">=</span><span class="s2">&quot;/share/dolphinnext/downloads&quot;</span>
-</pre></div>
-</div>
-</li>
-<li><p class="first"><strong>Executor Settings for Nextflow:</strong> You can set the system where nextflow itself is initiated. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Suggested</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">long</span> <span class="mi">8</span><span class="n">GB</span> <span class="mi">1</span><span class="n">CPU</span> <span class="mi">5000</span><span class="o">-</span><span class="mi">8000</span><span class="nb">min</span>
-</pre></div>
-</div>
-</li>
-<li><p class="first"><strong>Executor of Nextflow Jobs:</strong> This setting will be used if you don’t set any parameter in advanced section of your run page:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Suggested</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">short</span> <span class="mi">20</span><span class="n">GB</span> <span class="mi">1</span><span class="n">CPU</span> <span class="mi">240</span><span class="nb">min</span>
-</pre></div>
-</div>
-</li>
+<li><p class="first">Second, add public SSH Key into your host machine.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Please confirm our <a class="reference external" href="https://dolphinnext.umassmed.edu/php/terms.php">Terms and Conditions</a> &amp; <a class="reference external" href="https://dolphinnext.umassmed.edu/php/privacy.php">Privacy Policy</a> by clicking checkbox.</li>
+<li>Here, public key is securely generated for your account and required to be added into <code class="docutils literal notranslate"><span class="pre">~/.ssh/authorized_keys</span></code> in the host by user. Please check our <a class="reference external" href="https://youtu.be/7wH2NjXSebA">Adding Public SSH Key Video</a> or <a class="reference external" href="public_ssh_key.html">Documention for Adding Public SSH Key</a> for help.</li>
+<li>After adding public key, please click Validate SSH Keys button to finalize this section.</li>
 </ul>
 </div></blockquote>
 </li>
 </ol>
-<p>Once you complete these steps, you’re now able to submit jobs to specifed hosts.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect (<a class="reference external" href="mailto:yourusername&#37;&#52;&#48;yourhostname">yourusername<span>&#64;</span>yourhostname</a>). For instance, for <a class="reference external" href="mailto:us2r&#37;&#52;&#48;ghpcc06&#46;umassrc&#46;org">us2r<span>&#64;</span>ghpcc06<span>&#46;</span>umassrc<span>&#46;</span>org</a>:</p>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span>  <span class="n">Username</span><span class="p">:</span> <span class="n">yourusername</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">us2r</span><span class="p">)</span>
+<span class="o">-</span>  <span class="n">Hostname</span><span class="p">:</span> <span class="n">yourhostname</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">ghpcc06</span><span class="o">.</span><span class="n">umassrc</span><span class="o">.</span><span class="n">org</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<ol class="arabic simple" start="3">
+<li>Third, install/validate software dependencies into the host machine.</li>
+</ol>
+<p>In order to execute our pipelines, Nextflow should be installed into your host environment. Besides, most of our pipelines isolates their dependencies within their Docker or Singularity containers, therefore please install these softwares into your machine by following guidelines. If your platform doesn’t support the installation of Docker, you can still use our pipelines by just using Singularity.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Installing <a class="reference external" href="faq.html#how-can-i-install-nextflow">Nextflow</a></li>
+<li>Installing <a class="reference external" href="faq.html#how-can-i-install-singularity">Singularity (Version 3)</a></li>
+<li>Installing <a class="reference external" href="faq.html#how-can-i-install-docker">Docker</a></li>
+</ul>
+<p>Sofware Dependencies Section:</p>
+<ul class="simple">
+<li><strong>JAVA Command (optional):</strong> If JAVA is not added to $PATH environment, you can run command (eg. <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/8.0</span></code>) to manipulate your $PATH environment and gain access to JAVA.</li>
+<li><strong>Nextflow Path or Command (optional):</strong> If nextflow is not added to $PATH environment, you can either enter the path of the nextflow (eg. <code class="docutils literal notranslate"><span class="pre">/project/bin</span></code>), or run command (eg. <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">nextflow</span></code>) to manipulate your $PATH environment and gain access to new softwares.</li>
+<li><strong>Docker/Singularity Command (optional):</strong> You can run command to manipulate your $PATH environment in order to gain access to new softwares. (eg. <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">docker/1.0.0</span></code> or <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">load</span> <span class="pre">singularity/3.0.0</span></code>)</li>
+</ul>
+</div></blockquote>
+<ol class="arabic" start="4">
+<li><p class="first">General run settings could be set in following <strong>Run settings</strong> section:</p>
+<blockquote>
+<div><ul class="simple">
+<li><strong>Executor of Nextflow:</strong> Nextflow itself is initiated with this method and it will be only used for running nextflow itself.</li>
+<li><strong>Executor of Nextflow Jobs:</strong> This setting will be used as default setting for submitted jobs by Nextflow.</li>
+<li><strong>Download Directory:</strong> Used to download shared pipeline files such as genome indexes. If your platform has already such path, please enter that location. Otherwise you can set any path that you have permission to write. e.g. <code class="docutils literal notranslate"><span class="pre">/share/dolphinnext/downloads</span></code></li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+<p>Once you complete these steps, you’re now able to start using publicly available pipelines.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">Please note that DolphinNext doesn’t provide free access to our UMASS clusters. Instead, you need to use your run environment (High Performance Computing (HPC) environments, Amazon cloud services or personal workstations) to execute pipelines.</p>
+<p class="last">Please note that DolphinNext doesn’t provide free access to our UMASS clusters. Instead, you need to use your run environment (High Performance Computing (HPC) environments, Amazon/Google cloud services or personal workstations) to execute pipelines.</p>
 </div>
 </div>
 <div class="section" id="running-pipelines">
@@ -350,7 +295,7 @@ sudo apt install docker.io
 <div><a class="reference internal image-reference" href="../_images/run_params_work.png"><img alt="../_images/run_params_work.png" class="align-center" src="../_images/run_params_work.png" style="width: 99%;" /></a>
 </div></blockquote>
 </li>
-<li><p class="first"><strong>Run Environment:</strong> Profile that is created in the <a class="reference external" href="profile.html">profile</a>  page. If <a class="reference external" href="profile.html#b-defining-amazon-profile">Amazon profile</a>  is selected, then status of the profile should to be at the stage of <strong>running</strong>.</p>
+<li><p class="first"><strong>Run Environment:</strong> Profile that is created in the <a class="reference external" href="profile.html">profile</a>  page. If <a class="reference external" href="profile.html#b-defining-amazon-profile">Amazon profile</a> or <a class="reference external" href="profile.html#c-defining-google-profile">Google profile</a> is selected, then status of the profile should to be at the stage of <strong>running</strong>.</p>
 <blockquote>
 <div><a class="reference internal image-reference" href="../_images/run_params_env.png"><img alt="../_images/run_params_env.png" class="align-center" src="../_images/run_params_env.png" style="width: 99%;" /></a>
 </div></blockquote>
@@ -418,7 +363,7 @@ sudo apt install docker.io
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.3.64',
+            VERSION:'v1.1.3',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

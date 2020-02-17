@@ -30,6 +30,9 @@ Contents:
    dolphinNext/run
    dolphinNext/profile
    dolphinNext/amazon
+   dolphinNext/google
+   dolphinNext/public_ssh_key
+   dolphinNext/faq
    
 
 .. _Developer Guide:

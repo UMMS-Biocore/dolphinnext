@@ -59,6 +59,8 @@ function showWizardProfileAlert(){
     } 
 }
 
+
+
 function validatePW(type){
     var username = $("#pw-username").val();
     var hostname =  $("#pw-hostname").val();
@@ -93,6 +95,69 @@ function validatePW(type){
     return ret;
 }
 
+function checkPublicProfileSelected(){
+    //check if public profile settings are available in the #pw-hostname
+    var hostname = $('#pw-hostname').val()
+    var publicProfile = $('#pw-hostname')[0].selectize.options[hostname]
+    if (publicProfile["date_created"]){
+        //autofill other options, and go to last section
+        return publicProfile;
+    } else {
+        return false;
+    }
+}
+
+function selectizePubProfileHostname(dropdown_id) {
+    var renderMenuGroup = {
+        option: function (data, escape) {
+            if (data.hostname !== undefined) {
+                return '<div class="option">' +
+                    '<span class="title"><i>' + escape(data.hostname) + '</i></span>' +
+                    '</div>';
+            } 
+        },
+        item: function (data, escape) {
+            return '<div class="item" data-value="' + escape(data.hostname) + '">' + escape(data.hostname) + '</div>';
+        }
+    };
+
+    var hostMenuGroup = []
+    var allMenuGroup = getValues({ p: "getProfiles", type: "public" });
+    for (var i = 0; i < allMenuGroup.length; i++) {
+        if (allMenuGroup[i].hostname !== undefined) {
+            allMenuGroup[i].variable = decodeHtml(allMenuGroup[i].variable);
+            hostMenuGroup.push(allMenuGroup[i])
+        }
+    }
+    console.log(hostMenuGroup)
+    $(dropdown_id).selectize({
+        valueField: 'hostname',
+        searchField: ['hostname'],
+        maxItems: 1,
+        createOnBlur: true,
+        options: hostMenuGroup,
+        render: renderMenuGroup,
+        create: function (input, callback) {
+            //first check if its exist, otherwise add as new option 
+            var opts = this.options;
+            var checkExist = false;
+            $.each(opts, function (el) {
+                if (opts[el].hostname == input){
+                    checkExist = true;
+                    return false;
+                }
+            });
+            if (!checkExist){
+                callback({ id: input, hostname: input });
+            } else {
+                this.setValue(input, false);
+                return false;
+            }
+        }
+    });
+}
+
+
 $(document).ready(function () {
     $('#profilewizardmodal').on('show.bs.modal', function (event) {
         //Prevent BODY from scrolling when a modal is opened
@@ -114,6 +179,7 @@ $(document).ready(function () {
         $("#pw_job_exec").removeAttr('disabled');
         $(this).find('input[type=checkbox]').attr('checked',false); 
         $(this).find('input[type=radio]').attr('checked',false); 
+        selectizePubProfileHostname('#pw-hostname');
         if (mode === 'add') {
             $('.wizard .nav-tabs li').addClass("disabled")
             $('.wizard .nav-tabs li').first().removeClass("disabled").addClass("active");
@@ -136,6 +202,16 @@ $(document).ready(function () {
                         console.log(json)
                         if (json) {
                             fillFormByName('#profilewizardmodal', 'input, select, textarea', json);
+                            if (json.hostname){
+                                // check if its filled, otherwise add as new option 
+                                if (!$('#pw-hostname')[0].selectize.getValue()) {
+                                    $("#pw-hostname")[0].selectize.addOption({
+                                        id: json.hostname,
+                                        hostname: json.hostname,
+                                    });
+                                    $("#pw-hostname")[0].selectize.setValue(json.hostname, false);
+                                } 
+                            }
                             if (json.last_tab_id){
                                 $("#profilewizardmodal").find('a[data-toggle="tab"][href="#'+json.last_tab_id+'"]').click();
                             }
@@ -167,6 +243,7 @@ $(document).ready(function () {
 
     $('#profilewizardmodal').on('hide.bs.modal', function (event) {
         saveWizardData('#profilewizardmodal');
+        $('#pw-hostname')[0].selectize.destroy();
     });
 
     $(function () {
@@ -218,7 +295,7 @@ $(document).ready(function () {
             $("#pw-validatepublickey").css("display","none")
         }
     });
-    
+
     $('.wizard #pw_next_exec').on('change', function (e) {
         var next_exec= $(this).val()
         $("#pw_job_exec").removeAttr('disabled');
@@ -227,7 +304,7 @@ $(document).ready(function () {
             $("#pw_job_exec").attr('disabled', "disabled");
         } 
     });
-    
+
     $(".profilewizard input[name='profiletype']").on('change', function (e) {
         showWizardProfileAlert()
     });
@@ -308,7 +385,7 @@ $(document).ready(function () {
                         } 
                     }
                 }
-            } else if (profiletype == "amazon"){
+            } else if (profiletype == "amazon" || profiletype == "google" ){
                 $("pw-step-connectiontype-mainp").html()
             }
         } else if (href == "#pw-step-settings"){
@@ -325,7 +402,7 @@ $(document).ready(function () {
             var profiletype = $(".profilewizard input[name='profiletype']:checked").val()
             if (profiletype == "host"){
                 $('#pw-step-complete-header').html("Complete");
-                $('#pw-step-complete-text').html('Your run environment successfully added into your account. You can always access your run environments in the <a href="index.php?np=4" class="text-aqua" target="_blank">Profiles </a> section by clicking on its icon <a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" target="_blank" title="Profiles"><i class="glyphicon glyphicon-user"></i></a> located on the upper right corner of the website.');
+                $('#pw-step-complete-text').html('Your run environment successfully added into your account and you can start using publicly available pipelines. Please check our tutorial: <a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#running-pipelines" class="text-aqua" target="_blank">Running Pipelines</a> for details on how to start a new run. </br></br> Note: You can always access your run environments in the <a href="index.php?np=4" class="text-aqua" target="_blank">Profiles </a> section by clicking on its icon <a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" target="_blank" title="Profiles"><i class="glyphicon glyphicon-user"></i></a> located on the upper right corner of the website.');
                 $('[data-toggle="tooltip"]').tooltip();
                 var username = $.trim($("#pw-username").val());
                 var hostname = $.trim($("#pw-hostname").val());
@@ -335,7 +412,7 @@ $(document).ready(function () {
                     var currentdate = new Date(); 
                     var datetime = " on " + currentdate.getDate() + "/" + (currentdate.getMonth()+1)  + "/"  + currentdate.getFullYear();
                     var name = "Run Environment" + datetime
-                }
+                    }
                 var saveprofilecluster_id = $("#pw-saveprofilecluster_id").val();
                 var executor = $("#pw_next_exec").val();
                 var executor_job = $("#pw_job_exec").val();
@@ -353,9 +430,13 @@ $(document).ready(function () {
                 var singularity_cmd =  $.trim($("#pw-singularitycmd").val());
                 var cmdAr = ["source /etc/profile", java_cmd, next_cmd, docker_cmd, singularity_cmd]
                 var cmd = combineLinuxCmd(cmdAr);
-                
+
                 var port = $.trim($("#pw-sshport").val());
                 var ssh_id =  $("#pw-sshkeyid").val();
+                var variable = $.trim($("#pw-downdir").val());
+                if (variable){
+                    variable = 'params.DOWNDIR = "'+variable+'"';
+                }
                 var profileClusterObj = { 
                     p: "saveProfileCluster", 
                     id: saveprofilecluster_id,
@@ -378,12 +459,32 @@ $(document).ready(function () {
                     hostname: hostname, 
                     port: port, 
                     singu_cache: "", 
-                    variable: "", 
+                    variable: variable, 
                     ssh_id: ssh_id, 
                     group_id: "", 
                     auto_workdir: "", 
                     perms: "3"
                 };
+                var publicProfile = checkPublicProfileSelected();
+                if (publicProfile){
+                    profileClusterObj.executor = publicProfile.executor;
+                    profileClusterObj.cmd = publicProfile.cmd;
+                    profileClusterObj.next_path = publicProfile.next_path;
+                    profileClusterObj.next_memory = publicProfile.next_memory;
+                    profileClusterObj.next_queue = publicProfile.next_queue;
+                    profileClusterObj.next_time = publicProfile.next_time;
+                    profileClusterObj.next_cpu = publicProfile.next_cpu;
+                    profileClusterObj.next_clu_opt = publicProfile.next_clu_opt;
+                    profileClusterObj.executor_job = publicProfile.executor_job;
+                    profileClusterObj.job_memory = publicProfile.job_memory;
+                    profileClusterObj.job_queue = publicProfile.job_queue;
+                    profileClusterObj.job_time = publicProfile.job_time;
+                    profileClusterObj.job_cpu = publicProfile.job_cpu;
+                    profileClusterObj.job_clu_opt = publicProfile.job_clu_opt;
+                    profileClusterObj.singu_cache = publicProfile.singu_cache;
+                    profileClusterObj.variable = publicProfile.variable;
+                    profileClusterObj.auto_workdir = publicProfile.auto_workdir;
+                }
                 console.log(profileClusterObj)
                 var profileCluster = getValues(profileClusterObj);
                 console.log(profileCluster)
@@ -394,11 +495,14 @@ $(document).ready(function () {
                     }
                 }
                 $('#profilewizardmodal').data('status', "success");
-                //If you have any issues/questions about creating profiles please contact us on: support@dolphinnext.com
             } else if (profiletype == "amazon"){
                 $('#profilewizardmodal').data('status', "success");
                 $('#pw-step-complete-header').html("Quick Start Guide");
-                $('#pw-step-complete-text').html('Please click and follow our <a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#creating-profile" class="text-aqua" target="_blank">Profile Guide</a> to create your run enironment. If you have any issues/questions about creating profiles please contact us on: support@dolphinnext.com');
+                $('#pw-step-complete-text').html('Please click and follow our <a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#b-defining-amazon-profile" class="text-aqua" target="_blank">Amazon Profile Guide</a> to create your run enironment. If you have any issues/questions about creating profiles please contact us on: support@dolphinnext.com');
+            } else if (profiletype == "google"){
+                $('#profilewizardmodal').data('status', "success");
+                $('#pw-step-complete-header').html("Quick Start Guide");
+                $('#pw-step-complete-text').html('Please click and follow our <a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#c-defining-google-profile" class="text-aqua" target="_blank">Google Profile Guide</a> to create your run enironment. If you have any issues/questions about creating profiles please contact us on: support@dolphinnext.com');
             } else if (profiletype == "test"){
                 $('#profilewizardmodal').data('status', "success");
                 $('#pw-step-complete-header').html("Complete");
@@ -436,7 +540,7 @@ $(document).ready(function () {
                 showInfoModal("#infoMod","#infoModText", "Please choose one of the profile types to continue.");
                 return;
             }
-            if (profiletype == "test" || profiletype == "amazon"){
+            if (profiletype == "test" || profiletype == "amazon" || profiletype == "google"){
                 var $tabs = $('.wizard .nav-tabs li');
                 $tabs.last().removeClass('disabled');
                 lastTab($tabs);
@@ -458,8 +562,18 @@ $(document).ready(function () {
                 if (infoText){
                     showInfoModal("#infoMod","#infoModText", infoText);
                     return;
+                } 
+                //check if public profile settings are available in the #pw-hostname
+                var publicProfile = checkPublicProfileSelected();
+                if (publicProfile){
+                    //autofill other options, and go to last section
+                    var $tabs = $('.wizard .nav-tabs li');
+                    $tabs.last().removeClass('disabled');
+                    lastTab($tabs);
+                    return;
                 }
             }
+
         } else if ($activeTabId == "pw-step-settings"){
             var profiletype = $(".profilewizard input[name='profiletype']:checked").val()
             var useSSH = $("#pw-usesshkeys").val()

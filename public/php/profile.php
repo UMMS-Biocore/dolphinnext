@@ -423,13 +423,13 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <div id="mEnvInsTypeDiv" class="form-group" style="display:none">
-                        <label for="mEnvInsType" class="col-sm-3 control-label">Instance Type</label>
+                        <label for="mEnvInsType" class="col-sm-3 control-label">Instance Type <span><a data-toggle="tooltip" data-placement="bottom" title=" Amazon EC2 or Google Cloud instance type that comprise varying combinations of CPU, memory, storage, and networking capacity (eg. m3.xlarge)."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mEnvInsType" name="instance_type">
                         </div>
                     </div>
                     <div id="mEnvImageIdDiv" class="form-group" style="display:none">
-                        <label for="mEnvImageId" class="col-sm-3 control-label">Image Id</label>
+                        <label for="mEnvImageId" class="col-sm-3 control-label">Image Id <span><a data-toggle="tooltip" data-placement="bottom" title=" Virtual machine ID"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mEnvImageId" name="image_id">
                         </div>
@@ -447,7 +447,7 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <div id="mSubnetIdDiv" class="form-group" style="display:none">
-                        <label for="mSubnetId" class="col-sm-3 control-label">Subnet Id</label>
+                        <label for="mSubnetId" class="col-sm-3 control-label">Subnet Id <span><a data-toggle="tooltip" data-placement="bottom" title="Identifier of the VPC subnet to be applied e.g. subnet-05222a43."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSubnetId" name="subnet_id">
                         </div>
@@ -460,13 +460,13 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <div id="mSharedStorageIdDiv" class="form-group" style="display:none">
-                        <label for="mSharedStorageId" class="col-sm-3 control-label">Shared Storage Id</label>
+                        <label for="mSharedStorageId" class="col-sm-3 control-label">Shared Storage Id <span><a data-toggle="tooltip" data-placement="bottom" title="Identifier of the shared file system instance e.g. fs-1803efd1."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSharedStorageId" name="shared_storage_id">
                         </div>
                     </div>
                     <div id="mSharedStorageMountDiv" class="form-group" style="display:none">
-                        <label for="mSharedStorageMount" class="col-sm-3 control-label">Shared Storage Mount</label>
+                        <label for="mSharedStorageMount" class="col-sm-3 control-label">Shared Storage Mount <span><a data-toggle="tooltip" data-placement="bottom" title="Mount path of the shared file system e.g. /mnt/efs"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSharedStorageMount" value="/mnt/efs" name="shared_storage_mnt">
                         </div>

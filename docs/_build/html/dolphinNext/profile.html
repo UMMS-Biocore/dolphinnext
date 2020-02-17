@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Profile Guide &mdash; DolphinNext 0.3.64 documentation</title>
+  <title>Profile Guide &mdash; DolphinNext v1.1.3 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="DolphinNext 0.3.64 documentation" href="../index.html"/>
+    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/>
         <link rel="next" title="Amazon Cloud Guide" href="amazon.html"/>
         <link rel="prev" title="Run Guide" href="run.html"/> 
 
@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.3.64
+                v1.1.3
               </div>
             
           
@@ -106,13 +106,22 @@
 <li class="toctree-l2"><a class="reference internal" href="#profile-page">Profile Page</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#ssh-keys">SSH Keys</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#amazon-keys">Amazon Keys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#google-keys">Google Keys</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#groups">Groups</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#run-environments">Run Environments</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#a-defining-host-profile">A. Defining Host Profile:</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#b-defining-amazon-profile">B. Defining Amazon Profile:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-environments">Run Environments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-defining-host-profile">A. Defining Host Profile:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#b-defining-amazon-profile">B. Defining Amazon Profile:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c-defining-google-profile">C. Defining Google Profile:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#github-connection">GitHub Connection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#change-password">Change Password</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.html">Google Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="public_ssh_key.html">Adding Public SSH Key</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Developer Guide</span></p>
 <ul>
@@ -189,10 +198,18 @@
 <h2>Profile Page<a class="headerlink" href="#profile-page" title="Permalink to this headline">¶</a></h2>
 <p>Once logged in, click on the profile tab in the top right of the screen. You’ll notice several tabs to explore in profile page.</p>
 <img alt="../_images/profile_tabs2.png" class="align-center" src="../_images/profile_tabs2.png" />
-<p>First tab is the <strong>run environments</strong>. This is your main segment for creating connection profiles. Second tab is <strong>groups</strong> where you can create group and add members to it. Next section is the <strong>SSH Keys</strong>, where you can create new or enter existing SSH key pairs to establish connection to any kind of host. Fourth tab is called <strong>Amazon Keys</strong> where you enter your Amazon Web Services (AWS) security credentials to start/stop <a class="reference external" href="https://aws.amazon.com/ec2">Amazon EC2 instances</a>.</p>
+<ul class="simple">
+<li><strong>Run environments:</strong> This is your main segment for creating connection profiles.</li>
+<li><strong>Groups:</strong> where you can create group and add members to it to share your run or pipeline.</li>
+<li><strong>SSH Keys:</strong>, where you can create new or enter existing SSH key pairs to establish connection to any kind of host.</li>
+<li><strong>Amazon Keys:</strong> where you enter your Amazon Web Services (AWS) security credentials to start/stop <a class="reference external" href="https://aws.amazon.com/ec2">Amazon EC2 instances</a>.</li>
+<li><strong>Google Keys:</strong> where you enter your Google Cloud security credentials to execute your runs in Google Instances.</li>
+<li><strong>Github:</strong> where you enter your Github security credentials to push your pipeline information to your Github account.</li>
+<li><strong>Change Password:</strong> If you’re not using google sign-in, you can change your password within this section.</li>
+</ul>
 <div class="admonition tip">
 <p class="first admonition-title">Tip</p>
-<p class="last">Before creating run environment, <strong>SSH Keys</strong> needed to be created in SSH Keys tab. If you want to create Amazon EC2 instances and submit your jobs to Amazon Cloud, then both SSH and Amazon Key are required before specifying run environment.</p>
+<p class="last">Before creating run environment, <strong>SSH Keys</strong> needed to be created in SSH Keys tab. If you want to execute your runs in the cloud; you need to add Amazon or Google Key as well.</p>
 </div>
 </div>
 <div class="section" id="ssh-keys">
@@ -201,46 +218,53 @@
     <iframe src="https://www.youtube.com/embed/7wH2NjXSebA" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
 </div>
 </br><img alt="../_images/ssh_keys.png" class="align-center" src="../_images/ssh_keys.png" />
-<p>In the SSH keys tab, you can create new or enter existing SSH key pairs by clicking on “Add SSH Key” button. By using Add SSH Keys window, enter the name of your keys and select the method you want to proceed: <code class="docutils literal notranslate"><span class="pre">A.</span> <span class="pre">Use</span> <span class="pre">your</span> <span class="pre">own</span> <span class="pre">keys</span></code> or <code class="docutils literal notranslate"><span class="pre">B.</span> <span class="pre">Create</span> <span class="pre">new</span> <span class="pre">keys</span></code>.</p>
-<ul>
-<li><p class="first"><strong>A. Use your own keys:</strong> If you choose “use your own keys”, your private and public key pairs will be asked. You can reach your key pairs in your computer at default location: <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa</span></code> for private and <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa.pub</span></code> for public key. If these files are not exist or you want to create new ones, then on the command line, enter:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span><span class="o">-</span><span class="n">keygen</span> <span class="o">-</span><span class="n">t</span> <span class="n">rsa</span>
-</pre></div>
-</div>
-</li>
+<p>In the SSH keys tab, you can create new or enter existing SSH key pairs by clicking on “Add SSH Key” button. Please enter the name of your keys and select the method you want to proceed: <code class="docutils literal notranslate"><span class="pre">A.</span> <span class="pre">Use</span> <span class="pre">your</span> <span class="pre">own</span> <span class="pre">keys</span></code> or <code class="docutils literal notranslate"><span class="pre">B.</span> <span class="pre">Create</span> <span class="pre">new</span> <span class="pre">keys</span></code>.</p>
+<ul class="simple">
+<li><strong>A. Use your own keys:</strong> If you choose “use your own keys”, your private and public key pairs will be asked. You can reach your key pairs in your computer at default location: <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa</span></code> for private and <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa.pub</span></code> for public key. Copy those keys and paste into browser fields. If these files are not exist or you want to create new ones,  please check <a class="reference external" href="faq.html#how-can-i-create-ssh-keys-in-my-computer">the link here.</a></li>
+<li><strong>B. Create new keys:</strong> You will proceed by clicking generate keys button where new pair of ssh keys will be specifically produced for you.</li>
 </ul>
-<p>You will be prompted to supply a filename and a password. In order to accept the default filename (and location) for your key pair, press Enter without entering a filename. Your SSH keys will be generated using the default filename (<code class="docutils literal notranslate"><span class="pre">id_rsa</span></code> and <code class="docutils literal notranslate"><span class="pre">id_rsa.pub</span></code>).</p>
-<ul>
-<li><p class="first"><strong>B. Create new keys:</strong> You will proceed by clicking generate keys button where new pair of ssh keys will be specifically produced for you. You should keep these keys in your default .ssh directory (<code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa</span></code> for private and <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa.pub</span></code> for public key). It is required to be adjust your public key permissions to 644 (-rw-r–r–) and private key permissions to 600 (-rw——-) by entering following commands:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chmod</span> <span class="o">-</span><span class="n">R</span> <span class="mi">600</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa</span>
-<span class="n">chmod</span> <span class="o">-</span><span class="n">R</span> <span class="mi">644</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa</span><span class="o">.</span><span class="n">pub</span>
-</pre></div>
-</div>
-</li>
-</ul>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">In both of the cases, private key will be used for submiting jobs in the host. Therefore, public key required to be added into <code class="docutils literal notranslate"><span class="pre">~/.ssh/authorized_keys</span></code> in the host by user.</p>
-</div>
-<p>In order to add you public key to the host, you might use the following command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cat</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">id_rsa</span><span class="o">.</span><span class="n">pub</span> <span class="o">|</span> <span class="n">ssh</span> <span class="n">USERNAME</span><span class="nd">@HOSTNAME</span> <span class="s2">&quot;mkdir -p ~/.ssh &amp;&amp; cat &gt;&gt; ~/.ssh/authorized_keys&quot;</span>
-</pre></div>
-</div>
-<p>After inserting public key, connect to the host and make sure file permissions of <code class="docutils literal notranslate"><span class="pre">authorized_keys</span></code> and <code class="docutils literal notranslate"><span class="pre">ssh</span></code> folder is correct by following commands:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chmod</span> <span class="mi">700</span> <span class="o">~/.</span><span class="n">ssh</span>
-<span class="n">chmod</span> <span class="mi">600</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">authorized_keys</span>
-</pre></div>
-</div>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p>Please check your permission of your home directory, if there is a connection problem. It shouldn’t be 777, because of the security reasons. You can set the permission of home directory to more secure options (eg. 755, 744, 750):</p>
-<p class="last"><code class="docutils literal notranslate"><span class="pre">chmod</span> <span class="pre">750</span> <span class="pre">~</span></code></p>
-</div>
+<p>After clicking save button, your information will be encrypted and kept secure. Now, you need to add your public key into <code class="docutils literal notranslate"><span class="pre">~/.ssh/authorized_keys</span></code> in the host to establish connection. Please check <a class="reference external" href="public_ssh_key.html">Adding Public SSH Key</a> guideline for help.</p>
 </div>
 <div class="section" id="amazon-keys">
 <h2>Amazon Keys<a class="headerlink" href="#amazon-keys" title="Permalink to this headline">¶</a></h2>
 <img alt="../_images/profile_amazonkeys.png" class="align-center" src="../_images/profile_amazonkeys.png" />
-<p>In the Amazon keys tab, you can enter your AWS security credentials (access key, secret key and default region) by clicking on “Add Amazon Key” button. Your information will be encrypted and kept secure. You will only have full access to editing and viewing the key information.</p>
+<p>In the Amazon keys tab, you can enter your AWS security credentials (access key, secret key and default region) by clicking on “Add Amazon Key” button. Your information will be encrypted and kept secure. Only you will have full access to view &amp; change the key information.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">After saving your key, it is not allowed to view your keys for security purposes. However, you can always overwrite with a new key or delete it.</p>
+</div>
+</div>
+<div class="section" id="google-keys">
+<h2>Google Keys<a class="headerlink" href="#google-keys" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/profile_googlekeys.png" class="align-center" src="../_images/profile_googlekeys.png" />
+<p>In the Google keys tab, you need to enter your Project ID and Service Account Key by clicking on “Add Google Key” button.</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt><strong>Project ID:</strong>   - Open the Google Cloud Console</dt>
+<dd><ul class="first last">
+<li>Go to Dashboard</li>
+<li>Check Project info box for Project ID (eg. dolphinnext-193616)</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>Service Account Key:</strong>   - Open the Google Cloud Console</dt>
+<dd><ul class="first last">
+<li>Go to APIs &amp; Services → Credentials</li>
+<li>Click on the Create credentials drop-down and choose Service Account Key, in the following page</li>
+<li>Select an existing Service account or create a new one if needed</li>
+<li>Select JSON as Key type</li>
+<li>Click the Create button and download the JSON file giving a name of your choice e.g. creds.json.</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">After saving your key, it is not allowed to view your Service Account Key for security purposes. However, you can always overwrite with a new key or delete it.</p>
+</div>
 </div>
 <div class="section" id="groups">
 <h2>Groups<a class="headerlink" href="#groups" title="Permalink to this headline">¶</a></h2>
@@ -250,16 +274,22 @@
 <div class="section" id="run-environments">
 <h2>Run Environments<a class="headerlink" href="#run-environments" title="Permalink to this headline">¶</a></h2>
 <img alt="../_images/profile_runenv.png" class="align-center" src="../_images/profile_runenv.png" />
-<p>This section is used for defining connection profiles by clicking on “Add Environment” button. Type options (A. Host or B. Amazon) will be prompted to user. You may choose “Host” option, if you are planing to submit jobs to specified hosts by using SSH Keys, or you may proceed with “Amazon” option to create Amazon EC2 instances and submit your jobs to Amazon Cloud.</p>
-</div>
+<p>This section is used for defining connection profiles by clicking on “Add Environment” button. As a type, please choose one of these options:</p>
+<ul class="simple">
+<li><strong>A. Host:</strong> If you have an access to High Performance Computing (HPC) environments, or personal workstations.</li>
+<li><strong>B. Amazon:</strong> If you have an Amazon Web Services (AWS) account or planning to create one in order to run your jobs in the cloud.</li>
+<li><strong>C. Google:</strong> If you have an Google Cloud account or planning to create one in order to run your jobs in the cloud.</li>
+</ul>
 <div class="section" id="a-defining-host-profile">
-<h2>A. Defining Host Profile:<a class="headerlink" href="#a-defining-host-profile" title="Permalink to this headline">¶</a></h2>
+<h3>A. Defining Host Profile:<a class="headerlink" href="#a-defining-host-profile" title="Permalink to this headline">¶</a></h3>
 <ul>
-<li><p class="first"><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect. You don’t need to add <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> sign while entering this information. For instance, for <a class="reference external" href="mailto:us2r&#37;&#52;&#48;ghpcc06&#46;umassrc&#46;org">us2r<span>&#64;</span>ghpcc06<span>&#46;</span>umassrc<span>&#46;</span>org</a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Username</span><span class="p">:</span> <span class="n">us2r</span>
-<span class="n">Hostname</span><span class="p">:</span> <span class="n">ghpcc06</span><span class="o">.</span><span class="n">umassrc</span><span class="o">.</span><span class="n">org</span>
+<li><p class="first"><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect (<a class="reference external" href="mailto:yourusername&#37;&#52;&#48;yourhostname">yourusername<span>&#64;</span>yourhostname</a>). For instance, for <a class="reference external" href="mailto:us2r&#37;&#52;&#48;ghpcc06&#46;umassrc&#46;org">us2r<span>&#64;</span>ghpcc06<span>&#46;</span>umassrc<span>&#46;</span>org</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span>  <span class="n">Username</span><span class="p">:</span> <span class="n">yourusername</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">us2r</span><span class="p">)</span>
+<span class="o">-</span>  <span class="n">Hostname</span><span class="p">:</span> <span class="n">yourhostname</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">ghpcc06</span><span class="o">.</span><span class="n">umassrc</span><span class="o">.</span><span class="n">org</span><span class="p">)</span>
 </pre></div>
 </div>
+</li>
+<li><p class="first"><strong>SSH Port (optional):</strong> By default TCP port 22 is used for SSH connection. You can change this default by entering port number.</p>
 </li>
 <li><p class="first"><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</p>
 </li>
@@ -267,6 +297,8 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">bashrc</span> <span class="o">&amp;&amp;</span> <span class="n">module</span> <span class="n">load</span> <span class="n">java</span><span class="o">/</span><span class="mf">1.8</span><span class="o">.</span><span class="mi">0</span><span class="n">_77</span> <span class="o">&amp;&amp;</span> <span class="n">module</span> <span class="n">load</span> <span class="n">singularity</span><span class="o">/</span><span class="n">singularity</span><span class="o">-</span><span class="mf">3.4</span><span class="o">.</span><span class="mi">0</span>
 </pre></div>
 </div>
+</li>
+<li><p class="first"><strong>Singularity Cache Folder:</strong> Directory where remote Singularity images are stored. By default home directory is used. Note: When using a computing cluster it must be a shared folder accessible from all computing nodes.</p>
 </li>
 <li><p class="first"><strong>Profile Variables:</strong> Since most of the pipelines uses genome reference and index files, you can define a download directory to keep these files. If multiple people are going to use DolphinNext, we would suggest using a shared path in your cluster. e.g.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">DOWNDIR</span><span class="o">=</span><span class="s2">&quot;/share/dolphinnext/downloads&quot;</span>
@@ -278,34 +310,50 @@
 </pre></div>
 </div>
 </li>
-<li><p class="first"><strong>Executor Settings:</strong></p>
+<li><p class="first"><strong>Executor Settings:</strong> In DolphinNext, there are 4 different section to control your executor settings. First two fields are defined in <strong>profile -&gt; run environment</strong>, and rest of the fields are adjusted in the <strong>advanced tab</strong> of run page. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>.</p>
 <blockquote>
-<div><p><strong>1. Executor Settings for Nextflow (in the profile)</strong>:
-You can determine the system where nextflow itself is initiated. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself.
-e.g. suggested parameters: long 8GB 1CPU 5000-8000min</p>
-<p><strong>2. Executor of Nextflow Jobs (in the profile)</strong>:
-This setting will be used if you don’t set any parameter in advanced section of your run page. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>. Adjustment of these parameters are allowed for both options.
-e.g. suggested parameters: short 20GB 1CPU 240min</p>
-<p><strong>3. Executor Settings for All Processes (in Advanced tab of run page)</strong>:
-This setting will overwrite Executor of Nextflow Jobs (in the profile).
-e.g. suggested parameters: short 20GB 1CPU 240min</p>
-<p><strong>4. Executor Settings for Each Process (in Advanced tab of run page)</strong>:
-If particular process needs special parameters other than <strong>executor settings for all processes</strong>, you may override general settings by clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest.
-e.g. suggested parameters: long 20GB 4CPU 1000-5000min</p>
-</div></blockquote>
-</li>
+<div><p><strong>1. Executor of Nextflow (in the profile -&gt; run environment)</strong>:</p>
+<blockquote>
+<div><p>Nextflow itself is initiated with this method. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself. So time limit should be long enough to execute all of the processes in the pipeline.</p>
+<ul class="simple">
+<li>e.g. suggested parameters for sge/slurm/lsf: long (queue) 8 (GB Memory) 1 (CPU) 5000-8000 (min, Time)</li>
+<li>e.g. suggested parameters for local: 8 (GB Memory) 1 (CPU)</li>
 </ul>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">For instance you may initiate nextflow in <code class="docutils literal notranslate"><span class="pre">local</span></code> and allow nextflow to run its jobs <code class="docutils literal notranslate"><span class="pre">local</span></code>, <code class="docutils literal notranslate"><span class="pre">sge</span></code>, <code class="docutils literal notranslate"><span class="pre">lsf</span></code>, <code class="docutils literal notranslate"><span class="pre">slurm</span></code> or <code class="docutils literal notranslate"><span class="pre">ignite</span></code>. Alternatively, selection both options to <code class="docutils literal notranslate"><span class="pre">lsf</span></code> or <code class="docutils literal notranslate"><span class="pre">sge</span></code> would allow both executions to be maintained by <code class="docutils literal notranslate"><span class="pre">lsf</span></code> or <code class="docutils literal notranslate"><span class="pre">sge</span></code> executor.</p>
-</div>
+</div></blockquote>
+<p><strong>2. Executor of Nextflow Jobs (in the profile -&gt; run environment)</strong>:</p>
+<blockquote>
+<div><p>This setting will be used as default setting for submitted jobs by Nextflow. If you don’t set any parameter in advanced section of your run page.</p>
+<ul class="simple">
+<li>e.g. suggested parameters for sge/slurm/lsf: short (queue) 20 (GB Memory) 1 (CPU) 240 (min, Time)</li>
+<li>e.g. suggested parameters for local/ignite: 20 (GB Memory) 1 (CPU)</li>
+</ul>
+</div></blockquote>
+<p><strong>3. Executor Settings for All Processes (in the advanced tab of run page)</strong>:</p>
+<blockquote>
+<div><p>This setting will overwrite Executor of Nextflow Jobs (in the profile) and set default setting for Nextflow Jobs.</p>
+<ul class="simple">
+<li>e.g. suggested parameters for sge/slurm/lsf: short (queue) 20 (GB Memory) 1 (CPU) 240 (min, Time)</li>
+<li>e.g. suggested parameters for local/ignite: 20 (GB Memory) 1 (CPU)</li>
+</ul>
+</div></blockquote>
+<p><strong>4. Executor Settings for Each Process (in the advanced tab of run page)</strong>:</p>
+<blockquote>
+<div><p>If particular process requires different parameters other than the defaults (which are defined in <strong>Executor Settings for All Processes</strong> or <strong>Executor of Nextflow Jobs</strong> sections), you can overwrite the general settings by clicking the checkbox of process that you want to change. This will only affect the settings of clicked process and keep the original settings for the rest of the processes.</p>
+<ul class="simple">
+<li>e.g. suggested parameters for sge/slurm/lsf: long (queue) 20 (GB Memory) 4 (CPU) 1000-5000 (min, Time)</li>
+<li>e.g. suggested parameters for local/ignite: 20 (GB Memory) 4 (CPU)</li>
+</ul>
+</div></blockquote>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">In case of non-standart resources or settings is required for executor, then you can specify these parameters by using <strong>Other options</strong> box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">orte</span> <span class="pre">3</span></code> (to use MPI for distributed-memory machines) or <code class="docutils literal notranslate"><span class="pre">-pe</span> <span class="pre">smp</span> <span class="pre">3</span></code> (to use OpenMP for shared-memory machines) in the <strong>Other options</strong> box and just leave the CPU box empty.</p>
 </div>
+</div></blockquote>
+</li>
+</ul>
 </div>
 <div class="section" id="b-defining-amazon-profile">
-<h2>B. Defining Amazon Profile:<a class="headerlink" href="#b-defining-amazon-profile" title="Permalink to this headline">¶</a></h2>
+<h3>B. Defining Amazon Profile:<a class="headerlink" href="#b-defining-amazon-profile" title="Permalink to this headline">¶</a></h3>
 <ul>
 <li><p class="first"><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</p>
 </li>
@@ -313,12 +361,25 @@ e.g. suggested parameters: long 20GB 4CPU 1000-5000min</p>
 </li>
 <li><p class="first"><strong>Instance Type:</strong> <a class="reference external" href="https://aws.amazon.com/ec2/instance-types">Amazon EC2 instance types</a> that comprise varying combinations of CPU, memory, storage, and networking capacity (eg. <code class="docutils literal notranslate"><span class="pre">m3.xlarge</span></code>).</p>
 </li>
-<li><p class="first"><strong>Image Id:</strong> Virtual machine ID (eg. <code class="docutils literal notranslate"><span class="pre">ami-032a33ebe57465518</span></code>). If you want to create your own image, it should support <a class="reference external" href="http://singularity.lbl.gov">singularity</a>, <a class="reference external" href="https://www.docker.com/">docker engine</a> (version 1.11 or higher), Apache Ignite, Cloud-init package, and Java runtime (version 8).</p>
+<li><p class="first"><strong>Image Id:</strong> Virtual machine ID (eg. <code class="docutils literal notranslate"><span class="pre">ami-032a33ebe57465518</span></code>).</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>If you want to create your own image, please install following programs:</dt>
+<dd><ul class="first last simple">
+<li><a class="reference external" href="http://singularity.lbl.gov">Singularity</a></li>
+<li><a class="reference external" href="https://www.docker.com/">Docker engine</a> (version 1.11 or higher)</li>
+<li>Apache Ignite with Cloud-init package</li>
+<li><a class="reference external" href="https://www.nextflow.io/">Nextflow</a></li>
+<li><a class="reference external" href="https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html">AWS CLI</a></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
 </li>
 <li><p class="first"><strong>Subnet Id/Security Group/Shared Storage Id/Shared Storage Mount:</strong></p>
 <blockquote>
 <div><dl class="docutils">
-<dt>The filesystem needs to be created at <a class="reference external" href="https://console.aws.amazon.com/efs/">https://console.aws.amazon.com/efs/</a> and these  informations will be obtained upon creation of shared file system.</dt>
+<dt>The filesystem needs to be created at <a class="reference external" href="https://console.aws.amazon.com/efs/">https://console.aws.amazon.com/efs/</a> and these informations will be obtained upon creation of shared file system.</dt>
 <dd><ul class="first last simple">
 <li><em>Subnet Id:</em> Identifier of the VPC subnet to be applied e.g. subnet-05222a43.</li>
 <li><em>Security Group:</em> Identifier of the security group to be applied e.g. sg-df72b9ba, default.</li>
@@ -341,13 +402,74 @@ e.g. suggested parameters: long 20GB 4CPU 1000-5000min</p>
 </div>
 </div></blockquote>
 </li>
+<li><p class="first"><strong>Default Working Directory:</strong> Default directory in the host machine where runs will be executed. It is optional for AWS. (eg. /data/dnext)</p>
+</li>
+<li><p class="first"><strong>Default Bucket Location for Publishing:</strong> Default bucket location where dolphinnext reports will be published. It is optional for AWS (e.g. s3://bucket/dnext)</p>
+</li>
 <li><p class="first"><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></p>
 </li>
 <li><p class="first"><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg. <code class="docutils literal notranslate"><span class="pre">/project/umw_biocore/bin</span></code></p>
 </li>
+<li><p class="first"><strong>Singularity Cache Folder:</strong> Directory where remote Singularity images are stored. By default home directory is used. Note: When using a computing cluster it must be a shared folder accessible from all computing nodes.</p>
+</li>
+<li><p class="first"><strong>Profile Variables:</strong> You can set commonly used pipeline variables here. For instance,``params.DOWNDIR`` is used in most of our public pipelines to save all genome related files (fasta, index etc.). So you can set this variable like this: <code class="docutils literal notranslate"><span class="pre">params.DOWNDIR</span> <span class="pre">=</span> <span class="pre">&quot;/share/dnext_data&quot;</span></code> Also, you can enter multiple variables by separating them with newline.</p>
+</li>
 <li><p class="first"><strong>Executor of Nextflow/Executor of Nextflow Jobs:</strong> Amazon instances are automatically configured to use the Ignite executors. Therefore, while defining amazon profile, you should select <code class="docutils literal notranslate"><span class="pre">local</span></code> for <strong>Executor of Nextflow</strong> and <code class="docutils literal notranslate"><span class="pre">ignite</span></code> for <strong>Executor of Nextflow Jobs.</strong></p>
 </li>
 </ul>
+</div>
+<div class="section" id="c-defining-google-profile">
+<h3>C. Defining Google Profile:<a class="headerlink" href="#c-defining-google-profile" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first"><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</p>
+</li>
+<li><p class="first"><strong>Google Keys:</strong> Google credentials that are saved in Google keys tab and will allow to start/stop Google Cloud instances.</p>
+</li>
+<li><p class="first"><strong>Zone:</strong>  The Google zone where the computation is executed.(eg. us-east1-b)</p>
+</li>
+<li><p class="first"><strong>Instance Type:</strong> <a class="reference external" href="https://cloud.google.com/compute/docs/machine-types">Google Cloud machine types</a> that comprise varying combinations of CPU, memory, storage, and networking capacity (eg. <code class="docutils literal notranslate"><span class="pre">n1-standard-4</span></code>).</p>
+</li>
+<li><p class="first"><strong>Image Id:</strong> Virtual machine ID (eg. <code class="docutils literal notranslate"><span class="pre">dolphinnext-193616/global/images/dolphinnext-images-v1</span></code>).</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>If you want to create your own image, please install following programs:</dt>
+<dd><ul class="first last simple">
+<li><a class="reference external" href="http://singularity.lbl.gov">Singularity</a></li>
+<li><a class="reference external" href="https://www.docker.com/">Docker engine</a> (version 1.11 or higher)</li>
+<li>Apache Ignite with Cloud-init package</li>
+<li><a class="reference external" href="https://www.nextflow.io/">Nextflow</a></li>
+<li><a class="reference external" href="https://cloud.google.com/sdk/install">gcloud</a></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>Default Working Directory:</strong> Default directory in the host machine where runs will be executed. It is mandatory for google cloud. (eg. /data/dnext)</p>
+</li>
+<li><p class="first"><strong>Default Bucket Location for Publishing:</strong> Default bucket location where dolphinnext reports will be published. It is mandatory for google cloud and you can always edit this path in the run page. (e.g. gs://bucket/dnext)</p>
+</li>
+<li><p class="first"><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/bashrc</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">java/1.8.0_31</span> <span class="pre">&amp;&amp;</span> <span class="pre">module</span> <span class="pre">load</span> <span class="pre">bowtie2/2.3.2</span></code></p>
+</li>
+<li><p class="first"><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg. <code class="docutils literal notranslate"><span class="pre">/project/umw_biocore/bin</span></code></p>
+</li>
+<li><p class="first"><strong>Singularity Cache Folder:</strong> Directory where remote Singularity images are stored. By default home directory is used. Note: When using a computing cluster it must be a shared folder accessible from all computing nodes.</p>
+</li>
+<li><p class="first"><strong>Profile Variables:</strong> You can set commonly used pipeline variables here. For instance,``params.DOWNDIR`` is used in most of our public pipelines to save all genome related files (fasta, index etc.). So you can set this variable like this: <code class="docutils literal notranslate"><span class="pre">params.DOWNDIR</span> <span class="pre">=</span> <span class="pre">&quot;/share/dnext_data&quot;</span></code> Also, you can enter multiple variables by separating them with newline.</p>
+</li>
+<li><p class="first"><strong>Executor of Nextflow/Executor of Nextflow Jobs:</strong> Google instances are automatically configured to use the Ignite executors. Therefore, while defining google profile, you can select <code class="docutils literal notranslate"><span class="pre">local</span></code> for <strong>Executor of Nextflow</strong> and <code class="docutils literal notranslate"><span class="pre">ignite</span></code> for <strong>Executor of Nextflow Jobs.</strong></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="github-connection">
+<h2>GitHub Connection<a class="headerlink" href="#github-connection" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/profile_github.png" class="align-center" src="../_images/profile_github.png" />
+<p>You can enter your Github security credentials (Username, E-mail, Password) by clicking on “Add Github Account” button. Your information will be encrypted and kept secure. By adding your Github account, you could be able to push your pipeline information into your Github account and share with others.</p>
+</div>
+<div class="section" id="change-password">
+<h2>Change Password<a class="headerlink" href="#change-password" title="Permalink to this headline">¶</a></h2>
+<img alt="../_images/profile_change_password.png" class="align-center" src="../_images/profile_change_password.png" />
+<p>If you’re not using google sign-in, you can change your DolphinNext password by using this section.</p>
 </div>
 </div>
 
@@ -395,7 +517,7 @@ e.g. suggested parameters: long 20GB 4CPU 1000-5000min</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.3.64',
+            VERSION:'v1.1.3',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

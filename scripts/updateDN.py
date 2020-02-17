@@ -22,6 +22,7 @@ def getConf():
         ret['DBHOST'] = config.get('Dolphinnext', 'DBHOST')
         ret['DBPORT'] = config.get('Dolphinnext', 'DBPORT')
     except:
+        #When .sec file is not found (eg. docker tests), use following defaults:     
         ret['DB']     = 'dolphinnext'
         ret['DBUSER'] = 'root'
         ret['DBPASS'] = ''
