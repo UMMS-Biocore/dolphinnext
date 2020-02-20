@@ -115,6 +115,7 @@ class ajaxQueryTest extends TestCase
     /**
      * @depends testSaveUserManual
      * @depends testSaveUserManual2
+     * @depends testgetUserRole
      */
     public function testChangeRoleUser() {
 		ob_start();

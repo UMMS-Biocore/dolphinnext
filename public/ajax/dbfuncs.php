@@ -3878,7 +3878,7 @@ class dbfuncs {
                         SELECT DISTINCT pp.id as project_pipeline_id, pp.name,  pp.summary, max(r.id) as run_log_id,  pp.date_created as pp_date_created, pp.output_dir, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own, pp.pipeline_id, pp.group_id
                         FROM project_pipeline pp
                         LEFT JOIN run_log r  ON r.project_pipeline_id=pp.id
-                        LEFT JOIN user_group ug ON r.group_id=ug.g_id
+                        LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                         $where
                         GROUP BY pp.id 
                     ) b ON rr.id = b.run_log_id
