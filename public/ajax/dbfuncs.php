@@ -2403,9 +2403,12 @@ class dbfuncs {
         $sql = "UPDATE users SET $verify active=$active, last_modified_user='$user_id' WHERE id = '$user_id'";
         return self::runSQL($sql);
     }
-    public function changeRoleUser($user_id, $type) {
-        $sql = "UPDATE users SET role='$type', last_modified_user='$user_id' WHERE id = '$user_id'";
-        return self::runSQL($sql);
+    function changeRoleUser($user_id, $type, $ownerID) {
+        $userRole = $this->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            $sql = "UPDATE users SET role='$type', last_modified_user='$user_id' WHERE id = '$user_id'";
+            return self::runSQL($sql);
+        }
     }
 
     //    ------------- Profiles   ------------

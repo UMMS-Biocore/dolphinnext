@@ -83,6 +83,18 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)->id,'1');
 		ob_end_clean();
 	}
+    
+    /**
+     * @depends testSaveUserManual
+     */
+    public function testgetUserRole() {
+		ob_start();
+		$_REQUEST['p'] = 'getUserRole';
+		include('ajaxquery.php');
+		$this->assertEquals(json_decode($data)[0]->role, "admin");
+		ob_end_clean();
+	}
+    
     /**
      * @depends testSaveUserManual
      */
@@ -100,7 +112,21 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)->id,'2');
 		ob_end_clean();
 	}
-     
+    /**
+     * @depends testSaveUserManual
+     */
+    public function testChangeRoleUser() {
+		ob_start();
+        $_REQUEST['p'] = 'changeRoleUser';
+		$_REQUEST['user_id'] = '1';
+		$_REQUEST['type'] = "user";
+		include('ajaxquery.php');
+        $_REQUEST['p'] = 'getUserRole';
+		include('ajaxquery.php');
+		$this->assertEquals(json_decode($data)[0]->role, "user");
+		ob_end_clean();
+	}
+
     /**
      * @depends testSaveUserManual
      */
@@ -1368,17 +1394,7 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)[0]->name,'test_group');
 		ob_end_clean();
 	}
-    /**
-     * @depends testSaveUserManual
-     */
-    public function testgetUserRole() {
-		ob_start();
-		$_REQUEST['p'] = 'getUserRole';
-        $_SESSION['ownerID'] = '1';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->role, "user");
-		ob_end_clean();
-	}
+    
 
 	//   should be defined for admin user
 //	/**
