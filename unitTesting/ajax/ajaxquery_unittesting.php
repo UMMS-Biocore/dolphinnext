@@ -150,6 +150,7 @@ class ajaxQueryTest extends TestCase
      */
     public function testInsertGroup() {
 		ob_start();
+        $_REQUEST['id'] = '';
 		$_REQUEST['p'] = 'saveGroup';
 		$_REQUEST['name'] = 'test_group';
 		include('ajaxquery.php');
