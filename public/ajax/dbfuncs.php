@@ -660,6 +660,9 @@ class dbfuncs {
         $profile_def = "";
         if ($profileType == "amazon" || $profileType == "google"){
             $profile_def = "source /etc/profile && source ~/.bash_profile";
+        } else {
+            //default source command for ssh connection
+            $profile_def = "source /etc/profile";
         }
         $nextVer = $this->next_ver;
         $nextVerText = "";
@@ -815,7 +818,7 @@ class dbfuncs {
     }
 
     //get all nextflow executor text
-    function getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, $logName, $initialRunParams, $postCmd, $ownerID) {
+    function getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu,$next_time,$next_memory,$jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, $logName, $initialRunParams, $postCmd, $preCmd, $ownerID) {
         $cleanReportCmd = "";
         if ($runType == "resumerun"){
             $runType = "-resume";
@@ -850,7 +853,7 @@ class dbfuncs {
             }
             $initialRunCmd = "cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $nxf_work_init $igniteCmd $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
-        $mainNextCmd = "$cleanReportCmd $initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $nxf_work $igniteCmd $runType $reportOptions > $dolphin_path_real/$logName $postCmd";
+        $mainNextCmd = "$preCmd $cleanReportCmd $initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $nxf_work $igniteCmd $runType $reportOptions > $dolphin_path_real/$logName $postCmd";
 
         //for lsf "bsub -q short -n 1  -W 100 -R rusage[mem=32024]";
         if ($executor == "local"){
@@ -1367,7 +1370,7 @@ class dbfuncs {
         //get command for renaming previous log file
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
         $createUUID = $this->createUUIDCmd($dolphin_path_real, $uuid);
-        $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $ownerID);
+        $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $preCmd, $ownerID);
         $amzCmd = "";
         //temporarily copy s3/gs config file into initialrun folder 
         if (!empty($getCloudConfigFileDir)){
@@ -1379,7 +1382,7 @@ class dbfuncs {
             $amzCmd = "source $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
         }
         //create run cmd file (.dolphinnext.init)
-        $runCmdAll = "$amzCmd $renameLog $createUUID $preCmd $exec_next_all";
+        $runCmdAll = "$amzCmd $renameLog $createUUID $exec_next_all";
         $this->createDirFile ($run_path_real, ".dolphinnext.init", 'w', $runCmdAll);
 
         // compress run folder
@@ -2819,6 +2822,13 @@ class dbfuncs {
               Where pg.owner_id = '$ownerID' AND id not in (select process_group_id from process Where owner_id != '$ownerID')";
         return self::queryTable($sql);
     }
+    //$table="process" or "biocorepipe_save"
+    function getSharedItemByUser($table, $u_id, $g_id) {
+        $sql = "SELECT id, name
+                FROM $table 
+                WHERE owner_id = '$u_id' AND group_id = '$g_id' AND (perms=11 OR perms=15)";
+        return self::queryTable($sql);
+    }
 
     function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID) {
         $sql = "INSERT INTO process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, publish, script_mode, script_mode_header, process_uuid, process_rev_uuid) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group', '$publish','$script_mode', '$script_mode_header', '$process_uuid', '$process_rev_uuid')";
@@ -2837,9 +2847,75 @@ class dbfuncs {
         $sql = "UPDATE project SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    function removeGroup($id) {
-        $sql = "DELETE FROM groups WHERE id = '$id'";
-        return self::runSQL($sql);
+
+    function checkGroupItem($table, $g_id,$ownerID) {
+        $checkGroupItem = $this->queryAVal("SELECT id, name 
+                                    FROM $table 
+                                    WHERE deleted = 0 AND owner_id != '$ownerID' AND group_id ='$g_id'");
+        if (!empty($checkGroupItem)){
+            return "It is not allowed to remove your group because your group has been used by other members. For details, please contact with admin.";
+        } else {
+            return "";
+        }
+    }
+
+    function removeGroup($g_id,$ownerID) {
+        $ret = array();
+        $checkUserOwnGroup = $this->queryAVal("SELECT id FROM groups WHERE owner_id = '$ownerID' AND id = '$g_id'");
+        if (empty($checkUserOwnGroup)){
+            $ret["error"] = "You don't have permission to remove this group.";
+            return json_encode($ret);
+        } else {
+            // check if group is used in any processes/pipeline that are shared
+            $warn = $this->checkGroupItem("process", $g_id, $ownerID);
+            if (empty($warn)){
+                $warn = $this->checkGroupItem("biocorepipe_save", $g_id, $ownerID);
+            }
+            if (empty($warn)){
+                $this -> removeUserGroup($g_id);
+                $sql = "DELETE FROM groups WHERE id = '$g_id'";
+                return self::runSQL($sql);
+            } else {
+                $ret["error"] = $warn;
+                return json_encode($ret);
+            }
+        }
+    }
+
+    function checkUsersSharedItem($table, $u_id, $g_id){
+        $item_ids = json_decode($this->getSharedItemByUser($table, $u_id, $g_id));
+        for ($i = 0; $i < count($item_ids); $i++) {
+            $item_id = $item_ids[$i]->{"id"};
+            $warnName = $item_ids[$i]->{"name"};
+            list($checkUsed,$warn) = $this->checkUsed($table, $warnName, $item_id, $u_id);
+            if (!empty($checkUsed)){
+                return "It is not allowed to remove user from your group because user has shared processes/pipelines that are used by other group members. For details, please contact with admin.";
+            }
+        }
+        return "";
+    }
+
+    function removeUserFromGroup($u_id, $g_id, $ownerID) {
+        $ret = array();
+        $checkUserOwnGroup = $this->queryAVal("SELECT id FROM groups WHERE owner_id = '$ownerID' AND id = '$g_id'");
+        if (empty($checkUserOwnGroup)){
+            $ret["error"] = "You don't have permission to remove user from group.";
+            return json_encode($ret);
+        } else {
+            // check if user has any process/pipeline shared within group and used within in pipeline that owner is not the user
+            //get all shared process and pipeline of the user.
+            $warn = $this->checkUsersSharedItem("process",$u_id, $g_id);
+            if (empty($warn)){
+                $warn = $this->checkUsersSharedItem("biocorepipe_save",$u_id, $g_id);
+            }
+            if (empty($warn)){
+                $sql = "DELETE FROM user_group WHERE g_id = '$g_id' AND u_id='$u_id'";
+                return self::runSQL($sql);
+            } else {
+                $ret["error"] = $warn;
+                return json_encode($ret);
+            }
+        }
     }
     function removeUserGroup($id) {
         $sql = "DELETE FROM user_group WHERE g_id = '$id'";
@@ -2928,11 +3004,26 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     //    ------ Groups -------
-    public function getAllGroups() {
-        $sql = "SELECT id, name FROM groups";
-        return self::queryTable($sql);
+    function getAllGroups($ownerID) {
+        $userRole = $this->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            $sql = "SELECT id, name FROM groups";
+            return self::queryTable($sql);
+        }
     }
-    public function getGroups($id,$ownerID) {
+    function getAllAvailableGroups($user_id, $ownerID){
+        $userRole = $this->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            $sql = "SELECT DISTINCT id, name 
+                    FROM groups
+                    WHERE name NOT IN (SELECT DISTINCT g.name 
+                    FROM groups g
+                    INNER JOIN user_group ug ON g.id = ug.g_id 
+                    WHERE ug.u_id = '$user_id')";
+            return self::queryTable($sql);
+        }
+    }
+    function getGroups($id,$ownerID) {
         $where = " where u.deleted = 0";
         if ($id != ""){
             $where = " where u.deleted = 0 AND g.id = '$id'";
@@ -2942,8 +3033,8 @@ class dbfuncs {
               INNER JOIN users u ON g.owner_id = u.id $where";
         return self::queryTable($sql);
     }
-    public function viewGroupMembers($g_id) {
-        $sql = "SELECT id, username, email
+    function viewGroupMembers($g_id) {
+        $sql = "SELECT id, name, username, email
               FROM users
               WHERE deleted = 0 AND id in (
                 SELECT u_id
@@ -2951,16 +3042,29 @@ class dbfuncs {
                 WHERE g_id = '$g_id')";
         return self::queryTable($sql);
     }
-    public function getMemberAdd($g_id) {
-        $sql = "SELECT id, username, email
-                FROM users
-                WHERE deleted = 0 AND id NOT IN (
-                  SELECT u_id
-                  FROM user_group
-                  WHERE g_id = '$g_id')";
-        return self::queryTable($sql);
+    function saveGroupMemberByEmail($email, $g_id, $ownerID) {
+        $ret = array();
+        $email = str_replace("'", "''", $email);
+        $checkEmail = $this->queryAVal("SELECT id FROM users WHERE deleted=0 AND email = LCASE('" .$email. "')");
+        if (!empty($checkEmail)){
+            $u_id= $checkEmail;
+            $checkGroup = $this->getUserGroupsById($g_id,$u_id);
+            if (empty(json_decode($checkGroup))){
+                return $this->insertUserGroup($g_id, $u_id, $ownerID);
+            } else {
+                $ret["error"] = "User already exist in your group.";
+                return json_encode($ret);
+            }
+        } else {
+            $ret["error"] = "User not found.";
+            return json_encode($ret);
+        }
+
+
+
+
     }
-    public function getAllUsers($ownerID) {
+    function getAllUsers($ownerID) {
         $userRoleCheck = $this->getUserRole($ownerID);
         if (isset(json_decode($userRoleCheck)[0])){
             $userRole = json_decode($userRoleCheck)[0]->{'role'};
@@ -2973,7 +3077,8 @@ class dbfuncs {
         }
     }
 
-    public function getUserGroups($ownerID) {
+
+    function getUserGroups($ownerID) {
         $sql = "SELECT g.id, g.name, g.date_created, u.username, g.owner_id, ug.u_id
                   FROM groups g
                   INNER JOIN user_group ug ON  ug.g_id =g.id
@@ -2981,7 +3086,7 @@ class dbfuncs {
                   where u.deleted = 0 AND ug.u_id = '$ownerID'";
         return self::queryTable($sql);
     }
-    public function getUserGroupsById($id, $ownerID) {
+    function getUserGroupsById($id, $ownerID) {
         $sql = "SELECT g.id, g.name, g.date_created, u.username, g.owner_id, ug.u_id
                   FROM groups g
                   INNER JOIN user_group ug ON  ug.g_id =g.id
@@ -3026,12 +3131,12 @@ class dbfuncs {
         $sql = "INSERT INTO user_group (g_id, u_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$g_id', '$u_id', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
-    public function updateGroup($id, $name, $ownerID) {
+    function updateGroup($id, $name, $ownerID) {
         $sql = "UPDATE groups SET name= '$name', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
     //    ----------- Projects   ---------
-    public function getProjects($id,$ownerID) {
+    function getProjects($id,$ownerID) {
         $where = " where u.deleted=0 AND p.deleted=0 AND p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)";
         if ($id != ""){
             $where = " where u.deleted=0 AND p.deleted=0 AND p.id = '$id' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
@@ -3043,56 +3148,56 @@ class dbfuncs {
                   $where";
         return self::queryTable($sql);
     }
-    public function insertProject($name, $summary, $ownerID) {
+    function insertProject($name, $summary, $ownerID) {
         $sql = "INSERT INTO project(name, summary, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$name', '$summary', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
-    public function updateProject($id, $name, $summary, $ownerID) {
+    function updateProject($id, $name, $summary, $ownerID) {
         $sql = "UPDATE project SET name= '$name', summary= '$summary', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
     //    ----------- Runs     ---------
-    public function insertRun($project_pipeline_id, $status, $attempt, $ownerID) {
+    function insertRun($project_pipeline_id, $status, $attempt, $ownerID) {
         $sql = "INSERT INTO run (project_pipeline_id, run_status, attempt, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
                   ('$project_pipeline_id', '$status', '$attempt', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    public function insertRunLog($project_pipeline_id, $uuid, $status, $ownerID) {
+    function insertRunLog($project_pipeline_id, $uuid, $status, $ownerID) {
         $sql = "INSERT INTO run_log (project_pipeline_id, run_log_uuid, run_status, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
                   ('$project_pipeline_id', '$uuid', '$status', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
     //get maximum of $project_pipeline_id
-    public function updateRunLog($project_pipeline_id, $status, $duration, $ownerID) {
+    function updateRunLog($project_pipeline_id, $status, $duration, $ownerID) {
         $sql = "UPDATE run_log SET run_status='$status', duration='$duration', date_ended= now(), date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id' ORDER BY id DESC LIMIT 1";
         return self::runSQL($sql);
     }
-    public function getRunLog($project_pipeline_id) {
+    function getRunLog($project_pipeline_id) {
         $sql = "SELECT * FROM run_log WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
-    public function updateRunStatus($project_pipeline_id, $status, $ownerID) {
+    function updateRunStatus($project_pipeline_id, $status, $ownerID) {
         $sql = "UPDATE run SET run_status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
-    public function updateRunAttempt($project_pipeline_id, $attempt, $ownerID) {
+    function updateRunAttempt($project_pipeline_id, $attempt, $ownerID) {
         $sql = "UPDATE run SET attempt= '$attempt', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
-    public function updateRunPid($project_pipeline_id, $pid, $ownerID) {
+    function updateRunPid($project_pipeline_id, $pid, $ownerID) {
         $sql = "UPDATE run SET pid='$pid', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
-    public function getRunPid($project_pipeline_id) {
+    function getRunPid($project_pipeline_id) {
         $sql = "SELECT pid FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
-    public function getRunAttempt($project_pipeline_id) {
+    function getRunAttempt($project_pipeline_id) {
         $sql = "SELECT attempt FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
 
-    public function getUpload($name,$ownerID) {
+    function getUpload($name,$ownerID) {
         $filename= "{$this->tmp_path}/uploads/$ownerID/$name";
         // get contents of a file into a string
         $handle = fopen($filename, "r");
@@ -3100,7 +3205,7 @@ class dbfuncs {
         fclose($handle);
         return json_encode($content);
     }
-    public function removeUpload($name,$ownerID) {
+    function removeUpload($name,$ownerID) {
         $filename= "{$this->tmp_path}/uploads/$ownerID/$name";
         unlink($filename);
         return json_encode("file deleted");
@@ -3337,7 +3442,6 @@ class dbfuncs {
         }
         $localFile = $upload_dir . DIRECTORY_SEPARATOR . $fileName;
         $data = $this->rsyncTransfer($localFile,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID);
-        error_log($data);
         return json_encode($data);
     }
 
@@ -4248,7 +4352,7 @@ class dbfuncs {
     }
 
     function updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID) {
-        error_log("updated pipeline: $id");
+        error_log("updated pipeline_id:$id, perms:$perms, group_id:$group_id");
         $sql = "UPDATE biocorepipe_save pi
                             SET pi.group_id='$group_id', pi.perms='$perms', pi.date_modified=now(), pi.last_modified_user ='$ownerID'  WHERE pi.deleted=0 AND pi.id = '$id'";
         return self::runSQL($sql);
@@ -4300,7 +4404,7 @@ class dbfuncs {
 
     //update if user owns the process
     function updateProcessGroupPerm($id, $group_id, $perms, $ownerID) {
-        error_log("updated process: $id");
+        error_log("updated process_id:$id, perms:$perms, group_id:$group_id");
         $sql = "UPDATE process SET group_id='$group_id', perms='$perms', date_modified=now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
@@ -4374,13 +4478,28 @@ class dbfuncs {
         return $ret;
     }
 
-    function permUpdtModule($listPermsDenied, $type, $table, $id, $curr_group_id, $curr_perms, $group_id, $perms, $ownerID){
+    function checkUserOwnPerm($curr_ownerID, $ownerID){
+        $ret = 0;
+        settype($curr_ownerID, "integer");
+        settype($ownerID, "integer");
+        if ($curr_ownerID == $ownerID){
+            $ret = 1;
+        }
+        return $ret;
+    }
+
+
+    //$type.match(/strict/) prevents skipping in case update is needed
+    function permUpdtModule($listPermsDenied, $type, $table, $id, $curr_group_id, $curr_perms, $group_id, $perms, $curr_ownerID, $ownerID){
         // check if current value of the group and perm are same as expected values
         $checkEq = $this->checkPermGroupEq($curr_group_id, $curr_perms, $group_id, $perms);
         if ($checkEq != 1){
+            // if user doesn't own the process then only allow to change its permission.
+            $ownCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
             list($permCheck,$warnName) = $this->checkUserPermission($table, $id, $ownerID, "w");
             list($checkUsed,$warn) = $this->checkUsed($table, $warnName, $id, $ownerID);
-            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms)){
+
+            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms) && !empty($ownCheck)){
                 if ($type != "dry-run" && $type != "dry-run-strict"){
                     if ($table == "biocorepipe_save"){
                         $this->updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID);
@@ -4414,7 +4533,8 @@ class dbfuncs {
             $nodes = json_decode($pipeData[0]["nodes"]);
             $pipe_group_id = $pipeData[0]["group_id"];
             $pipe_perms = $pipeData[0]["perms"];
-            $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "biocorepipe_save", $pipeline_id, $pipe_group_id, $pipe_perms, $group_id, $perms, $ownerID);
+            $pipe_owner_id = $pipeData[0]["owner_id"];
+            $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "biocorepipe_save", $pipeline_id, $pipe_group_id, $pipe_perms, $group_id, $perms, $pipe_owner_id, $ownerID);
             if (!empty($nodes)){
                 foreach ($nodes as $item):
                 if ($item[2] !== "inPro" && $item[2] !== "outPro" ){
@@ -4424,14 +4544,15 @@ class dbfuncs {
                         if (!empty($pipeModId)){
                             $listPermsDenied = $this->recursivePermUpdtPipeline($type, $listPermsDenied, $pipeModId, $group_id, $perms, $ownerID);
                         }
-                    //processes
+                        //processes
                     } else {
                         $proId = $item[2];
                         $process_data = json_decode($this->getProcessDataById($proId, $ownerID),true);
                         if (!empty($process_data[0])){
                             $pro_group_id = $process_data[0]["group_id"];
                             $pro_perms = $process_data[0]["perms"];
-                            $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "process", $proId, $pro_group_id, $pro_perms, $group_id, $perms, $ownerID);
+                            $pro_owner_id = $process_data[0]["owner_id"];
+                            $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "process", $proId, $pro_group_id, $pro_perms, $group_id, $perms, $pro_owner_id, $ownerID);
                         }
                     }
                 }

@@ -1320,19 +1320,7 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)->id,'2');
 		ob_end_clean();
 	}
-    /**
-     * @depends testInsertGroup
-     * @depends testSaveUserManual
-     */
-    public function testgetMemberAdd() {
-		ob_start();
-		$_REQUEST['p'] = 'getMemberAdd';
-		$_REQUEST['g_id'] = '1';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->id,'2');
-		$this->assertEquals(json_decode($data)[0]->email,'member@gmail.com');
-		ob_end_clean();
-	}
+    
     /**
      * @depends testInsertGroup
      * @depends testSaveUserManual

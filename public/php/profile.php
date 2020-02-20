@@ -22,7 +22,8 @@ $GOOGPATH=GOOGPATH;
         /*height: 70px;*/
         /*min-height: 0px !important;*/
         border: 1px solid #ccc;
-    }   
+    }
+
 </style>
 
 
@@ -214,7 +215,7 @@ $GOOGPATH=GOOGPATH;
                     <!-- /.tab-pane ends -->
                     <!-- /.tab-pane starts -->
                     <div class="tab-pane" id="github">
-                        <div class="panel panel-default" >
+                        <div class="panel panel-default">
                             <div class="panel-heading clearfix">
                                 <div class="pull-right">
                                     <button type="button" class="btn btn-primary btn-sm" id="addGithub" data-toggle="modal" data-target="#githubModal">Add GitHub Account</button>
@@ -300,6 +301,7 @@ $GOOGPATH=GOOGPATH;
                                     <table id="AdminUserTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
+                                                <th>ID</th>
                                                 <th>Name</th>
                                                 <th>Username</th>
                                                 <th>E-mail</th>
@@ -361,8 +363,8 @@ $GOOGPATH=GOOGPATH;
                                 <option value="cluster">Host</option>
                                 <option value="amazon">Amazon Web Services</option>
                                 <?php if (!empty($GOOGPATH)){
-                                    echo '<option value="google">Google Cloud</option>';
-                                } ?>
+    echo '<option value="google">Google Cloud</option>';
+} ?>
                             </select>
                         </div>
                     </div>
@@ -653,25 +655,44 @@ $GOOGPATH=GOOGPATH;
 
 <!---- join Modal-->
 <div id="joinmodal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
                 <h4 class="modal-title" id="joinmodallabel">Join a group</h4>
             </div>
-            <form role="form" method="post">
-                <div class="modal-body" style="overflow:scroll">
-                    <fieldset>
-                        <label id="groupLabel">Select a group to join</label>
-                        <div id="groupListDiv" class="form-group">
-                            <select id="mGroupList" class="form-control" size="25"></select></div>
-                    </fieldset>
+            <div class="modal-body">
+                
+                <form id="joinmodaladd" class="form-horizontal" style="margin-bottom:40px;">
+                   <h5 style="margin-bottom:20px;">Add New Member</h5>
+                    <div class="form-group" >
+                        <label class="col-sm-2 control-label" style="padding-left:30px;">E-Mail of the User <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter e-mail address of the user and press add button."><i class="glyphicon glyphicon-info-sign"></i></a></span> </label>
+                        <div class="col-sm-8">
+                            <input type="email" class="form-control" id="joinmodal_email" name="email" value="">
+                        </div>
+                        <div class="col-sm-2">
+                            <button id="joinmodal_adduser" type="button" class="btn btn-primary">Add User <i class="fa fa-user"></i></button>
+                        </div>
+                    </div>
+                </form>
+                <h5 style="margin-bottom:10px;">Group Members</h5>
+                <div class="panel-body">
+                    <table id="groupmembertable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>E-mail</th>
+                                <th>Options</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" id="confirmGroupButton" class="btn btn-primary" data-dismiss="">Join</button>
-                    <button type="button" class="btn btn-default" id="cancelGroupButton" data-dismiss="modal" onclick="">Cancel</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="groupmembertabledata" onclick="">OK</button>
+            </div>
+
         </div>
     </div>
 </div>
@@ -873,7 +894,7 @@ $GOOGPATH=GOOGPATH;
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveGithub" >Submit</button>
+                <button type="button" class="btn btn-primary" id="saveGithub">Submit</button>
             </div>
         </div>
     </div>
@@ -927,7 +948,7 @@ $GOOGPATH=GOOGPATH;
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveGoogle" >Submit</button>
+                <button type="button" class="btn btn-primary" id="saveGoogle">Submit</button>
             </div>
         </div>
     </div>
@@ -1001,6 +1022,41 @@ $GOOGPATH=GOOGPATH;
     </div>
 </div>
 <!-- user modal ends-->
+
+
+<!-- admin Add Group Modal starts-->
+<div id="adminAddGroupModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add User into New Group</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="adminAddGroupNewGroup" class="col-sm-3 control-label">User Info:</label>
+                        <div class="col-sm-9">
+                            <p id="adminAddGroupUserInfo"></p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminAddGroupNewGroup" class="col-sm-3 control-label">Choose Group</label>
+                        <div class="col-sm-9">
+                            <select id="adminAddGroupNewGroup" class="form-control" name="group_id">
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="adminAddGroupSave">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- admin add group modal ends-->
 
 <div id="warnDelete" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
