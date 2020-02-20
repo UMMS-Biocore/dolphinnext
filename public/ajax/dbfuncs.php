@@ -3857,7 +3857,7 @@ class dbfuncs {
                       LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                       $where";
         } else {
-            //for sidebar menu (it brings shared runs)
+            //for sidebar menu 
             if ($project_id != ""){
                 $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.date_modified, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM project_pipeline pp
@@ -3865,7 +3865,7 @@ class dbfuncs {
                       INNER JOIN users u ON pp.owner_id = u.id
                       LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                       WHERE pp.deleted = 0 AND pip.deleted = 0 AND pp.project_id = '$project_id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
-                //for run status page (it doesn't bring shared runs)
+                //for run status page 
             } else {
                 if ($userRole == "admin"){
                     $where = " WHERE pp.deleted = 0";
