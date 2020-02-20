@@ -2406,7 +2406,7 @@ class dbfuncs {
     function changeRoleUser($user_id, $type, $ownerID) {
         $userRole = $this->getUserRoleVal($ownerID);
         if ($userRole == "admin"){
-            $sql = "UPDATE users SET role='$type', last_modified_user='$user_id' WHERE id = '$user_id'";
+            $sql = "UPDATE users SET role='$type', last_modified_user='$ownerID' WHERE id = '$user_id'";
             return self::runSQL($sql);
         }
     }

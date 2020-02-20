@@ -123,7 +123,8 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['user_id'] = '2';
 		$_REQUEST['type'] = "admin";
 		include('ajaxquery.php');
-        $_REQUEST['p'] = 'getUserRole';
+        $_REQUEST['id'] = '2';
+        $_REQUEST['p'] = 'getUserById';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->role, "admin");
 		ob_end_clean();
@@ -137,7 +138,8 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['user_id'] = '2';
 		$_REQUEST['type'] = "user";
 		include('ajaxquery.php');
-        $_REQUEST['p'] = 'getUserRole';
+        $_REQUEST['id'] = '2';
+        $_REQUEST['p'] = 'getUserById';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->role, "user");
 		ob_end_clean();

@@ -3,6 +3,7 @@ Adding public key video added to documentation.
 "Assign group to user" option added to admin menu.
 "Edit Group Name", "Add member with e-mail" and "Delete member from group" option added to group menu.
 Pre-cmd transfered into .dolphinnext.run script.
+Shared run status will be loaded into run status page.
 
 16.02.2020 Version 1.1.3
 Documentaion updated for:
