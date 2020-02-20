@@ -1350,6 +1350,7 @@ class ajaxQueryTest extends TestCase
      */
     public function testgetAllGroups() {
 		ob_start();
+		$_SESSION['ownerID'] = '1';
 		$_REQUEST['p'] = 'getAllGroups';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->id,'1');
