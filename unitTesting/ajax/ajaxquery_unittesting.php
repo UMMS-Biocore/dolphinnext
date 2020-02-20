@@ -118,12 +118,12 @@ class ajaxQueryTest extends TestCase
     public function testChangeRoleUser() {
 		ob_start();
         $_REQUEST['p'] = 'changeRoleUser';
-		$_REQUEST['user_id'] = '1';
-		$_REQUEST['type'] = "user";
+		$_REQUEST['user_id'] = '2';
+		$_REQUEST['type'] = "admin";
 		include('ajaxquery.php');
         $_REQUEST['p'] = 'getUserRole';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->role, "user");
+		$this->assertEquals(json_decode($data)[0]->role, "admin");
 		ob_end_clean();
 	}
     /**
@@ -132,12 +132,12 @@ class ajaxQueryTest extends TestCase
     public function testChangeRoleUser2() {
 		ob_start();
         $_REQUEST['p'] = 'changeRoleUser';
-		$_REQUEST['user_id'] = '1';
-		$_REQUEST['type'] = "admin";
+		$_REQUEST['user_id'] = '2';
+		$_REQUEST['type'] = "user";
 		include('ajaxquery.php');
         $_REQUEST['p'] = 'getUserRole';
 		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->role, "admin");
+		$this->assertEquals(json_decode($data)[0]->role, "user");
 		ob_end_clean();
 	}
 
