@@ -8455,7 +8455,7 @@ $(document).ready(function () {
                 //multipart_params : {'target_dir': "old"},
                 filters : {
                     // Maximum file size
-                    max_file_size : '3gb'
+                    max_file_size : '10gb'
                 },
                 // PreInit events, bound before any internal events
                 preinit : {
@@ -8744,13 +8744,13 @@ $(document).ready(function () {
                 sharedProfile = true;
             }
         }
+        var target_dir = $runscope.getUploadDir("exist");
+        $('#file_dir').val(target_dir);
         if (sharedProfile){
-            viewDirButSearch($runscope.getUploadDir("exist"));
+            viewDirButSearch(target_dir);
             $('#file_dir_div').css("display","none");
             $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
         } else {
-            var target_dir = $runscope.getUploadDir("exist");
-            $('#file_dir').val(target_dir);
             $('#viewDirBut').trigger("click");
             $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
         }

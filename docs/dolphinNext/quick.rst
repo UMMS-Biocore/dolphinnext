@@ -38,7 +38,7 @@ Once you enter DolphinNext platform, **Profile Wizard** will open as shown at be
 2. Second, add public SSH Key into your host machine.
 
     -  Please confirm our `Terms and Conditions <https://dolphinnext.umassmed.edu/php/terms.php>`_ & `Privacy Policy <https://dolphinnext.umassmed.edu/php/privacy.php>`_ by clicking checkbox.
-    -  Here, public key is securely generated for your account and required to be added into ``~/.ssh/authorized_keys`` in the host by user. Please check our `Adding Public SSH Key Video <https://youtu.be/7wH2NjXSebA>`_ or `Documention for Adding Public SSH Key <public_ssh_key.html>`_ for help. 
+    -  Here, public key is securely generated for your account and required to be added into ``~/.ssh/authorized_keys`` in the host by user. Please check our `Adding Public SSH Key Section <public_ssh_key.html>`_ for help. 
     -  After adding public key, please click Validate SSH Keys button to finalize this section.
     
 .. note::  **Username/Hostname:** You should enter your username and hostname of the host which you would like to connect (yourusername@yourhostname). For instance, for us2r@ghpcc06.umassrc.org::

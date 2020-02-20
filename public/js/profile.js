@@ -404,7 +404,7 @@ $(document).ready(function () {
             var title = $('#mAddEnvTitle').html();
             var noneList = [];
             var blockList = [];
-            
+
             if (selEnvType === "cluster" && !title.match(/Public/)) {
                 var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv","mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
                 var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv", "shareRunEnvDiv"];
@@ -684,18 +684,23 @@ $(document).ready(function () {
     });
 
 
-
-
-
-
     //------------   groups section-------------
     function getGroupTableOptions(owner_id, u_id) {
         if (owner_id === u_id) {
             //if user is the owner of the group
-            var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#joinmodal" data-toggle="modal" class="viewGroupMembers">View Group Members</a></li><li class="divider"></li><li><a href="#joinmodal" data-toggle="modal" class="addUsers">Add Users</a></li><li class="divider"></li><li><a href="#" class="deleteGroup">Delete Group</a></li></ul></div>';
+            var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#joinmodal" data-toggle="modal" class="viewGroupMembers">View Group Members</a></li><li class="divider"></li><li><a href="#joinmodal" data-toggle="modal" class="addUsers">Edit Group Members</a></li><li class="divider"></li><li><a href="#groupmodal" data-toggle="modal" class="editGroup">Edit Group Name</a></li><li><a href="#confirmDelModal" data-toggle="modal" class="deleteGroup">Delete Group</a></li></ul></div>'; 
         } else {
             var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#joinmodal" data-toggle="modal" class="viewGroupMembers">View Group Members</a></li></ul></div>';
         }
+        return button;
+    }
+
+    function getGroupMemberTableOptions(owner_id, u_id, member_id){
+        var button = "";
+        if (owner_id === u_id && u_id != member_id) {
+            //if user is the owner of the group
+            var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#confirmDelModal" class="removeUserFromGroup" data-toggle="modal">Remove User from Group</a></li></ul></div>';
+        } 
         return button;
     }
 
@@ -720,9 +725,6 @@ $(document).ready(function () {
         }]
     });
 
-
-
-
     $('#groupmodal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
@@ -742,74 +744,22 @@ $(document).ready(function () {
 
     $('#groupmodal').on('click', '#savegroup', function (event) {
         event.preventDefault();
-        var formValues = $('#groupmodal').find('input');
-        if ($('#mProjectName').val() !== '') {
+        var formValues = $('#groupmodal').find('input, select');
+        var requiredFields = ["name"];
+        var formObj = {};
+        var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+        if (stop === false){
             var savetype = $('#mGroupID').val();
-            var data = formValues.serializeArray(); // convert form to array
-            data.push({ name: "p", value: "saveGroup" });
+            formObj.p = "saveGroup";
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",
-                data: data,
+                data: formObj,
                 async: true,
                 success: function (s) {
-                    if (savetype.length) { //edit
-                        //                        var clickedRow = $('#savegroup').data('clickedrow');
-                        //                        var getGroupData = [];
-                        //                        getGroupData.push({ name: "id", value: savetype });
-                        //                        getGroupData.push({ name: "p", value: 'getGroups' });
-                        //                        $.ajax({
-                        //                            type: "POST",
-                        //                            url: "ajax/ajaxquery.php",
-                        //                            data: getGroupData,
-                        //                            async: true,
-                        //                            success: function (sc) {
-                        //                                var groupDat = sc;
-                        //                                var rowData = {};
-                        //                                var keys = groupTable.settings().init().columns;
-                        //                                for (var i = 0; i < keys.length; i++) {
-                        //                                    var key = keys[i].data;
-                        //                                    rowData[key] = groupDat[0][key];
-                        //                                }
-                        //                                rowData.id = groupDat[0].id;
-                        //                                groupTable.row(clickedRow).remove().draw();
-                        //                                groupTable.row.add(rowData).draw();
-                        //
-                        //                            },
-                        //                            error: function (errorThrown) {
-                        //                                alert("Error: " + errorThrown);
-                        //                            }
-                        //                        });
-
-                    } else { //insert
-                        var getGroupData = [];
-                        getGroupData.push({ name: "id", value: s.id });
-                        getGroupData.push({ name: "p", value: 'getGroups' });
-                        $.ajax({
-                            type: "POST",
-                            url: "ajax/ajaxquery.php",
-                            data: getGroupData,
-                            async: true,
-                            success: function (sc) {
-                                var groupDat = sc;
-                                var addData = {};
-                                var keys = groupTable.settings().init().columns;
-                                for (var i = 0; i < keys.length; i++) {
-                                    var key = keys[i].data;
-                                    addData[key] = groupDat[0][key];
-                                }
-                                addData.id = groupDat[0].id;
-                                groupTable.row.add(addData).draw();
-
-                            },
-                            error: function (errorThrown) {
-                                alert("Error: " + errorThrown);
-                            }
-                        });
-                    }
-
+                    groupTable.ajax.reload(null, false);
                     $('#groupmodal').modal('hide');
-
                 },
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -820,141 +770,87 @@ $(document).ready(function () {
 
 
 
+
+    $('#joinmodal').on('hide.bs.modal', function (event) {
+        $('#groupmembertabledata').removeData('rowData');
+        var groupMemberTable = $('#groupmembertable').DataTable();
+        groupMemberTable.destroy()
+    });
     $('#joinmodal').on('show.bs.modal', function (event) {
-        $('#confirmGroupButton').css('display', 'inline');
+        $(this).find('form').trigger('reset');
         var button = $(event.relatedTarget);
-        $(this).find('option').remove();
+        var clickedRow = button.closest('tr');
+        var rowData = groupTable.row(clickedRow).data();
+        $('#groupmembertabledata').data('rowData', rowData);
+        if ( ! $.fn.DataTable.isDataTable( '#groupmembertable' ) ) {
+            var groupMemberTable = $('#groupmembertable').DataTable({
+                "ajax": {
+                    url: "ajax/ajaxquery.php",
+                    data: { "p": "viewGroupMembers", g_id: rowData.id},
+                    "dataSrc": ""
+                },
+                "columns": [{
+                    "data": "name"
+                }, {
+                    "data": "username"
+                }, {
+                    "data": "email"
+                }, {
+                    data: null,
+                    className: "center",
+                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                        $(nTd).html(getGroupMemberTableOptions(rowData.owner_id, rowData.u_id, oData.id));
+                    }
+                }]
+            });
+        }
+
         if (button.attr('class') === 'viewGroupMembers') {
             $('#joinmodallabel').html('View Group Members');
-            $('#groupLabel').html('Group Members');
-            $('#confirmGroupButton').css('display', 'none');
-            $('#cancelGroupButton').html('OK');
-            var clickedRow = button.closest('tr');
-            var rowData = groupTable.row(clickedRow).data();
-            $.ajax({
-                type: "GET",
-                url: "ajax/ajaxquery.php",
-                data: {
-                    g_id: rowData.id,
-                    p: "viewGroupMembers"
-                },
-                async: false,
-                success: function (s) {
-                    for (var i = 0; i < s.length; i++) {
-                        var param = s[i];
-                        if (param.username){
-                            var optionGroup = new Option(param.username, param.id);
-                            $("#mGroupList").append(optionGroup);  
-                        }
-                    }
-                },
-                error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
-                }
-            });
+            $('#joinmodaladd').css("display","none");
 
         } else if (button.attr('class') === 'addUsers') {
             $('#joinmodallabel').html('List of All Users');
-            $('#groupLabel').html('Select a user to add to this group');
-            $('#confirmGroupButton').html('Add to group');
-            $('#cancelGroupButton').html('Cancel');
-            var clickedRow = button.closest('tr');
-            var rowData = groupTable.row(clickedRow).data();
-            $('#joinmodallabel').attr('clickedrow', rowData.id);
+            $('#joinmodaladd').css("display","block");
 
+
+        }
+    });
+
+    $('#joinmodal').on('click', '#joinmodal_adduser', function (e) {
+        var email = $("#joinmodal_email").val();
+        var g_data = $('#groupmembertabledata').data('rowData');
+        var g_id = g_data.id
+        if (g_id && email && email.includes("@")){
             $.ajax({
                 type: "GET",
                 url: "ajax/ajaxquery.php",
                 data: {
-                    g_id: rowData.id,
-                    p: "getMemberAdd"
+                    email: email,
+                    g_id: g_id,
+                    p: "saveGroupMemberByEmail"
                 },
-                async: false,
+                async: true,
                 success: function (s) {
-                    for (var i = 0; i < s.length; i++) {
-                        var param = s[i];
-                        var optionGroup = new Option(param.username, param.id);
-                        $("#mGroupList").append(optionGroup);
+                    // insert success
+                    if (s.id){
+                        //update group members table
+                        var groupMemberTable = $('#groupmembertable').DataTable();
+                        groupMemberTable.ajax.reload(null,false);
+                    } else if (s.error){
+                        showInfoModal("#infoMod","#infoModText", s.error)
                     }
                 },
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
-
         }
     });
 
-    $('#joinmodal').on('click', '#confirmGroupButton', function (event) {
-        event.preventDefault();
-        var label = $('#joinmodallabel').html();
-        if (label === 'Join a Group') {
-            var selGroup = $('#mGroupList').val();
-            if (selGroup !== '') {
-                var joinGro = getValues({ p: "saveUserGroup", g_id: selGroup });
-                if (joinGro) {
-                    var getGroupData = [];
-                    getGroupData.push({ name: "id", value: selGroup });
-                    getGroupData.push({ name: "p", value: 'getGroups' });
-                    $.ajax({
-                        type: "POST",
-                        url: "ajax/ajaxquery.php",
-                        data: getGroupData,
-                        async: true,
-                        success: function (sc) {
-                            var groupDat = sc;
-                            var addData = {};
-                            var keys = groupTable.settings().init().columns;
-                            for (var i = 0; i < keys.length; i++) {
-                                var key = keys[i].data;
-                                addData[key] = groupDat[0][key];
-                            }
-                            addData.id = groupDat[0].id;
-                            groupTable.row.add(addData).draw();
-                            $('#joinmodal').modal('hide');
 
 
-                        },
-                        error: function (errorThrown) {
-                            alert("Error: " + errorThrown);
-                        }
-                    });
 
-                }
-            }
-        } else if (label === 'List of All Users') {
-            var clickedrow = $('#joinmodallabel').attr('clickedrow');
-            var selGroup = $('#mGroupList').val();
-            if (selGroup !== '') {
-                var joinGro = getValues({ p: "saveUserGroup", u_id: selGroup, g_id: clickedrow });
-                if (joinGro) {
-                    $('#joinmodal').modal('hide');
-                }
-            }
-        }
-
-    });
-
-    $('#grouptable').on('click', '.deleteGroup', function (e) {
-        e.preventDefault();
-        var clickedRow = $(this).closest('tr');
-        var rowData = groupTable.row(clickedRow).data();
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: {
-                id: rowData.id,
-                p: "removeGroup"
-            },
-            async: true,
-            success: function (s) {
-                groupTable.row(clickedRow).remove().draw();
-            },
-            error: function (errorThrown) {
-                alert("Error: " + errorThrown);
-            }
-        });
-    });
     //--------------- groups section ends------------------
 
     //------------   ssh keys section-------------
@@ -1017,7 +913,7 @@ $(document).ready(function () {
         }]
     });
 
-    // confirm Delete ssh modal 
+    // confirm Delete modal 
     $('#confirmDelModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var clickedRow = button.closest('tr');
@@ -1053,12 +949,86 @@ $(document).ready(function () {
         } else if (button.attr('id') === 'delGoogKeyIcon') {
             $('#mDelBtn').attr('class', 'btn btn-primary delGoogKeyIcon');
             $('#confirmDelModalText').html('Are you sure you want to delete Google key?');
+        } else if (button.attr('class') === 'removeUserFromGroup') {
+            $('#mDelBtn').attr('class', 'btn btn-primary removeUserFromGroup');
+            var groupMemberTable = $('#groupmembertable').DataTable();
+            var rowData = groupMemberTable.row(clickedRow).data();
+            var email = rowData.email;
+            var name = rowData.name;
+            $('#mDelBtn').attr('remove_id', rowData.id);
+            $('#mDelBtn').data('clickedrow', clickedRow);
+            $('#confirmDelModalText').html('Are you sure you want to remove following user from the group?</br></br>Name: '+name+'</br>E-mail: '+email);
+        } else if (button.attr('class') === 'deleteGroup') {
+            $('#mDelBtn').attr('class', 'btn btn-primary deleteGroup');
+            var rowData = groupTable.row(clickedRow).data();
+            $('#mDelBtn').attr('remove_id', rowData.id);
+            $('#mDelBtn').data('clickedrow', clickedRow);
+            $('#confirmDelModalText').html('Are you sure you want to delete group "'+rowData.name+'"?');
         }
     });
 
     $('#confirmDelModal').on('click', '.delGoogKeyIcon', function (event) {
         prepareGoogModal({})
         $('#confirmDelModal').modal('hide');
+    });
+
+    $('#confirmDelModal').on('click', '.deleteGroup', function (event) {
+        var g_id = $('#mDelBtn').attr('remove_id');
+        var clickedRow = $('#mDelBtn').data('clickedrow');
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {
+                id: g_id,
+                p: "removeGroup"
+            },
+            async: true,
+            success: function (s) {
+                console.log(s)
+                if (s.error){
+                    showInfoModal("#infoMod","#infoModText", s.error)
+                } else {
+                    groupTable.ajax.reload(null, false);
+                    $('#confirmDelModal').modal('hide');
+                }
+            },
+            error: function (errorThrown) {
+                alert("Error: " + errorThrown);
+            }
+        });
+    });
+
+
+    $('#confirmDelModal').on('click', '.removeUserFromGroup', function (event) {
+        var user_id = $('#mDelBtn').attr('remove_id');
+        var g_data = $('#groupmembertabledata').data('rowData');
+        var g_id = g_data.id
+        var clickedRow = $('#mDelBtn').data('clickedrow');
+        if (user_id && g_id) {
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    u_id: user_id,
+                    g_id: g_id,
+                    p: "removeUserFromGroup"
+                },
+                async: true,
+                success: function (s) {
+                    if (s.error){
+                        showInfoModal("#infoMod","#infoModText", s.error)
+                    } else {
+                        var groupMemberTable = $('#groupmembertable').DataTable();
+                        groupMemberTable.ajax.reload(null, false);
+                        $('#confirmDelModal').modal('hide');
+                    }
+
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
     });
 
     $('#confirmDelModal').on('click', '.deleteGoogleKeys', function (event) {
@@ -1600,7 +1570,8 @@ $(document).ready(function () {
         } else {
             var roleItem = '<li><a name="admin" class="changeRoleUser">Assign admin role</a></li>';
         }
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + '<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
+        var groupBut = '<li><a href="#adminAddGroupModal" data-toggle="modal">Assign to group</a></li>';
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + groupBut +'<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
         return button;
 
     }
@@ -1714,6 +1685,8 @@ $(document).ready(function () {
                 "dataSrc": ""
             },
             "columns": [{
+                "data": "id"
+            },{
                 "data": "name"
             }, {
                 "data": "username"
@@ -1767,6 +1740,7 @@ $(document).ready(function () {
                 });
             }
         });
+
         $('#AdminUserTable').on('click', '.changeActiveUser, .changeRoleUser', function (event) {
             var type = $(this).attr('name'); //activateSendUser or activate or deactivate
             var p = $(this).attr('class');
@@ -1861,9 +1835,6 @@ $(document).ready(function () {
                             }
                             $('#userModal').modal('hide');
                         }
-
-
-
                     },
                     error: function (errorThrown) {
                         alert("Error: " + errorThrown);
@@ -1871,70 +1842,107 @@ $(document).ready(function () {
                 });
             }
         });
-        //---user modal section ends---
-    }
-    
-    //---github section starts---
+        //---user modal ends---
 
-
-
-        $('#githubModal').on('show.bs.modal', function (event) {
+        //  ---Admin Add Group Modal start ---- 
+        $('#adminAddGroupModal').on('show.bs.modal', function (event) {
             var button = $(event.relatedTarget);
             $(this).find('form').trigger('reset');
-            if (button.attr('id') === 'addGithub') {
-                $('#githubmodaltitle').html('Add GitHub Account');
-            } else {
-                $('#githubmodaltitle').html('Edit GitHub Account');
-                var clickedRow = button.closest('tr');
-                var rowData = githubTable.row(clickedRow).data();
-                var data = getValues({ p: "getGithub", id: rowData.id })[0];
-
-                $('#saveGithub').data('clickedrow', clickedRow);
-                fillFormByName('#githubModal', 'input, select', data);
+            var clickedRow = button.closest('tr');
+            var rowData = AdmUserTable.row(clickedRow).data();
+            $('#adminAddGroupUserInfo').html('Name: '+rowData.name+'</br>Username: '+rowData.username+'</br>E-mail: '+rowData.email);
+            $('#adminAddGroupSave').data('clickedrow', clickedRow);
+            if (rowData.id){
+                var allGroups = getValues({ p: "getAllAvailableGroups", user_id:rowData.id  });
+                fillDropdownArrObj(allGroups, "id", "name", "#adminAddGroupNewGroup", true, '<option value="" selected>Choose New Group </option>');
             }
         });
 
-        $('#githubModal').on('hide.bs.modal', function (event) {
-            cleanHasErrorClass("#githubModal")
+        $('#adminAddGroupModal').on('hide.bs.modal', function (event) {
+            cleanHasErrorClass("#adminAddGroupModal")
         });
-
-        $('#githubModal').on('click', '#saveGithub', function (event) {
+        $('#adminAddGroupModal').on('click', '#adminAddGroupSave', function (event) {
             event.preventDefault();
-            var formValues = $('#githubModal').find('input, select');
-            var requiredFields = ["username", "email", "password"];
-            var clickedRow = $('#saveGithub').data('clickedrow')
+            var formValues = $('#adminAddGroupModal').find('select');
+            var requiredFields = ["group_id"];
+            var clickedRow = $('#adminAddGroupSave').data('clickedrow')
             var formObj = {};
             var stop = "";
             [formObj, stop] = createFormObj(formValues, requiredFields)
-            var savetype = $('#mGitID').val();
             if (stop === false) {
-                formObj.p = "saveGithub"
-                $.ajax({
-                    type: "POST",
-                    url: "ajax/ajaxquery.php",
-                    data: formObj,
-                    async: true,
-                    success: function (s) {
-                        if (savetype.length) { //edit
-                            var newGitData = getValues({ p: "getGithub", id: savetype })
-                            if (newGitData[0]) {
-                                githubTable.row(clickedRow).remove().draw();
-                                githubTable.row.add(newGitData[0]).draw();
-                            }
-                        } else { //insert
-                            var newGitData = getValues({ p: "getGithub", id: s.id })
-                            if (newGitData[0]) {
-                                githubTable.row.add(newGitData[0]).draw();
-                            }
-                        }
-                        $('#githubModal').modal('hide');
-                    },
-                    error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
+                var rowData = AdmUserTable.row(clickedRow).data();
+                var user_id = rowData.id 
+                if (user_id && formObj.group_id){
+                    var joinGro = getValues({ p: "saveUserGroup", u_id: user_id, g_id: formObj.group_id });
+                    if (joinGro) {
+                        $('#adminAddGroupModal').modal('hide');
                     }
-                });
+                }
             }
         });
-        //---github section ends---
+        //  ---Admin Add Group MODAL ends ----
+    }
+    //---admin section ends---
+
+
+    //---github section starts---
+    $('#githubModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        $(this).find('form').trigger('reset');
+        if (button.attr('id') === 'addGithub') {
+            $('#githubmodaltitle').html('Add GitHub Account');
+        } else {
+            $('#githubmodaltitle').html('Edit GitHub Account');
+            var clickedRow = button.closest('tr');
+            var rowData = githubTable.row(clickedRow).data();
+            var data = getValues({ p: "getGithub", id: rowData.id })[0];
+
+            $('#saveGithub').data('clickedrow', clickedRow);
+            fillFormByName('#githubModal', 'input, select', data);
+        }
+    });
+
+    $('#githubModal').on('hide.bs.modal', function (event) {
+        cleanHasErrorClass("#githubModal")
+    });
+
+    $('#githubModal').on('click', '#saveGithub', function (event) {
+        event.preventDefault();
+        var formValues = $('#githubModal').find('input, select');
+        var requiredFields = ["username", "email", "password"];
+        var clickedRow = $('#saveGithub').data('clickedrow')
+        var formObj = {};
+        var stop = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+        var savetype = $('#mGitID').val();
+        if (stop === false) {
+            formObj.p = "saveGithub"
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: formObj,
+                async: true,
+                success: function (s) {
+                    if (savetype.length) { //edit
+                        var newGitData = getValues({ p: "getGithub", id: savetype })
+                        if (newGitData[0]) {
+                            githubTable.row(clickedRow).remove().draw();
+                            githubTable.row.add(newGitData[0]).draw();
+                        }
+                    } else { //insert
+                        var newGitData = getValues({ p: "getGithub", id: s.id })
+                        if (newGitData[0]) {
+                            githubTable.row.add(newGitData[0]).draw();
+                        }
+                    }
+                    $('#githubModal').modal('hide');
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
+    });
+    //---github section ends---
 
 });

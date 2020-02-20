@@ -333,15 +333,20 @@ else if ($p=="removeUpload"){
     $data = $db -> removeUpload($name,$ownerID);
 }
 else if ($p=="getAllGroups"){
-    $data = $db -> getAllGroups();
+    $data = $db -> getAllGroups($ownerID);
+}
+else if ($p=="getAllAvailableGroups"){
+    $user_id = $_REQUEST['user_id'];
+    $data = $db -> getAllAvailableGroups($user_id, $ownerID);
 }
 else if ($p=="viewGroupMembers"){
     $g_id = $_REQUEST['g_id'];
     $data = $db -> viewGroupMembers($g_id);
 }
-else if ($p=="getMemberAdd"){
+else if ($p=="saveGroupMemberByEmail"){
+    $email = $_REQUEST['email'];
     $g_id = $_REQUEST['g_id'];
-    $data = $db -> getMemberAdd($g_id);
+    $data = $db -> saveGroupMemberByEmail($email, $g_id, $ownerID);
 }
 else if ($p=="getProjects"){
     $data = $db -> getProjects($id,$ownerID);
@@ -392,7 +397,7 @@ else if ($p=="changeActiveUser"){
 else if ($p=="changeRoleUser"){
     $user_id = $_REQUEST['user_id'];
     $type = $_REQUEST['type'];
-    $data = $db->changeRoleUser($user_id, $type);  
+    $data = $db->changeRoleUser($user_id, $type, $ownerID);  
 }
 else if ($p=="changePassword"){
     $error = array();
@@ -430,7 +435,13 @@ else if ($p=="saveUserManual"){
         if (!empty($id)) {
             $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID);  
         } else {
-            $role = "user"; 
+            $any_user_check = $db->queryAVal("SELECT id FROM users");
+            $any_user_checkAr = json_decode($any_user_check,true); 
+            if (empty($any_user_checkAr)){
+                $role = "admin";
+            } else {
+                $role = "user"; 
+            }
             $active = 1; 
             $pass_hash = NULL;
             $verify = NULL;
@@ -617,8 +628,12 @@ else if ($p=="removeProject"){
     $data = $db -> removeProject($id);
 }
 else if ($p=="removeGroup"){   
-    $db -> removeUserGroup($id);
-    $data = $db -> removeGroup($id);
+    $data = $db -> removeGroup($id,$ownerID);
+}
+else if ($p=="removeUserFromGroup"){ 
+    $u_id = $_REQUEST['u_id'];
+    $g_id = $_REQUEST['g_id'];
+    $data = $db -> removeUserFromGroup($u_id, $g_id, $ownerID);
 }
 else if ($p=="removeProjectPipeline"){  
     $db -> removeRun($id);
@@ -1577,10 +1592,16 @@ else if ($p=="savePublicInput"){
 }
 else if ($p=="saveGroup"){
     $name = $_REQUEST['name'];
-    $data = $db->insertGroup($name, $ownerID);
-    $idArray = json_decode($data,true);
-    $g_id = $idArray["id"];
-    $db->insertUserGroup($g_id, $ownerID, $ownerID);
+    $name = str_replace("'","",$name);  
+    if (!empty($id)){
+        $data = $db->updateGroup($id, $name, $ownerID);
+    } else {
+        $data = $db->insertGroup($name, $ownerID);
+        $idArray = json_decode($data,true);
+        $g_id = $idArray["id"];
+        $db->insertUserGroup($g_id, $ownerID, $ownerID);
+    }
+
 }
 else if ($p=="saveTestGroup"){
     $data = $db->saveTestGroup($ownerID);
@@ -1801,9 +1822,10 @@ else if ($p=="checkPermUpdtProcess"){
     if (!empty($process_data[0])){
         $pro_group_id = $process_data[0]["group_id"];
         $pro_perms = $process_data[0]["perms"];
+        $pro_owner_id = $process_data[0]["owner_id"];
         settype($group_id, 'integer');
         settype($perms, 'integer');
-        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $ownerID);
+        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $pro_owner_id, $ownerID);
     }
     $data = json_encode($listPermsDenied);
 }

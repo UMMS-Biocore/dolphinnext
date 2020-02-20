@@ -205,7 +205,7 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                 <h3>Profile Type</h3>
                                 <p>Profile wizard will guide you to create your run environment. If you have an access to High Performance Computing (HPC) environments, or personal workstations please choose <b>Host</b>. If you have an Amazon Web Services (AWS) or Google Cloud account or planning to create one, then please choose <b>Amazon</b> or <b>Google</b>. <?php
                                         if ($SHOW_TEST_PROFILE && !empty($TEST_PROFILE_GROUP_ID)){
-                                            echo 'Finally, if you want to use our MASS cluster please choose <b>MASS cluster</b> option.';
+                                            echo 'Finally, if you want to use our MGHPCC cluster please choose <b>MGHPCC cluster</b> option.';
                                         }
                                     ?> </p>
                                 <div class="form-group" style="margin:20px;">
@@ -225,10 +225,10 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                         <?php
                                         if ($SHOW_TEST_PROFILE && !empty($TEST_PROFILE_GROUP_ID)){
                                             echo '<div class="radio">
-                                                    <label> <input type="radio" name="profiletype"  value="test"> MASS cluster </label>
+                                                    <label> <input type="radio" name="profiletype"  value="test"> MGHPCC cluster </label>
                                                 </div>
                                                 <div id="pw-step-info-alert" class="alert alert-info">
-                                                    <strong>Note:</strong> You can easily upload your files to our MASS cluster to process your data and download your results from report section. However, you will not have direct access to our cluster.
+                                                    <strong>Note:</strong> You can easily upload your files to our MGHPCC cluster to process your data and download your results from report section. However, you will not have direct access to our cluster.
                                                 </div>
                                                 ';
                                         }

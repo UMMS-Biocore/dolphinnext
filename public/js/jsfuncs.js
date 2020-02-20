@@ -103,6 +103,7 @@ function checkArraysEqual(a, b) {
 }
 
 //use array of item to fill select element
+//clean=true will empty dropdown first
 function fillDropdownArrObj(arr, val, name, dropdownId, clean, first) {
     first = first || false; //default false
     if (clean === true) {
