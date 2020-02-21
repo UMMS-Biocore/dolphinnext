@@ -1714,7 +1714,7 @@ $(document).ready(function () {
                     $(nTd).html(getAdminUserTableOptions(oData.active, oData.role));
                 }
             }],
-            'order': [[6, 'desc']]
+            'order': [[7, 'desc']]
         });
 
         $('#AdminUserTable').on('click', '.impersonUser', function (event) {
