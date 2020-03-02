@@ -10421,6 +10421,9 @@ $(document).ready(function () {
                             //return 1 if newName is found in directory.
                             var checkDuplicateFile = function (newName,fileNameObj){
                                 var ret = 1;
+                                if (!fileNameObj.rest){
+                                    return 0;
+                                }
                                 var targetfilepath = fileNameObj.rest + "/" + newName;
                                 var checkDup = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li").find("a").filter(function () {
                                     return $(this).attr('filepath') === targetfilepath
@@ -10428,9 +10431,6 @@ $(document).ready(function () {
                                 if (!checkDup.length){
                                     ret = 0;
                                 }
-                                console.log(targetfilepath)
-                                console.log(checkDup)
-
                                 return ret;
                             }
 
@@ -10447,7 +10447,9 @@ $(document).ready(function () {
                                 var obj = {};
                                 var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
                                 var filePath = $(activeLiA[0]).attr("filepath");
-                                obj = getFileName(filePath);
+                                if (filePath){
+                                    obj = getFileName(filePath);
+                                }
                                 return obj;
                             }
 
