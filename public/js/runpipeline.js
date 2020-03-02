@@ -1,7 +1,7 @@
 $runscope = {
     //-------- Store data:
     checkUserWritePermRun : null,
-    
+
     //-------- Functions:
     //Generic function to save ajax data
     getAjaxData : function(varName, getValuesObj){
@@ -6154,7 +6154,9 @@ function viewDirButSearch(dir){
                 console.log(fileArr)
                 console.log(errorAr)
                 if (fileArr.length > 0) {
-                    fillArray2Select(fileArr, "#viewDir", true)
+                    var copiedList = fileArr.slice(); 
+                    copiedList.unshift("..")
+                    fillArray2Select(copiedList, "#viewDir", true)
                     $("#viewDir").data("fileArr", fileArr)
                     $("#viewDir").data("fileDir", dir)
                     var amzKey = ""
@@ -6163,7 +6165,6 @@ function viewDirButSearch(dir){
                     if (dir.match(/gs:/i)){ googKey= $("#mRunGoogKeyGS").val(); }
                     $("#viewDir").data("amzKey", amzKey);
                     $("#viewDir").data("googKey", googKey);
-
                     $('#collection_type').trigger("change");
                 } else {
                     if (errorAr.length > 0) {
@@ -6183,19 +6184,19 @@ function viewDirButSearch(dir){
             fillArray2Select(["Files Not Found."], "#viewDir", true)
             resetPatternList()
         }
-        $("#viewDir > option").attr("style", "pointer-events: none;");
         $("#viewDir").css("display", "inline")
+        $("#viewDirDiv").css("display", "block")
     } else {
         showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Location' to search files.")
     }
 }
 
-function fillFileSearchBox(item){
+function fillFileSearchBox(item, targetDiv){
     if ($(item)){
         var val = $(item).text()
         if (val){
-            $('#file_dir').val(val)
-            $('#file_dir').keyup();
+            $('#'+targetDiv).val(val)
+            $('#'+targetDiv).keyup();
         }
     }
 }
@@ -6384,13 +6385,16 @@ $(document).ready(function () {
             $('.singlepatternDiv').css("display", "none")
             $('.patternButs').css("display", "none")
             $('.patternTable').css("display", "none")
-            $("#viewDir").css("display", "none")
+            $("#viewDir").css("display", "none");
+            $("#viewDirDiv").css("display", "none");
+            $("#viewDir > option").attr("style", "pointer-events: auto;");
             $("#seaGeoSamplesDiv").css("display", "none")
             $("#selGeoSamplesDiv").css("display", "none")
             $('#mRunAmzKeyS3Div').css("display", "none")
             $('#mArchAmzKeyS3Div_GEO').css("display", "none")
             $('#mArchAmzKeyS3Div').css("display", "none")
             $('#file_dir_div').css("display","block");
+            $('#viewDirInfo').css("display","block");
             var renderMenu = {
                 option: function (data, escape) {
                     return '<div class="option">' +
@@ -6424,6 +6428,34 @@ $(document).ready(function () {
         $('#viewDirBut').click(function () {
             var dir = $('#file_dir').val();
             viewDirButSearch(dir)
+        });
+
+        $('#addFileModal').on("dblclick", '#viewDir option', function() {
+            var selectedOpt = $(this).val();
+            var olddir = $('#file_dir').val();
+            var newdir = "";
+            if (selectedOpt == ".."){
+                var split = olddir.split("/")
+                //if ends with /    
+                if (olddir.slice(-1) == "/"){
+                    var finalPart = split[split.length - 2];
+                    newdir = olddir.substring(0, olddir.indexOf(finalPart));
+                } else{
+                    var finalPart = split[split.length - 1];
+                    newdir = olddir.substring(0, olddir.indexOf(finalPart));
+                }    
+            } else {
+                if (olddir.slice(-1) == "/"){
+                    newdir = olddir + selectedOpt;
+                } else{
+                    newdir = olddir + "/"+ selectedOpt;
+                }
+
+            }
+            if (newdir){
+                $('#file_dir').val(newdir);
+                viewDirButSearch(newdir); 
+            }
         });
 
         removeSRA = function (name, srr_id, collection_type, button) {
@@ -8787,8 +8819,11 @@ $(document).ready(function () {
         if (sharedProfile){
             viewDirButSearch(target_dir);
             $('#file_dir_div').css("display","none");
+            $('#viewDirInfo').css("display","none");
+            $("#viewDir > option").attr("style", "pointer-events: none;");
             $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
         } else {
+            $("#viewDir > option").attr("style", "pointer-events: auto;");
             $('#viewDirBut').trigger("click");
             $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
         }
