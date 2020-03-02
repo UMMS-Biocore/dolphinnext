@@ -101,6 +101,11 @@ else if ($p=="saveFileContent"){
     $uuid = $_REQUEST['uuid'];
     $data = $db -> saveFileContent($text,$uuid,$filename,$ownerID);
 }
+else if ($p=="deleteFile"){
+    $filename = $_REQUEST['filename'];
+    $uuid = $_REQUEST['uuid'];
+    $data = $db -> deleteFile($uuid,$filename,$ownerID);
+}
 
 else if ($p=="getFileList"){
     $uuid  = $_REQUEST['uuid'];
@@ -128,46 +133,44 @@ else if ($p=="getReportData"){
     $pipeline_id = $_REQUEST['pipeline_id'];
     $pipe = $db->loadPipeline($pipeline_id,$ownerID);
     $pipeData = json_decode($pipe,true);
-    $pubWebDir = $pipeData[0]['publish_web_dir'];
     $data = array();
-    if (!empty($pubWebDir)){
-        if (!empty($pipeData[0]["nodes"])){
-            $nodes = json_decode($pipeData[0]["nodes"]);
-            foreach ($nodes as $gNum => $item):
-            $out = array();
-            if ($item[2] == "outPro"){
-                $push = false;
-                $name = $item[3];
-                $processOpt = $item[4];
-                $out["id"] = $gNum;
-                $out["name"] = $name;
-                foreach ($processOpt as $key => $feature):
-                if ($key == "pubWeb"){
-                    $push = true;
-                    $pubWebAr = explode(",", $feature);
-                }
-                $out[$key] = $feature;
-                endforeach;
-                if ($push == true){
-                    $fileList = array_values((array)json_decode($db->getFileList($uuid, "$path/$name", "onlyfile")));
-                    $fileList = array_filter($fileList);
-                    if (!empty($fileList)){
-                        $out["fileList"] = $fileList;
-                        //split each view method into new array
-                        foreach ($pubWebAr as $eachPubWeb):
-                        $out["pubWeb"] = $eachPubWeb;
-                        $out["id"] = $out["id"]."_".$eachPubWeb;
-                        if (strtolower($name) == "summary"  || strtolower($name) == "multiqc"){
-                            array_unshift($data , $out); //push to the top of the array
-                        } else {
-                            $data[] = $out; //push $out object into array
-                        }
-                        endforeach;
+    if (!empty($pipeData[0]["nodes"])){
+        $nodes = json_decode($pipeData[0]["nodes"]);
+        foreach ($nodes as $gNum => $item):
+        $out = array();
+        if ($item[2] == "outPro"){
+            $push = false;
+            $name = $item[3];
+            $processOpt = $item[4];
+            $out["id"] = $gNum;
+            $out["name"] = $name; //directory name which has report files
+            foreach ($processOpt as $key => $feature):
+            if ($key == "pubWeb"){
+                $push = true;
+                $pubWebAr = explode(",", $feature);
+            }
+            $out[$key] = $feature;
+            endforeach;
+            if ($push == true){
+                $fileList = array_values((array)json_decode($db->getFileList($uuid, "$path/$name", "onlyfile")));
+                $fileList = array_filter($fileList);
+                if (!empty($fileList)){
+                    $out["fileList"] = $fileList;
+                    //split each view method into new array
+                    foreach ($pubWebAr as $eachPubWeb):
+                    $out["pubWeb"] = $eachPubWeb;
+                    $out["id"] = $out["id"]."_".$eachPubWeb;
+                    if (strtolower($name) == "summary"  || strtolower($name) == "multiqc"){
+                        array_unshift($data , $out); //push to the top of the array
+                    } else {
+                        $data[] = $out; //push $out object into array
                     }
+                    endforeach;
                 }
             }
-            endforeach;
         }
+        endforeach;
+        $data = $db->checkDescriptionBox($data, $uuid, $path);
     }
     $data = json_encode($data);
 }
@@ -1839,8 +1842,16 @@ else if ($p=="checkPermUpdtPipeline"){
     $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
     $data = json_encode($listPermsDenied);
 }
-else if ($p=="checkProject")
-{
+else if ($p=="checkUserWritePermRun"){
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $checkUserWritePermRun = $db->checkUserWritePermRun($project_pipeline_id, $ownerID);
+    if (empty(json_decode($checkUserWritePermRun))){
+        $data = json_encode(0);
+    } else {
+        $data = json_encode(1);
+    }
+}
+else if ($p=="checkProject") {
     $pipeline_id = $_REQUEST['pipeline_id'];
     $data = $db->checkProject($pipeline_id, $ownerID);
 }

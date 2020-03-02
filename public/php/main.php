@@ -482,7 +482,9 @@ folder instead of downloading all of them to reduce the load. -->
                             <ul class="dropdown-menu" role="menu">
                                 <li><a href="http://dolphinnext.readthedocs.io/" target="_blank">Reference Documentation</a></li>
                                 <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Quick Start Guide</a></li>
-                                <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/dev_quick.html" target="_blank"> Developer Tutorial</a></li>
+                                <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/dev_quick.html" target="_blank">Developer Tutorial</a></li>
+                                <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/faq.html" target="_blank">Frequently Asked Questions</a></li>
+
                                 <!--                                    <li class="divider"></li>-->
                                 <!--                                    <li><a href="#">One more separated link</a></li>-->
                             </ul>
@@ -847,7 +849,7 @@ immediately after the control sidebar -->
         <!-- Add Google Node Modal Ends-->
 
         <!--Info Modal Starts-->
-        <div id="infoMod" class="modal fade" tabindex="-1" role="dialog">
+        <div id="infoMod" style="z-index:1055;" class="modal fade" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -867,6 +869,25 @@ immediately after the control sidebar -->
         <!--Info Modal ENDs-->
 
         <!--Confirm Delete Modal-->
+        <div id="confirmDeleteModal" class="modal fade" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="confirmDeleteModalTitle">Confirm</h4>
+                    </div>
+                    <div class="modal-body" id="confirmDeleteModalText">Text</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="confirmDeleteModalDelBtn">Delete</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--Confirm Del Modal Ends-->
+
+
+        <!--Confirm Delete Wizard Modal-->
         <div id="confirmDelWizardModal" class="modal fade" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -882,7 +903,7 @@ immediately after the control sidebar -->
                 </div>
             </div>
         </div>
-        <!--Confirm Delete Modal Ends-->
+        <!--Confirm Delete Wizard Modal Ends-->
 
 
         <!--Google Platform Library on your web pages that integrate Google Sign-In-->

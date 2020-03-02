@@ -1065,6 +1065,7 @@
                         <div class="col-sm-7">
                             <select multiple="multiple" id="pubWebOpt" name="pubWebOpt">
                                 <option value="text">Text</option>
+                                <option value="image">Image</option>
                                 <option value="html">HTML</option>
                                 <option value="table" plugin="dataTables.js">DataTables</option>
                                 <option value="table-percent" plugin="dataTables.js">DataTables Percentage</option>

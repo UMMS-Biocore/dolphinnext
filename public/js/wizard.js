@@ -509,15 +509,15 @@ $(document).ready(function () {
                 //add into demo group
                 var saveTestGroup = getValues({ "p": "saveTestGroup" });
                 var start = "";
-                var rest = 'Now you can start a new run and choose <b>MASS cluster</b> in the run page. </br></br> You can check our <a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#running-pipelines" class="text-aqua" target="_blank">Run Guide</a> for tutorial videos.';
+                var rest = 'Now you can start a new run and choose <b>MGHPCC cluster</b> in the run page. </br></br> You can check our <a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#running-pipelines" class="text-aqua" target="_blank">Run Guide</a> for tutorial videos.';
                 var log = "";
                 if (saveTestGroup){
                     if (saveTestGroup["id"]){
                         //inserted
-                        start = 'We have successfully defined <b>MASS cluster</b> into your run environments. ';
+                        start = 'We have successfully defined <b>MGHPCC cluster</b> into your run environments. ';
                     } else if (saveTestGroup[0]){
                         //already inserted
-                        start = "<b>MASS cluster</b> already defined into your run environments. ";
+                        start = "<b>MGHPCC cluster</b> already defined into your run environments. ";
                     } else {
                         //failed
                         start = "An error occurred, please try again later.";
