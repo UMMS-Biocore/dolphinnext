@@ -660,10 +660,7 @@ class dbfuncs {
         $profile_def = "";
         if ($profileType == "amazon" || $profileType == "google"){
             $profile_def = "source /etc/profile && source ~/.bash_profile";
-        } else {
-            //default source command for ssh connection
-            $profile_def = "source /etc/profile";
-        }
+        } 
         $nextVer = $this->next_ver;
         $nextVerText = "";
         if (!empty($nextVer)){
@@ -1339,6 +1336,8 @@ class dbfuncs {
     function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID){
         //create files and folders
         $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
+        //create Run Description
+        $this -> createDirFile ("{$this->run_path}/$uuid/pubweb/_Description", "README.md", 'w', "#### **Run Description**\n\nYou can always edit this file in <a href=\"https://guides.github.com/features/mastering-markdown/\" target=\"_blank\">Markdown</a> format or upload your files by clicking the **Add File** <i style=\"font-size: 18px;\" class=\"fa fa-plus\"></i> button on the left." );
         //separate nextflow config (by using @config tag).
         $this -> createMultiConfig ("{$this->run_path}/$uuid/run", $mainConfigText);
         //create clean serverlog.txt 
@@ -1430,7 +1429,7 @@ class dbfuncs {
             $this->triggerRunErr('ERROR: Run directory cannot be transfered.\nLOG: '.$ret["package_exist_cmd_log"], $uuid,$project_pipeline_id,$ownerID);
         }
         // 4. extract and execute 
-        $exec_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real && rm $dolphin_path_real/run.tar.gz && bash $dolphin_path_real/.dolphinnext.init\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
+        $exec_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"source /etc/profile && tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real && rm $dolphin_path_real/run.tar.gz && bash $dolphin_path_real/.dolphinnext.init\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
         $this->writeLog($uuid,$exec_cmd,'a','serverlog.txt');
         $this->writeLog($uuid,$runCmdAll,'a','serverlog.txt');
         $next_submit_pid= shell_exec($exec_cmd); //"Job <203477> is submitted to queue <long>.\n"
@@ -3238,11 +3237,9 @@ class dbfuncs {
         $ssh_own_id = $cluDataArr[0]["owner_id"];
         $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
 
-        //get preCmd to load prerequisites (eg: source /etc/bashrc) (to run qstat qdel)
+        //get $preSSH to load prerequisites and run qstat qdel
+        $preSSH = "source /etc/profile && ";
         $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $proPipeCmd = $proPipeAll[0]->{'cmd'};
-        $profileCmd = $cluDataArr[0]["cmd"];
-        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, "", "", "");
         list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
         $upCacheCmd = $this->getUploadCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType); 
         if (!empty($upCacheCmd)){
@@ -3250,14 +3247,14 @@ class dbfuncs {
             $upCacheCmd = "; $upCacheCmd";
         }
         if ($executor == "lsf" && $commandType == "checkRunPid"){
-            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd bjobs\" 2>&1 &");
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH bjobs\" 2>&1 &");
             if (preg_match("/$pid/",$check_run)){
                 return json_encode('running');
             } else {
                 return json_encode('done');
             }
         } else if ($executor == "sge" && $commandType == "checkRunPid"){
-            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd qstat -j $pid\" 2>&1 &");
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH qstat -j $pid\" 2>&1 &");
             if (preg_match("/job_number:/",$check_run)){
                 return json_encode('running');
             } else {
@@ -3265,7 +3262,7 @@ class dbfuncs {
                 return json_encode('done');
             }
         } else if ($executor == "slurm" && $commandType == "checkRunPid"){
-            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd squeue --job $pid\" 2>&1 &");
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH squeue --job $pid\" 2>&1 &");
             if (preg_match("/$pid/",$check_run)){
                 return json_encode('running');
             } else {
@@ -3273,23 +3270,23 @@ class dbfuncs {
                 return json_encode('done');
             }
         } else if ($executor == "sge" && $commandType == "terminateRun"){
-            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd qdel $pid $upCacheCmd\" 2>&1 &");
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH qdel $pid $upCacheCmd\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "lsf" && $commandType == "terminateRun"){
-            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd bkill $pid $upCacheCmd\" 2>&1 &");
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH bkill $pid $upCacheCmd\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "slurm" && $commandType == "terminateRun"){
-            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd scancel $pid $upCacheCmd\" 2>&1 &");
+            $terminate_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH scancel $pid $upCacheCmd\" 2>&1 &");
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "local" && $commandType == "terminateRun"){
-            $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash $upCacheCmd\" 2>&1 &";
+            $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash $upCacheCmd\" 2>&1 &";
             $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
             $run_path_real = $this->getServerRunPath($uuid);
             $ret = $this->execute_cmd_logfile($cmd, $ret, "terminate_cmd_log", "terminate_cmd", "$run_path_real/serverlog.txt", "a");
             return json_encode('terminateCommandExecuted');
         } else if ($commandType == "getRemoteFileList"){
             $target_dir = $pid;
-            $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preCmd ls $target_dir \" 2>&1 & echo $! &";
+            $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH ls $target_dir \" 2>&1 & echo $! &";
             $file_list = shell_exec($cmd);
             return json_encode($file_list);
         }
@@ -3309,10 +3306,24 @@ class dbfuncs {
         return json_encode($content);
     }
     function saveFileContent($text, $uuid, $filename, $ownerID) {
+        if (preg_match("/\//i",$filename)){
+            $dirname = dirname($filename);
+        }
+        if (!file_exists("{$this->run_path}/$uuid/$dirname")) {
+            mkdir("{$this->run_path}/$uuid/$dirname", 0755, true);
+        }
         $file = fopen("{$this->run_path}/$uuid/$filename", "w");
         $res = fwrite($file, $text);
         fclose($file);
         return json_encode($res);
+    }
+    function deleteFile($uuid,$filename,$ownerID) {
+        $file = "{$this->run_path}/$uuid/$filename";
+        if (file_exists($file)) {
+            unlink($file);
+            return json_encode("file deleted.");
+        }
+        return json_encode("file not found.");
     }
 
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
@@ -3692,6 +3703,20 @@ class dbfuncs {
             }
         }
         return json_encode($scanned_directory);
+    }
+
+    function checkDescriptionBox($data, $uuid, $path){
+        $name = "_Description"; //folder name
+        $module = "run_description";
+        $id = $module;
+        $fileList = array_values((array)json_decode($this->getFileList($uuid, "$path/$name", "onlyfile")));
+        $fileList = array_filter($fileList);
+        $out["fileList"] = $fileList;
+        $out["name"] = $name;
+        $out["pubWeb"] = $module;
+        $out["id"] = $id."_".$module;
+        array_unshift($data , $out); //push to the top of the array
+        return $data;
     }
 
     //    ----------- Inputs, Project Inputs   ---------
@@ -4275,6 +4300,12 @@ class dbfuncs {
                             WHERE p.deleted = 0 AND pg.id = '$id'";
         return self::queryTable($sql);
     }
+    function checkUserWritePermRun($project_pipeline_id, $ownerID) {
+        $sql = "SELECT DISTINCT id, name
+                FROM project_pipeline
+                WHERE deleted = 0 AND owner_id = '$ownerID' AND id = '$project_pipeline_id'";
+        return self::queryTable($sql);
+    }
     function checkProject($pipeline_id, $ownerID) {
         $sql = "SELECT DISTINCT pp.id, p.name
                 FROM project_pipeline pp
@@ -4608,7 +4639,7 @@ class dbfuncs {
         return $res;
     }
 
-    public function moveFile($type, $from, $to, $ownerID){
+    function moveFile($type, $from, $to, $ownerID){
         $res = false;
         if ($type == "pubweb"){
             $from = "{$this->run_path}/$from";

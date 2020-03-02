@@ -167,6 +167,39 @@ function showInfoModal(modalId, textID, text) {
     }
 }
 
+//text: show in browser, 
+//savedData: save data to delete button
+//execFunc: execute execFunc(savedData) when clicking on delete button
+function showConfirmDeleteModal(text, savedData, execFunc) {
+    var modalId = "#confirmDeleteModal";
+    var textID = "#confirmDeleteModalText";
+    var clickid = "#confirmDeleteModalDelBtn";
+    //true if modal is open
+    if (($(modalId).data('bs.modal') || {}).isShown ){
+        $(textID).html(text);
+        $(clickid).removeData("data");
+        $(clickid).data("data",savedData);
+        $(modalId).on('click', clickid, function (event) {
+            var savedData = $(clickid).data("data")
+            execFunc(savedData)
+        });
+    } else {
+        $(modalId).off();
+        $(clickid).removeData("data")
+        $(modalId).on('show.bs.modal', function (event) {
+            $(this).find('form').trigger('reset');
+            $(textID).html(text);
+            $(clickid).data("data",savedData)
+        });
+        $(modalId).on('click', clickid, function (event) {
+            var savedData = $(clickid).data("data")
+            execFunc(savedData)
+            $(modalId).modal('hide'); 
+        });
+        $(modalId).modal('show'); 
+    }
+}
+
 
 function selectMultiselect(id, nameArr) {
     $(id).multiselect('deselectAll', false)
@@ -656,6 +689,49 @@ function initCloudConsole(cloud){
     });
 
 }
+
+
+var disableDoubleClickCollapse = function(id1check, id1div, id2check,id2div, baseid){
+    //not allow to click both option
+    $('#'+baseid).on('show.bs.collapse', '#'+id1div, function () {
+        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
+            $('#'+id2check).trigger("click");
+        }
+        $('#'+id1check).attr('onclick', "return false;");
+    });
+    $('#'+baseid).on('show.bs.collapse', '#'+id2div, function () {
+        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
+            $('#'+id1check).trigger("click");
+        }
+        $('#'+id2check).attr('onclick', "return false;");
+    });
+    $('#'+baseid).on('shown.bs.collapse', '#'+id1div, function () {
+        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
+            $('#'+id2check).trigger("click");
+        }
+        $('#'+id1check).removeAttr('onclick');
+    });
+    $('#'+baseid).on('shown.bs.collapse', '#'+id2div, function () {
+        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
+            $('#'+id1check).trigger("click");
+        }
+        $('#'+id2check).removeAttr('onclick');
+    });
+
+    $('#'+baseid).on('hide.bs.collapse', '#'+id2div, function () {
+        $('#'+id2check).attr('onclick', "return false;");
+    });
+    $('#'+baseid).on('hide.bs.collapse', '#'+id1div, function () {
+        $('#'+id1check).attr('onclick', "return false;");
+    });
+    $('#'+baseid).on('hidden.bs.collapse', '#'+id1div, function () {
+        $('#'+id1check).removeAttr('onclick');
+    });
+    $('#'+baseid).on('hidden.bs.collapse', '#'+id2div, function () {
+        $('#'+id2check).removeAttr('onclick');
+    });
+}
+
 
 $(document).ready(function () {
     initCloudConsole("amazon");

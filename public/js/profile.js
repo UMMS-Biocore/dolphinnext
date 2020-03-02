@@ -917,52 +917,52 @@ $(document).ready(function () {
     $('#confirmDelModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var clickedRow = button.closest('tr');
-        $('#mDelBtn').data('clickedrow', clickedRow);
+        $('#confirmDelModalDelBtn').data('clickedrow', clickedRow);
         if (button.attr('class') === 'deleteSSHKeys') {
             var rowData = sshTable.row(clickedRow).data();
             var remove_id = rowData.id;
-            $('#mDelBtn').attr('remove_id', remove_id);
-            $('#mDelBtn').attr('class', 'btn btn-primary deleteSSHKeys');
+            $('#confirmDelModalDelBtn').attr('remove_id', remove_id);
+            $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary deleteSSHKeys');
             $('#confirmDelModalText').html('Are you sure you want to delete?');
         } else if (button.attr('class') === 'delUser'){
             var AdmUserTable = $('#AdminUserTable').DataTable();
             var rowData = AdmUserTable.row(clickedRow).data();
             var remove_id = rowData.id;
-            $('#mDelBtn').attr('remove_id', remove_id);
+            $('#confirmDelModalDelBtn').attr('remove_id', remove_id);
             var email = rowData.email;
             var name = rowData.name;
-            $('#mDelBtn').attr('class', 'btn btn-primary delUser');
+            $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary delUser');
             $('#confirmDelModalText').html('Are you sure you want to delete following user?</br></br>Name: '+name+'</br>E-mail: '+email);
         } else if (button.attr('class') === 'deleteGithub') {
             var rowData = githubTable.row(clickedRow).data();
             var remove_id = rowData.id;
-            $('#mDelBtn').attr('remove_id', remove_id);
-            $('#mDelBtn').attr('class', 'btn btn-primary deleteGithub');
+            $('#confirmDelModalDelBtn').attr('remove_id', remove_id);
+            $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary deleteGithub');
             $('#confirmDelModalText').html('Are you sure you want to delete?');
         } else if (button.attr('class') === 'deleteGoogleKeys') {
             var googleTab = $('#googleKeyTable').DataTable()
             var rowData = googleTab.row(clickedRow).data();
             var remove_id = rowData.id;
-            $('#mDelBtn').attr('remove_id', remove_id);
-            $('#mDelBtn').attr('class', 'btn btn-primary deleteGoogleKeys');
+            $('#confirmDelModalDelBtn').attr('remove_id', remove_id);
+            $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary deleteGoogleKeys');
             $('#confirmDelModalText').html('Are you sure you want to delete Google key?');
         } else if (button.attr('id') === 'delGoogKeyIcon') {
-            $('#mDelBtn').attr('class', 'btn btn-primary delGoogKeyIcon');
+            $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary delGoogKeyIcon');
             $('#confirmDelModalText').html('Are you sure you want to delete Google key?');
         } else if (button.attr('class') === 'removeUserFromGroup') {
-            $('#mDelBtn').attr('class', 'btn btn-primary removeUserFromGroup');
+            $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary removeUserFromGroup');
             var groupMemberTable = $('#groupmembertable').DataTable();
             var rowData = groupMemberTable.row(clickedRow).data();
             var email = rowData.email;
             var name = rowData.name;
-            $('#mDelBtn').attr('remove_id', rowData.id);
-            $('#mDelBtn').data('clickedrow', clickedRow);
+            $('#confirmDelModalDelBtn').attr('remove_id', rowData.id);
+            $('#confirmDelModalDelBtn').data('clickedrow', clickedRow);
             $('#confirmDelModalText').html('Are you sure you want to remove following user from the group?</br></br>Name: '+name+'</br>E-mail: '+email);
         } else if (button.attr('class') === 'deleteGroup') {
-            $('#mDelBtn').attr('class', 'btn btn-primary deleteGroup');
+            $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary deleteGroup');
             var rowData = groupTable.row(clickedRow).data();
-            $('#mDelBtn').attr('remove_id', rowData.id);
-            $('#mDelBtn').data('clickedrow', clickedRow);
+            $('#confirmDelModalDelBtn').attr('remove_id', rowData.id);
+            $('#confirmDelModalDelBtn').data('clickedrow', clickedRow);
             $('#confirmDelModalText').html('Are you sure you want to delete group "'+rowData.name+'"?');
         }
     });
@@ -973,8 +973,8 @@ $(document).ready(function () {
     });
 
     $('#confirmDelModal').on('click', '.deleteGroup', function (event) {
-        var g_id = $('#mDelBtn').attr('remove_id');
-        var clickedRow = $('#mDelBtn').data('clickedrow');
+        var g_id = $('#confirmDelModalDelBtn').attr('remove_id');
+        var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         $.ajax({
             type: "POST",
             url: "ajax/ajaxquery.php",
@@ -1000,10 +1000,10 @@ $(document).ready(function () {
 
 
     $('#confirmDelModal').on('click', '.removeUserFromGroup', function (event) {
-        var user_id = $('#mDelBtn').attr('remove_id');
+        var user_id = $('#confirmDelModalDelBtn').attr('remove_id');
         var g_data = $('#groupmembertabledata').data('rowData');
         var g_id = g_data.id
-        var clickedRow = $('#mDelBtn').data('clickedrow');
+        var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (user_id && g_id) {
             $.ajax({
                 type: "POST",
@@ -1032,8 +1032,8 @@ $(document).ready(function () {
     });
 
     $('#confirmDelModal').on('click', '.deleteGoogleKeys', function (event) {
-        var remove_id = $('#mDelBtn').attr('remove_id');
-        var clickedRow = $('#mDelBtn').data('clickedrow');
+        var remove_id = $('#confirmDelModalDelBtn').attr('remove_id');
+        var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (remove_id !== '') {
             $.ajax({
                 type: "POST",
@@ -1056,8 +1056,8 @@ $(document).ready(function () {
     });
 
     $('#confirmDelModal').on('click', '.deleteGithub', function (event) {
-        var remove_id = $('#mDelBtn').attr('remove_id');
-        var clickedRow = $('#mDelBtn').data('clickedrow');
+        var remove_id = $('#confirmDelModalDelBtn').attr('remove_id');
+        var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (remove_id !== '') {
             $.ajax({
                 type: "POST",
@@ -1079,8 +1079,8 @@ $(document).ready(function () {
     });
 
     $('#confirmDelModal').on('click', '.deleteSSHKeys', function (event) {
-        var remove_id = $('#mDelBtn').attr('remove_id');
-        var clickedRow = $('#mDelBtn').data('clickedrow');
+        var remove_id = $('#confirmDelModalDelBtn').attr('remove_id');
+        var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (remove_id !== '') {
             var warnUser = false;
             var warnText = '';
@@ -1116,8 +1116,8 @@ $(document).ready(function () {
     });
 
     $('#confirmDelModal').on('click', '.delUser', function (event) {
-        var remove_id = $('#mDelBtn').attr('remove_id');
-        var clickedRow = $('#mDelBtn').data('clickedrow');
+        var remove_id = $('#confirmDelModalDelBtn').attr('remove_id');
+        var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (remove_id) {
             $.ajax({
                 type: "POST",

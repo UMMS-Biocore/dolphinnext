@@ -121,6 +121,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#run-questions">Run Questions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#i-can-not-reach-my-files-in-the-file-window">I can not reach my files in the file window</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#error-run-directory-cannot-be-created">Error: Run directory cannot be created</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#profile-questions">Profile Questions</a><ul>
@@ -199,29 +200,30 @@
            <div itemprop="articleBody">
             
   <div class="section" id="frequently-asked-questions">
-<h1><a class="toc-backref" href="#id3">Frequently Asked Questions</a><a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#id4">Frequently Asked Questions</a><a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#frequently-asked-questions" id="id3">Frequently Asked Questions</a><ul>
-<li><a class="reference internal" href="#installation-guide" id="id4">Installation Guide</a><ul>
-<li><a class="reference internal" href="#how-can-i-install-singularity" id="id5">How can I install singularity?</a></li>
-<li><a class="reference internal" href="#how-can-i-install-docker" id="id6">How can I install docker?</a></li>
-<li><a class="reference internal" href="#how-can-i-install-nextflow" id="id7">How can I install nextflow?</a></li>
-<li><a class="reference internal" href="#how-can-i-install-java" id="id8">How can I install JAVA?</a></li>
+<li><a class="reference internal" href="#frequently-asked-questions" id="id4">Frequently Asked Questions</a><ul>
+<li><a class="reference internal" href="#installation-guide" id="id5">Installation Guide</a><ul>
+<li><a class="reference internal" href="#how-can-i-install-singularity" id="id6">How can I install singularity?</a></li>
+<li><a class="reference internal" href="#how-can-i-install-docker" id="id7">How can I install docker?</a></li>
+<li><a class="reference internal" href="#how-can-i-install-nextflow" id="id8">How can I install nextflow?</a></li>
+<li><a class="reference internal" href="#how-can-i-install-java" id="id9">How can I install JAVA?</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#connection-issues" id="id9">Connection Issues</a><ul>
-<li><a class="reference internal" href="#why-can-t-i-validate-my-ssh-keys" id="id10">Why can’t I validate my SSH Keys?</a></li>
-<li><a class="reference internal" href="#how-can-i-create-ssh-keys-in-my-computer" id="id11">How can I create SSH keys in my computer?</a></li>
+<li><a class="reference internal" href="#connection-issues" id="id10">Connection Issues</a><ul>
+<li><a class="reference internal" href="#why-can-t-i-validate-my-ssh-keys" id="id11">Why can’t I validate my SSH Keys?</a></li>
+<li><a class="reference internal" href="#how-can-i-create-ssh-keys-in-my-computer" id="id12">How can I create SSH keys in my computer?</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#run-questions" id="id12">Run Questions</a><ul>
-<li><a class="reference internal" href="#i-can-not-reach-my-files-in-the-file-window" id="id13">I can not reach my files in the file window</a></li>
+<li><a class="reference internal" href="#run-questions" id="id13">Run Questions</a><ul>
+<li><a class="reference internal" href="#i-can-not-reach-my-files-in-the-file-window" id="id14">I can not reach my files in the file window</a></li>
+<li><a class="reference internal" href="#error-run-directory-cannot-be-created" id="id15">Error: Run directory cannot be created</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#profile-questions" id="id14">Profile Questions</a><ul>
-<li><a class="reference internal" href="#how-should-i-configure-my-executor-settings" id="id15">How should I configure my executor settings?</a></li>
+<li><a class="reference internal" href="#profile-questions" id="id16">Profile Questions</a><ul>
+<li><a class="reference internal" href="#how-should-i-configure-my-executor-settings" id="id17">How should I configure my executor settings?</a></li>
 </ul>
 </li>
 </ul>
@@ -229,9 +231,9 @@
 </ul>
 </div>
 <div class="section" id="installation-guide">
-<h2><a class="toc-backref" href="#id4">Installation Guide</a><a class="headerlink" href="#installation-guide" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id5">Installation Guide</a><a class="headerlink" href="#installation-guide" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="how-can-i-install-singularity">
-<h3><a class="toc-backref" href="#id5">How can I install singularity?</a><a class="headerlink" href="#how-can-i-install-singularity" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id6">How can I install singularity?</a><a class="headerlink" href="#how-can-i-install-singularity" title="Permalink to this headline">¶</a></h3>
 <p>Install <a class="reference external" href="https://sylabs.io/guides/3.0/user-guide/installation.html#install-on-linux">Singularity (Version 3)</a> for pipelines:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>## Remove old version of Singularity
 # sudo rm -rf /usr/local/libexec/singularity /usr/local/var/singularity /usr/local/etc/singularity /usr/local/bin/singularity /usr/local/bin/run-singularity /usr/local/etc/bash_completion.d/singularity
@@ -251,7 +253,7 @@ sudo make -C ./builddir install
 </div>
 </div>
 <div class="section" id="how-can-i-install-docker">
-<h3><a class="toc-backref" href="#id6">How can I install docker?</a><a class="headerlink" href="#how-can-i-install-docker" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id7">How can I install docker?</a><a class="headerlink" href="#how-can-i-install-docker" title="Permalink to this headline">¶</a></h3>
 <p>Installing <a class="reference external" href="https://docs.docker.com/install/linux/docker-ce/ubuntu/">Docker</a> for pipelines:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">## Uninstall Old Versions of Docker</span>
 <span class="c1"># sudo apt-get remove docker docker-engine docker.io</span>
@@ -262,7 +264,7 @@ sudo make -C ./builddir install
 </div>
 </div>
 <div class="section" id="how-can-i-install-nextflow">
-<h3><a class="toc-backref" href="#id7">How can I install nextflow?</a><a class="headerlink" href="#how-can-i-install-nextflow" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id8">How can I install nextflow?</a><a class="headerlink" href="#how-can-i-install-nextflow" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="faq.html#how-can-i-install-java">JAVA (v8+)</a> should be installed before installing Nextflow.
 Installing  <a class="reference external" href="https://www.nextflow.io/">Nextflow</a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">## To install to your ~/bin directory:</span>
@@ -279,7 +281,7 @@ Installing  <a class="reference external" href="https://www.nextflow.io/">Nextfl
 </div>
 </div>
 <div class="section" id="how-can-i-install-java">
-<h3><a class="toc-backref" href="#id8">How can I install JAVA?</a><a class="headerlink" href="#how-can-i-install-java" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id9">How can I install JAVA?</a><a class="headerlink" href="#how-can-i-install-java" title="Permalink to this headline">¶</a></h3>
 <p>Installing <a class="reference external" href="https://www.java.com/en/download/help/linux_x64_install.xml#install">Java v8+</a> for Nextflow:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">openjdk</span><span class="o">-</span><span class="mi">8</span><span class="o">-</span><span class="n">jdk</span> <span class="o">&amp;&amp;</span> \
 <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">ant</span> <span class="o">&amp;&amp;</span> \
@@ -296,9 +298,9 @@ Installing  <a class="reference external" href="https://www.nextflow.io/">Nextfl
 </div>
 </div>
 <div class="section" id="connection-issues">
-<h2><a class="toc-backref" href="#id9">Connection Issues</a><a class="headerlink" href="#connection-issues" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id10">Connection Issues</a><a class="headerlink" href="#connection-issues" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="why-can-t-i-validate-my-ssh-keys">
-<h3><a class="toc-backref" href="#id10">Why can’t I validate my SSH Keys?</a><a class="headerlink" href="#why-can-t-i-validate-my-ssh-keys" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id11">Why can’t I validate my SSH Keys?</a><a class="headerlink" href="#why-can-t-i-validate-my-ssh-keys" title="Permalink to this headline">¶</a></h3>
 <p>Please check following guide to find out the issue.</p>
 <blockquote>
 <div><ol class="arabic">
@@ -321,15 +323,13 @@ Installing  <a class="reference external" href="https://www.nextflow.io/">Nextfl
 </pre></div>
 </div>
 </li>
+<li><p class="first">Your <strong>home directory</strong> shoudn’t be <strong>writeable</strong> by other users. If you need to share your files with everyone, don’t set permission of your home directory to 777. It creates security issues and blocks ssh connection. You can set to more secure options such as 750, 755 or 754.</p>
+</li>
 </ol>
-<div class="admonition caution">
-<p class="first admonition-title">Caution</p>
-<p class="last">Your home directory shoudn’t be writeable by other users. If you need to share your files with everyone, don’t set permission of your home directory to 777. It creates security issues and blocks ssh connection. You can set to more secure options such as 750, 755 or 754.</p>
-</div>
 </div></blockquote>
 </div>
 <div class="section" id="how-can-i-create-ssh-keys-in-my-computer">
-<h3><a class="toc-backref" href="#id11">How can I create SSH keys in my computer?</a><a class="headerlink" href="#how-can-i-create-ssh-keys-in-my-computer" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id12">How can I create SSH keys in my computer?</a><a class="headerlink" href="#how-can-i-create-ssh-keys-in-my-computer" title="Permalink to this headline">¶</a></h3>
 <p>You can reach your key pairs in your computer at default location: <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa</span></code> for private and <code class="docutils literal notranslate"><span class="pre">~/.ssh/id_rsa.pub</span></code> for public key. If these files are not exist or you want to create new ones, then on the command line, enter:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span><span class="o">-</span><span class="n">keygen</span> <span class="o">-</span><span class="n">t</span> <span class="n">rsa</span>
 </pre></div>
@@ -338,16 +338,20 @@ Installing  <a class="reference external" href="https://www.nextflow.io/">Nextfl
 </div>
 </div>
 <div class="section" id="run-questions">
-<h2><a class="toc-backref" href="#id12">Run Questions</a><a class="headerlink" href="#run-questions" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id13">Run Questions</a><a class="headerlink" href="#run-questions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="i-can-not-reach-my-files-in-the-file-window">
-<h3><a class="toc-backref" href="#id13">I can not reach my files in the file window</a><a class="headerlink" href="#i-can-not-reach-my-files-in-the-file-window" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id14">I can not reach my files in the file window</a><a class="headerlink" href="#i-can-not-reach-my-files-in-the-file-window" title="Permalink to this headline">¶</a></h3>
+<p>There might be a connection issue, please check <a class="reference external" href="faq.html#why-can-t-i-validate-my-ssh-keys">Why can’t I validate my SSH Keys</a> section.</p>
+</div>
+<div class="section" id="error-run-directory-cannot-be-created">
+<h3><a class="toc-backref" href="#id15">Error: Run directory cannot be created</a><a class="headerlink" href="#error-run-directory-cannot-be-created" title="Permalink to this headline">¶</a></h3>
 <p>There might be a connection issue, please check <a class="reference external" href="faq.html#why-can-t-i-validate-my-ssh-keys">Why can’t I validate my SSH Keys</a> section.</p>
 </div>
 </div>
 <div class="section" id="profile-questions">
-<h2><a class="toc-backref" href="#id14">Profile Questions</a><a class="headerlink" href="#profile-questions" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id16">Profile Questions</a><a class="headerlink" href="#profile-questions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="how-should-i-configure-my-executor-settings">
-<h3><a class="toc-backref" href="#id15">How should I configure my executor settings?</a><a class="headerlink" href="#how-should-i-configure-my-executor-settings" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id17">How should I configure my executor settings?</a><a class="headerlink" href="#how-should-i-configure-my-executor-settings" title="Permalink to this headline">¶</a></h3>
 <p>In DolphinNext, there are 4 different section to control your executor settings. First two fields are defined in <strong>profile -&gt; run environment</strong>, and rest of the fields are adjusted in the <strong>advanced tab</strong> of run page. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>.</p>
 <p><strong>1. Executor of Nextflow (in the profile -&gt; run environment)</strong>:</p>
 <blockquote>

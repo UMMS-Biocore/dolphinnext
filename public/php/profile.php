@@ -1076,7 +1076,7 @@ $GOOGPATH=GOOGPATH;
 </div>
 </div>
 
-<!--Confirm Modal-->
+<!--Confirm Del Modal-->
 
 <div id="confirmDelModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -1087,13 +1087,13 @@ $GOOGPATH=GOOGPATH;
             </div>
             <div class="modal-body" id="confirmDelModalText">Text</div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal" id="mDelBtn">Delete</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="confirmDelModalDelBtn">Delete</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
             </div>
         </div>
     </div>
 </div>
-<!--Confirm Modal Ends-->
+<!--Confirm Del Modal Ends-->
 
 <!--Confirm Modal-->
 

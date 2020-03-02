@@ -103,6 +103,12 @@
 <li class="toctree-l2"><a class="reference internal" href="#signing-up">Signing Up</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#creating-profile">Creating Profile</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#running-pipelines">Running Pipelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-files">Adding Files</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#remote-files">Remote Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#geo-files">Geo Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#upload-files">Upload Files</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="project.html">Project Guide</a></li>
@@ -208,9 +214,16 @@
 <li>If you have an access to High Performance Computing (HPC) environments, or personal workstations, then please choose <strong>Host</strong>.</li>
 <li>If you have an Amazon Web Services (AWS) account or planning to create one, then please choose <strong>Amazon</strong> and follow our <a class="reference external" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#b-defining-amazon-profile">Amazon Guide</a>  to create your run environment.</li>
 <li>If you have an Google Cloud account or planning to create one, then please choose <strong>Google</strong> and follow our <a class="reference external" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#c-defining-google-profile">Google Guide</a> to create your run environment.</li>
+<li>If you choose <strong>MGHPCC cluster</strong> option, you can upload your files to our MGHPCC cluster to process your data and download your results from report section. However, you will not have direct access to our cluster.</li>
 </ol>
 </div></blockquote>
 </li>
+</ol>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you choose MGHPCC option, you can skip the rest of this guideline and go to <a class="reference external" href="quick.html#running-pipelines">Running Pipelines Section</a>.</p>
+</div>
+<ol class="arabic" start="2">
 <li><p class="first">Second, add public SSH Key into your host machine.</p>
 <blockquote>
 <div><ul class="simple">
@@ -221,11 +234,11 @@
 </div></blockquote>
 </li>
 </ol>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
 <p><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect (<a class="reference external" href="mailto:yourusername&#37;&#52;&#48;yourhostname">yourusername<span>&#64;</span>yourhostname</a>). For instance, for <a class="reference external" href="mailto:us2r&#37;&#52;&#48;ghpcc06&#46;umassrc&#46;org">us2r<span>&#64;</span>ghpcc06<span>&#46;</span>umassrc<span>&#46;</span>org</a>:</p>
-<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span>  <span class="n">Username</span><span class="p">:</span> <span class="n">yourusername</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">us2r</span><span class="p">)</span>
-<span class="o">-</span>  <span class="n">Hostname</span><span class="p">:</span> <span class="n">yourhostname</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">ghpcc06</span><span class="o">.</span><span class="n">umassrc</span><span class="o">.</span><span class="n">org</span><span class="p">)</span>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">*</span>  <span class="n">Username</span><span class="p">:</span> <span class="n">yourusername</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">us2r</span><span class="p">)</span>
+<span class="o">*</span>  <span class="n">Hostname</span><span class="p">:</span> <span class="n">yourhostname</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">ghpcc06</span><span class="o">.</span><span class="n">umassrc</span><span class="o">.</span><span class="n">org</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -258,10 +271,6 @@
 </li>
 </ol>
 <p>Once you complete these steps, you’re now able to start using publicly available pipelines.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">Please note that DolphinNext doesn’t provide free access to our UMASS clusters. Instead, you need to use your run environment (High Performance Computing (HPC) environments, Amazon/Google cloud services or personal workstations) to execute pipelines.</p>
-</div>
 </div>
 <div class="section" id="running-pipelines">
 <h2>Running Pipelines<a class="headerlink" href="#running-pipelines" title="Permalink to this headline">¶</a></h2>
@@ -300,22 +309,49 @@
 <div><a class="reference internal image-reference" href="../_images/run_params_env.png"><img alt="../_images/run_params_env.png" class="align-center" src="../_images/run_params_env.png" style="width: 99%;" /></a>
 </div></blockquote>
 </li>
-<li><p class="first"><strong>Inputs:</strong> Value and path of the files need to be entered.</p>
+<li><p class="first"><strong>Inputs:</strong> Value and path of the files need to be entered. For detailed information please check <a class="reference external" href="quick.html#adding-files">adding files section.</a></p>
 <blockquote>
 <div><a class="reference internal image-reference" href="../_images/run_params_inputs.png"><img alt="../_images/run_params_inputs.png" class="align-center" src="../_images/run_params_inputs.png" style="width: 50%;" /></a>
-<p>For detailed information about adding files, you can check our tutorial video:</p>
-<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
-    <iframe src="https://www.youtube.com/embed/3QaAqdyB11w" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-</div>
-</br></div></blockquote>
+</div></blockquote>
 </li>
 </ol>
 </div></blockquote>
 </li>
 <li><p class="first">Once all requirements are satisfied, <code class="docutils literal notranslate"><span class="pre">Waiting</span></code> button will turn in to green <code class="docutils literal notranslate"><span class="pre">ready</span> <span class="pre">to</span> <span class="pre">run</span></code> button as shown below. You can initiate your run by clicking <code class="docutils literal notranslate"><span class="pre">ready</span> <span class="pre">to</span> <span class="pre">run</span></code> button. Please go through <a class="reference external" href="run.html">run page</a> for detailed explanation about each module is used.</p>
+<blockquote>
+<div><img alt="../_images/run_header_ready.png" class="align-center" src="../_images/run_header_ready.png" />
+</div></blockquote>
 </li>
 </ol>
-<img alt="../_images/run_header_ready.png" class="align-center" src="../_images/run_header_ready.png" />
+</div>
+<div class="section" id="adding-files">
+<h2>Adding Files<a class="headerlink" href="#adding-files" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="remote-files">
+<h3>Remote Files<a class="headerlink" href="#remote-files" title="Permalink to this headline">¶</a></h3>
+<p>You can reach your remote files by entering:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Full path of a directory: eg. <code class="docutils literal notranslate"><span class="pre">/share/data/umw_biocore/genome_data/mousetest/mm10/gz</span></code></li>
+<li>Web link: eg. <code class="docutils literal notranslate"><span class="pre">https://galaxyweb.umassmed.edu/pub/dnext_data/test/reads</span></code></li>
+<li>Amazon (S3) Bucket: eg. <code class="docutils literal notranslate"><span class="pre">s3://biocore/fastq</span></code></li>
+<li>Google (GS) Bucket: eg. <code class="docutils literal notranslate"><span class="pre">gs://biocore/fastq</span></code></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="geo-files">
+<h3>Geo Files<a class="headerlink" href="#geo-files" title="Permalink to this headline">¶</a></h3>
+<p>If you want to download and use NCBI (GEO data) in the pipeline, you can simply use <strong>GEO Files</strong> tab. Here are the few examples for GEO ID: <code class="docutils literal notranslate"><span class="pre">GSM1331276</span></code>, <code class="docutils literal notranslate"><span class="pre">GSE55190</span></code>, <code class="docutils literal notranslate"><span class="pre">SRR10095965</span></code></p>
+</div>
+<div class="section" id="upload-files">
+<h3>Upload Files<a class="headerlink" href="#upload-files" title="Permalink to this headline">¶</a></h3>
+<p>If you need to upload your local files and transfer into <strong>Target Directory in the Host</strong>, you can use <strong>Upload Files</strong> tab.</p>
+<p>For detailed information about adding files, please check our tutorial video:</p>
+<blockquote>
+<div><div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+    <iframe src="https://www.youtube.com/embed/3QaAqdyB11w" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+</div>
+</br></div></blockquote>
+</div>
 </div>
 </div>
 

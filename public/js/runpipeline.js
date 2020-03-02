@@ -1,4 +1,16 @@
 $runscope = {
+    //-------- Store data:
+    checkUserWritePermRun : null,
+    
+    //-------- Functions:
+    //Generic function to save ajax data
+    getAjaxData : function(varName, getValuesObj){
+        if ($runscope[varName] === null){
+            $runscope[varName] = getValues(getValuesObj);
+            Object.defineProperty($runscope, varName, {configureable: false, writable:false});
+        }
+        return $runscope[varName];
+    },
     //get work OR publish dir OR runcmd
     getPubVal : function(type){
         var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
@@ -52,13 +64,19 @@ $runscope = {
             }
         }
         return uploadDir;
+    },
+    checkUserWritePerm: function(){
+        var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+        // if user owns the permission to write, then return 1 else 0; 
+        var writePerm = $runscope.getAjaxData("checkUserWritePermRun", {p:"checkUserWritePermRun", "project_pipeline_id":project_pipeline_id});
+        return writePerm;
     }
 }
+
 //prevent functions overwrite
 Object.defineProperty($runscope, "getPubVal", {configureable: false, writable:false});
 Object.defineProperty($runscope, "getUploadDir", {configureable: false, writable:false});
-
-
+Object.defineProperty($runscope, "checkUserWritePerm", {configureable: false, writable:false});
 
 // [name] is the name of the event "click", "mouseover", .. 
 // same as you'd pass it to bind()
@@ -5170,6 +5188,7 @@ function runProPipeCall(checkType, uuid) {
         uuid: uuid
     });
     updateRunVerNavBar()
+    $("#refreshVerReport").trigger("click");
     if (manualRunCheck == "true"){
         if (serverLogGet){
             if (serverLogGet["manualRunCmd"]){
@@ -5182,6 +5201,8 @@ function runProPipeCall(checkType, uuid) {
     readNextflowLogTimer(proType, proId, "default");
 
 }
+
+
 
 //#########read nextflow log file for status  ################################################
 function readNextflowLogTimer(proType, proId, type) {
@@ -5222,6 +5243,10 @@ $('a[href="#logTab"]').on('shown.bs.tab', function (e) {
 $('a[href="#reportTab"]').on('shown.bs.tab', function (e) {
     //check if div is empty
     $("#runVerReport").trigger("change");
+});
+
+$(document).on('click', '#errorProPipe', function (e) {
+    $('.nav-tabs a[href="#logTab"]').tab('show');
 });
 
 
@@ -6161,9 +6186,22 @@ function viewDirButSearch(dir){
         $("#viewDir > option").attr("style", "pointer-events: none;");
         $("#viewDir").css("display", "inline")
     } else {
-        showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Directory' to search files in your host.")
+        showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Location' to search files.")
     }
 }
+
+function fillFileSearchBox(item){
+    if ($(item)){
+        var val = $(item).text()
+        if (val){
+            $('#file_dir').val(val)
+            $('#file_dir').keyup();
+        }
+    }
+}
+
+
+
 
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
@@ -8840,13 +8878,16 @@ $(document).ready(function () {
 
 
 
-    //$(function () { allows to trigger when a.reportFile added later to DOM
+    //$(document) allows to trigger when a.reportFile added later into the DOM
     $(function () {
         $(document).on('shown.bs.tab click', 'a.reportFile', function (event) {
             var href = $(this).attr("href");
+            $(href).removeClass('fade').addClass('active in');
+            $(href).siblings().removeClass('active in').addClass('fade');
             $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
             //check if div is empty
             if (!$.trim($(href).html()).length) {
+                var writePerm= $runscope.checkUserWritePerm();
                 var uuid = $("#runVerReport").val();
                 var visType = $(this).attr("visType");
                 var filePath = $(this).attr("filepath");
@@ -8857,7 +8898,6 @@ $(document).ready(function () {
                     filename = split[split.length - 1];
                     dir = filePath.substring(0, filePath.indexOf(filename));
                 }
-                console.log(dir)
                 var fileid = $(this).attr("fileid");
                 var pubWebPath = $("#basepathinfo").attr("pubweb");
                 var debrowserUrl = $("#basepathinfo").attr("debrowser");
@@ -8951,19 +8991,33 @@ $(document).ready(function () {
                             uuid: uuid,
                             dir: dir,
                             filename: filename,
-                            pubWebPath: pubWebPath
+                            pubWebPath: pubWebPath,
+                            editable:writePerm
                         },
                         editorWidth: "60%",
                         reportWidth: "40%",
                         height: "565px",
                         theme: "monokai" //tomorrow
                     });
-                } else if (visType == "html" || visType == "pdf" || visType == "text") {
+                } else if (visType == "markdown") {
+                    var contentDiv = '<div style="width:100%;" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></div>';
+                    $(href).append(contentDiv)
+                    var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
+
+                    $("#" + fileid).markdownEditor({
+                        ajax: {
+                            data: {"text":data, uuid:uuid, pubWebPath:pubWebPath, filePath:filePath, editable:writePerm}
+                        },
+                        backgroundcolorenter: "#ced9e3",
+                        backgroundcolorleave: "#ECF0F4",
+                        height: "565px"
+                    });
+                } else if (visType == "html" || visType == "pdf" || visType == "text" || visType == "image" ) {
                     var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
-                    if (visType == "html" || visType == "text") {
-                        var iframe = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>';
-                    } else if (visType == "pdf") {
+                    if (visType == "pdf") {
                         var iframe = '<object style="width:100%; height:100%;"  data="' + link + '" type="application/pdf"><embed src="' + link + '" type="application/pdf" /></object>';
+                    } else {
+                        var iframe = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>';
                     }
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
                     $(href).append(contentDiv);
@@ -8977,11 +9031,10 @@ $(document).ready(function () {
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
                     $(href).append(contentDiv);
                     bindEveHandlerIcon(fileid)
-
-                    //                    $("#deb-" + fileid).load(function () {
-                    //                        $("#deb-" + fileid).loading('stop');
-                    //                    });
-                    //                    $("#deb-" + fileid).loading('start');
+                    //$("#deb-" + fileid).load(function () {
+                    //           $("#deb-" + fileid).loading('stop');
+                    //});
+                    //$("#deb-" + fileid).loading('start');
                 }
             }
         })
@@ -9002,6 +9055,363 @@ $(document).ready(function () {
     });
 
     //################################
+    // --markdownEditor jquery plugin --
+    //################################
+
+    (function ($) {
+        var methods = {
+            init: function (options) {
+                var settings = $.extend({
+                    // default values.
+                    color: "#556b2f",
+                    backgroundColor: "white",
+                    heightHeader: "60px",
+                    lineHeightHeader: "60px",
+                    heightBody: "600px",
+                    heightEditor: "525px",
+                    heightFileList: "565px",
+                    heightTitle: "50px",
+                    lineHeightTitle: "50px",
+                    heightIconBar: "35px"
+                }, options);
+                var elems = $(this);
+                elems.css("width", "100%")
+                elems.css("height", "100%")
+                var elemsID = $(this).attr("id");
+                elems.data('settings', settings);
+                elems.data("tooglescreen","expand")
+                var data = getData(settings);
+                if (data === undefined || data == null || data == "") {
+                    elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to show</div>')
+                } else {
+                    // append panel
+                    elems.append(getPanel(data, settings, elemsID));
+                    // after appending panel
+                    afterAppendPanel(data,settings, elemsID, elems)
+                }
+                return this;
+            }
+        };
+
+        $.fn.markdownEditor = function (methodOrOptions) {
+            if (methods[methodOrOptions]) {
+                return methods[methodOrOptions].apply(this, Array.prototype.slice.call(arguments, 1));
+            } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
+                // Default to "init"
+                return methods.init.apply(this, arguments);
+            } else {
+                $.error('Method ' + methodOrOptions + ' does not exist on jQuery');
+            }
+        };
+
+        var cleanFileName = function (name, type) {
+            if (type == "jquery"){
+                name = name.replace(/\./g, "_");
+                name = name.replace(/\//g, "_");
+            }
+            name = name.replace(/\$/g, "_");
+            name = name.replace(/\!/g, "_");
+            name = name.replace(/\</g, "_");
+            name = name.replace(/\>/g, "_");
+            name = name.replace(/\?/g, "_");
+            name = name.replace(/\(/g, "_");
+            name = name.replace(/\"/g, "_");
+            name = name.replace(/\'/g, "_");
+            name = name.replace(/\\/g, "_");
+            name = name.replace(/@/g, "_");
+            return name;
+        }
+
+
+
+        var getTab = function (elemsID, settings){
+            var fileid =  elemsID;
+            var tabID = "fileTabs_" + fileid;
+            var active = 'in active';
+            var editorID = "editorID_" + fileid;
+            var htmlID = "htmlID_" + fileid;
+            var scriptModeDivID = "scriptModeID_" + fileid;
+            var scriptMode = "scriptMode_" + fileid;
+            var htmlDiv = `<div id="`+htmlID+`" style="padding-left:15px; overflow:scroll; height:`+settings.heightFileList+`; width: 100%;"></div>`;
+            var aceEditorDiv = `<div id="`+editorID+`" style="display:none; height:`+settings.heightEditor+`; width: 100%;"></div>
+<div style="display:none;" id="`+scriptModeDivID+`" class="row">
+<p class="col-sm-4" style="padding-top:4px; padding-right:0; padding-left:60px;">Language Mode:</p>
+<div class="col-sm-3">
+<select id="`+scriptMode+`" class="form-control">
+<option value="markdown">markdown</option>
+</select>
+</div>
+</div>`;
+            var contentDiv = getFileContentHeaderIconDiv(fileid, settings) + '<div style="width:100%; height:'+settings.heightIconBar+';" editorid= "'+editorID+'" id="' + fileid + '">' + htmlDiv+aceEditorDiv + '</div>';
+            return '<div style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" >'+contentDiv+'</div>';
+        } 
+
+        var getFileContentHeaderIconDiv = function (fileid,settings) {
+            var editConfirmIcon = "";
+            var downloadIcon = `<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"> <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a> <ul class="dropdown-menu dropdown-menu-right"> <li><a fileid="` + fileid + `" id="downUrl-` + fileid + `" href="#">Download</a></li> </ul> </li>`;
+            if (settings.ajax.data.editable){
+                editConfirmIcon = `<li role="presentation"><a fileid="` + fileid + `" id="confirmmd-` + fileid + `" style="display:none;" data-toggle="tooltip" data-placement="bottom" data-original-title="Save Changes"><i style="font-size: 18px;" class="fa fa-save"></i></a><a fileid="` + fileid + `"  id="editmd-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Edit Markdown"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
+
+            }
+            var fullScreenIcon = `<li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>`;
+
+            var content = `<ul style="float:inherit"  class="nav nav-pills panelheader">` + editConfirmIcon + fullScreenIcon  + downloadIcon+`</ul>`;
+            var wrapDiv = '<div id="' + fileid + '-ContentHeaderIconDiv" style="float:right; height:35px; width:100%;">' + content + '</div>';
+            return wrapDiv;
+        }
+
+        var getFileContentCol = function (elemsID, dataObj, height, lineHeight, settings) { 
+            var colPercent = "100";
+            var heightT = ""
+            var lineHeightT = ""
+            var navTabDiv = '<div style="height:inherit;" class="tab-content">';
+            navTabDiv += getTab(elemsID, settings);
+            navTabDiv += '</div>';
+            if (height) {
+                heightT = 'height:' + height + '; ';
+            }
+            if (lineHeight) {
+                lineHeightT = 'line-height:' + lineHeight + '; ';
+            }
+            return '<div style="' + heightT + lineHeightT + 'float:left;  width:' + colPercent + '%; ">' + navTabDiv + "</div>";
+        }
+
+        var getColumnContent = function (dataObj, colObj, nTd) {
+            var col = "";
+            if (colObj.fnCreatedCell && !nTd) {
+                var nTd = $("<span></span>");
+                colObj.fnCreatedCell(nTd, dataObj)
+                col = nTd.clone().wrap('<p>').html();
+            } else if (colObj.fnCreatedCell && nTd) {
+                colObj.fnCreatedCell(nTd, dataObj)
+            } else if (colObj.data) {
+                col = dataObj[colObj.data]
+            }
+            return col
+        };
+
+        var toogleFullSize = function (tooglescreen, elems, settings) {
+            if (tooglescreen == "expand") {
+                var featList = ["z-index", "height", "position", "top", "left", "background"]
+                var newValue = ["1049", "100%", "fixed", "0", "0", "white"]
+                var oldCSS = {};
+                var newCSS = {};
+                for (var i = 0; i < featList.length; i++) {
+                    oldCSS[featList[i]] = elems.css(featList[i])
+                    newCSS[featList[i]] = newValue[i]
+                }
+                elems.data("oldCSS", oldCSS);
+                elems.data("tooglescreen", "compress");
+
+            } else {
+                var newCSS = elems.data("oldCSS");
+                elems.data("tooglescreen", "expand");
+
+            }
+            //apply css obj
+            $.each(newCSS, function (el) {
+                elems.css(el, newCSS[el])
+            });
+        }
+
+        var toogleHtmlSize = function (htmlID, elemsID, tooglescreen, elems, settings) {
+            if (tooglescreen == "expand") {
+                $("#" + htmlID ).css("height", $(window).height() -45)
+            } else {
+                $("#" + htmlID).css("height", settings.heightFileList)
+            }
+        }
+
+        var toogleEditorSize = function (editorId, elemsID,    tooglescreen, elems, settings) {
+            var each_file_id =  elemsID;
+            var icon = $('#fullscr-' + each_file_id).children()
+            if (tooglescreen == "expand") {
+                icon.attr("class", "fa fa-compress")
+            } else {
+                icon.attr("class", "fa fa-expand")
+            }
+            if (tooglescreen == "expand") {
+                $("#" + editorId ).css("height", $(window).height() - settings.heightIconBar.substring(0, settings.heightIconBar.length - 2) -45)
+            } else {
+                $("#" + editorId).css("height", settings.heightEditor)
+            }
+            window[editorId].resize();
+        }
+
+        var getFileName = function (settings) {
+            var res = { filename: "", rest: "" };
+            var filePath = settings.ajax.data.filePath
+            var split = filePath.split("/")
+            res.filename = split[split.length - 1]
+            res.rest = split.slice(0, -1).join('/');
+            return res
+        }
+
+        var savemd = function (settings, editorId) {
+            var obj = getFileName(settings);
+            var newPath = obj.rest + "/" + obj.filename
+            var text = window[editorId].getValue();
+            text = encodeURIComponent(text);
+            var run_log_uuid = $("#runVerReport").val();
+            var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
+            return saveData
+        }
+
+
+        var bindEveHandlerIcon = function (fileid, elems, elemsID, settings) {
+            $('[data-toggle="tooltip"]').tooltip();
+            $('#fullscr-' + fileid).on('click', function (event) {
+                var tooglescreen = elems.data("tooglescreen");
+                var editorID = "editorID_" + fileid;
+                var htmlID = "htmlID_" + fileid;
+                toogleHtmlSize(htmlID, elemsID, tooglescreen, elems, settings);
+                toogleEditorSize(editorID, elemsID, tooglescreen, elems, settings);
+                toogleFullSize(tooglescreen, elems, settings);
+            });
+            $('#downUrl-' + fileid).on('click', function (event) {
+                var fileid = $(this).attr("fileid")
+                var filename = $("#" + fileid).attr("filename")
+                var filepath = $("#" + fileid).attr("filepath")
+                var a = document.createElement('A');
+                var url = settings.ajax.data.pubWebPath + "/" + settings.ajax.data.uuid + "/pubweb/" + filepath
+                download_file(url, filename);
+            });
+            $('#editmd-' + fileid).on('click', function (event) {
+                var fileid = $(this).attr("fileid");
+                var editorID = "editorID_" + fileid;
+                var htmlID = "htmlID_" + fileid;
+                var scriptModeDivID = "scriptModeID_" + fileid;
+                window[editorID].resize();
+                $('#confirmmd-' + fileid).css("display", "inline-block");
+                $('#editmd-' + fileid).css("display", "none");
+                $('#' + editorID).css("display", "inline-block");
+                $('#' + scriptModeDivID).css("display", "block");
+                $('#' + htmlID).css("display", "none");
+            });
+            $('#confirmmd-' + fileid).on('click', function (event) {
+                var fileid = $(this).attr("fileid")
+                var editorID = "editorID_" + fileid;
+                var htmlID = "htmlID_" + fileid;
+                var scriptModeDivID = "scriptModeID_" + fileid;
+                window[editorID].resize();
+                $('#confirmmd-' + fileid).css("display", "none");
+                $('#editmd-' + fileid).css("display", "inline-block");
+                savemd(settings, editorID);
+                var textEditor = getValueAceEditor(editorID)
+                updateMarkdown(textEditor, htmlID)
+                $('#' + editorID).css("display", "none");
+                $('#' + scriptModeDivID).css("display", "none");
+                $('#' + htmlID).css("display", "inline-block");
+            });
+
+        }
+
+        var updateMarkdown = function (text, targetDiv){
+            var target = document.getElementById(targetDiv)
+            var converter = new showdown.Converter({tables: true});
+            var html = converter.makeHtml(text);
+            target.innerHTML = html;
+        }
+
+        var getColumnData = function (elemsID, dataObj, settings, height, lineHeight) {
+            var processParamDiv = ""
+            processParamDiv += getFileContentCol(elemsID, dataObj, height, lineHeight, settings)
+            return processParamDiv
+        }
+
+        var createAceEditor = function (editorId, script_modeId) {
+            //ace process editor
+            window[editorId] = ace.edit(editorId);
+            window[editorId].setTheme("ace/theme/tomorrow");
+            window[editorId].getSession().setMode("ace/mode/sh");
+            window[editorId].$blockScrolling = Infinity;
+            //If mode is exist, then apply it
+            var mode = $("#"+script_modeId).val();
+            if (mode && mode != "") {
+                window[editorId].session.setMode("ace/mode/" + mode);
+            }
+            $(function () {
+                $(document).on('change', script_modeId, function () {
+                    var newMode = $(script_modeId).val();
+                    window[editorId].session.setMode("ace/mode/" + newMode);
+                })
+            });
+        }
+
+        var setValueAceEditor = function (editorId, text){
+            window[editorId].setValue(text);
+            window[editorId].clearSelection();
+        }
+
+        var getValueAceEditor = function (editorId){
+            var val = window[editorId].getValue();
+            return val;
+        }
+
+
+
+
+        var afterAppendEachEl = function (text, elemsID, elems, settings){
+            var fileid =  elemsID;
+            var tabID = "fileTabs_" + fileid;
+            var editorID = "editorID_" + fileid;
+            var scriptMode = "scriptMode_" + fileid;
+            var htmlID = "htmlID_" + fileid;
+            bindEveHandlerIcon(fileid, elems, elemsID, settings);
+            createAceEditor(editorID, scriptMode);
+            setValueAceEditor(editorID, text);
+            var textEditor = getValueAceEditor(editorID)
+            updateMarkdown(textEditor, htmlID)
+
+        }
+        var afterAppendPanel = function (dataObj, settings, elemsID, elems) {
+            var text = dataObj.text
+            afterAppendEachEl(text, elemsID, elems, settings)
+        }
+
+        var getPanel = function (dataObj, settings, elemsID) {
+            if (dataObj) {
+                var id = "0"
+                var bodyDiv = getColumnData(elemsID, dataObj, settings, settings.heightBody, settings.lineHeightBody);
+                var wrapBody = '<div  id="' + elemsID + '-' + id + '" style="word-break: break-all;"><div class="panel-body" style="background-color:white; height:' + settings.heightBody + '; padding:0px;">' + bodyDiv + '</div>';
+                return '<div id="' + elemsID + 'PanelDiv-' + id + '" ><div class="panel" style="background-color:' + settings.backgroundcolorleave + '; margin-bottom:15px;">' + wrapBody + '</div></div>'
+            } else
+                return ""
+        }
+
+
+        var getData = function (settings) {
+            var res = null;
+            if (settings.ajax.url) {
+                $.ajax({
+                    type: "POST",
+                    url: settings.ajax.url,
+                    data: settings.ajax.data,
+                    datatype: "json",
+                    async: false,
+                    cache: false,
+                    success: function (results) {
+                        res = results
+                    },
+                    error: function (errorThrown) {
+                        console.log("##Error: ");
+                        console.log(errorThrown)
+                    }
+                });
+                return res
+            } else if (settings.ajax.data) {
+                if (settings.ajax.data === undefined || settings.ajax.data.length == 0) {
+                    res = null;
+                } else {
+                    res = settings.ajax.data;
+                }
+            }
+            return res;
+        }
+
+        }(jQuery));
+
+    //################################
     // --rMarkEditor jquery plugin --
     //################################
 
@@ -9017,17 +9427,17 @@ $(document).ready(function () {
             elems.css("height", "100%")
             var elemsID = $(this).attr("id");
             var getEditorIconDiv = function () {
-                return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">
-<li role="presentation"><a class="rmarkeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>
-<li role="presentation"><a class="rmarkeditorsaveas" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As">
-<span class="glyphicon-stack">
-<i class="fa fa-pencil glyphicon-stack-3x"></i>
-<i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i>
-</span>
-</a></li>
-<li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>
-<li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>
-</ul>`
+                var rmarkeditorrun = "";
+                var rmarkeditorsaveas = "";
+                var rmarkeditorsave = "";
+                var rmarkeditorsett ="";
+                if (settings.ajax.editable){
+                    rmarkeditorrun = `<li role="presentation"><a class="rmarkeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>`;
+                    rmarkeditorsaveas = `<li role="presentation"><a class="rmarkeditorsaveas" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As"><span class="glyphicon-stack"><i class="fa fa-pencil glyphicon-stack-3x"></i><i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i></span></a></li>`;
+                    rmarkeditorsave = `<li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>`;
+                    rmarkeditorsett = `<li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>`; 
+                }
+                return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">`+rmarkeditorrun+rmarkeditorsaveas+rmarkeditorsave+rmarkeditorsett+`</ul>`
             }
             var getReportIconDiv = function () {
                 return `<ul style="float:inherit"  class="nav nav-pills rmarkeditor">
@@ -9502,7 +9912,7 @@ $(document).ready(function () {
                             if ($('#rMarkRename').find("input.rmarkfilename")) {
                                 var newName = $($('#rMarkRename').find("input.rmarkfilename")[0]).val();
                                 var saveData = saveCommand(editorId, newName)
-                                $("#reportRows").dynamicRows("fnRefresh", "columnsBody")
+                                $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody"})
                                 var newFilepath = divOldDir + newName;
                                 var allfiles = elems.closest("div.panel-body").find("a[filepath]")
                                 for (var i = 0; i < allfiles.length; i++) {
@@ -9690,6 +10100,7 @@ $(document).ready(function () {
                 if (data === undefined || data == null || data == "") {
                     elems.append('<div  style="font-weight:900; line-height:' + settings.lineHeightTitle + 'height:' + settings.heightTitle + ';">No data available to report</div>')
                 } else {
+                    // append panel
                     var title = getTitle(data[0], settings);
                     if (title) {
                         elems.append(title);
@@ -9697,7 +10108,9 @@ $(document).ready(function () {
                     $(data).each(function (i) {
                         elems.append(getPanel(data[i], settings, elemsID));
                     });
-                    refreshHandler(settings)
+                    // after appending panel
+                    afterAppendPanel(data,settings, elemsID, elems);
+                    refreshHandler(settings);
                 }
                 return this;
             },
@@ -9706,10 +10119,10 @@ $(document).ready(function () {
                 var elemsID = $(this).attr("id");
                 var settings = elems.data('settings');
                 var data = getData(settings);
-                if (content == "columnsBody") {
+                if (content.type == "columnsBody") {
                     $(data).each(function (i) {
-                        var id = data[i].id
                         var dataObj = data[i];
+                        var id = dataObj.id;
                         var existWrapBody = $("#" + elemsID + '-' + id);
                         if (existWrapBody) {
                             var existBodyDiv = existWrapBody.children().children()
@@ -9721,6 +10134,9 @@ $(document).ready(function () {
                             })
                         }
                     });
+                    if (content.callback){
+                        content.callback()
+                    }
                 }
                 return this;
             }
@@ -9737,6 +10153,10 @@ $(document).ready(function () {
             }
         };
 
+
+        var afterAppendPanel = function (dataObj, settings, elemsID, elems) {
+            //            createModal()
+        }
 
 
         var refreshHandler = function (settings) {
@@ -9783,6 +10203,7 @@ $(document).ready(function () {
                 var nTd = $("<span></span>");
                 colObj.fnCreatedCell(nTd, dataObj)
                 col = nTd.clone().wrap('<p>').html();
+                // fnRefresh will execute if nTd is available 
             } else if (colObj.fnCreatedCell && nTd) {
                 colObj.fnCreatedCell(nTd, dataObj)
             } else if (colObj.data) {
@@ -9790,6 +10211,7 @@ $(document).ready(function () {
             }
             return col
         };
+
 
         var getColumnData = function (dataObj, settings, cols, height, lineHeight) {
             var columnPercent = 100;
@@ -9887,6 +10309,536 @@ $(document).ready(function () {
 
 
     $(function () {
+        function reloadReportRows(){
+            var run_log_uuid = $("#runVerReport").val();
+            $("#reportRows").empty();
+            //add 'className: "center"' to center text in columns array
+            $("#reportRows").dynamicRows({
+                ajax: {
+                    url: "ajax/ajaxquery.php",
+                    data: { "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id }
+                },
+                columnsBody: [{
+                    //file list
+                    data: null,
+                    colPercent: "15",
+                    overflow: "scroll",
+                    fnCreatedCell: function (nTd, oData) {
+                        var getExtension = function (filename){
+                            var re = /(?:\.([^.]+))?$/;
+                            var ext = re.exec(filename)[1];   // "txt"
+                            if (!ext){
+                                ext = "";
+                            }
+                            return ext;
+                        }
+                        var getIconByExtension = function(ext){
+                            var icon = "fa fa-file-text-o";
+                            if (ext == "tsv" || ext == "csv" || ext === "xls" || ext === "xlsx") {
+                                icon = "fa fa-table";
+                            } else if (ext == "html") {
+                                icon = "fa fa-file-code-o";
+                            } else if (ext == "pdf") {
+                                icon = "fa fa-file-pdf-o";
+                            } else if (ext == "rmd") {
+                                icon = "fa fa-pie-chart";
+                            } else if (ext == "md") {
+                                icon = "fa fa-edit";
+                            } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
+                                icon = "fa fa-file-image-o";
+                            }
+                            return icon;
+                        }
+                        var getVisTypeByExtension = function(ext){
+                            var visType = "text";
+                            if (ext == "tsv") {
+                                visType = "table";
+                            } else if (ext == "html") {
+                                visType = "html";
+                            } else if (ext == "pdf") {
+                                visType = "pdf";
+                            } else if (ext == "rmd") {
+                                visType = "rmarkdown";
+                            } else if (ext == "md") {
+                                visType = "markdown";
+                            } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
+                                visType = "image";
+                                //will download file if not supported
+                            } else if (ext == "txt" || ext === "xls" || ext === "xlsx" || ext === "csv") {
+                                visType = "text";
+                            }
+                            return visType;
+                        }
+
+                        var run_log_uuid = $("#runVerReport").val();
+                        var pubWebPath = $("#basepathinfo").attr("pubweb");
+                        var visType = oData.pubWeb
+                        var icon = "fa fa-file-text-o";
+                        if (visType == "table" || visType === "table-percent") {
+                            icon = "fa fa-table";
+                        }
+                        var fileList = oData.fileList;
+                        var liText = "";
+                        var active = "";
+                        $.each(fileList, function (el) {
+                            if (fileList[el]) {
+                                if (el == 0) {
+                                    active = "active"
+                                } else {
+                                    active = "";
+                                }
+                                //if oData.pubWeb= "run_description" -> fill file icons and visType based on their file type
+                                if (oData.pubWeb == "run_description"){
+                                    var ext = getExtension(fileList[el]);
+                                    icon = getIconByExtension(ext);
+                                    visType = getVisTypeByExtension(ext);
+                                }
+                                var filepath = oData.name + "/" + fileList[el];
+                                var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
+                                var filenameCl = cleanProcessName(fileList[el])
+                                var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                var fileID = oData.id + "_" + filenameCl;
+                                //remove directory str, only show filename in label
+                                var labelText = /[^/]*$/.exec(fileList[el])[0];
+                                liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="' + icon + '"></i>' + labelText + '</a></li>';
+                            }
+                        });
+
+                        //xxxxxxx
+                        var addEveHandlerIconDiv = function (id){
+                            var addIconID = "addIcon-" + id;
+                            var renameIcon = "renameIcon-" + id;
+                            var deleteIcon = "deleteIcon-" + id;
+
+                            var getFileName = function (filePath) {
+                                var res = { filename: "", rest: "" };
+                                var split = filePath.split("/")
+                                res.filename = split[split.length - 1]
+                                res.rest = split.slice(0, -1).join('/');
+                                return res
+                            }
+
+                            //return 1 if newName is found in directory.
+                            var checkDuplicateFile = function (newName,fileNameObj){
+                                var ret = 1;
+                                var targetfilepath = fileNameObj.rest + "/" + newName;
+                                var checkDup = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li").find("a").filter(function () {
+                                    return $(this).attr('filepath') === targetfilepath
+                                });
+                                if (!checkDup.length){
+                                    ret = 0;
+                                }
+                                console.log(targetfilepath)
+                                console.log(checkDup)
+
+                                return ret;
+                            }
+
+                            var dynrows_savefile = function (filePath,text) {
+                                var obj = getFileName(filePath);
+                                var newPath = obj.rest + "/" + obj.filename
+                                text = encodeURIComponent(text);
+                                var run_log_uuid = $("#runVerReport").val();
+                                var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
+                                return saveData
+                            }
+
+                            var getFileNameObj = function (){
+                                var obj = {};
+                                var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
+                                var filePath = $(activeLiA[0]).attr("filepath");
+                                obj = getFileName(filePath);
+                                return obj;
+                            }
+
+
+                            var dynrows_movefile = function (file1, file2){
+                                var run_log_uuid = $("#runVerReport").val();
+                                if (file1 && file2){
+                                    var moveFile = getValues({ 
+                                        p: "moveFile", 
+                                        "type": "pubweb",
+                                        "from": run_log_uuid + "/pubweb/" + file1,
+                                        "to": run_log_uuid + "/pubweb/" + file2
+                                    });
+                                    return moveFile;
+                                }
+                            }
+
+                            var createModal = function () {
+                                var fileModal = `
+<div id="dynRowsInfo" class="modal fade" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<h4 class="modal-title" id="dynRowsInfoTitle">Title</h4>
+</div>
+<div class="modal-body">
+<div id="dynRowsEditDiv" class="form-horizontal">
+<div class="form-group">
+<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please edit filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
+<div class="col-sm-8">
+<input id="dynRowsEditFileName" type="text" class="form-control">
+</div>
+</div>
+</div>
+<div id="dynRowsAddDiv" style="padding-right:10px;" class="form-horizontal">
+
+<div class="form-group">
+<label class="col-sm-4 control-label"><input type="checkbox" id="dynRowsEmptyFileCheck" name="check_emptyFile" data-toggle="collapse" data-target="#dynRows_emptyFileDiv" class="collapsed" aria-expanded="false"> Create Empty File </label>
+</div>
+<div id="dynRows_emptyFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
+<div class="form-group">
+<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
+<div class="col-sm-8">
+<input id="dynRowsFileName" type="text" class="form-control">
+</div>
+</div>
+</div>
+<div class="form-group">
+<label class="col-sm-4 control-label"><input type="checkbox" id="dynRows_uploadFileCheck" name="check_uploadFile" data-toggle="collapse" data-target="#dynRows_uploadFileDiv" class="collapsed" aria-expanded="false"> Upload File </label>
+</div>
+<div id="dynRows_uploadFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
+<div class="form-group">
+<div class="col-sm-12" id="dynRows_import_div">
+<form id="dynRowsUploadForm" action="ajax/import.php" class="dropzone">
+<div class="fallback ">
+<input name="file" type="file" />
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+<button id="dynRowsInfoButton" type="button" class="btn btn-primary" >Save</button>
+</div>
+</div>
+</div>
+</div>`;
+
+                                if (document.getElementById("dynRowsInfo") === null) {
+                                    $('body').append(fileModal);
+                                }
+                            }
+
+
+                            var bindEventHandlerModal = function(){
+                                //clean previous binds
+                                $("#reportRows").off();
+                                $("#dynRowsInfo").off();
+                                //not allow to click both option
+                                disableDoubleClickCollapse("dynRowsEmptyFileCheck", "dynRows_emptyFileDiv", "dynRows_uploadFileCheck","dynRows_uploadFileDiv", "dynRowsInfo");
+
+
+                                $("#reportRows").on('click', '#'+addIconID, function (event) {
+                                    window.dynRows = {};
+                                    window.dynRows.filename = ""
+                                    var myDropzone = Dropzone.forElement("#dynRowsUploadForm");
+                                    myDropzone.removeAllFiles();
+                                    if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
+                                        $('#'+"dynRowsEmptyFileCheck").trigger("click");
+                                    }
+                                    if ($('#'+"dynRows_uploadFileCheck").is(":checked")) {
+                                        $('#'+"dynRows_uploadFileCheck").trigger("click");
+                                    }
+                                    $("#dynRowsInfoTitle").text("Create New File")
+                                    $("#dynRowsFileName").val("NewFile.md")
+                                    $("#dynRowsEditDiv").css("display","none");
+                                    $("#dynRowsAddDiv").css("display","block");
+                                    $("#dynRowsInfoButton").attr("class", "btn btn-primary save")
+                                    $("#dynRowsInfoButton").text("Save")
+                                    $("#dynRowsInfo").modal("show");
+                                });
+
+                                var callbackActiveClick = function (){
+                                    $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a").trigger("click");
+                                }
+
+                                $('#dynRowsInfo').on('hide.bs.modal', function (event) {
+                                    $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody", callback:callbackActiveClick});
+                                });
+
+                                $("#dynRowsInfo").on('click', '.save', function (event) {
+                                    event.preventDefault();
+                                    var obj = getFileNameObj()
+                                    if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
+                                        var newName = $("#dynRowsFileName").val()
+                                        if (newName){
+                                            var checkDuplicate = checkDuplicateFile(newName,obj);
+                                            console.log(checkDuplicate)
+                                            if (!checkDuplicate){
+                                                var filepath = oData.name + "/" +newName;
+                                                var text = "";
+                                                dynrows_savefile(filepath,text);
+                                                $("#dynRowsInfo").modal("hide");
+                                            } else {
+                                                showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
+                                            }
+                                        } else{
+                                            showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
+                                        }
+                                    } else {
+                                        $("#dynRowsInfo").modal("hide");
+                                    } 
+                                });
+
+                                $("#reportRows").on('click', '#'+deleteIcon, function (event) {
+                                    var obj = getFileNameObj();
+                                    var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
+                                    var text = 'Are you sure you want to delete '+obj.filename+'?';
+                                    var savedData = $(activeLiA[0]);
+                                    var execFunc = function(savedData){
+                                        var filePath = savedData.attr("filepath");
+                                        var run_log_uuid = $("#runVerReport").val();
+                                        var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
+                                        $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
+                                    }
+                                    showConfirmDeleteModal(text, savedData, execFunc)
+                                });
+
+                                $("#reportRows").on('click', '#'+renameIcon, function (event) {
+                                    var obj = getFileNameObj()
+                                    $("#dynRowsInfoTitle").text("Edit Filename")
+                                    $("#dynRowsEditFileName").val(obj.filename)
+                                    $("#dynRowsEditDiv").css("display","block");
+                                    $("#dynRowsAddDiv").css("display","none");
+                                    $("#dynRowsInfoButton").attr("class", "btn btn-primary rename")
+                                    $("#dynRowsInfoButton").text("Save")
+                                    $("#dynRowsInfo").modal("show");
+                                });
+
+                                $("#dynRowsInfo").on('click', '.rename', function (event) {
+                                    event.preventDefault();
+                                    var obj = getFileNameObj()
+                                    var newName = $("#dynRowsEditFileName").val()
+                                    if (newName){
+                                        var checkDuplicate = checkDuplicateFile(newName,obj);
+                                        if (!checkDuplicate){
+                                            var filepath1 = oData.name + "/" +obj.filename;
+                                            var filepath2 = oData.name + "/" +newName;
+                                            dynrows_movefile(filepath1,filepath2);
+                                            $("#dynRowsInfo").modal("hide");
+                                        } else {
+                                            showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
+                                        }
+                                    } else {
+                                        showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
+                                    }
+                                });
+                            }
+
+
+                            var createDropzone = function (){
+                                console.log("createDropzone")
+                                if (Dropzone.options.dynRowsUploadForm){
+                                    $("#dynRowsUploadForm")[0].dropzone.destroy()
+                                    $("#dynRowsUploadForm").off()
+                                }
+                                // Configuriation of dropzone of id:dynRowsUploadForm in mdEditorInfo modal
+                                window.dynRows = {};
+                                window.dynRows.filename = "";
+                                Dropzone.options.dynRowsUploadForm = {
+                                    paramName: "pubweb", // The name that will be used to transfer the file
+                                    maxFilesize: 30, // MB
+                                    maxFiles:10,
+                                    createImageThumbnails: false,
+                                    dictDefaultMessage: 'Drop your file here or <button type="button" class="btn btn-default" >Select File </button>',
+                                    accept: function (file, done) {
+                                        window.dynRows.filename= file.name
+                                        done();
+                                        $('#dynRows_upload_name_span').text(file.name)
+                                    },
+                                    init: function() {
+                                        this.on("sending", function(file, xhr, formData){
+                                            formData.append("uuid", run_log_uuid);
+                                            formData.append("dir", oData.name);
+                                        });
+                                    }
+                                }; 
+                                $("#dynRowsUploadForm").dropzone();  
+
+                            }
+                            createModal()
+                            createDropzone()
+                            bindEventHandlerModal()
+                        }
+
+                        var getFileListHeaderIconDiv = function (id) {
+                            var border = "border-right: 1px solid lightgray;"
+                            var addIcon = `<li role="presentation"><a id="addIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Add File"><i style="font-size: 18px;" class="fa fa-plus"></i></a></li>`;
+                            var renameIcon = `<li role="presentation"><a id="renameIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Rename File"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
+                            var deleteIcon = `<li role="presentation"><a  id="deleteIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Delete File"><i style="font-size: 18px;" class="fa fa-trash"></i></a></li>`;
+                            var content = `<ul style="float:right"  class="nav nav-pills panelheader">` + addIcon + renameIcon + deleteIcon + `</ul>`;
+                            var wrapDiv = '<div id="' + id + '-ListHeaderIconDiv" style="'+border+'height:35px; width:100%;">' + content + '</div>';
+                            return wrapDiv;
+                        }
+                        var IconDiv = "";
+                        var writePerm= $runscope.checkUserWritePerm();
+                        //allows user to edit run page
+                        if (writePerm){
+                            if (oData.pubWeb == "run_description"){
+                                IconDiv = getFileListHeaderIconDiv(oData.id);
+                                addEveHandlerIconDiv(oData.id)
+                            }
+                        }
+                        if (!liText) {
+                            liText = '<div style="margin:10px;"> No data available</div>';
+                        }
+                        var allText = IconDiv + liText;
+                        $(nTd).html('<ul class="nav nav-pills nav-stacked">' + allText + '</ul>');
+                    },
+                }, {
+                    //file content
+                    data: null,
+                    colPercent: "85",
+                    fnCreatedCell: function (nTd, oData) {
+                        var fileList = oData.fileList;
+                        if ($(nTd).is(':empty')) {
+                            var navTabDiv = "";
+                            navTabDiv += '<div style="height:inherit;" class="tab-content">';
+                            var liText = "";
+                            var active = "";
+                            $.each(fileList, function (el) {
+                                var filenameCl = cleanProcessName(fileList[el])
+                                var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                var active = "";
+                                if (el == 0) {
+                                    active = 'in active';
+                                }
+                                navTabDiv += '<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
+                            });
+                            navTabDiv += '</div>';
+                            $(nTd).html(navTabDiv);
+                        } else {
+                            //when dynamicRows.fnrefresh is executed following code will update the tabid section
+                            var newTabIdList = []
+                            $.each(fileList, function (el) {
+                                var filenameCl = cleanProcessName(fileList[el])
+                                var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                newTabIdList.push(newTabID)
+                            });
+
+                            //get all existing tabs
+                            var alltabs = $(nTd).find("div[dynamicrowstabs]");
+                            for (var k = 0; k < alltabs.length; k++) {
+                                var oldTabID = $(alltabs[k]).attr("id");
+                                if($.inArray(oldTabID, newTabIdList) === -1){
+                                    //remove oldTabID from DOM, since it doesn't found in newTabIdList
+                                    $(alltabs[k]).remove();
+                                }
+                            }
+                            //add new tabs
+                            $.each(fileList, function (el) {
+                                var filenameCl = cleanProcessName(fileList[el])
+                                var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
+                                if (!$(nTd).find("div#" + newTabID).length) {
+                                    $(nTd).children().append('<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + newTabID + '" class = "tab-pane fade fullsize" ></div>')
+                                }
+                                if (el == 0){
+                                    $("#"+newTabID).addClass("in active").removeClass("fade");
+                                }
+                            });
+                        }
+                    },
+                }],
+                columnsHeader: [{
+                    data: null,
+                    colPercent: "4",
+                    fnCreatedCell: function (nTd, oData) {
+                        $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
+                    },
+                }, {
+                    data: null,
+                    fnCreatedCell: function (nTd, oData) {
+                        var gNum = oData.id.split("_")[0].split("-")[1];
+                        var rowID = "outputTa-" + gNum;
+                        var processName = $('#' + rowID + ' > :nth-child(5)').text();
+                        if (oData.pubWeb == "run_description"){
+                            processName = "Run Notes"
+                        }
+                        var processID = $('#' + rowID + ' > :nth-child(5)').text();
+                        $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + createLabel(processName) + '</span>');
+                    },
+                    colPercent: "37"
+                }, {
+                    data: null,
+                    colPercent: "39",
+                    fnCreatedCell: function (nTd, oData) {
+                        $(nTd).html('<span>' + createLabel(oData.name) + '</span>');
+                    }
+                }, {
+                    data: null,
+                    colPercent: "20",
+                    fnCreatedCell: function (nTd, oData) {
+                        var visType = oData.pubWeb
+                        var icon = "fa fa-file-text-o";
+                        var text = visType;
+                        if (visType === "table" || visType === "table-percent") {
+                            icon = "fa fa-table";
+                            text = "Table";
+                        } else if (visType === "html") {
+                            icon = "fa fa-file-code-o";
+                            text = "HTML";
+                        } else if (visType === "pdf") {
+                            icon = "fa fa-file-pdf-o";
+                            text = "PDF";
+                        } else if (visType === "rmarkdown") {
+                            icon = "fa fa-pie-chart";
+                            text = "R-Markdown";
+                        } else if (visType === "highcharts") {
+                            icon = "fa fa-line-chart";
+                            text = "Charts";
+                        } else if (visType === "debrowser") {
+                            icon = "glyphicon glyphicon-stats";
+                            text = "DE-Browser";
+                        } else if (visType === "image") {
+                            icon = "fa fa-file-image-o";
+                            text = "Image";
+                        } else if (visType === "run_description") {
+                            icon = "fa fa-edit";
+                            text = "Markdown";
+                        }
+                        $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
+                    }
+                }],
+                columnsTitle: [{
+                    data: null,
+                    colPercent: "4"
+
+                }, {
+                    data: null,
+                    fnCreatedCell: function (nTd, oData) {
+                        $(nTd).html('<span>PROCESS</span>');
+                    },
+                    colPercent: "37"
+                }, {
+                    data: "name",
+                    colPercent: "39",
+                    fnCreatedCell: function (nTd, oData) {
+                        $(nTd).html('<span>PUBLISHED DIRECTORY</span>');
+                    },
+                }, {
+                    data: null,
+                    colPercent: "20",
+                    fnCreatedCell: function (nTd, oData) {
+                        $(nTd).html('<span>VIEW FORMAT</span>');
+                    }
+                }],
+                backgroundcolorenter: "#ced9e3",
+                backgroundcolorleave: "#ECF0F4",
+                heightHeader: "60px"
+            });
+        }
+
+        $(document).on('click', '#refreshVerReport', function (event) {
+            reloadReportRows();
+        });
+
+
         $(document).on('change', '#runVerReport', function (event) {
             var run_log_uuid = $(this).val();
             var reload = true
@@ -9917,164 +10869,10 @@ $(document).ready(function () {
                 }
 
                 $("#runTitleReport").text(runTitleLog)
-                if (reload) {
-                    $("#reportRows").empty();
-                    //add 'className: "center"' to center text in columns array
-                    $("#reportRows").dynamicRows({
-                        ajax: {
-                            url: "ajax/ajaxquery.php",
-                            data: { "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id }
-                        },
-                        columnsBody: [{
-                            //file list
-                            data: null,
-                            colPercent: "15",
-                            overflow: "scroll",
-                            fnCreatedCell: function (nTd, oData) {
-                                var run_log_uuid = $("#runVerReport").val();
-                                var pubWebPath = $("#basepathinfo").attr("pubweb");
-                                var visType = oData.pubWeb
-                                var icon = "fa-file-text-o";
-                                if (visType == "table" || visType === "table-percent") {
-                                    icon = "fa-table";
-                                }
-                                var fileList = oData.fileList;
-                                var liText = "";
-                                var active = "";
-                                $.each(fileList, function (el) {
-                                    if (fileList[el]) {
-                                        if (el == 0) {
-                                            active = "active"
-                                        } else {
-                                            active = "";
-                                        }
-                                        var filepath = oData.name + "/" + fileList[el];
-                                        var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
-                                        var filenameCl = cleanProcessName(fileList[el])
-                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                        var fileID = oData.id + "_" + filenameCl;
-                                        //remove directory str, only show filename in label
-                                        var labelText = /[^/]*$/.exec(fileList[el])[0];
-                                        liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="fa ' + icon + '"></i>' + labelText + '</a></li>';
-                                    }
-                                });
-                                if (!liText) {
-                                    liText = '<div style="margin:10px;"> No data available</div>';
-                                }
-                                $(nTd).html('<ul class="nav nav-pills nav-stacked">' + liText + '</ul>');
-                            },
-                        }, {
-                            //file content
-                            data: null,
-                            colPercent: "85",
-                            fnCreatedCell: function (nTd, oData) {
-                                var fileList = oData.fileList;
-                                if ($(nTd).is(':empty')) {
-                                    var navTabDiv = "";
-                                    navTabDiv += '<div style="height:inherit;" class="tab-content">';
-                                    var liText = "";
-                                    var active = "";
-                                    $.each(fileList, function (el) {
-                                        var filenameCl = cleanProcessName(fileList[el])
-                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                        var active = "";
-                                        if (el == 0) {
-                                            active = 'in active';
-                                        }
-                                        navTabDiv += '<div style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
-                                    });
-                                    navTabDiv += '</div>';
-                                    $(nTd).html(navTabDiv);
-                                } else {
-                                    $.each(fileList, function (el) {
-                                        var filenameCl = cleanProcessName(fileList[el])
-                                        var tabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                        if (!$(nTd).find("div#" + tabID).length) {
-                                            $(nTd).children().append('<div style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade" ></div>')
-                                        }
-                                    });
-                                }
-                            },
-                        }],
-                        columnsHeader: [{
-                            data: null,
-                            colPercent: "4",
-                            fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
-                            },
-                        }, {
-                            data: null,
-                            fnCreatedCell: function (nTd, oData) {
-                                var gNum = oData.id.split("_")[0].split("-")[1];
-                                var rowID = "outputTa-" + gNum;
-                                var processName = $('#' + rowID + ' > :nth-child(5)').text();
-                                var processID = $('#' + rowID + ' > :nth-child(5)').text();
-                                $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + createLabel(processName) + '</span>');
-                            },
-                            colPercent: "37"
-                        }, {
-                            data: null,
-                            colPercent: "39",
-                            fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<span>' + createLabel(oData.name) + '</span>');
-                            }
-                        }, {
-                            data: null,
-                            colPercent: "20",
-                            fnCreatedCell: function (nTd, oData) {
-                                var visType = oData.pubWeb
-                                var icon = "fa fa-file-text-o";
-                                var text = visType;
-                                if (visType === "table" || visType === "table-percent") {
-                                    icon = "fa fa-table";
-                                    text = "Table";
-                                } else if (visType === "html") {
-                                    icon = "fa fa-file-code-o";
-                                    text = "HTML";
-                                } else if (visType === "pdf") {
-                                    icon = "fa fa-file-pdf-o";
-                                    text = "PDF";
-                                } else if (visType === "rmarkdown") {
-                                    icon = "fa fa-pie-chart";
-                                    text = "R-Markdown";
-                                } else if (visType === "highcharts") {
-                                    icon = "fa fa-line-chart";
-                                    text = "Charts";
-                                } else if (visType === "debrowser") {
-                                    icon = "glyphicon glyphicon-stats";
-                                    text = "DE-Browser";
-                                }
-                                $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
-                            }
-                        }],
-                        columnsTitle: [{
-                            data: null,
-                            colPercent: "4"
-
-                        }, {
-                            data: null,
-                            fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<span>PROCESS</span>');
-                            },
-                            colPercent: "37"
-                        }, {
-                            data: "name",
-                            colPercent: "39",
-                            fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<span>PUBLISHED DIRECTORY</span>');
-                            },
-                        }, {
-                            data: null,
-                            colPercent: "20",
-                            fnCreatedCell: function (nTd, oData) {
-                                $(nTd).html('<span>VIEW FORMAT</span>');
-                            }
-                        }],
-                        backgroundcolorenter: "#ced9e3",
-                        backgroundcolorleave: "#ECF0F4",
-                        heightHeader: "60px"
-                    });
+                if (reload){
+                    reloadReportRows();
                 }
+
             }
         });
     });

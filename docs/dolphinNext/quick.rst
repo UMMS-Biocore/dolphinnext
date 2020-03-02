@@ -34,6 +34,9 @@ Once you enter DolphinNext platform, **Profile Wizard** will open as shown at be
     A. If you have an access to High Performance Computing (HPC) environments, or personal workstations, then please choose **Host**. 
     B. If you have an Amazon Web Services (AWS) account or planning to create one, then please choose **Amazon** and follow our `Amazon Guide <https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#b-defining-amazon-profile>`_  to create your run environment.
     C. If you have an Google Cloud account or planning to create one, then please choose **Google** and follow our `Google Guide <https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#c-defining-google-profile>`_ to create your run environment.
+    D. If you choose **MGHPCC cluster** option, you can upload your files to our MGHPCC cluster to process your data and download your results from report section. However, you will not have direct access to our cluster.
+    
+.. note::  If you choose MGHPCC option, you can skip the rest of this guideline and go to `Running Pipelines Section <quick.html#running-pipelines>`_.
         
 2. Second, add public SSH Key into your host machine.
 
@@ -41,10 +44,10 @@ Once you enter DolphinNext platform, **Profile Wizard** will open as shown at be
     -  Here, public key is securely generated for your account and required to be added into ``~/.ssh/authorized_keys`` in the host by user. Please check our `Adding Public SSH Key Section <public_ssh_key.html>`_ for help. 
     -  After adding public key, please click Validate SSH Keys button to finalize this section.
     
-.. note::  **Username/Hostname:** You should enter your username and hostname of the host which you would like to connect (yourusername@yourhostname). For instance, for us2r@ghpcc06.umassrc.org::
+.. important::  **Username/Hostname:** You should enter your username and hostname of the host which you would like to connect (yourusername@yourhostname). For instance, for us2r@ghpcc06.umassrc.org::
     
-        -  Username: yourusername (eg. us2r)
-        -  Hostname: yourhostname (eg. ghpcc06.umassrc.org)
+        *  Username: yourusername (eg. us2r)
+        *  Hostname: yourhostname (eg. ghpcc06.umassrc.org)
     
 
 3. Third, install/validate software dependencies into the host machine.
@@ -73,8 +76,6 @@ In order to execute our pipelines, Nextflow should be installed into your host e
     -  **Download Directory:** Used to download shared pipeline files such as genome indexes. If your platform has already such path, please enter that location. Otherwise you can set any path that you have permission to write. e.g. ``/share/dolphinnext/downloads``
 
 Once you complete these steps, you're now able to start using publicly available pipelines.
-
-.. warning:: Please note that DolphinNext doesn't provide free access to our UMASS clusters. Instead, you need to use your run environment (High Performance Computing (HPC) environments, Amazon/Google cloud services or personal workstations) to execute pipelines. 
 
 
 Running Pipelines
@@ -126,27 +127,53 @@ Running Pipelines
 	   :align: center
 	   :width: 99%
     
-    C. **Inputs:** Value and path of the files need to be entered. 
+    C. **Inputs:** Value and path of the files need to be entered. For detailed information please check `adding files section. <quick.html#adding-files>`_ 
 
         .. image:: dolphinnext_images/run_params_inputs.png
 	   :align: center
 	   :width: 50%
 
-        For detailed information about adding files, you can check our tutorial video:
-        
-        .. raw:: html
 
-            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
-                <iframe src="https://www.youtube.com/embed/3QaAqdyB11w" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
-            </div>
-            </br>
- 
- 
- 
 6. Once all requirements are satisfied, ``Waiting`` button will turn in to green ``ready to run`` button as shown below. You can initiate your run by clicking ``ready to run`` button. Please go through `run page <run.html>`_ for detailed explanation about each module is used.
     
-.. image:: dolphinnext_images/run_header_ready.png
-	:align: center
+    .. image:: dolphinnext_images/run_header_ready.png
+	   :align: center
+
+
+
+Adding Files
+============
+
+Remote Files
+------------
+You can reach your remote files by entering:
+
+    - Full path of a directory: eg. ``/share/data/umw_biocore/genome_data/mousetest/mm10/gz``
+    - Web link: eg. ``https://galaxyweb.umassmed.edu/pub/dnext_data/test/reads``
+    - Amazon (S3) Bucket: eg. ``s3://biocore/fastq``
+    - Google (GS) Bucket: eg. ``gs://biocore/fastq``
+
+Geo Files
+---------
+
+If you want to download and use NCBI (GEO data) in the pipeline, you can simply use **GEO Files** tab. Here are the few examples for GEO ID: ``GSM1331276``, ``GSE55190``, ``SRR10095965``
+    
+Upload Files
+------------
+If you need to upload your local files and transfer into **Target Directory in the Host**, you can use **Upload Files** tab.
+
+For detailed information about adding files, please check our tutorial video:
+        
+    .. raw:: html
+
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+            <iframe src="https://www.youtube.com/embed/3QaAqdyB11w" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+        </div>
+        </br>
+ 
+ 
+ 
+
 
 
 

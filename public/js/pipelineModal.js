@@ -339,15 +339,6 @@
     var bindEventHandlerModal = function (elemsID){
         $(function () {
             $('#addIcon-' + elemsID).on('click', function (e) {
-                //                    var fileAr = [];
-                //                    var liAr = $("#fileListDiv_"+elemsID).find("li");
-                //                    for (var i = 0; i < liAr.length; i++) {
-                //                        var filename = $(liAr[i]).attr("id");
-                //                        if (filename != "" && filename !== null){
-                //                            fileAr.push filename)
-                //                        }
-                //                    }
-
                 $("#tEditorInfoTitle").text("Create New File")
                 $("#tEditorInfoName").val("New File")
                 $("#tEditorInfoText").css("display","none");
