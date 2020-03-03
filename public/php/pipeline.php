@@ -1219,7 +1219,7 @@
     </div>
 </div>
 
-<div id="warnUser" class="modal fade" tabindex="-1" role="dialog">
+<div id="warnUserImport" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -1227,7 +1227,7 @@
                 <h4 class="modal-title">Information</h4>
             </div>
             <div class="modal-body">
-                <span id="warnUserText">Text</span>
+                <p style="height:500px; overflow:scroll;" id="warnUserText">Text</p>
                 </br>
             </div>
             <div class="modal-footer">
