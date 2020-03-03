@@ -621,9 +621,6 @@ function checkImport(optObj) {
             uuid: process_uuid,
             rev_uuid: process_rev_uuid
         });
-        console.log("process_uuid",process_uuid)
-        console.log("process_rev_uuid",process_rev_uuid)
-        console.log("checkUUID",checkUUID)
         //prepare command to save/update db
         sendJSONprocess = prepareSendJSON("process", sendJSONprocess, importJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
         sendJSONproParaIn = prepareSendJSON("process_parameter_input", sendJSONproParaIn, proInJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
@@ -915,6 +912,7 @@ function encodeNodes(nodes, fileID) {
     $.each(nodes, function (el) {
         if (nodes[el]) {
             var proPipeID = nodes[el][2];
+            console.log("proPipeID_before", nodes[el][2])
             if (proPipeID != "outPro" && proPipeID != "inPro") {
                 if (proPipeID.match(/p/)) {
                     var piID = proPipeID.match(/p(.*)/)[1];
@@ -935,6 +933,8 @@ function encodeNodes(nodes, fileID) {
                     }
                 }
             }
+            console.log("proPipeID_after", nodes[el][2])
+            
         }
     });
     return nodes
@@ -972,6 +972,7 @@ function encodeElement(type, importJSON, fileID) {
         importJSON.script_pipe_config = encodeURIComponent(importJSON.script_pipe_config)
         importJSON.edges = encodeEdges(importJSON.edges, fileID)
         importJSON.nodes = encodeNodes(importJSON.nodes, fileID)
+        console.log("importJSON.nodes",importJSON.nodes)
         importJSON.mainG = JSON.parse(importJSON.mainG.replace(/'/gi, "\""))["mainG"];
         importJSON.pipeline_list = encodeProPipeList(importJSON.pipeline_list, fileID, "pipeline")
         importJSON.process_list = encodeProPipeList(importJSON.process_list, fileID, "process")
