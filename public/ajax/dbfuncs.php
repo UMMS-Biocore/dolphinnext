@@ -2405,9 +2405,12 @@ class dbfuncs {
         $sql = "UPDATE users SET $verify active=$active, last_modified_user='$user_id' WHERE id = '$user_id'";
         return self::runSQL($sql);
     }
-    public function changeRoleUser($user_id, $type) {
-        $sql = "UPDATE users SET role='$type', last_modified_user='$user_id' WHERE id = '$user_id'";
-        return self::runSQL($sql);
+    function changeRoleUser($user_id, $type, $ownerID) {
+        $userRole = $this->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            $sql = "UPDATE users SET role='$type', last_modified_user='$ownerID' WHERE id = '$user_id'";
+            return self::runSQL($sql);
+        }
     }
 
     //    ------------- Profiles   ------------
@@ -3891,7 +3894,7 @@ class dbfuncs {
                       LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                       $where";
         } else {
-            //for sidebar menu (it brings shared runs)
+            //for sidebar menu 
             if ($project_id != ""){
                 $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.date_modified, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM project_pipeline pp
@@ -3899,7 +3902,7 @@ class dbfuncs {
                       INNER JOIN users u ON pp.owner_id = u.id
                       LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                       WHERE pp.deleted = 0 AND pip.deleted = 0 AND pp.project_id = '$project_id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
-                //for run status page (it doesn't bring shared runs)
+                //for run status page 
             } else {
                 if ($userRole == "admin"){
                     $where = " WHERE pp.deleted = 0";
@@ -3912,7 +3915,7 @@ class dbfuncs {
                         SELECT DISTINCT pp.id as project_pipeline_id, pp.name,  pp.summary, max(r.id) as run_log_id,  pp.date_created as pp_date_created, pp.output_dir, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own, pp.pipeline_id, pp.group_id
                         FROM project_pipeline pp
                         LEFT JOIN run_log r  ON r.project_pipeline_id=pp.id
-                        LEFT JOIN user_group ug ON r.group_id=ug.g_id
+                        LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                         $where
                         GROUP BY pp.id 
                     ) b ON rr.id = b.run_log_id
