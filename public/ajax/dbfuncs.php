@@ -1332,12 +1332,15 @@ class dbfuncs {
         $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
         die(json_encode($message));
     }
+    function createReadmeMD($uuid){
+        $this -> createDirFile ("{$this->run_path}/$uuid/pubweb/_Description", "README.md", 'w', "#### **Run Description**\n\nYou can use this space for adding notes about your run such as its aims, experimental context, and any other ideas that you’d like to share with your group members. We support <a style=\"color:#1479cc;\" href=\"https://guides.github.com/features/mastering-markdown/\" target=\"_blank\">Markdown</a> for styling and formatting your notes.\n\nTo start editing this text, click **Edit Markdown** <i style=\"font-size: 14px;\" class=\"fa fa-pencil-square-o\"></i> icon on the right.\n\nIf you need to upload other files, please click the **Add File** <i style=\"font-size: 14px;\" class=\"fa fa-plus\"></i> icon on the left.");
+    }
 
     function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID){
         //create files and folders
         $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
         //create Run Description
-        $this -> createDirFile ("{$this->run_path}/$uuid/pubweb/_Description", "README.md", 'w', "#### **Run Description**\n\nYou can always edit this file in <a href=\"https://guides.github.com/features/mastering-markdown/\" target=\"_blank\">Markdown</a> format or upload your files by clicking the **Add File** <i style=\"font-size: 18px;\" class=\"fa fa-plus\"></i> button on the left." );
+        $this -> createReadmeMD($uuid);
         //separate nextflow config (by using @config tag).
         $this -> createMultiConfig ("{$this->run_path}/$uuid/run", $mainConfigText);
         //create clean serverlog.txt 
@@ -3711,6 +3714,15 @@ class dbfuncs {
         $id = $module;
         $fileList = array_values((array)json_decode($this->getFileList($uuid, "$path/$name", "onlyfile")));
         $fileList = array_filter($fileList);
+        if (empty($fileList)){
+            $targetDir = "{$this->run_path}/$uuid/pubweb/_Description";
+            //if not _Description not created before, create only for once
+            if (!file_exists($targetDir)) {
+                $this -> createReadmeMD($uuid);
+                $fileList = array_values((array)json_decode($this->getFileList($uuid, "$path/$name", "onlyfile")));
+                $fileList = array_filter($fileList);
+            }
+        }
         $out["fileList"] = $fileList;
         $out["name"] = $name;
         $out["pubWeb"] = $module;

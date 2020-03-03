@@ -9185,7 +9185,7 @@ $(document).ready(function () {
             var editConfirmIcon = "";
             var downloadIcon = `<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"> <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a> <ul class="dropdown-menu dropdown-menu-right"> <li><a fileid="` + fileid + `" id="downUrl-` + fileid + `" href="#">Download</a></li> </ul> </li>`;
             if (settings.ajax.data.editable){
-                editConfirmIcon = `<li role="presentation"><a fileid="` + fileid + `" id="confirmmd-` + fileid + `" style="display:none;" data-toggle="tooltip" data-placement="bottom" data-original-title="Save Changes"><i style="font-size: 18px;" class="fa fa-save"></i></a><a fileid="` + fileid + `"  id="editmd-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Edit Markdown"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
+                editConfirmIcon = `<li role="presentation"><a fileid="` + fileid + `" id="confirmmd-` + fileid + `" style="display:none;" data-toggle="tooltip" data-placement="bottom" data-original-title="Save Changes"><i style="font-size: 18px;" class="fa fa-save"></i></a><a fileid="` + fileid + `"  id="editmd-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Edit Markdown"><i style="font-size: 18px;" class="fa fa-pencil-square-o"></i></a></li>`;
 
             }
             var fullScreenIcon = `<li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>`;
@@ -9257,6 +9257,16 @@ $(document).ready(function () {
             }
         }
 
+
+        var aceEditorResize = function (editorId){
+            setTimeout(function () { 
+                window[editorId].resize();
+                window[editorId].setOption("wrap", false);
+                window[editorId].setOption("wrapBehavioursEnabled", false);
+                window[editorId].setOption("wrap", true); 
+            }, 100);
+        }
+
         var toogleEditorSize = function (editorId, elemsID,    tooglescreen, elems, settings) {
             var each_file_id =  elemsID;
             var icon = $('#fullscr-' + each_file_id).children()
@@ -9270,7 +9280,7 @@ $(document).ready(function () {
             } else {
                 $("#" + editorId).css("height", settings.heightEditor)
             }
-            window[editorId].resize();
+            aceEditorResize(editorId);
         }
 
         var getFileName = function (settings) {
@@ -9316,7 +9326,7 @@ $(document).ready(function () {
                 var editorID = "editorID_" + fileid;
                 var htmlID = "htmlID_" + fileid;
                 var scriptModeDivID = "scriptModeID_" + fileid;
-                window[editorID].resize();
+                aceEditorResize(editorID)
                 $('#confirmmd-' + fileid).css("display", "inline-block");
                 $('#editmd-' + fileid).css("display", "none");
                 $('#' + editorID).css("display", "inline-block");
@@ -9328,7 +9338,7 @@ $(document).ready(function () {
                 var editorID = "editorID_" + fileid;
                 var htmlID = "htmlID_" + fileid;
                 var scriptModeDivID = "scriptModeID_" + fileid;
-                window[editorID].resize();
+                aceEditorResize(editorID);
                 $('#confirmmd-' + fileid).css("display", "none");
                 $('#editmd-' + fileid).css("display", "inline-block");
                 savemd(settings, editorID);
@@ -9357,6 +9367,9 @@ $(document).ready(function () {
         var createAceEditor = function (editorId, script_modeId) {
             //ace process editor
             window[editorId] = ace.edit(editorId);
+            console.log(editorId)
+            window[editorId].setOption("wrap", true);
+            window[editorId].setOption("indentedSoftWrap", false);
             window[editorId].setTheme("ace/theme/tomorrow");
             window[editorId].getSession().setMode("ace/mode/sh");
             window[editorId].$blockScrolling = Infinity;
@@ -10632,7 +10645,10 @@ $(document).ready(function () {
                                         var filePath = savedData.attr("filepath");
                                         var run_log_uuid = $("#runVerReport").val();
                                         var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
+                                        console.log("deleteFile", deleteFile)
+                                        console.log("dynamicRows refresh1")
                                         $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
+                                        console.log("dynamicRows refresh2")
                                     }
                                     showConfirmDeleteModal(text, savedData, execFunc)
                                 });
