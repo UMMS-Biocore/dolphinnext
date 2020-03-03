@@ -379,12 +379,9 @@ $('#importButton').on('click', function (e) {
                     if (type == "process") {
                         //insert process parameters
                         var commandProPara = window.importObj[parBoxId].commandProPara;
-                                console.log("commandProPara", commandProPara)
-                        
                         if (commandProPara) {
                             for (var k = 0; k < commandProPara.length; k++) {
                                 var commandProParaID = commandProPara[k].id
-                                console.log("commandProParaID", commandProParaID)
                                 commandProPara[k].process_id = newID;
                                 commandProPara[k].perms = command.perms; //taken from process perms
                                 commandProPara[k].parameter_id = window.importObj[fileID].dict.parameter[commandProPara[k].parameter_id]
@@ -415,8 +412,6 @@ $('#importButton').on('click', function (e) {
                     throw new Error("Something went wrong!");
                 }
             }
-            console.log(i)
-            console.log(list.length)
             if (type == "process" && i == list.length - 1) {
                 removeRedundantProPara();
                 indexCache = 0;
@@ -632,8 +627,8 @@ function checkImport(optObj) {
         sendJSONproParaOut = prepareSendJSON("process_parameter_output", sendJSONproParaOut, proOutJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
         sendJSONproPara = sendJSONproParaIn.concat(sendJSONproParaOut);
         if (checkUUID) {
-            //if process_rev_uuid is found then check if process and pro_para are the same
-            if (checkUUID.process_rev_uuid) {
+            //if process_rev_uuid and process_uuid is found then check if process and pro_para are the same
+            if (checkUUID.process_rev_uuid && checkUUID.process_uuid) {
                 checkUUID.process_rev_uuid = decodeElement("process", checkUUID.process_rev_uuid)
                 var checkUUID_process_id = checkUUID.process_rev_uuid.id;
                 var checkObjPro = {};
