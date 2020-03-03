@@ -291,6 +291,7 @@ $('#importButton').on('click', function (e) {
     }
 
     function removeRedundantProPara() {
+        console.log("removeRedundantProPara")
         for (var fileid = 0; fileid < fileList.length; fileid++) {
             var redundant_propara = window.importObj[fileid].redundant_propara
             if (redundant_propara) {
@@ -414,6 +415,8 @@ $('#importButton').on('click', function (e) {
                     throw new Error("Something went wrong!");
                 }
             }
+            console.log(i)
+            console.log(list.length)
             if (type == "process" && i == list.length - 1) {
                 removeRedundantProPara();
                 indexCache = 0;
