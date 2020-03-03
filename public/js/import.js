@@ -668,6 +668,7 @@ function checkImport(optObj) {
             uuid: process_uuid,
             rev_uuid: process_rev_uuid
         });
+        console.log("rowType",rowType)
         console.log("checkUUID",checkUUID)
         //prepare command to save/update db
         sendJSONprocess = prepareSendJSON("process", sendJSONprocess, importJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
