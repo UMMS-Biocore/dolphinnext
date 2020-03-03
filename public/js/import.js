@@ -146,8 +146,6 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
     if (type == "process") {
         checkObj = keyChecker(["script", "script_footer", "script_header"], importJSON, dbJSON)
     } else if (type == "process_parameter_in" || type == "process_parameter_out") {
-        console.log(importJSON)
-        console.log(dbJSON)
         //prep of importJSON and dbJSON
         for (var i = 0; i < importJSON.length; i++) {
             importJSON[i] = decodeElement("process_parameter", importJSON[i]) || {};
@@ -162,20 +160,14 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
         for (var i = 0; i < importJSON.length; i++) {
             var dbParamId = window.importObj[fileID].dict.parameter[importJSON[i].parameter_id];
             if (dbParamId) {
-                var dbJSONfilt = dbJSON.filter(function (el) { return el.parameter_id == dbParamId; });
-                if (dbJSONfilt.length > 1) {
-                    dbJSONfilt = dbJSONfilt.filter(function (el) { return el.sname == importJSON[i].sname; });
-                }
-                if (dbJSONfilt.length === 0) {
-                    dbJSONfilt[0] = {}
-                }
-                if (dbJSONfilt.length >= 1) {
+                if (dbJSON[i].parameter_id == dbParamId && dbJSON[i].sname == importJSON[i].sname){
                     //pro para match found = update this item
-                    if (dbJSONfilt[0].id) {
-                        window.importObj[fileID].dict.propara[importJSON[i].id] = dbJSONfilt[0].id; //default value ("insert") now being replaced 
+                    if (dbJSON[i].id) {
+                        window.importObj[fileID].dict.propara[importJSON[i].id] = dbJSON[i].id; //default value ("insert") now being replaced 
                     }
-                    checkObj[type + i] = keyChecker(["sname", "operator", "closure", "reg_ex", "optional", "file_type", "qualifier"], importJSON[i], dbJSONfilt[0])
+                    checkObj[type + i] = keyChecker(["sname", "operator", "closure", "reg_ex", "optional", "file_type", "qualifier"], importJSON[i], dbJSON[i])
                 }
+
             }
         }
         //find redundant propara
@@ -190,7 +182,6 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
                 }
             }
         }
-    console.log(checkObj)
 
     } else if (type == "pipeline") {
         var checkObj2 = {};
@@ -345,12 +336,12 @@ $('#importButton').on('click', function (e) {
             if (warnUser && !window.importObj[parBoxId]["skipWarnUserCheck"]) {
                 window.importObj[parBoxId]["pass"] = false;
                 indexCache = i;
-                $('#warnUser').on('show.bs.modal', function (event) {
+                $('#warnUserImport').on('show.bs.modal', function (event) {
                     $(this).find('form').trigger('reset');
                     $("#warnUserText").multiline(warnUser);
 
                 });
-                $('#warnUser').on('hide.bs.modal', function (event) {
+                $('#warnUserImport').on('hide.bs.modal', function (event) {
                     var tmpid = $(document.activeElement).attr('id');
                     if (tmpid === "saveOnExistImport") {
                         window.importObj[parBoxId]["skipWarnUserCheck"] = true;
@@ -359,7 +350,7 @@ $('#importButton').on('click', function (e) {
                         $('#compButton').css("display", "none");
                     }
                 });
-                $('#warnUser').modal('show').one('hidden.bs.modal', function () {
+                $('#warnUserImport').modal('show').one('hidden.bs.modal', function () {
                     loop(type, list)
                 })
                 return;
