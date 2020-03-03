@@ -378,9 +378,12 @@ $('#importButton').on('click', function (e) {
                     if (type == "process") {
                         //insert process parameters
                         var commandProPara = window.importObj[parBoxId].commandProPara;
+                                console.log("commandProPara", commandProPara)
+                        
                         if (commandProPara) {
                             for (var k = 0; k < commandProPara.length; k++) {
                                 var commandProParaID = commandProPara[k].id
+                                console.log("commandProParaID", commandProParaID)
                                 commandProPara[k].process_id = newID;
                                 commandProPara[k].perms = command.perms; //taken from process perms
                                 commandProPara[k].parameter_id = window.importObj[fileID].dict.parameter[commandProPara[k].parameter_id]
