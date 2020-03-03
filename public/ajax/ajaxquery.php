@@ -400,7 +400,7 @@ else if ($p=="changeActiveUser"){
 else if ($p=="changeRoleUser"){
     $user_id = $_REQUEST['user_id'];
     $type = $_REQUEST['type'];
-    $data = $db->changeRoleUser($user_id, $type);  
+    $data = $db->changeRoleUser($user_id, $type, $ownerID);  
 }
 else if ($p=="changePassword"){
     $error = array();
@@ -438,7 +438,13 @@ else if ($p=="saveUserManual"){
         if (!empty($id)) {
             $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID);  
         } else {
-            $role = "user"; 
+            $any_user_check = $db->queryAVal("SELECT id FROM users");
+            $any_user_checkAr = json_decode($any_user_check,true); 
+            if (empty($any_user_checkAr)){
+                $role = "admin";
+            } else {
+                $role = "user"; 
+            }
             $active = 1; 
             $pass_hash = NULL;
             $verify = NULL;
