@@ -1,7 +1,7 @@
 $runscope = {
     //-------- Store data:
     checkUserWritePermRun : null,
-    
+
     //-------- Functions:
     //Generic function to save ajax data
     getAjaxData : function(varName, getValuesObj){
@@ -6154,7 +6154,9 @@ function viewDirButSearch(dir){
                 console.log(fileArr)
                 console.log(errorAr)
                 if (fileArr.length > 0) {
-                    fillArray2Select(fileArr, "#viewDir", true)
+                    var copiedList = fileArr.slice(); 
+                    copiedList.unshift("..")
+                    fillArray2Select(copiedList, "#viewDir", true)
                     $("#viewDir").data("fileArr", fileArr)
                     $("#viewDir").data("fileDir", dir)
                     var amzKey = ""
@@ -6163,7 +6165,6 @@ function viewDirButSearch(dir){
                     if (dir.match(/gs:/i)){ googKey= $("#mRunGoogKeyGS").val(); }
                     $("#viewDir").data("amzKey", amzKey);
                     $("#viewDir").data("googKey", googKey);
-
                     $('#collection_type').trigger("change");
                 } else {
                     if (errorAr.length > 0) {
@@ -6183,19 +6184,19 @@ function viewDirButSearch(dir){
             fillArray2Select(["Files Not Found."], "#viewDir", true)
             resetPatternList()
         }
-        $("#viewDir > option").attr("style", "pointer-events: none;");
         $("#viewDir").css("display", "inline")
+        $("#viewDirDiv").css("display", "block")
     } else {
         showInfoModal("#infoModal", "#infoModalText", "Please enter 'File Location' to search files.")
     }
 }
 
-function fillFileSearchBox(item){
+function fillFileSearchBox(item, targetDiv){
     if ($(item)){
         var val = $(item).text()
         if (val){
-            $('#file_dir').val(val)
-            $('#file_dir').keyup();
+            $('#'+targetDiv).val(val)
+            $('#'+targetDiv).keyup();
         }
     }
 }
@@ -6384,13 +6385,16 @@ $(document).ready(function () {
             $('.singlepatternDiv').css("display", "none")
             $('.patternButs').css("display", "none")
             $('.patternTable').css("display", "none")
-            $("#viewDir").css("display", "none")
+            $("#viewDir").css("display", "none");
+            $("#viewDirDiv").css("display", "none");
+            $("#viewDir > option").attr("style", "pointer-events: auto;");
             $("#seaGeoSamplesDiv").css("display", "none")
             $("#selGeoSamplesDiv").css("display", "none")
             $('#mRunAmzKeyS3Div').css("display", "none")
             $('#mArchAmzKeyS3Div_GEO').css("display", "none")
             $('#mArchAmzKeyS3Div').css("display", "none")
             $('#file_dir_div').css("display","block");
+            $('#viewDirInfo').css("display","block");
             var renderMenu = {
                 option: function (data, escape) {
                     return '<div class="option">' +
@@ -6424,6 +6428,34 @@ $(document).ready(function () {
         $('#viewDirBut').click(function () {
             var dir = $('#file_dir').val();
             viewDirButSearch(dir)
+        });
+
+        $('#addFileModal').on("dblclick", '#viewDir option', function() {
+            var selectedOpt = $(this).val();
+            var olddir = $('#file_dir').val();
+            var newdir = "";
+            if (selectedOpt == ".."){
+                var split = olddir.split("/")
+                //if ends with /    
+                if (olddir.slice(-1) == "/"){
+                    var finalPart = split[split.length - 2];
+                    newdir = olddir.substring(0, olddir.indexOf(finalPart));
+                } else{
+                    var finalPart = split[split.length - 1];
+                    newdir = olddir.substring(0, olddir.indexOf(finalPart));
+                }    
+            } else {
+                if (olddir.slice(-1) == "/"){
+                    newdir = olddir + selectedOpt;
+                } else{
+                    newdir = olddir + "/"+ selectedOpt;
+                }
+
+            }
+            if (newdir){
+                $('#file_dir').val(newdir);
+                viewDirButSearch(newdir); 
+            }
         });
 
         removeSRA = function (name, srr_id, collection_type, button) {
@@ -8787,8 +8819,11 @@ $(document).ready(function () {
         if (sharedProfile){
             viewDirButSearch(target_dir);
             $('#file_dir_div').css("display","none");
+            $('#viewDirInfo').css("display","none");
+            $("#viewDir > option").attr("style", "pointer-events: none;");
             $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
         } else {
+            $("#viewDir > option").attr("style", "pointer-events: auto;");
             $('#viewDirBut').trigger("click");
             $('#addFileModal').find('.nav-tabs a[href="#hostFiles"]').tab('show');
         }
@@ -9150,7 +9185,7 @@ $(document).ready(function () {
             var editConfirmIcon = "";
             var downloadIcon = `<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"> <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a> <ul class="dropdown-menu dropdown-menu-right"> <li><a fileid="` + fileid + `" id="downUrl-` + fileid + `" href="#">Download</a></li> </ul> </li>`;
             if (settings.ajax.data.editable){
-                editConfirmIcon = `<li role="presentation"><a fileid="` + fileid + `" id="confirmmd-` + fileid + `" style="display:none;" data-toggle="tooltip" data-placement="bottom" data-original-title="Save Changes"><i style="font-size: 18px;" class="fa fa-save"></i></a><a fileid="` + fileid + `"  id="editmd-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Edit Markdown"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
+                editConfirmIcon = `<li role="presentation"><a fileid="` + fileid + `" id="confirmmd-` + fileid + `" style="display:none;" data-toggle="tooltip" data-placement="bottom" data-original-title="Save Changes"><i style="font-size: 18px;" class="fa fa-save"></i></a><a fileid="` + fileid + `"  id="editmd-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Edit Markdown"><i style="font-size: 18px;" class="fa fa-pencil-square-o"></i></a></li>`;
 
             }
             var fullScreenIcon = `<li role="presentation"><a fileid="` + fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>`;
@@ -9222,6 +9257,16 @@ $(document).ready(function () {
             }
         }
 
+
+        var aceEditorResize = function (editorId){
+            setTimeout(function () { 
+                window[editorId].resize();
+                window[editorId].setOption("wrap", false);
+                window[editorId].setOption("wrapBehavioursEnabled", false);
+                window[editorId].setOption("wrap", true); 
+            }, 100);
+        }
+
         var toogleEditorSize = function (editorId, elemsID,    tooglescreen, elems, settings) {
             var each_file_id =  elemsID;
             var icon = $('#fullscr-' + each_file_id).children()
@@ -9235,7 +9280,7 @@ $(document).ready(function () {
             } else {
                 $("#" + editorId).css("height", settings.heightEditor)
             }
-            window[editorId].resize();
+            aceEditorResize(editorId);
         }
 
         var getFileName = function (settings) {
@@ -9281,7 +9326,7 @@ $(document).ready(function () {
                 var editorID = "editorID_" + fileid;
                 var htmlID = "htmlID_" + fileid;
                 var scriptModeDivID = "scriptModeID_" + fileid;
-                window[editorID].resize();
+                aceEditorResize(editorID)
                 $('#confirmmd-' + fileid).css("display", "inline-block");
                 $('#editmd-' + fileid).css("display", "none");
                 $('#' + editorID).css("display", "inline-block");
@@ -9293,7 +9338,7 @@ $(document).ready(function () {
                 var editorID = "editorID_" + fileid;
                 var htmlID = "htmlID_" + fileid;
                 var scriptModeDivID = "scriptModeID_" + fileid;
-                window[editorID].resize();
+                aceEditorResize(editorID);
                 $('#confirmmd-' + fileid).css("display", "none");
                 $('#editmd-' + fileid).css("display", "inline-block");
                 savemd(settings, editorID);
@@ -9322,6 +9367,9 @@ $(document).ready(function () {
         var createAceEditor = function (editorId, script_modeId) {
             //ace process editor
             window[editorId] = ace.edit(editorId);
+            console.log(editorId)
+            window[editorId].setOption("wrap", true);
+            window[editorId].setOption("indentedSoftWrap", false);
             window[editorId].setTheme("ace/theme/tomorrow");
             window[editorId].getSession().setMode("ace/mode/sh");
             window[editorId].$blockScrolling = Infinity;
@@ -10597,7 +10645,10 @@ $(document).ready(function () {
                                         var filePath = savedData.attr("filepath");
                                         var run_log_uuid = $("#runVerReport").val();
                                         var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
+                                        console.log("deleteFile", deleteFile)
+                                        console.log("dynamicRows refresh1")
                                         $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
+                                        console.log("dynamicRows refresh2")
                                     }
                                     showConfirmDeleteModal(text, savedData, execFunc)
                                 });

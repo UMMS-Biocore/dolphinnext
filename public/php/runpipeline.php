@@ -866,7 +866,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     <!-- Nav tabs -->
                     <ul class="nav nav-tabs" role="tablist">
                         <li id="hostFileTab" class="active"><a class="nav-item" data-toggle="tab" href="#hostFiles">Remote Files</a></li>
-                        <li id="geoFileTab"><a class="nav-item" data-toggle="tab" href="#geoFiles">GEO Files</a></li>
+                        <li id="geoFileTab"><a class="nav-item" data-toggle="tab" href="#geoFiles">GEO/NCBI Files</a></li>
                         </li>
                         <li id="uploadFileTab"><a class="nav-item" data-toggle="tab" href="#uploadFiles">Upload Files</a></li>
                         </li>
@@ -892,7 +892,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group" style="margin-bottom:0px;" id="file_dir_div">
+                                <div class="form-group" style="margin-bottom:10px;" id="file_dir_div">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">1. File Location <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the location of your files and click search button."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-8">
                                         <div class="input-group">
@@ -907,8 +907,8 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                     <div>
                                         <div class="col-sm-3"></div>
                                         <div class="col-sm-9">
-                                            <a  class="small" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#adding-files" target="_blank">Need help?</a> <span class="small"> 
-                                                Full path of a directory: eg.<code style="cursor:pointer;" onclick="fillFileSearchBox(this)">/share/data/umw_biocore/genome_data/mousetest/mm10/gz</code>
+                                            <a class="small" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#adding-files" target="_blank">Need help?</a> <span class="small">
+                                                Full path of a directory: eg.<code style="color:#333; cursor:pointer;" onclick="fillFileSearchBox(this, 'file_dir')">/share/data/umw_biocore/genome_data/mousetest/mm10/gz</code>
                                             </span>
                                         </div>
                                     </div>
@@ -916,24 +916,27 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                         <div class="col-sm-3"></div>
                                         <div class="col-sm-9">
                                             <span class="small">
-                                                Web link: eg.<code style="cursor:pointer;" onclick="fillFileSearchBox(this)">https://galaxyweb.umassmed.edu/pub/dnext_data/test/reads</code>
+                                                Web link: eg.<code style="color:#333; cursor:pointer;" onclick="fillFileSearchBox(this, 'file_dir')">https://galaxyweb.umassmed.edu/pub/dnext_data/test/reads</code>
                                             </span>
                                         </div>
                                     </div>
                                     <div>
                                         <div class="col-sm-3"></div>
                                         <div class="col-sm-9">
-                                            <span style="font-size:80%;" >
-                                                Amazon (S3) or Google (GS) Bucket: eg.<code style="cursor:pointer;" onclick="fillFileSearchBox(this) ">s3://biocore/fastq</code> or <code style="cursor:pointer;" onclick="fillFileSearchBox(this)">gs://biocore/fastq</code>
+                                            <span style="font-size:80%;">
+                                                Amazon (S3) or Google (GS) Bucket: eg.<code style="color:#333; cursor:pointer;" onclick="fillFileSearchBox(this, 'file_dir') ">s3://biocore/fastq</code> or <code style="color:#333; cursor:pointer;" onclick="fillFileSearchBox(this, 'file_dir')">gs://biocore/fastq</code>
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <div class="form-group" style="margin-top:10px;">
+
+                                <div id="viewDirDiv" class="form-group" style="margin-top:10px;">
                                     <div class="col-sm-3"></div>
                                     <div class="col-sm-8">
                                         <select id="viewDir" class="form-control" size="5" style="display:none;"></select>
+                                        <span id="viewDirInfo" style="font-size:80%;">
+                                            Couldn't find your files? You can navigate through folders by double-clicking above.
+                                        </span>
                                     </div>
                                 </div>
 
@@ -1083,13 +1086,26 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                             <form class="form-horizontal">
                                 <div class="form-group" id="viewGeoButDiv">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">1. GSE/GSM/SRR ID <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter GSE, GSM or SRR id "><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
-                                        <input type="text" class="form-control" id="geo_id" name="geo_id" value="">
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" placeholder="Search GEO/NCBI Data" id="geo_id" name="geo_id" value="">
+                                            <div class="input-group-btn">
+                                                <button class="btn btn-primary" id="viewGeoBut" type="button">
+                                                    <span class="glyphicon glyphicon-search"></span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-sm-2">
-                                        <button id="viewGeoBut" type="button" class="btn btn-primary">Search Geo Data <i class='fa fa-search'></i></button>
+                                    <div>
+                                        <div class="col-sm-3"></div>
+                                        <div class="col-sm-9">
+                                            <a class="small" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#adding-files" target="_blank">Need help?</a> <span class="small">
+                                                eg.<code style="color:#333; cursor:pointer;" onclick="fillFileSearchBox(this,'geo_id')">GSM1331276</code>, <code style="color:#333; cursor:pointer;" onclick="fillFileSearchBox(this,'geo_id')">GSE55190</code>, <code style="color:#333; cursor:pointer;" onclick="fillFileSearchBox(this,'geo_id')">SRR10095965</code>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">2. Searched GEO Files <span><a data-toggle="tooltip" data-placement="bottom" title="Click 'select' or 'select all' button to add files to a collection"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                 </div>
@@ -1136,7 +1152,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">4. Collection Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter name of collection to recall all of the entered files later"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-8">
                                         <select id="collection_id_geo" class="fbtn btn-default form-control" name="collection_id">
                                             <option value="" disabled selected>Type New Collection Name or Choose to Add into Existing Collection</option>
                                         </select>
@@ -1144,25 +1160,25 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 </div>
                                 <div class="form-group" id="archive_dir_geo_div">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Local Archive Directory (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter full path of the directory where all of the entered files will be published after merging/renaming operation eg. /home/test/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-8">
                                         <input type="text" class="form-control" id="archive_dir_geo" name="archive_dir">
                                     </div>
                                 </div>
                                 <div class="form-group" id="mArchAmzS3Div_GEO">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Amazon S3 Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Amazon bucket where all of the entered files will be published after merging/renaming operation eg. s3://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-8">
                                         <input type="text" class="form-control" id="s3_archive_dir_geo" name="s3_archive_dir">
                                     </div>
                                 </div>
                                 <div class="form-group" id="mArchGoogGSDiv_GEO">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Google Storage Backup (optional) <span><a data-toggle="tooltip" data-placement="bottom" title="Please specify your Google Cloud bucket where all of the entered files will be published after merging/renaming operation eg. gs://yourbucket/archive"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-8">
                                         <input type="text" class="form-control" id="gs_archive_dir_geo" name="gs_archive_dir">
                                     </div>
                                 </div>
                                 <div class="form-group" id="mArchAmzKeyS3Div_GEO" style="display:none; ">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px; color:#a7a218;">Select Amazon Keys(S3 Archive) <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon Keys to access your S3 archive directory"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-8">
                                         <select id="mArchAmzKeyS3_GEO" class="fbtn btn-default form-control" name="amazon_cre_id">
                                             <option value="" disabled selected>Select Amazon Keys </option>
                                         </select>
@@ -1170,7 +1186,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 </div>
                                 <div class="form-group" id="mArchGoogKeyGSDiv_GEO" style="display:none; ">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px; color:#a7a218;">Select Google Keys(GS Archive) <span><a data-toggle="tooltip" data-placement="bottom" title="Google Keys to access your GS archive directory"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
-                                    <div class="col-sm-7">
+                                    <div class="col-sm-8">
                                         <select id="mArchGoogKeyGS_GEO" class="fbtn btn-default form-control" name="google_cre_id">
                                             <option value="" disabled selected>Select Google Keys </option>
                                         </select>
