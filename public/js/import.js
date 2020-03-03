@@ -195,8 +195,6 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
         checkObj = keyChecker(["summary", "script_pipe_footer", "script_pipe_header", "script_pipe_config", "name"], importJSON, dbJSON)
         jQuery.extend(checkObj, checkObj2);
     } else if (type == "pipeline_strict") {
-        console.log(type)
-
         var checkObj2 = {};
         // remove process/parameter specific regions
         var importJSONcp = $.extend(true, {}, importJSON);
@@ -317,7 +315,6 @@ $('#importButton').on('click', function (e) {
                     window.importObj[fileID].dict.parameter[el] = newParameterID;
                 } else {
                     window.importObj["importStatus"] = "stopped";
-                    console.log("parameter insert (id:" + el + ") was not successful:" + JSON.stringify(missing_parameters[el]))
                     showInfoModal("#infoMod", "#infoModText", "parameter insert (id:" + el + ") was not successful:" + JSON.stringify(missing_parameters[el]))
                     return;
                 }
@@ -340,7 +337,6 @@ $('#importButton').on('click', function (e) {
                         },
                         error: function (errorThrown) {
                             window.importObj["importStatus"] = "stopped";
-                            console.log("Error: " + errorThrown + "Removal of process parameter (id:" + el + ") was not successful:" + JSON.stringify(redundant_propara[el]))
                             showInfoModal("#infoMod", "#infoModText", "Error: " + errorThrown + "Removal of process parameter (id:" + el + ") was not successful:" + JSON.stringify(redundant_propara[el]))
                         }
                     });
@@ -352,8 +348,6 @@ $('#importButton').on('click', function (e) {
     var indexCache;
     //loop through each row for process/pipeline module/pipeline
     function loop(type, list) {
-        console.log(type)
-        console.log(list)
         if (window.importObj["importStatus"]) {
             if (window.importObj["importStatus"] == "stopped") {
                 return;
@@ -363,8 +357,6 @@ $('#importButton').on('click', function (e) {
         for (var i = index; i < list.length; i++) {
             var parBoxId = list[i].getAttribute('id');
             var fileID = list[i].getAttribute('fileID');
-            console.log("parBoxId", parBoxId)
-            console.log("fileID", fileID)
             var command = window.importObj[parBoxId].command;
             if (type == "process") {
                 var oldID = window.importObj[parBoxId]["oldProcessId"];
@@ -399,8 +391,6 @@ $('#importButton').on('click', function (e) {
                 var commandID = command.id
                 command[type + "_group_id"] = $("#menuGroup_" + parBoxId)[0].selectize.getValue()
                 command = encodeElement(type, command, fileID)
-                console.log(command)
-
                 if (window.importObj["importStatus"]) {
                     if (window.importObj["importStatus"] == "stopped") {
                         rowUpdateStatus(parBoxId, "Error Occured ", "error");
@@ -664,11 +654,10 @@ function checkImport(optObj) {
         var process_rev_uuid = importJSON.process_rev_uuid;
         var checkUUID = getValues({
             p: "check_uuid",
-            type: rowType,
+            type: "process",
             uuid: process_uuid,
             rev_uuid: process_rev_uuid
         });
-        console.log("rowType",rowType)
         console.log("checkUUID",checkUUID)
         //prepare command to save/update db
         sendJSONprocess = prepareSendJSON("process", sendJSONprocess, importJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
@@ -765,7 +754,7 @@ function checkImport(optObj) {
         });
         console.log("pipeline_rev_uuid", pipeline_rev_uuid)
         console.log("pipeline_uuid", pipeline_uuid)
-        console.log("pipeUUID", pipeUUID)
+        console.log("check_uuid", pipeUUID)
         sendJSONpipeline = prepareSendJSON(type, sendJSONpipeline, importJSON, null, fileId, rowID, decodeElement("pipeline", pipeUUID.pipeline_rev_uuid))
         if (pipeUUID) {
             //if pipeline_rev_uuid is found then check if contents of pipeline are the same
@@ -839,9 +828,7 @@ function cleanIDColumn(sendJSONproPara) {
 
 
 function validatePipeImportBlock (fileId){
-    console.log(fileId)
     var importJSON = window.importObj[fileId].importJSON;
-    console.log(importJSON)
     var checkMainPipe = filterObjKeys(importJSON, /main_pipeline.*/, "obj");
     var checkPipeModule = filterObjKeys(importJSON, /pipeline_module.*/, "obj");
     checkPipeModule = sortByKey(checkPipeModule, 'layer')
@@ -892,7 +879,6 @@ function getFileBlock(fileId, fileName, importJSON, allParameters) {
             pipeModuleBlock += getRowImportTable("pipeModule", "Pipeline", fileId, i, checkPipeModule[i].name, checkPipeModule[i].pipeline_group_name, checkPipeModule[i].pipeline_uuid);
             checkPipeModule[i] = decodeElement("pipeline", checkPipeModule[i])
             optObj = { type: "pipeline", rowType: "pipeModule", fileId: fileId, blockID: i, importJSON: checkPipeModule[i] };
-            console.log(optObj)
             var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
             doCall(optObj);
         }
@@ -949,7 +935,6 @@ function convertEdgeIm(id, fileID) {
             idlist[1] = String(window.importObj[fileID].dict.process[idlist[1]])
         } else {
             window.importObj["importStatus"] = "stopped";
-            console.log("process (id:" + idlist[1] + ") not found in pipeline dictionary and pipeline edge conversion was not successful.")
             showInfoModal("#infoMod", "#infoModText", "process (id:" + idlist[1] + ") not found in pipeline dictionary and pipeline edge conversion was not successful.")
         }
     }
@@ -957,7 +942,6 @@ function convertEdgeIm(id, fileID) {
         idlist[3] = String(window.importObj[fileID].dict.parameter[idlist[3]])
     } else {
         window.importObj["importStatus"] = "stopped";
-        console.log("parameter (id:" + idlist[1] + ") not found in pipeline dictionary and pipeline edge conversion was not successful.");
         showInfoModal("#infoMod", "#infoModText", "parameter (id:" + idlist[1] + ") not found in pipeline dictionary and pipeline edge conversion was not successful.")
     }
     return idlist.join("-")
@@ -987,27 +971,21 @@ function encodeNodes(nodes, fileID) {
         if (nodes[el]) {
             var proPipeID = nodes[el][2];
             if (proPipeID != "outPro" && proPipeID != "inPro") {
-                console.log(proPipeID)
                 if (proPipeID.match(/p/)) {
                     var piID = proPipeID.match(/p(.*)/)[1];
                     var replace = window.importObj[fileID].dict.pipeline[piID];
-                    console.log("replace1",replace)
-
                     if (replace) {
                         nodes[el][2] = "p" + String(replace)
                     } else {
                         window.importObj["importStatus"] = "stopped";
-                        console.log("pipeline module (id:" + piID + ") not found in pipeline dictionary and pipeline node conversion was not successful.")
                         showInfoModal("#infoMod", "#infoModText", "pipeline module (id:" + piID + ") not found in pipeline dictionary and pipeline node conversion was not successful.")
                     }
                 } else {
                     var replace = window.importObj[fileID].dict.process[proPipeID];
-                    console.log("replace2",replace)
                     if (proPipeID && replace) {
                         nodes[el][2] = String(replace)
                     } else {
                         window.importObj["importStatus"] = "stopped";
-                        console.log("process (id:" + proPipeID + ") not found in pipeline dictionary and pipeline node conversion was not successful.")
                         showInfoModal("#infoMod", "#infoModText", "process (id:" + proPipeID + ") not found in pipeline dictionary and pipeline node conversion was not successful.")
                     }
                 }
