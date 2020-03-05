@@ -9351,12 +9351,8 @@ $(document).ready(function () {
 
         }
 
-        var updateMarkdown = function (text, targetDiv){
-            var target = document.getElementById(targetDiv)
-            var converter = new showdown.Converter({tables: true});
-            var html = converter.makeHtml(text);
-            target.innerHTML = html;
-        }
+        
+        
 
         var getColumnData = function (elemsID, dataObj, settings, height, lineHeight) {
             var processParamDiv = ""

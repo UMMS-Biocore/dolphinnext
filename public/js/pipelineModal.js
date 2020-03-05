@@ -1670,12 +1670,7 @@ function updateGitTitle(github_username, github_repo, commit_id){
     }
 }
 
-function updateMarkdown(text, targetDiv){
-    var target = document.getElementById(targetDiv)
-    var converter = new showdown.Converter({tables: true});
-    var html = converter.makeHtml(text);
-    target.innerHTML = html;
-}
+
 
 //[{"filename":"nextflow.config", "text":editorScriptPipeConfig}]
 //\n//~@:~\n@~:"filename"\n//~@:~\ntext

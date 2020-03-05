@@ -1,3 +1,7 @@
+05.03.2020 Version 1.1.8
+Run report template updated. 
+Table support added for markdown.
+
 03.03.2020 Version 1.1.7
 CENTRAL_API_URL transferred from .sec file to config.php.
 Minor bug fixed in the import function.
