@@ -733,6 +733,23 @@ var disableDoubleClickCollapse = function(id1check, id1div, id2check,id2div, bas
 }
 
 
+function updateMarkdown (text, targetDiv){
+    var target = document.getElementById(targetDiv)
+    // bootstrap requires "table" class to properly visualize it. Added with classMap and bindings
+    var classMap = {
+        table: 'table table-bordered table-striped',
+    }
+    var bindings = Object.keys(classMap)
+    .map(key => ({
+        type: 'output',
+        regex: new RegExp(`<${key}(.*)>`, 'g'),
+        replace: `<${key} style="width: auto;" class="${classMap[key]}" $1>`
+    }));
+    var converter = new showdown.Converter({tables: true ,extensions: [bindings]});
+    var html = converter.makeHtml(text);
+    target.innerHTML = html;
+}
+
 $(document).ready(function () {
     initCloudConsole("amazon");
     initCloudConsole("google");
