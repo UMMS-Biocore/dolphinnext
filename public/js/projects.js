@@ -1,6 +1,6 @@
 function updateSideBarProject(project_id, project_name, type) {
     if (type === 'add') {
-        $('#autocompletes1').append('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span>' + truncateName(project_name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="side-' + project_id + '" class="treeview-menu"></ul></li>');
+        $('#autocompletes1 > li:nth-child(1)').after('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span>' + truncateName(project_name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="side-' + project_id + '" class="treeview-menu"></ul></li>');
     } else if (type === "edit") {
         $('#side-' + project_id).parent().find('span').html(truncateName(project_name, 'sidebarMenu'));
     } else if (type === "remove") {
@@ -20,7 +20,7 @@ function getProjectOptions(projectOwn) {
 
 $(document).ready(function () {
     if (usRole === "admin") {
-        $('#publicfileValpanel').css('display', 'block');
+        $('#publicfileValpanel').css('display', 'none');
         var publicfiletable = $('#publicfiletable').DataTable({
             "scrollY": "500px",
             "scrollCollapse": true,
@@ -57,7 +57,7 @@ $(document).ready(function () {
         "scrollX": true,
         "ajax": {
             url: "ajax/ajaxquery.php",
-            data: { "p": "getProjects" },
+            data: { "p": "getUserProjects" },
             "dataSrc": ""
         },
         "columns": [{
@@ -65,17 +65,37 @@ $(document).ready(function () {
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                 $(nTd).html("<a href='index.php?np=2&id=" + oData.id + "'>" + oData.name + "</a>");
             }
-            }, {
+        }, {
             "data": "username"
-            }, {
+        }, {
             "data": "date_created"
-            }, {
+        }, {
             data: null,
             className: "center",
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getProjectOptions(oData.own));
             }
-            }]
+        }]
+    });
+    var sharedprojectTable = $('#sharedprojecttable').DataTable({
+        "scrollY": "500px",
+        "scrollCollapse": true,
+        "scrollX": true,
+        "ajax": {
+            url: "ajax/ajaxquery.php",
+            data: { "p": "getSharedProjects" },
+            "dataSrc": ""
+        },
+        "columns": [{
+            "data": "name",
+            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                $(nTd).html("<a href='index.php?np=2&id=" + oData.id + "'>" + oData.name + "</a>");
+            }
+        }, {
+            "data": "username"
+        }, {
+            "data": "date_created"
+        }]
     });
 
 
@@ -132,13 +152,11 @@ $(document).ready(function () {
                                 projectTable.row(clickedRow).remove().draw();
                                 projectTable.row.add(rowData).draw();
                                 updateSideBarProject(projectDat[0].id, projectDat[0].name, 'edit');
-
                             },
                             error: function (errorThrown) {
                                 alert("Error: " + errorThrown);
                             }
                         });
-
                     } else { //insert
                         var getProjectData = [];
                         getProjectData.push({ name: "id", value: s.id });
@@ -160,16 +178,13 @@ $(document).ready(function () {
                                 addData.own = projectDat[0].own;
                                 projectTable.row.add(addData).draw();
                                 updateSideBarProject(projectDat[0].id, projectDat[0].name, 'add');
-
                             },
                             error: function (errorThrown) {
                                 alert("Error: " + errorThrown);
                             }
                         });
                     }
-
                     $('#projectmodal').modal('hide');
-
                 },
                 error: function (errorThrown) {
                     alert("Error: " + errorThrown);
@@ -178,29 +193,57 @@ $(document).ready(function () {
         }
     });
 
+
+
     $('#projecttable').on('click', '#projectremove', function (e) {
         e.preventDefault();
-
         var clickedRow = $(this).closest('tr');
         var rowData = projectTable.row(clickedRow).data();
-        console.log(rowData);
-
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: {
-                id: rowData.id,
-                p: "removeProject"
-            },
-            async: true,
-            success: function (s) {
-                projectTable.row(clickedRow).remove().draw();
-                updateSideBarProject(rowData.id, rowData.name, 'remove');
-            },
-            error: function (errorThrown) {
-                alert("Error: " + errorThrown);
-            }
+        var project_id = rowData.id;
+        var project_name = rowData.name;
+        var text = 'Are you sure you want to delete this project: "'+project_name+'" ?';
+        var proPipeGet = getValues({
+            "project_id": project_id,
+            "p": "getProjectPipelines"
         });
+        if (proPipeGet.length){
+            text += "</br></br>Following runs will be deleted as well:</br>";
+            for (var i = 0; i < proPipeGet.length; i++) {
+                text += "- "+ proPipeGet[i].pp_name + "</br>";
+            }
+        }
+        var savedData = clickedRow;
+        var execFunc = function(savedData){
+            var projectTable = $('#projecttable').DataTable();
+            var rowData = projectTable.row(savedData).data();
+            
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    p: "removeProject",
+                    'id': rowData.id,
+                    'name': rowData.name
+                },
+                async: true,
+                success: function (s) {
+                    if (s){
+                        if ($.isEmptyObject(s)){
+                            projectTable.row(rowData).remove().draw();
+                            projectTable.ajax.reload(null, false);
+                            updateSideBarProject(rowData.id, rowData.name, 'remove');
+                        } else {
+                            showInfoModal("#infoMod", "#infoModText", s)
+                        }
+                    }
+
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
+        showConfirmDeleteModal(text, savedData, execFunc)
     });
 
 
@@ -230,7 +273,7 @@ $(document).ready(function () {
 
             }
         }
-        
+
     }
 
     $('#publicmodal').on('show.bs.modal', function (event) {

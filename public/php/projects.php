@@ -1,10 +1,10 @@
-<div class="panel panel-default" id="projecttablepanel">
+<div class="panel panel-default">
     <div class="panel-heading clearfix">
         <div class="pull-right">
             <button type="button" class="btn btn-primary btn-sm" title="Add Project" id="addproject" data-toggle="modal" data-target="#projectmodal">Create a Project</button>
         </div>
         <div class="pull-left">
-            <h5><i class="fa fa-calendar-o " style="margin-left:0px; margin-right:0px;"></i> Projects</h5>
+            <h5><i class="fa fa-calendar-o " style="margin-left:0px; margin-right:0px;"></i> My Projects</h5>
         </div>
     </div>
 
@@ -20,6 +20,51 @@
             </thead>
         </table>
     </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <div class="pull-left">
+            <h5><i class="fa fa-calendar-o " style="margin-left:0px; margin-right:0px;"></i> Shared Projects</h5>
+        </div>
+    </div>
+
+    <div class="panel-body">
+        <table id="sharedprojecttable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Owner</th>
+                    <th>Created on</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<div class="panel panel-default" id="publicfileValpanel" style="display:none;">
+    <div class="panel-heading clearfix">
+        <div class="pull-right">
+            <button type="button" class="btn btn-primary btn-sm" title="Add Public Files/Values" id="addpublicFileVal" data-toggle="modal" data-target="#publicmodal">Add Public Files/Values</button>
+        </div>
+        <div class="pull-left">
+            <h5><i class="fa fa-folder-open-o"></i> Public Files/Values</h5>
+        </div>
+    </div>
+        <div class="panel-body">
+            <table id="publicfiletable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                <thead>
+                    <tr>
+                        <th>File/Value Name</th>
+                        <th>Type</th>
+                        <th>Host/Shared Storage ID</th>
+                        <th>Owner</th>
+                        <th>Created On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
 </div>
 
 <div id="projectmodal" class="modal fade" tabindex="-1" role="dialog">
@@ -52,33 +97,6 @@
         </div>
     </div>
 </div>
-
-
-<div class="panel panel-default" id="publicfileValpanel" style="display:none;">
-    <div class="panel-heading clearfix">
-        <div class="pull-right">
-            <button type="button" class="btn btn-primary btn-sm" title="Add Public Files/Values" id="addpublicFileVal" data-toggle="modal" data-target="#publicmodal">Add Public Files/Values</button>
-        </div>
-        <div class="pull-left">
-            <h5><i class="fa fa-folder-open-o"></i> Public Files/Values</h5>
-        </div>
-    </div>
-        <div class="panel-body">
-            <table id="publicfiletable" class="table table-striped table-bordered" cellspacing="0" width="100%">
-                <thead>
-                    <tr>
-                        <th>File/Value Name</th>
-                        <th>Type</th>
-                        <th>Host/Shared Storage ID</th>
-                        <th>Owner</th>
-                        <th>Created On</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
-</div>
-
 
 <div id="publicmodal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">

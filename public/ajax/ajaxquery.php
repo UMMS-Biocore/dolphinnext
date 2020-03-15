@@ -352,7 +352,16 @@ else if ($p=="saveGroupMemberByEmail"){
     $data = $db -> saveGroupMemberByEmail($email, $g_id, $ownerID);
 }
 else if ($p=="getProjects"){
-    $data = $db -> getProjects($id,$ownerID);
+    $type = "default";
+    $data = $db -> getProjects($id,$type,$ownerID);
+}
+else if ($p=="getUserProjects"){
+    $type = "user";
+    $data = $db -> getProjects($id,$type,$ownerID);
+}
+else if ($p=="getSharedProjects"){
+    $type = "shared";
+    $data = $db -> getProjects($id,$type,$ownerID);
 }
 else if ($p=="getGroups"){
     $data = $db -> getGroups($id,$ownerID);
@@ -518,8 +527,19 @@ else if ($p=="getUserRole"){
     $data = $db -> getUserRole($ownerID);
 }
 else if ($p=="getExistProjectPipelines"){
+    $type = "default";
     $pipeline_id = $_REQUEST['pipeline_id'];
-    $data = $db -> getExistProjectPipelines($pipeline_id,$ownerID);
+    $data = $db -> getExistProjectPipelines($pipeline_id,$type,$ownerID);
+}
+else if ($p=="getExistUserProjectPipelines"){
+    $type = "user";
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $data = $db -> getExistProjectPipelines($pipeline_id,$type,$ownerID);
+}
+else if ($p=="getExistSharedProjectPipelines"){
+    $type = "shared";
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $data = $db -> getExistProjectPipelines($pipeline_id,$type,$ownerID);
 }
 else if ($p=="getProjectPipelines"){
     $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
@@ -623,12 +643,9 @@ else if ($p=="removeProcess"){
     $db->removeProcessParameterByProcessID($id);
     $data = $db -> removeProcess($id);
 }
-else if ($p=="removeProject"){   
-    $db -> removeProjectPipelineInputbyProjectID($id);
-    $db -> removeRunByProjectID($id);
-    $db -> removeProjectPipelinebyProjectID($id);
-    $db -> removeProjectInputbyProjectID($id);
-    $data = $db -> removeProject($id);
+else if ($p=="removeProject"){  
+    $name = $_REQUEST['name'];
+    $data = $db -> removeProject($id,$name,$ownerID);
 }
 else if ($p=="removeGroup"){   
     $data = $db -> removeGroup($id,$ownerID);
@@ -1623,9 +1640,12 @@ else if ($p=="moveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $new_project_id = $_REQUEST['new_project_id'];
     $old_project_id = $_REQUEST['old_project_id'];
-    $data = $db->updateProPipe_ProjectID($project_pipeline_id, $new_project_id, $ownerID);
-    $db->updateProPipeInput_ProjectID($project_pipeline_id, $new_project_id, $ownerID);
-    //get project_pipeline_inputs belong to project_pipeline and add one by one
+    $group_id = $_REQUEST['group_id'];
+    $perms = $_REQUEST['perms'];
+    $old_project_id = $_REQUEST['old_project_id'];
+    $data = $db->updateProPipe_ProjectID($project_pipeline_id, $new_project_id, $group_id, $perms, $ownerID);
+    $db->updateProPipeInput_ProjectID($project_pipeline_id, $new_project_id, $group_id, $perms, $ownerID);
+    //get project_pipeline_inputs belong to project_pipeline and add into file_project and project_input tables
     $allinputs = json_decode($db->getProjectPipelineInputs($project_pipeline_id, $ownerID));
     foreach ($allinputs as $inputitem):
     $input_id = $inputitem->{'input_id'};
@@ -1652,7 +1672,7 @@ else if ($p=="moveRun"){
         // check if project input is exist
         $checkFilePro = $db->checkFileProject($new_project_id, $file_id);
         $checkFileProData = json_decode($checkFilePro,true);
-        //insert into file project table
+        //insert into file_project table
         if (!isset($checkFileProData[0])){
             $insertFileProject = $db->insertFileProject($file_id, $new_project_id, $ownerID);
         }
@@ -1690,11 +1710,11 @@ else if ($p=="saveProjectPipeline"){
     $output_dir = isset($_REQUEST['output_dir']) ? $_REQUEST['output_dir'] : "";
     $publish_dir = isset($_REQUEST['publish_dir']) ? $_REQUEST['publish_dir'] : "";
     $publish_dir_check = isset($_REQUEST['publish_dir_check']) ? $_REQUEST['publish_dir_check'] : "";
-    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : "";
+    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : 0;
     $profile = isset($_REQUEST['profile']) ? $_REQUEST['profile'] : "";
     $interdel = isset($_REQUEST['interdel']) ? $_REQUEST['interdel'] : "";
     $cmd = isset($_REQUEST['cmd']) ? urldecode($_REQUEST['cmd']) : "";
-    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
     $exec_each = isset($_REQUEST['exec_each']) ? $_REQUEST['exec_each'] : "";
     $exec_all = isset($_REQUEST['exec_all']) ? $_REQUEST['exec_all'] : "";
     $exec_all_settings = isset($_REQUEST['exec_all_settings']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['exec_all_settings']), ENT_QUOTES)) : "";
@@ -1715,21 +1735,19 @@ else if ($p=="saveProjectPipeline"){
     $withDag = isset($_REQUEST['withDag']) ? $_REQUEST['withDag'] : "";
     $process_opt = isset($_REQUEST['process_opt']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['process_opt']), ENT_QUOTES)) : "";
     $onload = isset($_REQUEST['onload']) ? $_REQUEST['onload'] : "";
+    settype($perms, 'integer');
     settype($group_id, 'integer');
     settype($amazon_cre_id, 'integer');
     settype($google_cre_id, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
-        if ($perms !== "3"){
-            $db->updateProjectGroupPerm($id, $group_id, $perms, $ownerID);
-            $db->updateProjectInputGroupPerm($id, $group_id, $perms, $ownerID);
-            $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
-            $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
-            $data = json_encode($listPermsDenied);  
-        }
+        $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
+        $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
+        $listPermsDenied = array();
+        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+        $listPermsDenied = $db->checkPermUpdtProject("default", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
+        $data = json_encode($listPermsDenied);  
     } else {
-        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
+        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $ownerID);
     }
 }
 else if ($p=="saveProcessParameter"){
@@ -1840,6 +1858,18 @@ else if ($p=="checkPermUpdtPipeline"){
     settype($perms, 'integer');
     $listPermsDenied = array();
     $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+    $data = json_encode($listPermsDenied);
+}
+else if ($p=="checkPermUpdtRun"){
+    $project_id = $_REQUEST['project_id'];
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    $perms = $_REQUEST['perms'];
+    settype($group_id, 'integer');
+    settype($perms, 'integer');
+    $listPermsDenied = array();
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+    $listPermsDenied = $db->checkPermUpdtProject("dry-run", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
     $data = json_encode($listPermsDenied);
 }
 else if ($p=="checkUserWritePermRun"){

@@ -38,12 +38,13 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <input class="box-dynamic width-dynamic" type="text" projectid="<?php echo $id;?>" name="projectTitle" autocomplete="off" placeholder="Enter Run Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 300px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="run-title"><span class="width-dynamic" style="display:none"></span></input>
 
         <i style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px;">|</i>
-        <i class="fa fa-calendar-o " style="padding-top:12px; margin-left:0px; margin-right:0px;"></i> Project:
-        <a href="" style="font-size: large; font-style:italic;  max-width: 500px;" id="project-title"></a>
+        <i class="fa fa-calendar-o " style="padding-top:12px; margin-left:0px; margin-right:0px;"></i> <a data-toggle="tooltip" data-placement="bottom" data-original-title="Change Project" href="#" onclick="duplicateProPipe(&#34;changeproject&#34;);return false;" >Project:</a>
+        <a href="" style="font-size: large; font-style:italic;  max-width: 500px;" data-toggle="tooltip" data-placement="bottom" data-original-title="Go to Project" id="project-title"></a>
+        
         <i style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px;">|</i>
 
         <i class="fa fa-spinner " style="margin-left:0px; margin-right:0px;"></i> Pipeline:
-        <a href="" projectpipelineid="<?php echo $id;?>" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" id="pipeline-title"></a>
+        <a href="" projectpipelineid="<?php echo $id;?>" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" id="pipeline-title" data-toggle="tooltip" data-placement="bottom" data-original-title="Go to Pipeline"></a>
         <i style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px;">|</i>
 
         <!--        Save and delete icons-->
@@ -567,36 +568,83 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 
 <!--confirmDuplicate Modal-->
 <div id="confirmDuplicate" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="confirmDuplicateTitle">Confirm</h4>
             </div>
             <div class="modal-body">
-                <form class="form-horizontal">
-                    <div class="text-left" style="padding-top:10px; padding-left:15px; padding-bottom:20px;">
+                <form class="form-horizontal" style="padding-left:15px;">
+                    <div class="text-left" style="padding-top:10px;  padding-bottom:20px;">
                         <p id="confirmDuplicateText"></p>
                     </div>
-                    <div class="form-group">
-                        <label for="userProject" class="col-sm-3 control-label">Target Project:
-                        </label>
-                        <div class="col-md-7" style="padding-right:0px;">
-                            <select id="userProject" class="fbtn btn-default form-control">
+                    <div class="form-group" id="pipelineRevsDiv">
+                        <label class="col-sm-3 control-label" style="text-align: left; ">1. Choose Pipeline Revision: </label>
+                        <div class="col-md-8" style="padding-right:0px;">
+                            <select id="pipelineRevs" class="fbtn btn-default form-control">
                             </select>
                         </div>
-                        <div class="col-md-1">
-                            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#projectmodal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Add New Project"><span><i class="glyphicon glyphicon-plus"></i></span></a></button>
+                    </div>
+                    <div class="form-group" id="chooseTargetProjectLabel">
+                        <label class="col-sm-3 control-label" style="text-align: left; ">2. Choose Target Project: </label>
+                    </div>
+                    <div role="tabpanel">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li id="userProjectLi" class="active"><a class="nav-item" data-toggle="tab" href="#userProjectTab">My Projects</a></li>
+                        <li id="sharedProjectLi" class="nav-item"><a class="nav-item" data-toggle="tab" href="#sharedProjectTab">Shared Projects</a></li>
+                    </ul>
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" searchtab="true" id="userProjectTab">
+                            <form class="form-horizontal">
+                                <div class="form-group">
+                                    <div class="col-sm-12 pull-right">
+                                        <button style="margin-top:15px;" type="button" class="btn btn-primary btn-sm pull-right" title="Add Project" id="addproject" data-toggle="modal" data-target="#projectmodal">Create a Project</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <table id="projecttable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Check</th>
+                                                <th>Project Name</th>
+                                                <th>Owner</th>
+                                                <th>Modified on</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" searchtab="true" id="sharedProjectTab">
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <table id="sharedProjectTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Check</th>
+                                                <th>Project Name</th>
+                                                <th>Owner</th>
+                                                <th>Modified on</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>
                 </form>
+                
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal" id="copyRunBut">Copy</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal" id="moveRunBut">Move</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal" id="duplicateKeepBtn">Keep Existing Revision</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal" id="duplicateNewBtn">Use New Revision</button>
+                <button type="button" class="btn btn-primary"  id="copyRunBut">Copy</button>
+                <button type="button" class="btn btn-primary"  id="moveRunBut">Move</button>
             </div>
         </div>
     </div>
@@ -935,7 +983,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                     <div class="col-sm-8">
                                         <select id="viewDir" class="form-control" size="5" style="display:none;"></select>
                                         <span id="viewDirInfo" style="font-size:80%;">
-                                            Couldn't find your files? You can navigate through folders by double-clicking above.
+                                            <a class="small" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/faq.html#run-questions" target="_blank">Couldn't find your files?</a> You can navigate through folders by double-clicking above.
                                         </span>
                                     </div>
                                 </div>

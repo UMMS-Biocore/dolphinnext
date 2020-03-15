@@ -495,29 +495,32 @@ createAceEditors("pipelineSumEditor", "#pipelineSumEditor_mode")
 
 function createAceEditors(editorId, script_modeId) {
     //ace process editor
-    window[editorId] = ace.edit(editorId);
-    window[editorId].setTheme("ace/theme/tomorrow");
-    window[editorId].getSession().setMode("ace/mode/sh");
-    window[editorId].$blockScrolling = Infinity;
-    //If mode is exist, then apply it
-    var mode = $(script_modeId).val();
-    if (mode && mode != "") {
-        window[editorId].session.setMode("ace/mode/" + mode);
+    if (document.getElementById(editorId)){
+        window[editorId] = ace.edit(editorId);
+        window[editorId].setTheme("ace/theme/tomorrow");
+        window[editorId].getSession().setMode("ace/mode/sh");
+        window[editorId].$blockScrolling = Infinity;
+        //If mode is exist, then apply it
+        var mode = $(script_modeId).val();
+        if (mode && mode != "") {
+            window[editorId].session.setMode("ace/mode/" + mode);
+        }
+        // If template text is not changed or it is blank : set the template text on change
+        if (script_modeId == "#script_mode"){
+            $(function () {
+                $(document).on('change', script_modeId, function () {
+                    var newMode = $(script_modeId).val();
+                    window[editorId].session.setMode("ace/mode/" + newMode);
+                    var editorText = window[editorId].getValue();
+                    if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templatesh || editorText === '') {
+                        var newTempText = 'template' + newMode;
+                        window[editorId].setValue(window[newTempText]);
+                    }
+                })
+            });
+        }
     }
-    // If template text is not changed or it is blank : set the template text on change
-    if (script_modeId == "#script_mode"){
-        $(function () {
-            $(document).on('change', script_modeId, function () {
-                var newMode = $(script_modeId).val();
-                window[editorId].session.setMode("ace/mode/" + newMode);
-                var editorText = window[editorId].getValue();
-                if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templatesh || editorText === '') {
-                    var newTempText = 'template' + newMode;
-                    window[editorId].setValue(window[newTempText]);
-                }
-            })
-        });
-    }
+
 }
 // To refresh the content of ace editors. Otherwise it doesn't show the text
 $('#advOptPro').on('show.bs.collapse', function () {
@@ -1797,7 +1800,6 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     editorPipeFooter.clearSelection();
                 }
                 editorScriptPipeConfig = createMultiConfig(pData[0].script_pipe_config);
-
                 $("#pipelineFiles").textEditor({
                     ajax: {
                         data: editorScriptPipeConfig
@@ -2094,7 +2096,7 @@ $(document).ready(function () {
     var usRole = callusRole();
     pipeline_id = $('#pipeline-title').attr('pipelineid');
     //fill pipeline groups
-    if (pipeline_id !== '') {
+    if (pipeline_id) {
         $('#pipeMenuGroupTop').css('display', 'none');
         $('#pipeMenuGroupBottom').css('display', 'inline');
         $('#pipeSepBar').remove()
@@ -2117,14 +2119,17 @@ $(document).ready(function () {
             $('#groupSelPro').append($('<option>', { value: item.id, text : item.name }));
         });
         loadPipeMenuGroup(true);
-        $("#pipelineFiles").textEditor({
-            ajax: {
-                data: [{"filename":"nextflow.config", "text":""}]
-            },
-            backgroundcolorenter: "#ced9e3",
-            backgroundcolorleave: "#ECF0F4",
-            height: "600px"
-        });
+        if (document.getElementById("pipelineFiles")){
+            $("#pipelineFiles").textEditor({
+                ajax: {
+                    data: [{"filename":"nextflow.config", "text":""}]
+                },
+                backgroundcolorenter: "#ced9e3",
+                backgroundcolorleave: "#ECF0F4",
+                height: "600px"
+            });
+        }
+
     }
 
     //Make modal draggable    
@@ -3666,35 +3671,70 @@ $(document).ready(function () {
     });
 
     //   ---- Run modal starts ---
-    var projectTable = $('#projecttable').DataTable({
-        "ajax": {
-            url: "ajax/ajaxquery.php",
-            data: { "p": "getProjects" },
-            "dataSrc": ""
-        },
-        "columns": [
-            {
-                "data": "id",
-                "checkboxes": {
-                    'targets': 0,
-                    'selectRow': true
-                }
-            },
-            {
-                "data": "name"
-            }, {
-                "data": "username"
-            }, {
-                "data": "date_modified"
-            }],
-        'select': {
-            'style': 'single'
-        },
-        'order': [[3, 'desc']]
-    });
-
     $('#mRun').on('show.bs.modal', function (event) {
+        $('#mRun a[href="#userProjectTab"]').trigger('click');
+        if ( ! $.fn.DataTable.isDataTable( '#projecttable' ) ) {
+            var projectTable = $('#projecttable').DataTable({
+                "ajax": {
+                    url: "ajax/ajaxquery.php",
+                    data: { "p": "getUserProjects" },
+                    "dataSrc": ""
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "checkboxes": {
+                            'targets': 0,
+                            'selectRow': true
+                        }
+                    },
+                    {
+                        "data": "name"
+                    }, {
+                        "data": "username"
+                    }, {
+                        "data": "date_modified"
+                    }],
+                'select': {
+                    'style': 'single'
+                },
+                'order': [[3, 'desc']]
+            });
+            var sharedProjectTable = $('#sharedProjectTable').DataTable({
+                "ajax": {
+                    url: "ajax/ajaxquery.php",
+                    data: { "p": "getSharedProjects" },
+                    "dataSrc": ""
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "checkboxes": {
+                            'targets': 0,
+                            'selectRow': true
+                        }
+                    },
+                    {
+                        "data": "name"
+                    }, {
+                        "data": "username"
+                    }, {
+                        "data": "date_modified"
+                    }],
+                'select': {
+                    'style': 'single'
+                },
+                'order': [[3, 'desc']]
+            });
+        } else {
+            var projectTable = $('#projecttable').DataTable();
+            var sharedProjectTable = $('#sharedProjectTable').DataTable();
+            projectTable.ajax.reload(null, false);
+            sharedProjectTable.ajax.reload(null, false);
+            
+        }
         projectTable.column(0).checkboxes.deselect();
+        sharedProjectTable.column(0).checkboxes.deselect();
         var pipeline_id = $('#pipeline-title').attr('pipelineid');
         if (pipeline_id === '') {
             event.preventDefault();
@@ -3704,10 +3744,19 @@ $(document).ready(function () {
     $('#mRun').on('click', '#selectProject', function (event) {
         event.preventDefault();
         var pipeline_id = $('#pipeline-title').attr('pipelineid');
-        var rows_selected = projectTable.column(0).checkboxes.selected();
-        if (rows_selected.length === 1 && pipeline_id !== '') {
+        var activeTabLi = $("#mRun ul.nav-tabs li.active").attr("id");
+        var rows_selected = [];
+        if (activeTabLi == "sharedProjectLi"){
+            var sharedProjectTable = $('#sharedProjectTable').DataTable();
+            rows_selected = sharedProjectTable.column(0).checkboxes.selected();
+        } else if (activeTabLi == "userProjectLi"){
+            var projectTable = $('#projecttable').DataTable();
+            rows_selected = projectTable.column(0).checkboxes.selected();
+        }
+        if (rows_selected.length === 1 && pipeline_id) {
             $('#runNameModal').modal('show');
         }
+
     });
     //enter run name modal
     $('#runNameModal').on('show.bs.modal', function (event) {
@@ -3715,18 +3764,38 @@ $(document).ready(function () {
         $(this).find('form').trigger('reset');
         if (button.attr('id') === 'selectProject') {
             $('#runNameModaltitle').html('Enter Run Name');
-        } else {}
+        } 
     });
     //save run on database
     $('#runNameModal').on('click', '#saveRun', function (event) {
         event.preventDefault();
         var pipeline_id = $('#pipeline-title').attr('pipelineid');
-        var rows_selected = projectTable.column(0).checkboxes.selected();
+        var rows_selected = [];
+        var activeTabLi = $("#mRun ul.nav-tabs li.active").attr("id");
+        if (activeTabLi == "sharedProjectLi"){
+            var sharedProjectTable = $('#sharedProjectTable').DataTable();
+            rows_selected = sharedProjectTable.column(0).checkboxes.selected();
+            var project_data = sharedProjectTable.data();
+            
+        } else if (activeTabLi == "userProjectLi"){
+            var projectTable = $('#projecttable').DataTable();
+            rows_selected = projectTable.column(0).checkboxes.selected();
+            var project_data = projectTable.data();
+        }
         var run_name = $('#runName').val();
 
-        if (rows_selected.length === 1 && pipeline_id !== '' && run_name !== '') {
+        if (rows_selected.length === 1 && pipeline_id && run_name) {
             var data = [];
             var project_id = rows_selected[0];
+            var rowData = $.grep(project_data, function(v) {
+                return v.id == project_id
+            });
+            if (rowData[0]){
+                if (rowData[0].perms && rowData[0].group_id){
+                    data.push({ name: "perms", value: rowData[0].perms });
+                    data.push({ name: "group_id", value: rowData[0].group_id });
+                }
+            }
             data.push({ name: "name", value: run_name });
             data.push({ name: "project_id", value: project_id });
             data.push({ name: "pipeline_id", value: pipeline_id });
@@ -3760,33 +3829,7 @@ $(document).ready(function () {
             data: data,
             async: true,
             success: function (s) {
-                if (savetype.length) { //edit
-
-                } else { //insert
-                    var getProjectData = [];
-                    getProjectData.push({ name: "id", value: s.id });
-                    getProjectData.push({ name: "p", value: 'getProjects' });
-                    $.ajax({
-                        type: "POST",
-                        url: "ajax/ajaxquery.php",
-                        data: getProjectData,
-                        async: true,
-                        success: function (sc) {
-                            var projectDat = sc;
-                            var addData = {};
-                            var keys = projectTable.settings().init().columns;
-                            for (var i = 0; i < keys.length; i++) {
-                                var key = keys[i].data;
-                                addData[key] = projectDat[0][key];
-                            }
-                            addData.id = projectDat[0].id;
-                            projectTable.row.add(addData).draw();
-                        },
-                        error: function (errorThrown) {
-                            alert("Error: " + errorThrown);
-                        }
-                    });
-                }
+                $("#projecttable").DataTable().ajax.reload(null, false);
                 $('#projectmodal').modal('hide');
             },
             error: function (errorThrown) {
@@ -3797,45 +3840,85 @@ $(document).ready(function () {
     //   ---- Run modal ends ---
 
     //   ---- Run Exist modal starts ---
-    var existProjectTable = $('#existRunTable').DataTable({
-        "ajax": {
-            url: "ajax/ajaxquery.php",
-            data: { "p": "getExistProjectPipelines", pipeline_id: pipeline_id },
-            "dataSrc": ""
-        },
-        "columns": [
-            {
-                "data": "id",
-                "checkboxes": {
-                    'targets': 0,
-                    'selectRow': true
-                }
-            }, {
-                "data": "pp_name"
-            }, {
-                "data": "project_name"
-            }, {
-                "data": "username"
-            }, {
-                "data": "date_modified"
-            }],
-        'select': {
-            'style': 'single'
-        },
-        'order': [[4, 'desc']]
-    });
-
     $('#mExistRun').on('show.bs.modal', function (event) {
-        existProjectTable.column(0).checkboxes.deselect();
-        if (pipeline_id === '') {
-            event.preventDefault();
+        $('#mExistRun a[href="#userRunTab"]').trigger('click');
+        if ( ! $.fn.DataTable.isDataTable( '#existRunTable' ) ) {
+            var existRunTable = $('#existRunTable').DataTable({
+                "ajax": {
+                    url: "ajax/ajaxquery.php",
+                    data: { "p": "getExistUserProjectPipelines", pipeline_id: pipeline_id },
+                    "dataSrc": ""
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "checkboxes": {
+                            'targets': 0,
+                            'selectRow': true
+                        }
+                    }, {
+                        "data": "pp_name"
+                    }, {
+                        "data": "project_name"
+                    }, {
+                        "data": "username"
+                    }, {
+                        "data": "date_modified"
+                    }],
+                'select': {
+                    'style': 'single'
+                },
+                'order': [[4, 'desc']]
+            });
+            var sharedRunTable = $('#sharedRunTable').DataTable({
+                "ajax": {
+                    url: "ajax/ajaxquery.php",
+                    data: { "p": "getExistSharedProjectPipelines", pipeline_id: pipeline_id },
+                    "dataSrc": ""
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "checkboxes": {
+                            'targets': 0,
+                            'selectRow': true
+                        }
+                    }, {
+                        "data": "pp_name"
+                    }, {
+                        "data": "project_name"
+                    }, {
+                        "data": "username"
+                    }, {
+                        "data": "date_modified"
+                    }],
+                'select': {
+                    'style': 'single'
+                },
+                'order': [[4, 'desc']]
+            });
+        } else {
+            var existRunTable = $('#existRunTable').DataTable();
+            var sharedRunTable = $('#sharedRunTable').DataTable();
+            existRunTable.ajax.reload(null, false);
+            sharedRunTable.ajax.reload(null, false);
         }
+        existRunTable.column(0).checkboxes.deselect();
+        sharedRunTable.column(0).checkboxes.deselect();
     });
 
 
     $('#mExistRun').on('click', '#selectExistRun', function (event) {
         event.preventDefault();
-        var rows_selected = existProjectTable.column(0).checkboxes.selected();
+        var rows_selected = [];
+        var activeTabLi = $("#mExistRun ul.nav-tabs li.active").attr("id");
+        if (activeTabLi == "sharedRunLi"){
+            var sharedRunTable = $('#sharedRunTable').DataTable();
+            rows_selected = sharedRunTable.column(0).checkboxes.selected();
+        } else if (activeTabLi == "userRunLi"){
+            var existProjectTable = $('#existRunTable').DataTable();
+            rows_selected = existProjectTable.column(0).checkboxes.selected();
+        }
         if (rows_selected.length === 1 && pipeline_id !== '') {
             var project_pipeline_id = rows_selected[0];
             $('#mExistRun').modal('hide');

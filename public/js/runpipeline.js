@@ -1,6 +1,7 @@
 $runscope = {
     //-------- Store data:
     checkUserWritePermRun : null,
+    getProjectPipelines: null,
 
     //-------- Functions:
     //Generic function to save ajax data
@@ -5657,13 +5658,28 @@ function saveRun() {
     if (dupliProPipe === false) {
         project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     } else if (dupliProPipe === true) {
-        old_project_pipeline_id = project_pipeline_id;
-        project_pipeline_id = '';
-        project_id = $('#userProject').val();
-        run_name = run_name + '-copy'
-        if (confirmNewRev) {
-            newpipelineID = highestRevPipeId;
-            onload = "refreshEnv";
+        var numOfErr;
+        var target_group_id;
+        var target_perms;
+        var new_project_id = getTargetProject();
+        [numOfErr,target_group_id,target_perms] = validateMoveCopyRun(new_project_id);
+        if (!numOfErr){
+            //if project belong to other user's project than change its value 
+            $('#groupSelRun').val(target_group_id);
+            $('#permsRun').val(target_perms);
+
+            old_project_pipeline_id = project_pipeline_id;
+            project_pipeline_id = '';
+            project_id = new_project_id;
+            run_name = run_name + '-copy'
+            if (confirmNewRev) {
+                newpipelineID = $('#pipelineRevs').val();
+                onload = "refreshEnv";
+            }
+        } else {
+            confirmNewRev = false; 
+            dupliProPipe = false;
+            return;
         }
     }
     //check cloud keys
@@ -5681,6 +5697,8 @@ function saveRun() {
     var perms = $('#permsRun').val();
     var interdel = $('#intermeDel').is(":checked").toString();
     var groupSel = $('#groupSelRun').val();
+    console.log("perms", perms)
+    console.log("groupSel", groupSel)
     var cmd = encodeURIComponent($runscope.getPubVal("runcmd"));
     var exec_each = $('#exec_each').is(":checked").toString();
     var exec_all = $('#exec_all').is(":checked").toString();
@@ -5699,7 +5717,7 @@ function saveRun() {
     var withTimeline = $('#withTimeline').is(":checked").toString();
     var withDag = $('#withDag').is(":checked").toString();
     var process_opt = getProcessOpt();
-    if (run_name !== '') {
+    if (run_name && project_id && newpipelineID) {
         data.push({ name: "id", value: project_pipeline_id });
         data.push({ name: "name", value: run_name });
         data.push({ name: "project_id", value: project_id });
@@ -5739,6 +5757,7 @@ function saveRun() {
             data: data,
             async: true,
             success: function (s) {
+                toastr.info('All changes are saved.')
                 console.log(s)
                 if (dupliProPipe === false) {
                     if (s){
@@ -5760,9 +5779,11 @@ function saveRun() {
                 }
             },
             error: function (errorThrown) {
-                alert("Error: " + errorThrown);
+                toastr.error("Changes couldn't be saved.")
             }
         });
+    } else {
+        toastr.error("Changes couldn't be saved.")
     }
 }
 
@@ -5797,6 +5818,8 @@ dupliProPipe = false;
 function checkNewRevision() {
     //getPipelineRevision will retrive pipeline revisions that user allows to use
     var checkNewRew = getValues({ p: "getPipelineRevision", pipeline_id: pipeline_id });
+    //fill dropdown
+    refreshPipeRevisions("#pipelineRevs",checkNewRew);
     var askNewRev = false;
     var highestRev = pipeData[0].rev_id;
     var highestRevPipeId = pipeline_id;
@@ -5809,62 +5832,139 @@ function checkNewRevision() {
             }
         });
     }
-    return [highestRevPipeId, askNewRev]
+    return askNewRev;
 }
 
-function refreshProjectDropDown(id){
-    $.ajax({
-        type: "GET",
-        url: "ajax/ajaxquery.php",
-        data: {
-            p: "getProjects"
-        },
-        async: false,
-        success: function (s) {
-            $(id).empty();
-            for (var i = 0; i < s.length; i++) {
-                var param = s[i];
-                var optionGroup = new Option(decodeHtml(param.name), param.id);
-                $(id).append(optionGroup);
-            }
-            $(id).val(project_id)
-        },
-        error: function (errorThrown) {
-            alert("Error: " + errorThrown);
-        }
-    });
+
+function refreshProjectDatatable(){
+    console.log("refreshProjectDatatable")
+    if ( ! $.fn.DataTable.isDataTable( '#projecttable' ) ) {
+        var projectTable = $('#projecttable').DataTable({
+            "ajax": {
+                url: "ajax/ajaxquery.php",
+                data: { "p": "getUserProjects" },
+                "dataSrc": ""
+            },
+            "columns": [
+                {
+                    "data": "id",
+                    "checkboxes": {
+                        'targets': 0,
+                        'selectRow': true
+                    }
+                },
+                {
+                    "data": "name"
+                }, {
+                    "data": "username"
+                }, {
+                    "data": "date_modified"
+                }],
+            'select': {
+                'style': 'single'
+            },
+            'order': [[3, 'desc']]
+        });
+        var sharedProjectTable = $('#sharedProjectTable').DataTable({
+            "ajax": {
+                url: "ajax/ajaxquery.php",
+                data: { "p": "getSharedProjects" },
+                "dataSrc": ""
+            },
+            "columns": [
+                {
+                    "data": "id",
+                    "checkboxes": {
+                        'targets': 0,
+                        'selectRow': true
+                    }
+                },
+                {
+                    "data": "name"
+                }, {
+                    "data": "username"
+                }, {
+                    "data": "date_modified"
+                }],
+            'select': {
+                'style': 'single'
+            },
+            'order': [[3, 'desc']]
+        });
+    } else {
+        var projectTable = $('#projecttable').DataTable();
+        var sharedProjectTable = $('#sharedProjectTable').DataTable();
+        projectTable.ajax.reload(null, false);
+        sharedProjectTable.ajax.reload(null, false);
+
+    }
+    projectTable.column(0).checkboxes.deselect();
+    sharedProjectTable.column(0).checkboxes.deselect();
 }
+
+function getTargetProject(){
+    var new_project_id = "";
+    var rows_selected = [];
+    var activeTabLi = $("#confirmDuplicate ul.nav-tabs li.active").attr("id");
+    if (activeTabLi == "sharedProjectLi"){
+        var sharedProjectTable = $('#sharedProjectTable').DataTable();
+        rows_selected = sharedProjectTable.column(0).checkboxes.selected();
+        new_project_id = rows_selected[0];
+    } else if (activeTabLi == "userProjectLi"){
+        var projectTable = $('#projecttable').DataTable();
+        rows_selected = projectTable.column(0).checkboxes.selected();
+        new_project_id = rows_selected[0];
+    }
+    return new_project_id;
+}
+
+function refreshPipeRevisions(id, revData){
+    console.log(revData)
+    $(id).empty();
+    for (var i = revData.length; i--;) {
+        var param = revData[i];
+        if (pipeline_id == param.id){
+            var optionGroup = new Option(decodeHtml('Revision: ' + param.rev_id + ' ' + param.rev_comment + ' on ' + param.date_modified + " (current rev.)"), param.id);
+        } else {
+            var optionGroup = new Option(decodeHtml('Revision: ' + param.rev_id + ' ' + param.rev_comment + ' on ' + param.date_modified), param.id);
+        }
+        $(id).append(optionGroup);
+    }
+    $(id).val(pipeline_id);
+}
+
 
 function duplicateProPipe(type) {
-    refreshProjectDropDown("#userProject");
-
+    $('#confirmDuplicate a[href="#userProjectTab"]').trigger('click');
+    refreshProjectDatatable();
+    dupliProPipe = false;
+    confirmNewRev = false;
     if (type == "copy"){
-        dupliProPipe = true;
-        confirmNewRev = false;
-        [highestRevPipeId, askNewRev] = checkNewRevision();
-        $('#copyRunBut').css("display","none");
+        var askNewRev = checkNewRevision();
         $('#moveRunBut').css("display","none");
-        $('#duplicateKeepBtn').css("display","none");
-        $('#duplicateNewBtn').css("display","none");
+        $('#copyRunBut').css("display","inline-block");
+        $('#pipelineRevsDiv').css("display","block");
+        $('#chooseTargetProjectLabel').css("display","block");
         if (askNewRev === true) {
-            $('#duplicateKeepBtn').css("display","inline-block");
-            $('#duplicateNewBtn').css("display","inline-block");
-            $("#confirmDuplicateText").html('New revision of this pipeline is available. If you want to create a new run and keep your revision of pipeline, please click "Keep Existing Revision" button. If you wish to use same input parameters in new revision of pipeline then click "Use New Revision" button.</br></br><b style="color:blue;">* Caution:</b> If you choose "Use New Revision", you might need to re-enter your custom pipeline options.');
+            $("#confirmDuplicateText").html('New revision of this pipeline is available. If you change your pipeline revision, we will transfer your input parameters into your new run. However, you might need to re-enter your custom pipeline options.');
         } else {
-            $('#copyRunBut').css("display","inline-block");
-            $("#confirmDuplicateText").text('Please select target project to copy your run.');
+            $("#confirmDuplicateText").text('Please select target project to copy your run. If you change your pipeline revision, we will transfer your input parameters into your new run. However, you might need to re-enter your custom pipeline options.');
         }
         $("#confirmDuplicateTitle").text('Copy Run');
         $('#confirmDuplicate').modal("show");  
-    } else if (type == "move"){
-        dupliProPipe = false;
+    } else if (type == "move" || type == "changeproject"){
         saveRun();
         $('#copyRunBut').css("display","none");
-        $('#duplicateKeepBtn').css("display","none");
-        $('#duplicateNewBtn').css("display","none");
         $('#moveRunBut').css("display","inline-block");
-        $("#confirmDuplicateText").text('Please select target project to move your run.');
-        $("#confirmDuplicateTitle").text('Move Run');
+        $('#pipelineRevsDiv').css("display","none");
+        $('#chooseTargetProjectLabel').css("display","none");
+        if (type == "move"){
+            $("#confirmDuplicateTitle").text('Move Run');
+            $("#confirmDuplicateText").text('Please select your target project to move your run.');
+        } else if (type == "changeproject"){
+            $("#confirmDuplicateTitle").text('Change Project');
+            $("#confirmDuplicateText").text('Please choose your new project.');
+        }
     }
     $('#confirmDuplicate').modal("show");
 }
@@ -6201,18 +6301,66 @@ function fillFileSearchBox(item, targetDiv){
     }
 }
 
-
+function validateMoveCopyRun(new_project_id){
+    var infoText = '';
+    var target_group_id = $("#groupSelRun").val();
+    var target_perms = $("#permsRun").val();
+    var target_project_data = getValues({ p: "getProjects", id:new_project_id});
+    console.log("target_group_id", target_group_id)
+    console.log("target_perms", target_perms)
+    console.log("target_project_data", target_project_data)
+    //if owner of the project is not the user, then change its target_group_id and target_perms
+    if (target_project_data[0]){
+        if (!parseInt(target_project_data[0].own) && target_project_data[0].perms && target_project_data[0].group_id){
+            target_group_id = target_project_data[0].group_id;
+            target_perms = target_project_data[0].perms;
+        } 
+    }
+    console.log("target_group_id", target_group_id)
+    console.log("target_perms", target_perms)
+    var checkPermissionUpdt = getValues({ p: "checkPermUpdtRun",  pipeline_id: pipeline_id,  project_id: new_project_id,  perms:target_perms,   group_id:target_group_id}); 
+    var warnAr = $.map(checkPermissionUpdt, function(value, index) {
+        return [value];
+    });
+    var numOfErr = warnAr.length;
+    if (numOfErr > 0) {
+        infoText += "Permission of the project/pipeline needs to be updated in order to move/copy of the run. However, it couldn't be done because of the following reason(s): </br></br>"
+        $.each(warnAr, function (element) {
+            infoText += warnAr[element]+"</br>";
+        });
+        showInfoModal("#infoMod","#infoModText", infoText);
+    }
+    return [numOfErr,target_group_id,target_perms];
+}
 
 
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
-    pipeData = getValues({ p: "getProjectPipelines", id: project_pipeline_id });
+    pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
     projectpipelineOwn = pipeData[0].own;
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
     runPid = "";
     countFailRead = 0; //count failed read amount if it reaches 5, show connection lost 
     changeOnchooseEnv = false;
+    // save info when run saved successfully
+    toastr.options = {
+        "closeButton": false,
+        "debug": false,
+        "newestOnTop": false,
+        "progressBar": false,
+        "positionClass": "toast-bottom-left",
+        "preventDuplicates": true,
+        "onclick": null,
+        "showDuration": "300",
+        "hideDuration": "1000",
+        "timeOut": "2500",
+        "extendedTimeOut": "1000",
+        "showEasing": "linear",
+        "hideEasing": "linear",
+        "showMethod": "fadeIn",
+        "hideMethod": "fadeOut"
+    }
     // if user not own it, cannot change or delete run
     if (projectpipelineOwn === "0") {
         $('#deleteRun').remove();
@@ -8834,38 +8982,50 @@ $(document).ready(function () {
     //### pluplouder ends
 
 
+
     //######### copy/move runs
     $('#confirmDuplicate').on('click', '#moveRunBut', function (e) {
-        var new_project_id = $('#userProject').val();
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: {
-                old_project_id: project_id,
-                new_project_id: new_project_id,
-                project_pipeline_id: project_pipeline_id,
-                p: "moveRun"
-            },
-            async: true,
-            success: function (s) {
-                setTimeout(function () { window.location.replace("index.php?np=3&id=" + project_pipeline_id); }, 0);
-            },
-            error: function (errorThrown) {
-                alert("Error: " + errorThrown);
+        var new_project_id = getTargetProject()
+        if (!new_project_id){
+            showInfoModal("#infoMod", "#infoModText", "Please choose one of the projects.")
+        } else {
+            // check if moving operation is valid.
+            var numOfErr;
+            var target_group_id;
+            var target_perms;
+            [numOfErr,target_group_id,target_perms] = validateMoveCopyRun(new_project_id);
+            if (!numOfErr){
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: {
+                        old_project_id: project_id,
+                        new_project_id: new_project_id,
+                        project_pipeline_id: project_pipeline_id,
+                        perms:target_perms,
+                        group_id:target_group_id,
+                        p: "moveRun"
+                    },
+                    async: true,
+                    success: function (s) {
+                        setTimeout(function () { window.location.replace("index.php?np=3&id=" + project_pipeline_id); }, 0);
+                    },
+                    error: function (errorThrown) {
+                        alert("Error: " + errorThrown);
+                    }
+                });
             }
-        });
+        }
     });
     $('#confirmDuplicate').on('click', '#copyRunBut', function (e) {
-        confirmNewRev = false;
-        saveRun();
-    });
-    $('#confirmDuplicate').on('click', '#duplicateKeepBtn', function (e) {
-        confirmNewRev = false;
-        saveRun();
-    });
-    $('#confirmDuplicate').on('click', '#duplicateNewBtn', function (e) {
-        confirmNewRev = true;
-        saveRun();
+        var new_project_id = getTargetProject()
+        if (!new_project_id){
+            showInfoModal("#infoMod", "#infoModText", "Please choose one of the projects.")
+        } else {
+            confirmNewRev = true;
+            dupliProPipe = true; 
+            saveRun();
+        }
     });
 
 
@@ -8882,8 +9042,7 @@ $(document).ready(function () {
             data: {name:projectName, summary:"", p:"saveProject"},
             async: true,
             success: function (s) {
-                refreshProjectDropDown("#userProject");
-                $("#userProject").val(s.id);
+                refreshProjectDatatable();
                 $('#projectmodal').modal('hide');
             },
             error: function (errorThrown) {
@@ -9351,8 +9510,8 @@ $(document).ready(function () {
 
         }
 
-        
-        
+
+
 
         var getColumnData = function (elemsID, dataObj, settings, height, lineHeight) {
             var processParamDiv = ""
@@ -10641,10 +10800,7 @@ $(document).ready(function () {
                                         var filePath = savedData.attr("filepath");
                                         var run_log_uuid = $("#runVerReport").val();
                                         var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
-                                        console.log("deleteFile", deleteFile)
-                                        console.log("dynamicRows refresh1")
                                         $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
-                                        console.log("dynamicRows refresh2")
                                     }
                                     showConfirmDeleteModal(text, savedData, execFunc)
                                 });
