@@ -1,7 +1,7 @@
 <!-- sidebar menu: : style can be found in sidebar.less -->
 <!--        Control Sidebar-->
 <div class=" dropdown messages-menu ">
-    <a id="newPipeline" class="btn btn-primary" style=" margin-left:15px;" href="index.php?np=1" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="New Pipeline">
+    <a id="newPipeline" class="btn btn-primary" style=" margin-left:15px;" href="index.php?np=1&id=0" data-toggle="tooltip" data-placement="bottom" title="" data-original-title="New Pipeline">
                   <span class="glyphicon-stack">
                     <i class="fa fa-plus-circle glyphicon-stack-2x" style="color:white;"></i>
                       <i class="fa fa-spinner glyphicon-stack-1x" style="color:white;"></i>

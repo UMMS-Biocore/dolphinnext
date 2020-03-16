@@ -112,7 +112,16 @@ Run Questions
 I can not reach my files in the file window
 -------------------------------------------
 
-There might be a connection issue, please check `Why can't I validate my SSH Keys <faq.html#why-can-t-i-validate-my-ssh-keys>`_ section.
+There might be a connection issue, please check following steps:
+
+    1. The SSH protocol requires following file/directory permissions to establish secure connections. So please execute following commands to make sure SSH related files are not writeable by other users::
+    
+        chmod 700 ~/.ssh
+        chmod 600 ~/.ssh/authorized_keys
+    
+    
+    2. Your **home directory** shoudn't be **writeable** by other users. If you need to share your files with everyone, don't set permission of your home directory to 777. It creates security issues and blocks ssh connection. You can set to more secure options such as 750, 755 or 754.
+
 
 Error: Run directory cannot be created
 --------------------------------------

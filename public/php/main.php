@@ -60,6 +60,8 @@ folder instead of downloading all of them to reduce the load. -->
     <!-- plupload -->
     <link rel="stylesheet" href="bower_components/plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
     <link rel="stylesheet" href="bower_components/plupload/js/jquery.plupload.queue/css/jquery.plupload.queue.css" type="text/css" />
+    <!-- toastr -->
+    <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
     <!-- to fix favicon.ico not found error-->
     <link rel="shortcut icon" href="#">
     <style>
@@ -954,6 +956,7 @@ immediately after the control sidebar -->
         <script src="bower_components/plupload/js/jquery.ui.plupload/jquery.ui.plupload.min.js"></script>
         <script src="bower_components/plupload/js/jquery.plupload.queue/jquery.plupload.queue.js"></script>
         <script type="text/javascript" src="dist/js/dataTables.checkboxes.js"></script>
+        <script type="text/javascript" src="bower_components/toastr/build/toastr.min.js"></script>
         <?php print getJS($np, $login, $id); ?>
 
 </body>

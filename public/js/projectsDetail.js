@@ -1,3 +1,19 @@
+$projDetScope = {
+    //-------- Store data:
+    getProjects : null,
+
+    //-------- Functions:
+    //Generic function to save ajax data
+    getAjaxData : function(varName, getValuesObj){
+        if ($projDetScope[varName] === null){
+            $projDetScope[varName] = getValues(getValuesObj);
+        }
+        return $projDetScope[varName];
+    }
+}
+
+
+
 function saveProjectIcon() {
     var data = [];
     var projectSummary = encodeURIComponent($('#projectSum').val());
@@ -32,6 +48,7 @@ function loadProjectDetails(project_id) {
         data: getProjectD,
         async: true,
         success: function (s) {
+            $projDetScope.getProjects = s;
             $('#project-title').val(decodeHtml(s[0].name));
             $('#ownUserName').text(s[0].username);
             $('#projectSum').val(decodeHtml(s[0].summary));
@@ -46,25 +63,9 @@ function loadProjectDetails(project_id) {
     });
 };
 
-function delProject() {
-    var project_id = $('#project-title').attr('projectid');
-    $.ajax({
-        type: "POST",
-        url: "ajax/ajaxquery.php",
-        data: {
-            p: "removeProject",
-            'id': project_id
-        },
-        async: true,
-        success: function (s) {
-            window.location.replace("index.php?np=2");
 
-        },
-        error: function (errorThrown) {
-            alert("Error: " + errorThrown);
-        }
-    });
-}
+
+
 
 function updateSideBarProPipe(project_id, project_pipeline_id, project_pipeline_name, type) {
     if (type === 'add') {
@@ -140,7 +141,6 @@ $(document).ready(function () {
     allAvailablePipelines = getValues({ p: "getSavedPipelines" });
 
     function getPipeRevDropDown(pipeRowData){
-        console.log("getPipeRevDropDown")
         var dropdown = '<select class="btn-default pipeRevChange" prev="-1" >';
         var pipeline_gid = pipeRowData.pipeline_gid;
         var rev_id = pipeRowData.rev_id;
@@ -253,9 +253,17 @@ $(document).ready(function () {
                         var dropdown= $($(allRowDom[x]).children()[2]).children();
                         var $pipeline_id = dropdown.val()
                         if ($pipeline_id){
+                            var projData = $projDetScope.getAjaxData("getProjects", {p:"getProjects", "id":project_id});
+                            if (projData[0]){
+                                if (projData[0].perms && projData[0].group_id){
+                                    data.push({ name: "perms", value: projData[0].perms });
+                                    data.push({ name: "group_id", value: projData[0].group_id });
+                                }
+                            }
                             data.push({ name: "name", value: run_name });
                             data.push({ name: "project_id", value: project_id });
                             data.push({ name: "pipeline_id", value: $pipeline_id });
+                            console.log(data)
                             data.push({ name: "p", value: "saveProjectPipeline" });
                             var proPipeGet = getValues(data);
                             //add new row into the table
@@ -299,28 +307,13 @@ $(document).ready(function () {
         }
     });
 
-    $('#runtable').on('click', '#projectrunremove', function (e) {
-        e.preventDefault();
+    $("#runtable").on('click', '#projectrunremove', function (event) {
         var clickedRow = $(this).closest('tr');
-        $('#confirmModal').removeData( "buttonID" );
-        $('#confirmModal').removeData( "clickedRow" );
-        $('#confirmModal').data("buttonID", "projectrunremove");
-        $('#confirmModal').data("clickedRow", clickedRow);
-        $('#confirmModal').modal('show');
-    });
-
-
-    $('#confirmModal').on('show.bs.modal', function (e) {
-        var buttonID = $('#confirmModal').data("buttonID");
-        if (buttonID === 'projectrunremove') {
-            $('#confirmModalText').html('Are you sure you want to delete this run?');
-        } 
-    });
-    $('#confirmModal').on('click', '#deleteBtn', function (e) {
-        e.preventDefault();
-        var buttonID = $('#confirmModal').data("buttonID");
-        if (buttonID === 'projectrunremove'){
-            var clickedRow = $('#confirmModal').data("clickedRow");
+        var rowData = runsTable.row(clickedRow).data();
+        var text = 'Are you sure you want to delete this run: "'+rowData.name+'" ?';
+        var savedData = clickedRow;
+        var execFunc = function(clickedRow){
+            var runsTable = $('#runtable').DataTable();
             var rowData = runsTable.row(clickedRow).data();
             $.ajax({
                 type: "POST",
@@ -331,8 +324,51 @@ $(document).ready(function () {
                 },
                 async: true,
                 success: function (s) {
-                    runsTable.row(clickedRow).remove().draw();
+                    runsTable.ajax.reload(null, false);
                     updateSideBarProPipe("", rowData.id, "", 'remove');
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
+        showConfirmDeleteModal(text, savedData, execFunc)
+    });
+
+    $(document).on('click', '.deleteProject', function (event) {
+        var project_id = $('#project-title').attr('projectid');
+        var project_name = $('#project-title').val();
+        var text = 'Are you sure you want to delete this project: "'+project_name+'" ?';
+        var proPipeGet = getValues({
+            "project_id": project_id,
+            "p": "getProjectPipelines"
+        });
+        if (proPipeGet.length){
+            text += "</br></br>Following runs will be deleted as well:</br>";
+            for (var i = 0; i < proPipeGet.length; i++) {
+                text += "- "+ proPipeGet[i].pp_name + "</br>";
+            }
+        }
+        var savedData = project_id;
+        var execFunc = function(project_id){
+            var project_name = $('#project-title').val();
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {
+                    p: "removeProject",
+                    'id': project_id,
+                    'name': project_name
+                },
+                async: true,
+                success: function (s) {
+                    if (s){
+                        if ($.isEmptyObject(s)){
+                            window.location.replace("index.php?np=2");
+                        } else {
+                            showInfoModal("#infoMod", "#infoModText", s)
+                        }
+                    }
 
                 },
                 error: function (errorThrown) {
@@ -340,6 +376,7 @@ $(document).ready(function () {
                 }
             });
         }
+        showConfirmDeleteModal(text, savedData, execFunc)
     });
 
 

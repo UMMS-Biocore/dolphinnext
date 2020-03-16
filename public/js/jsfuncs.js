@@ -82,6 +82,12 @@ function filterObjVal(obj, filter) {
 }
 
 
+//filter array of object by key
+//var found_names = $.grep(names, function(v) {
+//    return v.name === "Joe" && v.age < 30;
+//});
+
+
 //sort array of object by key
 function sortByKey(array, key) {
     return array.sort(function (a, b) {
@@ -851,15 +857,22 @@ $(document).ready(function () {
     //--------- permission control for process/pipeline/run starts-------
     $(function () {
         var previousOpt;
-        var checkPermissionUpdt = function (id,perms,group_id,format) {
+        var checkPermissionUpdtFunc = function (obj,perms,group_id,format) {
             var warnUser = false;
             var infoText = '';
-            if (format == "pipeline" || format == "run" ){
-                var checkPermissionUpdt = getValues({ p: "checkPermUpdtPipeline", "pipeline_id": id, perms:perms,  group_id:group_id}); 
+            var pipeline_id = obj.pipeline_id;
+            var process_id = obj.process_id;
+            var project_id = obj.project_id;
+            console.log(obj)
+            var checkPermissionUpdt;
+            if (format == "pipeline"){
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtPipeline", "pipeline_id": pipeline_id, perms:perms,  group_id:group_id}); 
             } else if (format == "process"){
-                var checkPermissionUpdt = getValues({ p: "checkPermUpdtProcess", "process_id": id, perms:perms,  group_id:group_id}); 
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtProcess", "process_id": process_id, perms:perms,  group_id:group_id}); 
+            } else if (format == "run"){
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtRun",  pipeline_id: pipeline_id,  project_id: project_id,  perms:perms,   group_id:group_id}); 
             }
-            console.log(checkPermissionUpdt);
+            console.log(checkPermissionUpdt)
             var warnAr = $.map(checkPermissionUpdt, function(value, index) {
                 return [value];
             });
@@ -869,11 +882,16 @@ $(document).ready(function () {
                 if (format == "pipeline" || format == "process" ){
                     infoText += 'It is not allowed to change permission/group of current revision because of the following reason(s): </br></br>'
                 } else if (format == "run"){
-                    infoText += "Permission of the pipeline needs to be updated in order to share this run. However, it couldn't be changed because of the following reason(s): </br></br>"
+                    infoText += "Permission of the project/pipeline needs to be updated in order to change permission/group of the run. However, it couldn't be done because of the following reason(s): </br></br>"
                 } 
                 $.each(warnAr, function (element) {
                     infoText += warnAr[element]+"</br>";
                 });
+                if (numOfErr == 1 && warnAr[0]){
+                    if (warnAr[0].match(/project:/i)){
+                        infoText += "</br>*You might consider moving your run into another project to change its permission/group."
+                    }
+                }
             }
             return [warnUser, infoText];
         }
@@ -882,6 +900,8 @@ $(document).ready(function () {
             previousOpt = $(this).children("option:selected");
         }).on('change', '.permscheck', function (event) {
             var dropdownID = this.id;
+            var idObj = {};
+            console.log(dropdownID)
             if (dropdownID == "permsPipe" || dropdownID == "groupSelPipe"){
                 var selGroup = $("#groupSelPipe").val();
                 var selPerm = $("#permsPipe").val();
@@ -889,8 +909,10 @@ $(document).ready(function () {
                 if (pipeline_id) {
                     var warnUser = false;
                     var infoText = '';
+                    idObj.pipeline_id = pipeline_id;
+                    var objData = $.extend(true, {}, idObj);
                     //check if pipeline permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdt(pipeline_id,selPerm,selGroup, "pipeline");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "pipeline");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
@@ -904,11 +926,17 @@ $(document).ready(function () {
                 var selGroup = $("#groupSelRun").val();
                 var selPerm = $("#permsRun").val();
                 var pipeline_id = $('#pipeline-title').attr('pipeline_id');
-                if (pipeline_id){
+                var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+                var project_id = pipeData[0].project_id;
+                if (pipeline_id && project_id){
                     var warnUser = false;
                     var infoText = '';
+                    idObj.pipeline_id = pipeline_id
+                    idObj.project_id = project_id
+                    var objData = $.extend(true, {}, idObj);
                     //check if pipeline permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdt(pipeline_id,selPerm,selGroup, "run");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "run");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
@@ -922,8 +950,10 @@ $(document).ready(function () {
                     var warnUser = false;
                     var infoText = '';
                     var numOfRuns = '';
+                    idObj.process_id = process_id
+                    var objData = $.extend(true, {}, idObj);
                     //check if process permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdt(process_id,selPerm,selGroup, "process");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "process");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
