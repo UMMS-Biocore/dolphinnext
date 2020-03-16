@@ -1644,6 +1644,9 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                         def_publishdir = profileData[0].def_publishdir + "/work"+project_pipeline_id ; 
                         $("#publish_dir").val(def_publishdir);
                         updateCheckBox('#publish_dir_check', "true");
+                    } else {
+                        $("#publish_dir").val(def_publishdir);
+                        updateCheckBox('#publish_dir_check', "false");
                     }
                     if (profileData[0].def_workdir){
                         def_workdir = profileData[0].def_workdir + "/work"+project_pipeline_id;
@@ -3850,6 +3853,11 @@ function updateCheckBox(check_id, status) {
             $(check_id).trigger("click");
             $(check_id).prop('checked', true);
         }
+    } else if ((check_id === '#publish_dir_check') && status === "false"){
+        if ($(check_id).is(":checked") === true) {
+            $(check_id).trigger("click");
+            $(check_id).prop('checked', false);
+        }  
     }
     if (status === "true") {
         $(check_id).prop('checked', true);
@@ -6306,9 +6314,6 @@ function validateMoveCopyRun(new_project_id){
     var target_group_id = $("#groupSelRun").val();
     var target_perms = $("#permsRun").val();
     var target_project_data = getValues({ p: "getProjects", id:new_project_id});
-    console.log("target_group_id", target_group_id)
-    console.log("target_perms", target_perms)
-    console.log("target_project_data", target_project_data)
     //if owner of the project is not the user, then change its target_group_id and target_perms
     if (target_project_data[0]){
         if (!parseInt(target_project_data[0].own) && target_project_data[0].perms && target_project_data[0].group_id){
@@ -6316,8 +6321,6 @@ function validateMoveCopyRun(new_project_id){
             target_perms = target_project_data[0].perms;
         } 
     }
-    console.log("target_group_id", target_group_id)
-    console.log("target_perms", target_perms)
     var checkPermissionUpdt = getValues({ p: "checkPermUpdtRun",  pipeline_id: pipeline_id,  project_id: new_project_id,  perms:target_perms,   group_id:target_group_id}); 
     var warnAr = $.map(checkPermissionUpdt, function(value, index) {
         return [value];

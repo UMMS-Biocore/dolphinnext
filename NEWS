@@ -1,5 +1,15 @@
-06.03.2020 Version 1.1.9
-Pipeline tab filled with public pipelines.
+16.03.2020 Version 1.1.9
+Public pipelines are listed in the pipeline page.
+Shared and user projects/runs are separated with separated tables in pipeline/project/run page.
+Users allowed to add run into shared projects.
+Additional warnings added when project is attempted to delete.
+shared and user projects/runs are separated in the left sidebar.
+permission update algorithm for shared project is updated.
+Pipeline revision is prompted when user wants to copy a run.
+Toast notifications added into run page to show when page is saved.
+Remove value of publish directory when it is not defined in run environment.
+Change project button added to run page (move run).
+Keep run_description folder from the last attempt of the run when run restarted.
 
 05.03.2020 Version 1.1.8
 Run report template updated. 

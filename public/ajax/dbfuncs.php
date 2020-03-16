@@ -1336,11 +1336,33 @@ class dbfuncs {
         $this -> createDirFile ("{$this->run_path}/$uuid/pubweb/_Description", "README.md", 'w', "#### **Run Description**\n\nYou can use this space for adding notes about your run such as its aims, experimental context, and any other ideas that you’d like to share with your group members. We support <a style=\"color:#1479cc;\" href=\"https://guides.github.com/features/mastering-markdown/\" target=\"_blank\">Markdown</a> for styling and formatting your notes.\n\nTo start editing this text, click **Edit Markdown** <i style=\"font-size: 14px;\" class=\"fa fa-pencil-square-o\"></i> icon on the right.\n\nYou can also upload additional files such as images, PDFs, Excel docs, etc. Please click the **Add File** <i style=\"font-size: 14px;\" class=\"fa fa-plus\"></i> icon on the left to upload your files.\n\n</br>\nHere are some examples for markdown format:\n\na) Lists\n\n* Star used for unordered list.\n* if you have sub points, put tab before the star\n\t* Like this\n\n1. You can user numbers for ordered list\n2. Like this\n\nb) Images\n\n![rnaseq](https://dolphinnext.umassmed.edu/public/images/stranded_rnaseq.png)\n\nc) Code Blocks\n\n```\nplot(gene)\n```\n\nd) Tables\n\nHeader 1 | Header 2\n-------- | --------\nCell 1   | Cell 2\nCell 3   | Cell 4\n");
     }
 
+    function createCopyReadmeMD($attempt,$uuid,$project_pipeline_id){
+        settype($attempt, 'integer');
+        $succ = 0;
+        if ($attempt > 1){
+            $run_log_data = $this -> getRunLog($project_pipeline_id);
+            $run_logs = json_decode($run_log_data);
+            $log_count = count($run_logs);
+            if ($log_count > 1){
+                $prev_uuid = $run_logs[$log_count-2]->{'run_log_uuid'};
+                $prevDir = "{$this->run_path}/$prev_uuid/pubweb/_Description";
+                $targetDir = "{$this->run_path}/$uuid/pubweb/_Description";
+                if (file_exists($prevDir)){
+                    $this->recurse_copy($prevDir, $targetDir);
+                    $succ = 1;
+                }   
+            }
+        } 
+        if (empty($succ)){
+            $this->createReadmeMD($uuid);
+        }
+    }
+
     function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID){
         //create files and folders
         $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
         //create Run Description
-        $this -> createReadmeMD($uuid);
+        $this -> createCopyReadmeMD($attempt,$uuid,$project_pipeline_id);
         //separate nextflow config (by using @config tag).
         $this -> createMultiConfig ("{$this->run_path}/$uuid/run", $mainConfigText);
         //create clean serverlog.txt 

@@ -28,7 +28,7 @@ class sidemenufuncs {
     }
 
     function getSideMenuAllLiBlocks($parentData, $menuhtml, $db, $ownerID){
-        foreach ($parentData as $parentitem):
+        foreach (array_reverse($parentData) as $parentitem):
         $orgName = $parentitem->{'name'};
         $showName = $orgName;
         $tooltip = "";
