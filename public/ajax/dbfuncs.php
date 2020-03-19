@@ -4587,6 +4587,8 @@ class dbfuncs {
     }
 
 
+    //$type.match(/greaterOrEqual/) only execute when $perms>=$curr_perms
+    //$type.match(/dry-run/) prevents update
     //$type.match(/strict/) prevents skipping in case update is needed
     function permUpdtModule($listPermsDenied, $type, $table, $id, $curr_group_id, $curr_perms, $group_id, $perms, $curr_ownerID, $ownerID){
         // check if current value of the group and perm are same as expected values
@@ -4596,9 +4598,9 @@ class dbfuncs {
             $ownCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
             list($permCheck,$warnName) = $this->checkUserPermission($table, $id, $ownerID, "w");
             list($checkUsed,$warn) = $this->checkUsed($table, $warnName, $id, $ownerID);
-            //error_log("permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
-            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms) && !empty($ownCheck)){
-                if ($type != "dry-run" && $type != "dry-run-strict"){
+            //error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
+            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms) && !empty($ownCheck) && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms>=$curr_perms)) ){
+                if (!preg_match("/dry-run/i", $type)){
                     if ($table == "biocorepipe_save"){
                         $this->updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID);
                     } else if ($table == "process"){
@@ -4612,7 +4614,7 @@ class dbfuncs {
             } else {
                 if (!empty($warn)){
                     //validateUpdtNeed: allows skipping in case update not needed
-                    if ($type != "strict" && $type != "dry-run-strict"){
+                    if (!preg_match("/strict/i", $type)){
                         $validateUpdtNeed = $this->validateUpdtNeed($curr_group_id, $curr_perms, $group_id, $perms);
                         if (!empty($validateUpdtNeed)){
                             $listPermsDenied[] = $warn;
