@@ -1,5 +1,8 @@
+20.03.2020 Version 1.1.11
+Parameters of the copied run will be refreshed, only if pipeline revision has changed.
+
 19.03.2020 Version 1.1.10
-New option (greaterOrEqual) added to permission update algorithm for run page.
+A new option (greaterOrEqual) added to the permission update algorithm for the run page.
 
 16.03.2020 Version 1.1.9
 Public pipelines are listed in the pipeline page.

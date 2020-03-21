@@ -139,7 +139,7 @@ function combineLinuxCmd(cmdAr){
 
 function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
-    $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /></div>');
+    $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon" style=" position: absolute; top: 0; right: 0; bottom: 0; left: 0;" src="css/loader.gif" alt="Loading..." /></div>');
 }
 function showLoadingDivText(parentId, text) {
     if ($("#loading-badge-" + parentId).length){

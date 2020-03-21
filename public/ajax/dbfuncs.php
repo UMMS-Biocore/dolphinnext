@@ -475,7 +475,15 @@ class dbfuncs {
     }
 
     //get nextflow input parameters
-    function getMainRunInputs ($project_pipeline_id, $dolphin_path_real, $ownerID ){
+    function getMainRunInputs ($project_pipeline_id, $proPipeAll, $ownerID ){
+        // get outputdir
+        list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
+        if ($profileType == "google" && !empty($dolphin_publish_real)){
+            $dolphin_path_real_coll = $dolphin_publish_real;
+        } else {
+            $dolphin_path_real_coll = $dolphin_path_real;
+        }
+        
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $next_inputs="";
         if (!empty($allinputs)){
@@ -484,7 +492,7 @@ class dbfuncs {
             $inputName = $inputitem->{'name'};
             $collection_id = $inputitem->{'collection_id'};
             if (!empty($collection_id)){
-                $inputsPath = "$dolphin_path_real/inputs/$collection_id";
+                $inputsPath = "$dolphin_path_real_coll/inputs/$collection_id";
                 $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
                 $file_type = $allfiles[0]->{'file_type'};
                 $collection_type = $allfiles[0]->{'collection_type'};
@@ -493,6 +501,10 @@ class dbfuncs {
                 } else if ($collection_type == "pair"){
                     $inputName = "$inputsPath/*.{R1,R2}.$file_type";
                 }
+            }
+            //if profile variable not defined in the profile then use run_work directory (eg. ${params.DOWNDIR}) 
+            if (preg_match('/\$\{.*\}/U',$inputName)){
+                $inputName = preg_replace('/\$\{.*\}/U', "$dolphin_path_real/downloads", $inputName);
             }
             $next_inputs.="  ".$inputitem->{'given_name'}." = '".$inputName."'\n";
             endforeach;
@@ -941,14 +953,8 @@ class dbfuncs {
         $containerRunOpt = $this->getContainerRunOpt($proPipeAll, $profileType, $profileId, "main", $ownerID);
 
         $configText = "// Process Config:\n\n{$containerConfig}{$containerRunOpt}{$configText}";
-        // get outputdir
-        list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
-        $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
-        if ($profileType == "google" && !empty($dolphin_publish_real)){
-            $dolphin_path_real = $dolphin_publish_real;
-        }
-
         //get nextflow.config from pipeline.
+        $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
         $pipe = $this->loadPipeline($pipeline_id,$ownerID);
         $pipe_obj = json_decode($pipe,true);
         $script_pipe_configRaw = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
@@ -961,7 +967,7 @@ class dbfuncs {
         $configText .= "$variable\n";
         $configText .= "$script_pipe_config\n";
         //get main run input parameters
-        $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $dolphin_path_real, $ownerID);
+        $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $proPipeAll, $ownerID);
         $configText .= "\n// Run Parameters:\n\n".$mainRunParams;
         //get main run local variable parameters:
         $configText = $this->getProcessParams($proVarObj, $configText);
@@ -2632,7 +2638,12 @@ class dbfuncs {
         $sql = "UPDATE profile_local SET name='$name', executor='$executor', next_path='$next_path', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu',  last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
-
+    function updateProfileVariable($id, $table, $variable, $ownerID){
+        $sql = "UPDATE profile_$table SET variable='$variable', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    
+    
     function insertProfileCluster($name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID) {
         $sql = "INSERT INTO profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, variable, group_id, auto_workdir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$username', '$hostname', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$next_clu_opt','$job_clu_opt', '$public', '$variable', '$group_id', '$auto_workdir', '$ownerID', '$perms', now(), now(), '$ownerID')";
         return self::insTable($sql);
@@ -3894,6 +3905,11 @@ class dbfuncs {
                   VALUES ('$name', '$project_id', '$pipeline_id', '$summary', '$output_dir', '$profile', '$interdel', '$cmd', '$exec_each', '$exec_all', '$exec_all_settings', '$exec_each_settings', '$docker_check', '$docker_img', '$singu_check', '$singu_save', '$singu_img', '$exec_next_settings', '$docker_opt', '$singu_opt', '$amazon_cre_id', '$google_cre_id', '$publish_dir','$publish_dir_check', '$withReport', '$withTrace', '$withTimeline', '$withDag', '$process_opt', '$onload', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id')";
         return self::insTable($sql);
     }
+    function updateProjectPipelineOnload($id, $onload,$ownerID){
+        $sql = "UPDATE project_pipeline SET onload='$onload', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    
     function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID) {
         $sql = "UPDATE project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload' WHERE id = '$id'";
         return self::runSQL($sql);

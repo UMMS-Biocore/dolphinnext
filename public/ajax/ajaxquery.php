@@ -812,7 +812,6 @@ else if ($p=="generateKeys")
 {
     $data = $db->generateKeys($ownerID);
 }
-
 else if ($p=="getProfileVariables"){
     $proType = isset($_REQUEST['proType']) ? $_REQUEST['proType'] : "";
     if (!empty($id) && !empty($proType)) {
@@ -854,7 +853,31 @@ else if ($p=="getProfileVariables"){
         }
         $data= json_encode($new_obj);  
     }
-
+}
+else if ($p=="appendProfileVariables"){
+    $data = json_encode("");
+    $new_variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
+    $proType = $_REQUEST['proType'];
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    if (!empty($id) && !empty($proType)) {
+        if ($proType == "cluster"){
+            $profdata = $db->getProfileClusterbyID($id, $ownerID);
+        } else if ($proType == "amazon" || $proType == "google"){
+            $profdata = $db->getProfileCloudbyID($id, $proType, $ownerID);
+        }
+    } 
+    $checkProData = json_decode($profdata,true);
+    if (isset($checkProData[0])){
+        $old_variable = $checkProData[0]["variable"];
+        if (empty($old_variable)){
+            $final_variable = $new_variable;
+        } else {
+            $final_variable = $old_variable."\n".$new_variable;
+        }
+        $db->updateProfileVariable($id, $proType, $final_variable, $ownerID);
+        $onload = "refreshEnv";
+        $data = $db->updateProjectPipelineOnload($project_pipeline_id, $onload, $ownerID);
+    }
 }
 else if ($p=="getProfiles")
 {

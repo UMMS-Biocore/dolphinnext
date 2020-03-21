@@ -4302,40 +4302,32 @@ function addMissingVar(defName){
 
 function checkMissingVar(){
     window["undefinedVarObj"] = {};
-    var systemInputAr = $('#inputsTable > tbody').find('td[given_name]').filter(function () {
-        return systemInputs.indexOf($(this).attr('given_name')) > -1
-    });
-    //get all system input paths
-    for (var i = 0; i < systemInputAr.length; i++) {
-        var inputSpan = $(systemInputAr[i]).find("span[id*='filePath']");
-        if (inputSpan && inputSpan[0]) {
-            var inputPath = $(inputSpan[0]).text();
-            addMissingVar(inputPath)
-        }
-    }
-
-    if (!$.isEmptyObject(window["undefinedVarObj"])){
-        var egText = ""
-        var undefinedVarAr = []
-        var warnText = "Undefined variables found in your system inputs: ";
-        var icon ='<button type="button" class="btn" data-backdrop="false" onclick="refreshEnv()" style="background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Refresh Environments"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>';
-        $.each(window["undefinedVarObj"], function (el) {
-            undefinedVarAr.push(el);
-            egText += el + ' = "/yourpath"</br>'
+    if (projectpipelineOwn === "1") {
+        var systemInputAr = $('#inputsTable > tbody').find('td[given_name]').filter(function () {
+            return systemInputs.indexOf($(this).attr('given_name')) > -1
         });
-        warnText += undefinedVarAr.join(", ") + ". "
-        warnText += 'Please define these variables inside <a href="index.php?np=4"><b>Profile Variables</b> </a> section of your run environment. e.g.</br>'
-        warnText += egText
-        warnText += 'Then please reload this page and click <b>Refresh Environments</b> button '+icon+' to autofill system inputs.'
-        if (!document.getElementById("undefinedVar")){
-            var warningPanel = '<div id="undefinedVar" class="panel panel-danger" style="border:2px solid #E08D08; background-color:#e08d080f;"><div class="panel-body"><span id="undefText">'+warnText+'</span></div></div>'
-            $("#warningSection").append(warningPanel)
-        } else {
-            $("#undefText").html(warnText)
-
+        //get all system input paths
+        for (var i = 0; i < systemInputAr.length; i++) {
+            var inputSpan = $(systemInputAr[i]).find("span[id*='filePath']");
+            if (inputSpan && inputSpan[0]) {
+                var inputPath = $(inputSpan[0]).text();
+                addMissingVar(inputPath)
+            }
         }
-    } else {
-        $("#warningSection> #undefinedVar").remove()
+
+        if (!$.isEmptyObject(window["undefinedVarObj"])){
+            var egText = ""
+            var undefinedVarAr = []
+            var warnText = 'Please choose a directory to save the downloaded files. <button type="button" class="btn btn-danger btn-sm" id="defVarRunEnv" data-toggle="modal" data-target="#profVarRunEnvModal">Enter Directory</button>'
+            if (!document.getElementById("undefinedVar")){
+                var warningPanel = '<div id="undefinedVar" class="panel panel-danger" style="border:2px solid #E08D08; background-color:#e08d080f;"><div class="panel-body"><span id="undefText">'+warnText+'</span></div></div>'
+                $("#warningSection").append(warningPanel);
+            } else {
+                $("#undefText").html(warnText)
+            }
+        } else {
+            $("#warningSection> #undefinedVar").remove()
+        }
     }
 }
 
@@ -5682,7 +5674,9 @@ function saveRun() {
             run_name = run_name + '-copy'
             if (confirmNewRev) {
                 newpipelineID = $('#pipelineRevs').val();
-                onload = "refreshEnv";
+                if (newpipelineID != pipeline_id){
+                    onload = "refreshEnv";
+                }
             }
         } else {
             confirmNewRev = false; 
@@ -5843,9 +5837,8 @@ function checkNewRevision() {
     return askNewRev;
 }
 
-
-function refreshProjectDatatable(){
-    console.log("refreshProjectDatatable")
+//type =="selectproject" or "default"
+function refreshProjectDatatable(type){
     if ( ! $.fn.DataTable.isDataTable( '#projecttable' ) ) {
         var projectTable = $('#projecttable').DataTable({
             "ajax": {
@@ -5908,6 +5901,20 @@ function refreshProjectDatatable(){
     }
     projectTable.column(0).checkboxes.deselect();
     sharedProjectTable.column(0).checkboxes.deselect();
+    // choose existing project
+    if (type == "selectproject"){
+        //        projectTable.rows( function ( idx, data, node ){
+        //            if (data.id == project_id){
+        //                projectTable.row(idx).select();
+        //            }
+        //        });
+        //        sharedProjectTable.rows( function ( idx, data, node ){
+        //            if (data.id == project_id){
+        //                $('#sharedProjectTable').DataTable().row(idx).select();
+        //            }
+        //        });
+    }
+
 }
 
 function getTargetProject(){
@@ -5927,7 +5934,6 @@ function getTargetProject(){
 }
 
 function refreshPipeRevisions(id, revData){
-    console.log(revData)
     $(id).empty();
     for (var i = revData.length; i--;) {
         var param = revData[i];
@@ -5944,10 +5950,10 @@ function refreshPipeRevisions(id, revData){
 
 function duplicateProPipe(type) {
     $('#confirmDuplicate a[href="#userProjectTab"]').trigger('click');
-    refreshProjectDatatable();
     dupliProPipe = false;
     confirmNewRev = false;
     if (type == "copy"){
+        refreshProjectDatatable("selectproject");
         var askNewRev = checkNewRevision();
         $('#moveRunBut').css("display","none");
         $('#copyRunBut').css("display","inline-block");
@@ -5961,6 +5967,7 @@ function duplicateProPipe(type) {
         $("#confirmDuplicateTitle").text('Copy Run');
         $('#confirmDuplicate').modal("show");  
     } else if (type == "move" || type == "changeproject"){
+        refreshProjectDatatable("default");
         saveRun();
         $('#copyRunBut').css("display","none");
         $('#moveRunBut').css("display","inline-block");
@@ -9045,7 +9052,7 @@ $(document).ready(function () {
             data: {name:projectName, summary:"", p:"saveProject"},
             async: true,
             success: function (s) {
-                refreshProjectDatatable();
+                refreshProjectDatatable("default");
                 $('#projectmodal').modal('hide');
             },
             error: function (errorThrown) {
@@ -11135,10 +11142,92 @@ $(document).ready(function () {
     });
 
 
+    $('#profVarRunEnvModal').on('show.bs.modal', function () {
+        if (window["undefinedVarObj"]){
+            var downdirCheck = false;
+            var htmlBlock = "";
+            $.each(window["undefinedVarObj"], function (el) {
+                if (el == "params.DOWNDIR" && $(window.undefinedVarObj).length == 1){
+                    downdirCheck = true;
+                    htmlBlock = '<div class="form-group"><label class="col-sm-3 control-label">Download Path</label><div class="col-sm-9"><input type="text" class="form-control" placeholder="/share/dolphinnext/data" name="'+el+'"></div></div>';
+                } else {
+                    htmlBlock += '<div class="form-group"><label class="col-sm-3 control-label">'+el+'</label><div class="col-sm-9"><input type="text" placeholder="/share/dolphinnext/data"  class="form-control" name="'+el+'"></div></div>';
+                }
+            });
+            $("#profVarRunEnvBlock").empty();
+            $("#profVarRunEnvBlock").append(htmlBlock);
+            if (downdirCheck){
+                $("#profVarRunEnvModalText").html('Please define a download path to keep reusable pipeline files such as genome indexes. ') 
+            } else {
+                $("#profVarRunEnvModalText").html('Please define download paths to keep reusable pipeline files such as genome indexes. </br></br> <span style="padding-left:20px;">e.g. </span><code>  /share/dolphinnext/data</code>') 
+            }
+            $("#profVarRunEnvModalText2").html(`
 
+<a style="color:#1479cc; cursor:pointer; text-decoration:underline;" data-toggle="collapse" data-target="#profVarRunEnvModalText3"><i class="glyphicon glyphicon-info-sign"></i> Need Help?</a>
+<div id="profVarRunEnvModalText3" class="collapse">
+<p></br>
 
+<b>Info-1:</b> You can always edit this parameter in <b>Profile Variables</b> section: </br>
 
+<span class="badge" style="margin-top:10px; margin-left:25px;"> Profile -> Run Environments -> Profile Variables</span></br></br>
 
+<b>Info-2:</b> If you choose to not enter download path, your <b>Work Directory</b> will be used as default. However, this approach is not recommended and will cause unnecessary download for each run. We suggest to define another path which will allow to reuse the downloaded files. </br></br>
+
+<b>Use Case-1:</b> If you don't have shared file system with other users, you can set any path that you have permission to write.</br></br>
+
+<b>Use Case-2:</b> If DolphinNext already been used in your platform and your admin already defined such path, please enter that location.</br></br>
+
+<b>Use Case-3:</b> If you're the admin of your platform, then please set a path that you have permission to write and other members have the permission to read.</p>
+</div>
+
+`);
+        }
+    });
+
+    $('#profVarRunEnvModal').on('click', '#profVarRunEnvSave', function () {
+        var formValues = $('#profVarRunEnvModal').find('input');
+        var requiredFields = [];
+        var formObj = {};
+        var stop = "";
+        var profVar = "";
+        [formObj, stop] = createFormObj(formValues, requiredFields)
+        $.each(formObj, function (el) {
+            if (formObj[el]){
+                profVar += el + " = "+ '"'+formObj[el] +'"\n';
+            }
+        });
+        console.log(profVar)
+        profVar = $.trim(profVar);
+        console.log(profVar)
+        
+        if (profVar){
+            profVar = encodeURIComponent(profVar);
+            $.ajax({
+                url: "ajax/ajaxquery.php",
+                data: {p:"appendProfileVariables", 
+                       variable:profVar,
+                       proType:proTypeWindow,
+                       id:proIdWindow,
+                       project_pipeline_id: project_pipeline_id},
+                cache: false,
+                type: "POST",
+                success: function (data) {
+                    if (!data){
+                        toastr.error("Error occured.")
+                    } else {
+                        $('#profVarRunEnvModal').modal("hide");
+                        setTimeout(function () { window.location.reload(false);  }, 10);
+                    }
+                },
+                error: function (jqXHR, exception) {
+                    toastr.error("Error occured.")
+                }
+            });
+        } else {
+            showInfoModal("#infoModal", "#infoModalText", "Please enter a download path.")
+        }
+
+    });
 
 
 
