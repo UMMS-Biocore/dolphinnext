@@ -9256,11 +9256,11 @@ $(document).ready(function () {
     });
 
     $.getScript("js/plugins/markdownEditor.js", function() {
-        console.log("markdownEditor.js loaded");
+//        console.log("markdownEditor.js loaded");
     });
 
     $.getScript("js/plugins/rMarkEditor.js", function() {
-        console.log("rMarkEditor.js loaded");
+//        console.log("rMarkEditor.js loaded");
     });
 
 
