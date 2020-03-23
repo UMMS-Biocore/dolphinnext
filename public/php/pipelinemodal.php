@@ -788,7 +788,7 @@
                             <label> <input type="checkbox" id="checkInDesc" name="checkInDesc"> Description <span><a data-toggle="tooltip" data-placement="bottom" placeholder="Optional description" title="Please click checkbox to define description of the input which will be seen in the run page. You can use html syntax to create web-links or format the text."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         </div>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" id="inDescOpt" name="inDescOpt" disabled></input>
+                            <textarea type="text" class="form-control" id="inDescOpt" name="inDescOpt" disabled></textarea>
                         </div>
                     </div>
                     <div id="pubWebDiv" class="form-group">

@@ -3415,6 +3415,7 @@ $(document).ready(function () {
                     $(inputID).removeAttr('disabled')
                     if (inputID == "#inDescOpt"){
                         renameTextDefVal = decodeHtml(renameTextDefVal);
+                        renameTextDefVal = renameTextDefVal.replace(/<\/br>/g, "\n");
                     } 
                     $(inputID).val(renameTextDefVal)
                 }
@@ -3450,6 +3451,7 @@ $(document).ready(function () {
         if (checkValue === "true" && attr == "showSett"){
             $("#" + renameTextID).attr(attr, value)
         } else if (checkValue === "true" && attr == "inDescOpt"){
+            value = value.replace(/\n/g, "</br>")
             value = escapeHtml(value);
             $("#" + renameTextID).data(attr, value);
         } else if (checkValue === "true" && value !== "") {

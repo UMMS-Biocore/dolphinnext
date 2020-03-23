@@ -6087,6 +6087,7 @@ $(function () {
                     navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
                 }
                 navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
+                navTabDiv += '<a style="margin-left:5px;" href="#" class="btn btn-info tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true">Contact Us</a>'
                 navTabDiv += '</div>';
             }
             navTabDiv += '</div>';
@@ -10146,11 +10147,11 @@ $(document).ready(function () {
 
 <span class="badge" style="margin-top:10px; margin-left:25px;"> Profile -> Run Environments -> Profile Variables</span></br></br>
 
-<b>Info-2:</b> If you choose to not enter download path, your <b>Work Directory</b> will be used as default. However, this approach is not recommended and will cause unnecessary download for each run. We suggest to define another path which will allow to reuse the downloaded files. </br></br>
+<b>Info-2:</b> If you choose not to enter download path, your <b>Work Directory</b> will be used as default. However, this approach is not recommended and might cause unnecessary download for each run. We suggest to define a path which will allow to reuse the downloaded files. </br></br>
 
-<b>Use Case-1:</b> If you don't have shared file system with other users, you can set any path that you have permission to write.</br></br>
+<b>Use Case-1:</b> If you want to use DolphinNext by yourself and don't have any shared directory system, you can simply set any path that you have permission to write. This way, all of the pipelines will use same set of files and unnecessary downloads will be prevented. </br></br>
 
-<b>Use Case-2:</b> If DolphinNext already been used in your platform and your admin already defined such path, please enter that location.</br></br>
+<b>Use Case-2:</b> If you're using shared directory system and DolphinNext already been used in your platform, then your admin should have defined such path. Please contact with your admin to learn that location and enter that path.</br></br>
 
 <b>Use Case-3:</b> If you're the admin of your platform, then please set a path that you have permission to write and other members have the permission to read.</p>
 </div>
