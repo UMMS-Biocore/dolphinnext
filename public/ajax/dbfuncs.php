@@ -4098,10 +4098,10 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     //------- feedback ------
-    function savefeedback($email,$message,$url) {
+    function savefeedback($email,$message,$url, $ownerID) {
         $email = str_replace("'", "''", $email);
-        $sql = "INSERT INTO feedback(email, message, url, date_created) VALUES
-                      ('$email', '$message','$url', now())";
+        $sql = "INSERT INTO feedback(email, message, url, date_created, owner_id) 
+                VALUES ('$email', '$message','$url', now(), '$ownerID')";
         return self::insTable($sql);
     }
 

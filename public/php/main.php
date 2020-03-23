@@ -37,8 +37,6 @@ folder instead of downloading all of them to reduce the load. -->
         <link rel="stylesheet" href="dist/css/skins/_all-skins.min.css">
         <!-- selectize style -->
         <link rel="stylesheet" href="css/selectize.bootstrap3.css">
-        <!-- feedback modal style -->
-        <link rel="stylesheet" href="css/feedback.css">
         <!--  w3 fonts-->
         <link rel="stylesheet" type="text/css" href="css/w3.css">
         <!-- Google Font -->
@@ -65,6 +63,12 @@ folder instead of downloading all of them to reduce the load. -->
         <!-- to fix favicon.ico not found error-->
         <link rel="shortcut icon" href="#">
         <style>
+            .link-underline {
+                color:#1479cc; 
+                cursor:pointer; 
+                text-decoration:underline;
+            }
+            
             /* Ace Editor scroll problem fix */
             .ace_text-input {
                 position: absolute !important
@@ -491,8 +495,11 @@ folder instead of downloading all of them to reduce the load. -->
                                     <!--                                    <li><a href="#">One more separated link</a></li>-->
                                 </ul>
                             </li>
+                            <li>
+                                <a id="tooglehelp" class="tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true"><i class="glyphicon glyphicon-question-sign"></i></a>
+                            </li>
 
-                            <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><b style="color:#7c1842;" id="dn-version" ver="<?php echo DN_VERSION?>"> VERSION <?php echo DN_VERSION?> </b></a>
+                            <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span id="dn-version" ver="<?php echo DN_VERSION?>">v<?php echo DN_VERSION?> </span></a>
                                 <div class="dropdown-menu" style="width:650px; padding:0px;">
                                     <div class="panel panel-default" style="margin:0px;">
                                         <div class="panel-heading clearfix">
@@ -655,23 +662,37 @@ immediately after the control sidebar -->
                 <p> </p>
             </footer>
 
-            <?php print include("php/wizard.php"); ?>
-            <!--        feedback modal-->
-            <div id="feedback">
-                <div id="feedback-form" style='display:none;' class="col-xs-4 col-md-4 panel panel-default">
-                    <form method="POST" action="/feedback" class="form panel-body" role="form">
+            <aside id="controlSidebarHelp" class="control-sidebar control-sidebar-light">
+                <div>
+                    <div style="margin-top:30px; text-align:center;"><img src="data:image/png;base64,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"/> </div>
+                    <form class="form panel-body" role="form">
+                        <div style="margin-top:30px; margin-bottom:15px;"><b>Need Help?</b></div>
                         <div class="form-group">
-                            <input class="form-control" name="email" autofocus placeholder="Your e-mail" type="email" />
+                            <p>Learn from the documentation below.</p>
                         </div>
                         <div class="form-group">
-                            <textarea class="form-control" name="message" required placeholder="Please write your feedback here..." rows="5"></textarea>
+                            <ul>
+                                <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#running-pipelines" target="_blank">Running Pipelines</a></li> 
+                                <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#adding-files" target="_blank">Adding Files</a></li>
+                                <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/faq.html" target="_blank">Frequently Asked Questions</a></li>
+                            </ul>
+                            Not finding what you need? Visit our <a class="link-underline" href="https://dolphinnext.readthedocs.io" target="_blank">Reference Documentation</a></li>
                         </div>
-                        <button class="btn btn-primary pull-right" type="submit">Send</button>
+                        <div style="margin-top:30px; margin-bottom:15px;"><b>Contact our support</b></div>
+                        <div class="form-group">
+                            <textarea class="form-control" id="feedmessage" name="message" required placeholder="Describe your issue or share your ideas here..." rows="10"></textarea>
+                        </div>
+                        <button style="margin-top:15px;" class="btn btn-primary pull-right" type="button" id="sendfeedback">Send</button>
+                        <button style="margin-top:15px; margin-right:5px; " class="btn btn-default pull-right" type="button"><a href="#" data-toggle="control-sidebar" data-slide="true">Cancel</a></button>
                     </form>
                 </div>
-                <div id="feedback-tab">Feedback</div>
-            </div>
-            <!--  feedback modal ends-->
+            </aside>
+            <!-- The sidebar's background -->
+            <!-- This div must placed right after the sidebar for it to work-->
+            <div class="control-sidebar-bg"></div>
+
+            <?php print include("php/wizard.php"); ?>
+
 
             <!-- Add google Modal Starts-->
             <div id="googleModal" class="modal fade" tabindex="-1" role="dialog">

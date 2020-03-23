@@ -414,7 +414,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -506,6 +506,9 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
     if (showSett != null) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('showSett', showSett)
     }
+    if (inDescOpt != null) {
+        $("#text" + MainGNum + "-" + pObj.gNum).data('inDescOpt', inDescOpt)
+    }
     if (pubWeb) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('pubWeb', pubWeb)
     }
@@ -586,6 +589,7 @@ function addProcess(processDat, xpos, ypos) {
     var dropDown = null;
     var pubWeb = null;
     var showSett = null;
+    var inDescOpt = null;
     //var process_id = processData[index].id;
     //for input parameters:  
     if (processDat === "inputparam@inPro") {
@@ -603,7 +607,7 @@ function addProcess(processDat, xpos, ypos) {
         var init = "o"
         var pColor = "orange"
 
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, window)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, window)
         processList[("g-" + gNum)] = name
         processListNoOutput[("g-" + gNum)] = name
         gNum = gNum + 1
@@ -623,7 +627,7 @@ function addProcess(processDat, xpos, ypos) {
         var classtoparam = classtoparam || "connect_to_output input"
         var init = "i"
         var pColor = "green"
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, window)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, window)
 
         processList[("g-" + gNum)] = name
         gNum = gNum + 1
@@ -1819,6 +1823,7 @@ function rename() {
     renameTextDefVal = d3.select("#" + this.id).attr('defVal');
     renameTextDropDown = d3.select("#" + this.id).attr('dropDown');
     renameTextShowSett = d3.select("#" + this.id).attr('showSett');
+    renameTextInDesc = $("#" + this.id).data('inDescOpt');
     renameTextPubWeb = d3.select("#" + this.id).attr('pubWeb');
     body = document.body;
     bodyW = body.offsetWidth;
@@ -2125,6 +2130,7 @@ function createSaveNodes() {
         var defVal = $("#text-" + gNum).attr("defVal");
         var dropDown = $("#text-" + gNum).attr("dropDown");
         var showSett = $("#text-" + gNum).attr("showSett");
+        var inDescOpt = $("#text-" + gNum).data("inDescOpt");
         var pubWeb = $("#text-" + gNum).attr("pubWeb");
         var processModule = {};
         if (defVal) {
@@ -2135,6 +2141,9 @@ function createSaveNodes() {
         }
         if (showSett != undefined) {
             processModule["showSett"] = showSett;
+        }
+        if (inDescOpt != undefined) {
+            processModule["inDescOpt"] = inDescOpt;
         }
         if (pubWeb) {
             processModule["pubWeb"] = pubWeb;
@@ -2416,6 +2425,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var defVal = null;
     var dropDown = null;
     var showSett = null;
+    var inDescOpt = null;
     var pubWeb = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
@@ -2426,6 +2436,9 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         }
         if (processModules.showSett != undefined) {
             showSett = processModules.showSett;
+        }
+        if (processModules.inDescOpt != undefined) {
+            inDescOpt = processModules.inDescOpt;
         }
         if (processModules.pubWeb) {
             pubWeb = processModules.pubWeb;
@@ -2462,7 +2475,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.processListNoOutput[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
@@ -2496,7 +2509,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 

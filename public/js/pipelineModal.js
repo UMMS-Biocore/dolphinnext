@@ -3376,6 +3376,7 @@ $(document).ready(function () {
     // "change name" modal for input parameters: remove attr:disabled by click
     toggleCheckBox('#checkDropDown', '#dropDownOpt');
     toggleCheckBox('#checkShowSett', '#showSettOpt');
+    toggleCheckBox('#checkInDesc', '#inDescOpt');
     toggleCheckBox('#checkDefVal', '#defVal');
     toggleCheckBox('#checkPubWeb', '#pubWebOpt');
 
@@ -3412,6 +3413,9 @@ $(document).ready(function () {
                     $(inputID).multiselect('select', optAr);
                 } else {
                     $(inputID).removeAttr('disabled')
+                    if (inputID == "#inDescOpt"){
+                        renameTextDefVal = decodeHtml(renameTextDefVal);
+                    } 
                     $(inputID).val(renameTextDefVal)
                 }
                 $(checkID).attr('checked', true);
@@ -3445,10 +3449,17 @@ $(document).ready(function () {
         var checkValue = $(checkId).is(":checked").toString();
         if (checkValue === "true" && attr == "showSett"){
             $("#" + renameTextID).attr(attr, value)
+        } else if (checkValue === "true" && attr == "inDescOpt"){
+            value = escapeHtml(value);
+            $("#" + renameTextID).data(attr, value);
         } else if (checkValue === "true" && value !== "") {
             $("#" + renameTextID).attr(attr, value)
         } else {
-            $("#" + renameTextID).removeAttr(attr);
+            if (attr == "inDescOpt"){
+                $("#" + renameTextID).removeData(attr);
+            } else {
+                $("#" + renameTextID).removeAttr(attr);
+            }
         }
     }
     $('#pubWebOpt').multiselect({
@@ -3474,22 +3485,26 @@ $(document).ready(function () {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")
             $('#showSettDiv').css("display", "none")
+            $('#indescDiv').css("display", "none")
             $('#pubWebDiv').css("display", "none")
         } else if (renameTextClassType === "input") {
             $('#defValDiv').css("display", "block")
             $('#dropdownDiv').css("display", "block")
             $('#showSettDiv').css("display", "block")
+            $('#indescDiv').css("display", "block")
             $('#pubWebDiv').css("display", "none")
         } else if (renameTextClassType === "output") {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")
             $('#showSettDiv').css("display", "none")
+            $('#indescDiv').css("display", "none")
             $('#pubWebDiv').css("display", "block")
         }
 
         fillRenameModal(renameTextDefVal, "#checkDefVal", '#defVal');
         fillRenameModal(renameTextDropDown, '#checkDropDown', '#dropDownOpt');
         fillRenameModal(renameTextShowSett, '#checkShowSett', '#showSettOpt');
+        fillRenameModal(renameTextInDesc, '#checkInDesc', '#inDescOpt');
         fillRenameModal(renameTextPubWeb, '#checkPubWeb', '#pubWebOpt');
         $('#renameModaltitle').html('Change Name');
         $('#mRenName').val(renameText);
@@ -3499,6 +3514,7 @@ $(document).ready(function () {
         saveValue('#checkDropDown', '#dropDownOpt', "dropDown");
         saveValue('#checkPubWeb', '#pubWebOpt', "pubWeb");
         saveValue('#checkShowSett', '#showSettOpt', "showSett");
+        saveValue('#checkInDesc', '#inDescOpt', "inDescOpt");
         changeName();
         autosave();
         $('#renameModal').modal("hide");
@@ -3731,7 +3747,7 @@ $(document).ready(function () {
             var sharedProjectTable = $('#sharedProjectTable').DataTable();
             projectTable.ajax.reload(null, false);
             sharedProjectTable.ajax.reload(null, false);
-            
+
         }
         projectTable.column(0).checkboxes.deselect();
         sharedProjectTable.column(0).checkboxes.deselect();
@@ -3776,7 +3792,7 @@ $(document).ready(function () {
             var sharedProjectTable = $('#sharedProjectTable').DataTable();
             rows_selected = sharedProjectTable.column(0).checkboxes.selected();
             var project_data = sharedProjectTable.data();
-            
+
         } else if (activeTabLi == "userProjectLi"){
             var projectTable = $('#projecttable').DataTable();
             rows_selected = projectTable.column(0).checkboxes.selected();
