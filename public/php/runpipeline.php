@@ -28,6 +28,15 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
     #fileContent .multiselect-item.multiselect-filter>.input-group>.input-group-btn {
         width: 40px;
     }
+    
+    .indesc {
+        font-style:italic; 
+        color:darkslategray; 
+        font-weight: 300; 
+        font-size:13px;
+        display:block;
+        padding-top:5px;
+    }
 
 </style>
 
@@ -38,9 +47,9 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <input class="box-dynamic width-dynamic" type="text" projectid="<?php echo $id;?>" name="projectTitle" autocomplete="off" placeholder="Enter Run Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 300px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="run-title"><span class="width-dynamic" style="display:none"></span></input>
 
         <i style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px;">|</i>
-        <i class="fa fa-calendar-o " style="padding-top:12px; margin-left:0px; margin-right:0px;"></i> <a data-toggle="tooltip" data-placement="bottom" data-original-title="Change Project" href="#" onclick="duplicateProPipe(&#34;changeproject&#34;);return false;" >Project:</a>
+        <i class="fa fa-calendar-o " style="padding-top:12px; margin-left:0px; margin-right:0px;"></i> <a data-toggle="tooltip" data-placement="bottom" data-original-title="Change Project" href="#" onclick="duplicateProPipe(&#34;changeproject&#34;);return false;">Project:</a>
         <a href="" style="font-size: large; font-style:italic;  max-width: 500px;" data-toggle="tooltip" data-placement="bottom" data-original-title="Go to Project" id="project-title"></a>
-        
+
         <i style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px;">|</i>
 
         <i class="fa fa-spinner " style="margin-left:0px; margin-right:0px;"></i> Pipeline:
@@ -590,61 +599,61 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         <label class="col-sm-3 control-label" style="text-align: left; ">2. Choose Target Project: </label>
                     </div>
                     <div role="tabpanel">
-                    <!-- Nav tabs -->
-                    <ul class="nav nav-tabs" role="tablist">
-                        <li id="userProjectLi" class="active"><a class="nav-item" data-toggle="tab" href="#userProjectTab">My Projects</a></li>
-                        <li id="sharedProjectLi" class="nav-item"><a class="nav-item" data-toggle="tab" href="#sharedProjectTab">Shared Projects</a></li>
-                    </ul>
-                    <!-- Tab panes -->
-                    <div class="tab-content">
-                        <div role="tabpanel" class="tab-pane active" searchtab="true" id="userProjectTab">
-                            <form class="form-horizontal">
-                                <div class="form-group">
-                                    <div class="col-sm-12 pull-right">
-                                        <button style="margin-top:15px;" type="button" class="btn btn-primary btn-sm pull-right" title="Add Project" id="addproject" data-toggle="modal" data-target="#projectmodal">Create a Project</button>
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li id="userProjectLi" class="active"><a class="nav-item" data-toggle="tab" href="#userProjectTab">My Projects</a></li>
+                            <li id="sharedProjectLi" class="nav-item"><a class="nav-item" data-toggle="tab" href="#sharedProjectTab">Shared Projects</a></li>
+                        </ul>
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div role="tabpanel" class="tab-pane active" searchtab="true" id="userProjectTab">
+                                <form class="form-horizontal">
+                                    <div class="form-group">
+                                        <div class="col-sm-12 pull-right">
+                                            <button style="margin-top:15px;" type="button" class="btn btn-primary btn-sm pull-right" title="Add Project" id="addproject" data-toggle="modal" data-target="#projectmodal">Create a Project</button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div class="panel panel-default">
+                                    <div class="panel-body">
+                                        <table id="projecttable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Check</th>
+                                                    <th>Project Name</th>
+                                                    <th>Owner</th>
+                                                    <th>Modified on</th>
+                                                </tr>
+                                            </thead>
+                                        </table>
                                     </div>
                                 </div>
-                            </form>
-                            <div class="panel panel-default">
-                                <div class="panel-body">
-                                    <table id="projecttable" class="table table-striped table-bordered" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th>Check</th>
-                                                <th>Project Name</th>
-                                                <th>Owner</th>
-                                                <th>Modified on</th>
-                                            </tr>
-                                        </thead>
-                                    </table>
-                                </div>
                             </div>
-                        </div>
-                        <div role="tabpanel" class="tab-pane" searchtab="true" id="sharedProjectTab">
-                            <div class="panel panel-default">
-                                <div class="panel-body">
-                                    <table id="sharedProjectTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
-                                        <thead>
-                                            <tr>
-                                                <th>Check</th>
-                                                <th>Project Name</th>
-                                                <th>Owner</th>
-                                                <th>Modified on</th>
-                                            </tr>
-                                        </thead>
-                                    </table>
+                            <div role="tabpanel" class="tab-pane" searchtab="true" id="sharedProjectTab">
+                                <div class="panel panel-default">
+                                    <div class="panel-body">
+                                        <table id="sharedProjectTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                            <thead>
+                                                <tr>
+                                                    <th>Check</th>
+                                                    <th>Project Name</th>
+                                                    <th>Owner</th>
+                                                    <th>Modified on</th>
+                                                </tr>
+                                            </thead>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
                 </form>
-                
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary"  id="copyRunBut">Copy</button>
-                <button type="button" class="btn btn-primary"  id="moveRunBut">Move</button>
+                <button type="button" class="btn btn-primary" id="copyRunBut">Copy</button>
+                <button type="button" class="btn btn-primary" id="moveRunBut">Move</button>
             </div>
         </div>
     </div>
@@ -1293,6 +1302,44 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
     </div>
 </div>
 <!--addFileModal ends-->
+
+<!--profVarRunEnvModal Modal Starts-->
+<div id="profVarRunEnvModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Profile Variables</h4>
+            </div>
+            <div class="modal-body" id="profVarRunEnvModalBody">
+               <form class="form-horizontal">
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        <p id="profVarRunEnvModalText">Test</p>
+                    </div>
+                </div>
+                </form>
+                <form class="form-horizontal" id="profVarRunEnvBlock">
+
+                </form>
+                <form class="form-horizontal" style="margin-top:30px;">
+                    <div class="form-group" >
+                        <div class="col-sm-12">
+                            <p id="profVarRunEnvModalText2" >Test</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="profVarRunEnvSave">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--profVarRunEnvModal Modal ENDs-->
+
+
 
 <!--Info Modal Starts-->
 <div id="infoModal" class="modal fade" tabindex="-1" role="dialog">

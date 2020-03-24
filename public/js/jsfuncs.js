@@ -37,6 +37,24 @@ $(function () {
     $('[data-toggle="tooltip"]').tooltip();
 });
 
+toastr.options = {
+    "closeButton": false,
+    "debug": false,
+    "newestOnTop": false,
+    "progressBar": false,
+    "positionClass": "toast-bottom-left",
+    "preventDuplicates": true,
+    "onclick": null,
+    "showDuration": "300",
+    "hideDuration": "1000",
+    "timeOut": "2500",
+    "extendedTimeOut": "1000",
+    "showEasing": "linear",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+}
+
 //jquery clean css notation and add # sign to beginning
 function jqcss(myid) {
     return "#" + myid.replace(/(:|\.|\[|\]|,|=|@)/g, "\\$1");
@@ -139,7 +157,7 @@ function combineLinuxCmd(cmdAr){
 
 function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
-    $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /></div>');
+    $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon" style=" position: absolute; top: 0; right: 0; bottom: 0; left: 0;" src="css/loader.gif" alt="Loading..." /></div>');
 }
 function showLoadingDivText(parentId, text) {
     if ($("#loading-badge-" + parentId).length){
@@ -965,6 +983,31 @@ $(document).ready(function () {
         });
     });
     //---- permission control for process/pipeline/run ends
+
+
+    $(document).on('click', '.tooglehelp', function () {
+        $("#feedmessage").val("");
+    });
+    $("#controlSidebarHelp").on('click', '#sendfeedback', function () {
+        var message = $("#feedmessage").val();
+        var url = window.location.href;
+        if (message){
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {message: message, url:url, "p": "savefeedback"},
+                success: function () {
+                    $("#feedmessage").val("");
+                    toastr.success("Your message has been sent");
+                    $("#tooglehelp").click();
+                },
+                error:function () {
+                    toastr.error("Error occured.");
+                }
+                
+            });
+        }
+    });
 
 });
 
@@ -1829,28 +1872,7 @@ function fixCollapseMenu(collapseDiv, checkboxId) {
     });
 }
 
-$(function () {
-    $("#feedback-tab").click(function () {
-        $("#feedback-form").toggle("slide right");
-    });
 
-    $("#feedback-form form").on('submit', function (event) {
-        var $form = $(this);
-        var data = $form.serializeArray();
-        var url = window.location.href;
-        data.push({ name: "url", value: url })
-        data.push({ name: "p", value: "savefeedback" })
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: data,
-            success: function () {
-                $("#feedback-form").toggle("slide right").find("textarea").val('');
-            }
-        });
-        event.preventDefault();
-    });
-});
 
 //$("#example").multiline('this\n has\n newlines');
 $.fn.multiline = function (text) {

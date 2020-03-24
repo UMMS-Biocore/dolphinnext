@@ -1,5 +1,12 @@
+20.03.2020 Version 1.1.11
+Feedback button is replaced with the help sidebar. Messages will be sent to admin by e-mail.
+Description field added to run inputs which supports html syntax.
+Warning of "undefined download directory" is simplified. If user doesn't enter path, work directory will be used.
+Parameters of the copied run will be refreshed, only if pipeline revision has changed.
+
+
 19.03.2020 Version 1.1.10
-New option (greaterOrEqual) added to permission update algorithm for run page.
+A new option (greaterOrEqual) added to the permission update algorithm for the run page.
 
 16.03.2020 Version 1.1.9
 Public pipelines are listed in the pipeline page.

@@ -322,10 +322,33 @@ else if ($p=="getEditDelParameters"){
     $data = $db -> getEditDelParameters($ownerID);
 }
 else if ($p=="savefeedback"){
-    $email = $_REQUEST['email'];
+    $email = "";
     $message = $_REQUEST['message'];
     $url = $_REQUEST['url'];
-    $data = $db -> savefeedback($email,$message,$url);
+    $userData = json_decode($db->getUserById($ownerID));
+    if (!empty($userData)){
+        if (!empty($userData[0])){
+            $email = $userData[0]->{'email'};
+            $name = $userData[0]->{'name'};
+            $username = $userData[0]->{'username'};
+            $institute = $userData[0]->{'institute'};
+            $lab = $userData[0]->{'lab'};
+            $from = EMAIL_SENDER;
+            $from_name = "DolphinNext Team";
+            $to =  EMAIL_ADMIN;
+            $subject = "User Message";
+            $send="New message has been received by the user.<br><br><b>User Information:</b>";
+            $send.="<br>Name: ".$name;
+            $send.="<br>Username: ".$username;
+            $send.="<br>Institute: ".$institute;
+            $send.="<br>Lab: ".$lab;
+            $send.="<br>Email: ".$email;
+            $send.="<br>Page: ".$url;
+            $send.="<br><br>Message:<br> ".$message;
+            $stat = $db->sendEmail($from, $from_name, $to, $subject, $send);  
+        }
+    }
+    $data = $db -> savefeedback($email,$message,$url,$ownerID);
 }
 else if ($p=="getUpload"){
     $name = $_REQUEST['name'];
@@ -812,7 +835,6 @@ else if ($p=="generateKeys")
 {
     $data = $db->generateKeys($ownerID);
 }
-
 else if ($p=="getProfileVariables"){
     $proType = isset($_REQUEST['proType']) ? $_REQUEST['proType'] : "";
     if (!empty($id) && !empty($proType)) {
@@ -854,7 +876,31 @@ else if ($p=="getProfileVariables"){
         }
         $data= json_encode($new_obj);  
     }
-
+}
+else if ($p=="appendProfileVariables"){
+    $data = json_encode("");
+    $new_variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
+    $proType = $_REQUEST['proType'];
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    if (!empty($id) && !empty($proType)) {
+        if ($proType == "cluster"){
+            $profdata = $db->getProfileClusterbyID($id, $ownerID);
+        } else if ($proType == "amazon" || $proType == "google"){
+            $profdata = $db->getProfileCloudbyID($id, $proType, $ownerID);
+        }
+    } 
+    $checkProData = json_decode($profdata,true);
+    if (isset($checkProData[0])){
+        $old_variable = $checkProData[0]["variable"];
+        if (empty($old_variable)){
+            $final_variable = $new_variable;
+        } else {
+            $final_variable = $old_variable."\n".$new_variable;
+        }
+        $db->updateProfileVariable($id, $proType, $final_variable, $ownerID);
+        $onload = "refreshEnv";
+        $data = $db->updateProjectPipelineOnload($project_pipeline_id, $onload, $ownerID);
+    }
 }
 else if ($p=="getProfiles")
 {
