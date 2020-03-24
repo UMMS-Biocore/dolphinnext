@@ -483,7 +483,7 @@ class dbfuncs {
         } else {
             $dolphin_path_real_coll = $dolphin_path_real;
         }
-        
+
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $next_inputs="";
         if (!empty($allinputs)){
@@ -942,6 +942,10 @@ class dbfuncs {
             $configText .= "process.container = '".$imagePath."'\n";
             $configText .= "docker.enabled = true\n";
         } else if ($singu_check == "true") {
+            $configText .= "process.container = '".$imagePath."'\n";
+            $configText .= "singularity.enabled = true\n";
+        } else if ($singu_check != "true" && $docker_check != "true" && $runType == "initial"){
+            //singularity is default for initial run
             $configText .= "process.container = '".$imagePath."'\n";
             $configText .= "singularity.enabled = true\n";
         }
@@ -2642,8 +2646,8 @@ class dbfuncs {
         $sql = "UPDATE profile_$table SET variable='$variable', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    
-    
+
+
     function insertProfileCluster($name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID) {
         $sql = "INSERT INTO profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, variable, group_id, auto_workdir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$username', '$hostname', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$next_clu_opt','$job_clu_opt', '$public', '$variable', '$group_id', '$auto_workdir', '$ownerID', '$perms', now(), now(), '$ownerID')";
         return self::insTable($sql);
@@ -3909,7 +3913,7 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline SET onload='$onload', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    
+
     function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID) {
         $sql = "UPDATE project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload' WHERE id = '$id'";
         return self::runSQL($sql);

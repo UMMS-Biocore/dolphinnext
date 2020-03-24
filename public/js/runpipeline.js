@@ -4814,7 +4814,7 @@ function checkRunPid(runPid, proType, proId) {
 
 function parseMountPath(path, length) {
     if (path != null && path != "") {
-        if (path.match(/\//) && !path.match(/:/)) {
+        if (path.match("^\/") && !path.match(/:/)) {
             var allDir = path.split("/");
             if (length == 2 && allDir[1] && allDir[2]) {
                 return "/" + allDir[1] + "/" + allDir[2];

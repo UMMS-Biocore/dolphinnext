@@ -499,7 +499,7 @@ folder instead of downloading all of them to reduce the load. -->
                             <a id="tooglehelp" class="tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true"><i class="glyphicon glyphicon-question-sign"></i></a>
                         </li>
 
-                        <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span style="font-size:small;" id="dn-version" ver="<?php echo DN_VERSION?>">v<?php echo DN_VERSION?> </span></a>
+                        <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span id="dn-version" ver="<?php echo DN_VERSION?>">v<?php echo DN_VERSION?> </span></a>
                             <div class="dropdown-menu" style="width:650px; padding:0px;">
                                 <div class="panel panel-default" style="margin:0px;">
                                     <div class="panel-heading clearfix">
@@ -694,7 +694,7 @@ immediately after the control sidebar -->
         <!-- This div must placed right after the sidebar for it to work-->
         <div class="control-sidebar-bg"></div>
         <!--            Contact Us footer-->
-        <a style="position:fixed; right: 5px; bottom: 0px; border-bottom-left-radius:0px; border-bottom-right-radius:0px;" href="#" class="btn btn-default tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true"> <i class="fa fa-envelope"></i> Support</a>
+        <a style="position:fixed; right: 15px; bottom: 0px; border-bottom-left-radius:0px; border-bottom-right-radius:0px;" href="#" class="btn btn-default tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true"> <i class="fa fa-envelope"></i> Support</a>
 
         <?php print include("php/wizard.php"); ?>
 

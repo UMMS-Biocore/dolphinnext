@@ -1,7 +1,11 @@
+24.03.2020 Version 1.1.12
+Bug fixed while binding paths to containers.
+Default initial run container set to singularity when run container is not enabled.
+
 20.03.2020 Version 1.1.11
-Feedback button is replaced with the help sidebar. Messages will be sent to admin by e-mail.
-Description field added to run inputs which supports html syntax.
-Warning of "undefined download directory" is simplified. If user doesn't enter path, work directory will be used.
+The feedback button is replaced with the help sidebar. Messages will be sent to admin by e-mail.
+The description field added to run inputs that support HTML syntax.
+The warning of the "undefined download directory" is simplified. If a user doesn't enter a path, the Work Directory will be used.
 Parameters of the copied run will be refreshed, only if pipeline revision has changed.
 
 
