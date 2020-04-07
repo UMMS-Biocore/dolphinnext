@@ -257,7 +257,6 @@ window.setInterval( function() {
 
 
 
-// check the cloud profiles activity each 40 sec.
 checkCloudProfiles("timer", "amazon");
 checkCloudProfiles("timer", "google");
 
@@ -280,6 +279,7 @@ function checkCloudProfiles(timer, cloud) {
                     countActive++;
                 }
                 if (timer === "timer") {
+                    // check the cloud profiles activity each 60 sec.
                     checkCloudTimer(proData[k].id, 60000, cloud);
                 }
                 window.modalRec = {};
@@ -451,6 +451,8 @@ function checkCloudStatus(proId, cloud) {
         $('#'+cloud+'CloudListLog-'+proId).data("logData", checkCloudStatusLog.logCloudList)
     }
 
+    // update active number:
+    checkCloudProfiles("notimer", cloud);
     // set autoshutdown counter
     var proData = getValues({ p: "getProfileCloud", cloud:cloud, id:proId });
     var autoshutdown_check = proData[0].autoshutdown_check;
@@ -1004,7 +1006,7 @@ $(document).ready(function () {
                 error:function () {
                     toastr.error("Error occured.");
                 }
-                
+
             });
         }
     });

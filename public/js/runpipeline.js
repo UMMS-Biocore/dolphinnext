@@ -1286,7 +1286,7 @@ function checkConds(conds, type) {
 }
 
 function getInputVariables(button) {
-    var rowID = button.parent().parent().parent().attr("id"); //"inputTa-5"
+    var rowID = button.closest("tr").attr("id"); //"inputTa-5"
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
@@ -1437,8 +1437,9 @@ function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
         }
     } else { // if value is empty:"" then remove from project pipeline input table
         if (keepExist == false) {
+            var fillingType = "default";
             var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
-            removeSelectFile(rowID, qualifier);
+            removeSelectFile(rowID, qualifier, fillingType);
         }
     }
 }
@@ -2155,6 +2156,38 @@ function decodeGenericCond(autoFillJSON) {
     return autoFillJSON
 }
 
+function prepareInsertInput(getProPipeInputs, rowID, firGnum, paraQualifier, fillingType){
+    var filePath = getProPipeInputs[0].name; //value for val type
+    var proPipeInputID = getProPipeInputs[0].id;
+    var given_name = getProPipeInputs[0].given_name;
+    var collection_id = getProPipeInputs[0].collection_id;
+    var collection_name = getProPipeInputs[0].collection_name;
+    var collection = { collection_id: collection_id, collection_name: collection_name }
+    var url = getProPipeInputs[0].url;
+    var urlzip = getProPipeInputs[0].urlzip;
+    var checkPath = getProPipeInputs[0].checkpath;
+    insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath, fillingType);
+}
+
+function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier){
+    if (getProPipeInputs) {
+        if (getProPipeInputs.length > 0) {
+            var fillingType = "default";
+            prepareInsertInput(getProPipeInputs, rowID, firGnum, paraQualifier, fillingType);
+        }
+        if (getProPipeInputs.length > 1) {
+            for (var k = 1; k < getProPipeInputs.length; k++) {
+                var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
+            }
+        }
+    }
+    //check if run saved before
+    if (pipeData[0].date_created == pipeData[0].date_modified) {
+        //after filling, if "use default" button is exist, then click default option.
+        clickUseDefault(rowID);
+    }
+}
+
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett) {
@@ -2198,38 +2231,14 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, na
     //check if project_pipeline_inputs exist then fill:
     var getProPipeInputs = projectPipeInputs.filter(function (el) { return el.given_name == paramGivenName })
     var rowID = rowType + 'Ta-' + firGnum;
-    if (getProPipeInputs && getProPipeInputs != "") {
-        if (getProPipeInputs.length > 0) {
-            var filePath = getProPipeInputs[0].name; //value for val type
-            var proPipeInputID = getProPipeInputs[0].id;
-            var given_name = getProPipeInputs[0].given_name;
-            var collection_id = getProPipeInputs[0].collection_id;
-            var collection_name = getProPipeInputs[0].collection_name;
-            var collection = { collection_id: collection_id, collection_name: collection_name }
-            var url = getProPipeInputs[0].url;
-            var urlzip = getProPipeInputs[0].urlzip;
-            var checkPath = getProPipeInputs[0].checkpath;
-            insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath);
-        }
-        if (getProPipeInputs.length > 1) {
-            for (var k = 1; k < getProPipeInputs.length; k++) {
-                var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
-            }
-        }
-    }
-    //check if run saved before
-    if (pipeData[0].date_created == pipeData[0].date_modified) {
-        //after filling, if "use default" button is exist, then click default option.
-        clickUseDefault(rowID, defaultVal);
-    }
+    fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier);
 }
 
 
-function clickUseDefault(rowID, defaultVal) {
-    //    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
-    //    var checkinputValEnter = $('#' + rowID).find('#inputValEnter')[0]
+function clickUseDefault(rowID) {
     var checkDefVal = $('#' + rowID).find('#defValUse').css('display')
-    if (defaultVal && defaultVal != "" && checkDefVal !== "none") {
+    var defaultVal = $('#' + rowID).find('#defValUse').attr('defval')
+    if (defaultVal && checkDefVal !== "none") {
         $('#' + rowID).find('#defValUse').trigger("click")
     }
 }
@@ -3228,6 +3237,8 @@ function showhideOnEnv(allProSett, profileData){
     }
 }
 
+
+
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix, second) {
@@ -3308,34 +3319,11 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
             var selectFileButton = getSelectFileButton(paraQualifier, dropDownQual, dropDownMenu, defValButton)
             //insert both system and user inputs
             var inRow = getRowTable(rowType, firGnum, secGnum, paramGivenName, paraIdentifier, paraFileType, paraQualifier, processName, selectFileButton, show_setting);
-            insertInRow(inRow, paramGivenName, rowType, "mainInputs", desc)
+            insertInRow(inRow, paramGivenName, rowType, "mainInputs", desc);
             //get project_pipeline_inputs:
             var getProPipeInputs = projectPipeInputs.filter(function (el) { return el.given_name == paramGivenName })
             var rowID = rowType + 'Ta-' + firGnum;
-            if (getProPipeInputs && getProPipeInputs != "") {
-                if (getProPipeInputs.length > 0) {
-                    var filePath = getProPipeInputs[0].name; //value for val type
-                    var proPipeInputID = getProPipeInputs[0].id;
-                    var given_name = getProPipeInputs[0].given_name;
-                    var collection_id = getProPipeInputs[0].collection_id;
-                    var collection_name = getProPipeInputs[0].collection_name;
-                    var collection = { collection_id: collection_id, collection_name: collection_name }
-                    var url = getProPipeInputs[0].url;
-                    var urlzip = getProPipeInputs[0].urlzip;
-                    var checkPath = getProPipeInputs[0].checkpath;
-                    insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath); 
-                }
-                if (getProPipeInputs.length > 1) {
-                    for (var k = 1; k < getProPipeInputs.length; k++) {
-                        var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
-                    }
-                }
-            }
-            //check if run saved before
-            if (pipeData[0].date_created == pipeData[0].date_modified) {
-                //after filling, if "use default" button is exist, then click default option.
-                clickUseDefault(rowID, paramDefVal);
-            }
+            fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier);
             //outputsTable
         } else if (rowType === 'output') {
             var outName = document.getElementById(prefix + second).getAttribute("name");
@@ -3801,6 +3789,7 @@ function loadPipelineDetails(pipeline_id, pipeData) {
             $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
             $('#pipelineSum').val(decodeHtml(pData[0].summary));
+            $('#pipelineSum').attr('disabled', "disabled");
             var script_pipe_header_config = ""
             if (pData[0].script_pipe_header !== null) {
                 script_pipe_header_config += decodeHtml(pData[0].script_pipe_header) + "\n";
@@ -3890,106 +3879,8 @@ function refreshCreatorData(project_pipeline_id) {
     }
 }
 
-
-
-
-
-
-function loadProjectPipeline(pipeData) {
-    loadRunOptions("change");
-    $('#creatorInfoPip').css('display', "block");
-    $('#project-title').text(decodeHtml(pipeData[0].project_name));
-    $('#run-title').changeVal(decodeHtml(pipeData[0].pp_name));
-    $('#runSum').val(decodeHtml(pipeData[0].summary));
-    $('#rOut_dir').val(pipeData[0].output_dir);
-    $('#publish_dir').val(pipeData[0].publish_dir);
-    $('#chooseEnv').val(pipeData[0].profile);
-    $('#permsRun').val(pipeData[0].perms);
-    $('#runCmd').val(pipeData[0].cmd);
-    $('#docker_img').val(pipeData[0].docker_img);
-    $('#docker_opt').val(pipeData[0].docker_opt);
-    $('#singu_img').val(pipeData[0].singu_img);
-    $('#singu_opt').val(pipeData[0].singu_opt);
-    updateCheckBox('#publish_dir_check', pipeData[0].publish_dir_check);
-    updateCheckBox('#intermeDel', pipeData[0].interdel);
-    updateCheckBox('#exec_each', decodeHtml(pipeData[0].exec_each));
-    updateCheckBox('#exec_all', decodeHtml(pipeData[0].exec_all));
-    updateCheckBox('#docker_check', pipeData[0].docker_check);
-    updateCheckBox('#singu_check', pipeData[0].singu_check);
-    updateCheckBox('#singu_save', pipeData[0].singu_save);
-    updateCheckBox('#withTrace', pipeData[0].withTrace);
-    updateCheckBox('#withReport', pipeData[0].withReport);
-    updateCheckBox('#withDag', pipeData[0].withDag);
-    updateCheckBox('#withTimeline', pipeData[0].withTimeline);
-    checkShub()
-
-    //load process options 
-    if (pipeData[0].process_opt) {
-        //fill process options table
-        loadProcessOpt(decodeHtml(pipeData[0].process_opt)); 
-    }
-    // bind event handlers for autofill
-    setTimeout(function () {
-        if (autoFillJSON !== null && autoFillJSON !== undefined) {
-            bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
-            bindEveHandler(autoFillJSON);
-            // if duplicated run has refreshEnv trigger refreshEnv when page loads
-            if (pipeData[0].onload){
-                if (pipeData[0].onload == "refreshEnv"){
-                    console.log("onload refreshEnv")
-                    refreshEnv();
-                }
-            }
-        }
-    }, 1000);
-    checkCloudType(pipeData[0].profile)
-    //load cloud keys for possible s3/gs connection
-    loadCloudKeys();
-    if (pipeData[0].amazon_cre_id !== "0") {
-        $('#mRunAmzKey').val(pipeData[0].amazon_cre_id);
-    } else {
-        selectCloudKey("amazon");
-    }
-
-    if (pipeData[0].google_cre_id !== "0") {
-        $('#mRunGoogKey').val(pipeData[0].google_cre_id);
-    } else {
-        selectCloudKey("google");
-    }
-
-    //load user groups
-    var allUserGrp = getValues({ p: "getUserGroups" });
-    if (allUserGrp && allUserGrp != "") {
-        for (var i = 0; i < allUserGrp.length; i++) {
-            var param = allUserGrp[i];
-            var optionGroup = new Option(param.name, param.id);
-            $("#groupSelRun").append(optionGroup);
-        }
-    }
-    if (pipeData[0].group_id !== "0") {
-        $('#groupSelRun').val(pipeData[0].group_id);
-    }
-
+function loadExecSettings(pipeData){
     var chooseEnv = $('#chooseEnv option:selected').val();
-    $('#ownUserNamePip').text(pipeData[0].username);
-    $('#datecreatedPip').text(pipeData[0].date_created);
-    $('.lasteditedPip').text(pipeData[0].date_modified);
-
-    // activate collapse icon for process options
-    refreshCollapseIconDiv()
-    $('#pipelineSum').attr('disabled', "disabled");
-    fillRunVerOpt(["#runVerLog", "#runVerReport"])
-    //hide system inputs
-    $("#systemInputs").trigger("click");
-    //insert icon for process_options according to show_setting attribute
-    hideProcessOptionsAsIcons()
-    //autofillEmptyInputs
-    if (autoFillJSON !== undefined && autoFillJSON !== null) {
-        autofillEmptyInputs(autoFillJSON)
-    }
-    // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
-    cleanDepProPipeInputs();
-    // fill executor settings:
     if (pipeData[0].profile !== "" && chooseEnv) {
         var [allProSett, profileData] = getJobData("both");
         showhideOnEnv(allProSett, profileData)
@@ -4011,6 +3902,103 @@ function loadProjectPipeline(pipeData) {
     } else {
         $('#jobSettingsDiv').css('display', 'none');
     }
+}
+
+function loadUserGroups(pipeData){
+    var allUserGrp = getValues({ p: "getUserGroups" });
+    if (allUserGrp && allUserGrp != "") {
+        for (var i = 0; i < allUserGrp.length; i++) {
+            var param = allUserGrp[i];
+            var optionGroup = new Option(param.name, param.id);
+            $("#groupSelRun").append(optionGroup);
+        }
+    }
+    if (pipeData[0].group_id !== "0") {
+        $('#groupSelRun').val(pipeData[0].group_id);
+    } 
+}
+
+function loadRunSettings(pipeData){
+    $('#rOut_dir').val(pipeData[0].output_dir);
+    $('#publish_dir').val(pipeData[0].publish_dir);
+    $('#chooseEnv').val(pipeData[0].profile);
+    $('#runCmd').val(pipeData[0].cmd);
+    $('#docker_img').val(pipeData[0].docker_img);
+    $('#docker_opt').val(pipeData[0].docker_opt);
+    $('#singu_img').val(pipeData[0].singu_img);
+    $('#singu_opt').val(pipeData[0].singu_opt);
+    updateCheckBox('#publish_dir_check', pipeData[0].publish_dir_check);
+    updateCheckBox('#intermeDel', pipeData[0].interdel);
+    updateCheckBox('#exec_each', decodeHtml(pipeData[0].exec_each));
+    updateCheckBox('#exec_all', decodeHtml(pipeData[0].exec_all));
+    updateCheckBox('#docker_check', pipeData[0].docker_check);
+    updateCheckBox('#singu_check', pipeData[0].singu_check);
+    updateCheckBox('#singu_save', pipeData[0].singu_save);
+    updateCheckBox('#withTrace', pipeData[0].withTrace);
+    updateCheckBox('#withReport', pipeData[0].withReport);
+    updateCheckBox('#withDag', pipeData[0].withDag);
+    updateCheckBox('#withTimeline', pipeData[0].withTimeline);
+    //fill process options table
+    if (pipeData[0].process_opt) {
+        loadProcessOpt(decodeHtml(pipeData[0].process_opt)); 
+    }
+    // fill executor settings:
+    loadExecSettings(pipeData);
+}
+
+
+
+function loadProjectPipeline(pipeData) {
+    loadRunOptions("change");
+    $('#creatorInfoPip').css('display', "block");
+    $('#project-title').text(decodeHtml(pipeData[0].project_name));
+    $('#run-title').changeVal(decodeHtml(pipeData[0].pp_name));
+    $('#runSum').val(decodeHtml(pipeData[0].summary));
+    $('#permsRun').val(pipeData[0].perms);
+    $('#ownUserNamePip').text(pipeData[0].username);
+    $('#datecreatedPip').text(pipeData[0].date_created);
+    $('.lasteditedPip').text(pipeData[0].date_modified);
+
+    loadRunSettings(pipeData);
+    checkShub()
+    // bind event handlers for autofill
+    setTimeout(function () {
+        if (autoFillJSON !== null && autoFillJSON !== undefined) {
+            bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
+            bindEveHandler(autoFillJSON);
+            // if duplicated run has refreshEnv trigger refreshEnv when page loads
+            if (pipeData[0].onload){
+                if (pipeData[0].onload == "refreshEnv"){
+                    console.log("onload refreshEnv")
+                    refreshEnv();
+                }
+            }
+        }
+    }, 1000);
+    checkCloudType(pipeData[0].profile)
+    //load cloud keys for possible s3/gs connection
+    loadCloudKeys(pipeData);
+    // load group info
+    loadUserGroups(pipeData);
+    // activate collapse icon for process options
+    refreshCollapseIconDiv()
+
+    fillRunVerOpt(["#runVerLog"])
+    //hide system inputs
+    $("#systemInputs").trigger("click");
+    //insert icon for process_options according to show_setting attribute
+    hideProcessOptionsAsIcons()
+    //autofillEmptyInputs
+    if (autoFillJSON !== undefined && autoFillJSON !== null) {
+        autofillEmptyInputs(autoFillJSON)
+    }
+    // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
+    cleanDepProPipeInputs();
+    //after loading pipeline disable all the inputs
+    if (projectpipelineOwn === "0") {
+        toogleRunInputs("disable");
+    }
+    updateDiskSpace()
     setTimeout(function () { checkReadytoRun(); }, 1000);
 }
 
@@ -4088,12 +4076,17 @@ function loadRunOptions(type) {
     }
 }
 //insert selected input to inputs table
-function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection, url, urlzip, checkPath) {
+function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection, url, urlzip, checkPath, fillingType) {
     var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
     if (checkDropDown) {
-        $(checkDropDown).val(filePath)
+        $(checkDropDown).val(filePath);
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
         $('#' + rowID).find('#defValUse').css('display', 'none');
+        if (fillingType == "dry"){
+            $(checkDropDown).prop("disabled", true);
+        } else {
+            $(checkDropDown).prop("disabled", false);
+        }
     } else {
         if (qualifier === 'file' || qualifier === 'set') {
             var editIcon = getIconButtonModal('inputFile', 'Edit', 'fa fa-pencil');
@@ -4124,37 +4117,58 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
                 filePath = '<i class="fa fa-database"></i> ' + collection.collection_name
             }
         }
+        if (fillingType == "dry"){
+            urlIcon= ""
+            editIcon= ""
+            deleteIcon= ""
+        }
         $('#' + rowID).find(".firstsec" ).append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + filePath + '</span>' + urlIcon + editIcon + deleteIcon );
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
 
     }
 }
 //remove for both dropdown and file/val options
-function removeSelectFile(rowID, sType) {
+function removeSelectFile(rowID, sType, fillingType) {
     var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
     if (checkDropDown) {
+        // During dry-fill, remove selected option
         $('#' + rowID).find('#defValUse').css('display', 'inline');
+        if (fillingType == "dry"){
+            var dropVal = $(checkDropDown).val();
+            if (dropVal){
+                $(checkDropDown).val("");
+            }
+            $('#' + rowID).find('#defValUse').css('display', 'none');
+        }
         $('#' + rowID).removeAttr('propipeinputid');
     } else {
         if (sType === 'file' || sType === 'set') {
             $('#' + rowID).find('#inputFileEnter').css('display', 'inline');
-            $('#' + rowID).find('#defValUse').css('display', 'inline');
+            if (fillingType == "dry"){
+                $('#' + rowID).find('#inputFileEnter').prop("disabled", true);
+                $('#' + rowID).find('#defValUse').css('display', 'none');
+            } else {
+                $('#' + rowID).find('#inputFileEnter').prop("disabled", false);
+                $('#' + rowID).find('#defValUse').css('display', 'inline');
+            }
         } else if (sType === 'val') {
             $('#' + rowID).find('#inputValEnter').css('display', 'inline');
             $('#' + rowID).find('#defValUse').css('display', 'inline');
+            if (fillingType == "dry"){
+                $('#' + rowID).find('#inputValEnter').prop("disabled", true);
+                $('#' + rowID).find('#defValUse').css('display', 'none');
+            } else {
+                $('#' + rowID).find('#inputValEnter').prop("disabled", false);
+                $('#' + rowID).find('#defValUse').css('display', 'inline');
+            }
         }
+
         $('#' + rowID).find(".firstsec > span" ).remove();
         var buttonList = $('#' + rowID).find(".firstsec > button");
-        if (buttonList[3]) {
-            buttonList[3].remove();
-        }
-        if (buttonList[2]) {
-            buttonList[2].remove();
-        }
-        if (buttonList[1]) {
-            var but1id = $(buttonList[1]).attr("id");
-            if (but1id == "inputValEdit" || but1id == "inputFileEdit" || but1id.match(/^urlBut-/)) {
-                buttonList[1].remove();
+        for (var c = 0; c < buttonList.length; c++) {
+            var butid = $(buttonList[c]).attr("id");
+            if (butid == "inputDelDelete" || butid == "inputValDelete" || butid == "inputValEdit" || butid == "inputFileDelete" || butid == "inputFileEdit" || butid.match(/^urlBut-/)) {
+                buttonList[c].remove();
             }
         }
         $('#' + rowID).removeAttr('propipeinputid');
@@ -4196,10 +4210,11 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
         checkpath: checkPathData
     });
     //insert into #inputsTab
+    var fillingType = "default"
     if (fillInput.projectPipelineInputID && collection_name) {
-        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath);
+        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath, fillingType);
     } else if (fillInput.projectPipelineInputID && fillInput.inputName) {
-        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath);
+        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath, fillingType);
     }
 }
 
@@ -4478,7 +4493,54 @@ function checkCloudType(profileTypeId){
             }
         }  
     }
+}
 
+function updateDiskSpace(){
+    console.log("updateDiskSpace")
+    var workDir = $runscope.getPubVal("work");
+    if (workDir && proTypeWindow && proIdWindow){
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {p:"getDiskSpace", dir:workDir, profileType:proTypeWindow, profileId: proIdWindow},
+            async: true,
+            beforeSend: function(){
+                $("#workdir_diskpercent").html("Checking");
+            },
+            success: function (s) {
+                if (s){
+                    if (s.percent && s.free) {
+                        $("#workdir_diskpercent").css("width",s.percent);
+                        $("#workdir_diskpercent").html(s.percent);
+                        $("#workdir_diskspace").text(s.free+" available");
+                        let now = new Date();
+                        $("#workdir_diskpercent").data("lastcheck", now);
+                        toogleWorkdirDiskSpace('show');
+                    } else {
+                        toogleWorkdirDiskSpace('hide');
+                    }
+                }
+            },
+            error: function (errorThrown) {
+                toogleWorkdirDiskSpace('hide');
+            }
+        }); 
+    } else {
+        toogleWorkdirDiskSpace('hide');
+    }
+}
+
+
+function toogleWorkdirDiskSpace(type){
+    if (type== "show"){
+        $("#workdir_diskspace").css("display","block");
+        $("#updateDiskSpaceBut").css("display","inline-block");
+        $("#workdir_diskpercent_div").css("display","block");
+    } else if (type== "hide"){
+        $("#workdir_diskspace").css("display","none");
+        $("#updateDiskSpaceBut").css("display","none");
+        $("#workdir_diskpercent_div").css("display","none");  
+    }
 }
 
 function checkWorkDir(){
@@ -4493,11 +4555,16 @@ function checkWorkDir(){
         }
         if (output_dir.indexOf(' ') >= 0){
             showInfoM = true
-            infoModalText += "</br> * There shouldn't be a space in your path.";
+            infoModalText += "</br> * There shouldn't be any space in your path.";
         }
         if (showInfoM){
             showInfoModal("#infoModal", "#infoModalText", infoModalText)
-        }    
+        } else {
+            var countSlash = (output_dir.match(/\//g) || []).length;
+            if (countSlash >1){
+                updateDiskSpace()
+            }
+        }   
     }  
 }
 
@@ -4549,7 +4616,7 @@ function autoCheck(type) {
             if (changeOnchooseEnv != undefined){
                 if (changeOnchooseEnv == true){
                     //save run after all parameters loaded on change of chooseEnv
-                    saveRun();
+                    saveRun(false);
                 } 
             }
 
@@ -4639,7 +4706,7 @@ function checkCloudPatt(pattern, div, key, path, getProPipeInputs) {
     return status;
 }
 
-function loadCloudKeys() {
+function loadCloudKeys(pipeData) {
     var data = getValues({ p: "getAmz" });
     if (data && data != "") {
         $.each(data, function (i, item) {
@@ -4657,6 +4724,16 @@ function loadCloudKeys() {
             $('#mArchGoogKeyGS').append($('<option>', { value: item.id, text : item.name }));
             $('#mArchGoogKeyGS_GEO').append($('<option>', { value: item.id, text : item.name }));
         });
+    }
+    if (pipeData[0].amazon_cre_id !== "0") {
+        $('#mRunAmzKey').val(pipeData[0].amazon_cre_id);
+    } else {
+        selectCloudKey("amazon");
+    }
+    if (pipeData[0].google_cre_id !== "0") {
+        $('#mRunGoogKey').val(pipeData[0].google_cre_id);
+    } else {
+        selectCloudKey("google");
     }
 }
 
@@ -5074,7 +5151,7 @@ function runProjectPipe(runProPipeCall, checkType) {
         }
         //create uuid for run
         var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id, manualRun:manualRunCheck });
-        fillRunVerOpt(["#runVerLog", "#runVerReport"])
+        fillRunVerOpt(["#runVerLog"])
         $('#runLogArea').val("");
         var hostname = $('#chooseEnv').find('option:selected').attr('host');
         pathArray = getPathArray();
@@ -5096,7 +5173,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 
 //click on run button (callback function)
 function runProPipeCall(checkType, uuid) {
-    saveRun();
+    saveRun(false);
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
@@ -5231,6 +5308,9 @@ function readNextflowLogTimer(proType, proId, type) {
     interval_readPubWeb = setInterval(function () {
         readPubWeb(proType, proId, "no_reload")
     }, 60000);
+    interval_getWorkDirSpace = setInterval(function () {
+        updateDiskSpace();
+    }, 600000);
 }
 
 autoScrollLog = true;
@@ -5256,8 +5336,13 @@ $('a[href="#logTab"]').on('shown.bs.tab', function (e) {
 });
 
 $('a[href="#reportTab"]').on('shown.bs.tab', function (e) {
-    //check if div is empty
-    $("#runVerReport").trigger("change");
+    $("#runVerLog").trigger("change");
+});
+$('a[href="#configTab"]').on('shown.bs.tab', function (e) {
+    $("#runVerLog").trigger("change");
+});
+$('a[href="#advancedTab"]').on('shown.bs.tab', function (e) {
+    $("#runVerLog").trigger("change");
 });
 
 $(document).on('click', '#errorProPipe', function (e) {
@@ -5517,7 +5602,7 @@ function getProcessOpt() {
         });
         processOptAll[proGnum] = processOptEach
     });
-    return encodeURIComponent(JSON.stringify(processOptAll))
+    return encodeURIComponent(JSON.stringify(processOptAll));
 }
 
 function fillEachProcessOpt(eachProcessOpt, label, inputDiv, inputDivType) {
@@ -5659,11 +5744,11 @@ function formToJsonEachPro() {
 }
 
 function saveRunIcon() {
-    saveRun();
+    saveRun(false);
     checkReadytoRun();
 }
 
-function saveRun() {
+function saveRun(sucFunc) {
     var data = [];
     var runSummary = encodeURIComponent($('#runSum').val());
     var run_name = $('#run-title').val();
@@ -5713,8 +5798,6 @@ function saveRun() {
     var perms = $('#permsRun').val();
     var interdel = $('#intermeDel').is(":checked").toString();
     var groupSel = $('#groupSelRun').val();
-    console.log("perms", perms)
-    console.log("groupSel", groupSel)
     var cmd = encodeURIComponent($runscope.getPubVal("runcmd"));
     var exec_each = $('#exec_each').is(":checked").toString();
     var exec_all = $('#exec_all').is(":checked").toString();
@@ -5773,7 +5856,11 @@ function saveRun() {
             data: data,
             async: true,
             success: function (s) {
-                toastr.info('All changes are saved.')
+                toastr.info('All changes are saved.');
+                if (typeof sucFunc === "function") {
+                    sucFunc()
+                }
+
                 console.log(s)
                 if (dupliProPipe === false) {
                     if (s){
@@ -5982,7 +6069,7 @@ function duplicateProPipe(type) {
         $('#confirmDuplicate').modal("show");  
     } else if (type == "move" || type == "changeproject"){
         refreshProjectDatatable("default");
-        saveRun();
+        saveRun(false);
         $('#copyRunBut').css("display","none");
         $('#moveRunBut').css("display","inline-block");
         $('#pipelineRevsDiv').css("display","none");
@@ -5998,111 +6085,9 @@ function duplicateProPipe(type) {
     $('#confirmDuplicate').modal("show");
 }
 
-$(function () {
-    $(document).on('change', '#runVerLog', function (event) {
-        console.log("runVerLog")
-        var run_log_uuid = $(this).val();
-        if (run_log_uuid) {
-            var version = $('option:selected', this).attr('ver');
-            if (version) {
-                var runTitleLog = "Run Log " + version + ":"
-                $('a[href="#logTab"]').css("display", "block")
-                $('a[href="#reportTab"]').css("display", "block")
-            } else {
-                var runTitleLog = "";
-                $('a[href="#logTab"]').css("display", "none")
-                $('a[href="#reportTab"]').css("display", "none")
-            }
-            var lastrun = $('option:selected', this).attr('lastrun');
-            if (lastrun) {
-                lastrun = 'lastrun="yes"';
-            } else {
-                lastrun = "";
-            }
-            var activeTab = $("ul#logNavBar li.active > a")
-            var activeID = "";
-            if (activeTab[0]) {
-                activeID = $(activeTab[0]).attr("href")
-            }
-            $("#runTitleLog").text(runTitleLog)
-            $("#logContentDiv").empty();
-            //to support outdated log directory system 
-            if (run_log_uuid.match(/^run/)) {
-                var path = ""
-                } else {
-                    var path = "run"
-                    }
-            var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
-            var fileListAr = getObjectValues(fileList);
-            var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
-            var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
-            //hide serverlog.txt
-            var pubWebPath = $("#basepathinfo").attr("pubweb")
-            var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
-            var k = 0;
-            var tabDiv = [];
-            var fileName = [];
-            for (var j = 0; j < order.length; j++) {
-                if ($("#logContentDiv").attr(logContentDivAttr[j]) == "true" && (fileListAr.includes(order[j]) || order[j] == "log.txt")) {
-                    var exist = 'style="display:block;"';
-                } else {
-                    var exist = 'style="display:none;"';
-                }
-                k++
-                var active = "";
-                if (k == 1) {
-                    active = 'class="active"';
-                }
-                var tabID = cleanProcessName(order[j]) + 'Tab';
-                tabDiv.push(tabID);
-                fileName.push(order[j]);
-                navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
-            }
-            navTabDiv += '</ul>';
-            navTabDiv += '<div id="logNavCont" class="tab-content">';
-            for (var n = 0; n < tabDiv.length; n++) {
-                var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
-                var active = "";
-                if (n == 0) {
-                    active = 'in active';
-                }
-                navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
-                if (fileName[n] == "log.txt") {
-                    var serverlogText = "";
-                    var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
-                    if (fileListAr.includes("serverlog.txt")) {
-                        serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
-                        //to support outdated log directory system 
-                    } else if (fileListAr.includes("nextflow.log")) {
-                        logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
-                    }
-                    if (fileListAr.includes("err.log")) {
-                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
-                    }
-                    if (fileListAr.includes("initial.log")) {
-                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initial.log" });
-                    }
-                    navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
-                } else {
-                    navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
-                }
-                navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
-                navTabDiv += '<a style="margin-left:5px;" href="#" class="btn btn-info tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true">Contact Us</a>'
-                navTabDiv += '</div>';
-            }
-            navTabDiv += '</div>';
-            $("#logContentDiv").append(navTabDiv)
-            $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
-                autoScrollLogArea()
-            });
-            if (activeID) {
-                if ($('.nav-tabs a[href="' + activeID + '"]').css("display") != "none") {
-                    $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
-                }
-            }
-        }
-    });
-});
+
+
+
 
 function fillRunVerOpt(dropDownAr) {
     var runLogs = getValues({ "p": "getRunLog", project_pipeline_id: project_pipeline_id })
@@ -6125,9 +6110,7 @@ function fillRunVerOpt(dropDownAr) {
         var lastItem = "";
         var dropDownId = dropDownAr[j];
         var runType = "";
-        if (dropDownId == "#runVerReport") {
-            runType = "Report"
-        } else if (dropDownId == "#runVerLog") {
+        if (dropDownId == "#runVerLog") {
             runType = "Log"
         }
         $(dropDownId).empty();
@@ -6154,6 +6137,10 @@ function fillRunVerOpt(dropDownAr) {
             }
             $(dropDownId).val($(dropDownId + ' option:first').val());
         });
+        var lastrunUID = $(dropDownId + ' option:first').val();
+        // don't allow to reload configtab unless another log is selected 
+        $(dropDownId).attr("configTabUID",lastrunUID);
+        $(dropDownId).attr("prevUID",lastrunUID);
         $(dropDownId).trigger("change");
     }
 }
@@ -6185,7 +6172,6 @@ function updateRunVerNavBar() {
                         $('a[href="#' + tabID + '"]').css("display", "block")
                     }
                 }
-
             }
         }
         if (!activeID) {
@@ -6359,6 +6345,66 @@ function validateMoveCopyRun(new_project_id){
 }
 
 
+function tooglePermsGroupsDiv(mode){
+    if (mode == "show"){
+        $('#groupsDiv').css("display", "block");
+        $('#permsDiv').css("display", "block");
+    } else if (mode == "hide"){
+        $('#groupsDiv').css("display", "none");
+        $('#permsDiv').css("display", "none");
+    }
+}
+function toogleStatusMode(mode){
+    if (mode == "default"){
+        $('#pipeRunDiv').css("display", "block");
+        $('#runStatDiv').css("display", "none");
+        $('#runStatDiv').find("div").css("display","none")
+    } else if (mode == "noOptions"){
+        $('#pipeRunDiv').css("display", "none");
+        $('#runStatDiv').css("display", "block");
+    }
+}
+
+// show old run_status of the logs//Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+function runLogStatUpdate(runStatus){
+    if (runStatus === "NextSuc") {
+        displayStatButton('runStatComplete');
+    } else if (runStatus === "Error" || runStatus === "NextErr") {
+        displayStatButton('runStatError');
+    } else if (runStatus === "Terminated") {
+        displayStatButton('runStatTerminated');
+    } else if (runStatus === "Manual") {
+        displayStatButton('runStatManual');
+        //  if runStatus states that run is still running then there must be some error occured. show errorProPipe
+    } else if (runStatus === "NextRun" || runStatus === "Waiting" || runStatus === "init") {
+        displayStatButton('runStatError');
+    } 
+}
+
+function displayStatButton(idButton) {
+    var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual"];
+    for (var i = 0; i < buttonList.length; i++) {
+        if (document.getElementById(buttonList[i])){
+            document.getElementById(buttonList[i]).style.display = "none";
+        }
+    }
+    if (document.getElementById(idButton)){
+        document.getElementById(idButton).style.display = "inline";
+    }
+}
+
+function toogleRunInputs(type){
+    var bool;
+    if (type == "disable"){
+        bool = true;
+    } else if (type == "enable"){
+        bool = false;
+    }
+    $("#configTab :input").not(":button[show_sett_but]").prop("disabled", bool);
+    $("#advancedTab :input").prop("disabled", bool);
+    $('.ui-dialog :input').not(".ui-dialog-buttonpane :input").prop("disabled", bool);
+}
+
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
@@ -6376,6 +6422,7 @@ $(document).ready(function () {
         $('#delRun').remove();
         $('#saveRunIcon').remove();
         $('#pipeRunDiv').remove();
+        toogleStatusMode("noOptions")
         $("#run-title").prop("disabled", true);
     }
 
@@ -6410,17 +6457,6 @@ $(document).ready(function () {
         loadPipelineDetails(pipeline_id, pipeData);
 
     }
-    //after loading pipeline disable all the inputs
-    if (projectpipelineOwn === "0") {
-        setTimeout(function () {
-            $("#configTab :input").not( ":button[show_sett_but]" ).prop("disabled", true);
-            $("#advancedTab :input").prop("disabled", true);
-            $('.ui-dialog :input').prop("disabled", true);
-        }, 1000);
-    }
-
-
-
 
     //##################
     //Sample Modal
@@ -6670,7 +6706,7 @@ $(document).ready(function () {
                     }
                     if (geoFailedList.length > 0){
                         $("#errGeoModalErrDiv").css("display","block");
-                        $("#errGeoModalErrText").html("Following " + geoFailedList.length +" geo terms could not be loaded because of a connection error. If you want to skip these items, please click 'ok' button, otherwise click 'retry' button to search missing items again.");
+                        $("#errGeoModalErrText").html("Following " + geoFailedList.length +" geo terms could not be loaded. If you want to skip these items, please click 'ok' button, otherwise click 'retry' button to search those items again.");
                         $("#errGeoModalErrList").removeData();
                         $("#errGeoModalErrList").val(err_list);
                         $("#errGeoModalErrList").data("geoFailedList", geoFailedList);
@@ -7909,7 +7945,8 @@ $(document).ready(function () {
                 checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
             } else { // remove from project pipeline input table
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
-                removeSelectFile(rowID, qualifier);
+                var fillingType = "default"
+                removeSelectFile(rowID, qualifier, fillingType);
             }
             checkReadytoRun();
         });
@@ -7944,8 +7981,9 @@ $(document).ready(function () {
             checkShub()
             checkCloudType(profileTypeId)
             checkReadytoRun();
+            updateDiskSpace();
             //save run in change 
-            saveRun();
+            saveRun(false);
 
         });
     });
@@ -8335,7 +8373,8 @@ $(document).ready(function () {
         var proPipeInputID = $('#' + rowID).attr('propipeinputid');
         var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
         var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
-        removeSelectFile(rowID, qualifier);
+        var fillingType = "default;"
+        removeSelectFile(rowID, qualifier, fillingType);
         checkReadytoRun();
     });
 
@@ -9032,7 +9071,7 @@ $(document).ready(function () {
         } else {
             confirmNewRev = true;
             dupliProPipe = true; 
-            saveRun();
+            saveRun(false);
         }
     });
 
@@ -9090,7 +9129,7 @@ $(document).ready(function () {
             //check if div is empty
             if (!$.trim($(href).html()).length) {
                 var writePerm= $runscope.checkUserWritePerm();
-                var uuid = $("#runVerReport").val();
+                var uuid = $("#runVerLog").val();
                 var visType = $(this).attr("visType");
                 var filePath = $(this).attr("filepath");
                 var split = filePath.split("/")
@@ -9257,11 +9296,11 @@ $(document).ready(function () {
     });
 
     $.getScript("js/plugins/markdownEditor.js", function() {
-//        console.log("markdownEditor.js loaded");
+        //        console.log("markdownEditor.js loaded");
     });
 
     $.getScript("js/plugins/rMarkEditor.js", function() {
-//        console.log("rMarkEditor.js loaded");
+        //        console.log("rMarkEditor.js loaded");
     });
 
 
@@ -9499,7 +9538,7 @@ $(document).ready(function () {
 
     $(function () {
         function reloadReportRows(){
-            var run_log_uuid = $("#runVerReport").val();
+            var run_log_uuid = $("#runVerLog").val();
             $("#reportRows").empty();
             //add 'className: "center"' to center text in columns array
             $("#reportRows").dynamicRows({
@@ -9559,7 +9598,7 @@ $(document).ready(function () {
                             return visType;
                         }
 
-                        var run_log_uuid = $("#runVerReport").val();
+                        var run_log_uuid = $("#runVerLog").val();
                         var pubWebPath = $("#basepathinfo").attr("pubweb");
                         var visType = oData.pubWeb
                         var icon = "fa fa-file-text-o";
@@ -9627,7 +9666,7 @@ $(document).ready(function () {
                                 var obj = getFileName(filePath);
                                 var newPath = obj.rest + "/" + obj.filename
                                 text = encodeURIComponent(text);
-                                var run_log_uuid = $("#runVerReport").val();
+                                var run_log_uuid = $("#runVerLog").val();
                                 var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
                                 return saveData
                             }
@@ -9644,7 +9683,7 @@ $(document).ready(function () {
 
 
                             var dynrows_movefile = function (file1, file2){
-                                var run_log_uuid = $("#runVerReport").val();
+                                var run_log_uuid = $("#runVerLog").val();
                                 if (file1 && file2){
                                     var moveFile = getValues({ 
                                         p: "moveFile", 
@@ -9784,7 +9823,7 @@ $(document).ready(function () {
                                     var savedData = $(activeLiA[0]);
                                     var execFunc = function(savedData){
                                         var filePath = savedData.attr("filepath");
-                                        var run_log_uuid = $("#runVerReport").val();
+                                        var run_log_uuid = $("#runVerLog").val();
                                         var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
                                         $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
                                     }
@@ -10029,28 +10068,10 @@ $(document).ready(function () {
             reloadReportRows();
         });
 
-
-        $(document).on('change', '#runVerReport', function (event) {
-            var run_log_uuid = $(this).val();
+        function updateRunReportTab(run_log_uuid){
             var reload = true
             if (run_log_uuid) {
-                var prevUUID = $(this).attr("prev")
-                $(this).attr("prev", run_log_uuid)
-                var savedReportData = $.data(this, "reportData")
-                var reportData = getValues({ "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id })
-                $.data(this, "reportData", reportData);
-                if (prevUUID) {
-                    if (prevUUID == run_log_uuid) {
-                        if (savedReportData && reportData) {
-                            if (savedReportData.length && reportData.length) {
-                                if (savedReportData.length == reportData.length) {
-                                    reload = false
-                                }
-                            }
-                        }
-                    }
-                }
-                var version = $('option:selected', this).attr('ver');
+                var version = $('option:selected', '#runVerLog').attr('ver');
                 if (version) {
                     var runTitleLog = "Run Report " + version + ":"
                     $('a[href="#reportTab"]').css("display", "block")
@@ -10058,14 +10079,316 @@ $(document).ready(function () {
                     var runTitleLog = "";
                     $('a[href="#reportTab"]').css("display", "none")
                 }
-
                 $("#runTitleReport").text(runTitleLog)
                 if (reload){
                     reloadReportRows();
                 }
+            }
+        }
+
+        function updateRunLogStat(run_log_uuid){
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {p:"getRunLogStatus", uuid:run_log_uuid},
+                async: true,
+                success: function (s) {
+                    if (s){
+                        if (s[0]){
+                            var run_status = s[0].run_status;
+                            runLogStatUpdate(run_status)
+                        }
+                    }
+                },
+                error: function (errorThrown) {
+                    toastr.error("Error occured.");
+                }
+            }); 
+        }
+
+        function updateRunConfigTab(prevUUID){
+            var loadRunLogOpt = function (){
+                var fillProPipeInputsRev = function(projectPipeInputs_rev, lastrun){
+                    var numInputRows = $('#inputsTable > tbody').find('td[given_name]');
+                    $.each(numInputRows, function (el) {
+                        var given_name = $(numInputRows[el]).attr("given_name");
+                        var in_row = $(numInputRows[el]).closest('tr');
+                        var rowID = in_row.attr("id"); //"inputTa-5"
+                        var gnum = rowID.split("Ta-")[1];
+                        var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
+                        //check if project_pipeline_inputs exist then fill:
+                        var getProPipeInputs = projectPipeInputs_rev.filter(function (el) { return el.given_name == given_name });
+                        if (lastrun){
+                            var fillingType = "default";
+                        } else {
+                            var fillingType = "dry";
+                        }
+                        removeSelectFile(rowID, qualifier,fillingType)
+                        if (getProPipeInputs.length > 0) {
+                            prepareInsertInput(getProPipeInputs, rowID, gnum, qualifier, fillingType);
+                        }
+                        // During dry-fill, update process settings
+                        showHideSett(rowID)
+                    });
+                    if (lastrun) {
+                        toogleRunInputs("enable")
+                    } else {
+                        toogleRunInputs("disable")
+                    }
+                }
+
+                var run_log_uuid = $('#runVerLog').val();
+                var lastrun = $('#runVerLog option[value="'+run_log_uuid+'"]').attr('lastrun');
+                //load from projectpipelinedata
+                if (lastrun){
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: {p:"getProjectPipelines", id:project_pipeline_id},
+                        async: true,
+                        success: function (pipe) {
+                            if (pipe){
+                                loadRunSettings(pipe);
+                            }
+                        }, 
+                        error: function (errorThrown) {
+                            toastr.error("Error occured.");
+                        }
+                    });
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: {p:"getProjectPipelineInputs", project_pipeline_id:project_pipeline_id},
+                        async: true,
+                        success: function (projectPipeInputs_rev) {
+                            if (projectPipeInputs_rev){
+                                fillProPipeInputsRev(projectPipeInputs_rev, lastrun);
+                            }
+                        }, 
+                        error: function (errorThrown) {
+                            toastr.error("Error occured.");
+                        }
+                    });
+                    //load from getRunLogOpt
+                } else {
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: {p:"getRunLogOpt", uuid:run_log_uuid},
+                        async: true,
+                        success: function (s) {
+                            var pipe = s.run_opt;
+                            if (pipe){
+                                console.log(IsJsonString(pipe));
+                                if (IsJsonString(pipe)) {
+                                    var json = JSON.parse(pipe)
+                                    console.log(json)
+                                    if (json) {
+                                        var pipeData = [];
+                                        pipeData[0] = json;
+                                        loadRunSettings(pipeData);
+                                        if (json.project_pipeline_input){
+                                            var projectPipeInputs_rev = json.project_pipeline_input; 
+                                            fillProPipeInputsRev(projectPipeInputs_rev, lastrun);
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        error: function (errorThrown) {
+                            toastr.error("Error occured.");
+                        }
+                    }); 
+                }
 
             }
+            var prevlastrun = $('#runVerLog option[value="'+prevUUID+'"]').attr('lastrun')
+            console.log("updateRunConfigTab")
+            console.log("prevUUID", prevUUID)
+            console.log("prevlastrun", prevlastrun)
+            // if prevUUID belong to lastrun then saveRun before loadRunLogOpt 
+            if (!prevUUID || prevlastrun){
+                saveRun(loadRunLogOpt);
+            } else {
+                loadRunLogOpt();
+            }
+        }
+
+        function updateRunLogTab(run_log_uuid){
+            console.log("updateRunLogTab")
+            if (run_log_uuid) {
+                var version = $('option:selected', '#runVerLog').attr('ver');
+                if (version) {
+                    var runTitleLog = "Run Log " + version + ":"
+                    } else {
+                        var runTitleLog = "";
+                    }
+                var lastrun = $('option:selected', '#runVerLog').attr('lastrun');
+                if (lastrun) {
+                    lastrun = 'lastrun="yes"';
+                } else {
+                    lastrun = "";
+                }
+                var activeTab = $("ul#logNavBar li.active > a")
+                var activeID = "";
+                if (activeTab[0]) {
+                    activeID = $(activeTab[0]).attr("href")
+                }
+                $("#runTitleLog").text(runTitleLog)
+                $("#logContentDiv").empty();
+                //to support outdated log directory system 
+                if (run_log_uuid.match(/^run/)) {
+                    var path = ""
+                    } else {
+                        var path = "run"
+                        }
+                var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
+                var fileListAr = getObjectValues(fileList);
+                var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
+                var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
+                //hide serverlog.txt
+                var pubWebPath = $("#basepathinfo").attr("pubweb")
+                var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
+                var k = 0;
+                var tabDiv = [];
+                var fileName = [];
+                for (var j = 0; j < order.length; j++) {
+                    if ($("#logContentDiv").attr(logContentDivAttr[j]) == "true" && (fileListAr.includes(order[j]) || order[j] == "log.txt")) {
+                        var exist = 'style="display:block;"';
+                    } else {
+                        var exist = 'style="display:none;"';
+                    }
+                    k++
+                    var active = "";
+                    if (k == 1) {
+                        active = 'class="active"';
+                    }
+                    var tabID = cleanProcessName(order[j]) + 'Tab';
+                    tabDiv.push(tabID);
+                    fileName.push(order[j]);
+                    navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
+                }
+                navTabDiv += '</ul>';
+                navTabDiv += '<div id="logNavCont" class="tab-content">';
+                for (var n = 0; n < tabDiv.length; n++) {
+                    var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
+                    var active = "";
+                    if (n == 0) {
+                        active = 'in active';
+                    }
+                    navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
+                    if (fileName[n] == "log.txt") {
+                        var serverlogText = "";
+                        var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
+                        if (fileListAr.includes("serverlog.txt")) {
+                            serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
+                            //to support outdated log directory system 
+                        } else if (fileListAr.includes("nextflow.log")) {
+                            logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
+                        }
+                        if (fileListAr.includes("err.log")) {
+                            serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
+                        }
+                        if (fileListAr.includes("initial.log")) {
+                            serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initial.log" });
+                        }
+                        navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
+                    } else {
+                        navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
+                    }
+                    navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
+                    navTabDiv += '<a style="margin-left:5px;" href="#" class="btn btn-info tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true">Contact Us</a>'
+                    navTabDiv += '</div>';
+                }
+                navTabDiv += '</div>';
+                $("#logContentDiv").append(navTabDiv)
+                $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
+                    autoScrollLogArea();
+                });
+                if (activeID) {
+                    if ($('.nav-tabs a[href="' + activeID + '"]').css("display") != "none") {
+                        $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+                    }
+                }
+            }
+        }
+
+        $(document).on('change', '#runVerLog', function (event) {
+            console.log("change:runVerLog");
+            //check which tab is active:
+            var activeTab = "";
+            var activeTab = $("ul#runTabDiv li.active > a")
+            var activeID = "";
+            if (activeTab[0]) {
+                activeID = $(activeTab[0]).attr("href")
+            }
+            var version = $('option:selected', '#runVerLog').attr('ver');
+            if (version) {
+                $('a[href="#logTab"]').css("display", "block")
+                $('a[href="#reportTab"]').css("display", "block")
+                $('#runVerLog').css("display", "block");
+            } else {
+                $('a[href="#logTab"]').css("display", "none")
+                $('a[href="#reportTab"]').css("display", "none")
+                $('#runVerLog').css("display", "none");
+            }
+            var run_log_uuid = $('#runVerLog').val();
+            // save the previous options into their attributes
+            var reportTabUID = $('#runVerLog').attr("reportTabUID");
+            var logTabUID = $('#runVerLog').attr("logTabUID");
+            var configTabUID = $('#runVerLog').attr("configTabUID");
+            var prevUID = $('#runVerLog').attr("prevUID");
+            // save all change info
+            if (prevUID != run_log_uuid){
+                $('#runVerLog').attr("prevUID", run_log_uuid)
+            }
+            var lastrun = $('option:selected', '#runVerLog').attr('lastrun');
+            var runVerLogCheck = $('option:selected', '#runVerLog').length;
+            // before any run starts runVerLogCheck=0
+            if (lastrun || !runVerLogCheck) {
+                toogleStatusMode("default")
+                tooglePermsGroupsDiv("show")
+            } else if (runVerLogCheck) {
+                toogleStatusMode("noOptions")
+                tooglePermsGroupsDiv("hide")
+            } 
+            if (prevUID != run_log_uuid && !lastrun){
+                updateRunLogStat(run_log_uuid);
+            }
+
+            console.log("activeID",activeID)
+            console.log("run_log_uuid",run_log_uuid)
+            console.log("reportTabUID",reportTabUID)
+            console.log("configTabUID",configTabUID)
+
+            if (activeID == "#logTab"){
+                if (logTabUID != run_log_uuid){
+                    $('#runVerLog').attr("logTabUID", run_log_uuid)
+                    updateRunLogTab(run_log_uuid);
+                }
+            } else if (activeID == "#reportTab"){
+                if (reportTabUID != run_log_uuid){
+                    $('#runVerLog').attr("reportTabUID", run_log_uuid)
+                    updateRunReportTab(run_log_uuid);
+                }
+            } else if (activeID == "#configTab" || activeID == "#advancedTab"){
+                //don't fill on page load 
+                if (configTabUID != run_log_uuid){
+                    $('#runVerLog').attr("configTabUID", run_log_uuid)
+                    console.log("updateRunConfigTab:"+configTabUID+" to "+run_log_uuid)
+                    updateRunConfigTab(configTabUID);
+                }
+            }
         });
+
+
+
+
+
+
+
+
+
     });
 
 

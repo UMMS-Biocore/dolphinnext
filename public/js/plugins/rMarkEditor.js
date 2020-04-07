@@ -211,7 +211,7 @@
             var newPath = obj.rest + "/" + filename
             var text = window[editorId].getValue();
             text = encodeURIComponent(text);
-            var run_log_uuid = $("#runVerReport").val();
+            var run_log_uuid = $("#runVerLog").val();
             var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
             return saveData
         }

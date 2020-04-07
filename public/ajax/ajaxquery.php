@@ -44,6 +44,7 @@ if ($p=="saveRun"){
         $attempt = "0";
     }
     $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+    $db->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$ownerID);
     $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
     list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
     $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
@@ -201,6 +202,13 @@ else if ($p=="saveNextflowLog"){
         unset($value);
         $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
     }
+}
+
+else if ($p=="getDiskSpace"){
+    $dir = $_REQUEST['dir'];
+    $profileType = $_REQUEST['profileType'];
+    $profileId = $_REQUEST['profileId'];
+    $data = $db -> getDiskSpace($dir, $profileType, $profileId, $ownerID);
 }
 else if ($p=="getLsDir"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -571,6 +579,19 @@ else if ($p=="getProjectPipelines"){
 else if ($p=="getRunLog"){
     $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
     $data = $db -> getRunLog($project_pipeline_id);
+}
+else if ($p=="getRunLogStatus"){
+    $uuid = $_REQUEST['uuid'];
+    $data = $db -> getRunLogStatus($uuid);
+}
+else if ($p=="getRunLogOpt"){
+    $data = json_encode("");
+    $uuid = $_REQUEST['uuid'];
+    $raw_data = json_decode($db->getRunLogOpt($uuid));
+    if (!empty($raw_data[0])){
+        $raw_data[0]->{'run_opt'} = str_replace('\\', '\\\\', $raw_data[0]->{'run_opt'});
+        $data = json_encode($raw_data[0]);
+    }
 }
 else if ($p=="sendEmail"){
     $adminemail = $_REQUEST['adminemail'];

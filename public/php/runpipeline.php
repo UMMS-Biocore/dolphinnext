@@ -28,14 +28,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
     #fileContent .multiselect-item.multiselect-filter>.input-group>.input-group-btn {
         width: 40px;
     }
-    
+
     .indesc {
-        font-style:italic; 
-        color:darkslategray; 
-        font-weight: 300; 
-        font-size:13px;
-        display:block;
-        padding-top:5px;
+        font-style: italic;
+        color: darkslategray;
+        font-weight: 300;
+        font-size: 13px;
+        display: block;
+        padding-top: 5px;
     }
 
 </style>
@@ -177,6 +177,33 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
             </div>
             <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; vertical-align:middle;" data-original-title="Waiting for input parameters, output directory and selection of active environment (if s3 path is defined then waiting for the amazon keys)" data-placement="bottom" data-toggle="tooltip">Waiting</button>
         </div>
+
+        <div id="runStatDiv" style="display:none; float:right; margin-right:5px;">
+            <div id="runStatError" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-danger" type="button">Run Error</button>
+            </div>
+            <div id="runStatComplete" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-success" type="button">Completed</button>
+            </div>
+            <div id="runStatRunning" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-info" type="button">Running</button>
+            </div>
+            <div id="runStatWaiting" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-info" type="button">Initializing..</button>
+            </div>
+            <div id="runStatConnecting" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-info" type="button">Connecting..</button>
+            </div>
+            <div id="runStatTerminated" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-danger" type="button">Terminated</button>
+            </div>
+            <div id="runStatAborted" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-info" type="button">Reconnecting..</button>
+            </div>
+            <div id="runStatManual" style="display:none; float:right; " class="btn-group">
+                <button class="btn bg-purple-active color-palette" type="button">Manual Run</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -189,6 +216,9 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 </div>
 
 <div id="runTabSection">
+    <div style="width:140px; float:right;">
+        <select id="runVerLog" style="display:none;" class="fbtn btn-default form-control"></select>
+    </div>
     <ul id="runTabDiv" class="nav nav-tabs">
         <li class="active"><a class="nav-item" data-toggle="tab" href="#configTab">Run Settings</a></li>
         <li><a class="nav-item" data-toggle="tab" href="#advancedTab">Advanced</a></li>
@@ -210,8 +240,19 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <div>
                     <div class="row" id="rOut_dirDiv">
                         <div class="col-md-12">
+                            <label style="float:left; margin-right:10px;"> Work Directory (Full path)</label>
+                            <span title="Check Available Space" style="cursor:pointer;" onclick="updateDiskSpace()">
+                                <div id="workdir_diskpercent_div" class="col-md-1 progress" style=" display:none; margin-bottom:0px; padding-left:0px; padding-right:0px; margin-right:5px; margin-left:5px;">
+                                    <div id="workdir_diskpercent" class="progress-bar progress-bar-info" role="progressbar" style="padding-left:3px; color:black; width:60%"></div>
+                                </div>
+                            </span>
+
+                            <p id="workdir_diskspace" style="float:left; display:none;" class="small"></p>
+
+
+                        </div>
+                        <div class="col-md-12">
                             <div class="form-group">
-                                <label>Work Directory (Full path)</label>
                                 <input type="text" class="form-control" style="width: 100%;" id="rOut_dir" name="output_dir" placeholder="Enter output directory">
                             </div>
                         </div>
@@ -458,9 +499,8 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     <div class="form-group col-md-2">
                         <input type="checkbox" id="withTimeline" checked> Timeline</input>
                     </div>
-
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" id="permsDiv">
                     <div class="form-group">
                         <label>Permissions to View</label>
                         <select id="permsRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="perms">
@@ -469,7 +509,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         </select>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-6" id="groupsDiv">
                     <div class="form-group">
                         <label>Group Selection </label>
                         <select id="groupSelRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="group_id">
@@ -484,10 +524,6 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <div id="logTab" class="tab-pane fade">
             <div class="row" style="margin-top:10px; margin-bottom:2px;">
                 <div class="col-md-12">
-                    <div style="width:140px; float:right;">
-                        <select id="runVerLog" class="fbtn btn-default form-control"></select>
-                    </div>
-
                     <div class="form-group">
                         <h5 id="runTitleLog">Run Version 1:</h5>
                     </div>
@@ -532,9 +568,6 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <div id="reportTab" class="tab-pane fade">
             <div class="row" style="margin-top:10px; margin-bottom:2px;">
                 <div class="col-md-12">
-                    <div style="width:110px; float:right;">
-                        <select id="runVerReport" class="fbtn btn-default form-control mRunVerReportChange"></select>
-                    </div>
                     <div style="float:right;">
                         <button id="refreshVerReport" type="button" class="btn" data-backdrop="false" style="background:none; padding-right:10px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Reload Report Section"><i class="fa fa-refresh" style="font-size: 15px;"></i></a></button>
                     </div>
@@ -1312,20 +1345,20 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <h4 class="modal-title">Profile Variables</h4>
             </div>
             <div class="modal-body" id="profVarRunEnvModalBody">
-               <form class="form-horizontal">
-                <div class="form-group">
-                    <div class="col-sm-12">
-                        <p id="profVarRunEnvModalText">Test</p>
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <p id="profVarRunEnvModalText">Test</p>
+                        </div>
                     </div>
-                </div>
                 </form>
                 <form class="form-horizontal" id="profVarRunEnvBlock">
 
                 </form>
                 <form class="form-horizontal" style="margin-top:30px;">
-                    <div class="form-group" >
+                    <div class="form-group">
                         <div class="col-sm-12">
-                            <p id="profVarRunEnvModalText2" >Test</p>
+                            <p id="profVarRunEnvModalText2">Test</p>
                         </div>
                     </div>
                 </form>

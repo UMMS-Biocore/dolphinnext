@@ -1,3 +1,7 @@
+26.03.2020 Version 1.1.13
+Amount of active cloud instances updated without opening cloud console.
+Disk space control added to run page.
+
 24.03.2020 Version 1.1.12
 Bug fixed while binding paths to containers.
 Default initial run container set to singularity when run container is not enabled.

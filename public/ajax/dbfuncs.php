@@ -475,7 +475,7 @@ class dbfuncs {
     }
 
     //get nextflow input parameters
-    function getMainRunInputs ($project_pipeline_id, $proPipeAll, $ownerID ){
+    function getMainRunInputs ($project_pipeline_id, $proPipeAll, $profileType, $ownerID ){
         // get outputdir
         list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
         if ($profileType == "google" && !empty($dolphin_publish_real)){
@@ -971,7 +971,7 @@ class dbfuncs {
         $configText .= "$variable\n";
         $configText .= "$script_pipe_config\n";
         //get main run input parameters
-        $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $proPipeAll, $ownerID);
+        $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $proPipeAll, $profileType, $ownerID);
         $configText .= "\n// Run Parameters:\n\n".$mainRunParams;
         //get main run local variable parameters:
         $configText = $this->getProcessParams($proVarObj, $configText);
@@ -1320,20 +1320,29 @@ class dbfuncs {
         }
     }
 
-    function recurse_copy($src,$dst) { 
-        $dir = opendir($src); 
-        @mkdir($dst); 
-        while(false !== ( $file = readdir($dir)) ) { 
-            if (( $file != '.' ) && ( $file != '..' )) { 
-                if ( is_dir($src . '/' . $file) ) { 
-                    recurse_copy($src . '/' . $file,$dst . '/' . $file); 
-                } 
-                else { 
-                    copy($src . '/' . $file,$dst . '/' . $file); 
-                } 
-            } 
-        } 
-        closedir($dir); 
+    function recurse_copy($source, $dest) { 
+        // Check for symlinks
+        if (is_link($source)) {
+            return symlink(readlink($source), $dest);
+        }
+        // Simple copy for a file
+        if (is_file($source)) {
+            return copy($source, $dest);
+        }
+        // Make destination directory
+        if (!is_dir($dest)) {
+            mkdir($dest, 0755, true);
+        }
+        // Loop through the folder
+        $dir = dir($source);
+        while (false !== $entry = $dir->read()) {
+            if ($entry == '.' || $entry == '..') {
+                continue;
+            }
+            $this->recurse_copy("$source/$entry", "$dest/$entry");
+        }
+        $dir->close();
+        return true;
     } 
 
     function triggerRunErr($message, $uuid,$project_pipeline_id,$ownerID){
@@ -1487,7 +1496,26 @@ class dbfuncs {
         return json_encode($ret);
     }
 
-    public function updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID){
+    function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $ownerID){
+        $newObj = $proPipeAll[0];
+        $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+        $newObj->{'project_pipeline_input'} = $allinputs;
+        foreach ($allinputs as $inputitem):
+        $collection_id = $inputitem->{'collection_id'};
+        $collection_arr = array();
+        if (!empty($collection_id)){
+            $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
+            foreach ($allfiles as $fileData):
+            $name = $fileData->{'name'};
+            if (!in_array($name, $collection_arr)){ $collection_arr[] = $name; }
+            endforeach;
+            $newObj->{"collection-$collection_id"} = $collection_arr;
+        }
+        endforeach;
+        $this->updateRunLogOpt(json_encode($newObj), $uuid, $ownerID);
+    }
+
+    function updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID){
         //check if $project_pipeline_id already exits un run table
         $checkRun = $this->getRun($project_pipeline_id,$ownerID);
         $checkarray = json_decode($checkRun,true);
@@ -1503,7 +1531,7 @@ class dbfuncs {
         } else {
             $this->insertRun($project_pipeline_id, $status, "1", $ownerID);
         }
-        $data = $this->insertRunLog($project_pipeline_id, $uuid, $status, $ownerID);
+        $this->insertRunLog($project_pipeline_id, $uuid, $status, $ownerID);
     }
 
     function parseKeyLine($txt, $key){
@@ -3220,8 +3248,20 @@ class dbfuncs {
         $sql = "UPDATE run_log SET run_status='$status', duration='$duration', date_ended= now(), date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id' ORDER BY id DESC LIMIT 1";
         return self::runSQL($sql);
     }
+    function updateRunLogOpt($runLogOpt, $uuid, $ownerID) {
+        $sql = "UPDATE run_log SET run_opt='$runLogOpt', date_modified= now(), last_modified_user ='$ownerID'  WHERE run_log_uuid = '$uuid' AND owner_id = '$ownerID'";
+        return self::runSQL($sql);
+    }
     function getRunLog($project_pipeline_id) {
         $sql = "SELECT * FROM run_log WHERE project_pipeline_id = '$project_pipeline_id'";
+        return self::queryTable($sql);
+    }
+    function getRunLogOpt($uuid) {
+        $sql = "SELECT run_opt FROM run_log WHERE run_log_uuid = '$uuid'";
+        return self::queryTable($sql);
+    }
+    function getRunLogStatus($uuid) {
+        $sql = "SELECT run_status FROM run_log WHERE run_log_uuid = '$uuid'";
         return self::queryTable($sql);
     }
     function updateRunStatus($project_pipeline_id, $status, $ownerID) {
@@ -3519,7 +3559,44 @@ class dbfuncs {
         return $size;
     }
 
-    public function getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $google_cre_id, $project_pipeline_id, $ownerID) {
+    function getDiskSpace($dir, $profileType, $profileId, $ownerID){
+        $log = array();
+        if (!empty($dir)){
+            $dir = trim($dir);
+            $blocks = explode("/", $dir);
+            if ( 2<count($blocks)){
+                $checkdir = "/".$blocks[1]."/".$blocks[2];
+                list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+                $ssh_id = $cluDataArr[0]["ssh_id"];
+                $perms = $cluDataArr[0]["perms"];
+                $auto_workdir = $cluDataArr[0]["auto_workdir"];
+                $ssh_own_id = $cluDataArr[0]["owner_id"];
+                $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
+                if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
+                $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"df -hP $checkdir\" 2>&1 &";
+                $log["ret"] = shell_exec($cmd);
+                if (!is_null($log["ret"]) && isset($log["ret"])){
+                    $ret_blocks = explode("\n", $log["ret"]);
+                    for ($i = 0; $i < count($ret_blocks); ++$i) {
+                        if (preg_match("/Use%/i",$ret_blocks[$i])){
+                            $vals = $ret_blocks[$i+1];
+                            $val_blok = preg_split("/[\s,]+/", $vals);
+                            $log["total"] = $val_blok[1];
+                            $log["used"] = $val_blok[2];
+                            $log["free"] = $val_blok[3];
+                            $log["percent"] = $val_blok[4];
+                            break;
+                        }
+                    }
+                } else {
+                    $log["ret"] = "Query failed! Please check your query, connection profile or internet connection";
+                } 
+            }
+        }
+        return json_encode($log);
+    }
+
+    function getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $google_cre_id, $project_pipeline_id, $ownerID) {
         $dir = trim($dir);
         $log = "";
         if (preg_match("/s3:/i", $dir)){
