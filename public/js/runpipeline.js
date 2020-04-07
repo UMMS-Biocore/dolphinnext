@@ -3851,17 +3851,16 @@ function cleanDepProPipeInputs() {
 
 
 function updateCheckBox(check_id, status) {
-    if ((check_id === '#exec_all' || check_id === '#exec_each' || check_id === '#singu_check' || check_id === '#docker_check' || check_id === '#publish_dir_check') && status === "true") {
-        if ($(check_id).is(":checked") === false) {
-            $(check_id).trigger("click");
+    var targetDiv = $(check_id).attr("data-target");
+    if (targetDiv){
+        if (status == "true"){
+            $(targetDiv).collapse("show")
             $(check_id).prop('checked', true);
-        }
-    } else if ((check_id === '#publish_dir_check') && status === "false"){
-        if ($(check_id).is(":checked") === true) {
-            $(check_id).trigger("click");
+        } else if (status == "false"){
+            $(targetDiv).collapse("hide")
             $(check_id).prop('checked', false);
-        }  
-    }
+        }
+    } 
     if (status === "true") {
         $(check_id).prop('checked', true);
     } else if (status === "false") {
@@ -4180,6 +4179,7 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
     var nameInput = "";
     if (data) {
         nameInput = data[1].value;
+        nameInput = nameInput.replace(/\"/g, "_").replace(/\'/g, "_");
     }
     var collection_id = ""
     var collection_name = ""
@@ -4223,6 +4223,7 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
     var nameInput = "";
     if (data) {
         nameInput = data[1].value;
+        nameInput = nameInput.replace(/\"/g, "").replace(/\'/g, "");
     }
     var collection_id = ""
     var collection_name = ""
