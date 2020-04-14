@@ -80,6 +80,11 @@ else if ($p=="updateProPipeStatus") {
     $loadtype = "fast";
     $data = $db->updateProPipeStatus($project_pipeline_id, $loadtype, $ownerID);
 }
+else if ($p=="saveRunLogSize"){
+    $uuid = isset($_REQUEST['uuid']) ? $_REQUEST['uuid'] : "";
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $data = $db->saveRunLogSize($uuid, $project_pipeline_id, $ownerID);
+}
 else if ($p=="getFileContent"){
     $filename = $_REQUEST['filename'];
     if (isset($_REQUEST['project_pipeline_id'])){
@@ -575,6 +580,18 @@ else if ($p=="getExistSharedProjectPipelines"){
 else if ($p=="getProjectPipelines"){
     $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
     $data = $db -> getProjectPipelines($id,$project_id,$ownerID,$userRole);
+}
+else if ($p=="updateProjectPipelineNewRun"){
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $new_run = $_REQUEST['newrun'];
+    //only use when newrun is not exist
+    $data = $db -> updateProjectPipelineNewRun($project_pipeline_id,$new_run,$ownerID);
+}
+else if ($p=="updateProjectPipelineWithOldRun"){
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $run_log_uuid = $_REQUEST['run_log_uuid'];
+    //only use when newrun is exist
+    $data = $db -> updateProjectPipelineWithOldRun($project_pipeline_id,$run_log_uuid,$ownerID);
 }
 else if ($p=="getRunLog"){
     $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";

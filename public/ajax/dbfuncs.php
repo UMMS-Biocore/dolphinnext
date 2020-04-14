@@ -52,6 +52,7 @@ class dbfuncs {
         if (!$result) {
             error_log($sql);
             trigger_error('Database Error: ' . self::$link->error);
+            return json_encode ("");
         }
         if ($result && $result!="1")
         {
@@ -220,6 +221,15 @@ class dbfuncs {
         }
     }
 
+    function getDirectorySize($f){
+        $io = popen ( '/usr/bin/du -sk ' . $f, 'r' );
+        $size = fgets ( $io, 4096);
+        $size = substr ( $size, 0, strpos ( $size, "\t" ) );
+        pclose ( $io );
+        return $size;
+    }
+
+
     function randomPassword() {
         $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
         $pass = array(); //remember to declare $pass as an array
@@ -342,14 +352,19 @@ class dbfuncs {
     }
 
     function getCluAmzData($profileId, $profileType, $ownerID) {
+        $connect = "";
         if ($profileType == 'cluster'){
             $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
             $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
+            if (!empty($cluDataArr[0])){
+                $connect = $cluDataArr[0]["username"]."@".$cluDataArr[0]["hostname"];
+            }
         } else if ($profileType == 'amazon' || $profileType == 'google'){
             $cluData=$this->getProfileCloudbyID($profileId, $profileType, $ownerID);
             $cluDataArr=json_decode($cluData,true);
-            $connect = $cluDataArr[0]["ssh"];
+            if (!empty($cluDataArr[0])){
+                $connect = $cluDataArr[0]["ssh"];
+            }
         }
         $ssh_port = !empty($cluDataArr[0]["port"]) ? " -p ".$cluDataArr[0]["port"] : "";
         $scp_port = !empty($cluDataArr[0]["port"]) ? " -P ".$cluDataArr[0]["port"] : "";
@@ -1494,6 +1509,18 @@ class dbfuncs {
             $this->writeLog($uuid,"RUN COMMAND:\n".$ret["manualRunCmd"],'a','serverlog.txt');
         }
         return json_encode($ret);
+    }
+
+    function saveRunLogSize($uuid, $project_pipeline_id, $ownerID){
+        if (empty($uuid)){
+            $rundir = "run$project_pipeline_id";
+        } else {
+            $rundir = $uuid;
+        }
+        $run_path_server = "{$this->run_path}/$rundir";
+        $size = $this->getDirectorySize($run_path_server);
+        $ret = $this->updateRunLogSize($project_pipeline_id, $uuid, $size, $ownerID);
+        return $ret;
     }
 
     function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $ownerID){
@@ -3248,6 +3275,15 @@ class dbfuncs {
         $sql = "UPDATE run_log SET run_status='$status', duration='$duration', date_ended= now(), date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id' ORDER BY id DESC LIMIT 1";
         return self::runSQL($sql);
     }
+    function updateRunLogSize($project_pipeline_id, $uuid, $size, $ownerID) {
+        if (empty($uuid)){
+            $sql = "UPDATE run_log SET size='$size', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id' AND owner_id = '$ownerID' ORDER BY id DESC LIMIT 1";
+            return self::runSQL($sql);
+        } else {
+            $sql = "UPDATE run_log SET size='$size', date_modified= now(), last_modified_user ='$ownerID'  WHERE run_log_uuid = '$uuid' AND owner_id = '$ownerID'";
+            return self::runSQL($sql);
+        }
+    }
     function updateRunLogOpt($runLogOpt, $uuid, $ownerID) {
         $sql = "UPDATE run_log SET run_opt='$runLogOpt', date_modified= now(), last_modified_user ='$ownerID'  WHERE run_log_uuid = '$uuid' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
@@ -3475,6 +3511,7 @@ class dbfuncs {
             }
         }
         if (!is_null($nextflow_log) && !empty($nextflow_log)){
+            $this->saveRunLogSize($uuid, $project_pipeline_id, $ownerID);
             return json_encode("nextflow log saved");
         } else {
             return json_encode("logNotFound");
@@ -3567,30 +3604,33 @@ class dbfuncs {
             if ( 2<count($blocks)){
                 $checkdir = "/".$blocks[1]."/".$blocks[2];
                 list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
-                $ssh_id = $cluDataArr[0]["ssh_id"];
-                $perms = $cluDataArr[0]["perms"];
-                $auto_workdir = $cluDataArr[0]["auto_workdir"];
-                $ssh_own_id = $cluDataArr[0]["owner_id"];
-                $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
-                if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
-                $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"df -hP $checkdir\" 2>&1 &";
-                $log["ret"] = shell_exec($cmd);
-                if (!is_null($log["ret"]) && isset($log["ret"])){
-                    $ret_blocks = explode("\n", $log["ret"]);
-                    for ($i = 0; $i < count($ret_blocks); ++$i) {
-                        if (preg_match("/Use%/i",$ret_blocks[$i])){
-                            $vals = $ret_blocks[$i+1];
-                            $val_blok = preg_split("/[\s,]+/", $vals);
-                            $log["total"] = $val_blok[1];
-                            $log["used"] = $val_blok[2];
-                            $log["free"] = $val_blok[3];
-                            $log["percent"] = $val_blok[4];
-                            break;
+                if (!empty($cluDataArr[0])){
+                    $ssh_id = $cluDataArr[0]["ssh_id"];
+                    $perms = $cluDataArr[0]["perms"];
+                    $auto_workdir = $cluDataArr[0]["auto_workdir"];
+                    $ssh_own_id = $cluDataArr[0]["owner_id"];
+                    $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
+                    if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
+                    $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"df -hP $checkdir\" 2>&1 &";
+                    $log["ret"] = shell_exec($cmd);
+                    if (!is_null($log["ret"]) && isset($log["ret"])){
+                        $ret_blocks = explode("\n", $log["ret"]);
+                        for ($i = 0; $i < count($ret_blocks); ++$i) {
+                            if (preg_match("/Use%/i",$ret_blocks[$i])){
+                                $vals = $ret_blocks[$i+1];
+                                $val_blok = preg_split("/[\s,]+/", $vals);
+                                $log["total"] = $val_blok[1];
+                                $log["used"] = $val_blok[2];
+                                $log["free"] = $val_blok[3];
+                                $log["percent"] = $val_blok[4];
+                                break;
+                            }
                         }
+                    } else {
+                        $log["ret"] = "Query failed! Please check your query, connection profile or internet connection";
                     }
-                } else {
-                    $log["ret"] = "Query failed! Please check your query, connection profile or internet connection";
-                } 
+                }
+
             }
         }
         return json_encode($log);
@@ -3982,12 +4022,88 @@ class dbfuncs {
 
     // ------- Project Pipelines  ------
     function insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $ownerID) {
-        $sql = "INSERT INTO project_pipeline(name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id)
-                  VALUES ('$name', '$project_id', '$pipeline_id', '$summary', '$output_dir', '$profile', '$interdel', '$cmd', '$exec_each', '$exec_all', '$exec_all_settings', '$exec_each_settings', '$docker_check', '$docker_img', '$singu_check', '$singu_save', '$singu_img', '$exec_next_settings', '$docker_opt', '$singu_opt', '$amazon_cre_id', '$google_cre_id', '$publish_dir','$publish_dir_check', '$withReport', '$withTrace', '$withTimeline', '$withDag', '$process_opt', '$onload', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id')";
+        $sql = "INSERT INTO project_pipeline(name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run)
+                  VALUES ('$name', '$project_id', '$pipeline_id', '$summary', '$output_dir', '$profile', '$interdel', '$cmd', '$exec_each', '$exec_all', '$exec_all_settings', '$exec_each_settings', '$docker_check', '$docker_img', '$singu_check', '$singu_save', '$singu_img', '$exec_next_settings', '$docker_opt', '$singu_opt', '$amazon_cre_id', '$google_cre_id', '$publish_dir','$publish_dir_check', '$withReport', '$withTrace', '$withTimeline', '$withDag', '$process_opt', '$onload', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id', '1')";
         return self::insTable($sql);
     }
     function updateProjectPipelineOnload($id, $onload,$ownerID){
         $sql = "UPDATE project_pipeline SET onload='$onload', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    function updateProjectPipelineNewRun($project_pipeline_id,$new_run,$ownerID){
+        $sql = "UPDATE project_pipeline SET new_run='$new_run', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$project_pipeline_id'";
+        return self::runSQL($sql);
+    }
+
+    function updateProjectPipelineWithOldRun($id,$run_log_uuid,$ownerID){
+        $ret = json_encode("");
+        $raw_data = json_decode($this->getRunLogOpt($run_log_uuid));
+        if (!empty($raw_data[0])){
+            $raw_data[0]->{'run_opt'} = str_replace('\\', '\\\\', $raw_data[0]->{'run_opt'});
+            $data = json_decode($raw_data[0]->{'run_opt'});
+            $project_id = $data->{'project_id'};
+            $pipeline_id = $data->{'pipeline_id'};
+            $output_dir = $data->{'output_dir'};
+            $publish_dir = $data->{'publish_dir'};
+            $publish_dir_check = $data->{'publish_dir_check'};
+            $profile = $data->{'profile'};
+            $interdel = $data->{'interdel'};
+            $cmd = $data->{'cmd'};
+            $exec_each = $data->{'exec_each'};
+            $exec_all = $data->{'exec_all'};
+            $exec_all_settings = $data->{'exec_all_settings'};
+            $exec_each_settings = $data->{'exec_each_settings'};
+            $exec_next_settings = $data->{'exec_next_settings'};
+            $docker_check = $data->{'docker_check'};
+            $docker_img = $data->{'docker_img'};
+            $docker_opt = $data->{'docker_opt'};
+            $singu_check = $data->{'singu_check'};
+            $singu_save = $data->{'singu_save'};
+            $singu_img = $data->{'singu_img'};
+            $singu_opt = $data->{'singu_opt'};
+            $amazon_cre_id = $data->{'amazon_cre_id'};
+            $google_cre_id = $data->{'google_cre_id'};
+            $withReport = $data->{'withReport'};
+            $withTrace = $data->{'withTrace'};
+            $withTimeline = $data->{'withTimeline'};
+            $withDag = $data->{'withDag'};
+            $process_opt = $data->{'process_opt'};
+            $new_run = 1;
+            settype($amazon_cre_id, 'integer');
+            settype($google_cre_id, 'integer');
+            $ret= $this->updtProjectPipelineWithOldRun($id, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $new_run, $ownerID);
+            if (!empty($ret)){
+                $ret = $this->removeProjectPipelineInputByPipe($id);
+                if (!empty($ret)){
+                    // insert new inputs:
+                    $allinputs = $data->{'project_pipeline_input'};
+                    foreach ($allinputs as $inputitem):
+                    $input_id = $inputitem->{'input_id'};
+                    $g_num = $inputitem->{'g_num'};
+                    $given_name = $inputitem->{'given_name'};
+                    $qualifier = $inputitem->{'qualifier'};
+                    $collection_id = $inputitem->{'collection_id'};
+                    $url = $inputitem->{'url'};
+                    $urlzip = $inputitem->{'urlzip'};
+                    $checkpath = $inputitem->{'checkpath'};
+                    settype($input_id, 'integer');
+                    settype($collection_id, 'integer');
+                    settype($g_num, 'integer');
+                    settype($url, 'integer');
+                    settype($urlzip, 'integer');
+                    settype($checkpath, 'integer');
+                    $ret = $this->insertProPipeInput($id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $url, $urlzip, $checkpath, $ownerID);
+                    endforeach;
+                    //return last data
+                    $ret =  $this->getProjectPipelines($id,"",$ownerID,"");
+                }
+            }
+        }
+        return $ret;
+    }
+
+    function updtProjectPipelineWithOldRun($id, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $new_run, $ownerID) {
+        $sql = "UPDATE project_pipeline SET output_dir='$output_dir', profile='$profile', interdel='$interdel', cmd='$cmd', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', new_run='$new_run' WHERE id = '$id' AND owner_id='$ownerID'";
         return self::runSQL($sql);
     }
 
@@ -4000,7 +4116,7 @@ class dbfuncs {
         return $this->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$project_pipeline_id'");
     }
     function updateProPipeLastRunUUID($project_pipeline_id, $uuid) {
-        $sql = "UPDATE project_pipeline SET last_run_uuid='$uuid' WHERE id='$project_pipeline_id'";
+        $sql = "UPDATE project_pipeline SET last_run_uuid='$uuid', new_run='0' WHERE id='$project_pipeline_id'";
         return self::runSQL($sql);
     }
     function getProjectPipelines($id,$project_id,$ownerID,$userRole) {
@@ -4011,7 +4127,7 @@ class dbfuncs {
                 $where = " where pp.id = '$id' AND pip.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
             }
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, IF(pp.owner_id='$ownerID',1,0) as own
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM project_pipeline pp
                       INNER JOIN users u ON pp.owner_id = u.id
                       INNER JOIN project p ON pp.project_id = p.id
@@ -4124,7 +4240,7 @@ class dbfuncs {
 
     function getProjectPipelineInputs($project_pipeline_id,$ownerID) {
         $where = " where (c.deleted = 0 OR c.deleted IS NULL) AND ppi.deleted=0 AND ppi.project_pipeline_id = '$project_pipeline_id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63 OR (ug.u_id ='$ownerID' and ppi.perms = 15))";
-        $sql = "SELECT DISTINCT ppi.id, i.id as input_id, i.name, ppi.given_name, ppi.g_num, ppi.collection_id, c.name as collection_name, i2.name as url, i3.name as urlzip, i4.name as checkpath
+        $sql = "SELECT DISTINCT ppi.id, i.id as input_id, ppi.qualifier, i.name, ppi.given_name, ppi.g_num, ppi.collection_id, c.name as collection_name, i2.name as url, i3.name as urlzip, i4.name as checkpath
                     FROM project_pipeline_input ppi
                     LEFT JOIN input i ON (i.id = ppi.input_id)
                     LEFT JOIN input i2 ON (i2.id = ppi.url)

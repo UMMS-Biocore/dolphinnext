@@ -1,6 +1,9 @@
 26.03.2020 Version 1.1.13
 Amount of active cloud instances updated without opening cloud console.
 Disk space control added to run page.
+Run history dropdown created which allows to execute to use previous run attempts.
+Each run settings are saved for each run attempts.
+Fixed checkbox scroll for run page.
 
 24.03.2020 Version 1.1.12
 Bug fixed while binding paths to containers.

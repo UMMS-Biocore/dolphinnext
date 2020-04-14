@@ -155,6 +155,8 @@ function combineLinuxCmd(cmdAr){
     return ret;
 }
 
+
+
 function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
     $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon" style=" position: absolute; top: 0; right: 0; bottom: 0; left: 0;" src="css/loader.gif" alt="Loading..." /></div>');
@@ -194,10 +196,12 @@ function showInfoModal(modalId, textID, text) {
 //text: show in browser, 
 //savedData: save data to delete button
 //execFunc: execute execFunc(savedData) when clicking on delete button
-function showConfirmDeleteModal(text, savedData, execFunc) {
+function showConfirmDeleteModal(text, savedData, execFunc, buttonText) {
     var modalId = "#confirmDeleteModal";
     var textID = "#confirmDeleteModalText";
     var clickid = "#confirmDeleteModalDelBtn";
+    var btnText = buttonText || "Delete";
+    $(clickid).text(btnText)
     //true if modal is open
     if (($(modalId).data('bs.modal') || {}).isShown ){
         $(textID).html(text);
@@ -779,6 +783,21 @@ function updateMarkdown (text, targetDiv){
 $(document).ready(function () {
     initCloudConsole("amazon");
     initCloudConsole("google");
+
+    // example link 'UID: <a class="showHideSpan" data-toggle="tooltip" data-placement="bottom" data-original-title="Show/Hide Unique Run ID"><span  short="'+shortUID+'" long="'+run_log_uuid+'" last="short">'+shortUID+'<span></a>';
+    $(document).on('click', '.showHideSpan', function (event) {
+        var short = $(this).find("span").attr("short");
+        var long = $(this).find("span").attr("long");
+        var last = $(this).find("span").attr("last");
+        if (last == "short"){
+            $(this).find("span").text(long)
+            $(this).find("span").attr("last", "long");
+        } else if (last == "long"){
+            $(this).find("span").text(short);
+            $(this).find("span").attr("last", "short");
+        }
+    });
+
 
     $(function () {
         $(document).on('change', '.autoShutCheck', function (event) {

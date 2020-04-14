@@ -9,7 +9,7 @@ $runscope = {
     getAjaxData : function (varName, getValuesObj) {
         if ($runscope[varName] === null){
             $runscope[varName] = getValues(getValuesObj);
-            Object.defineProperty($runscope, varName, {configureable: false, writable:false});
+            //            Object.defineProperty($runscope, varName, {configureable: false, writable:false});
         }
         return $runscope[varName];
     },
@@ -3917,6 +3917,28 @@ function loadUserGroups(pipeData){
     } 
 }
 
+//fillingType:"default" or "dry"
+function fillProPipeInputsRev (projectPipeInputs_rev, fillingType){
+    var numInputRows = $('#inputsTable > tbody').find('td[given_name]');
+    $.each(numInputRows, function (el) {
+        var given_name = $(numInputRows[el]).attr("given_name");
+        var in_row = $(numInputRows[el]).closest('tr');
+        var rowID = in_row.attr("id"); //"inputTa-5"
+        var gnum = rowID.split("Ta-")[1];
+        var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
+        //check if project_pipeline_inputs exist then fill:
+        var getProPipeInputs = projectPipeInputs_rev.filter(function (el) { return el.given_name == given_name });
+        removeSelectFile(rowID, qualifier,fillingType)
+        if (getProPipeInputs.length > 0) {
+            prepareInsertInput(getProPipeInputs, rowID, gnum, qualifier, fillingType);
+        }
+        // During dry-fill, update process settings
+        showHideSett(rowID)
+    });
+}
+
+
+
 function loadRunSettings(pipeData){
     $('#rOut_dir').val(pipeData[0].output_dir);
     $('#publish_dir').val(pipeData[0].publish_dir);
@@ -3982,7 +4004,7 @@ function loadProjectPipeline(pipeData) {
     // activate collapse icon for process options
     refreshCollapseIconDiv()
 
-    fillRunVerOpt(["#runVerLog"])
+    fillRunVerOpt("#runVerLog")
     //hide system inputs
     $("#systemInputs").trigger("click");
     //insert icon for process_options according to show_setting attribute
@@ -4400,12 +4422,11 @@ function checkReadytoRun(type) {
 
     //if ready and not running/waits/error
     if (publishReady && s3Status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
-        console.log("initial runStatus")
-        console.log(runStatus)
+        console.log("initial runStatus", runStatus)
         if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun") {
             if (cloudStatus) {
                 if (cloudStatus === "running") {
-                    console.log(checkType)
+                    console.log("checkType", checkType)
                     if (checkType === "rerun" || checkType === "resumerun") {
                         runStatus = "aboutToStart"
                         runProjectPipe(runProPipeCall, checkType);
@@ -4418,8 +4439,7 @@ function checkReadytoRun(type) {
                     displayButton('statusProPipe');
                 }
             } else {
-                console.log("checkType")
-                console.log(checkType)
+                console.log("checkType", checkType)
                 if (checkType === "rerun" || checkType === "resumerun") {
                     runStatus = "aboutToStart"
                     runProjectPipe(runProPipeCall, checkType);
@@ -4803,6 +4823,49 @@ function configTextAllProcess(confText, exec_all_settings, type, proName, execut
     return confText
 }
 
+//type="" or "Opt"
+function displayStatButton(idButton, type) {
+    var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual", "runStatErrorOpt", "runStatCompleteOpt", "runStatRunningOpt", "runStatWaitingOpt", "runStatConnectingOpt", "runStatTerminatedOpt", "runStatAbortedOpt", "runStatManualOpt"];
+    for (var i = 0; i < buttonList.length; i++) {
+        if (document.getElementById(buttonList[i])){
+            document.getElementById(buttonList[i]).style.display = "none";
+        }
+    }
+    if (type){
+        idButton = idButton + type;
+    }
+    if (document.getElementById(idButton)){
+        document.getElementById(idButton).style.display = "inline";
+    }
+}
+
+function updateRunProPipeOptions(){
+    var length = $('#runVerLog > option').length;
+    if (length<3){
+        $("#runProPipeStart").css("display","list-item");
+        $("#runProPipeReRun").css("display","none");
+        $("#runProPipeResume").css("display","none");
+    } else {
+        $("#runProPipeStart").css("display","none");
+        $("#runProPipeReRun").css("display","list-item");
+        $("#runProPipeResume").css("display","list-item"); 
+    }
+}
+
+function showManualRunModal(){
+    $("#manualRunModal").modal('show');
+}
+
+$(document).on('click', '#runProPipeBut', function (e) {
+    e.stopPropagation();
+    $("#runProPipeDropdown").dropdown("toggle");
+    updateRunProPipeOptions()
+});
+
+$(document).on('click', '#runProPipeBut2', function (e) {
+    updateRunProPipeOptions()
+});
+
 function displayButton(idButton) {
     var buttonList = ['runProPipe', 'errorProPipe', 'completeProPipe', 'runningProPipe', 'waitingProPipe', 'statusProPipe', 'connectingProPipe', 'terminatedProPipe', "abortedProPipe", "manualProPipe"];
     for (var i = 0; i < buttonList.length; i++) {
@@ -4837,6 +4900,7 @@ function terminateProjectPipe() {
     var setStatus = getValues({ p: "updateRunStatus", run_status: "Terminated", project_pipeline_id: project_pipeline_id });
     if (setStatus) {
         displayButton('terminatedProPipe');
+        window.runStatus = "Terminated";
         //trigger saving newxtflow log file
         setTimeout(function () {
             clearIntNextLog(proType, proId)
@@ -5151,22 +5215,39 @@ function runProjectPipe(runProPipeCall, checkType) {
             displayButton('connectingProPipe');
         }
         //create uuid for run
-        var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id, manualRun:manualRunCheck });
-        fillRunVerOpt(["#runVerLog"])
-        $('#runLogArea').val("");
-        var hostname = $('#chooseEnv').find('option:selected').attr('host');
-        pathArray = getPathArray();
-        //autofill for ghpcc06 cluster to mount all directories before run executed.
-        if (hostname === "ghpcc06.umassrc.org") {
-            execOtherOpt = autofillMountPath(pathArray)
-        }
-        pathArrayL1 = getPathArrayL1(pathArray)
-        //Autofill runOptions of singularity and docker image
-        window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
-        //initial run run-options to send with ajax
-        window.initRunOptions = getInitRunOptions(pathArrayL1)
-        // Call the callback
-        setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
+        $.ajax({
+            url: "ajax/ajaxquery.php",
+            data: { 
+                p: "updateRunAttemptLog", 
+                project_pipeline_id: project_pipeline_id, 
+                manualRun:manualRunCheck 
+            },
+            cache: false,
+            type: "POST",
+            success: function (uuid) {
+                updateNewRunStatus("0")
+                $('#runLogArea').val("");
+                var hostname = $('#chooseEnv').find('option:selected').attr('host');
+                pathArray = getPathArray();
+                //autofill for ghpcc06 cluster to mount all directories before run executed.
+                if (hostname === "ghpcc06.umassrc.org") {
+                    execOtherOpt = autofillMountPath(pathArray)
+                }
+                pathArrayL1 = getPathArrayL1(pathArray)
+                //Autofill runOptions of singularity and docker image
+                window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
+                //initial run run-options to send with ajax
+                window.initRunOptions = getInitRunOptions(pathArrayL1)
+                // Call the callback
+                var runAfterSave = function (){
+                    runProPipeCall(keepCheckType, uuid);
+                }
+                saveRun(runAfterSave);
+            },
+            error: function (jqXHR, exception) {
+                toastr.error("Error occured.")
+            }
+        });
     } else {
         $("#manualRunModal").modal("show");
     }
@@ -5174,7 +5255,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 
 //click on run button (callback function)
 function runProPipeCall(checkType, uuid) {
-    saveRun(false);
+    console.log("runProPipeCall")
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
@@ -5264,35 +5345,46 @@ function runProPipeCall(checkType, uuid) {
     }
     //save nextflow text as nextflow.nf and start job
     serverLog = '';
-    var serverLogGet = getValues({
-        p: "saveRun",
-        nextText: nextText,
-        proVarObj: proVarObj,
-        configText: configText,
-        profileType: proType,
-        profileId: proId,
-        initRunOptions: initRunOptions,
-        docker_check: docker_check,
-        google_cre_id: google_cre_id,
-        amazon_cre_id: amazon_cre_id,
-        project_pipeline_id: project_pipeline_id,
-        runType: checkType,
-        manualRun: manualRunCheck,
-        uuid: uuid
-    });
-    updateRunVerNavBar()
-    $("#refreshVerReport").trigger("click");
-    if (manualRunCheck == "true"){
-        if (serverLogGet){
-            if (serverLogGet["manualRunCmd"]){
-                $("#manualRunCmd").val(serverLogGet["manualRunCmd"])
-                hideLoadingDiv("manuaRunPanel");
-            }
+    $.ajax({
+        url: "ajax/ajaxquery.php",
+        data: {
+            p: "saveRun",
+            nextText: nextText,
+            proVarObj: proVarObj,
+            configText: configText,
+            profileType: proType,
+            profileId: proId,
+            initRunOptions: initRunOptions,
+            docker_check: docker_check,
+            google_cre_id: google_cre_id,
+            amazon_cre_id: amazon_cre_id,
+            project_pipeline_id: project_pipeline_id,
+            runType: checkType,
+            manualRun: manualRunCheck,
+            uuid: uuid
+        },
+        cache: false,
+        type: "POST",
+        success: function (serverLogGet) {
+            updateNewRunStatus("0")
+            fillRunVerOpt("#runVerLog");
+            updateRunVerNavBar()
+            $("#refreshVerReport").trigger("click");
+            if (manualRunCheck == "true"){
+                if (serverLogGet){
+                    if (serverLogGet["manualRunCmd"]){
+                        $("#manualRunCmd").val(serverLogGet["manualRunCmd"])
+                        hideLoadingDiv("manuaRunPanel");
+                    }
+                }
+            } 
+            $('.nav-tabs a[href="#logTab"]').tab('show');
+            readNextflowLogTimer(proType, proId, "default");
+        },
+        error: function (jqXHR, exception) {
+            toastr.error("Error occured.")
         }
-    } 
-    $('.nav-tabs a[href="#logTab"]').tab('show');
-    readNextflowLogTimer(proType, proId, "default");
-
+    });
 }
 
 
@@ -5381,14 +5473,18 @@ function saveNexLg(proType, proId) {
 }
 
 function clearIntPubWeb(proType, proId) {
-    clearInterval(interval_readPubWeb);
+    if (typeof interval_readPubWeb !== 'undefined'){
+        clearInterval(interval_readPubWeb);
+    }
     //last save call after run completed
     setTimeout(function () { readPubWeb(proType, proId, "no_reload") }, 4000);
 }
 //
 
 function clearIntNextLog(proType, proId) {
-    clearInterval(interval_readNextlog);
+    if (typeof interval_readNextlog !== 'undefined'){
+        clearInterval(interval_readNextlog);
+    }
     //last save call after run completed
     setTimeout(function () { saveNexLg(proType, proId) }, 5000);
 }
@@ -5409,7 +5505,7 @@ function readNextLog(proType, proId, type) {
         }
         var pidStatus = "";
 
-        // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+        // Available Run_status States: Terminated,NextSuc,Error,NextErr,NextRun, Waiting,init, Aborted
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
         if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr" || runStatus === "Manual") {
             window["countFailRead"]=0;
@@ -5744,9 +5840,107 @@ function formToJsonEachPro() {
 
 }
 
+function checkNewRunStatus(){
+    var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+    var newrunCheck = 0;
+    //if new_run is selected then unselect dropdown
+    if (pipeData[0]){
+        if (pipeData[0].new_run === "1"){
+            newrunCheck = 1;
+        }
+    }
+    return newrunCheck;
+}
+
+function updateNewRunStatus(stat){
+    if (pipeData[0]){
+        pipeData[0].new_run = stat;
+    }
+    if ($runscope.getProjectPipelines[0]){
+        $runscope.getProjectPipelines[0].new_run =stat;
+    } 
+}
+
+function createNewRunFunc(newRunExist){
+    var run_log_uuid = $('#runVerLog').val();
+    if (!newRunExist){
+        $.ajax({
+            url: "ajax/ajaxquery.php",
+            data: {
+                p:"updateProjectPipelineNewRun",  
+                newrun:1, 
+                project_pipeline_id: project_pipeline_id,
+                run_log_uuid: run_log_uuid
+            },
+            cache: false,
+            type: "POST",
+            success: function (data) {
+                if(data){
+                    updateNewRunStatus("1");
+                    fillRunVerOpt('#runVerLog');
+                    $('.nav-tabs a[href="#configTab"]').tab('show');
+                    toastr.info('New run is ready.');
+                } else {
+                    toastr.error("Error occured.")
+                }
+            },
+            error: function (jqXHR, exception) {
+                toastr.error("Error occured.")
+            }
+        }); 
+    } else {
+        $.ajax({
+            url: "ajax/ajaxquery.php",
+            data: {
+                p:"updateProjectPipelineWithOldRun",  
+                project_pipeline_id: project_pipeline_id,
+                run_log_uuid: run_log_uuid
+            },
+            cache: false,
+            type: "POST",
+            success: function (data) {
+                if (data){
+                    //refresh existing pipeData
+                    pipeData = data;
+                    if ($runscope.getProjectPipelines){
+                        $runscope.getProjectPipelines = data;
+                    } 
+                    fillRunVerOpt('#runVerLog');
+                    $('.nav-tabs a[href="#configTab"]').tab('show');
+                    toastr.info('New run is ready.');
+                } else {
+                    toastr.error("Old run couldn't be loaded.")
+                }
+            },
+            error: function (jqXHR, exception) {
+                toastr.error("Error occured.")
+            }
+        });
+
+
+    }
+
+}
+
 function saveRunIcon() {
-    saveRun(false);
-    checkReadytoRun();
+    //check if lastrun is running, then show warning
+    if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init"){
+        showInfoModal("#infoModal", "#infoModalText", "Please wait for your last run to finish.")
+    } else {
+        var newRunExist =checkNewRunStatus();
+        var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+        if (newRunExist && newRun){
+            saveRun(false);
+            checkReadytoRun();
+        } else if (!newRunExist){
+            var sucFunc = function(){
+                $('.nav-tabs a[href="#configTab"]').tab('show');
+                createNewRunFunc(newRunExist)
+            }
+            saveRun(sucFunc);
+            checkReadytoRun();
+        }
+    }
 }
 
 function saveRun(sucFunc) {
@@ -5791,7 +5985,6 @@ function saveRun(sucFunc) {
         amazon_cre_id = $("#mRunAmzKey").val();
     }
     google_cre_id = $("#mRunGoogKey").val();
-
     var output_dir = $runscope.getPubVal("work");
     var publish_dir = $runscope.getPubVal("publish");
     var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
@@ -5857,12 +6050,11 @@ function saveRun(sucFunc) {
             data: data,
             async: true,
             success: function (s) {
+                console.log(s)
                 toastr.info('All changes are saved.');
                 if (typeof sucFunc === "function") {
                     sucFunc()
                 }
-
-                console.log(s)
                 if (dupliProPipe === false) {
                     if (s){
                         if ($.isArray(s)){
@@ -6090,7 +6282,7 @@ function duplicateProPipe(type) {
 
 
 
-function fillRunVerOpt(dropDownAr) {
+function fillRunVerOpt(dropDownId) {
     var runLogs = getValues({ "p": "getRunLog", project_pipeline_id: project_pipeline_id })
     //allow one outdated log directory
     var newRunLogs = [];
@@ -6106,42 +6298,62 @@ function fillRunVerOpt(dropDownAr) {
         }
     });
     var size = $(newRunLogs).size()
-    for (var j = 0; j < dropDownAr.length; j++) {
-        var n = 0;
-        var lastItem = "";
-        var dropDownId = dropDownAr[j];
-        var runType = "";
-        if (dropDownId == "#runVerLog") {
-            runType = "Log"
-        }
-        $(dropDownId).empty();
-        $.each(newRunLogs, function (el) {
-            var run_log_uuid = newRunLogs[el].run_log_uuid;
-            var date_created = newRunLogs[el].date_created
-            var project_pipeline_id = newRunLogs[el].project_pipeline_id
-            if (run_log_uuid || project_pipeline_id) {
-                n++;
-                if (n == size) {
-                    lastItem = 'lastRun="yes"';
-                } else {
-                    lastItem = "";
-                }
-                if (run_log_uuid) {
-                    $(dropDownId).prepend(
-                        $('<option ' + lastItem + '></option>').attr("ver", n).val(run_log_uuid).html("Run " + runType + " " + n + " created at " + date_created)
-                    );
-                } else if (project_pipeline_id) {
-                    $(dropDownId).prepend(
-                        $('<option ' + lastItem + '></option>').attr("ver", n).val("run" + project_pipeline_id).html("Run Log " + n + " created at " + date_created)
-                    );
+    var n = 0;
+    var lastDropdownVal = '';
+    var lastItem = 'lastRun="yes"';
+    var newRun = 'newRun="yes"';
+    $(dropDownId).empty();
+    $.each(newRunLogs, function (el) {
+        var run_log_uuid = newRunLogs[el].run_log_uuid;
+        var date_created = newRunLogs[el].date_created
+        var project_pipeline_id = newRunLogs[el].project_pipeline_id
+        var sizeInKB = newRunLogs[el].size
+        var sizeText = "";
+        if (run_log_uuid || project_pipeline_id) {
+            n++;
+            if (size){
+                var sizeInMB = (sizeInKB / (1024)).toFixed(2);
+                if (sizeInKB){
+                    sizeText = " ("+sizeInMB+" MB)";
                 }
             }
-            $(dropDownId).val($(dropDownId + ' option:first').val());
-        });
-        var lastrunUID = $(dropDownId + ' option:first').val();
+            if (n == size) {
+                lastItem = 'lastRun="yes"';
+            } else {
+                lastItem = "";
+            }
+
+            if (run_log_uuid) {
+                lastDropdownVal = run_log_uuid;
+                $(dropDownId).prepend(
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val(lastDropdownVal).html("Run " + n + " created at " + date_created+sizeText)
+                );
+            } else if (project_pipeline_id) {
+                lastDropdownVal = "run" + project_pipeline_id;
+                $(dropDownId).prepend(
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val(lastDropdownVal).html("Run " + n + " created at " + date_created+sizeText)
+                );
+            }
+        }
+    });
+    $(dropDownId).prepend( $('<option disabled></option>').val(0).html("-- Run History --") );
+    var newrunCheck = checkNewRunStatus();
+    if (n === 0){
+        updateNewRunStatus("1");
+        newrunCheck = "1";
+    }
+    //if new_run is selected then select first "Run History" option
+    if (newrunCheck){
+        n++;
+        $(dropDownId).prepend($('<option ' + newRun + '></option>').attr("ver", n).val("newrun").html("New Run " + n));
+        $(dropDownId).val($(dropDownId + ' option:first').val());
+        $(dropDownId).trigger("change");
+        // else choose second option
+    } else {
+        $(dropDownId).val($(dropDownId + ' option[value="'+lastDropdownVal+'"]').val());
         // don't allow to reload configtab unless another log is selected 
-        $(dropDownId).attr("configTabUID",lastrunUID);
-        $(dropDownId).attr("prevUID",lastrunUID);
+        //        $(dropDownId).attr("configTabUID",lastDropdownVal);
+        //        $(dropDownId).attr("prevUID",lastDropdownVal);
         $(dropDownId).trigger("change");
     }
 }
@@ -6355,6 +6567,18 @@ function tooglePermsGroupsDiv(mode){
         $('#permsDiv').css("display", "none");
     }
 }
+
+function toogleMainIcons(mode){
+    if (mode == "show"){
+        $('#saveRunIcon').css("display", "inline-block");
+        $('#downPipeline').css("display", "inline-block");
+        $('#delRun').css("display", "inline-block");
+    } else if (mode == "hide"){
+        $('#saveRunIcon').css("display", "none");
+        $('#downPipeline').css("display", "none");
+        $('#delRun').css("display", "none");
+    }
+}
 function toogleStatusMode(mode){
     if (mode == "default"){
         $('#pipeRunDiv').css("display", "block");
@@ -6367,32 +6591,22 @@ function toogleStatusMode(mode){
 }
 
 // show old run_status of the logs//Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
-function runLogStatUpdate(runStatus){
+function runLogStatUpdate(runStatus, type){
     if (runStatus === "NextSuc") {
-        displayStatButton('runStatComplete');
+        displayStatButton('runStatComplete', type);
     } else if (runStatus === "Error" || runStatus === "NextErr") {
-        displayStatButton('runStatError');
+        displayStatButton('runStatError', type);
     } else if (runStatus === "Terminated") {
-        displayStatButton('runStatTerminated');
+        displayStatButton('runStatTerminated', type);
     } else if (runStatus === "Manual") {
-        displayStatButton('runStatManual');
+        displayStatButton('runStatManual', type);
         //  if runStatus states that run is still running then there must be some error occured. show errorProPipe
     } else if (runStatus === "NextRun" || runStatus === "Waiting" || runStatus === "init") {
-        displayStatButton('runStatError');
+        displayStatButton('runStatError', type);
     } 
 }
 
-function displayStatButton(idButton) {
-    var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual"];
-    for (var i = 0; i < buttonList.length; i++) {
-        if (document.getElementById(buttonList[i])){
-            document.getElementById(buttonList[i]).style.display = "none";
-        }
-    }
-    if (document.getElementById(idButton)){
-        document.getElementById(idButton).style.display = "inline";
-    }
-}
+
 
 function toogleRunInputs(type){
     var bool;
@@ -9540,6 +9754,11 @@ $(document).ready(function () {
     $(function () {
         function reloadReportRows(){
             var run_log_uuid = $("#runVerLog").val();
+            if (run_log_uuid){
+                var runUID = '<span style="font-size:10px; float:right; color:gray;">Run UID: '+run_log_uuid+'</span>';
+                $("#reportRowsFooter").html(runUID); 
+            }
+
             $("#reportRows").empty();
             //add 'className: "center"' to center text in columns array
             $("#reportRows").dynamicRows({
@@ -10072,15 +10291,23 @@ $(document).ready(function () {
         function updateRunReportTab(run_log_uuid){
             var reload = true
             if (run_log_uuid) {
+                var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
                 var version = $('option:selected', '#runVerLog').attr('ver');
-                if (version) {
-                    var runTitleLog = "Run Report " + version + ":"
+                if (version && !newRun) {
+                    var runTitleLog = "<label>Run " + version + " - Report</label>";
                     $('a[href="#reportTab"]').css("display", "block")
                 } else {
+                    if ($("ul#runTabDiv li.active > a")[0]){
+                        if ($($("ul#runTabDiv li.active > a")[0]).attr("href") == "#reportTab"){
+                            $('.nav-tabs a[href="#configTab"]').trigger("click")
+                        }
+                    }
+                    
+                    
                     var runTitleLog = "";
                     $('a[href="#reportTab"]').css("display", "none")
                 }
-                $("#runTitleReport").text(runTitleLog)
+                $("#runTitleReport").html(runTitleLog)
                 if (reload){
                     reloadReportRows();
                 }
@@ -10097,7 +10324,7 @@ $(document).ready(function () {
                     if (s){
                         if (s[0]){
                             var run_status = s[0].run_status;
-                            runLogStatUpdate(run_status)
+                            runLogStatUpdate(run_status, "Opt");
                         }
                     }
                 },
@@ -10107,41 +10334,26 @@ $(document).ready(function () {
             }); 
         }
 
-        function updateRunConfigTab(prevUUID){
+        function updateRunConfigTab(prevUID){
             var loadRunLogOpt = function (){
-                var fillProPipeInputsRev = function(projectPipeInputs_rev, lastrun){
-                    var numInputRows = $('#inputsTable > tbody').find('td[given_name]');
-                    $.each(numInputRows, function (el) {
-                        var given_name = $(numInputRows[el]).attr("given_name");
-                        var in_row = $(numInputRows[el]).closest('tr');
-                        var rowID = in_row.attr("id"); //"inputTa-5"
-                        var gnum = rowID.split("Ta-")[1];
-                        var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
-                        //check if project_pipeline_inputs exist then fill:
-                        var getProPipeInputs = projectPipeInputs_rev.filter(function (el) { return el.given_name == given_name });
-                        if (lastrun){
-                            var fillingType = "default";
-                        } else {
-                            var fillingType = "dry";
-                        }
-                        removeSelectFile(rowID, qualifier,fillingType)
-                        if (getProPipeInputs.length > 0) {
-                            prepareInsertInput(getProPipeInputs, rowID, gnum, qualifier, fillingType);
-                        }
-                        // During dry-fill, update process settings
-                        showHideSett(rowID)
-                    });
-                    if (lastrun) {
-                        toogleRunInputs("enable")
-                    } else {
-                        toogleRunInputs("disable")
-                    }
-                }
-
                 var run_log_uuid = $('#runVerLog').val();
-                var lastrun = $('#runVerLog option[value="'+run_log_uuid+'"]').attr('lastrun');
+                var runTitleConfig = "";
+                var runTitleAdvanced = "";
+                var version = $('option:selected', '#runVerLog').attr('ver');
+                if (version) {
+                    runTitleConfig = "<label>Run "+version+" - Settings</label>"
+                    runTitleAdvanced = "<label>Run "+version+" - Advanced</label>"
+                } else {
+                    runTitleConfig = "<label>Run Settings</label>";
+                    runTitleAdvanced = "<label>Advanced</label>";
+                } 
+                $("#runTitleConfig").html(runTitleConfig)
+                $("#runTitleAdvanced").html(runTitleAdvanced)
+                var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
+                var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+                var newRunExist =checkNewRunStatus();
                 //load from projectpipelinedata
-                if (lastrun){
+                if (newRun || (!newRunExist && lastrun)){
                     $.ajax({
                         type: "POST",
                         url: "ajax/ajaxquery.php",
@@ -10150,6 +10362,7 @@ $(document).ready(function () {
                         success: function (pipe) {
                             if (pipe){
                                 loadRunSettings(pipe);
+                                checkReadytoRun();
                             }
                         }, 
                         error: function (errorThrown) {
@@ -10163,7 +10376,7 @@ $(document).ready(function () {
                         async: true,
                         success: function (projectPipeInputs_rev) {
                             if (projectPipeInputs_rev){
-                                fillProPipeInputsRev(projectPipeInputs_rev, lastrun);
+                                fillProPipeInputsRev(projectPipeInputs_rev, "default");
                             }
                         }, 
                         error: function (errorThrown) {
@@ -10190,7 +10403,7 @@ $(document).ready(function () {
                                         loadRunSettings(pipeData);
                                         if (json.project_pipeline_input){
                                             var projectPipeInputs_rev = json.project_pipeline_input; 
-                                            fillProPipeInputsRev(projectPipeInputs_rev, lastrun);
+                                            fillProPipeInputsRev(projectPipeInputs_rev, "dry");
                                         }
                                     }
                                 }
@@ -10203,12 +10416,13 @@ $(document).ready(function () {
                 }
 
             }
-            var prevlastrun = $('#runVerLog option[value="'+prevUUID+'"]').attr('lastrun')
             console.log("updateRunConfigTab")
-            console.log("prevUUID", prevUUID)
-            console.log("prevlastrun", prevlastrun)
-            // if prevUUID belong to lastrun then saveRun before loadRunLogOpt 
-            if (!prevUUID || prevlastrun){
+            console.log("prevUID", prevUID);
+            var prevlastrun = $('#runVerLog option[value="'+prevUID+'"]').attr('lastrun') || false;
+            var prevnewRun = $('#runVerLog option[value="'+prevUID+'"]').attr('newRun') || false;
+            var newRunExist =checkNewRunStatus();
+            // if prevUID belong to newrun then saveRun before loadRunLogOpt 
+            if (prevnewRun || (!newRunExist && prevlastrun)){
                 saveRun(loadRunLogOpt);
             } else {
                 loadRunLogOpt();
@@ -10218,12 +10432,11 @@ $(document).ready(function () {
         function updateRunLogTab(run_log_uuid){
             console.log("updateRunLogTab")
             if (run_log_uuid) {
+                var runTitleLog = "";
                 var version = $('option:selected', '#runVerLog').attr('ver');
                 if (version) {
-                    var runTitleLog = "Run Log " + version + ":"
-                    } else {
-                        var runTitleLog = "";
-                    }
+                    var runTitleLog = "<label>Run " + version + " - Log</label>";
+                } 
                 var lastrun = $('option:selected', '#runVerLog').attr('lastrun');
                 if (lastrun) {
                     lastrun = 'lastrun="yes"';
@@ -10235,7 +10448,8 @@ $(document).ready(function () {
                 if (activeTab[0]) {
                     activeID = $(activeTab[0]).attr("href")
                 }
-                $("#runTitleLog").text(runTitleLog)
+                
+                $("#runTitleLog").html(runTitleLog)
                 $("#logContentDiv").empty();
                 //to support outdated log directory system 
                 if (run_log_uuid.match(/^run/)) {
@@ -10299,6 +10513,7 @@ $(document).ready(function () {
                     }
                     navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
                     navTabDiv += '<a style="margin-left:5px;" href="#" class="btn btn-info tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true">Contact Us</a>'
+                    navTabDiv += '<span style="font-size:10px; float:right; color:gray;">Run UID: '+run_log_uuid+'</span>'
                     navTabDiv += '</div>';
                 }
                 navTabDiv += '</div>';
@@ -10312,7 +10527,32 @@ $(document).ready(function () {
                     }
                 }
             }
+            $('[data-toggle="tooltip"]').tooltip();
         }
+
+        $(document).on('click', '.createNewRun', function (event) {
+            //check if lastrun is running, then show warning
+            if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init"){
+                showInfoModal("#infoModal", "#infoModalText", "Please wait for your last run to finish, before creating new run.")
+            } else {
+                var newRunExist =checkNewRunStatus();
+                if (newRunExist){
+                    var text = 'New run has already been created. Are you sure you want to overwrite the settings of existing new run page?';
+                    var savedData = "";
+                    var execFunc = function(savedData){
+                        createNewRunFunc(newRunExist)
+                    }
+                    var btnText = "Overwrite";
+                    showConfirmDeleteModal(text, savedData, execFunc, btnText)
+                } else {
+                    createNewRunFunc(newRunExist)
+                }
+                //            $('#runVerLog').val(0);
+                //            $('#runVerLog').trigger("change");
+            }
+
+
+        });
 
         $(document).on('change', '#runVerLog', function (event) {
             console.log("change:runVerLog");
@@ -10323,15 +10563,20 @@ $(document).ready(function () {
             if (activeTab[0]) {
                 activeID = $(activeTab[0]).attr("href")
             }
+            var size = $('#runVerLog > option').length;
+            if (size) {
+                $('#runVerLog').css("display", "block");
+            } else {
+                $('#runVerLog').css("display", "none");
+            }
+            var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
             var version = $('option:selected', '#runVerLog').attr('ver');
-            if (version) {
+            if (version && !newRun) {
                 $('a[href="#logTab"]').css("display", "block")
                 $('a[href="#reportTab"]').css("display", "block")
-                $('#runVerLog').css("display", "block");
             } else {
                 $('a[href="#logTab"]').css("display", "none")
                 $('a[href="#reportTab"]').css("display", "none")
-                $('#runVerLog').css("display", "none");
             }
             var run_log_uuid = $('#runVerLog').val();
             // save the previous options into their attributes
@@ -10343,25 +10588,41 @@ $(document).ready(function () {
             if (prevUID != run_log_uuid){
                 $('#runVerLog').attr("prevUID", run_log_uuid)
             }
-            var lastrun = $('option:selected', '#runVerLog').attr('lastrun');
-            var runVerLogCheck = $('option:selected', '#runVerLog').length;
-            // before any run starts runVerLogCheck=0
-            if (lastrun || !runVerLogCheck) {
-                toogleStatusMode("default")
-                tooglePermsGroupsDiv("show")
-            } else if (runVerLogCheck) {
-                toogleStatusMode("noOptions")
-                tooglePermsGroupsDiv("hide")
-            } 
-            if (prevUID != run_log_uuid && !lastrun){
-                updateRunLogStat(run_log_uuid);
+            var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
+            var newRunExist =checkNewRunStatus();
+            console.log("lastrun", lastrun)
+            console.log("newRun", newRun)
+            console.log("newRunExist", newRunExist)
+            //new run mode
+            if (newRun) {
+                toogleStatusMode("default");
+                tooglePermsGroupsDiv("show");
+                toogleMainIcons("show");
+                toogleRunInputs("enable");
+                checkType="newrun";
+                checkReadytoRun()
+                //last run mode 
+            } else if (lastrun && !newRunExist){
+                toogleStatusMode("default");
+                tooglePermsGroupsDiv("show");
+                toogleMainIcons("show");
+                toogleRunInputs("enable");
+                checkType="";
+                readNextLog(proTypeWindow, proIdWindow, "no_reload");
+                //history mode
+            } else {
+                toogleStatusMode("noOptions");
+                tooglePermsGroupsDiv("hide");
+                toogleMainIcons("hide");
+                toogleRunInputs("disable");
+                if (prevUID != run_log_uuid){
+                    updateRunLogStat(run_log_uuid);
+                }
             }
-
             console.log("activeID",activeID)
             console.log("run_log_uuid",run_log_uuid)
             console.log("reportTabUID",reportTabUID)
             console.log("configTabUID",configTabUID)
-
             if (activeID == "#logTab"){
                 if (logTabUID != run_log_uuid){
                     $('#runVerLog').attr("logTabUID", run_log_uuid)
@@ -10376,20 +10637,10 @@ $(document).ready(function () {
                 //don't fill on page load 
                 if (configTabUID != run_log_uuid){
                     $('#runVerLog').attr("configTabUID", run_log_uuid)
-                    console.log("updateRunConfigTab:"+configTabUID+" to "+run_log_uuid)
                     updateRunConfigTab(configTabUID);
                 }
             }
         });
-
-
-
-
-
-
-
-
-
     });
 
 

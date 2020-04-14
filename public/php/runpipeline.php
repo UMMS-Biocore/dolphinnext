@@ -59,16 +59,18 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <!--        Save and delete icons-->
         <button type="submit" id="saveRunIcon" class="btn" name="button" data-backdrop="false" onclick="saveRunIcon()" style="background:none;  margin:0px; padding:0px;  ">
             <a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Run">
-                <i class="fa fa-save" style="font-size: 17px;"></i></a></button>
+                <i class="fa fa-save" style="font-size: 17px;"></i>
+            </a>
+        </button>
         <button type="button" id="downPipeline" class="btn" name="button" onclick="download(createNextflowFile(&quot;run&quot;))" data-backdrop="false" style=" background:none; margin:0px; padding:0px;">
-            <a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Pipeline">
-                <i class="glyphicon glyphicon-save"></i></a></button>
-        <button type="submit" id="copyRun" class="btn" name="button" data-backdrop="false" onclick="duplicateProPipe(&#34;copy&#34;);return false;" style=" background:none; margin:0px; padding:0px;">
-            <a data-toggle="tooltip" data-placement="bottom" data-original-title="Copy Run ">
-                <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
+            <a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Pipeline"> <i class="glyphicon glyphicon-save"></i>
+            </a>
+        </button>
         <button type="button" id="delRun" class="btn" name="button" data-backdrop="false" data-toggle="modal" href="#confirmModal" style=" margin:0px; background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Run">
-                <i class="glyphicon glyphicon-trash"></i></a></button>
-        <!--        Save and delete icons ends-->
+                <i class="glyphicon glyphicon-trash"></i>
+            </a>
+        </button>
+        <!--  Save and delete icons ends-->
 
         <div id="pipeActionsDiv" style="float:right;  margin-right:5px;" class="dropdown">
             <button class="btn btn-default dropdown-toggle" type="button" id="pipeActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;">
@@ -76,7 +78,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
             </button>
             <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu2">
                 <li><a id="deleteRun" data-toggle="modal" href="#confirmModal">Delete Run</a>
-                <li><a id="duplicaRun" onclick="duplicateProPipe(&#34;copy&#34;);return false;">Copy Run</a></li>
+                <li><a id="duplicaRun" onclick="duplicateProPipe(&#34;copy&#34;);return false;">Duplicate Run</a></li>
                 <li><a id="moveRun" onclick="duplicateProPipe(&#34;move&#34;);return false;">Move Run</a></li>
                 </li>
             </ul>
@@ -87,7 +89,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
                     <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
@@ -98,7 +100,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
                     <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
@@ -109,7 +111,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
                 </ul>
             </div>
@@ -118,7 +120,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
                 </ul>
             </div>
@@ -127,7 +129,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
                 </ul>
             </div>
@@ -136,7 +138,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
                     <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
@@ -147,7 +149,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
@@ -159,20 +161,22 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <button type="button" class="btn bg-purple-active color-palette dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
                     <li><a href="#" onclick="checkReadytoRun(&#34;rerun&#34;);return false;">ReRun</a></li>
                     <li><a href="#" onclick="checkReadytoRun(&#34;resumerun&#34;);return false;">Resume</a></li>
                     <li><a data-toggle="modal" href="#manualRunModal">Manual Run</a></li>
                 </ul>
             </div>
             <div id="runProPipe" style="display:none; float:right; " class="btn-group">
-                <button class="btn btn-success" type="button" id="runProPipeBut" onclick="runProjectPipe(runProPipeCall,&#34;newrun&#34;);return false;"><i class="fa fa-play" style=""></i> Run</button>
-                <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                <button class="btn btn-success" type="button" id="runProPipeBut"><i class="fa fa-play" style=""></i> Run</button>
+                <button id="runProPipeBut2" type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu" role="menu">
-                    <li><a href="#" onclick="runProjectPipe(runProPipeCall,&#34;newrun&#34;);return false;">Start</a></li>
-                    <li><a data-toggle="modal" href="#manualRunModal">(Optional) Manual Run</a></li>
+                <ul id="runProPipeDropdown" class="dropdown-menu dropdown-menu-right" role="menu">
+                    <li id="runProPipeStart"><a href="#" onclick="runProjectPipe(runProPipeCall,&#34;newrun&#34;);return false;">Start</a></li>
+                    <li id="runProPipeReRun"><a href="#" onclick="runProjectPipe(runProPipeCall,&#34;rerun&#34;);return false;">ReRun</a></li>
+                    <li id="runProPipeResume"><a href="#" onclick="runProjectPipe(runProPipeCall,&#34;resumerun&#34;);return false;">Resume</a></li>
+                    <li><a href="#" onclick="showManualRunModal();return false;">(Optional) Manual Run</a></li>
                 </ul>
             </div>
             <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; vertical-align:middle;" data-original-title="Waiting for input parameters, output directory and selection of active environment (if s3 path is defined then waiting for the amazon keys)" data-placement="bottom" data-toggle="tooltip">Waiting</button>
@@ -203,6 +207,51 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
             <div id="runStatManual" style="display:none; float:right; " class="btn-group">
                 <button class="btn bg-purple-active color-palette" type="button">Manual Run</button>
             </div>
+
+            <div id="runStatErrorOpt" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-danger" type="button">Run Error</button>
+                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span class="caret"></span></button>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                    <li><a href="#" onclick="return false;" class="createNewRun">Use these Params to Create New Run</a></li>
+                </ul>
+            </div>
+            <div id="runStatCompleteOpt" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-success" type="button">Completed</button>
+                <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span class="caret"></span></button>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                    <li><a href="#" onclick="return false;" class="createNewRun">Use these Params to Create New Run</a></li>
+                </ul>
+            </div>
+            <div id="runStatRunningOpt" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-info" type="button">Running</button>
+            </div>
+            <div id="runStatWaitingOpt" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-info" type="button">Initializing..</button>
+            </div>
+            <div id="runStatConnectingOpt" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-info" type="button">Connecting..</button>
+            </div>
+            <div id="runStatTerminatedOpt" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-danger" type="button">Terminated</button>
+                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span class="caret"></span></button>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                    <li><a href="#" onclick="return false;" class="createNewRun">Use these Params to Create New Run</a></li>
+                </ul>
+            </div>
+            <div id="runStatAbortedOpt" style="display:none; float:right; " class="btn-group">
+                <button class="btn btn-info" type="button">Reconnecting..</button>
+                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span class="caret"></span></button>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                    <li><a href="#" onclick="return false;" class="createNewRun">Use these Params to Create New Run</a></li>
+                </ul>
+            </div>
+            <div id="runStatManualOpt" style="display:none; float:right; " class="btn-group">
+                <button class="btn bg-purple-active color-palette" type="button">Manual Run</button>
+                <button type="button" class="btn bg-purple-active color-palette dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span class="caret"></span></button>
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                    <li><a href="#" onclick="return false;" class="createNewRun">Use these Params to Create New Run</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -213,6 +262,10 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 </div>
 
 <div id="warningSection">
+</div>
+
+<div id="infoSection" style="background-color:#FDF2C1; border-left:0px; padding:2px 2px 2px 5px; margin:0 0 10px 0; display:none;">
+    <h5 style="color:#937D68;"></h5>
 </div>
 
 <div id="runTabSection">
@@ -228,7 +281,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
     </ul>
     <div class="tab-content">
         <div id="configTab" class="tab-pane fade in active">
-            <div id="desTitlePip" style="margin-top:10px; margin-bottom:2px;">
+            <div class="row" style="margin-top:10px; margin-bottom:2px;">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <h5 id="runTitleConfig"></h5>
+                    </div>
+                </div>
+            </div>
+            <div id="desTitlePip">
                 <div class="row">
                     <div class="col-md-12">
                         <label>Run Description</label>
@@ -406,7 +466,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         </div>
 
         <div id="advancedTab" class="tab-pane fade">
-            <div id="advOpt" class="row" style="margin-top:10px; margin-bottom:2px;">
+            <div class="row" style="margin-top:10px; margin-bottom:2px;">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <h5 id="runTitleAdvanced"><label></label></h5>
+                    </div>
+                </div>
+            </div>
+            <div id="advOpt" class="row" style="margin-bottom:2px;">
                 <div class="col-md-12" id="runCmdDiv">
                     <div class="form-group">
                         <label>Run Command <span><a data-toggle="tooltip" data-placement="bottom" title="You may run the command or commands (by seperating each command with && sign) before the nextflow job starts. (eg. source /etc/bashrc && module load java/1.8.0_31 && module load singularity/singularity-2.4)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
@@ -575,7 +642,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         <h5 id="runTitleReport">Run Report 1</h5>
                     </div>
                     <div id="reportRows" style="margin-top:25px;"></div>
-
+                    <div id="reportRowsFooter"></div>
                 </div>
             </div>
         </div>
