@@ -2373,7 +2373,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
 
-    public function getSubMenuFromSideBar($parent, $ownerID){
+    function getSubMenuFromSideBar($parent, $ownerID){
         $admin_only = "";
         $admin_only_group_by = "";
         if ($ownerID != ''){
@@ -5286,10 +5286,10 @@ class dbfuncs {
         $pipeline_list = $newObj->{"pipeline_list"};
         $publish_web_dir = $newObj->{"publish_web_dir"};
         $pipeline_gid = isset($newObj->{"pipeline_gid"}) ? $newObj->{"pipeline_gid"} : "";
-        if (empty($pipeline_gid)) {
+        if ($pipeline_gid == "") {
             $max_gid = json_decode($this->getMaxPipeline_gid(),true)[0]["pipeline_gid"];
             settype($max_gid, "integer");
-            if (!empty($max_gid) && $max_gid != 0) {
+            if (!empty($max_gid)) {
                 $pipeline_gid = $max_gid +1;
             } else {
                 $pipeline_gid = 1;

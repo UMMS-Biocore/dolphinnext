@@ -1671,15 +1671,15 @@ else if ($p=="saveProcessGroup"){
 else if ($p=="saveProcess"){
     $name = $_REQUEST['name'];
     $process_gid = $_REQUEST['process_gid'];
-    if (empty($process_gid)) {
+    if ($process_gid == "") {
         $max_gid = json_decode($db->getMaxProcess_gid(),true)[0]["process_gid"];
         settype($max_gid, "integer");
-        if (!empty($max_gid) && $max_gid != 0) {
+        if (!empty($max_gid)) {
             $process_gid = $max_gid +1;
         } else {
             $process_gid = 1;
         }
-    }
+    }  
     $process_uuid = isset($_REQUEST['process_uuid']) ? $_REQUEST['process_uuid'] : "";
     $process_rev_uuid = isset($_REQUEST['process_rev_uuid']) ? $_REQUEST['process_rev_uuid'] : "";
     $process_uuid = "$process_uuid";

@@ -1,16 +1,23 @@
-26.03.2020 Version 1.1.13
+25.04.2020 Version 1.1.13
 * Major upgrades:
 Each run settings are saved for each run attempts.
-Run history dropdown created which allows to execute to use previous run attempts.
-Run history dropdown shows the amount of spaced used in DolphinNext servers.
+Run history dropdown created which allows executing to use previous run attempts.
+Run history dropdown shows the amount of space used in DolphinNext servers.
 Run history settings added to rename, delete, purge or recover of the run.
-Checking work directory space feature added to run page.
+Checking work directory space feature added to the run page.
 * Minor updates:
-Amount of active cloud instances updated without opening cloud console.
-New run page will be created if user saves the changes on the last run.
-Checkbox related scrolling animations are fixed for run page.
-UID of the run is added into report and log tabs.
-Calculate user's disk usage button added for the admin console.
+Amount of active cloud instances updated without opening the cloud console.
+The new run page will be created if the user saves the changes on the last run.
+UID of the run is added into the report and log tabs.
+Calculate the user's disk usage button added for the admin console.
+* Fixes:
+Quote usage error fixed for the input parameter of the pipeline.
+Bug fixed when collection path entered with spaces. 
+Validation function added for the paired list of files. 
+Selective reloading function added to cached browser files.
+Minor bug fixed when process and pipeline gid equals to zero.
+Checkbox related scrolling animations are fixed for the run page.
+
 
 24.03.2020 Version 1.1.12
 Bug fixed while binding paths to containers.
