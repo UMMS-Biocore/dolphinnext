@@ -69,6 +69,17 @@ function IsJsonString(str) {
     return true;
 }
 
+//formatSizeUnits(4000*1024)  // beacuse 4000 KB to convert MB 
+function formatSizeUnits(bytes){
+      if      (bytes>=1073741824) {bytes=(bytes/1073741824).toFixed(2)+' GB';}
+      else if (bytes>=1048576)    {bytes=(bytes/1048576).toFixed(2)+' MB';}
+      else if (bytes>=1024)       {bytes=(bytes/1024).toFixed(2)+' KB';}
+      else if (bytes>1)           {bytes=bytes+' bytes';}
+      else if (bytes==1)          {bytes=bytes+' byte';}
+      else                        {bytes='0 byte';}
+      return bytes;
+}
+
 // example:
 //var filteredNames = filterObjKeys(names, /Peter/); // second parameter is a javascript regex object, so for exemple for case insensitive you would do /Peter/i  
 //third parameter is optional: return(array if keys/array of obj)=(keys/obj)
@@ -1551,6 +1562,10 @@ function getValuesAsync(data, callback) {
         success: function (data) {
             result = data;
             callback(result);
+        },
+        error: function (errorThrown) {
+            console.log("AJAX Error occured.", data)
+            toastr.error("Error occured.");
         }
     });
 }

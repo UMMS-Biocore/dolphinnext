@@ -36,6 +36,7 @@ function getSidebarMenu($np,$login)
 
 function getJS($np, $login, $id)
 {
+    error_log($_SERVER['DOCUMENT_ROOT']);
     $js = "<script src=\"js/jsfuncs.js\"></script><script src=\"js/wizard.js\"></script>";
     if ($np==1 && $login==1 && !empty($id)){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
   <script src=\"js/pipelineD3core.js\"></script><script src=\"js/pipelineD3.js\"></script><script src=\"js/pipelineModal.js\"></script>

@@ -222,10 +222,13 @@ class dbfuncs {
     }
 
     function getDirectorySize($f){
-        $io = popen ( '/usr/bin/du -sk ' . $f, 'r' );
-        $size = fgets ( $io, 4096);
-        $size = substr ( $size, 0, strpos ( $size, "\t" ) );
-        pclose ( $io );
+        $size = 0;
+        if (file_exists($f)){
+            $io = popen ( '/usr/bin/du -sk ' . $f, 'r' );
+            $size = fgets ( $io, 4096);
+            $size = substr ( $size, 0, strpos ( $size, "\t" ) );
+            pclose ( $io );
+        }
         return $size;
     }
 
@@ -353,6 +356,7 @@ class dbfuncs {
 
     function getCluAmzData($profileId, $profileType, $ownerID) {
         $connect = "";
+        $cluDataArr=array();
         if ($profileType == 'cluster'){
             $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
             $cluDataArr=json_decode($cluData,true);
@@ -1374,7 +1378,7 @@ class dbfuncs {
         settype($attempt, 'integer');
         $succ = 0;
         if ($attempt > 1){
-            $run_log_data = $this -> getRunLog($project_pipeline_id);
+            $run_log_data = $this -> getRunLog($project_pipeline_id, "default");
             $run_logs = json_decode($run_log_data);
             $log_count = count($run_logs);
             if ($log_count > 1){
@@ -1519,8 +1523,34 @@ class dbfuncs {
         }
         $run_path_server = "{$this->run_path}/$rundir";
         $size = $this->getDirectorySize($run_path_server);
+        settype($size, 'integer');
         $ret = $this->updateRunLogSize($project_pipeline_id, $uuid, $size, $ownerID);
         return $ret;
+    }
+
+    function saveRunLogSizeUser($userID,$ownerID){
+        if (!empty($userID) &&!empty($ownerID) ){
+            $userLogRaw = $this->getRunLogUser($userID, "all");
+            $userLog = json_decode($userLogRaw);
+            foreach ($userLog as $log):
+            $run_log_uuid = !empty($log->{'run_log_uuid'}) ? $log->{'run_log_uuid'} : "";
+            $project_pipeline_id = !empty($log->{'project_pipeline_id'}) ? $log->{'project_pipeline_id'} : "";
+            $data = $this->saveRunLogSize($run_log_uuid, $project_pipeline_id, $userID);
+            endforeach;
+            //update total user disk_usage
+            $userLogRaw = $this->saveUserDiskUsage($userID, $ownerID);
+        }
+    }
+
+    function saveUserDiskUsage($userID, $ownerID){
+        $tsize= $this->queryAVal("SELECT SUM(size) as tsize FROM run_log WHERE owner_id='$userID'");
+        settype($tsize, 'integer');
+        $this->updateUserDiskUsage($tsize, $userID, $ownerID);
+    }
+
+    function updateUserDiskUsage($disk_usage, $userID, $ownerID) {
+        $sql = "UPDATE users SET disk_usage='$disk_usage', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$userID'";
+        return self::runSQL($sql);
     }
 
     function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $ownerID){
@@ -2062,8 +2092,11 @@ class dbfuncs {
     function getLastRunData($project_pipeline_id){
         $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
             FROM project_pipeline pp
-            INNER JOIN run_log r
-            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.id='$project_pipeline_id'";
+            INNER JOIN (
+                        SELECT DISTINCT rr.run_status, rr.id, rr.project_pipeline_id
+                        FROM run_log rr
+                        WHERE rr.project_pipeline_id = '$project_pipeline_id' AND rr.deleted=0 ORDER BY rr.id DESC LIMIT 1
+                    ) r ON pp.id = r.project_pipeline_id";
         return self::queryTable($sql);
     }
     function cleanlist($list, $ret){
@@ -2155,7 +2188,6 @@ class dbfuncs {
                 $profile = $runData["profile"];
                 $subRunLogDir = "run";
             }
-
         }
         if (!empty($profile)){
             $profileAr = explode("-", $profile);
@@ -2259,8 +2291,8 @@ class dbfuncs {
                     $out["runStatus"] = $runStatus;
                 }
             }
-            return json_encode($out);
         }
+        return json_encode($out);
     }
 
 
@@ -2686,7 +2718,7 @@ class dbfuncs {
         $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
             FROM project_pipeline pp
             INNER JOIN run_log r
-            WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND pp.owner_id = '$ownerID' AND pp.profile = '$cloud-$id' AND (r.run_status = 'init' OR r.run_status = 'Waiting' OR r.run_status = 'NextRun' OR r.run_status = 'Aborted')";
+            WHERE pp.last_run_uuid = r.run_log_uuid AND r.deleted=0 AND pp.deleted=0 AND pp.owner_id = '$ownerID' AND pp.profile = '$cloud-$id' AND (r.run_status = 'init' OR r.run_status = 'Waiting' OR r.run_status = 'NextRun' OR r.run_status = 'Aborted')";
         return self::queryTable($sql);
     }
     function insertProfileLocal($name, $executor,$next_path, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ownerID) {
@@ -3040,6 +3072,47 @@ class dbfuncs {
         $sql = "UPDATE run SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id'";
         return self::runSQL($sql);
     }
+    function removeRunLog($id,$ownerID) {
+        $sql = "UPDATE run_log SET deleted = 1, date_modified = now() WHERE id = '$id' AND owner_id='$ownerID'";
+        return self::runSQL($sql);
+    }
+    function recoverRunLog($id,$ownerID) {
+        $sql = "UPDATE run_log SET deleted = 0, date_modified = now() WHERE id = '$id' AND owner_id='$ownerID'";
+        return self::runSQL($sql);
+    }
+    function purgeRunLog($id,$ownerID) {
+        $log = $this->getRunLogById($id,$ownerID);
+        $delsuccess = 0;
+        if (!empty($log)){
+            $logData = json_decode($log);
+            if (!empty($logData[0])){
+                $uuid = $logData[0]->{"run_log_uuid"};
+                $project_pipeline_id = $logData[0]->{"project_pipeline_id"};
+                if (empty($uuid)){
+                    $rundir = "run$project_pipeline_id";
+                } else {
+                    $rundir = $uuid;
+                }
+                $run_path_server = "{$this->run_path}/$rundir";
+                if (!file_exists($run_path_server)) {
+                    $delsuccess = 1;
+                } else {
+                    if (!empty("{$this->run_path}")){
+                        system('rm -rf ' . escapeshellarg("$run_path_server"), $retval);
+                        if ($retval == 0){
+                            $delsuccess = 1;
+                        }  
+                    }
+                }
+            }
+        }
+        if (!empty($delsuccess)){
+            $sql = "DELETE FROM run_log WHERE id = '$id' AND owner_id='$ownerID'";
+            return self::runSQL($sql);
+        } else {
+            return json_encode("Error occured.");
+        }
+    }
     function removeInput($id) {
         $sql = "DELETE FROM input WHERE id = '$id'";
         return self::runSQL($sql);
@@ -3164,9 +3237,7 @@ class dbfuncs {
         if (isset(json_decode($userRoleCheck)[0])){
             $userRole = json_decode($userRoleCheck)[0]->{'role'};
             if ($userRole == "admin"){
-                $sql = "SELECT *
-                      FROM users
-                      WHERE id <> '$ownerID' AND deleted=0";
+                $sql = "SELECT * FROM users WHERE id <> '$ownerID' AND deleted=0";
                 return self::queryTable($sql);
             }
         }
@@ -3272,24 +3343,48 @@ class dbfuncs {
     }
     //get maximum of $project_pipeline_id
     function updateRunLog($project_pipeline_id, $status, $duration, $ownerID) {
-        $sql = "UPDATE run_log SET run_status='$status', duration='$duration', date_ended= now(), date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id' ORDER BY id DESC LIMIT 1";
+        $sql = "UPDATE run_log SET run_status='$status', duration='$duration', date_ended= now(), date_modified= now(), last_modified_user ='$ownerID'  WHERE deleted=0 AND project_pipeline_id = '$project_pipeline_id' ORDER BY id DESC LIMIT 1";
         return self::runSQL($sql);
     }
     function updateRunLogSize($project_pipeline_id, $uuid, $size, $ownerID) {
         if (empty($uuid)){
-            $sql = "UPDATE run_log SET size='$size', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id' AND owner_id = '$ownerID' ORDER BY id DESC LIMIT 1";
+            $sql = "UPDATE run_log SET size='$size', date_modified= now(), last_modified_user ='$ownerID'  WHERE  deleted=0 AND project_pipeline_id = '$project_pipeline_id' AND owner_id = '$ownerID' ORDER BY id DESC LIMIT 1";
             return self::runSQL($sql);
         } else {
             $sql = "UPDATE run_log SET size='$size', date_modified= now(), last_modified_user ='$ownerID'  WHERE run_log_uuid = '$uuid' AND owner_id = '$ownerID'";
             return self::runSQL($sql);
         }
     }
+    function updateRunLogName($id, $name, $ownerID) {
+        $sql = "UPDATE run_log SET name='$name', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$id' AND owner_id = '$ownerID'";
+        return self::runSQL($sql);
+    }
     function updateRunLogOpt($runLogOpt, $uuid, $ownerID) {
         $sql = "UPDATE run_log SET run_opt='$runLogOpt', date_modified= now(), last_modified_user ='$ownerID'  WHERE run_log_uuid = '$uuid' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
-    function getRunLog($project_pipeline_id) {
-        $sql = "SELECT * FROM run_log WHERE project_pipeline_id = '$project_pipeline_id'";
+    function getRunLogById($id,$ownerID) {
+        $sql = "SELECT * FROM run_log WHERE id = '$id' AND owner_id = '$ownerID'";
+        return self::queryTable($sql);
+    }
+    function getRunLog($project_pipeline_id, $type) {
+        $where = "";
+        if ($type == "default"){
+            $where = "AND deleted=0";
+        } else if ($type == "all"){
+            $where = "";
+        }
+        $sql = "SELECT * FROM run_log WHERE project_pipeline_id = '$project_pipeline_id' $where";
+        return self::queryTable($sql);
+    }
+    function getRunLogUser($userID, $type) {
+        $where = "";
+        if ($type == "default"){
+            $where = "AND deleted=0";
+        } else if ($type == "all"){
+            $where = "";
+        }
+        $sql = "SELECT * FROM run_log WHERE owner_id='$userID' $where";
         return self::queryTable($sql);
     }
     function getRunLogOpt($uuid) {
@@ -3625,6 +3720,12 @@ class dbfuncs {
                                 $log["percent"] = $val_blok[4];
                                 break;
                             }
+                        }
+                        $duCmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"du -hs $dir\" 2>&- | cut -f1";
+                        $log["ret_duCmd"] = shell_exec($duCmd);
+                        $log["ret_duCmd"] = trim($log["ret_duCmd"]);
+                        if (!empty($log["ret_duCmd"])){
+                            $log["workdir_size"] = $log["ret_duCmd"];
                         }
                     } else {
                         $log["ret"] = "Query failed! Please check your query, connection profile or internet connection";
@@ -3966,6 +4067,11 @@ class dbfuncs {
         return self::insTable($sql);
     }
     function insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID) {
+        $name = trim($name);
+        $file_dir = trim($file_dir);
+        $archive_dir = trim($archive_dir);
+        $s3_archive_dir = trim($s3_archive_dir);
+        $gs_archive_dir = trim($gs_archive_dir);
         $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_type, archive_dir, s3_archive_dir, gs_archive_dir, run_env, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$s3_archive_dir', '$gs_archive_dir', '$run_env', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
@@ -4116,7 +4222,7 @@ class dbfuncs {
         return $this->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$project_pipeline_id'");
     }
     function updateProPipeLastRunUUID($project_pipeline_id, $uuid) {
-        $sql = "UPDATE project_pipeline SET last_run_uuid='$uuid', new_run='0' WHERE id='$project_pipeline_id'";
+        $sql = "UPDATE project_pipeline SET last_run_uuid='$uuid' WHERE id='$project_pipeline_id'";
         return self::runSQL($sql);
     }
     function getProjectPipelines($id,$project_id,$ownerID,$userRole) {
@@ -4155,7 +4261,7 @@ class dbfuncs {
                     RIGHT JOIN (
                         SELECT DISTINCT pp.id as project_pipeline_id, pp.name,  pp.summary, max(r.id) as run_log_id,  pp.date_created as pp_date_created, pp.output_dir, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own, pp.pipeline_id, pp.group_id
                         FROM project_pipeline pp
-                        LEFT JOIN run_log r  ON r.project_pipeline_id=pp.id
+                        LEFT JOIN run_log r  ON r.project_pipeline_id=pp.id AND r.deleted = 0
                         LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                         $where
                         GROUP BY pp.id 

@@ -60,9 +60,16 @@ folder instead of downloading all of them to reduce the load. -->
     <link rel="stylesheet" href="bower_components/plupload/js/jquery.plupload.queue/css/jquery.plupload.queue.css" type="text/css" />
     <!-- toastr -->
     <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
+    <!-- toastr -->
+    <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
     <!-- to fix favicon.ico not found error-->
     <link rel="shortcut icon" href="#">
     <style>
+        /* strikethrough css deleted rows in Datatables */
+        tr.strikeline-row {
+            color: gray;
+            text-decoration: line-through;
+        }
         .link-underline {
             color: #1479cc;
             cursor: pointer;

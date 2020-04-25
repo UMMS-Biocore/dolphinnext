@@ -306,6 +306,7 @@ $GOOGPATH=GOOGPATH;
                                                 <th>Username</th>
                                                 <th>E-mail</th>
                                                 <th>Institute</th>
+                                                <th>Usage(MB)</th>
                                                 <th>Role</th>
                                                 <th>Active</th>
                                                 <th>Member Date</th>

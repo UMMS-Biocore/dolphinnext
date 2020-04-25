@@ -1,9 +1,16 @@
 26.03.2020 Version 1.1.13
-Amount of active cloud instances updated without opening cloud console.
-Disk space control added to run page.
-Run history dropdown created which allows to execute to use previous run attempts.
+* Major upgrades:
 Each run settings are saved for each run attempts.
-Fixed checkbox scroll for run page.
+Run history dropdown created which allows to execute to use previous run attempts.
+Run history dropdown shows the amount of spaced used in DolphinNext servers.
+Run history settings added to rename, delete, purge or recover of the run.
+Checking work directory space feature added to run page.
+* Minor updates:
+Amount of active cloud instances updated without opening cloud console.
+New run page will be created if user saves the changes on the last run.
+Checkbox related scrolling animations are fixed for run page.
+UID of the run is added into report and log tabs.
+Calculate user's disk usage button added for the admin console.
 
 24.03.2020 Version 1.1.12
 Bug fixed while binding paths to containers.

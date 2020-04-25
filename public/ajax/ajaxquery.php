@@ -38,6 +38,7 @@ if ($p=="saveRun"){
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
     $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
+    $db->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
     $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
     $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
     if (empty($attempt) || $attempt == 0 || $attempt == "0"){
@@ -84,6 +85,31 @@ else if ($p=="saveRunLogSize"){
     $uuid = isset($_REQUEST['uuid']) ? $_REQUEST['uuid'] : "";
     $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
     $data = $db->saveRunLogSize($uuid, $project_pipeline_id, $ownerID);
+}
+else if ($p=="saveRunLogName"){
+    $name =  addslashes(htmlspecialchars(urldecode($_REQUEST['name']), ENT_QUOTES));
+    $data = $db->updateRunLogName($id, $name, $ownerID);
+}
+else if ($p=="saveRunLogSizeAllUsers"){
+    $userRole = $db->getUserRoleVal($ownerID);
+    $data = json_encode("");
+    if ($userRole == "admin"){
+        $sql = "SELECT * FROM users WHERE deleted=0";
+        $usersRaw=$db->queryTable($sql);
+        $users = json_decode($usersRaw);
+        foreach ($users as $user):
+        $userID = $user->{'id'};
+        $db->saveRunLogSizeUser($userID,$ownerID);
+        endforeach;
+    }
+}
+else if ($p=="saveRunLogSizeUser"){
+    $userRole = $db->getUserRoleVal($ownerID);
+    $data = json_encode("");
+    if ($userRole == "admin"){
+        $userID = $_REQUEST['userid'];
+        $db->saveRunLogSizeUser($userID,$ownerID);
+    }
 }
 else if ($p=="getFileContent"){
     $filename = $_REQUEST['filename'];
@@ -195,7 +221,7 @@ else if ($p=="saveNextflowLog"){
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
-    $data = "";
+    $data = json_encode("");
     if (!empty($uuid) && !empty($ownerID)){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
@@ -595,7 +621,13 @@ else if ($p=="updateProjectPipelineWithOldRun"){
 }
 else if ($p=="getRunLog"){
     $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
-    $data = $db -> getRunLog($project_pipeline_id);
+    $type = "default";
+    $data = $db -> getRunLog($project_pipeline_id, $type);
+}
+else if ($p=="getRunLogAll"){
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $type = "all";
+    $data = $db -> getRunLog($project_pipeline_id, $type);
 }
 else if ($p=="getRunLogStatus"){
     $uuid = $_REQUEST['uuid'];
@@ -720,6 +752,36 @@ else if ($p=="removeProjectPipeline"){
     $db -> removeRun($id);
     $db -> removeProjectPipelineInputByPipe($id);
     $data = $db -> removeProjectPipeline($id);
+}
+else if ($p=="removeRunLog"){ 
+    $data = json_encode("");
+    $runlogs = $_REQUEST['runlogs'];
+    $type = $_REQUEST['type'];
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    foreach ($runlogs as $runlog_id):
+    if ($type == "remove"){
+        $data = $db -> removeRunLog($runlog_id, $ownerID);
+    } else if ($type == "purge"){
+        $data = $db -> purgeRunLog($runlog_id, $ownerID);
+    } else if ($type == "recover"){
+        $data = $db -> recoverRunLog($runlog_id, $ownerID);
+    }
+    endforeach;
+    if ($type == "purge"){
+        $db->saveUserDiskUsage($ownerID, $ownerID);
+    } 
+    $runDataJS = $db->getLastRunData($project_pipeline_id);
+    $last_run_uuid = "";
+    $run_status = "";
+    if (!empty(json_decode($runDataJS,true))){
+        $runData = json_decode($runDataJS,true)[0];
+        if (!empty($runData)){
+            $last_run_uuid = $runData["last_run_uuid"];
+            $run_status = $runData["run_status"];
+        }
+    }
+    $db->updateProPipeLastRunUUID($project_pipeline_id,$last_run_uuid);
+    $db->updateRunStatus($project_pipeline_id, $run_status, $ownerID);
 }
 else if ($p=="removeProjectInput"){   
     $data = $db -> removeProjectInput($id);

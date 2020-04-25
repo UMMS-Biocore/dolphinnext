@@ -72,6 +72,13 @@ $runscope = {
         // if user owns the permission to write, then return 1 else 0; 
         var writePerm = $runscope.getAjaxData("checkUserWritePermRun", {p:"checkUserWritePermRun", "project_pipeline_id":project_pipeline_id});
         return writePerm;
+    },
+    checkProjectPipelineOwn: function(){
+        var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+        // if user owns the permission to write, then return 1 else 0; 
+        var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+        var projectpipelineOwn = pipeData[0].own;
+        return projectpipelineOwn;
     }
 }
 
@@ -4016,7 +4023,8 @@ function loadProjectPipeline(pipeData) {
     // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
     cleanDepProPipeInputs();
     //after loading pipeline disable all the inputs
-    if (projectpipelineOwn === "0") {
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+    if (projectpipelineOwn !== "1") {
         toogleRunInputs("disable");
     }
     updateDiskSpace()
@@ -4354,6 +4362,7 @@ function addMissingVar(defName){
 
 function checkMissingVar(){
     window["undefinedVarObj"] = {};
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
     if (projectpipelineOwn === "1") {
         var systemInputAr = $('#inputsTable > tbody').find('td[given_name]').filter(function () {
             return systemInputs.indexOf($(this).attr('given_name')) > -1
@@ -4519,48 +4528,63 @@ function checkCloudType(profileTypeId){
 function updateDiskSpace(){
     console.log("updateDiskSpace")
     var workDir = $runscope.getPubVal("work");
-    if (workDir && proTypeWindow && proIdWindow){
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: {p:"getDiskSpace", dir:workDir, profileType:proTypeWindow, profileId: proIdWindow},
-            async: true,
-            beforeSend: function(){
-                $("#workdir_diskpercent").html("Checking");
-            },
-            success: function (s) {
-                if (s){
-                    if (s.percent && s.free) {
-                        $("#workdir_diskpercent").css("width",s.percent);
-                        $("#workdir_diskpercent").html(s.percent);
-                        $("#workdir_diskspace").text(s.free+" available");
-                        let now = new Date();
-                        $("#workdir_diskpercent").data("lastcheck", now);
-                        toogleWorkdirDiskSpace('show');
-                    } else {
-                        toogleWorkdirDiskSpace('hide');
+    var countSlash = (workDir.match(/\//g) || []).length;
+    if (countSlash >1){
+        if (workDir && proTypeWindow && proIdWindow){
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {p:"getDiskSpace", dir:workDir, profileType:proTypeWindow, profileId: proIdWindow},
+                async: true,
+                beforeSend: function(){
+                    $("#workdir_diskpercent").html("Checking");
+                },
+                success: function (s) {
+                    if (s){
+                        if (s.percent && s.free) {
+                            $("#workdir_diskpercent").css("width",s.percent);
+                            $("#workdir_diskpercent").html(s.percent);
+                            var workdir_diskspace = '<a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Available Disk Space (updated every 10 minutes)">'+s.free+" free"+'</a>';
+                            if (s.workdir_size){
+                                var usedInfo = '<a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Size of the work directory (updated every 10 minutes)">Size: '+s.workdir_size+'  <i style="font-size: 13px; ma" class="fa fa-info-circle"></i></a> ';
+                                workdir_diskspace += '<span style="margin-left:3px; margin-right:3px;"> | </span>' + usedInfo
+
+                            }
+                            $("#workdir_diskspace").html(workdir_diskspace);
+                            if (s.workdir_size){
+                                $('[data-toggle="tooltip"]').tooltip();
+                            }
+                            let now = new Date();
+                            $("#workdir_diskpercent").data("lastcheck", now);
+                            toogleWorkdirDiskSpace('show');
+                        } else {
+                            toogleWorkdirDiskSpace('hide');
+                        }
                     }
+                },
+                error: function (errorThrown) {
+                    toogleWorkdirDiskSpace('hide');
                 }
-            },
-            error: function (errorThrown) {
-                toogleWorkdirDiskSpace('hide');
-            }
-        }); 
+            }); 
+        } else {
+            toogleWorkdirDiskSpace('hide');
+        }
     } else {
         toogleWorkdirDiskSpace('hide');
     }
 }
-
 
 function toogleWorkdirDiskSpace(type){
     if (type== "show"){
         $("#workdir_diskspace").css("display","block");
         $("#updateDiskSpaceBut").css("display","inline-block");
         $("#workdir_diskpercent_div").css("display","block");
+        $("#refreshDiskSpaceBut").css("display","block")
     } else if (type== "hide"){
         $("#workdir_diskspace").css("display","none");
         $("#updateDiskSpaceBut").css("display","none");
         $("#workdir_diskpercent_div").css("display","none");  
+        $("#refreshDiskSpaceBut").css("display","none")
     }
 }
 
@@ -4581,12 +4605,11 @@ function checkWorkDir(){
         if (showInfoM){
             showInfoModal("#infoModal", "#infoModalText", infoModalText)
         } else {
-            var countSlash = (output_dir.match(/\//g) || []).length;
-            if (countSlash >1){
-                updateDiskSpace()
-            }
+            updateDiskSpace()
         }   
-    }  
+    }  else {
+        updateDiskSpace()
+    }
 }
 
 
@@ -4825,7 +4848,7 @@ function configTextAllProcess(confText, exec_all_settings, type, proName, execut
 
 //type="" or "Opt"
 function displayStatButton(idButton, type) {
-    var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual", "runStatErrorOpt", "runStatCompleteOpt", "runStatRunningOpt", "runStatWaitingOpt", "runStatConnectingOpt", "runStatTerminatedOpt", "runStatAbortedOpt", "runStatManualOpt"];
+    var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual", "runStatErrorOpt", "runStatCompleteOpt", "runStatRunningOpt", "runStatWaitingOpt", "runStatConnectingOpt", "runStatTerminatedOpt", "runStatAbortedOpt", "runStatManualOpt", "runStatErrorNoOpt", "runStatCompleteNoOpt", "runStatRunningNoOpt", "runStatWaitingNoOpt", "runStatConnectingNoOpt", "runStatTerminatedNoOpt", "runStatAbortedNoOpt", "runStatManualNoOpt"];
     for (var i = 0; i < buttonList.length; i++) {
         if (document.getElementById(buttonList[i])){
             document.getElementById(buttonList[i]).style.display = "none";
@@ -5490,6 +5513,7 @@ function clearIntNextLog(proType, proId) {
 }
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
     if (projectpipelineOwn === "1") {
         var updateProPipeStatus = getValues({ p: "updateProPipeStatus", project_pipeline_id: project_pipeline_id });
         window.serverLog = "";
@@ -5566,7 +5590,7 @@ function readNextLog(proType, proId, type) {
             }
         }
 
-        var lastrun = $('#runLogArea').attr('lastrun');
+        var lastrun = $('option:selected', "#runVerLog").attr('lastrun');
         if (lastrun) {
             $('#runLogArea').val(serverLog + "\n" + nextflowLog);
             autoScrollLogArea()
@@ -5925,7 +5949,7 @@ function createNewRunFunc(newRunExist){
 function saveRunIcon() {
     //check if lastrun is running, then show warning
     if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init"){
-        showInfoModal("#infoModal", "#infoModalText", "Please wait for your last run to finish.")
+        saveRun(false);
     } else {
         var newRunExist =checkNewRunStatus();
         var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
@@ -6131,6 +6155,9 @@ function checkNewRevision() {
     return askNewRev;
 }
 
+
+
+
 //type =="selectproject" or "default"
 function refreshProjectDatatable(type){
     if ( ! $.fn.DataTable.isDataTable( '#projecttable' ) ) {
@@ -6283,6 +6310,7 @@ function duplicateProPipe(type) {
 
 
 function fillRunVerOpt(dropDownId) {
+    console.log("fillRunVerOpt")
     var runLogs = getValues({ "p": "getRunLog", project_pipeline_id: project_pipeline_id })
     //allow one outdated log directory
     var newRunLogs = [];
@@ -6297,57 +6325,79 @@ function fillRunVerOpt(dropDownId) {
             newRunLogs.push(runLogs[el])
         }
     });
-    var size = $(newRunLogs).size()
+    var nRun = $(newRunLogs).size()
     var n = 0;
     var lastDropdownVal = '';
     var lastItem = 'lastRun="yes"';
     var newRun = 'newRun="yes"';
+    var tsize = 0;
     $(dropDownId).empty();
     $.each(newRunLogs, function (el) {
         var run_log_uuid = newRunLogs[el].run_log_uuid;
         var date_created = newRunLogs[el].date_created
         var project_pipeline_id = newRunLogs[el].project_pipeline_id
         var sizeInKB = newRunLogs[el].size
+        tsize += parseInt(sizeInKB);
         var sizeText = "";
+        var runName = "";
         if (run_log_uuid || project_pipeline_id) {
             n++;
-            if (size){
-                var sizeInMB = (sizeInKB / (1024)).toFixed(2);
-                if (sizeInKB){
-                    sizeText = " ("+sizeInMB+" MB)";
+            if (sizeInKB && sizeInKB != "0"){
+                var size = formatSizeUnits(sizeInKB*1024)
+                if (size){
+                    sizeText = " ("+size+")";
                 }
             }
-            if (n == size) {
+            if (n == nRun) {
                 lastItem = 'lastRun="yes"';
             } else {
                 lastItem = "";
+            }
+            if (newRunLogs[el].name){
+                runName = decodeHtml(newRunLogs[el].name);
+            } else {
+                runName = 'Run '+n;
             }
 
             if (run_log_uuid) {
                 lastDropdownVal = run_log_uuid;
                 $(dropDownId).prepend(
-                    $('<option ' + lastItem + '></option>').attr("ver", n).val(lastDropdownVal).html("Run " + n + " created at " + date_created+sizeText)
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val(lastDropdownVal).html(runName + " created at " + date_created+sizeText)
                 );
             } else if (project_pipeline_id) {
                 lastDropdownVal = "run" + project_pipeline_id;
                 $(dropDownId).prepend(
-                    $('<option ' + lastItem + '></option>').attr("ver", n).val(lastDropdownVal).html("Run " + n + " created at " + date_created+sizeText)
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val(lastDropdownVal).html(runName + " created at " + date_created+sizeText)
                 );
             }
         }
     });
+    if (tsize){
+        var tsize = formatSizeUnits(tsize*1024)
+        if (tsize){
+            var icon = '<a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Total size of the runs in the DolphinNext server. It doesn\'t show the actual run size in the run environment.">'+tsize+'</a>';
+            $("#runLogSize").html(icon);
+        }
+    }
     $(dropDownId).prepend( $('<option disabled></option>').val(0).html("-- Run History --") );
     var newrunCheck = checkNewRunStatus();
     if (n === 0){
         updateNewRunStatus("1");
         newrunCheck = "1";
     }
+
     //if new_run is selected then select first "Run History" option
     if (newrunCheck){
         n++;
         $(dropDownId).prepend($('<option ' + newRun + '></option>').attr("ver", n).val("newrun").html("New Run " + n));
         $(dropDownId).val($(dropDownId + ' option:first').val());
         $(dropDownId).trigger("change");
+        if ($("ul#runTabDiv li.active > a")[0]){
+            var attr = $($("ul#runTabDiv li.active > a")[0]).attr("href");
+            if (attr == "#reportTab" || attr == "#logTab"){
+                $('.nav-tabs a[href="#configTab"]').trigger("click")
+            }
+        }
         // else choose second option
     } else {
         $(dropDownId).val($(dropDownId + ' option[value="'+lastDropdownVal+'"]').val());
@@ -6584,9 +6634,15 @@ function toogleStatusMode(mode){
         $('#pipeRunDiv').css("display", "block");
         $('#runStatDiv').css("display", "none");
         $('#runStatDiv').find("div").css("display","none")
-    } else if (mode == "noOptions"){
+        $('#runStatNoDiv').css("display", "none");
+    } else if (mode == "oneOption"){
         $('#pipeRunDiv').css("display", "none");
         $('#runStatDiv').css("display", "block");
+        $('#runStatNoDiv').css("display", "none");
+    } else if (mode == "noOption"){
+        $('#pipeRunDiv').css("display", "none");
+        $('#runStatDiv').css("display", "none");
+        $('#runStatNoDiv').css("display", "block");
     }
 }
 
@@ -6623,7 +6679,7 @@ function toogleRunInputs(type){
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
-    projectpipelineOwn = pipeData[0].own;
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
     runPid = "";
@@ -6631,18 +6687,17 @@ $(document).ready(function () {
     changeOnchooseEnv = false;
     // save info when run saved successfully
     // if user not own it, cannot change or delete run
-    if (projectpipelineOwn === "0") {
+    if (projectpipelineOwn !== "1") {
         $('#deleteRun').remove();
         $('#moveRun').remove();
         $('#delRun').remove();
         $('#saveRunIcon').remove();
         $('#pipeRunDiv').remove();
-        toogleStatusMode("noOptions")
+        $('#runStatDiv').remove();
+        $('#runHistoryConsole').remove();
+        toogleStatusMode("noOption")
         $("#run-title").prop("disabled", true);
     }
-
-
-    //runStatus
     runStatus = "";
     if (projectpipelineOwn === "1") {
         runStatus = getRunStatus(project_pipeline_id);
@@ -6743,6 +6798,294 @@ $(document).ready(function () {
     };
 
     $(function () {
+        function loadRunHistoryTable(type){
+            if ( $.fn.DataTable.isDataTable( '#runHistoryTable' ) ) {
+                $('#runHistoryTable').dataTable().off()
+                $('#runHistoryTable').dataTable().fnDestroy();
+            }
+            if (type == "default"){
+                var histTable = $('#runHistoryTable').DataTable({
+                    "ajax": {
+                        url: "ajax/ajaxquery.php",
+                        data: { "p": "getRunLog", project_pipeline_id: project_pipeline_id },
+                        "dataSrc": ""
+                    },
+                    "columns": [
+                        {
+                            "data": "id",
+                            'visible' : false
+                        },{
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                var editicon = '<a class="runHistoryRecRename" data-toggle="tooltip" data-placement="bottom" data-original-title="Rename" style="margin-left:3px;"><i style="color:grey;" class="fa fa-pencil"></i></a>';
+                                var runName;
+                                if (oData.name){
+                                    runName = decodeHtml(oData.name);
+                                } else {
+                                    var runNum = iRow+1;
+                                    runName = 'Run '+runNum;
+                                }
+                                $(nTd).html('<span class="runHistName" logid="'+oData.id+'">'+runName+'</span>'+editicon);
+                            }
+                        }, {
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                var sizeInMB = 0;
+                                if (oData.size) {
+                                    sizeInMB = (oData.size / (1024)).toFixed(2);
+                                    if (sizeInMB == 0.00){
+                                        sizeInMB = 0;
+                                    }
+                                } else {
+                                    sizeInMB = "NA";
+                                }
+                                $(nTd).html(sizeInMB);
+                            }
+                        }, {
+                            "data": "date_created"
+                        }],
+                    'order': [[3, 'desc']],
+                    "paging":   false,
+                    "bFilter":   false,
+                    "info":     false,
+                    "scrollY":  "200px",
+                    sScrollX : true,
+                    scrollX : true,
+                });
+            } else if (type == "delete"){
+                var histTable = $('#runHistoryTable').DataTable({
+                    "ajax": {
+                        url: "ajax/ajaxquery.php",
+                        data: { "p": "getRunLog", project_pipeline_id: project_pipeline_id },
+                        "dataSrc": ""
+                    },
+                    "columns": [
+                        {
+                            "data": "id",
+                            "checkboxes": {
+                                'targets': 0,
+                                'selectRow': true
+                            }
+                        },{
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                if (oData.name){
+                                    $(nTd).html(decodeHtml(oData.name));
+                                } else {
+                                    var runNum = iRow+1;
+                                    $(nTd).html("Run "+runNum);
+                                }
+                            }
+                        }, {
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                var sizeInMB = 0;
+                                if (oData.size) {
+                                    sizeInMB = (oData.size / (1024)).toFixed(2);
+                                    if (sizeInMB == 0.00){
+                                        sizeInMB = 0;
+                                    }
+                                } else {
+                                    sizeInMB = "NA";
+                                }
+                                $(nTd).html(sizeInMB);
+                            }
+                        }, {
+                            "data": "date_created"
+                        }],
+                    'order': [[3, 'desc']],
+                    "paging":   false,
+                    "bFilter":   false,
+                    "info":     false,
+                    "scrollY":  "200px",
+                    sScrollX : true,
+                    scrollX : true,
+                    'select': {
+                        'style': 'multiple'
+                    }
+                });
+            } else if (type == "purge" || type=="recover"){
+                var histTable = $('#runHistoryTable').DataTable({
+                    "ajax": {
+                        url: "ajax/ajaxquery.php",
+                        data: { "p": "getRunLogAll", project_pipeline_id: project_pipeline_id },
+                        "dataSrc": ""
+                    },
+                    "columns": [
+                        {
+                            "data": "id",
+                            "checkboxes": {
+                                'targets': 0,
+                                'selectRow': true
+                            }
+                        },{
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                if (oData.name){
+                                    $(nTd).html(decodeHtml(oData.name));
+                                } else {
+                                    var runNum = iRow+1;
+                                    $(nTd).html("Run "+runNum);
+                                }
+                            }
+                        }, {
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                var sizeInMB = 0;
+                                if (oData.size) {
+                                    sizeInMB = (oData.size / (1024)).toFixed(2);
+                                    if (sizeInMB == 0.00){
+                                        sizeInMB = 0;
+                                    }
+                                } else {
+                                    sizeInMB = "NA";
+                                }
+                                $(nTd).html(sizeInMB);
+                            }
+                        }, {
+                            "data": "date_created"
+                        }],
+                    'order': [[3, 'desc']],
+                    "paging":   false,
+                    "bFilter":   false,
+                    "info":     false,
+                    "scrollY":  "200px",
+                    sScrollX : true,
+                    scrollX : true,
+                    'select': {
+                        'style': 'multiple',
+                        'selector': 'tr:not(.no-select)'
+                    },
+                    'rowCallback': function( row, data, index ){
+                        if(data.deleted == '0'){
+                            $('td:eq(0)', row).html('');
+                            $(row).addClass('no-select');
+                            $(row).removeClass('strikeline-row');
+                        } else {
+                            $(row).removeClass('no-select');
+                            $(row).addClass('strikeline-row');
+                        }
+                    }
+                })
+                histTable.on('select.dt', function( e, dt, type, indexes ){
+                    histTable.cells('tr.no-select', 0).checkboxes.deselect();     
+                });
+            } 
+        }
+        $(document).on('click', '#runHistoryConsole', function () {
+            $('#runHistoryModal').modal("show");
+        });
+        $('#runHistoryModal').on('show.bs.modal', function () {
+            $("#runHistoryModalBut").css("display","none");
+            loadRunHistoryTable("default")
+        });
+        $('#runHistoryModal').on('shown.bs.modal', function () {
+            $('#runHistoryTable').DataTable().columns.adjust().draw();
+        });
+        $('#runHistoryModal').on('click', '#runHistoryDelIcon', function () {
+            loadRunHistoryTable("delete")
+            $("#runHistoryModalBut").css("display","block");
+            $("#runHistoryModalApply").data("info","delete");
+            $("#runHistoryModalApply").text("Delete");
+        });
+        $('#runHistoryModal').on('click', '.runHistoryRecRename', function () {
+            var runName = $(this).siblings("span").text();
+            var logid = $(this).siblings("span").attr("logid");
+            $("#editRunName").data("logid",logid)
+            $("#editRunName").val(runName)
+            $("#editRunModal").modal("show");
+            $("#runHistoryModalBut").css("display","none");
+        });
+        $('#runHistoryModal').on('click', '#runHistoryPurgeIcon', function () {
+            loadRunHistoryTable("purge")
+            $("#runHistoryModalBut").css("display","block");
+            $("#runHistoryModalApply").data("info","purge");
+            $("#runHistoryModalApply").text("Purge");
+        });
+        $('#runHistoryModal').on('click', '#runHistoryRecIcon', function () {
+            loadRunHistoryTable("recover")
+            $("#runHistoryModalBut").css("display","block");
+            $("#runHistoryModalApply").data("info","recover");
+            $("#runHistoryModalApply").text("Recover");
+        });
+        $('#editRunModal').on('click', '#editRunDetails', function () {
+            var runName = $("#editRunName").val();
+            var logid = $("#editRunName").data("logid");
+            if (runName){
+                if (runName.length>50){
+                    showInfoModal("#infoMod","#infoModText", "It is not allowed to enter more than 50 characters.");
+                } else {
+                    runName = encodeURIComponent(runName)
+                    getValuesAsync({p:"saveRunLogName", name:runName, id:logid}, function (s) {
+                        loadRunHistoryTable("default");
+                        fillRunVerOpt('#runVerLog');
+                        $("#editRunModal").modal("hide");
+                    }); 
+                }
+            } else {
+                showInfoModal("#infoMod","#infoModText", "Please enter run name to save.");
+            }
+        });
+
+        $('#runHistoryModal').on('click', '#runHistoryModalCancel', function () {
+            loadRunHistoryTable("default")
+            $("#runHistoryModalApply").removeAttr("info");
+            $("#runHistoryModalBut").css("display","none");
+        });
+
+        $('#runHistoryModal').on('click', '#runHistoryModalApply', function () {
+            var type = $("#runHistoryModalApply").data("info");
+            var selRows = $('#runHistoryTable').DataTable().rows({ selected: true }).data();
+            var selRowsId =[];
+            for (var i = 0; i < selRows.length; i++) {
+                selRowsId.push(selRows[i].id);
+            }
+            var savedData = selRowsId;
+            if (type == "delete"){
+                if (selRowsId.length >0){
+                    var text = 'Are you sure you want to delete '+selRowsId.length+' run(s)?';
+                    var execFunc = function(savedData){
+                        getValuesAsync({p:"removeRunLog", type:"remove", runlogs:selRowsId, project_pipeline_id:project_pipeline_id}, function (s) {
+                            $("#runHistoryModalBut").css("display","none");
+                            loadRunHistoryTable("default")
+                            fillRunVerOpt("#runVerLog")
+                        });
+                    }
+                    showConfirmDeleteModal(text, savedData, execFunc)
+                }
+            } else if (type == "purge"){
+                if (selRowsId.length >0){
+                    var text = 'Are you sure you want permanently delete selected '+selRowsId.length+' run(s)?';
+                    var execFunc = function(savedData){
+                        getValuesAsync({p:"removeRunLog", type:"purge", runlogs:selRowsId, project_pipeline_id:project_pipeline_id}, function (s) {
+                            $("#runHistoryModalBut").css("display","none");
+                            loadRunHistoryTable("default")
+                        });
+                    }
+                    showConfirmDeleteModal(text, savedData, execFunc)
+                }
+            }else if (type == "recover"){
+                if (selRowsId.length >0){
+                    var text = 'Are you sure you want to recover selected '+selRowsId.length+' run(s)?';
+                    var execFunc = function(savedData){
+                        getValuesAsync({p:"removeRunLog", type:"recover", runlogs:selRowsId, project_pipeline_id:project_pipeline_id}, function (s) {
+                            $("#runHistoryModalBut").css("display","none");
+                            loadRunHistoryTable("default")
+                            fillRunVerOpt("#runVerLog")
+                        });
+                    }
+                    showConfirmDeleteModal(text, savedData, execFunc)
+                }
+            }
+
+        });
+
+
+
+
+    });
+
+    $(function () {
         $(document).on('xhr.dt', '#sampleTable', function (e, settings, json, xhr) {
             new $.fn.dataTable.Api(settings).one('draw', function () {
                 initCompleteFunction(settings, json);
@@ -6834,12 +7177,14 @@ $(document).ready(function () {
 
         $('#viewDirBut').click(function () {
             var dir = $('#file_dir').val();
+            dir = $.trim(dir);
             viewDirButSearch(dir)
         });
 
         $('#addFileModal').on("dblclick", '#viewDir option', function() {
             var selectedOpt = $(this).val();
             var olddir = $('#file_dir').val();
+            olddir = $.trim(olddir);
             var newdir = "";
             if (selectedOpt == ".."){
                 var split = olddir.split("/")
@@ -6857,8 +7202,8 @@ $(document).ready(function () {
                 } else{
                     newdir = olddir + "/"+ selectedOpt;
                 }
-
             }
+            console.log(newdir)
             if (newdir){
                 $('#file_dir').val(newdir);
                 viewDirButSearch(newdir); 
@@ -7468,9 +7813,11 @@ $(document).ready(function () {
                     formObj.file_dir = fileDirArr;
 
                     if (s3_archive_dir.match(/s3:/i)){
+                        s3_archive_dir = $.trim(s3_archive_dir)
                         formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
                     }
                     if (gs_archive_dir.match(/gs:/i)){
+                        gs_archive_dir = $.trim(gs_archive_dir)
                         formObj.gs_archive_dir = gs_archive_dir+"\t"+googArchKey
                     }
                     formObj.file_array = ret.file_array;
@@ -7812,37 +8159,72 @@ $(document).ready(function () {
 
             }
         });
-
     });
 
 
-
     function updateFileArea(selectId, pattern) {
-        var fileOrj = $("#viewDir").data("fileArr")
+        var fileOrj = $("#viewDir").data("fileArr");
         if (fileOrj) {
             var fileAr = fileOrj.slice(); //clone list
             var delArr = $(selectId).data("samples")
-            if (delArr) {
-                if (delArr.length) {
-                    for (var i = 0; i < delArr.length; i++) {
-                        var index = fileAr.indexOf(delArr[i]);
-                        if (index > -1) {
-                            fileAr.splice(index, 1);
-                        }
+            // files that are selected are kept in delArr and removed before loading fillArray2Select
+            if (delArr && delArr.length) {
+                for (var i = 0; i < delArr.length; i++) {
+                    var index = fileAr.indexOf(delArr[i]);
+                    if (index > -1) {
+                        fileAr.splice(index, 1);
                     }
                 }
             }
+            console.log("fileAr",fileAr)
+
             if (fileAr) {
-                pattern = cleanRegEx(pattern);
-                var reg = new RegExp(pattern)
+                var patternReg = cleanRegEx(pattern);
+                var reg = new RegExp(patternReg)
                 var filteredAr = fileAr.filter(line => line.match(reg));
                 if (filteredAr.length > 0) {
-                    fillArray2Select(filteredAr, selectId, true)
+                    if (pattern && (selectId == "#forwardList" || selectId == "#reverseList" ) && ($("#forward_pattern").val().length == $("#reverse_pattern").val().length)){ 
+                        //replace pattern with "__" to match with complementary list
+                        var filteredArReg = []; 
+                        for (var i = 0; i < filteredAr.length; i++) {
+                            var compVal = filteredAr[i].split(pattern).join("__");
+                            filteredArReg.push(compVal)
+                        }
+                        console.log("filteredArReg",filteredArReg)
+                        $(selectId).data("filteredArReg", filteredArReg);
+                        if (selectId == "#forwardList"){
+                            var filteredArComp = $("#reverseList").data("filteredArReg");
+                        } else if (selectId == "#reverseList"){
+                            var filteredArComp = $("#forwardList").data("filteredArReg");
+                        }
+                        if (filteredArComp && filteredArComp.length > 0) {
+                            console.log("filteredArComp",filteredArComp)
+                            var trashIdx = [];
+                            for (var k = 0; k < filteredAr.length; k++) {
+                                var compVal = filteredAr[k].split(pattern).join("__");
+                                var index = filteredArComp.indexOf(compVal);
+                                //if complementary not found in the filteredArComp, then remove
+                                if (index < 0) {
+                                    trashIdx.push(k);
+                                }
+                            }
+                            for (var i = trashIdx.length - 1; i >= 0; i--){
+                                filteredAr.splice(trashIdx[i], 1);
+                            }
+                        }
+                    } else {
+                        $(selectId).removeData("filteredArReg");
+                    }
+                    fillArray2Select(filteredAr, selectId, true);
+
+
                 } else {
-                    fillArray2Select(["No file match with pattern."], selectId, true)
+                    fillArray2Select(["No files matching the pattern."], selectId, true)
+                    $(selectId).removeData("filteredArReg");
                 }
             } else {
-                fillArray2Select(["There is no file to match pattern"], selectId, true)
+                fillArray2Select(["No files matching the pattern."], selectId, true)
+                $(selectId).removeData("filteredArReg");
             }
         }
     }
@@ -7857,12 +8239,12 @@ $(document).ready(function () {
     }
     $(function () {
         $(document).on('keyup', '#forward_pattern', function () {
-            var pattern = $(this).val();
-            updateFileList("#forwardList", pattern)
+            updateFileList("#forwardList", $("#forward_pattern").val());
+            updateFileList("#reverseList", $("#reverse_pattern").val());
         });
         $(document).on('keyup', '#reverse_pattern', function () {
-            var pattern = $(this).val();
-            updateFileList("#reverseList", pattern)
+            updateFileList("#reverseList", $("#reverse_pattern").val());
+            updateFileList("#forwardList", $("#forward_pattern").val());
         });
         $(document).on('keyup', '#single_pattern', function () {
             var pattern = $(this).val();
@@ -10302,8 +10684,8 @@ $(document).ready(function () {
                             $('.nav-tabs a[href="#configTab"]').trigger("click")
                         }
                     }
-                    
-                    
+
+
                     var runTitleLog = "";
                     $('a[href="#reportTab"]').css("display", "none")
                 }
@@ -10314,7 +10696,7 @@ $(document).ready(function () {
             }
         }
 
-        function updateRunLogStat(run_log_uuid){
+        function updateRunLogStat(run_log_uuid, updateRunLogStat){
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",
@@ -10324,7 +10706,12 @@ $(document).ready(function () {
                     if (s){
                         if (s[0]){
                             var run_status = s[0].run_status;
-                            runLogStatUpdate(run_status, "Opt");
+                            console.log(run_status)
+                            if (updateRunLogStat == "1"){
+                                runLogStatUpdate(run_status, "Opt");
+                            } else {
+                                runLogStatUpdate(run_status, "NoOpt");
+                            }
                         }
                     }
                 },
@@ -10438,6 +10825,7 @@ $(document).ready(function () {
                     var runTitleLog = "<label>Run " + version + " - Log</label>";
                 } 
                 var lastrun = $('option:selected', '#runVerLog').attr('lastrun');
+                console.log(lastrun)
                 if (lastrun) {
                     lastrun = 'lastrun="yes"';
                 } else {
@@ -10448,7 +10836,7 @@ $(document).ready(function () {
                 if (activeTab[0]) {
                     activeID = $(activeTab[0]).attr("href")
                 }
-                
+
                 $("#runTitleLog").html(runTitleLog)
                 $("#logContentDiv").empty();
                 //to support outdated log directory system 
@@ -10565,9 +10953,9 @@ $(document).ready(function () {
             }
             var size = $('#runVerLog > option').length;
             if (size) {
-                $('#runVerLog').css("display", "block");
+                $('#runHistoryDiv').css("display", "block");
             } else {
-                $('#runVerLog').css("display", "none");
+                $('#runHistoryDiv').css("display", "none");
             }
             var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
             var version = $('option:selected', '#runVerLog').attr('ver');
@@ -10590,11 +10978,12 @@ $(document).ready(function () {
             }
             var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
             var newRunExist =checkNewRunStatus();
+            var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
             console.log("lastrun", lastrun)
             console.log("newRun", newRun)
             console.log("newRunExist", newRunExist)
             //new run mode
-            if (newRun) {
+            if (newRun && projectpipelineOwn == "1") {
                 toogleStatusMode("default");
                 tooglePermsGroupsDiv("show");
                 toogleMainIcons("show");
@@ -10602,7 +10991,7 @@ $(document).ready(function () {
                 checkType="newrun";
                 checkReadytoRun()
                 //last run mode 
-            } else if (lastrun && !newRunExist){
+            } else if (lastrun && !newRunExist && projectpipelineOwn == "1"){
                 toogleStatusMode("default");
                 tooglePermsGroupsDiv("show");
                 toogleMainIcons("show");
@@ -10611,12 +11000,16 @@ $(document).ready(function () {
                 readNextLog(proTypeWindow, proIdWindow, "no_reload");
                 //history mode
             } else {
-                toogleStatusMode("noOptions");
+                if (projectpipelineOwn == "1"){
+                    toogleStatusMode("oneOption");
+                } else {
+                    toogleStatusMode("noOption");
+                }
                 tooglePermsGroupsDiv("hide");
                 toogleMainIcons("hide");
                 toogleRunInputs("disable");
                 if (prevUID != run_log_uuid){
-                    updateRunLogStat(run_log_uuid);
+                    updateRunLogStat(run_log_uuid, projectpipelineOwn);
                 }
             }
             console.log("activeID",activeID)
