@@ -6635,6 +6635,7 @@ function toogleMainIcons(mode){
     }
 }
 function toogleStatusMode(mode){
+    console.log("mode",mode)
     if (mode == "default"){
         $('#pipeRunDiv').css("display", "block");
         $('#runStatDiv').css("display", "none");
@@ -7290,6 +7291,7 @@ $(function () {
             var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
             var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
             var newRunExist =checkNewRunStatus();
+
             //load from projectpipelinedata
             if (newRun || (!newRunExist && lastrun)){
                 $.ajax({
@@ -7364,8 +7366,9 @@ $(function () {
         var prevlastrun = $('#runVerLog option[value="'+prevUID+'"]').attr('lastrun') || false;
         var prevnewRun = $('#runVerLog option[value="'+prevUID+'"]').attr('newRun') || false;
         var newRunExist =checkNewRunStatus();
+        var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
         // if prevUID belong to newrun then saveRun before loadRunLogOpt 
-        if (prevnewRun || (!newRunExist && prevlastrun)){
+        if (projectpipelineOwn == "1" && prevnewRun || (!newRunExist && prevlastrun)){
             saveRun(loadRunLogOpt);
         } else {
             loadRunLogOpt();
@@ -7556,11 +7559,11 @@ $(function () {
             readNextLog(proTypeWindow, proIdWindow, "no_reload");
             //history mode
         } else {
-            if (projectpipelineOwn == "1"){
-                toogleStatusMode("oneOption");
-            } else {
-                toogleStatusMode("noOption");
-            }
+//            if (projectpipelineOwn == "1"){
+//                toogleStatusMode("oneOption");
+//            } else {
+//                toogleStatusMode("noOption");
+//            }
             tooglePermsGroupsDiv("hide");
             toogleMainIcons("hide");
             toogleRunInputs("disable");
