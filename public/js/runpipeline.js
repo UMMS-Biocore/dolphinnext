@@ -6665,7 +6665,6 @@ function runLogStatUpdate(runStatus, type){
 
 
 function toogleRunInputs(type){
-    console.log("toogleRunInputs",type);
     var bool;
     if (type == "disable"){
         bool = true;
@@ -10764,7 +10763,12 @@ $(document).ready(function () {
                         async: true,
                         success: function (projectPipeInputs_rev) {
                             if (projectPipeInputs_rev){
-                                fillProPipeInputsRev(projectPipeInputs_rev, "default");
+                                var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+                                if (projectpipelineOwn == "1"){
+                                    fillProPipeInputsRev(projectPipeInputs_rev, "default");
+                                } else {
+                                    fillProPipeInputsRev(projectPipeInputs_rev, "dry");
+                                }
                             }
                         }, 
                         error: function (errorThrown) {
@@ -11141,10 +11145,7 @@ $(document).ready(function () {
                 profVar += el + " = "+ '"'+formObj[el] +'"\n';
             }
         });
-        console.log(profVar)
         profVar = $.trim(profVar);
-        console.log(profVar)
-
         if (profVar){
             profVar = encodeURIComponent(profVar);
             $.ajax({
