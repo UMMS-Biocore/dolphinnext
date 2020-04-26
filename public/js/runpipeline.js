@@ -6665,6 +6665,7 @@ function runLogStatUpdate(runStatus, type){
 
 
 function toogleRunInputs(type){
+    console.log("toogleRunInputs",type);
     var bool;
     if (type == "disable"){
         bool = true;
