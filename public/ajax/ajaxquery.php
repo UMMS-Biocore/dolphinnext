@@ -1670,7 +1670,7 @@ else if ($p=="saveProcessGroup"){
 }
 else if ($p=="saveProcess"){
     $name = $_REQUEST['name'];
-    $process_gid = $_REQUEST['process_gid'];
+    $process_gid = isset($_REQUEST['process_gid']) ? $_REQUEST['process_gid'] : "";
     if ($process_gid == "") {
         $max_gid = json_decode($db->getMaxProcess_gid(),true)[0]["process_gid"];
         settype($max_gid, "integer");
