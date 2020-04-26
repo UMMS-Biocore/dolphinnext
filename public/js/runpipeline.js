@@ -4848,6 +4848,8 @@ function configTextAllProcess(confText, exec_all_settings, type, proName, execut
 
 //type="" or "Opt"
 function displayStatButton(idButton, type) {
+    console.log(idButton)
+    console.log(type)
     var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual", "runStatErrorOpt", "runStatCompleteOpt", "runStatRunningOpt", "runStatWaitingOpt", "runStatConnectingOpt", "runStatTerminatedOpt", "runStatAbortedOpt", "runStatManualOpt", "runStatErrorNoOpt", "runStatCompleteNoOpt", "runStatRunningNoOpt", "runStatWaitingNoOpt", "runStatConnectingNoOpt", "runStatTerminatedNoOpt", "runStatAbortedNoOpt", "runStatManualNoOpt"];
     for (var i = 0; i < buttonList.length; i++) {
         if (document.getElementById(buttonList[i])){
@@ -6325,6 +6327,7 @@ function fillRunVerOpt(dropDownId) {
             newRunLogs.push(runLogs[el])
         }
     });
+    console.log(newRunLogs)
     var nRun = $(newRunLogs).size()
     var n = 0;
     var lastDropdownVal = '';
@@ -6385,7 +6388,8 @@ function fillRunVerOpt(dropDownId) {
         updateNewRunStatus("1");
         newrunCheck = "1";
     }
-
+    console.log(newrunCheck)
+    console.log(lastDropdownVal)
     //if new_run is selected then select first "Run History" option
     if (newrunCheck){
         n++;
@@ -6400,6 +6404,7 @@ function fillRunVerOpt(dropDownId) {
         }
         // else choose second option
     } else {
+        console.log($(dropDownId + ' option[value="'+lastDropdownVal+'"]').val())
         $(dropDownId).val($(dropDownId + ' option[value="'+lastDropdownVal+'"]').val());
         // don't allow to reload configtab unless another log is selected 
         //        $(dropDownId).attr("configTabUID",lastDropdownVal);
@@ -6648,6 +6653,7 @@ function toogleStatusMode(mode){
 
 // show old run_status of the logs//Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
 function runLogStatUpdate(runStatus, type){
+    console.log(type)
     if (runStatus === "NextSuc") {
         displayStatButton('runStatComplete', type);
     } else if (runStatus === "Error" || runStatus === "NextErr") {
@@ -6675,6 +6681,916 @@ function toogleRunInputs(type){
     $("#advancedTab :input").prop("disabled", bool);
     $('.ui-dialog :input').not(".ui-dialog-buttonpane :input").prop("disabled", bool);
 }
+
+$(function () {
+    function reloadReportRows(){
+        var run_log_uuid = $("#runVerLog").val();
+        if (run_log_uuid){
+            var runUID = '<span style="font-size:10px; float:right; color:gray;">Run UID: '+run_log_uuid+'</span>';
+            $("#reportRowsFooter").html(runUID); 
+        }
+
+        $("#reportRows").empty();
+        //add 'className: "center"' to center text in columns array
+        $("#reportRows").dynamicRows({
+            ajax: {
+                url: "ajax/ajaxquery.php",
+                data: { "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id }
+            },
+            columnsBody: [{
+                //file list
+                data: null,
+                colPercent: "15",
+                overflow: "scroll",
+                fnCreatedCell: function (nTd, oData) {
+                    var getExtension = function (filename){
+                        var re = /(?:\.([^.]+))?$/;
+                        var ext = re.exec(filename)[1];   // "txt"
+                        if (!ext){
+                            ext = "";
+                        }
+                        return ext;
+                    }
+                    var getIconByExtension = function(ext){
+                        var icon = "fa fa-file-text-o";
+                        if (ext == "tsv" || ext == "csv" || ext === "xls" || ext === "xlsx") {
+                            icon = "fa fa-table";
+                        } else if (ext == "html") {
+                            icon = "fa fa-file-code-o";
+                        } else if (ext == "pdf") {
+                            icon = "fa fa-file-pdf-o";
+                        } else if (ext == "rmd") {
+                            icon = "fa fa-pie-chart";
+                        } else if (ext == "md") {
+                            icon = "fa fa-edit";
+                        } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
+                            icon = "fa fa-file-image-o";
+                        }
+                        return icon;
+                    }
+                    var getVisTypeByExtension = function(ext){
+                        var visType = "text";
+                        if (ext == "tsv") {
+                            visType = "table";
+                        } else if (ext == "html") {
+                            visType = "html";
+                        } else if (ext == "pdf") {
+                            visType = "pdf";
+                        } else if (ext == "rmd") {
+                            visType = "rmarkdown";
+                        } else if (ext == "md") {
+                            visType = "markdown";
+                        } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
+                            visType = "image";
+                            //will download file if not supported
+                        } else if (ext == "txt" || ext === "xls" || ext === "xlsx" || ext === "csv") {
+                            visType = "text";
+                        }
+                        return visType;
+                    }
+
+                    var run_log_uuid = $("#runVerLog").val();
+                    var pubWebPath = $("#basepathinfo").attr("pubweb");
+                    var visType = oData.pubWeb
+                    var icon = "fa fa-file-text-o";
+                    if (visType == "table" || visType === "table-percent") {
+                        icon = "fa fa-table";
+                    }
+                    var fileList = oData.fileList;
+                    var liText = "";
+                    var active = "";
+                    $.each(fileList, function (el) {
+                        if (fileList[el]) {
+                            if (el == 0) {
+                                active = "active"
+                            } else {
+                                active = "";
+                            }
+                            //if oData.pubWeb= "run_description" -> fill file icons and visType based on their file type
+                            if (oData.pubWeb == "run_description"){
+                                var ext = getExtension(fileList[el]);
+                                icon = getIconByExtension(ext);
+                                visType = getVisTypeByExtension(ext);
+                            }
+                            var filepath = oData.name + "/" + fileList[el];
+                            var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
+                            var filenameCl = cleanProcessName(fileList[el])
+                            var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                            var fileID = oData.id + "_" + filenameCl;
+                            //remove directory str, only show filename in label
+                            var labelText = /[^/]*$/.exec(fileList[el])[0];
+                            liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="' + icon + '"></i>' + labelText + '</a></li>';
+                        }
+                    });
+
+                    //xxxxxxx
+                    var addEveHandlerIconDiv = function (id){
+                        var addIconID = "addIcon-" + id;
+                        var renameIcon = "renameIcon-" + id;
+                        var deleteIcon = "deleteIcon-" + id;
+
+                        var getFileName = function (filePath) {
+                            var res = { filename: "", rest: "" };
+                            var split = filePath.split("/")
+                            res.filename = split[split.length - 1]
+                            res.rest = split.slice(0, -1).join('/');
+                            return res
+                        }
+
+                        //return 1 if newName is found in directory.
+                        var checkDuplicateFile = function (newName,fileNameObj){
+                            var ret = 1;
+                            if (!fileNameObj.rest){
+                                return 0;
+                            }
+                            var targetfilepath = fileNameObj.rest + "/" + newName;
+                            var checkDup = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li").find("a").filter(function () {
+                                return $(this).attr('filepath') === targetfilepath
+                            });
+                            if (!checkDup.length){
+                                ret = 0;
+                            }
+                            return ret;
+                        }
+
+                        var dynrows_savefile = function (filePath,text) {
+                            var obj = getFileName(filePath);
+                            var newPath = obj.rest + "/" + obj.filename
+                            text = encodeURIComponent(text);
+                            var run_log_uuid = $("#runVerLog").val();
+                            var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
+                            return saveData
+                        }
+
+                        var getFileNameObj = function (){
+                            var obj = {};
+                            var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
+                            var filePath = $(activeLiA[0]).attr("filepath");
+                            if (filePath){
+                                obj = getFileName(filePath);
+                            }
+                            return obj;
+                        }
+
+
+                        var dynrows_movefile = function (file1, file2){
+                            var run_log_uuid = $("#runVerLog").val();
+                            if (file1 && file2){
+                                var moveFile = getValues({ 
+                                    p: "moveFile", 
+                                    "type": "pubweb",
+                                    "from": run_log_uuid + "/pubweb/" + file1,
+                                    "to": run_log_uuid + "/pubweb/" + file2
+                                });
+                                return moveFile;
+                            }
+                        }
+
+                        var createModal = function () {
+                            var fileModal = `
+<div id="dynRowsInfo" class="modal fade" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<h4 class="modal-title" id="dynRowsInfoTitle">Title</h4>
+</div>
+<div class="modal-body">
+<div id="dynRowsEditDiv" class="form-horizontal">
+<div class="form-group">
+<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please edit filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
+<div class="col-sm-8">
+<input id="dynRowsEditFileName" type="text" class="form-control">
+</div>
+</div>
+</div>
+<div id="dynRowsAddDiv" style="padding-right:10px;" class="form-horizontal">
+
+<div class="form-group">
+<label class="col-sm-4 control-label"><input type="checkbox" id="dynRowsEmptyFileCheck" name="check_emptyFile" data-toggle="collapse" data-target="#dynRows_emptyFileDiv" class="collapsed" aria-expanded="false"> Create Empty File </label>
+</div>
+<div id="dynRows_emptyFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
+<div class="form-group">
+<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
+<div class="col-sm-8">
+<input id="dynRowsFileName" type="text" class="form-control">
+</div>
+</div>
+</div>
+<div class="form-group">
+<label class="col-sm-4 control-label"><input type="checkbox" id="dynRows_uploadFileCheck" name="check_uploadFile" data-toggle="collapse" data-target="#dynRows_uploadFileDiv" class="collapsed" aria-expanded="false"> Upload File </label>
+</div>
+<div id="dynRows_uploadFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
+<div class="form-group">
+<div class="col-sm-12" id="dynRows_import_div">
+<form id="dynRowsUploadForm" action="ajax/import.php" class="dropzone">
+<div class="fallback ">
+<input name="file" type="file" />
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+<button id="dynRowsInfoButton" type="button" class="btn btn-primary" >Save</button>
+</div>
+</div>
+</div>
+</div>`;
+
+                            if (document.getElementById("dynRowsInfo") === null) {
+                                $('body').append(fileModal);
+                            }
+                        }
+
+
+                        var bindEventHandlerModal = function(){
+                            //clean previous binds
+                            $("#reportRows").off();
+                            $("#dynRowsInfo").off();
+                            //not allow to click both option
+                            disableDoubleClickCollapse("dynRowsEmptyFileCheck", "dynRows_emptyFileDiv", "dynRows_uploadFileCheck","dynRows_uploadFileDiv", "dynRowsInfo");
+
+
+                            $("#reportRows").on('click', '#'+addIconID, function (event) {
+                                window.dynRows = {};
+                                window.dynRows.filename = ""
+                                var myDropzone = Dropzone.forElement("#dynRowsUploadForm");
+                                myDropzone.removeAllFiles();
+                                if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
+                                    $('#'+"dynRowsEmptyFileCheck").trigger("click");
+                                }
+                                if ($('#'+"dynRows_uploadFileCheck").is(":checked")) {
+                                    $('#'+"dynRows_uploadFileCheck").trigger("click");
+                                }
+                                $("#dynRowsInfoTitle").text("Create New File")
+                                $("#dynRowsFileName").val("NewFile.md")
+                                $("#dynRowsEditDiv").css("display","none");
+                                $("#dynRowsAddDiv").css("display","block");
+                                $("#dynRowsInfoButton").attr("class", "btn btn-primary save")
+                                $("#dynRowsInfoButton").text("Save")
+                                $("#dynRowsInfo").modal("show");
+                            });
+
+                            var callbackActiveClick = function (){
+                                $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a").trigger("click");
+                            }
+
+                            $('#dynRowsInfo').on('hide.bs.modal', function (event) {
+                                $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody", callback:callbackActiveClick});
+                            });
+
+                            $("#dynRowsInfo").on('click', '.save', function (event) {
+                                event.preventDefault();
+                                var obj = getFileNameObj()
+                                if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
+                                    var newName = $("#dynRowsFileName").val()
+                                    if (newName){
+                                        var checkDuplicate = checkDuplicateFile(newName,obj);
+                                        console.log(checkDuplicate)
+                                        if (!checkDuplicate){
+                                            var filepath = oData.name + "/" +newName;
+                                            var text = "";
+                                            dynrows_savefile(filepath,text);
+                                            $("#dynRowsInfo").modal("hide");
+                                        } else {
+                                            showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
+                                        }
+                                    } else{
+                                        showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
+                                    }
+                                } else {
+                                    $("#dynRowsInfo").modal("hide");
+                                } 
+                            });
+
+                            $("#reportRows").on('click', '#'+deleteIcon, function (event) {
+                                var obj = getFileNameObj();
+                                var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
+                                var text = 'Are you sure you want to delete '+obj.filename+'?';
+                                var savedData = $(activeLiA[0]);
+                                var execFunc = function(savedData){
+                                    var filePath = savedData.attr("filepath");
+                                    var run_log_uuid = $("#runVerLog").val();
+                                    var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
+                                    $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
+                                }
+                                showConfirmDeleteModal(text, savedData, execFunc)
+                            });
+
+                            $("#reportRows").on('click', '#'+renameIcon, function (event) {
+                                var obj = getFileNameObj()
+                                $("#dynRowsInfoTitle").text("Edit Filename")
+                                $("#dynRowsEditFileName").val(obj.filename)
+                                $("#dynRowsEditDiv").css("display","block");
+                                $("#dynRowsAddDiv").css("display","none");
+                                $("#dynRowsInfoButton").attr("class", "btn btn-primary rename")
+                                $("#dynRowsInfoButton").text("Save")
+                                $("#dynRowsInfo").modal("show");
+                            });
+
+                            $("#dynRowsInfo").on('click', '.rename', function (event) {
+                                event.preventDefault();
+                                var obj = getFileNameObj()
+                                var newName = $("#dynRowsEditFileName").val()
+                                if (newName){
+                                    var checkDuplicate = checkDuplicateFile(newName,obj);
+                                    if (!checkDuplicate){
+                                        var filepath1 = oData.name + "/" +obj.filename;
+                                        var filepath2 = oData.name + "/" +newName;
+                                        dynrows_movefile(filepath1,filepath2);
+                                        $("#dynRowsInfo").modal("hide");
+                                    } else {
+                                        showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
+                                    }
+                                } else {
+                                    showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
+                                }
+                            });
+                        }
+
+
+                        var createDropzone = function (){
+                            console.log("createDropzone")
+                            if (Dropzone.options.dynRowsUploadForm){
+                                $("#dynRowsUploadForm")[0].dropzone.destroy()
+                                $("#dynRowsUploadForm").off()
+                            }
+                            // Configuriation of dropzone of id:dynRowsUploadForm in mdEditorInfo modal
+                            window.dynRows = {};
+                            window.dynRows.filename = "";
+                            Dropzone.options.dynRowsUploadForm = {
+                                paramName: "pubweb", // The name that will be used to transfer the file
+                                maxFilesize: 30, // MB
+                                maxFiles:10,
+                                createImageThumbnails: false,
+                                dictDefaultMessage: 'Drop your file here or <button type="button" class="btn btn-default" >Select File </button>',
+                                accept: function (file, done) {
+                                    window.dynRows.filename= file.name
+                                    done();
+                                    $('#dynRows_upload_name_span').text(file.name)
+                                },
+                                init: function() {
+                                    this.on("sending", function(file, xhr, formData){
+                                        formData.append("uuid", run_log_uuid);
+                                        formData.append("dir", oData.name);
+                                    });
+                                }
+                            }; 
+                            $("#dynRowsUploadForm").dropzone();  
+
+                        }
+                        createModal()
+                        createDropzone()
+                        bindEventHandlerModal()
+                    }
+
+                    var getFileListHeaderIconDiv = function (id) {
+                        var border = "border-right: 1px solid lightgray;"
+                        var addIcon = `<li role="presentation"><a id="addIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Add File"><i style="font-size: 18px;" class="fa fa-plus"></i></a></li>`;
+                        var renameIcon = `<li role="presentation"><a id="renameIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Rename File"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
+                        var deleteIcon = `<li role="presentation"><a  id="deleteIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Delete File"><i style="font-size: 18px;" class="fa fa-trash"></i></a></li>`;
+                        var content = `<ul style="float:right"  class="nav nav-pills panelheader">` + addIcon + renameIcon + deleteIcon + `</ul>`;
+                        var wrapDiv = '<div id="' + id + '-ListHeaderIconDiv" style="'+border+'height:35px; width:100%;">' + content + '</div>';
+                        return wrapDiv;
+                    }
+                    var IconDiv = "";
+                    var writePerm= $runscope.checkUserWritePerm();
+                    //allows user to edit run page
+                    if (writePerm){
+                        if (oData.pubWeb == "run_description"){
+                            IconDiv = getFileListHeaderIconDiv(oData.id);
+                            addEveHandlerIconDiv(oData.id)
+                        }
+                    }
+                    if (!liText) {
+                        liText = '<div style="margin:10px;"> No data available</div>';
+                    }
+                    var allText = IconDiv + liText;
+                    $(nTd).html('<ul class="nav nav-pills nav-stacked">' + allText + '</ul>');
+                },
+            }, {
+                //file content
+                data: null,
+                colPercent: "85",
+                fnCreatedCell: function (nTd, oData) {
+                    var fileList = oData.fileList;
+                    if ($(nTd).is(':empty')) {
+                        var navTabDiv = "";
+                        navTabDiv += '<div style="height:inherit;" class="tab-content">';
+                        var liText = "";
+                        var active = "";
+                        $.each(fileList, function (el) {
+                            var filenameCl = cleanProcessName(fileList[el])
+                            var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                            var active = "";
+                            if (el == 0) {
+                                active = 'in active';
+                            }
+                            navTabDiv += '<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
+                        });
+                        navTabDiv += '</div>';
+                        $(nTd).html(navTabDiv);
+                    } else {
+                        //when dynamicRows.fnrefresh is executed following code will update the tabid section
+                        var newTabIdList = []
+                        $.each(fileList, function (el) {
+                            var filenameCl = cleanProcessName(fileList[el])
+                            var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
+                            newTabIdList.push(newTabID)
+                        });
+
+                        //get all existing tabs
+                        var alltabs = $(nTd).find("div[dynamicrowstabs]");
+                        for (var k = 0; k < alltabs.length; k++) {
+                            var oldTabID = $(alltabs[k]).attr("id");
+                            if($.inArray(oldTabID, newTabIdList) === -1){
+                                //remove oldTabID from DOM, since it doesn't found in newTabIdList
+                                $(alltabs[k]).remove();
+                            }
+                        }
+                        //add new tabs
+                        $.each(fileList, function (el) {
+                            var filenameCl = cleanProcessName(fileList[el])
+                            var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
+                            if (!$(nTd).find("div#" + newTabID).length) {
+                                $(nTd).children().append('<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + newTabID + '" class = "tab-pane fade fullsize" ></div>')
+                            }
+                            if (el == 0){
+                                $("#"+newTabID).addClass("in active").removeClass("fade");
+                            }
+                        });
+                    }
+                },
+            }],
+            columnsHeader: [{
+                data: null,
+                colPercent: "4",
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
+                },
+            }, {
+                data: null,
+                fnCreatedCell: function (nTd, oData) {
+                    var gNum = oData.id.split("_")[0].split("-")[1];
+                    var rowID = "outputTa-" + gNum;
+                    var processName = $('#' + rowID + ' > :nth-child(5)').text();
+                    if (oData.pubWeb == "run_description"){
+                        processName = "Run Notes"
+                    }
+                    var processID = $('#' + rowID + ' > :nth-child(5)').text();
+                    $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + createLabel(processName) + '</span>');
+                },
+                colPercent: "37"
+            }, {
+                data: null,
+                colPercent: "39",
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span>' + createLabel(oData.name) + '</span>');
+                }
+            }, {
+                data: null,
+                colPercent: "20",
+                fnCreatedCell: function (nTd, oData) {
+                    var visType = oData.pubWeb
+                    var icon = "fa fa-file-text-o";
+                    var text = visType;
+                    if (visType === "table" || visType === "table-percent") {
+                        icon = "fa fa-table";
+                        text = "Table";
+                    } else if (visType === "html") {
+                        icon = "fa fa-file-code-o";
+                        text = "HTML";
+                    } else if (visType === "pdf") {
+                        icon = "fa fa-file-pdf-o";
+                        text = "PDF";
+                    } else if (visType === "rmarkdown") {
+                        icon = "fa fa-pie-chart";
+                        text = "R-Markdown";
+                    } else if (visType === "highcharts") {
+                        icon = "fa fa-line-chart";
+                        text = "Charts";
+                    } else if (visType === "debrowser") {
+                        icon = "glyphicon glyphicon-stats";
+                        text = "DE-Browser";
+                    } else if (visType === "image") {
+                        icon = "fa fa-file-image-o";
+                        text = "Image";
+                    } else if (visType === "run_description") {
+                        icon = "fa fa-edit";
+                        text = "Markdown";
+                    }
+                    $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
+                }
+            }],
+            columnsTitle: [{
+                data: null,
+                colPercent: "4"
+
+            }, {
+                data: null,
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span>PROCESS</span>');
+                },
+                colPercent: "37"
+            }, {
+                data: "name",
+                colPercent: "39",
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span>PUBLISHED DIRECTORY</span>');
+                },
+            }, {
+                data: null,
+                colPercent: "20",
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span>VIEW FORMAT</span>');
+                }
+            }],
+            backgroundcolorenter: "#ced9e3",
+            backgroundcolorleave: "#ECF0F4",
+            heightHeader: "60px"
+        });
+    }
+
+    $(document).on('click', '#refreshVerReport', function (event) {
+        reloadReportRows();
+    });
+
+    function updateRunReportTab(run_log_uuid){
+        var reload = true
+        if (run_log_uuid) {
+            var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+            var version = $('option:selected', '#runVerLog').attr('ver');
+            if (version && !newRun) {
+                var runTitleLog = "<label>Run " + version + " - Report</label>";
+                $('a[href="#reportTab"]').css("display", "block")
+            } else {
+                if ($("ul#runTabDiv li.active > a")[0]){
+                    if ($($("ul#runTabDiv li.active > a")[0]).attr("href") == "#reportTab"){
+                        $('.nav-tabs a[href="#configTab"]').trigger("click")
+                    }
+                }
+
+
+                var runTitleLog = "";
+                $('a[href="#reportTab"]').css("display", "none")
+            }
+            $("#runTitleReport").html(runTitleLog)
+            if (reload){
+                reloadReportRows();
+            }
+        }
+    }
+
+    function updateRunLogStat(run_log_uuid, projectpipelineOwn){
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {p:"getRunLogStatus", uuid:run_log_uuid},
+            async: true,
+            success: function (s) {
+                if (s){
+                    if (s[0]){
+                        var run_status = s[0].run_status;
+                        var run_opt_check = s[0].run_opt_check;
+                        if (run_opt_check == "1" && projectpipelineOwn == "1"){
+                            toogleStatusMode("oneOption");
+                            runLogStatUpdate(run_status, "Opt");
+                        } else {
+                            toogleStatusMode("noOption");
+                            runLogStatUpdate(run_status, "NoOpt");
+                        }
+                    }
+                }
+            },
+            error: function (errorThrown) {
+                toastr.error("Error occured.");
+            }
+        }); 
+    }
+
+    function updateRunConfigTab(prevUID){
+        var loadRunLogOpt = function (){
+            var run_log_uuid = $('#runVerLog').val();
+            var runTitleConfig = "";
+            var runTitleAdvanced = "";
+            var version = $('option:selected', '#runVerLog').attr('ver');
+            if (version) {
+                runTitleConfig = "<label>Run "+version+" - Settings</label>"
+                runTitleAdvanced = "<label>Run "+version+" - Advanced</label>"
+            } else {
+                runTitleConfig = "<label>Run Settings</label>";
+                runTitleAdvanced = "<label>Advanced</label>";
+            } 
+            $("#runTitleConfig").html(runTitleConfig)
+            $("#runTitleAdvanced").html(runTitleAdvanced)
+            var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
+            var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+            var newRunExist =checkNewRunStatus();
+            //load from projectpipelinedata
+            if (newRun || (!newRunExist && lastrun)){
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: {p:"getProjectPipelines", id:project_pipeline_id},
+                    async: true,
+                    success: function (pipe) {
+                        if (pipe){
+                            loadRunSettings(pipe);
+                            checkReadytoRun();
+                        }
+                    }, 
+                    error: function (errorThrown) {
+                        toastr.error("Error occured.");
+                    }
+                });
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: {p:"getProjectPipelineInputs", project_pipeline_id:project_pipeline_id},
+                    async: true,
+                    success: function (projectPipeInputs_rev) {
+                        if (projectPipeInputs_rev){
+                            var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+                            if (projectpipelineOwn == "1"){
+                                fillProPipeInputsRev(projectPipeInputs_rev, "default");
+                            } else {
+                                fillProPipeInputsRev(projectPipeInputs_rev, "dry");
+                            }
+                        }
+                    }, 
+                    error: function (errorThrown) {
+                        toastr.error("Error occured.");
+                    }
+                });
+                //load from getRunLogOpt
+            } else {
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: {p:"getRunLogOpt", uuid:run_log_uuid},
+                    async: true,
+                    success: function (s) {
+                        var pipe = s.run_opt;
+                        if (pipe){
+                            console.log(IsJsonString(pipe));
+                            if (IsJsonString(pipe)) {
+                                var json = JSON.parse(pipe)
+                                console.log(json)
+                                if (json) {
+                                    var pipeData = [];
+                                    pipeData[0] = json;
+                                    loadRunSettings(pipeData);
+                                    if (json.project_pipeline_input){
+                                        var projectPipeInputs_rev = json.project_pipeline_input; 
+                                        fillProPipeInputsRev(projectPipeInputs_rev, "dry");
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    error: function (errorThrown) {
+                        toastr.error("Error occured.");
+                    }
+                }); 
+            }
+
+        }
+        console.log("updateRunConfigTab")
+        console.log("prevUID", prevUID);
+        var prevlastrun = $('#runVerLog option[value="'+prevUID+'"]').attr('lastrun') || false;
+        var prevnewRun = $('#runVerLog option[value="'+prevUID+'"]').attr('newRun') || false;
+        var newRunExist =checkNewRunStatus();
+        // if prevUID belong to newrun then saveRun before loadRunLogOpt 
+        if (prevnewRun || (!newRunExist && prevlastrun)){
+            saveRun(loadRunLogOpt);
+        } else {
+            loadRunLogOpt();
+        }
+    }
+
+    function updateRunLogTab(run_log_uuid){
+        console.log("updateRunLogTab")
+        if (run_log_uuid) {
+            var runTitleLog = "";
+            var version = $('option:selected', '#runVerLog').attr('ver');
+            if (version) {
+                var runTitleLog = "<label>Run " + version + " - Log</label>";
+            } 
+            var lastrun = $('option:selected', '#runVerLog').attr('lastrun');
+            console.log(lastrun)
+            if (lastrun) {
+                lastrun = 'lastrun="yes"';
+            } else {
+                lastrun = "";
+            }
+            var activeTab = $("ul#logNavBar li.active > a")
+            var activeID = "";
+            if (activeTab[0]) {
+                activeID = $(activeTab[0]).attr("href")
+            }
+
+            $("#runTitleLog").html(runTitleLog)
+            $("#logContentDiv").empty();
+            //to support outdated log directory system 
+            if (run_log_uuid.match(/^run/)) {
+                var path = ""
+                } else {
+                    var path = "run"
+                    }
+            var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
+            var fileListAr = getObjectValues(fileList);
+            var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
+            var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
+            //hide serverlog.txt
+            var pubWebPath = $("#basepathinfo").attr("pubweb")
+            var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
+            var k = 0;
+            var tabDiv = [];
+            var fileName = [];
+            for (var j = 0; j < order.length; j++) {
+                if ($("#logContentDiv").attr(logContentDivAttr[j]) == "true" && (fileListAr.includes(order[j]) || order[j] == "log.txt")) {
+                    var exist = 'style="display:block;"';
+                } else {
+                    var exist = 'style="display:none;"';
+                }
+                k++
+                var active = "";
+                if (k == 1) {
+                    active = 'class="active"';
+                }
+                var tabID = cleanProcessName(order[j]) + 'Tab';
+                tabDiv.push(tabID);
+                fileName.push(order[j]);
+                navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
+            }
+            navTabDiv += '</ul>';
+            navTabDiv += '<div id="logNavCont" class="tab-content">';
+            for (var n = 0; n < tabDiv.length; n++) {
+                var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
+                var active = "";
+                if (n == 0) {
+                    active = 'in active';
+                }
+                navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
+                if (fileName[n] == "log.txt") {
+                    var serverlogText = "";
+                    var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
+                    if (fileListAr.includes("serverlog.txt")) {
+                        serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
+                        //to support outdated log directory system 
+                    } else if (fileListAr.includes("nextflow.log")) {
+                        logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
+                    }
+                    if (fileListAr.includes("err.log")) {
+                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
+                    }
+                    if (fileListAr.includes("initial.log")) {
+                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initial.log" });
+                    }
+                    navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
+                } else {
+                    navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
+                }
+                navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
+                navTabDiv += '<a style="margin-left:5px;" href="#" class="btn btn-info tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true">Contact Us</a>'
+                navTabDiv += '<span style="font-size:10px; float:right; color:gray;">Run UID: '+run_log_uuid+'</span>'
+                navTabDiv += '</div>';
+            }
+            navTabDiv += '</div>';
+            $("#logContentDiv").append(navTabDiv)
+            $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
+                autoScrollLogArea();
+            });
+            if (activeID) {
+                if ($('.nav-tabs a[href="' + activeID + '"]').css("display") != "none") {
+                    $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+                }
+            }
+        }
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+
+    $(document).on('click', '.createNewRun', function (event) {
+        //check if lastrun is running, then show warning
+        if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init"){
+            showInfoModal("#infoModal", "#infoModalText", "Please wait for your last run to finish, before creating new run.")
+        } else {
+            var newRunExist =checkNewRunStatus();
+            if (newRunExist){
+                var text = 'New run has already been created. Are you sure you want to overwrite the settings of existing new run page?';
+                var savedData = "";
+                var execFunc = function(savedData){
+                    createNewRunFunc(newRunExist)
+                }
+                var btnText = "Overwrite";
+                showConfirmDeleteModal(text, savedData, execFunc, btnText)
+            } else {
+                createNewRunFunc(newRunExist)
+            }
+            //            $('#runVerLog').val(0);
+            //            $('#runVerLog').trigger("change");
+        }
+
+
+    });
+
+    $(document).on('change', '#runVerLog', function (event) {
+        console.log("change:runVerLog");
+        //check which tab is active:
+        var activeTab = "";
+        var activeTab = $("ul#runTabDiv li.active > a")
+        var activeID = "";
+        if (activeTab[0]) {
+            activeID = $(activeTab[0]).attr("href")
+        }
+        var size = $('#runVerLog > option').length;
+        if (size) {
+            $('#runHistoryDiv').css("display", "block");
+        } else {
+            $('#runHistoryDiv').css("display", "none");
+        }
+        var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+        var version = $('option:selected', '#runVerLog').attr('ver');
+        if (version && !newRun) {
+            $('a[href="#logTab"]').css("display", "block")
+            $('a[href="#reportTab"]').css("display", "block")
+        } else {
+            $('a[href="#logTab"]').css("display", "none")
+            $('a[href="#reportTab"]').css("display", "none")
+        }
+        var run_log_uuid = $('#runVerLog').val();
+        // save the previous options into their attributes
+        var reportTabUID = $('#runVerLog').attr("reportTabUID");
+        var logTabUID = $('#runVerLog').attr("logTabUID");
+        var configTabUID = $('#runVerLog').attr("configTabUID");
+        var prevUID = $('#runVerLog').attr("prevUID");
+        // save all change info
+        if (prevUID != run_log_uuid){
+            $('#runVerLog').attr("prevUID", run_log_uuid)
+        }
+        var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
+        var newRunExist =checkNewRunStatus();
+        var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+        console.log("lastrun", lastrun)
+        console.log("newRun", newRun)
+        console.log("newRunExist", newRunExist)
+        //new run mode
+        if (newRun && projectpipelineOwn == "1") {
+            toogleStatusMode("default");
+            tooglePermsGroupsDiv("show");
+            toogleMainIcons("show");
+            toogleRunInputs("enable");
+            checkType="newrun";
+            checkReadytoRun()
+            //last run mode 
+        } else if (lastrun && !newRunExist && projectpipelineOwn == "1"){
+            toogleStatusMode("default");
+            tooglePermsGroupsDiv("show");
+            toogleMainIcons("show");
+            toogleRunInputs("enable");
+            checkType="";
+            readNextLog(proTypeWindow, proIdWindow, "no_reload");
+            //history mode
+        } else {
+            if (projectpipelineOwn == "1"){
+                toogleStatusMode("oneOption");
+            } else {
+                toogleStatusMode("noOption");
+            }
+            tooglePermsGroupsDiv("hide");
+            toogleMainIcons("hide");
+            toogleRunInputs("disable");
+            if (prevUID != run_log_uuid){
+                updateRunLogStat(run_log_uuid, projectpipelineOwn);
+            }
+        }
+        console.log("activeID",activeID)
+        console.log("run_log_uuid",run_log_uuid)
+        console.log("reportTabUID",reportTabUID)
+        console.log("configTabUID",configTabUID)
+        if (activeID == "#logTab"){
+            if (logTabUID != run_log_uuid){
+                $('#runVerLog').attr("logTabUID", run_log_uuid)
+                updateRunLogTab(run_log_uuid);
+            }
+        } else if (activeID == "#reportTab"){
+            if (reportTabUID != run_log_uuid){
+                $('#runVerLog').attr("reportTabUID", run_log_uuid)
+                updateRunReportTab(run_log_uuid);
+            }
+        } else if (activeID == "#configTab" || activeID == "#advancedTab"){
+            //don't fill on page load 
+            if (configTabUID != run_log_uuid){
+                $('#runVerLog').attr("configTabUID", run_log_uuid)
+                updateRunConfigTab(configTabUID);
+            }
+        }
+    });
+});
 
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
@@ -10133,913 +11049,7 @@ $(document).ready(function () {
         }(jQuery));
 
 
-    $(function () {
-        function reloadReportRows(){
-            var run_log_uuid = $("#runVerLog").val();
-            if (run_log_uuid){
-                var runUID = '<span style="font-size:10px; float:right; color:gray;">Run UID: '+run_log_uuid+'</span>';
-                $("#reportRowsFooter").html(runUID); 
-            }
 
-            $("#reportRows").empty();
-            //add 'className: "center"' to center text in columns array
-            $("#reportRows").dynamicRows({
-                ajax: {
-                    url: "ajax/ajaxquery.php",
-                    data: { "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id }
-                },
-                columnsBody: [{
-                    //file list
-                    data: null,
-                    colPercent: "15",
-                    overflow: "scroll",
-                    fnCreatedCell: function (nTd, oData) {
-                        var getExtension = function (filename){
-                            var re = /(?:\.([^.]+))?$/;
-                            var ext = re.exec(filename)[1];   // "txt"
-                            if (!ext){
-                                ext = "";
-                            }
-                            return ext;
-                        }
-                        var getIconByExtension = function(ext){
-                            var icon = "fa fa-file-text-o";
-                            if (ext == "tsv" || ext == "csv" || ext === "xls" || ext === "xlsx") {
-                                icon = "fa fa-table";
-                            } else if (ext == "html") {
-                                icon = "fa fa-file-code-o";
-                            } else if (ext == "pdf") {
-                                icon = "fa fa-file-pdf-o";
-                            } else if (ext == "rmd") {
-                                icon = "fa fa-pie-chart";
-                            } else if (ext == "md") {
-                                icon = "fa fa-edit";
-                            } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
-                                icon = "fa fa-file-image-o";
-                            }
-                            return icon;
-                        }
-                        var getVisTypeByExtension = function(ext){
-                            var visType = "text";
-                            if (ext == "tsv") {
-                                visType = "table";
-                            } else if (ext == "html") {
-                                visType = "html";
-                            } else if (ext == "pdf") {
-                                visType = "pdf";
-                            } else if (ext == "rmd") {
-                                visType = "rmarkdown";
-                            } else if (ext == "md") {
-                                visType = "markdown";
-                            } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
-                                visType = "image";
-                                //will download file if not supported
-                            } else if (ext == "txt" || ext === "xls" || ext === "xlsx" || ext === "csv") {
-                                visType = "text";
-                            }
-                            return visType;
-                        }
-
-                        var run_log_uuid = $("#runVerLog").val();
-                        var pubWebPath = $("#basepathinfo").attr("pubweb");
-                        var visType = oData.pubWeb
-                        var icon = "fa fa-file-text-o";
-                        if (visType == "table" || visType === "table-percent") {
-                            icon = "fa fa-table";
-                        }
-                        var fileList = oData.fileList;
-                        var liText = "";
-                        var active = "";
-                        $.each(fileList, function (el) {
-                            if (fileList[el]) {
-                                if (el == 0) {
-                                    active = "active"
-                                } else {
-                                    active = "";
-                                }
-                                //if oData.pubWeb= "run_description" -> fill file icons and visType based on their file type
-                                if (oData.pubWeb == "run_description"){
-                                    var ext = getExtension(fileList[el]);
-                                    icon = getIconByExtension(ext);
-                                    visType = getVisTypeByExtension(ext);
-                                }
-                                var filepath = oData.name + "/" + fileList[el];
-                                var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
-                                var filenameCl = cleanProcessName(fileList[el])
-                                var tabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                var fileID = oData.id + "_" + filenameCl;
-                                //remove directory str, only show filename in label
-                                var labelText = /[^/]*$/.exec(fileList[el])[0];
-                                liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="' + icon + '"></i>' + labelText + '</a></li>';
-                            }
-                        });
-
-                        //xxxxxxx
-                        var addEveHandlerIconDiv = function (id){
-                            var addIconID = "addIcon-" + id;
-                            var renameIcon = "renameIcon-" + id;
-                            var deleteIcon = "deleteIcon-" + id;
-
-                            var getFileName = function (filePath) {
-                                var res = { filename: "", rest: "" };
-                                var split = filePath.split("/")
-                                res.filename = split[split.length - 1]
-                                res.rest = split.slice(0, -1).join('/');
-                                return res
-                            }
-
-                            //return 1 if newName is found in directory.
-                            var checkDuplicateFile = function (newName,fileNameObj){
-                                var ret = 1;
-                                if (!fileNameObj.rest){
-                                    return 0;
-                                }
-                                var targetfilepath = fileNameObj.rest + "/" + newName;
-                                var checkDup = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li").find("a").filter(function () {
-                                    return $(this).attr('filepath') === targetfilepath
-                                });
-                                if (!checkDup.length){
-                                    ret = 0;
-                                }
-                                return ret;
-                            }
-
-                            var dynrows_savefile = function (filePath,text) {
-                                var obj = getFileName(filePath);
-                                var newPath = obj.rest + "/" + obj.filename
-                                text = encodeURIComponent(text);
-                                var run_log_uuid = $("#runVerLog").val();
-                                var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
-                                return saveData
-                            }
-
-                            var getFileNameObj = function (){
-                                var obj = {};
-                                var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
-                                var filePath = $(activeLiA[0]).attr("filepath");
-                                if (filePath){
-                                    obj = getFileName(filePath);
-                                }
-                                return obj;
-                            }
-
-
-                            var dynrows_movefile = function (file1, file2){
-                                var run_log_uuid = $("#runVerLog").val();
-                                if (file1 && file2){
-                                    var moveFile = getValues({ 
-                                        p: "moveFile", 
-                                        "type": "pubweb",
-                                        "from": run_log_uuid + "/pubweb/" + file1,
-                                        "to": run_log_uuid + "/pubweb/" + file2
-                                    });
-                                    return moveFile;
-                                }
-                            }
-
-                            var createModal = function () {
-                                var fileModal = `
-<div id="dynRowsInfo" class="modal fade" tabindex="-1" role="dialog">
-<div class="modal-dialog" role="document">
-<div class="modal-content">
-<div class="modal-header">
-<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-<h4 class="modal-title" id="dynRowsInfoTitle">Title</h4>
-</div>
-<div class="modal-body">
-<div id="dynRowsEditDiv" class="form-horizontal">
-<div class="form-group">
-<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please edit filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
-<div class="col-sm-8">
-<input id="dynRowsEditFileName" type="text" class="form-control">
-</div>
-</div>
-</div>
-<div id="dynRowsAddDiv" style="padding-right:10px;" class="form-horizontal">
-
-<div class="form-group">
-<label class="col-sm-4 control-label"><input type="checkbox" id="dynRowsEmptyFileCheck" name="check_emptyFile" data-toggle="collapse" data-target="#dynRows_emptyFileDiv" class="collapsed" aria-expanded="false"> Create Empty File </label>
-</div>
-<div id="dynRows_emptyFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
-<div class="form-group">
-<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
-<div class="col-sm-8">
-<input id="dynRowsFileName" type="text" class="form-control">
-</div>
-</div>
-</div>
-<div class="form-group">
-<label class="col-sm-4 control-label"><input type="checkbox" id="dynRows_uploadFileCheck" name="check_uploadFile" data-toggle="collapse" data-target="#dynRows_uploadFileDiv" class="collapsed" aria-expanded="false"> Upload File </label>
-</div>
-<div id="dynRows_uploadFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
-<div class="form-group">
-<div class="col-sm-12" id="dynRows_import_div">
-<form id="dynRowsUploadForm" action="ajax/import.php" class="dropzone">
-<div class="fallback ">
-<input name="file" type="file" />
-</div>
-</form>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="modal-footer">
-<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-<button id="dynRowsInfoButton" type="button" class="btn btn-primary" >Save</button>
-</div>
-</div>
-</div>
-</div>`;
-
-                                if (document.getElementById("dynRowsInfo") === null) {
-                                    $('body').append(fileModal);
-                                }
-                            }
-
-
-                            var bindEventHandlerModal = function(){
-                                //clean previous binds
-                                $("#reportRows").off();
-                                $("#dynRowsInfo").off();
-                                //not allow to click both option
-                                disableDoubleClickCollapse("dynRowsEmptyFileCheck", "dynRows_emptyFileDiv", "dynRows_uploadFileCheck","dynRows_uploadFileDiv", "dynRowsInfo");
-
-
-                                $("#reportRows").on('click', '#'+addIconID, function (event) {
-                                    window.dynRows = {};
-                                    window.dynRows.filename = ""
-                                    var myDropzone = Dropzone.forElement("#dynRowsUploadForm");
-                                    myDropzone.removeAllFiles();
-                                    if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
-                                        $('#'+"dynRowsEmptyFileCheck").trigger("click");
-                                    }
-                                    if ($('#'+"dynRows_uploadFileCheck").is(":checked")) {
-                                        $('#'+"dynRows_uploadFileCheck").trigger("click");
-                                    }
-                                    $("#dynRowsInfoTitle").text("Create New File")
-                                    $("#dynRowsFileName").val("NewFile.md")
-                                    $("#dynRowsEditDiv").css("display","none");
-                                    $("#dynRowsAddDiv").css("display","block");
-                                    $("#dynRowsInfoButton").attr("class", "btn btn-primary save")
-                                    $("#dynRowsInfoButton").text("Save")
-                                    $("#dynRowsInfo").modal("show");
-                                });
-
-                                var callbackActiveClick = function (){
-                                    $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a").trigger("click");
-                                }
-
-                                $('#dynRowsInfo').on('hide.bs.modal', function (event) {
-                                    $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody", callback:callbackActiveClick});
-                                });
-
-                                $("#dynRowsInfo").on('click', '.save', function (event) {
-                                    event.preventDefault();
-                                    var obj = getFileNameObj()
-                                    if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
-                                        var newName = $("#dynRowsFileName").val()
-                                        if (newName){
-                                            var checkDuplicate = checkDuplicateFile(newName,obj);
-                                            console.log(checkDuplicate)
-                                            if (!checkDuplicate){
-                                                var filepath = oData.name + "/" +newName;
-                                                var text = "";
-                                                dynrows_savefile(filepath,text);
-                                                $("#dynRowsInfo").modal("hide");
-                                            } else {
-                                                showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
-                                            }
-                                        } else{
-                                            showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
-                                        }
-                                    } else {
-                                        $("#dynRowsInfo").modal("hide");
-                                    } 
-                                });
-
-                                $("#reportRows").on('click', '#'+deleteIcon, function (event) {
-                                    var obj = getFileNameObj();
-                                    var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
-                                    var text = 'Are you sure you want to delete '+obj.filename+'?';
-                                    var savedData = $(activeLiA[0]);
-                                    var execFunc = function(savedData){
-                                        var filePath = savedData.attr("filepath");
-                                        var run_log_uuid = $("#runVerLog").val();
-                                        var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
-                                        $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
-                                    }
-                                    showConfirmDeleteModal(text, savedData, execFunc)
-                                });
-
-                                $("#reportRows").on('click', '#'+renameIcon, function (event) {
-                                    var obj = getFileNameObj()
-                                    $("#dynRowsInfoTitle").text("Edit Filename")
-                                    $("#dynRowsEditFileName").val(obj.filename)
-                                    $("#dynRowsEditDiv").css("display","block");
-                                    $("#dynRowsAddDiv").css("display","none");
-                                    $("#dynRowsInfoButton").attr("class", "btn btn-primary rename")
-                                    $("#dynRowsInfoButton").text("Save")
-                                    $("#dynRowsInfo").modal("show");
-                                });
-
-                                $("#dynRowsInfo").on('click', '.rename', function (event) {
-                                    event.preventDefault();
-                                    var obj = getFileNameObj()
-                                    var newName = $("#dynRowsEditFileName").val()
-                                    if (newName){
-                                        var checkDuplicate = checkDuplicateFile(newName,obj);
-                                        if (!checkDuplicate){
-                                            var filepath1 = oData.name + "/" +obj.filename;
-                                            var filepath2 = oData.name + "/" +newName;
-                                            dynrows_movefile(filepath1,filepath2);
-                                            $("#dynRowsInfo").modal("hide");
-                                        } else {
-                                            showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
-                                        }
-                                    } else {
-                                        showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
-                                    }
-                                });
-                            }
-
-
-                            var createDropzone = function (){
-                                console.log("createDropzone")
-                                if (Dropzone.options.dynRowsUploadForm){
-                                    $("#dynRowsUploadForm")[0].dropzone.destroy()
-                                    $("#dynRowsUploadForm").off()
-                                }
-                                // Configuriation of dropzone of id:dynRowsUploadForm in mdEditorInfo modal
-                                window.dynRows = {};
-                                window.dynRows.filename = "";
-                                Dropzone.options.dynRowsUploadForm = {
-                                    paramName: "pubweb", // The name that will be used to transfer the file
-                                    maxFilesize: 30, // MB
-                                    maxFiles:10,
-                                    createImageThumbnails: false,
-                                    dictDefaultMessage: 'Drop your file here or <button type="button" class="btn btn-default" >Select File </button>',
-                                    accept: function (file, done) {
-                                        window.dynRows.filename= file.name
-                                        done();
-                                        $('#dynRows_upload_name_span').text(file.name)
-                                    },
-                                    init: function() {
-                                        this.on("sending", function(file, xhr, formData){
-                                            formData.append("uuid", run_log_uuid);
-                                            formData.append("dir", oData.name);
-                                        });
-                                    }
-                                }; 
-                                $("#dynRowsUploadForm").dropzone();  
-
-                            }
-                            createModal()
-                            createDropzone()
-                            bindEventHandlerModal()
-                        }
-
-                        var getFileListHeaderIconDiv = function (id) {
-                            var border = "border-right: 1px solid lightgray;"
-                            var addIcon = `<li role="presentation"><a id="addIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Add File"><i style="font-size: 18px;" class="fa fa-plus"></i></a></li>`;
-                            var renameIcon = `<li role="presentation"><a id="renameIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Rename File"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
-                            var deleteIcon = `<li role="presentation"><a  id="deleteIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Delete File"><i style="font-size: 18px;" class="fa fa-trash"></i></a></li>`;
-                            var content = `<ul style="float:right"  class="nav nav-pills panelheader">` + addIcon + renameIcon + deleteIcon + `</ul>`;
-                            var wrapDiv = '<div id="' + id + '-ListHeaderIconDiv" style="'+border+'height:35px; width:100%;">' + content + '</div>';
-                            return wrapDiv;
-                        }
-                        var IconDiv = "";
-                        var writePerm= $runscope.checkUserWritePerm();
-                        //allows user to edit run page
-                        if (writePerm){
-                            if (oData.pubWeb == "run_description"){
-                                IconDiv = getFileListHeaderIconDiv(oData.id);
-                                addEveHandlerIconDiv(oData.id)
-                            }
-                        }
-                        if (!liText) {
-                            liText = '<div style="margin:10px;"> No data available</div>';
-                        }
-                        var allText = IconDiv + liText;
-                        $(nTd).html('<ul class="nav nav-pills nav-stacked">' + allText + '</ul>');
-                    },
-                }, {
-                    //file content
-                    data: null,
-                    colPercent: "85",
-                    fnCreatedCell: function (nTd, oData) {
-                        var fileList = oData.fileList;
-                        if ($(nTd).is(':empty')) {
-                            var navTabDiv = "";
-                            navTabDiv += '<div style="height:inherit;" class="tab-content">';
-                            var liText = "";
-                            var active = "";
-                            $.each(fileList, function (el) {
-                                var filenameCl = cleanProcessName(fileList[el])
-                                var tabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                var active = "";
-                                if (el == 0) {
-                                    active = 'in active';
-                                }
-                                navTabDiv += '<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
-                            });
-                            navTabDiv += '</div>';
-                            $(nTd).html(navTabDiv);
-                        } else {
-                            //when dynamicRows.fnrefresh is executed following code will update the tabid section
-                            var newTabIdList = []
-                            $.each(fileList, function (el) {
-                                var filenameCl = cleanProcessName(fileList[el])
-                                var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                newTabIdList.push(newTabID)
-                            });
-
-                            //get all existing tabs
-                            var alltabs = $(nTd).find("div[dynamicrowstabs]");
-                            for (var k = 0; k < alltabs.length; k++) {
-                                var oldTabID = $(alltabs[k]).attr("id");
-                                if($.inArray(oldTabID, newTabIdList) === -1){
-                                    //remove oldTabID from DOM, since it doesn't found in newTabIdList
-                                    $(alltabs[k]).remove();
-                                }
-                            }
-                            //add new tabs
-                            $.each(fileList, function (el) {
-                                var filenameCl = cleanProcessName(fileList[el])
-                                var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                if (!$(nTd).find("div#" + newTabID).length) {
-                                    $(nTd).children().append('<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + newTabID + '" class = "tab-pane fade fullsize" ></div>')
-                                }
-                                if (el == 0){
-                                    $("#"+newTabID).addClass("in active").removeClass("fade");
-                                }
-                            });
-                        }
-                    },
-                }],
-                columnsHeader: [{
-                    data: null,
-                    colPercent: "4",
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
-                    },
-                }, {
-                    data: null,
-                    fnCreatedCell: function (nTd, oData) {
-                        var gNum = oData.id.split("_")[0].split("-")[1];
-                        var rowID = "outputTa-" + gNum;
-                        var processName = $('#' + rowID + ' > :nth-child(5)').text();
-                        if (oData.pubWeb == "run_description"){
-                            processName = "Run Notes"
-                        }
-                        var processID = $('#' + rowID + ' > :nth-child(5)').text();
-                        $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + createLabel(processName) + '</span>');
-                    },
-                    colPercent: "37"
-                }, {
-                    data: null,
-                    colPercent: "39",
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span>' + createLabel(oData.name) + '</span>');
-                    }
-                }, {
-                    data: null,
-                    colPercent: "20",
-                    fnCreatedCell: function (nTd, oData) {
-                        var visType = oData.pubWeb
-                        var icon = "fa fa-file-text-o";
-                        var text = visType;
-                        if (visType === "table" || visType === "table-percent") {
-                            icon = "fa fa-table";
-                            text = "Table";
-                        } else if (visType === "html") {
-                            icon = "fa fa-file-code-o";
-                            text = "HTML";
-                        } else if (visType === "pdf") {
-                            icon = "fa fa-file-pdf-o";
-                            text = "PDF";
-                        } else if (visType === "rmarkdown") {
-                            icon = "fa fa-pie-chart";
-                            text = "R-Markdown";
-                        } else if (visType === "highcharts") {
-                            icon = "fa fa-line-chart";
-                            text = "Charts";
-                        } else if (visType === "debrowser") {
-                            icon = "glyphicon glyphicon-stats";
-                            text = "DE-Browser";
-                        } else if (visType === "image") {
-                            icon = "fa fa-file-image-o";
-                            text = "Image";
-                        } else if (visType === "run_description") {
-                            icon = "fa fa-edit";
-                            text = "Markdown";
-                        }
-                        $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
-                    }
-                }],
-                columnsTitle: [{
-                    data: null,
-                    colPercent: "4"
-
-                }, {
-                    data: null,
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span>PROCESS</span>');
-                    },
-                    colPercent: "37"
-                }, {
-                    data: "name",
-                    colPercent: "39",
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span>PUBLISHED DIRECTORY</span>');
-                    },
-                }, {
-                    data: null,
-                    colPercent: "20",
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span>VIEW FORMAT</span>');
-                    }
-                }],
-                backgroundcolorenter: "#ced9e3",
-                backgroundcolorleave: "#ECF0F4",
-                heightHeader: "60px"
-            });
-        }
-
-        $(document).on('click', '#refreshVerReport', function (event) {
-            reloadReportRows();
-        });
-
-        function updateRunReportTab(run_log_uuid){
-            var reload = true
-            if (run_log_uuid) {
-                var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
-                var version = $('option:selected', '#runVerLog').attr('ver');
-                if (version && !newRun) {
-                    var runTitleLog = "<label>Run " + version + " - Report</label>";
-                    $('a[href="#reportTab"]').css("display", "block")
-                } else {
-                    if ($("ul#runTabDiv li.active > a")[0]){
-                        if ($($("ul#runTabDiv li.active > a")[0]).attr("href") == "#reportTab"){
-                            $('.nav-tabs a[href="#configTab"]').trigger("click")
-                        }
-                    }
-
-
-                    var runTitleLog = "";
-                    $('a[href="#reportTab"]').css("display", "none")
-                }
-                $("#runTitleReport").html(runTitleLog)
-                if (reload){
-                    reloadReportRows();
-                }
-            }
-        }
-
-        function updateRunLogStat(run_log_uuid, updateRunLogStat){
-            $.ajax({
-                type: "POST",
-                url: "ajax/ajaxquery.php",
-                data: {p:"getRunLogStatus", uuid:run_log_uuid},
-                async: true,
-                success: function (s) {
-                    if (s){
-                        if (s[0]){
-                            var run_status = s[0].run_status;
-                            console.log(run_status)
-                            if (updateRunLogStat == "1"){
-                                runLogStatUpdate(run_status, "Opt");
-                            } else {
-                                runLogStatUpdate(run_status, "NoOpt");
-                            }
-                        }
-                    }
-                },
-                error: function (errorThrown) {
-                    toastr.error("Error occured.");
-                }
-            }); 
-        }
-
-        function updateRunConfigTab(prevUID){
-            var loadRunLogOpt = function (){
-                var run_log_uuid = $('#runVerLog').val();
-                var runTitleConfig = "";
-                var runTitleAdvanced = "";
-                var version = $('option:selected', '#runVerLog').attr('ver');
-                if (version) {
-                    runTitleConfig = "<label>Run "+version+" - Settings</label>"
-                    runTitleAdvanced = "<label>Run "+version+" - Advanced</label>"
-                } else {
-                    runTitleConfig = "<label>Run Settings</label>";
-                    runTitleAdvanced = "<label>Advanced</label>";
-                } 
-                $("#runTitleConfig").html(runTitleConfig)
-                $("#runTitleAdvanced").html(runTitleAdvanced)
-                var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
-                var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
-                var newRunExist =checkNewRunStatus();
-                //load from projectpipelinedata
-                if (newRun || (!newRunExist && lastrun)){
-                    $.ajax({
-                        type: "POST",
-                        url: "ajax/ajaxquery.php",
-                        data: {p:"getProjectPipelines", id:project_pipeline_id},
-                        async: true,
-                        success: function (pipe) {
-                            if (pipe){
-                                loadRunSettings(pipe);
-                                checkReadytoRun();
-                            }
-                        }, 
-                        error: function (errorThrown) {
-                            toastr.error("Error occured.");
-                        }
-                    });
-                    $.ajax({
-                        type: "POST",
-                        url: "ajax/ajaxquery.php",
-                        data: {p:"getProjectPipelineInputs", project_pipeline_id:project_pipeline_id},
-                        async: true,
-                        success: function (projectPipeInputs_rev) {
-                            if (projectPipeInputs_rev){
-                                var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
-                                if (projectpipelineOwn == "1"){
-                                    fillProPipeInputsRev(projectPipeInputs_rev, "default");
-                                } else {
-                                    fillProPipeInputsRev(projectPipeInputs_rev, "dry");
-                                }
-                            }
-                        }, 
-                        error: function (errorThrown) {
-                            toastr.error("Error occured.");
-                        }
-                    });
-                    //load from getRunLogOpt
-                } else {
-                    $.ajax({
-                        type: "POST",
-                        url: "ajax/ajaxquery.php",
-                        data: {p:"getRunLogOpt", uuid:run_log_uuid},
-                        async: true,
-                        success: function (s) {
-                            var pipe = s.run_opt;
-                            if (pipe){
-                                console.log(IsJsonString(pipe));
-                                if (IsJsonString(pipe)) {
-                                    var json = JSON.parse(pipe)
-                                    console.log(json)
-                                    if (json) {
-                                        var pipeData = [];
-                                        pipeData[0] = json;
-                                        loadRunSettings(pipeData);
-                                        if (json.project_pipeline_input){
-                                            var projectPipeInputs_rev = json.project_pipeline_input; 
-                                            fillProPipeInputsRev(projectPipeInputs_rev, "dry");
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        error: function (errorThrown) {
-                            toastr.error("Error occured.");
-                        }
-                    }); 
-                }
-
-            }
-            console.log("updateRunConfigTab")
-            console.log("prevUID", prevUID);
-            var prevlastrun = $('#runVerLog option[value="'+prevUID+'"]').attr('lastrun') || false;
-            var prevnewRun = $('#runVerLog option[value="'+prevUID+'"]').attr('newRun') || false;
-            var newRunExist =checkNewRunStatus();
-            // if prevUID belong to newrun then saveRun before loadRunLogOpt 
-            if (prevnewRun || (!newRunExist && prevlastrun)){
-                saveRun(loadRunLogOpt);
-            } else {
-                loadRunLogOpt();
-            }
-        }
-
-        function updateRunLogTab(run_log_uuid){
-            console.log("updateRunLogTab")
-            if (run_log_uuid) {
-                var runTitleLog = "";
-                var version = $('option:selected', '#runVerLog').attr('ver');
-                if (version) {
-                    var runTitleLog = "<label>Run " + version + " - Log</label>";
-                } 
-                var lastrun = $('option:selected', '#runVerLog').attr('lastrun');
-                console.log(lastrun)
-                if (lastrun) {
-                    lastrun = 'lastrun="yes"';
-                } else {
-                    lastrun = "";
-                }
-                var activeTab = $("ul#logNavBar li.active > a")
-                var activeID = "";
-                if (activeTab[0]) {
-                    activeID = $(activeTab[0]).attr("href")
-                }
-
-                $("#runTitleLog").html(runTitleLog)
-                $("#logContentDiv").empty();
-                //to support outdated log directory system 
-                if (run_log_uuid.match(/^run/)) {
-                    var path = ""
-                    } else {
-                        var path = "run"
-                        }
-                var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
-                var fileListAr = getObjectValues(fileList);
-                var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
-                var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
-                //hide serverlog.txt
-                var pubWebPath = $("#basepathinfo").attr("pubweb")
-                var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
-                var k = 0;
-                var tabDiv = [];
-                var fileName = [];
-                for (var j = 0; j < order.length; j++) {
-                    if ($("#logContentDiv").attr(logContentDivAttr[j]) == "true" && (fileListAr.includes(order[j]) || order[j] == "log.txt")) {
-                        var exist = 'style="display:block;"';
-                    } else {
-                        var exist = 'style="display:none;"';
-                    }
-                    k++
-                    var active = "";
-                    if (k == 1) {
-                        active = 'class="active"';
-                    }
-                    var tabID = cleanProcessName(order[j]) + 'Tab';
-                    tabDiv.push(tabID);
-                    fileName.push(order[j]);
-                    navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
-                }
-                navTabDiv += '</ul>';
-                navTabDiv += '<div id="logNavCont" class="tab-content">';
-                for (var n = 0; n < tabDiv.length; n++) {
-                    var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
-                    var active = "";
-                    if (n == 0) {
-                        active = 'in active';
-                    }
-                    navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
-                    if (fileName[n] == "log.txt") {
-                        var serverlogText = "";
-                        var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
-                        if (fileListAr.includes("serverlog.txt")) {
-                            serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
-                            //to support outdated log directory system 
-                        } else if (fileListAr.includes("nextflow.log")) {
-                            logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
-                        }
-                        if (fileListAr.includes("err.log")) {
-                            serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
-                        }
-                        if (fileListAr.includes("initial.log")) {
-                            serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initial.log" });
-                        }
-                        navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
-                    } else {
-                        navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
-                    }
-                    navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
-                    navTabDiv += '<a style="margin-left:5px;" href="#" class="btn btn-info tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true">Contact Us</a>'
-                    navTabDiv += '<span style="font-size:10px; float:right; color:gray;">Run UID: '+run_log_uuid+'</span>'
-                    navTabDiv += '</div>';
-                }
-                navTabDiv += '</div>';
-                $("#logContentDiv").append(navTabDiv)
-                $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
-                    autoScrollLogArea();
-                });
-                if (activeID) {
-                    if ($('.nav-tabs a[href="' + activeID + '"]').css("display") != "none") {
-                        $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
-                    }
-                }
-            }
-            $('[data-toggle="tooltip"]').tooltip();
-        }
-
-        $(document).on('click', '.createNewRun', function (event) {
-            //check if lastrun is running, then show warning
-            if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init"){
-                showInfoModal("#infoModal", "#infoModalText", "Please wait for your last run to finish, before creating new run.")
-            } else {
-                var newRunExist =checkNewRunStatus();
-                if (newRunExist){
-                    var text = 'New run has already been created. Are you sure you want to overwrite the settings of existing new run page?';
-                    var savedData = "";
-                    var execFunc = function(savedData){
-                        createNewRunFunc(newRunExist)
-                    }
-                    var btnText = "Overwrite";
-                    showConfirmDeleteModal(text, savedData, execFunc, btnText)
-                } else {
-                    createNewRunFunc(newRunExist)
-                }
-                //            $('#runVerLog').val(0);
-                //            $('#runVerLog').trigger("change");
-            }
-
-
-        });
-
-        $(document).on('change', '#runVerLog', function (event) {
-            console.log("change:runVerLog");
-            //check which tab is active:
-            var activeTab = "";
-            var activeTab = $("ul#runTabDiv li.active > a")
-            var activeID = "";
-            if (activeTab[0]) {
-                activeID = $(activeTab[0]).attr("href")
-            }
-            var size = $('#runVerLog > option').length;
-            if (size) {
-                $('#runHistoryDiv').css("display", "block");
-            } else {
-                $('#runHistoryDiv').css("display", "none");
-            }
-            var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
-            var version = $('option:selected', '#runVerLog').attr('ver');
-            if (version && !newRun) {
-                $('a[href="#logTab"]').css("display", "block")
-                $('a[href="#reportTab"]').css("display", "block")
-            } else {
-                $('a[href="#logTab"]').css("display", "none")
-                $('a[href="#reportTab"]').css("display", "none")
-            }
-            var run_log_uuid = $('#runVerLog').val();
-            // save the previous options into their attributes
-            var reportTabUID = $('#runVerLog').attr("reportTabUID");
-            var logTabUID = $('#runVerLog').attr("logTabUID");
-            var configTabUID = $('#runVerLog').attr("configTabUID");
-            var prevUID = $('#runVerLog').attr("prevUID");
-            // save all change info
-            if (prevUID != run_log_uuid){
-                $('#runVerLog').attr("prevUID", run_log_uuid)
-            }
-            var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
-            var newRunExist =checkNewRunStatus();
-            var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
-            console.log("lastrun", lastrun)
-            console.log("newRun", newRun)
-            console.log("newRunExist", newRunExist)
-            //new run mode
-            if (newRun && projectpipelineOwn == "1") {
-                toogleStatusMode("default");
-                tooglePermsGroupsDiv("show");
-                toogleMainIcons("show");
-                toogleRunInputs("enable");
-                checkType="newrun";
-                checkReadytoRun()
-                //last run mode 
-            } else if (lastrun && !newRunExist && projectpipelineOwn == "1"){
-                toogleStatusMode("default");
-                tooglePermsGroupsDiv("show");
-                toogleMainIcons("show");
-                toogleRunInputs("enable");
-                checkType="";
-                readNextLog(proTypeWindow, proIdWindow, "no_reload");
-                //history mode
-            } else {
-                if (projectpipelineOwn == "1"){
-                    toogleStatusMode("oneOption");
-                } else {
-                    toogleStatusMode("noOption");
-                }
-                tooglePermsGroupsDiv("hide");
-                toogleMainIcons("hide");
-                toogleRunInputs("disable");
-                if (prevUID != run_log_uuid){
-                    updateRunLogStat(run_log_uuid, projectpipelineOwn);
-                }
-            }
-            console.log("activeID",activeID)
-            console.log("run_log_uuid",run_log_uuid)
-            console.log("reportTabUID",reportTabUID)
-            console.log("configTabUID",configTabUID)
-            if (activeID == "#logTab"){
-                if (logTabUID != run_log_uuid){
-                    $('#runVerLog').attr("logTabUID", run_log_uuid)
-                    updateRunLogTab(run_log_uuid);
-                }
-            } else if (activeID == "#reportTab"){
-                if (reportTabUID != run_log_uuid){
-                    $('#runVerLog').attr("reportTabUID", run_log_uuid)
-                    updateRunReportTab(run_log_uuid);
-                }
-            } else if (activeID == "#configTab" || activeID == "#advancedTab"){
-                //don't fill on page load 
-                if (configTabUID != run_log_uuid){
-                    $('#runVerLog').attr("configTabUID", run_log_uuid)
-                    updateRunConfigTab(configTabUID);
-                }
-            }
-        });
-    });
 
 
     $('#manualRunModal').on('show.bs.modal', function () {

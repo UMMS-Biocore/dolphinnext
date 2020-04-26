@@ -380,7 +380,7 @@ class ajaxQueryTest extends TestCase
 	public function testgetProcess_gid() {
 		ob_start();
 		$_REQUEST['p'] = 'getProcess_gid';
-		$_REQUEST['process_id'] = '1';
+		$_REQUEST['process_id'] = '0';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->process_gid,'1');
 		ob_end_clean();

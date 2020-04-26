@@ -3392,7 +3392,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     function getRunLogStatus($uuid) {
-        $sql = "SELECT run_status FROM run_log WHERE run_log_uuid = '$uuid'";
+        $sql = "SELECT run_status, IF(run_opt IS NULL,0,1) as run_opt_check FROM run_log WHERE run_log_uuid = '$uuid'";
         return self::queryTable($sql);
     }
     function updateRunStatus($project_pipeline_id, $status, $ownerID) {
