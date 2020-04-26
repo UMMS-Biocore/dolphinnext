@@ -1571,7 +1571,8 @@ $(document).ready(function () {
             var roleItem = '<li><a name="admin" class="changeRoleUser">Assign admin role</a></li>';
         }
         var groupBut = '<li><a href="#adminAddGroupModal" data-toggle="modal">Assign to group</a></li>';
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + groupBut +'<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
+        var calculateUserUsage = '<li><a class="calculateUserUsage">Calculate User Usage</a></li>';
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + groupBut +calculateUserUsage+'<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
         return button;
 
     }
@@ -1695,6 +1696,20 @@ $(document).ready(function () {
             }, {
                 "data": "institute"
             }, {
+                "data": null,
+                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    var sizeInMB = 0;
+                    if (oData.disk_usage) {
+                        sizeInMB = (oData.disk_usage / (1024)).toFixed(2);
+                        if (sizeInMB == 0.00){
+                            sizeInMB = 0;
+                        }
+                    } else {
+                        sizeInMB = "NA";
+                    }
+                    $(nTd).html(sizeInMB);
+                }
+            }, {
                 "data": "role"
             }, {
                 "data": "active",
@@ -1714,7 +1729,7 @@ $(document).ready(function () {
                     $(nTd).html(getAdminUserTableOptions(oData.active, oData.role));
                 }
             }],
-            'order': [[7, 'desc']]
+            'order': [[8, 'desc']]
         });
 
         $('#AdminUserTable').on('click', '.impersonUser', function (event) {
@@ -1736,6 +1751,29 @@ $(document).ready(function () {
                     },
                     error: function (errorThrown) {
                         alert("Error: " + errorThrown);
+                    }
+                });
+            }
+        });
+
+        $('#AdminUserTable').on('click', '.calculateUserUsage', function (event) {
+            var clickedRow = $(this).closest('tr');
+            var rowData = AdmUserTable.row(clickedRow).data();
+            var userId = rowData.id;
+            
+            if (userId !== '') {
+                showLoadingDiv("AdminUserTable")
+                $.ajax({
+                    type: "POST",
+                    data: {"p":"saveRunLogSizeUser", userid:userId},
+                    url: "ajax/ajaxquery.php",
+                    success: function (sc) {
+                        hideLoadingDiv("AdminUserTable")
+                        toastr.info("User Usage calculated.")
+                        AdmUserTable.ajax.reload(null, false);
+                    },
+                    error: function (errorThrown) {
+                       toastr.info("Error Occured.")
                     }
                 });
             }

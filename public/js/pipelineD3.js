@@ -2371,7 +2371,9 @@ function modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, type) {
     if (type == "move") {
         $('#pipeline-' + pipeline_id).parent().remove();
     }
-    $('#pipeGr-' + pipeline_group_id).append('<li><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" draggable="false" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
+    var group_id = $('#groupSelPipe').val();
+    var perms = $('#permsPipe').val();
+    $('#pipeGr-' + pipeline_group_id).append('<li  p="'+perms+'" g="'+group_id+'" pin="false" admin="0"><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" origin="'+sName+'" draggable="false" ondragstart="dragStart(event)" ondrag="dragging(event)" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
 }
 
 function modifyPipelineParentSideBar(name, groupID) {

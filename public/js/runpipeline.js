@@ -9,7 +9,7 @@ $runscope = {
     getAjaxData : function (varName, getValuesObj) {
         if ($runscope[varName] === null){
             $runscope[varName] = getValues(getValuesObj);
-            Object.defineProperty($runscope, varName, {configureable: false, writable:false});
+            //            Object.defineProperty($runscope, varName, {configureable: false, writable:false});
         }
         return $runscope[varName];
     },
@@ -72,6 +72,13 @@ $runscope = {
         // if user owns the permission to write, then return 1 else 0; 
         var writePerm = $runscope.getAjaxData("checkUserWritePermRun", {p:"checkUserWritePermRun", "project_pipeline_id":project_pipeline_id});
         return writePerm;
+    },
+    checkProjectPipelineOwn: function(){
+        var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+        // if user owns the permission to write, then return 1 else 0; 
+        var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+        var projectpipelineOwn = pipeData[0].own;
+        return projectpipelineOwn;
     }
 }
 
@@ -1286,7 +1293,7 @@ function checkConds(conds, type) {
 }
 
 function getInputVariables(button) {
-    var rowID = button.parent().parent().parent().attr("id"); //"inputTa-5"
+    var rowID = button.closest("tr").attr("id"); //"inputTa-5"
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
     var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
@@ -1437,8 +1444,9 @@ function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
         }
     } else { // if value is empty:"" then remove from project pipeline input table
         if (keepExist == false) {
+            var fillingType = "default";
             var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
-            removeSelectFile(rowID, qualifier);
+            removeSelectFile(rowID, qualifier, fillingType);
         }
     }
 }
@@ -2155,6 +2163,38 @@ function decodeGenericCond(autoFillJSON) {
     return autoFillJSON
 }
 
+function prepareInsertInput(getProPipeInputs, rowID, firGnum, paraQualifier, fillingType){
+    var filePath = getProPipeInputs[0].name; //value for val type
+    var proPipeInputID = getProPipeInputs[0].id;
+    var given_name = getProPipeInputs[0].given_name;
+    var collection_id = getProPipeInputs[0].collection_id;
+    var collection_name = getProPipeInputs[0].collection_name;
+    var collection = { collection_id: collection_id, collection_name: collection_name }
+    var url = getProPipeInputs[0].url;
+    var urlzip = getProPipeInputs[0].urlzip;
+    var checkPath = getProPipeInputs[0].checkpath;
+    insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath, fillingType);
+}
+
+function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier){
+    if (getProPipeInputs) {
+        if (getProPipeInputs.length > 0) {
+            var fillingType = "default";
+            prepareInsertInput(getProPipeInputs, rowID, firGnum, paraQualifier, fillingType);
+        }
+        if (getProPipeInputs.length > 1) {
+            for (var k = 1; k < getProPipeInputs.length; k++) {
+                var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
+            }
+        }
+    }
+    //check if run saved before
+    if (pipeData[0].date_created == pipeData[0].date_modified) {
+        //after filling, if "use default" button is exist, then click default option.
+        clickUseDefault(rowID);
+    }
+}
+
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett) {
@@ -2198,38 +2238,14 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, na
     //check if project_pipeline_inputs exist then fill:
     var getProPipeInputs = projectPipeInputs.filter(function (el) { return el.given_name == paramGivenName })
     var rowID = rowType + 'Ta-' + firGnum;
-    if (getProPipeInputs && getProPipeInputs != "") {
-        if (getProPipeInputs.length > 0) {
-            var filePath = getProPipeInputs[0].name; //value for val type
-            var proPipeInputID = getProPipeInputs[0].id;
-            var given_name = getProPipeInputs[0].given_name;
-            var collection_id = getProPipeInputs[0].collection_id;
-            var collection_name = getProPipeInputs[0].collection_name;
-            var collection = { collection_id: collection_id, collection_name: collection_name }
-            var url = getProPipeInputs[0].url;
-            var urlzip = getProPipeInputs[0].urlzip;
-            var checkPath = getProPipeInputs[0].checkpath;
-            insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath);
-        }
-        if (getProPipeInputs.length > 1) {
-            for (var k = 1; k < getProPipeInputs.length; k++) {
-                var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
-            }
-        }
-    }
-    //check if run saved before
-    if (pipeData[0].date_created == pipeData[0].date_modified) {
-        //after filling, if "use default" button is exist, then click default option.
-        clickUseDefault(rowID, defaultVal);
-    }
+    fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier);
 }
 
 
-function clickUseDefault(rowID, defaultVal) {
-    //    var checkDropDown = $('#' + rowID).find('select[indropdown]')[0]
-    //    var checkinputValEnter = $('#' + rowID).find('#inputValEnter')[0]
+function clickUseDefault(rowID) {
     var checkDefVal = $('#' + rowID).find('#defValUse').css('display')
-    if (defaultVal && defaultVal != "" && checkDefVal !== "none") {
+    var defaultVal = $('#' + rowID).find('#defValUse').attr('defval')
+    if (defaultVal && checkDefVal !== "none") {
         $('#' + rowID).find('#defValUse').trigger("click")
     }
 }
@@ -3228,6 +3244,8 @@ function showhideOnEnv(allProSett, profileData){
     }
 }
 
+
+
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix, second) {
@@ -3308,34 +3326,11 @@ function insertInputOutputRow(rowType, MainGNum, firGnum, secGnum, pObj, prefix,
             var selectFileButton = getSelectFileButton(paraQualifier, dropDownQual, dropDownMenu, defValButton)
             //insert both system and user inputs
             var inRow = getRowTable(rowType, firGnum, secGnum, paramGivenName, paraIdentifier, paraFileType, paraQualifier, processName, selectFileButton, show_setting);
-            insertInRow(inRow, paramGivenName, rowType, "mainInputs", desc)
+            insertInRow(inRow, paramGivenName, rowType, "mainInputs", desc);
             //get project_pipeline_inputs:
             var getProPipeInputs = projectPipeInputs.filter(function (el) { return el.given_name == paramGivenName })
             var rowID = rowType + 'Ta-' + firGnum;
-            if (getProPipeInputs && getProPipeInputs != "") {
-                if (getProPipeInputs.length > 0) {
-                    var filePath = getProPipeInputs[0].name; //value for val type
-                    var proPipeInputID = getProPipeInputs[0].id;
-                    var given_name = getProPipeInputs[0].given_name;
-                    var collection_id = getProPipeInputs[0].collection_id;
-                    var collection_name = getProPipeInputs[0].collection_name;
-                    var collection = { collection_id: collection_id, collection_name: collection_name }
-                    var url = getProPipeInputs[0].url;
-                    var urlzip = getProPipeInputs[0].urlzip;
-                    var checkPath = getProPipeInputs[0].checkpath;
-                    insertSelectInput(rowID, firGnum, filePath, proPipeInputID, paraQualifier, collection, url, urlzip, checkPath); 
-                }
-                if (getProPipeInputs.length > 1) {
-                    for (var k = 1; k < getProPipeInputs.length; k++) {
-                        var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
-                    }
-                }
-            }
-            //check if run saved before
-            if (pipeData[0].date_created == pipeData[0].date_modified) {
-                //after filling, if "use default" button is exist, then click default option.
-                clickUseDefault(rowID, paramDefVal);
-            }
+            fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier);
             //outputsTable
         } else if (rowType === 'output') {
             var outName = document.getElementById(prefix + second).getAttribute("name");
@@ -3801,6 +3796,7 @@ function loadPipelineDetails(pipeline_id, pipeData) {
             $('#pipeline-title2').attr('href', 'index.php?np=1&id=' + pipeline_id);
             $('#project-title').attr('href', 'index.php?np=2&id=' + project_id);
             $('#pipelineSum').val(decodeHtml(pData[0].summary));
+            $('#pipelineSum').attr('disabled', "disabled");
             var script_pipe_header_config = ""
             if (pData[0].script_pipe_header !== null) {
                 script_pipe_header_config += decodeHtml(pData[0].script_pipe_header) + "\n";
@@ -3862,17 +3858,16 @@ function cleanDepProPipeInputs() {
 
 
 function updateCheckBox(check_id, status) {
-    if ((check_id === '#exec_all' || check_id === '#exec_each' || check_id === '#singu_check' || check_id === '#docker_check' || check_id === '#publish_dir_check') && status === "true") {
-        if ($(check_id).is(":checked") === false) {
-            $(check_id).trigger("click");
+    var targetDiv = $(check_id).attr("data-target");
+    if (targetDiv){
+        if (status == "true"){
+            $(targetDiv).collapse("show")
             $(check_id).prop('checked', true);
-        }
-    } else if ((check_id === '#publish_dir_check') && status === "false"){
-        if ($(check_id).is(":checked") === true) {
-            $(check_id).trigger("click");
+        } else if (status == "false"){
+            $(targetDiv).collapse("hide")
             $(check_id).prop('checked', false);
-        }  
-    }
+        }
+    } 
     if (status === "true") {
         $(check_id).prop('checked', true);
     } else if (status === "false") {
@@ -3890,106 +3885,8 @@ function refreshCreatorData(project_pipeline_id) {
     }
 }
 
-
-
-
-
-
-function loadProjectPipeline(pipeData) {
-    loadRunOptions("change");
-    $('#creatorInfoPip').css('display', "block");
-    $('#project-title').text(decodeHtml(pipeData[0].project_name));
-    $('#run-title').changeVal(decodeHtml(pipeData[0].pp_name));
-    $('#runSum').val(decodeHtml(pipeData[0].summary));
-    $('#rOut_dir').val(pipeData[0].output_dir);
-    $('#publish_dir').val(pipeData[0].publish_dir);
-    $('#chooseEnv').val(pipeData[0].profile);
-    $('#permsRun').val(pipeData[0].perms);
-    $('#runCmd').val(pipeData[0].cmd);
-    $('#docker_img').val(pipeData[0].docker_img);
-    $('#docker_opt').val(pipeData[0].docker_opt);
-    $('#singu_img').val(pipeData[0].singu_img);
-    $('#singu_opt').val(pipeData[0].singu_opt);
-    updateCheckBox('#publish_dir_check', pipeData[0].publish_dir_check);
-    updateCheckBox('#intermeDel', pipeData[0].interdel);
-    updateCheckBox('#exec_each', decodeHtml(pipeData[0].exec_each));
-    updateCheckBox('#exec_all', decodeHtml(pipeData[0].exec_all));
-    updateCheckBox('#docker_check', pipeData[0].docker_check);
-    updateCheckBox('#singu_check', pipeData[0].singu_check);
-    updateCheckBox('#singu_save', pipeData[0].singu_save);
-    updateCheckBox('#withTrace', pipeData[0].withTrace);
-    updateCheckBox('#withReport', pipeData[0].withReport);
-    updateCheckBox('#withDag', pipeData[0].withDag);
-    updateCheckBox('#withTimeline', pipeData[0].withTimeline);
-    checkShub()
-
-    //load process options 
-    if (pipeData[0].process_opt) {
-        //fill process options table
-        loadProcessOpt(decodeHtml(pipeData[0].process_opt)); 
-    }
-    // bind event handlers for autofill
-    setTimeout(function () {
-        if (autoFillJSON !== null && autoFillJSON !== undefined) {
-            bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
-            bindEveHandler(autoFillJSON);
-            // if duplicated run has refreshEnv trigger refreshEnv when page loads
-            if (pipeData[0].onload){
-                if (pipeData[0].onload == "refreshEnv"){
-                    console.log("onload refreshEnv")
-                    refreshEnv();
-                }
-            }
-        }
-    }, 1000);
-    checkCloudType(pipeData[0].profile)
-    //load cloud keys for possible s3/gs connection
-    loadCloudKeys();
-    if (pipeData[0].amazon_cre_id !== "0") {
-        $('#mRunAmzKey').val(pipeData[0].amazon_cre_id);
-    } else {
-        selectCloudKey("amazon");
-    }
-
-    if (pipeData[0].google_cre_id !== "0") {
-        $('#mRunGoogKey').val(pipeData[0].google_cre_id);
-    } else {
-        selectCloudKey("google");
-    }
-
-    //load user groups
-    var allUserGrp = getValues({ p: "getUserGroups" });
-    if (allUserGrp && allUserGrp != "") {
-        for (var i = 0; i < allUserGrp.length; i++) {
-            var param = allUserGrp[i];
-            var optionGroup = new Option(param.name, param.id);
-            $("#groupSelRun").append(optionGroup);
-        }
-    }
-    if (pipeData[0].group_id !== "0") {
-        $('#groupSelRun').val(pipeData[0].group_id);
-    }
-
+function loadExecSettings(pipeData){
     var chooseEnv = $('#chooseEnv option:selected').val();
-    $('#ownUserNamePip').text(pipeData[0].username);
-    $('#datecreatedPip').text(pipeData[0].date_created);
-    $('.lasteditedPip').text(pipeData[0].date_modified);
-
-    // activate collapse icon for process options
-    refreshCollapseIconDiv()
-    $('#pipelineSum').attr('disabled', "disabled");
-    fillRunVerOpt(["#runVerLog", "#runVerReport"])
-    //hide system inputs
-    $("#systemInputs").trigger("click");
-    //insert icon for process_options according to show_setting attribute
-    hideProcessOptionsAsIcons()
-    //autofillEmptyInputs
-    if (autoFillJSON !== undefined && autoFillJSON !== null) {
-        autofillEmptyInputs(autoFillJSON)
-    }
-    // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
-    cleanDepProPipeInputs();
-    // fill executor settings:
     if (pipeData[0].profile !== "" && chooseEnv) {
         var [allProSett, profileData] = getJobData("both");
         showhideOnEnv(allProSett, profileData)
@@ -4011,6 +3908,126 @@ function loadProjectPipeline(pipeData) {
     } else {
         $('#jobSettingsDiv').css('display', 'none');
     }
+}
+
+function loadUserGroups(pipeData){
+    var allUserGrp = getValues({ p: "getUserGroups" });
+    if (allUserGrp && allUserGrp != "") {
+        for (var i = 0; i < allUserGrp.length; i++) {
+            var param = allUserGrp[i];
+            var optionGroup = new Option(param.name, param.id);
+            $("#groupSelRun").append(optionGroup);
+        }
+    }
+    if (pipeData[0].group_id !== "0") {
+        $('#groupSelRun').val(pipeData[0].group_id);
+    } 
+}
+
+//fillingType:"default" or "dry"
+function fillProPipeInputsRev (projectPipeInputs_rev, fillingType){
+    var numInputRows = $('#inputsTable > tbody').find('td[given_name]');
+    $.each(numInputRows, function (el) {
+        var given_name = $(numInputRows[el]).attr("given_name");
+        var in_row = $(numInputRows[el]).closest('tr');
+        var rowID = in_row.attr("id"); //"inputTa-5"
+        var gnum = rowID.split("Ta-")[1];
+        var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
+        //check if project_pipeline_inputs exist then fill:
+        var getProPipeInputs = projectPipeInputs_rev.filter(function (el) { return el.given_name == given_name });
+        removeSelectFile(rowID, qualifier,fillingType)
+        if (getProPipeInputs.length > 0) {
+            prepareInsertInput(getProPipeInputs, rowID, gnum, qualifier, fillingType);
+        }
+        // During dry-fill, update process settings
+        showHideSett(rowID)
+    });
+}
+
+
+
+function loadRunSettings(pipeData){
+    $('#rOut_dir').val(pipeData[0].output_dir);
+    $('#publish_dir').val(pipeData[0].publish_dir);
+    $('#chooseEnv').val(pipeData[0].profile);
+    $('#runCmd').val(pipeData[0].cmd);
+    $('#docker_img').val(pipeData[0].docker_img);
+    $('#docker_opt').val(pipeData[0].docker_opt);
+    $('#singu_img').val(pipeData[0].singu_img);
+    $('#singu_opt').val(pipeData[0].singu_opt);
+    updateCheckBox('#publish_dir_check', pipeData[0].publish_dir_check);
+    updateCheckBox('#intermeDel', pipeData[0].interdel);
+    updateCheckBox('#exec_each', decodeHtml(pipeData[0].exec_each));
+    updateCheckBox('#exec_all', decodeHtml(pipeData[0].exec_all));
+    updateCheckBox('#docker_check', pipeData[0].docker_check);
+    updateCheckBox('#singu_check', pipeData[0].singu_check);
+    updateCheckBox('#singu_save', pipeData[0].singu_save);
+    updateCheckBox('#withTrace', pipeData[0].withTrace);
+    updateCheckBox('#withReport', pipeData[0].withReport);
+    updateCheckBox('#withDag', pipeData[0].withDag);
+    updateCheckBox('#withTimeline', pipeData[0].withTimeline);
+    //fill process options table
+    if (pipeData[0].process_opt) {
+        loadProcessOpt(decodeHtml(pipeData[0].process_opt)); 
+    }
+    // fill executor settings:
+    loadExecSettings(pipeData);
+}
+
+
+
+function loadProjectPipeline(pipeData) {
+    loadRunOptions("change");
+    $('#creatorInfoPip').css('display', "block");
+    $('#project-title').text(decodeHtml(pipeData[0].project_name));
+    $('#run-title').changeVal(decodeHtml(pipeData[0].pp_name));
+    $('#runSum').val(decodeHtml(pipeData[0].summary));
+    $('#permsRun').val(pipeData[0].perms);
+    $('#ownUserNamePip').text(pipeData[0].username);
+    $('#datecreatedPip').text(pipeData[0].date_created);
+    $('.lasteditedPip').text(pipeData[0].date_modified);
+
+    loadRunSettings(pipeData);
+    checkShub()
+    // bind event handlers for autofill
+    setTimeout(function () {
+        if (autoFillJSON !== null && autoFillJSON !== undefined) {
+            bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
+            bindEveHandler(autoFillJSON);
+            // if duplicated run has refreshEnv trigger refreshEnv when page loads
+            if (pipeData[0].onload){
+                if (pipeData[0].onload == "refreshEnv"){
+                    console.log("onload refreshEnv")
+                    refreshEnv();
+                }
+            }
+        }
+    }, 1000);
+    checkCloudType(pipeData[0].profile)
+    //load cloud keys for possible s3/gs connection
+    loadCloudKeys(pipeData);
+    // load group info
+    loadUserGroups(pipeData);
+    // activate collapse icon for process options
+    refreshCollapseIconDiv()
+
+    fillRunVerOpt("#runVerLog")
+    //hide system inputs
+    $("#systemInputs").trigger("click");
+    //insert icon for process_options according to show_setting attribute
+    hideProcessOptionsAsIcons()
+    //autofillEmptyInputs
+    if (autoFillJSON !== undefined && autoFillJSON !== null) {
+        autofillEmptyInputs(autoFillJSON)
+    }
+    // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
+    cleanDepProPipeInputs();
+    //after loading pipeline disable all the inputs
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+    if (projectpipelineOwn !== "1") {
+        toogleRunInputs("disable");
+    }
+    updateDiskSpace()
     setTimeout(function () { checkReadytoRun(); }, 1000);
 }
 
@@ -4088,12 +4105,17 @@ function loadRunOptions(type) {
     }
 }
 //insert selected input to inputs table
-function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection, url, urlzip, checkPath) {
+function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier, collection, url, urlzip, checkPath, fillingType) {
     var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
     if (checkDropDown) {
-        $(checkDropDown).val(filePath)
+        $(checkDropDown).val(filePath);
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
         $('#' + rowID).find('#defValUse').css('display', 'none');
+        if (fillingType == "dry"){
+            $(checkDropDown).prop("disabled", true);
+        } else {
+            $(checkDropDown).prop("disabled", false);
+        }
     } else {
         if (qualifier === 'file' || qualifier === 'set') {
             var editIcon = getIconButtonModal('inputFile', 'Edit', 'fa fa-pencil');
@@ -4124,37 +4146,58 @@ function insertSelectInput(rowID, gNumParam, filePath, proPipeInputID, qualifier
                 filePath = '<i class="fa fa-database"></i> ' + collection.collection_name
             }
         }
+        if (fillingType == "dry"){
+            urlIcon= ""
+            editIcon= ""
+            deleteIcon= ""
+        }
         $('#' + rowID).find(".firstsec" ).append('<span style="padding-right:7px;" id="filePath-' + gNumParam + '" ' + collectionAttr + '>' + filePath + '</span>' + urlIcon + editIcon + deleteIcon );
         $('#' + rowID).attr('propipeinputid', proPipeInputID);
 
     }
 }
 //remove for both dropdown and file/val options
-function removeSelectFile(rowID, sType) {
+function removeSelectFile(rowID, sType, fillingType) {
     var checkDropDown = $('#' + rowID).find('select[indropdown]')[0];
     if (checkDropDown) {
+        // During dry-fill, remove selected option
         $('#' + rowID).find('#defValUse').css('display', 'inline');
+        if (fillingType == "dry"){
+            var dropVal = $(checkDropDown).val();
+            if (dropVal){
+                $(checkDropDown).val("");
+            }
+            $('#' + rowID).find('#defValUse').css('display', 'none');
+        }
         $('#' + rowID).removeAttr('propipeinputid');
     } else {
         if (sType === 'file' || sType === 'set') {
             $('#' + rowID).find('#inputFileEnter').css('display', 'inline');
-            $('#' + rowID).find('#defValUse').css('display', 'inline');
+            if (fillingType == "dry"){
+                $('#' + rowID).find('#inputFileEnter').prop("disabled", true);
+                $('#' + rowID).find('#defValUse').css('display', 'none');
+            } else {
+                $('#' + rowID).find('#inputFileEnter').prop("disabled", false);
+                $('#' + rowID).find('#defValUse').css('display', 'inline');
+            }
         } else if (sType === 'val') {
             $('#' + rowID).find('#inputValEnter').css('display', 'inline');
             $('#' + rowID).find('#defValUse').css('display', 'inline');
+            if (fillingType == "dry"){
+                $('#' + rowID).find('#inputValEnter').prop("disabled", true);
+                $('#' + rowID).find('#defValUse').css('display', 'none');
+            } else {
+                $('#' + rowID).find('#inputValEnter').prop("disabled", false);
+                $('#' + rowID).find('#defValUse').css('display', 'inline');
+            }
         }
+
         $('#' + rowID).find(".firstsec > span" ).remove();
         var buttonList = $('#' + rowID).find(".firstsec > button");
-        if (buttonList[3]) {
-            buttonList[3].remove();
-        }
-        if (buttonList[2]) {
-            buttonList[2].remove();
-        }
-        if (buttonList[1]) {
-            var but1id = $(buttonList[1]).attr("id");
-            if (but1id == "inputValEdit" || but1id == "inputFileEdit" || but1id.match(/^urlBut-/)) {
-                buttonList[1].remove();
+        for (var c = 0; c < buttonList.length; c++) {
+            var butid = $(buttonList[c]).attr("id");
+            if (butid == "inputDelDelete" || butid == "inputValDelete" || butid == "inputValEdit" || butid == "inputFileDelete" || butid == "inputFileEdit" || butid.match(/^urlBut-/)) {
+                buttonList[c].remove();
             }
         }
         $('#' + rowID).removeAttr('propipeinputid');
@@ -4166,6 +4209,7 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
     var nameInput = "";
     if (data) {
         nameInput = data[1].value;
+        nameInput = nameInput.replace(/\"/g, "_").replace(/\'/g, "_");
     }
     var collection_id = ""
     var collection_name = ""
@@ -4196,10 +4240,11 @@ function checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, 
         checkpath: checkPathData
     });
     //insert into #inputsTab
+    var fillingType = "default"
     if (fillInput.projectPipelineInputID && collection_name) {
-        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath);
+        insertSelectInput(rowID, gNumParam, collection_name, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath, fillingType);
     } else if (fillInput.projectPipelineInputID && fillInput.inputName) {
-        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath);
+        insertSelectInput(rowID, gNumParam, fillInput.inputName, fillInput.projectPipelineInputID, sType, collection, url, urlzip, checkPath, fillingType);
     }
 }
 
@@ -4208,6 +4253,7 @@ function checkInputEdit(data, gNumParam, given_name, qualifier, rowID, sType, pr
     var nameInput = "";
     if (data) {
         nameInput = data[1].value;
+        nameInput = nameInput.replace(/\"/g, "").replace(/\'/g, "");
     }
     var collection_id = ""
     var collection_name = ""
@@ -4316,6 +4362,7 @@ function addMissingVar(defName){
 
 function checkMissingVar(){
     window["undefinedVarObj"] = {};
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
     if (projectpipelineOwn === "1") {
         var systemInputAr = $('#inputsTable > tbody').find('td[given_name]').filter(function () {
             return systemInputs.indexOf($(this).attr('given_name')) > -1
@@ -4384,12 +4431,11 @@ function checkReadytoRun(type) {
 
     //if ready and not running/waits/error
     if (publishReady && s3Status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
-        console.log("initial runStatus")
-        console.log(runStatus)
+        console.log("initial runStatus", runStatus)
         if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun") {
             if (cloudStatus) {
                 if (cloudStatus === "running") {
-                    console.log(checkType)
+                    console.log("checkType", checkType)
                     if (checkType === "rerun" || checkType === "resumerun") {
                         runStatus = "aboutToStart"
                         runProjectPipe(runProPipeCall, checkType);
@@ -4402,8 +4448,7 @@ function checkReadytoRun(type) {
                     displayButton('statusProPipe');
                 }
             } else {
-                console.log("checkType")
-                console.log(checkType)
+                console.log("checkType", checkType)
                 if (checkType === "rerun" || checkType === "resumerun") {
                     runStatus = "aboutToStart"
                     runProjectPipe(runProPipeCall, checkType);
@@ -4478,7 +4523,69 @@ function checkCloudType(profileTypeId){
             }
         }  
     }
+}
 
+function updateDiskSpace(){
+    console.log("updateDiskSpace")
+    var workDir = $runscope.getPubVal("work");
+    var countSlash = (workDir.match(/\//g) || []).length;
+    if (countSlash >1){
+        if (workDir && proTypeWindow && proIdWindow){
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {p:"getDiskSpace", dir:workDir, profileType:proTypeWindow, profileId: proIdWindow},
+                async: true,
+                beforeSend: function(){
+                    $("#workdir_diskpercent").html("Checking");
+                },
+                success: function (s) {
+                    if (s){
+                        if (s.percent && s.free) {
+                            $("#workdir_diskpercent").css("width",s.percent);
+                            $("#workdir_diskpercent").html(s.percent);
+                            var workdir_diskspace = '<a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Available Disk Space (updated every 10 minutes)">'+s.free+" free"+'</a>';
+                            if (s.workdir_size){
+                                var usedInfo = '<a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Size of the work directory (updated every 10 minutes)">Size: '+s.workdir_size+'  <i style="font-size: 13px; ma" class="fa fa-info-circle"></i></a> ';
+                                workdir_diskspace += '<span style="margin-left:3px; margin-right:3px;"> | </span>' + usedInfo
+
+                            }
+                            $("#workdir_diskspace").html(workdir_diskspace);
+                            if (s.workdir_size){
+                                $('[data-toggle="tooltip"]').tooltip();
+                            }
+                            let now = new Date();
+                            $("#workdir_diskpercent").data("lastcheck", now);
+                            toogleWorkdirDiskSpace('show');
+                        } else {
+                            toogleWorkdirDiskSpace('hide');
+                        }
+                    }
+                },
+                error: function (errorThrown) {
+                    toogleWorkdirDiskSpace('hide');
+                }
+            }); 
+        } else {
+            toogleWorkdirDiskSpace('hide');
+        }
+    } else {
+        toogleWorkdirDiskSpace('hide');
+    }
+}
+
+function toogleWorkdirDiskSpace(type){
+    if (type== "show"){
+        $("#workdir_diskspace").css("display","block");
+        $("#updateDiskSpaceBut").css("display","inline-block");
+        $("#workdir_diskpercent_div").css("display","block");
+        $("#refreshDiskSpaceBut").css("display","block")
+    } else if (type== "hide"){
+        $("#workdir_diskspace").css("display","none");
+        $("#updateDiskSpaceBut").css("display","none");
+        $("#workdir_diskpercent_div").css("display","none");  
+        $("#refreshDiskSpaceBut").css("display","none")
+    }
 }
 
 function checkWorkDir(){
@@ -4493,12 +4600,16 @@ function checkWorkDir(){
         }
         if (output_dir.indexOf(' ') >= 0){
             showInfoM = true
-            infoModalText += "</br> * There shouldn't be a space in your path.";
+            infoModalText += "</br> * There shouldn't be any space in your path.";
         }
         if (showInfoM){
             showInfoModal("#infoModal", "#infoModalText", infoModalText)
-        }    
-    }  
+        } else {
+            updateDiskSpace()
+        }   
+    }  else {
+        updateDiskSpace()
+    }
 }
 
 
@@ -4549,7 +4660,7 @@ function autoCheck(type) {
             if (changeOnchooseEnv != undefined){
                 if (changeOnchooseEnv == true){
                     //save run after all parameters loaded on change of chooseEnv
-                    saveRun();
+                    saveRun(false);
                 } 
             }
 
@@ -4639,7 +4750,7 @@ function checkCloudPatt(pattern, div, key, path, getProPipeInputs) {
     return status;
 }
 
-function loadCloudKeys() {
+function loadCloudKeys(pipeData) {
     var data = getValues({ p: "getAmz" });
     if (data && data != "") {
         $.each(data, function (i, item) {
@@ -4657,6 +4768,16 @@ function loadCloudKeys() {
             $('#mArchGoogKeyGS').append($('<option>', { value: item.id, text : item.name }));
             $('#mArchGoogKeyGS_GEO').append($('<option>', { value: item.id, text : item.name }));
         });
+    }
+    if (pipeData[0].amazon_cre_id !== "0") {
+        $('#mRunAmzKey').val(pipeData[0].amazon_cre_id);
+    } else {
+        selectCloudKey("amazon");
+    }
+    if (pipeData[0].google_cre_id !== "0") {
+        $('#mRunGoogKey').val(pipeData[0].google_cre_id);
+    } else {
+        selectCloudKey("google");
     }
 }
 
@@ -4725,6 +4846,51 @@ function configTextAllProcess(confText, exec_all_settings, type, proName, execut
     return confText
 }
 
+//type="" or "Opt"
+function displayStatButton(idButton, type) {
+    console.log(idButton)
+    console.log(type)
+    var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual", "runStatErrorOpt", "runStatCompleteOpt", "runStatRunningOpt", "runStatWaitingOpt", "runStatConnectingOpt", "runStatTerminatedOpt", "runStatAbortedOpt", "runStatManualOpt", "runStatErrorNoOpt", "runStatCompleteNoOpt", "runStatRunningNoOpt", "runStatWaitingNoOpt", "runStatConnectingNoOpt", "runStatTerminatedNoOpt", "runStatAbortedNoOpt", "runStatManualNoOpt"];
+    for (var i = 0; i < buttonList.length; i++) {
+        if (document.getElementById(buttonList[i])){
+            document.getElementById(buttonList[i]).style.display = "none";
+        }
+    }
+    if (type){
+        idButton = idButton + type;
+    }
+    if (document.getElementById(idButton)){
+        document.getElementById(idButton).style.display = "inline";
+    }
+}
+
+function updateRunProPipeOptions(){
+    var length = $('#runVerLog > option').length;
+    if (length<3){
+        $("#runProPipeStart").css("display","list-item");
+        $("#runProPipeReRun").css("display","none");
+        $("#runProPipeResume").css("display","none");
+    } else {
+        $("#runProPipeStart").css("display","none");
+        $("#runProPipeReRun").css("display","list-item");
+        $("#runProPipeResume").css("display","list-item"); 
+    }
+}
+
+function showManualRunModal(){
+    $("#manualRunModal").modal('show');
+}
+
+$(document).on('click', '#runProPipeBut', function (e) {
+    e.stopPropagation();
+    $("#runProPipeDropdown").dropdown("toggle");
+    updateRunProPipeOptions()
+});
+
+$(document).on('click', '#runProPipeBut2', function (e) {
+    updateRunProPipeOptions()
+});
+
 function displayButton(idButton) {
     var buttonList = ['runProPipe', 'errorProPipe', 'completeProPipe', 'runningProPipe', 'waitingProPipe', 'statusProPipe', 'connectingProPipe', 'terminatedProPipe', "abortedProPipe", "manualProPipe"];
     for (var i = 0; i < buttonList.length; i++) {
@@ -4759,6 +4925,7 @@ function terminateProjectPipe() {
     var setStatus = getValues({ p: "updateRunStatus", run_status: "Terminated", project_pipeline_id: project_pipeline_id });
     if (setStatus) {
         displayButton('terminatedProPipe');
+        window.runStatus = "Terminated";
         //trigger saving newxtflow log file
         setTimeout(function () {
             clearIntNextLog(proType, proId)
@@ -5073,22 +5240,39 @@ function runProjectPipe(runProPipeCall, checkType) {
             displayButton('connectingProPipe');
         }
         //create uuid for run
-        var uuid = getValues({ p: "updateRunAttemptLog", project_pipeline_id: project_pipeline_id, manualRun:manualRunCheck });
-        fillRunVerOpt(["#runVerLog", "#runVerReport"])
-        $('#runLogArea').val("");
-        var hostname = $('#chooseEnv').find('option:selected').attr('host');
-        pathArray = getPathArray();
-        //autofill for ghpcc06 cluster to mount all directories before run executed.
-        if (hostname === "ghpcc06.umassrc.org") {
-            execOtherOpt = autofillMountPath(pathArray)
-        }
-        pathArrayL1 = getPathArrayL1(pathArray)
-        //Autofill runOptions of singularity and docker image
-        window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
-        //initial run run-options to send with ajax
-        window.initRunOptions = getInitRunOptions(pathArrayL1)
-        // Call the callback
-        setTimeout(function () { runProPipeCall(keepCheckType, uuid); }, 1000);
+        $.ajax({
+            url: "ajax/ajaxquery.php",
+            data: { 
+                p: "updateRunAttemptLog", 
+                project_pipeline_id: project_pipeline_id, 
+                manualRun:manualRunCheck 
+            },
+            cache: false,
+            type: "POST",
+            success: function (uuid) {
+                updateNewRunStatus("0")
+                $('#runLogArea').val("");
+                var hostname = $('#chooseEnv').find('option:selected').attr('host');
+                pathArray = getPathArray();
+                //autofill for ghpcc06 cluster to mount all directories before run executed.
+                if (hostname === "ghpcc06.umassrc.org") {
+                    execOtherOpt = autofillMountPath(pathArray)
+                }
+                pathArrayL1 = getPathArrayL1(pathArray)
+                //Autofill runOptions of singularity and docker image
+                window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
+                //initial run run-options to send with ajax
+                window.initRunOptions = getInitRunOptions(pathArrayL1)
+                // Call the callback
+                var runAfterSave = function (){
+                    runProPipeCall(keepCheckType, uuid);
+                }
+                saveRun(runAfterSave);
+            },
+            error: function (jqXHR, exception) {
+                toastr.error("Error occured.")
+            }
+        });
     } else {
         $("#manualRunModal").modal("show");
     }
@@ -5096,7 +5280,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 
 //click on run button (callback function)
 function runProPipeCall(checkType, uuid) {
-    saveRun();
+    console.log("runProPipeCall")
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
@@ -5186,35 +5370,46 @@ function runProPipeCall(checkType, uuid) {
     }
     //save nextflow text as nextflow.nf and start job
     serverLog = '';
-    var serverLogGet = getValues({
-        p: "saveRun",
-        nextText: nextText,
-        proVarObj: proVarObj,
-        configText: configText,
-        profileType: proType,
-        profileId: proId,
-        initRunOptions: initRunOptions,
-        docker_check: docker_check,
-        google_cre_id: google_cre_id,
-        amazon_cre_id: amazon_cre_id,
-        project_pipeline_id: project_pipeline_id,
-        runType: checkType,
-        manualRun: manualRunCheck,
-        uuid: uuid
-    });
-    updateRunVerNavBar()
-    $("#refreshVerReport").trigger("click");
-    if (manualRunCheck == "true"){
-        if (serverLogGet){
-            if (serverLogGet["manualRunCmd"]){
-                $("#manualRunCmd").val(serverLogGet["manualRunCmd"])
-                hideLoadingDiv("manuaRunPanel");
-            }
+    $.ajax({
+        url: "ajax/ajaxquery.php",
+        data: {
+            p: "saveRun",
+            nextText: nextText,
+            proVarObj: proVarObj,
+            configText: configText,
+            profileType: proType,
+            profileId: proId,
+            initRunOptions: initRunOptions,
+            docker_check: docker_check,
+            google_cre_id: google_cre_id,
+            amazon_cre_id: amazon_cre_id,
+            project_pipeline_id: project_pipeline_id,
+            runType: checkType,
+            manualRun: manualRunCheck,
+            uuid: uuid
+        },
+        cache: false,
+        type: "POST",
+        success: function (serverLogGet) {
+            updateNewRunStatus("0")
+            fillRunVerOpt("#runVerLog");
+            updateRunVerNavBar()
+            $("#refreshVerReport").trigger("click");
+            if (manualRunCheck == "true"){
+                if (serverLogGet){
+                    if (serverLogGet["manualRunCmd"]){
+                        $("#manualRunCmd").val(serverLogGet["manualRunCmd"])
+                        hideLoadingDiv("manuaRunPanel");
+                    }
+                }
+            } 
+            $('.nav-tabs a[href="#logTab"]').tab('show');
+            readNextflowLogTimer(proType, proId, "default");
+        },
+        error: function (jqXHR, exception) {
+            toastr.error("Error occured.")
         }
-    } 
-    $('.nav-tabs a[href="#logTab"]').tab('show');
-    readNextflowLogTimer(proType, proId, "default");
-
+    });
 }
 
 
@@ -5231,6 +5426,9 @@ function readNextflowLogTimer(proType, proId, type) {
     interval_readPubWeb = setInterval(function () {
         readPubWeb(proType, proId, "no_reload")
     }, 60000);
+    interval_getWorkDirSpace = setInterval(function () {
+        updateDiskSpace();
+    }, 600000);
 }
 
 autoScrollLog = true;
@@ -5256,8 +5454,13 @@ $('a[href="#logTab"]').on('shown.bs.tab', function (e) {
 });
 
 $('a[href="#reportTab"]').on('shown.bs.tab', function (e) {
-    //check if div is empty
-    $("#runVerReport").trigger("change");
+    $("#runVerLog").trigger("change");
+});
+$('a[href="#configTab"]').on('shown.bs.tab', function (e) {
+    $("#runVerLog").trigger("change");
+});
+$('a[href="#advancedTab"]').on('shown.bs.tab', function (e) {
+    $("#runVerLog").trigger("change");
 });
 
 $(document).on('click', '#errorProPipe', function (e) {
@@ -5295,19 +5498,24 @@ function saveNexLg(proType, proId) {
 }
 
 function clearIntPubWeb(proType, proId) {
-    clearInterval(interval_readPubWeb);
+    if (typeof interval_readPubWeb !== 'undefined'){
+        clearInterval(interval_readPubWeb);
+    }
     //last save call after run completed
     setTimeout(function () { readPubWeb(proType, proId, "no_reload") }, 4000);
 }
 //
 
 function clearIntNextLog(proType, proId) {
-    clearInterval(interval_readNextlog);
+    if (typeof interval_readNextlog !== 'undefined'){
+        clearInterval(interval_readNextlog);
+    }
     //last save call after run completed
     setTimeout(function () { saveNexLg(proType, proId) }, 5000);
 }
 // type= reload for reload the page
 function readNextLog(proType, proId, type) {
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
     if (projectpipelineOwn === "1") {
         var updateProPipeStatus = getValues({ p: "updateProPipeStatus", project_pipeline_id: project_pipeline_id });
         window.serverLog = "";
@@ -5323,7 +5531,7 @@ function readNextLog(proType, proId, type) {
         }
         var pidStatus = "";
 
-        // check runStatus to get status //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+        // Available Run_status States: Terminated,NextSuc,Error,NextErr,NextRun, Waiting,init, Aborted
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
         if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr" || runStatus === "Manual") {
             window["countFailRead"]=0;
@@ -5384,7 +5592,7 @@ function readNextLog(proType, proId, type) {
             }
         }
 
-        var lastrun = $('#runLogArea').attr('lastrun');
+        var lastrun = $('option:selected', "#runVerLog").attr('lastrun');
         if (lastrun) {
             $('#runLogArea').val(serverLog + "\n" + nextflowLog);
             autoScrollLogArea()
@@ -5517,7 +5725,7 @@ function getProcessOpt() {
         });
         processOptAll[proGnum] = processOptEach
     });
-    return encodeURIComponent(JSON.stringify(processOptAll))
+    return encodeURIComponent(JSON.stringify(processOptAll));
 }
 
 function fillEachProcessOpt(eachProcessOpt, label, inputDiv, inputDivType) {
@@ -5658,12 +5866,110 @@ function formToJsonEachPro() {
 
 }
 
-function saveRunIcon() {
-    saveRun();
-    checkReadytoRun();
+function checkNewRunStatus(){
+    var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+    var newrunCheck = 0;
+    //if new_run is selected then unselect dropdown
+    if (pipeData[0]){
+        if (pipeData[0].new_run === "1"){
+            newrunCheck = 1;
+        }
+    }
+    return newrunCheck;
 }
 
-function saveRun() {
+function updateNewRunStatus(stat){
+    if (pipeData[0]){
+        pipeData[0].new_run = stat;
+    }
+    if ($runscope.getProjectPipelines[0]){
+        $runscope.getProjectPipelines[0].new_run =stat;
+    } 
+}
+
+function createNewRunFunc(newRunExist){
+    var run_log_uuid = $('#runVerLog').val();
+    if (!newRunExist){
+        $.ajax({
+            url: "ajax/ajaxquery.php",
+            data: {
+                p:"updateProjectPipelineNewRun",  
+                newrun:1, 
+                project_pipeline_id: project_pipeline_id,
+                run_log_uuid: run_log_uuid
+            },
+            cache: false,
+            type: "POST",
+            success: function (data) {
+                if(data){
+                    updateNewRunStatus("1");
+                    fillRunVerOpt('#runVerLog');
+                    $('.nav-tabs a[href="#configTab"]').tab('show');
+                    toastr.info('New run is ready.');
+                } else {
+                    toastr.error("Error occured.")
+                }
+            },
+            error: function (jqXHR, exception) {
+                toastr.error("Error occured.")
+            }
+        }); 
+    } else {
+        $.ajax({
+            url: "ajax/ajaxquery.php",
+            data: {
+                p:"updateProjectPipelineWithOldRun",  
+                project_pipeline_id: project_pipeline_id,
+                run_log_uuid: run_log_uuid
+            },
+            cache: false,
+            type: "POST",
+            success: function (data) {
+                if (data){
+                    //refresh existing pipeData
+                    pipeData = data;
+                    if ($runscope.getProjectPipelines){
+                        $runscope.getProjectPipelines = data;
+                    } 
+                    fillRunVerOpt('#runVerLog');
+                    $('.nav-tabs a[href="#configTab"]').tab('show');
+                    toastr.info('New run is ready.');
+                } else {
+                    toastr.error("Old run couldn't be loaded.")
+                }
+            },
+            error: function (jqXHR, exception) {
+                toastr.error("Error occured.")
+            }
+        });
+
+
+    }
+
+}
+
+function saveRunIcon() {
+    //check if lastrun is running, then show warning
+    if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init"){
+        saveRun(false);
+    } else {
+        var newRunExist =checkNewRunStatus();
+        var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+        if (newRunExist && newRun){
+            saveRun(false);
+            checkReadytoRun();
+        } else if (!newRunExist){
+            var sucFunc = function(){
+                $('.nav-tabs a[href="#configTab"]').tab('show');
+                createNewRunFunc(newRunExist)
+            }
+            saveRun(sucFunc);
+            checkReadytoRun();
+        }
+    }
+}
+
+function saveRun(sucFunc) {
     var data = [];
     var runSummary = encodeURIComponent($('#runSum').val());
     var run_name = $('#run-title').val();
@@ -5705,7 +6011,6 @@ function saveRun() {
         amazon_cre_id = $("#mRunAmzKey").val();
     }
     google_cre_id = $("#mRunGoogKey").val();
-
     var output_dir = $runscope.getPubVal("work");
     var publish_dir = $runscope.getPubVal("publish");
     var publish_dir_check = $('#publish_dir_check').is(":checked").toString();
@@ -5713,8 +6018,6 @@ function saveRun() {
     var perms = $('#permsRun').val();
     var interdel = $('#intermeDel').is(":checked").toString();
     var groupSel = $('#groupSelRun').val();
-    console.log("perms", perms)
-    console.log("groupSel", groupSel)
     var cmd = encodeURIComponent($runscope.getPubVal("runcmd"));
     var exec_each = $('#exec_each').is(":checked").toString();
     var exec_all = $('#exec_all').is(":checked").toString();
@@ -5773,8 +6076,11 @@ function saveRun() {
             data: data,
             async: true,
             success: function (s) {
-                toastr.info('All changes are saved.')
                 console.log(s)
+                toastr.info('All changes are saved.');
+                if (typeof sucFunc === "function") {
+                    sucFunc()
+                }
                 if (dupliProPipe === false) {
                     if (s){
                         if ($.isArray(s)){
@@ -5850,6 +6156,9 @@ function checkNewRevision() {
     }
     return askNewRev;
 }
+
+
+
 
 //type =="selectproject" or "default"
 function refreshProjectDatatable(type){
@@ -5982,7 +6291,7 @@ function duplicateProPipe(type) {
         $('#confirmDuplicate').modal("show");  
     } else if (type == "move" || type == "changeproject"){
         refreshProjectDatatable("default");
-        saveRun();
+        saveRun(false);
         $('#copyRunBut').css("display","none");
         $('#moveRunBut').css("display","inline-block");
         $('#pipelineRevsDiv').css("display","none");
@@ -5998,113 +6307,12 @@ function duplicateProPipe(type) {
     $('#confirmDuplicate').modal("show");
 }
 
-$(function () {
-    $(document).on('change', '#runVerLog', function (event) {
-        console.log("runVerLog")
-        var run_log_uuid = $(this).val();
-        if (run_log_uuid) {
-            var version = $('option:selected', this).attr('ver');
-            if (version) {
-                var runTitleLog = "Run Log " + version + ":"
-                $('a[href="#logTab"]').css("display", "block")
-                $('a[href="#reportTab"]').css("display", "block")
-            } else {
-                var runTitleLog = "";
-                $('a[href="#logTab"]').css("display", "none")
-                $('a[href="#reportTab"]').css("display", "none")
-            }
-            var lastrun = $('option:selected', this).attr('lastrun');
-            if (lastrun) {
-                lastrun = 'lastrun="yes"';
-            } else {
-                lastrun = "";
-            }
-            var activeTab = $("ul#logNavBar li.active > a")
-            var activeID = "";
-            if (activeTab[0]) {
-                activeID = $(activeTab[0]).attr("href")
-            }
-            $("#runTitleLog").text(runTitleLog)
-            $("#logContentDiv").empty();
-            //to support outdated log directory system 
-            if (run_log_uuid.match(/^run/)) {
-                var path = ""
-                } else {
-                    var path = "run"
-                    }
-            var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
-            var fileListAr = getObjectValues(fileList);
-            var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
-            var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
-            //hide serverlog.txt
-            var pubWebPath = $("#basepathinfo").attr("pubweb")
-            var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
-            var k = 0;
-            var tabDiv = [];
-            var fileName = [];
-            for (var j = 0; j < order.length; j++) {
-                if ($("#logContentDiv").attr(logContentDivAttr[j]) == "true" && (fileListAr.includes(order[j]) || order[j] == "log.txt")) {
-                    var exist = 'style="display:block;"';
-                } else {
-                    var exist = 'style="display:none;"';
-                }
-                k++
-                var active = "";
-                if (k == 1) {
-                    active = 'class="active"';
-                }
-                var tabID = cleanProcessName(order[j]) + 'Tab';
-                tabDiv.push(tabID);
-                fileName.push(order[j]);
-                navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
-            }
-            navTabDiv += '</ul>';
-            navTabDiv += '<div id="logNavCont" class="tab-content">';
-            for (var n = 0; n < tabDiv.length; n++) {
-                var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
-                var active = "";
-                if (n == 0) {
-                    active = 'in active';
-                }
-                navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
-                if (fileName[n] == "log.txt") {
-                    var serverlogText = "";
-                    var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
-                    if (fileListAr.includes("serverlog.txt")) {
-                        serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
-                        //to support outdated log directory system 
-                    } else if (fileListAr.includes("nextflow.log")) {
-                        logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
-                    }
-                    if (fileListAr.includes("err.log")) {
-                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
-                    }
-                    if (fileListAr.includes("initial.log")) {
-                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initial.log" });
-                    }
-                    navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
-                } else {
-                    navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
-                }
-                navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
-                navTabDiv += '<a style="margin-left:5px;" href="#" class="btn btn-info tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true">Contact Us</a>'
-                navTabDiv += '</div>';
-            }
-            navTabDiv += '</div>';
-            $("#logContentDiv").append(navTabDiv)
-            $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
-                autoScrollLogArea()
-            });
-            if (activeID) {
-                if ($('.nav-tabs a[href="' + activeID + '"]').css("display") != "none") {
-                    $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
-                }
-            }
-        }
-    });
-});
 
-function fillRunVerOpt(dropDownAr) {
+
+
+
+function fillRunVerOpt(dropDownId) {
+    console.log("fillRunVerOpt")
     var runLogs = getValues({ "p": "getRunLog", project_pipeline_id: project_pipeline_id })
     //allow one outdated log directory
     var newRunLogs = [];
@@ -6119,41 +6327,88 @@ function fillRunVerOpt(dropDownAr) {
             newRunLogs.push(runLogs[el])
         }
     });
-    var size = $(newRunLogs).size()
-    for (var j = 0; j < dropDownAr.length; j++) {
-        var n = 0;
-        var lastItem = "";
-        var dropDownId = dropDownAr[j];
-        var runType = "";
-        if (dropDownId == "#runVerReport") {
-            runType = "Report"
-        } else if (dropDownId == "#runVerLog") {
-            runType = "Log"
-        }
-        $(dropDownId).empty();
-        $.each(newRunLogs, function (el) {
-            var run_log_uuid = newRunLogs[el].run_log_uuid;
-            var date_created = newRunLogs[el].date_created
-            var project_pipeline_id = newRunLogs[el].project_pipeline_id
-            if (run_log_uuid || project_pipeline_id) {
-                n++;
-                if (n == size) {
-                    lastItem = 'lastRun="yes"';
-                } else {
-                    lastItem = "";
-                }
-                if (run_log_uuid) {
-                    $(dropDownId).prepend(
-                        $('<option ' + lastItem + '></option>').attr("ver", n).val(run_log_uuid).html("Run " + runType + " " + n + " created at " + date_created)
-                    );
-                } else if (project_pipeline_id) {
-                    $(dropDownId).prepend(
-                        $('<option ' + lastItem + '></option>').attr("ver", n).val("run" + project_pipeline_id).html("Run Log " + n + " created at " + date_created)
-                    );
+    console.log(newRunLogs)
+    var nRun = $(newRunLogs).size()
+    var n = 0;
+    var lastDropdownVal = '';
+    var lastItem = 'lastRun="yes"';
+    var newRun = 'newRun="yes"';
+    var tsize = 0;
+    $(dropDownId).empty();
+    $.each(newRunLogs, function (el) {
+        var run_log_uuid = newRunLogs[el].run_log_uuid;
+        var date_created = newRunLogs[el].date_created
+        var project_pipeline_id = newRunLogs[el].project_pipeline_id
+        var sizeInKB = newRunLogs[el].size
+        tsize += parseInt(sizeInKB);
+        var sizeText = "";
+        var runName = "";
+        if (run_log_uuid || project_pipeline_id) {
+            n++;
+            if (sizeInKB && sizeInKB != "0"){
+                var size = formatSizeUnits(sizeInKB*1024)
+                if (size){
+                    sizeText = " ("+size+")";
                 }
             }
-            $(dropDownId).val($(dropDownId + ' option:first').val());
-        });
+            if (n == nRun) {
+                lastItem = 'lastRun="yes"';
+            } else {
+                lastItem = "";
+            }
+            if (newRunLogs[el].name){
+                runName = decodeHtml(newRunLogs[el].name);
+            } else {
+                runName = 'Run '+n;
+            }
+
+            if (run_log_uuid) {
+                lastDropdownVal = run_log_uuid;
+                $(dropDownId).prepend(
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val(lastDropdownVal).html(runName + " created at " + date_created+sizeText)
+                );
+            } else if (project_pipeline_id) {
+                lastDropdownVal = "run" + project_pipeline_id;
+                $(dropDownId).prepend(
+                    $('<option ' + lastItem + '></option>').attr("ver", n).val(lastDropdownVal).html(runName + " created at " + date_created+sizeText)
+                );
+            }
+        }
+    });
+    if (tsize){
+        var tsize = formatSizeUnits(tsize*1024)
+        if (tsize){
+            var icon = '<a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Total size of the runs in the DolphinNext server. It doesn\'t show the actual run size in the run environment.">'+tsize+'</a>';
+            $("#runLogSize").html(icon);
+        }
+    }
+    $(dropDownId).prepend( $('<option disabled></option>').val(0).html("-- Run History --") );
+    var newrunCheck = checkNewRunStatus();
+    if (n === 0){
+        updateNewRunStatus("1");
+        newrunCheck = "1";
+    }
+    console.log(newrunCheck)
+    console.log(lastDropdownVal)
+    //if new_run is selected then select first "Run History" option
+    if (newrunCheck){
+        n++;
+        $(dropDownId).prepend($('<option ' + newRun + '></option>').attr("ver", n).val("newrun").html("New Run " + n));
+        $(dropDownId).val($(dropDownId + ' option:first').val());
+        $(dropDownId).trigger("change");
+        if ($("ul#runTabDiv li.active > a")[0]){
+            var attr = $($("ul#runTabDiv li.active > a")[0]).attr("href");
+            if (attr == "#reportTab" || attr == "#logTab"){
+                $('.nav-tabs a[href="#configTab"]').trigger("click")
+            }
+        }
+        // else choose second option
+    } else {
+        console.log($(dropDownId + ' option[value="'+lastDropdownVal+'"]').val())
+        $(dropDownId).val($(dropDownId + ' option[value="'+lastDropdownVal+'"]').val());
+        // don't allow to reload configtab unless another log is selected 
+        //        $(dropDownId).attr("configTabUID",lastDropdownVal);
+        //        $(dropDownId).attr("prevUID",lastDropdownVal);
         $(dropDownId).trigger("change");
     }
 }
@@ -6185,7 +6440,6 @@ function updateRunVerNavBar() {
                         $('a[href="#' + tabID + '"]').css("display", "block")
                     }
                 }
-
             }
         }
         if (!activeID) {
@@ -6359,10 +6613,989 @@ function validateMoveCopyRun(new_project_id){
 }
 
 
+function tooglePermsGroupsDiv(mode){
+    if (mode == "show"){
+        $('#groupsDiv').css("display", "block");
+        $('#permsDiv').css("display", "block");
+    } else if (mode == "hide"){
+        $('#groupsDiv').css("display", "none");
+        $('#permsDiv').css("display", "none");
+    }
+}
+
+function toogleMainIcons(mode){
+    if (mode == "show"){
+        $('#saveRunIcon').css("display", "inline-block");
+        $('#downPipeline').css("display", "inline-block");
+        $('#delRun').css("display", "inline-block");
+    } else if (mode == "hide"){
+        $('#saveRunIcon').css("display", "none");
+        $('#downPipeline').css("display", "none");
+        $('#delRun').css("display", "none");
+    }
+}
+function toogleStatusMode(mode){
+    if (mode == "default"){
+        $('#pipeRunDiv').css("display", "block");
+        $('#runStatDiv').css("display", "none");
+        $('#runStatDiv').find("div").css("display","none")
+        $('#runStatNoDiv').css("display", "none");
+    } else if (mode == "oneOption"){
+        $('#pipeRunDiv').css("display", "none");
+        $('#runStatDiv').css("display", "block");
+        $('#runStatNoDiv').css("display", "none");
+    } else if (mode == "noOption"){
+        $('#pipeRunDiv').css("display", "none");
+        $('#runStatDiv').css("display", "none");
+        $('#runStatNoDiv').css("display", "block");
+    }
+}
+
+// show old run_status of the logs//Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
+function runLogStatUpdate(runStatus, type){
+    console.log(type)
+    if (runStatus === "NextSuc") {
+        displayStatButton('runStatComplete', type);
+    } else if (runStatus === "Error" || runStatus === "NextErr") {
+        displayStatButton('runStatError', type);
+    } else if (runStatus === "Terminated") {
+        displayStatButton('runStatTerminated', type);
+    } else if (runStatus === "Manual") {
+        displayStatButton('runStatManual', type);
+        //  if runStatus states that run is still running then there must be some error occured. show errorProPipe
+    } else if (runStatus === "NextRun" || runStatus === "Waiting" || runStatus === "init") {
+        displayStatButton('runStatError', type);
+    } 
+}
+
+
+
+function toogleRunInputs(type){
+    var bool;
+    if (type == "disable"){
+        bool = true;
+    } else if (type == "enable"){
+        bool = false;
+    }
+    $("#configTab :input").not(":button[show_sett_but]").prop("disabled", bool);
+    $("#advancedTab :input").prop("disabled", bool);
+    $('.ui-dialog :input').not(".ui-dialog-buttonpane :input").prop("disabled", bool);
+}
+
+$(function () {
+    function reloadReportRows(){
+        var run_log_uuid = $("#runVerLog").val();
+        if (run_log_uuid){
+            var runUID = '<span style="font-size:10px; float:right; color:gray;">Run UID: '+run_log_uuid+'</span>';
+            $("#reportRowsFooter").html(runUID); 
+        }
+
+        $("#reportRows").empty();
+        //add 'className: "center"' to center text in columns array
+        $("#reportRows").dynamicRows({
+            ajax: {
+                url: "ajax/ajaxquery.php",
+                data: { "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id }
+            },
+            columnsBody: [{
+                //file list
+                data: null,
+                colPercent: "15",
+                overflow: "scroll",
+                fnCreatedCell: function (nTd, oData) {
+                    var getExtension = function (filename){
+                        var re = /(?:\.([^.]+))?$/;
+                        var ext = re.exec(filename)[1];   // "txt"
+                        if (!ext){
+                            ext = "";
+                        }
+                        return ext;
+                    }
+                    var getIconByExtension = function(ext){
+                        var icon = "fa fa-file-text-o";
+                        if (ext == "tsv" || ext == "csv" || ext === "xls" || ext === "xlsx") {
+                            icon = "fa fa-table";
+                        } else if (ext == "html") {
+                            icon = "fa fa-file-code-o";
+                        } else if (ext == "pdf") {
+                            icon = "fa fa-file-pdf-o";
+                        } else if (ext == "rmd") {
+                            icon = "fa fa-pie-chart";
+                        } else if (ext == "md") {
+                            icon = "fa fa-edit";
+                        } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
+                            icon = "fa fa-file-image-o";
+                        }
+                        return icon;
+                    }
+                    var getVisTypeByExtension = function(ext){
+                        var visType = "text";
+                        if (ext == "tsv") {
+                            visType = "table";
+                        } else if (ext == "html") {
+                            visType = "html";
+                        } else if (ext == "pdf") {
+                            visType = "pdf";
+                        } else if (ext == "rmd") {
+                            visType = "rmarkdown";
+                        } else if (ext == "md") {
+                            visType = "markdown";
+                        } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
+                            visType = "image";
+                            //will download file if not supported
+                        } else if (ext == "txt" || ext === "xls" || ext === "xlsx" || ext === "csv") {
+                            visType = "text";
+                        }
+                        return visType;
+                    }
+
+                    var run_log_uuid = $("#runVerLog").val();
+                    var pubWebPath = $("#basepathinfo").attr("pubweb");
+                    var visType = oData.pubWeb
+                    var icon = "fa fa-file-text-o";
+                    if (visType == "table" || visType === "table-percent") {
+                        icon = "fa fa-table";
+                    }
+                    var fileList = oData.fileList;
+                    var liText = "";
+                    var active = "";
+                    $.each(fileList, function (el) {
+                        if (fileList[el]) {
+                            if (el == 0) {
+                                active = "active"
+                            } else {
+                                active = "";
+                            }
+                            //if oData.pubWeb= "run_description" -> fill file icons and visType based on their file type
+                            if (oData.pubWeb == "run_description"){
+                                var ext = getExtension(fileList[el]);
+                                icon = getIconByExtension(ext);
+                                visType = getVisTypeByExtension(ext);
+                            }
+                            var filepath = oData.name + "/" + fileList[el];
+                            var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
+                            var filenameCl = cleanProcessName(fileList[el])
+                            var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                            var fileID = oData.id + "_" + filenameCl;
+                            //remove directory str, only show filename in label
+                            var labelText = /[^/]*$/.exec(fileList[el])[0];
+                            liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="' + icon + '"></i>' + labelText + '</a></li>';
+                        }
+                    });
+
+                    //xxxxxxx
+                    var addEveHandlerIconDiv = function (id){
+                        var addIconID = "addIcon-" + id;
+                        var renameIcon = "renameIcon-" + id;
+                        var deleteIcon = "deleteIcon-" + id;
+
+                        var getFileName = function (filePath) {
+                            var res = { filename: "", rest: "" };
+                            var split = filePath.split("/")
+                            res.filename = split[split.length - 1]
+                            res.rest = split.slice(0, -1).join('/');
+                            return res
+                        }
+
+                        //return 1 if newName is found in directory.
+                        var checkDuplicateFile = function (newName,fileNameObj){
+                            var ret = 1;
+                            if (!fileNameObj.rest){
+                                return 0;
+                            }
+                            var targetfilepath = fileNameObj.rest + "/" + newName;
+                            var checkDup = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li").find("a").filter(function () {
+                                return $(this).attr('filepath') === targetfilepath
+                            });
+                            if (!checkDup.length){
+                                ret = 0;
+                            }
+                            return ret;
+                        }
+
+                        var dynrows_savefile = function (filePath,text) {
+                            var obj = getFileName(filePath);
+                            var newPath = obj.rest + "/" + obj.filename
+                            text = encodeURIComponent(text);
+                            var run_log_uuid = $("#runVerLog").val();
+                            var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
+                            return saveData
+                        }
+
+                        var getFileNameObj = function (){
+                            var obj = {};
+                            var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
+                            var filePath = $(activeLiA[0]).attr("filepath");
+                            if (filePath){
+                                obj = getFileName(filePath);
+                            }
+                            return obj;
+                        }
+
+
+                        var dynrows_movefile = function (file1, file2){
+                            var run_log_uuid = $("#runVerLog").val();
+                            if (file1 && file2){
+                                var moveFile = getValues({ 
+                                    p: "moveFile", 
+                                    "type": "pubweb",
+                                    "from": run_log_uuid + "/pubweb/" + file1,
+                                    "to": run_log_uuid + "/pubweb/" + file2
+                                });
+                                return moveFile;
+                            }
+                        }
+
+                        var createModal = function () {
+                            var fileModal = `
+<div id="dynRowsInfo" class="modal fade" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+<h4 class="modal-title" id="dynRowsInfoTitle">Title</h4>
+</div>
+<div class="modal-body">
+<div id="dynRowsEditDiv" class="form-horizontal">
+<div class="form-group">
+<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please edit filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
+<div class="col-sm-8">
+<input id="dynRowsEditFileName" type="text" class="form-control">
+</div>
+</div>
+</div>
+<div id="dynRowsAddDiv" style="padding-right:10px;" class="form-horizontal">
+
+<div class="form-group">
+<label class="col-sm-4 control-label"><input type="checkbox" id="dynRowsEmptyFileCheck" name="check_emptyFile" data-toggle="collapse" data-target="#dynRows_emptyFileDiv" class="collapsed" aria-expanded="false"> Create Empty File </label>
+</div>
+<div id="dynRows_emptyFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
+<div class="form-group">
+<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
+<div class="col-sm-8">
+<input id="dynRowsFileName" type="text" class="form-control">
+</div>
+</div>
+</div>
+<div class="form-group">
+<label class="col-sm-4 control-label"><input type="checkbox" id="dynRows_uploadFileCheck" name="check_uploadFile" data-toggle="collapse" data-target="#dynRows_uploadFileDiv" class="collapsed" aria-expanded="false"> Upload File </label>
+</div>
+<div id="dynRows_uploadFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
+<div class="form-group">
+<div class="col-sm-12" id="dynRows_import_div">
+<form id="dynRowsUploadForm" action="ajax/import.php" class="dropzone">
+<div class="fallback ">
+<input name="file" type="file" />
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+<button id="dynRowsInfoButton" type="button" class="btn btn-primary" >Save</button>
+</div>
+</div>
+</div>
+</div>`;
+
+                            if (document.getElementById("dynRowsInfo") === null) {
+                                $('body').append(fileModal);
+                            }
+                        }
+
+
+                        var bindEventHandlerModal = function(){
+                            //clean previous binds
+                            $("#reportRows").off();
+                            $("#dynRowsInfo").off();
+                            //not allow to click both option
+                            disableDoubleClickCollapse("dynRowsEmptyFileCheck", "dynRows_emptyFileDiv", "dynRows_uploadFileCheck","dynRows_uploadFileDiv", "dynRowsInfo");
+
+
+                            $("#reportRows").on('click', '#'+addIconID, function (event) {
+                                window.dynRows = {};
+                                window.dynRows.filename = ""
+                                var myDropzone = Dropzone.forElement("#dynRowsUploadForm");
+                                myDropzone.removeAllFiles();
+                                if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
+                                    $('#'+"dynRowsEmptyFileCheck").trigger("click");
+                                }
+                                if ($('#'+"dynRows_uploadFileCheck").is(":checked")) {
+                                    $('#'+"dynRows_uploadFileCheck").trigger("click");
+                                }
+                                $("#dynRowsInfoTitle").text("Create New File")
+                                $("#dynRowsFileName").val("NewFile.md")
+                                $("#dynRowsEditDiv").css("display","none");
+                                $("#dynRowsAddDiv").css("display","block");
+                                $("#dynRowsInfoButton").attr("class", "btn btn-primary save")
+                                $("#dynRowsInfoButton").text("Save")
+                                $("#dynRowsInfo").modal("show");
+                            });
+
+                            var callbackActiveClick = function (){
+                                $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a").trigger("click");
+                            }
+
+                            $('#dynRowsInfo').on('hide.bs.modal', function (event) {
+                                $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody", callback:callbackActiveClick});
+                            });
+
+                            $("#dynRowsInfo").on('click', '.save', function (event) {
+                                event.preventDefault();
+                                var obj = getFileNameObj()
+                                if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
+                                    var newName = $("#dynRowsFileName").val()
+                                    if (newName){
+                                        var checkDuplicate = checkDuplicateFile(newName,obj);
+                                        console.log(checkDuplicate)
+                                        if (!checkDuplicate){
+                                            var filepath = oData.name + "/" +newName;
+                                            var text = "";
+                                            dynrows_savefile(filepath,text);
+                                            $("#dynRowsInfo").modal("hide");
+                                        } else {
+                                            showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
+                                        }
+                                    } else{
+                                        showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
+                                    }
+                                } else {
+                                    $("#dynRowsInfo").modal("hide");
+                                } 
+                            });
+
+                            $("#reportRows").on('click', '#'+deleteIcon, function (event) {
+                                var obj = getFileNameObj();
+                                var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
+                                var text = 'Are you sure you want to delete '+obj.filename+'?';
+                                var savedData = $(activeLiA[0]);
+                                var execFunc = function(savedData){
+                                    var filePath = savedData.attr("filepath");
+                                    var run_log_uuid = $("#runVerLog").val();
+                                    var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
+                                    $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
+                                }
+                                showConfirmDeleteModal(text, savedData, execFunc)
+                            });
+
+                            $("#reportRows").on('click', '#'+renameIcon, function (event) {
+                                var obj = getFileNameObj()
+                                $("#dynRowsInfoTitle").text("Edit Filename")
+                                $("#dynRowsEditFileName").val(obj.filename)
+                                $("#dynRowsEditDiv").css("display","block");
+                                $("#dynRowsAddDiv").css("display","none");
+                                $("#dynRowsInfoButton").attr("class", "btn btn-primary rename")
+                                $("#dynRowsInfoButton").text("Save")
+                                $("#dynRowsInfo").modal("show");
+                            });
+
+                            $("#dynRowsInfo").on('click', '.rename', function (event) {
+                                event.preventDefault();
+                                var obj = getFileNameObj()
+                                var newName = $("#dynRowsEditFileName").val()
+                                if (newName){
+                                    var checkDuplicate = checkDuplicateFile(newName,obj);
+                                    if (!checkDuplicate){
+                                        var filepath1 = oData.name + "/" +obj.filename;
+                                        var filepath2 = oData.name + "/" +newName;
+                                        dynrows_movefile(filepath1,filepath2);
+                                        $("#dynRowsInfo").modal("hide");
+                                    } else {
+                                        showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
+                                    }
+                                } else {
+                                    showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
+                                }
+                            });
+                        }
+
+
+                        var createDropzone = function (){
+                            console.log("createDropzone")
+                            if (Dropzone.options.dynRowsUploadForm){
+                                $("#dynRowsUploadForm")[0].dropzone.destroy()
+                                $("#dynRowsUploadForm").off()
+                            }
+                            // Configuriation of dropzone of id:dynRowsUploadForm in mdEditorInfo modal
+                            window.dynRows = {};
+                            window.dynRows.filename = "";
+                            Dropzone.options.dynRowsUploadForm = {
+                                paramName: "pubweb", // The name that will be used to transfer the file
+                                maxFilesize: 30, // MB
+                                maxFiles:10,
+                                createImageThumbnails: false,
+                                dictDefaultMessage: 'Drop your file here or <button type="button" class="btn btn-default" >Select File </button>',
+                                accept: function (file, done) {
+                                    window.dynRows.filename= file.name
+                                    done();
+                                    $('#dynRows_upload_name_span').text(file.name)
+                                },
+                                init: function() {
+                                    this.on("sending", function(file, xhr, formData){
+                                        formData.append("uuid", run_log_uuid);
+                                        formData.append("dir", oData.name);
+                                    });
+                                }
+                            }; 
+                            $("#dynRowsUploadForm").dropzone();  
+
+                        }
+                        createModal()
+                        createDropzone()
+                        bindEventHandlerModal()
+                    }
+
+                    var getFileListHeaderIconDiv = function (id) {
+                        var border = "border-right: 1px solid lightgray;"
+                        var addIcon = `<li role="presentation"><a id="addIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Add File"><i style="font-size: 18px;" class="fa fa-plus"></i></a></li>`;
+                        var renameIcon = `<li role="presentation"><a id="renameIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Rename File"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
+                        var deleteIcon = `<li role="presentation"><a  id="deleteIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Delete File"><i style="font-size: 18px;" class="fa fa-trash"></i></a></li>`;
+                        var content = `<ul style="float:right"  class="nav nav-pills panelheader">` + addIcon + renameIcon + deleteIcon + `</ul>`;
+                        var wrapDiv = '<div id="' + id + '-ListHeaderIconDiv" style="'+border+'height:35px; width:100%;">' + content + '</div>';
+                        return wrapDiv;
+                    }
+                    var IconDiv = "";
+                    var writePerm= $runscope.checkUserWritePerm();
+                    //allows user to edit run page
+                    if (writePerm){
+                        if (oData.pubWeb == "run_description"){
+                            IconDiv = getFileListHeaderIconDiv(oData.id);
+                            addEveHandlerIconDiv(oData.id)
+                        }
+                    }
+                    if (!liText) {
+                        liText = '<div style="margin:10px;"> No data available</div>';
+                    }
+                    var allText = IconDiv + liText;
+                    $(nTd).html('<ul class="nav nav-pills nav-stacked">' + allText + '</ul>');
+                },
+            }, {
+                //file content
+                data: null,
+                colPercent: "85",
+                fnCreatedCell: function (nTd, oData) {
+                    var fileList = oData.fileList;
+                    if ($(nTd).is(':empty')) {
+                        var navTabDiv = "";
+                        navTabDiv += '<div style="height:inherit;" class="tab-content">';
+                        var liText = "";
+                        var active = "";
+                        $.each(fileList, function (el) {
+                            var filenameCl = cleanProcessName(fileList[el])
+                            var tabID = 'reportTab' + oData.id + "_" + filenameCl;
+                            var active = "";
+                            if (el == 0) {
+                                active = 'in active';
+                            }
+                            navTabDiv += '<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
+                        });
+                        navTabDiv += '</div>';
+                        $(nTd).html(navTabDiv);
+                    } else {
+                        //when dynamicRows.fnrefresh is executed following code will update the tabid section
+                        var newTabIdList = []
+                        $.each(fileList, function (el) {
+                            var filenameCl = cleanProcessName(fileList[el])
+                            var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
+                            newTabIdList.push(newTabID)
+                        });
+
+                        //get all existing tabs
+                        var alltabs = $(nTd).find("div[dynamicrowstabs]");
+                        for (var k = 0; k < alltabs.length; k++) {
+                            var oldTabID = $(alltabs[k]).attr("id");
+                            if($.inArray(oldTabID, newTabIdList) === -1){
+                                //remove oldTabID from DOM, since it doesn't found in newTabIdList
+                                $(alltabs[k]).remove();
+                            }
+                        }
+                        //add new tabs
+                        $.each(fileList, function (el) {
+                            var filenameCl = cleanProcessName(fileList[el])
+                            var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
+                            if (!$(nTd).find("div#" + newTabID).length) {
+                                $(nTd).children().append('<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + newTabID + '" class = "tab-pane fade fullsize" ></div>')
+                            }
+                            if (el == 0){
+                                $("#"+newTabID).addClass("in active").removeClass("fade");
+                            }
+                        });
+                    }
+                },
+            }],
+            columnsHeader: [{
+                data: null,
+                colPercent: "4",
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
+                },
+            }, {
+                data: null,
+                fnCreatedCell: function (nTd, oData) {
+                    var gNum = oData.id.split("_")[0].split("-")[1];
+                    var rowID = "outputTa-" + gNum;
+                    var processName = $('#' + rowID + ' > :nth-child(5)').text();
+                    if (oData.pubWeb == "run_description"){
+                        processName = "Run Notes"
+                    }
+                    var processID = $('#' + rowID + ' > :nth-child(5)').text();
+                    $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + createLabel(processName) + '</span>');
+                },
+                colPercent: "37"
+            }, {
+                data: null,
+                colPercent: "39",
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span>' + createLabel(oData.name) + '</span>');
+                }
+            }, {
+                data: null,
+                colPercent: "20",
+                fnCreatedCell: function (nTd, oData) {
+                    var visType = oData.pubWeb
+                    var icon = "fa fa-file-text-o";
+                    var text = visType;
+                    if (visType === "table" || visType === "table-percent") {
+                        icon = "fa fa-table";
+                        text = "Table";
+                    } else if (visType === "html") {
+                        icon = "fa fa-file-code-o";
+                        text = "HTML";
+                    } else if (visType === "pdf") {
+                        icon = "fa fa-file-pdf-o";
+                        text = "PDF";
+                    } else if (visType === "rmarkdown") {
+                        icon = "fa fa-pie-chart";
+                        text = "R-Markdown";
+                    } else if (visType === "highcharts") {
+                        icon = "fa fa-line-chart";
+                        text = "Charts";
+                    } else if (visType === "debrowser") {
+                        icon = "glyphicon glyphicon-stats";
+                        text = "DE-Browser";
+                    } else if (visType === "image") {
+                        icon = "fa fa-file-image-o";
+                        text = "Image";
+                    } else if (visType === "run_description") {
+                        icon = "fa fa-edit";
+                        text = "Markdown";
+                    }
+                    $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
+                }
+            }],
+            columnsTitle: [{
+                data: null,
+                colPercent: "4"
+
+            }, {
+                data: null,
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span>PROCESS</span>');
+                },
+                colPercent: "37"
+            }, {
+                data: "name",
+                colPercent: "39",
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span>PUBLISHED DIRECTORY</span>');
+                },
+            }, {
+                data: null,
+                colPercent: "20",
+                fnCreatedCell: function (nTd, oData) {
+                    $(nTd).html('<span>VIEW FORMAT</span>');
+                }
+            }],
+            backgroundcolorenter: "#ced9e3",
+            backgroundcolorleave: "#ECF0F4",
+            heightHeader: "60px"
+        });
+    }
+
+    $(document).on('click', '#refreshVerReport', function (event) {
+        reloadReportRows();
+    });
+
+    function updateRunReportTab(run_log_uuid){
+        var reload = true
+        if (run_log_uuid) {
+            var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+            var version = $('option:selected', '#runVerLog').attr('ver');
+            if (version && !newRun) {
+                var runTitleLog = "<label>Run " + version + " - Report</label>";
+                $('a[href="#reportTab"]').css("display", "block")
+            } else {
+                if ($("ul#runTabDiv li.active > a")[0]){
+                    if ($($("ul#runTabDiv li.active > a")[0]).attr("href") == "#reportTab"){
+                        $('.nav-tabs a[href="#configTab"]').trigger("click")
+                    }
+                }
+
+
+                var runTitleLog = "";
+                $('a[href="#reportTab"]').css("display", "none")
+            }
+            $("#runTitleReport").html(runTitleLog)
+            if (reload){
+                reloadReportRows();
+            }
+        }
+    }
+
+    function updateRunLogStat(run_log_uuid, projectpipelineOwn){
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {p:"getRunLogStatus", uuid:run_log_uuid},
+            async: true,
+            success: function (s) {
+                if (s){
+                    if (s[0]){
+                        var run_status = s[0].run_status;
+                        var run_opt_check = s[0].run_opt_check;
+                        if (run_opt_check == "1" && projectpipelineOwn == "1"){
+                            toogleStatusMode("oneOption");
+                            runLogStatUpdate(run_status, "Opt");
+                        } else {
+                            toogleStatusMode("noOption");
+                            runLogStatUpdate(run_status, "NoOpt");
+                        }
+                    }
+                }
+            },
+            error: function (errorThrown) {
+                toastr.error("Error occured.");
+            }
+        }); 
+    }
+
+    function updateRunConfigTab(prevUID){
+        var loadRunLogOpt = function (){
+            var run_log_uuid = $('#runVerLog').val();
+            var runTitleConfig = "";
+            var runTitleAdvanced = "";
+            var version = $('option:selected', '#runVerLog').attr('ver');
+            if (version) {
+                runTitleConfig = "<label>Run "+version+" - Settings</label>"
+                runTitleAdvanced = "<label>Run "+version+" - Advanced</label>"
+            } else {
+                runTitleConfig = "<label>Run Settings</label>";
+                runTitleAdvanced = "<label>Advanced</label>";
+            } 
+            $("#runTitleConfig").html(runTitleConfig)
+            $("#runTitleAdvanced").html(runTitleAdvanced)
+            var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
+            var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+            var newRunExist =checkNewRunStatus();
+            //load from projectpipelinedata
+            if (newRun || (!newRunExist && lastrun)){
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: {p:"getProjectPipelines", id:project_pipeline_id},
+                    async: true,
+                    success: function (pipe) {
+                        if (pipe){
+                            loadRunSettings(pipe);
+                            checkReadytoRun();
+                        }
+                    }, 
+                    error: function (errorThrown) {
+                        toastr.error("Error occured.");
+                    }
+                });
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: {p:"getProjectPipelineInputs", project_pipeline_id:project_pipeline_id},
+                    async: true,
+                    success: function (projectPipeInputs_rev) {
+                        if (projectPipeInputs_rev){
+                            var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+                            if (projectpipelineOwn == "1"){
+                                fillProPipeInputsRev(projectPipeInputs_rev, "default");
+                            } else {
+                                fillProPipeInputsRev(projectPipeInputs_rev, "dry");
+                            }
+                        }
+                    }, 
+                    error: function (errorThrown) {
+                        toastr.error("Error occured.");
+                    }
+                });
+                //load from getRunLogOpt
+            } else {
+                $.ajax({
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: {p:"getRunLogOpt", uuid:run_log_uuid},
+                    async: true,
+                    success: function (s) {
+                        var pipe = s.run_opt;
+                        if (pipe){
+                            console.log(IsJsonString(pipe));
+                            if (IsJsonString(pipe)) {
+                                var json = JSON.parse(pipe)
+                                console.log(json)
+                                if (json) {
+                                    var pipeData = [];
+                                    pipeData[0] = json;
+                                    loadRunSettings(pipeData);
+                                    if (json.project_pipeline_input){
+                                        var projectPipeInputs_rev = json.project_pipeline_input; 
+                                        fillProPipeInputsRev(projectPipeInputs_rev, "dry");
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    error: function (errorThrown) {
+                        toastr.error("Error occured.");
+                    }
+                }); 
+            }
+
+        }
+        console.log("updateRunConfigTab")
+        console.log("prevUID", prevUID);
+        var prevlastrun = $('#runVerLog option[value="'+prevUID+'"]').attr('lastrun') || false;
+        var prevnewRun = $('#runVerLog option[value="'+prevUID+'"]').attr('newRun') || false;
+        var newRunExist =checkNewRunStatus();
+        // if prevUID belong to newrun then saveRun before loadRunLogOpt 
+        if (prevnewRun || (!newRunExist && prevlastrun)){
+            saveRun(loadRunLogOpt);
+        } else {
+            loadRunLogOpt();
+        }
+    }
+
+    function updateRunLogTab(run_log_uuid){
+        console.log("updateRunLogTab")
+        if (run_log_uuid) {
+            var runTitleLog = "";
+            var version = $('option:selected', '#runVerLog').attr('ver');
+            if (version) {
+                var runTitleLog = "<label>Run " + version + " - Log</label>";
+            } 
+            var lastrun = $('option:selected', '#runVerLog').attr('lastrun');
+            console.log(lastrun)
+            if (lastrun) {
+                lastrun = 'lastrun="yes"';
+            } else {
+                lastrun = "";
+            }
+            var activeTab = $("ul#logNavBar li.active > a")
+            var activeID = "";
+            if (activeTab[0]) {
+                activeID = $(activeTab[0]).attr("href")
+            }
+
+            $("#runTitleLog").html(runTitleLog)
+            $("#logContentDiv").empty();
+            //to support outdated log directory system 
+            if (run_log_uuid.match(/^run/)) {
+                var path = ""
+                } else {
+                    var path = "run"
+                    }
+            var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
+            var fileListAr = getObjectValues(fileList);
+            var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
+            var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
+            //hide serverlog.txt
+            var pubWebPath = $("#basepathinfo").attr("pubweb")
+            var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
+            var k = 0;
+            var tabDiv = [];
+            var fileName = [];
+            for (var j = 0; j < order.length; j++) {
+                if ($("#logContentDiv").attr(logContentDivAttr[j]) == "true" && (fileListAr.includes(order[j]) || order[j] == "log.txt")) {
+                    var exist = 'style="display:block;"';
+                } else {
+                    var exist = 'style="display:none;"';
+                }
+                k++
+                var active = "";
+                if (k == 1) {
+                    active = 'class="active"';
+                }
+                var tabID = cleanProcessName(order[j]) + 'Tab';
+                tabDiv.push(tabID);
+                fileName.push(order[j]);
+                navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
+            }
+            navTabDiv += '</ul>';
+            navTabDiv += '<div id="logNavCont" class="tab-content">';
+            for (var n = 0; n < tabDiv.length; n++) {
+                var link = pubWebPath + "/" + run_log_uuid + "/" + path + "/" + fileName[n];
+                var active = "";
+                if (n == 0) {
+                    active = 'in active';
+                }
+                navTabDiv += '<div id = "' + tabDiv[n] + '" class = "tab-pane fade ' + active + '" >';
+                if (fileName[n] == "log.txt") {
+                    var serverlogText = "";
+                    var logText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/log.txt" });
+                    if (fileListAr.includes("serverlog.txt")) {
+                        serverlogText = getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/serverlog.txt" });
+                        //to support outdated log directory system 
+                    } else if (fileListAr.includes("nextflow.log")) {
+                        logText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/nextflow.log" });
+                    }
+                    if (fileListAr.includes("err.log")) {
+                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
+                    }
+                    if (fileListAr.includes("initial.log")) {
+                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initial.log" });
+                    }
+                    navTabDiv += '<textarea ' + lastrun + ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' + serverlogText + logText + '</textarea>';
+                } else {
+                    navTabDiv += '<iframe frameborder="0"  style="width:100%; height:900px;" fillsrc="' + link + '"></iframe>';
+                }
+                navTabDiv += '<a href="' + link + '" class="btn btn-info" role="button" target="_blank">Open Web Link</a>'
+                navTabDiv += '<a style="margin-left:5px;" href="#" class="btn btn-info tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true">Contact Us</a>'
+                navTabDiv += '<span style="font-size:10px; float:right; color:gray;">Run UID: '+run_log_uuid+'</span>'
+                navTabDiv += '</div>';
+            }
+            navTabDiv += '</div>';
+            $("#logContentDiv").append(navTabDiv)
+            $('a[href="#log_txtTab"]').on('shown.bs.tab', function (e) {
+                autoScrollLogArea();
+            });
+            if (activeID) {
+                if ($('.nav-tabs a[href="' + activeID + '"]').css("display") != "none") {
+                    $('.nav-tabs a[href="' + activeID + '"]').trigger("click")
+                }
+            }
+        }
+        $('[data-toggle="tooltip"]').tooltip();
+    }
+
+    $(document).on('click', '.createNewRun', function (event) {
+        //check if lastrun is running, then show warning
+        if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init"){
+            showInfoModal("#infoModal", "#infoModalText", "Please wait for your last run to finish, before creating new run.")
+        } else {
+            var newRunExist =checkNewRunStatus();
+            if (newRunExist){
+                var text = 'New run has already been created. Are you sure you want to overwrite the settings of existing new run page?';
+                var savedData = "";
+                var execFunc = function(savedData){
+                    createNewRunFunc(newRunExist)
+                }
+                var btnText = "Overwrite";
+                showConfirmDeleteModal(text, savedData, execFunc, btnText)
+            } else {
+                createNewRunFunc(newRunExist)
+            }
+            //            $('#runVerLog').val(0);
+            //            $('#runVerLog').trigger("change");
+        }
+
+
+    });
+
+    $(document).on('change', '#runVerLog', function (event) {
+        console.log("change:runVerLog");
+        //check which tab is active:
+        var activeTab = "";
+        var activeTab = $("ul#runTabDiv li.active > a")
+        var activeID = "";
+        if (activeTab[0]) {
+            activeID = $(activeTab[0]).attr("href")
+        }
+        var size = $('#runVerLog > option').length;
+        if (size) {
+            $('#runHistoryDiv').css("display", "block");
+        } else {
+            $('#runHistoryDiv').css("display", "none");
+        }
+        var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
+        var version = $('option:selected', '#runVerLog').attr('ver');
+        if (version && !newRun) {
+            $('a[href="#logTab"]').css("display", "block")
+            $('a[href="#reportTab"]').css("display", "block")
+        } else {
+            $('a[href="#logTab"]').css("display", "none")
+            $('a[href="#reportTab"]').css("display", "none")
+        }
+        var run_log_uuid = $('#runVerLog').val();
+        // save the previous options into their attributes
+        var reportTabUID = $('#runVerLog').attr("reportTabUID");
+        var logTabUID = $('#runVerLog').attr("logTabUID");
+        var configTabUID = $('#runVerLog').attr("configTabUID");
+        var prevUID = $('#runVerLog').attr("prevUID");
+        // save all change info
+        if (prevUID != run_log_uuid){
+            $('#runVerLog').attr("prevUID", run_log_uuid)
+        }
+        var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
+        var newRunExist =checkNewRunStatus();
+        var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+        console.log("lastrun", lastrun)
+        console.log("newRun", newRun)
+        console.log("newRunExist", newRunExist)
+        //new run mode
+        if (newRun && projectpipelineOwn == "1") {
+            toogleStatusMode("default");
+            tooglePermsGroupsDiv("show");
+            toogleMainIcons("show");
+            toogleRunInputs("enable");
+            checkType="newrun";
+            checkReadytoRun()
+            //last run mode 
+        } else if (lastrun && !newRunExist && projectpipelineOwn == "1"){
+            toogleStatusMode("default");
+            tooglePermsGroupsDiv("show");
+            toogleMainIcons("show");
+            toogleRunInputs("enable");
+            checkType="";
+            readNextLog(proTypeWindow, proIdWindow, "no_reload");
+            //history mode
+        } else {
+            if (projectpipelineOwn == "1"){
+                toogleStatusMode("oneOption");
+            } else {
+                toogleStatusMode("noOption");
+            }
+            tooglePermsGroupsDiv("hide");
+            toogleMainIcons("hide");
+            toogleRunInputs("disable");
+            if (prevUID != run_log_uuid){
+                updateRunLogStat(run_log_uuid, projectpipelineOwn);
+            }
+        }
+        console.log("activeID",activeID)
+        console.log("run_log_uuid",run_log_uuid)
+        console.log("reportTabUID",reportTabUID)
+        console.log("configTabUID",configTabUID)
+        if (activeID == "#logTab"){
+            if (logTabUID != run_log_uuid){
+                $('#runVerLog').attr("logTabUID", run_log_uuid)
+                updateRunLogTab(run_log_uuid);
+            }
+        } else if (activeID == "#reportTab"){
+            if (reportTabUID != run_log_uuid){
+                $('#runVerLog').attr("reportTabUID", run_log_uuid)
+                updateRunReportTab(run_log_uuid);
+            }
+        } else if (activeID == "#configTab" || activeID == "#advancedTab"){
+            //don't fill on page load 
+            if (configTabUID != run_log_uuid){
+                $('#runVerLog').attr("configTabUID", run_log_uuid)
+                updateRunConfigTab(configTabUID);
+            }
+        }
+    });
+});
+
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
-    projectpipelineOwn = pipeData[0].own;
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
     runPid = "";
@@ -6370,17 +7603,17 @@ $(document).ready(function () {
     changeOnchooseEnv = false;
     // save info when run saved successfully
     // if user not own it, cannot change or delete run
-    if (projectpipelineOwn === "0") {
+    if (projectpipelineOwn !== "1") {
         $('#deleteRun').remove();
         $('#moveRun').remove();
         $('#delRun').remove();
         $('#saveRunIcon').remove();
         $('#pipeRunDiv').remove();
+        $('#runStatDiv').remove();
+        $('#runHistoryConsole').remove();
+        toogleStatusMode("noOption")
         $("#run-title").prop("disabled", true);
     }
-
-
-    //runStatus
     runStatus = "";
     if (projectpipelineOwn === "1") {
         runStatus = getRunStatus(project_pipeline_id);
@@ -6410,17 +7643,6 @@ $(document).ready(function () {
         loadPipelineDetails(pipeline_id, pipeData);
 
     }
-    //after loading pipeline disable all the inputs
-    if (projectpipelineOwn === "0") {
-        setTimeout(function () {
-            $("#configTab :input").not( ":button[show_sett_but]" ).prop("disabled", true);
-            $("#advancedTab :input").prop("disabled", true);
-            $('.ui-dialog :input').prop("disabled", true);
-        }, 1000);
-    }
-
-
-
 
     //##################
     //Sample Modal
@@ -6490,6 +7712,294 @@ $(document).ready(function () {
             }
         }
     };
+
+    $(function () {
+        function loadRunHistoryTable(type){
+            if ( $.fn.DataTable.isDataTable( '#runHistoryTable' ) ) {
+                $('#runHistoryTable').dataTable().off()
+                $('#runHistoryTable').dataTable().fnDestroy();
+            }
+            if (type == "default"){
+                var histTable = $('#runHistoryTable').DataTable({
+                    "ajax": {
+                        url: "ajax/ajaxquery.php",
+                        data: { "p": "getRunLog", project_pipeline_id: project_pipeline_id },
+                        "dataSrc": ""
+                    },
+                    "columns": [
+                        {
+                            "data": "id",
+                            'visible' : false
+                        },{
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                var editicon = '<a class="runHistoryRecRename" data-toggle="tooltip" data-placement="bottom" data-original-title="Rename" style="margin-left:3px;"><i style="color:grey;" class="fa fa-pencil"></i></a>';
+                                var runName;
+                                if (oData.name){
+                                    runName = decodeHtml(oData.name);
+                                } else {
+                                    var runNum = iRow+1;
+                                    runName = 'Run '+runNum;
+                                }
+                                $(nTd).html('<span class="runHistName" logid="'+oData.id+'">'+runName+'</span>'+editicon);
+                            }
+                        }, {
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                var sizeInMB = 0;
+                                if (oData.size) {
+                                    sizeInMB = (oData.size / (1024)).toFixed(2);
+                                    if (sizeInMB == 0.00){
+                                        sizeInMB = 0;
+                                    }
+                                } else {
+                                    sizeInMB = "NA";
+                                }
+                                $(nTd).html(sizeInMB);
+                            }
+                        }, {
+                            "data": "date_created"
+                        }],
+                    'order': [[3, 'desc']],
+                    "paging":   false,
+                    "bFilter":   false,
+                    "info":     false,
+                    "scrollY":  "200px",
+                    sScrollX : true,
+                    scrollX : true,
+                });
+            } else if (type == "delete"){
+                var histTable = $('#runHistoryTable').DataTable({
+                    "ajax": {
+                        url: "ajax/ajaxquery.php",
+                        data: { "p": "getRunLog", project_pipeline_id: project_pipeline_id },
+                        "dataSrc": ""
+                    },
+                    "columns": [
+                        {
+                            "data": "id",
+                            "checkboxes": {
+                                'targets': 0,
+                                'selectRow': true
+                            }
+                        },{
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                if (oData.name){
+                                    $(nTd).html(decodeHtml(oData.name));
+                                } else {
+                                    var runNum = iRow+1;
+                                    $(nTd).html("Run "+runNum);
+                                }
+                            }
+                        }, {
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                var sizeInMB = 0;
+                                if (oData.size) {
+                                    sizeInMB = (oData.size / (1024)).toFixed(2);
+                                    if (sizeInMB == 0.00){
+                                        sizeInMB = 0;
+                                    }
+                                } else {
+                                    sizeInMB = "NA";
+                                }
+                                $(nTd).html(sizeInMB);
+                            }
+                        }, {
+                            "data": "date_created"
+                        }],
+                    'order': [[3, 'desc']],
+                    "paging":   false,
+                    "bFilter":   false,
+                    "info":     false,
+                    "scrollY":  "200px",
+                    sScrollX : true,
+                    scrollX : true,
+                    'select': {
+                        'style': 'multiple'
+                    }
+                });
+            } else if (type == "purge" || type=="recover"){
+                var histTable = $('#runHistoryTable').DataTable({
+                    "ajax": {
+                        url: "ajax/ajaxquery.php",
+                        data: { "p": "getRunLogAll", project_pipeline_id: project_pipeline_id },
+                        "dataSrc": ""
+                    },
+                    "columns": [
+                        {
+                            "data": "id",
+                            "checkboxes": {
+                                'targets': 0,
+                                'selectRow': true
+                            }
+                        },{
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                if (oData.name){
+                                    $(nTd).html(decodeHtml(oData.name));
+                                } else {
+                                    var runNum = iRow+1;
+                                    $(nTd).html("Run "+runNum);
+                                }
+                            }
+                        }, {
+                            "data": null,
+                            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                                var sizeInMB = 0;
+                                if (oData.size) {
+                                    sizeInMB = (oData.size / (1024)).toFixed(2);
+                                    if (sizeInMB == 0.00){
+                                        sizeInMB = 0;
+                                    }
+                                } else {
+                                    sizeInMB = "NA";
+                                }
+                                $(nTd).html(sizeInMB);
+                            }
+                        }, {
+                            "data": "date_created"
+                        }],
+                    'order': [[3, 'desc']],
+                    "paging":   false,
+                    "bFilter":   false,
+                    "info":     false,
+                    "scrollY":  "200px",
+                    sScrollX : true,
+                    scrollX : true,
+                    'select': {
+                        'style': 'multiple',
+                        'selector': 'tr:not(.no-select)'
+                    },
+                    'rowCallback': function( row, data, index ){
+                        if(data.deleted == '0'){
+                            $('td:eq(0)', row).html('');
+                            $(row).addClass('no-select');
+                            $(row).removeClass('strikeline-row');
+                        } else {
+                            $(row).removeClass('no-select');
+                            $(row).addClass('strikeline-row');
+                        }
+                    }
+                })
+                histTable.on('select.dt', function( e, dt, type, indexes ){
+                    histTable.cells('tr.no-select', 0).checkboxes.deselect();     
+                });
+            } 
+        }
+        $(document).on('click', '#runHistoryConsole', function () {
+            $('#runHistoryModal').modal("show");
+        });
+        $('#runHistoryModal').on('show.bs.modal', function () {
+            $("#runHistoryModalBut").css("display","none");
+            loadRunHistoryTable("default")
+        });
+        $('#runHistoryModal').on('shown.bs.modal', function () {
+            $('#runHistoryTable').DataTable().columns.adjust().draw();
+        });
+        $('#runHistoryModal').on('click', '#runHistoryDelIcon', function () {
+            loadRunHistoryTable("delete")
+            $("#runHistoryModalBut").css("display","block");
+            $("#runHistoryModalApply").data("info","delete");
+            $("#runHistoryModalApply").text("Delete");
+        });
+        $('#runHistoryModal').on('click', '.runHistoryRecRename', function () {
+            var runName = $(this).siblings("span").text();
+            var logid = $(this).siblings("span").attr("logid");
+            $("#editRunName").data("logid",logid)
+            $("#editRunName").val(runName)
+            $("#editRunModal").modal("show");
+            $("#runHistoryModalBut").css("display","none");
+        });
+        $('#runHistoryModal').on('click', '#runHistoryPurgeIcon', function () {
+            loadRunHistoryTable("purge")
+            $("#runHistoryModalBut").css("display","block");
+            $("#runHistoryModalApply").data("info","purge");
+            $("#runHistoryModalApply").text("Purge");
+        });
+        $('#runHistoryModal').on('click', '#runHistoryRecIcon', function () {
+            loadRunHistoryTable("recover")
+            $("#runHistoryModalBut").css("display","block");
+            $("#runHistoryModalApply").data("info","recover");
+            $("#runHistoryModalApply").text("Recover");
+        });
+        $('#editRunModal').on('click', '#editRunDetails', function () {
+            var runName = $("#editRunName").val();
+            var logid = $("#editRunName").data("logid");
+            if (runName){
+                if (runName.length>50){
+                    showInfoModal("#infoMod","#infoModText", "It is not allowed to enter more than 50 characters.");
+                } else {
+                    runName = encodeURIComponent(runName)
+                    getValuesAsync({p:"saveRunLogName", name:runName, id:logid}, function (s) {
+                        loadRunHistoryTable("default");
+                        fillRunVerOpt('#runVerLog');
+                        $("#editRunModal").modal("hide");
+                    }); 
+                }
+            } else {
+                showInfoModal("#infoMod","#infoModText", "Please enter run name to save.");
+            }
+        });
+
+        $('#runHistoryModal').on('click', '#runHistoryModalCancel', function () {
+            loadRunHistoryTable("default")
+            $("#runHistoryModalApply").removeAttr("info");
+            $("#runHistoryModalBut").css("display","none");
+        });
+
+        $('#runHistoryModal').on('click', '#runHistoryModalApply', function () {
+            var type = $("#runHistoryModalApply").data("info");
+            var selRows = $('#runHistoryTable').DataTable().rows({ selected: true }).data();
+            var selRowsId =[];
+            for (var i = 0; i < selRows.length; i++) {
+                selRowsId.push(selRows[i].id);
+            }
+            var savedData = selRowsId;
+            if (type == "delete"){
+                if (selRowsId.length >0){
+                    var text = 'Are you sure you want to delete '+selRowsId.length+' run(s)?';
+                    var execFunc = function(savedData){
+                        getValuesAsync({p:"removeRunLog", type:"remove", runlogs:selRowsId, project_pipeline_id:project_pipeline_id}, function (s) {
+                            $("#runHistoryModalBut").css("display","none");
+                            loadRunHistoryTable("default")
+                            fillRunVerOpt("#runVerLog")
+                        });
+                    }
+                    showConfirmDeleteModal(text, savedData, execFunc)
+                }
+            } else if (type == "purge"){
+                if (selRowsId.length >0){
+                    var text = 'Are you sure you want permanently delete selected '+selRowsId.length+' run(s)?';
+                    var execFunc = function(savedData){
+                        getValuesAsync({p:"removeRunLog", type:"purge", runlogs:selRowsId, project_pipeline_id:project_pipeline_id}, function (s) {
+                            $("#runHistoryModalBut").css("display","none");
+                            loadRunHistoryTable("default")
+                        });
+                    }
+                    showConfirmDeleteModal(text, savedData, execFunc)
+                }
+            }else if (type == "recover"){
+                if (selRowsId.length >0){
+                    var text = 'Are you sure you want to recover selected '+selRowsId.length+' run(s)?';
+                    var execFunc = function(savedData){
+                        getValuesAsync({p:"removeRunLog", type:"recover", runlogs:selRowsId, project_pipeline_id:project_pipeline_id}, function (s) {
+                            $("#runHistoryModalBut").css("display","none");
+                            loadRunHistoryTable("default")
+                            fillRunVerOpt("#runVerLog")
+                        });
+                    }
+                    showConfirmDeleteModal(text, savedData, execFunc)
+                }
+            }
+
+        });
+
+
+
+
+    });
 
     $(function () {
         $(document).on('xhr.dt', '#sampleTable', function (e, settings, json, xhr) {
@@ -6583,12 +8093,14 @@ $(document).ready(function () {
 
         $('#viewDirBut').click(function () {
             var dir = $('#file_dir').val();
+            dir = $.trim(dir);
             viewDirButSearch(dir)
         });
 
         $('#addFileModal').on("dblclick", '#viewDir option', function() {
             var selectedOpt = $(this).val();
             var olddir = $('#file_dir').val();
+            olddir = $.trim(olddir);
             var newdir = "";
             if (selectedOpt == ".."){
                 var split = olddir.split("/")
@@ -6606,8 +8118,8 @@ $(document).ready(function () {
                 } else{
                     newdir = olddir + "/"+ selectedOpt;
                 }
-
             }
+            console.log(newdir)
             if (newdir){
                 $('#file_dir').val(newdir);
                 viewDirButSearch(newdir); 
@@ -6670,7 +8182,7 @@ $(document).ready(function () {
                     }
                     if (geoFailedList.length > 0){
                         $("#errGeoModalErrDiv").css("display","block");
-                        $("#errGeoModalErrText").html("Following " + geoFailedList.length +" geo terms could not be loaded because of a connection error. If you want to skip these items, please click 'ok' button, otherwise click 'retry' button to search missing items again.");
+                        $("#errGeoModalErrText").html("Following " + geoFailedList.length +" geo terms could not be loaded. If you want to skip these items, please click 'ok' button, otherwise click 'retry' button to search those items again.");
                         $("#errGeoModalErrList").removeData();
                         $("#errGeoModalErrList").val(err_list);
                         $("#errGeoModalErrList").data("geoFailedList", geoFailedList);
@@ -7217,9 +8729,11 @@ $(document).ready(function () {
                     formObj.file_dir = fileDirArr;
 
                     if (s3_archive_dir.match(/s3:/i)){
+                        s3_archive_dir = $.trim(s3_archive_dir)
                         formObj.s3_archive_dir = s3_archive_dir+"\t"+amzArchKey
                     }
                     if (gs_archive_dir.match(/gs:/i)){
+                        gs_archive_dir = $.trim(gs_archive_dir)
                         formObj.gs_archive_dir = gs_archive_dir+"\t"+googArchKey
                     }
                     formObj.file_array = ret.file_array;
@@ -7561,37 +9075,72 @@ $(document).ready(function () {
 
             }
         });
-
     });
 
 
-
     function updateFileArea(selectId, pattern) {
-        var fileOrj = $("#viewDir").data("fileArr")
+        var fileOrj = $("#viewDir").data("fileArr");
         if (fileOrj) {
             var fileAr = fileOrj.slice(); //clone list
             var delArr = $(selectId).data("samples")
-            if (delArr) {
-                if (delArr.length) {
-                    for (var i = 0; i < delArr.length; i++) {
-                        var index = fileAr.indexOf(delArr[i]);
-                        if (index > -1) {
-                            fileAr.splice(index, 1);
-                        }
+            // files that are selected are kept in delArr and removed before loading fillArray2Select
+            if (delArr && delArr.length) {
+                for (var i = 0; i < delArr.length; i++) {
+                    var index = fileAr.indexOf(delArr[i]);
+                    if (index > -1) {
+                        fileAr.splice(index, 1);
                     }
                 }
             }
+            console.log("fileAr",fileAr)
+
             if (fileAr) {
-                pattern = cleanRegEx(pattern);
-                var reg = new RegExp(pattern)
+                var patternReg = cleanRegEx(pattern);
+                var reg = new RegExp(patternReg)
                 var filteredAr = fileAr.filter(line => line.match(reg));
                 if (filteredAr.length > 0) {
-                    fillArray2Select(filteredAr, selectId, true)
+                    if (pattern && (selectId == "#forwardList" || selectId == "#reverseList" ) && ($("#forward_pattern").val().length == $("#reverse_pattern").val().length)){ 
+                        //replace pattern with "__" to match with complementary list
+                        var filteredArReg = []; 
+                        for (var i = 0; i < filteredAr.length; i++) {
+                            var compVal = filteredAr[i].split(pattern).join("__");
+                            filteredArReg.push(compVal)
+                        }
+                        console.log("filteredArReg",filteredArReg)
+                        $(selectId).data("filteredArReg", filteredArReg);
+                        if (selectId == "#forwardList"){
+                            var filteredArComp = $("#reverseList").data("filteredArReg");
+                        } else if (selectId == "#reverseList"){
+                            var filteredArComp = $("#forwardList").data("filteredArReg");
+                        }
+                        if (filteredArComp && filteredArComp.length > 0) {
+                            console.log("filteredArComp",filteredArComp)
+                            var trashIdx = [];
+                            for (var k = 0; k < filteredAr.length; k++) {
+                                var compVal = filteredAr[k].split(pattern).join("__");
+                                var index = filteredArComp.indexOf(compVal);
+                                //if complementary not found in the filteredArComp, then remove
+                                if (index < 0) {
+                                    trashIdx.push(k);
+                                }
+                            }
+                            for (var i = trashIdx.length - 1; i >= 0; i--){
+                                filteredAr.splice(trashIdx[i], 1);
+                            }
+                        }
+                    } else {
+                        $(selectId).removeData("filteredArReg");
+                    }
+                    fillArray2Select(filteredAr, selectId, true);
+
+
                 } else {
-                    fillArray2Select(["No file match with pattern."], selectId, true)
+                    fillArray2Select(["No files matching the pattern."], selectId, true)
+                    $(selectId).removeData("filteredArReg");
                 }
             } else {
-                fillArray2Select(["There is no file to match pattern"], selectId, true)
+                fillArray2Select(["No files matching the pattern."], selectId, true)
+                $(selectId).removeData("filteredArReg");
             }
         }
     }
@@ -7606,12 +9155,12 @@ $(document).ready(function () {
     }
     $(function () {
         $(document).on('keyup', '#forward_pattern', function () {
-            var pattern = $(this).val();
-            updateFileList("#forwardList", pattern)
+            updateFileList("#forwardList", $("#forward_pattern").val());
+            updateFileList("#reverseList", $("#reverse_pattern").val());
         });
         $(document).on('keyup', '#reverse_pattern', function () {
-            var pattern = $(this).val();
-            updateFileList("#reverseList", pattern)
+            updateFileList("#reverseList", $("#reverse_pattern").val());
+            updateFileList("#forwardList", $("#forward_pattern").val());
         });
         $(document).on('keyup', '#single_pattern', function () {
             var pattern = $(this).val();
@@ -7909,7 +9458,8 @@ $(document).ready(function () {
                 checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
             } else { // remove from project pipeline input table
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
-                removeSelectFile(rowID, qualifier);
+                var fillingType = "default"
+                removeSelectFile(rowID, qualifier, fillingType);
             }
             checkReadytoRun();
         });
@@ -7944,8 +9494,9 @@ $(document).ready(function () {
             checkShub()
             checkCloudType(profileTypeId)
             checkReadytoRun();
+            updateDiskSpace();
             //save run in change 
-            saveRun();
+            saveRun(false);
 
         });
     });
@@ -8335,7 +9886,8 @@ $(document).ready(function () {
         var proPipeInputID = $('#' + rowID).attr('propipeinputid');
         var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
         var qualifier = $('#' + rowID + ' > :nth-child(4)').text();
-        removeSelectFile(rowID, qualifier);
+        var fillingType = "default;"
+        removeSelectFile(rowID, qualifier, fillingType);
         checkReadytoRun();
     });
 
@@ -9032,7 +10584,7 @@ $(document).ready(function () {
         } else {
             confirmNewRev = true;
             dupliProPipe = true; 
-            saveRun();
+            saveRun(false);
         }
     });
 
@@ -9090,7 +10642,7 @@ $(document).ready(function () {
             //check if div is empty
             if (!$.trim($(href).html()).length) {
                 var writePerm= $runscope.checkUserWritePerm();
-                var uuid = $("#runVerReport").val();
+                var uuid = $("#runVerLog").val();
                 var visType = $(this).attr("visType");
                 var filePath = $(this).attr("filepath");
                 var split = filePath.split("/")
@@ -9257,11 +10809,11 @@ $(document).ready(function () {
     });
 
     $.getScript("js/plugins/markdownEditor.js", function() {
-//        console.log("markdownEditor.js loaded");
+        //        console.log("markdownEditor.js loaded");
     });
 
     $.getScript("js/plugins/rMarkEditor.js", function() {
-//        console.log("rMarkEditor.js loaded");
+        //        console.log("rMarkEditor.js loaded");
     });
 
 
@@ -9497,576 +11049,7 @@ $(document).ready(function () {
         }(jQuery));
 
 
-    $(function () {
-        function reloadReportRows(){
-            var run_log_uuid = $("#runVerReport").val();
-            $("#reportRows").empty();
-            //add 'className: "center"' to center text in columns array
-            $("#reportRows").dynamicRows({
-                ajax: {
-                    url: "ajax/ajaxquery.php",
-                    data: { "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id }
-                },
-                columnsBody: [{
-                    //file list
-                    data: null,
-                    colPercent: "15",
-                    overflow: "scroll",
-                    fnCreatedCell: function (nTd, oData) {
-                        var getExtension = function (filename){
-                            var re = /(?:\.([^.]+))?$/;
-                            var ext = re.exec(filename)[1];   // "txt"
-                            if (!ext){
-                                ext = "";
-                            }
-                            return ext;
-                        }
-                        var getIconByExtension = function(ext){
-                            var icon = "fa fa-file-text-o";
-                            if (ext == "tsv" || ext == "csv" || ext === "xls" || ext === "xlsx") {
-                                icon = "fa fa-table";
-                            } else if (ext == "html") {
-                                icon = "fa fa-file-code-o";
-                            } else if (ext == "pdf") {
-                                icon = "fa fa-file-pdf-o";
-                            } else if (ext == "rmd") {
-                                icon = "fa fa-pie-chart";
-                            } else if (ext == "md") {
-                                icon = "fa fa-edit";
-                            } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
-                                icon = "fa fa-file-image-o";
-                            }
-                            return icon;
-                        }
-                        var getVisTypeByExtension = function(ext){
-                            var visType = "text";
-                            if (ext == "tsv") {
-                                visType = "table";
-                            } else if (ext == "html") {
-                                visType = "html";
-                            } else if (ext == "pdf") {
-                                visType = "pdf";
-                            } else if (ext == "rmd") {
-                                visType = "rmarkdown";
-                            } else if (ext == "md") {
-                                visType = "markdown";
-                            } else if (ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "tif" || ext == "tiff" || ext == "bmp"  || ext == "gif") {
-                                visType = "image";
-                                //will download file if not supported
-                            } else if (ext == "txt" || ext === "xls" || ext === "xlsx" || ext === "csv") {
-                                visType = "text";
-                            }
-                            return visType;
-                        }
 
-                        var run_log_uuid = $("#runVerReport").val();
-                        var pubWebPath = $("#basepathinfo").attr("pubweb");
-                        var visType = oData.pubWeb
-                        var icon = "fa fa-file-text-o";
-                        if (visType == "table" || visType === "table-percent") {
-                            icon = "fa fa-table";
-                        }
-                        var fileList = oData.fileList;
-                        var liText = "";
-                        var active = "";
-                        $.each(fileList, function (el) {
-                            if (fileList[el]) {
-                                if (el == 0) {
-                                    active = "active"
-                                } else {
-                                    active = "";
-                                }
-                                //if oData.pubWeb= "run_description" -> fill file icons and visType based on their file type
-                                if (oData.pubWeb == "run_description"){
-                                    var ext = getExtension(fileList[el]);
-                                    icon = getIconByExtension(ext);
-                                    visType = getVisTypeByExtension(ext);
-                                }
-                                var filepath = oData.name + "/" + fileList[el];
-                                var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
-                                var filenameCl = cleanProcessName(fileList[el])
-                                var tabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                var fileID = oData.id + "_" + filenameCl;
-                                //remove directory str, only show filename in label
-                                var labelText = /[^/]*$/.exec(fileList[el])[0];
-                                liText += '<li class="' + active + '"><a  class="reportFile" data-toggle="tab" fileid="' + fileID + '" filepath="' + filepath + '" href="#' + tabID + '" visType="' + visType + '" fillsrc="' + link + '" ><i class="' + icon + '"></i>' + labelText + '</a></li>';
-                            }
-                        });
-
-                        //xxxxxxx
-                        var addEveHandlerIconDiv = function (id){
-                            var addIconID = "addIcon-" + id;
-                            var renameIcon = "renameIcon-" + id;
-                            var deleteIcon = "deleteIcon-" + id;
-
-                            var getFileName = function (filePath) {
-                                var res = { filename: "", rest: "" };
-                                var split = filePath.split("/")
-                                res.filename = split[split.length - 1]
-                                res.rest = split.slice(0, -1).join('/');
-                                return res
-                            }
-
-                            //return 1 if newName is found in directory.
-                            var checkDuplicateFile = function (newName,fileNameObj){
-                                var ret = 1;
-                                if (!fileNameObj.rest){
-                                    return 0;
-                                }
-                                var targetfilepath = fileNameObj.rest + "/" + newName;
-                                var checkDup = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li").find("a").filter(function () {
-                                    return $(this).attr('filepath') === targetfilepath
-                                });
-                                if (!checkDup.length){
-                                    ret = 0;
-                                }
-                                return ret;
-                            }
-
-                            var dynrows_savefile = function (filePath,text) {
-                                var obj = getFileName(filePath);
-                                var newPath = obj.rest + "/" + obj.filename
-                                text = encodeURIComponent(text);
-                                var run_log_uuid = $("#runVerReport").val();
-                                var saveData = getValues({ p: "saveFileContent", text: text, uuid: run_log_uuid, filename: "pubweb/" + newPath });
-                                return saveData
-                            }
-
-                            var getFileNameObj = function (){
-                                var obj = {};
-                                var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
-                                var filePath = $(activeLiA[0]).attr("filepath");
-                                if (filePath){
-                                    obj = getFileName(filePath);
-                                }
-                                return obj;
-                            }
-
-
-                            var dynrows_movefile = function (file1, file2){
-                                var run_log_uuid = $("#runVerReport").val();
-                                if (file1 && file2){
-                                    var moveFile = getValues({ 
-                                        p: "moveFile", 
-                                        "type": "pubweb",
-                                        "from": run_log_uuid + "/pubweb/" + file1,
-                                        "to": run_log_uuid + "/pubweb/" + file2
-                                    });
-                                    return moveFile;
-                                }
-                            }
-
-                            var createModal = function () {
-                                var fileModal = `
-<div id="dynRowsInfo" class="modal fade" tabindex="-1" role="dialog">
-<div class="modal-dialog" role="document">
-<div class="modal-content">
-<div class="modal-header">
-<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-<h4 class="modal-title" id="dynRowsInfoTitle">Title</h4>
-</div>
-<div class="modal-body">
-<div id="dynRowsEditDiv" class="form-horizontal">
-<div class="form-group">
-<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please edit filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
-<div class="col-sm-8">
-<input id="dynRowsEditFileName" type="text" class="form-control">
-</div>
-</div>
-</div>
-<div id="dynRowsAddDiv" style="padding-right:10px;" class="form-horizontal">
-
-<div class="form-group">
-<label class="col-sm-4 control-label"><input type="checkbox" id="dynRowsEmptyFileCheck" name="check_emptyFile" data-toggle="collapse" data-target="#dynRows_emptyFileDiv" class="collapsed" aria-expanded="false"> Create Empty File </label>
-</div>
-<div id="dynRows_emptyFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
-<div class="form-group">
-<label class="col-sm-4 control-label">Filename <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter filename with extenstion. Eg. notes.md"><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
-<div class="col-sm-8">
-<input id="dynRowsFileName" type="text" class="form-control">
-</div>
-</div>
-</div>
-<div class="form-group">
-<label class="col-sm-4 control-label"><input type="checkbox" id="dynRows_uploadFileCheck" name="check_uploadFile" data-toggle="collapse" data-target="#dynRows_uploadFileDiv" class="collapsed" aria-expanded="false"> Upload File </label>
-</div>
-<div id="dynRows_uploadFileDiv" class="collapse" aria-expanded="false" style="height: 0px;">
-<div class="form-group">
-<div class="col-sm-12" id="dynRows_import_div">
-<form id="dynRowsUploadForm" action="ajax/import.php" class="dropzone">
-<div class="fallback ">
-<input name="file" type="file" />
-</div>
-</form>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="modal-footer">
-<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-<button id="dynRowsInfoButton" type="button" class="btn btn-primary" >Save</button>
-</div>
-</div>
-</div>
-</div>`;
-
-                                if (document.getElementById("dynRowsInfo") === null) {
-                                    $('body').append(fileModal);
-                                }
-                            }
-
-
-                            var bindEventHandlerModal = function(){
-                                //clean previous binds
-                                $("#reportRows").off();
-                                $("#dynRowsInfo").off();
-                                //not allow to click both option
-                                disableDoubleClickCollapse("dynRowsEmptyFileCheck", "dynRows_emptyFileDiv", "dynRows_uploadFileCheck","dynRows_uploadFileDiv", "dynRowsInfo");
-
-
-                                $("#reportRows").on('click', '#'+addIconID, function (event) {
-                                    window.dynRows = {};
-                                    window.dynRows.filename = ""
-                                    var myDropzone = Dropzone.forElement("#dynRowsUploadForm");
-                                    myDropzone.removeAllFiles();
-                                    if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
-                                        $('#'+"dynRowsEmptyFileCheck").trigger("click");
-                                    }
-                                    if ($('#'+"dynRows_uploadFileCheck").is(":checked")) {
-                                        $('#'+"dynRows_uploadFileCheck").trigger("click");
-                                    }
-                                    $("#dynRowsInfoTitle").text("Create New File")
-                                    $("#dynRowsFileName").val("NewFile.md")
-                                    $("#dynRowsEditDiv").css("display","none");
-                                    $("#dynRowsAddDiv").css("display","block");
-                                    $("#dynRowsInfoButton").attr("class", "btn btn-primary save")
-                                    $("#dynRowsInfoButton").text("Save")
-                                    $("#dynRowsInfo").modal("show");
-                                });
-
-                                var callbackActiveClick = function (){
-                                    $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a").trigger("click");
-                                }
-
-                                $('#dynRowsInfo').on('hide.bs.modal', function (event) {
-                                    $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody", callback:callbackActiveClick});
-                                });
-
-                                $("#dynRowsInfo").on('click', '.save', function (event) {
-                                    event.preventDefault();
-                                    var obj = getFileNameObj()
-                                    if ($('#'+"dynRowsEmptyFileCheck").is(":checked")) {
-                                        var newName = $("#dynRowsFileName").val()
-                                        if (newName){
-                                            var checkDuplicate = checkDuplicateFile(newName,obj);
-                                            console.log(checkDuplicate)
-                                            if (!checkDuplicate){
-                                                var filepath = oData.name + "/" +newName;
-                                                var text = "";
-                                                dynrows_savefile(filepath,text);
-                                                $("#dynRowsInfo").modal("hide");
-                                            } else {
-                                                showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
-                                            }
-                                        } else{
-                                            showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
-                                        }
-                                    } else {
-                                        $("#dynRowsInfo").modal("hide");
-                                    } 
-                                });
-
-                                $("#reportRows").on('click', '#'+deleteIcon, function (event) {
-                                    var obj = getFileNameObj();
-                                    var activeLiA = $("#"+oData.id+"-ListHeaderIconDiv").siblings("li.active").find("a");
-                                    var text = 'Are you sure you want to delete '+obj.filename+'?';
-                                    var savedData = $(activeLiA[0]);
-                                    var execFunc = function(savedData){
-                                        var filePath = savedData.attr("filepath");
-                                        var run_log_uuid = $("#runVerReport").val();
-                                        var deleteFile = getValues({ p: "deleteFile", uuid: run_log_uuid, filename: "pubweb/" + filePath });
-                                        $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody",callback:callbackActiveClick});
-                                    }
-                                    showConfirmDeleteModal(text, savedData, execFunc)
-                                });
-
-                                $("#reportRows").on('click', '#'+renameIcon, function (event) {
-                                    var obj = getFileNameObj()
-                                    $("#dynRowsInfoTitle").text("Edit Filename")
-                                    $("#dynRowsEditFileName").val(obj.filename)
-                                    $("#dynRowsEditDiv").css("display","block");
-                                    $("#dynRowsAddDiv").css("display","none");
-                                    $("#dynRowsInfoButton").attr("class", "btn btn-primary rename")
-                                    $("#dynRowsInfoButton").text("Save")
-                                    $("#dynRowsInfo").modal("show");
-                                });
-
-                                $("#dynRowsInfo").on('click', '.rename', function (event) {
-                                    event.preventDefault();
-                                    var obj = getFileNameObj()
-                                    var newName = $("#dynRowsEditFileName").val()
-                                    if (newName){
-                                        var checkDuplicate = checkDuplicateFile(newName,obj);
-                                        if (!checkDuplicate){
-                                            var filepath1 = oData.name + "/" +obj.filename;
-                                            var filepath2 = oData.name + "/" +newName;
-                                            dynrows_movefile(filepath1,filepath2);
-                                            $("#dynRowsInfo").modal("hide");
-                                        } else {
-                                            showInfoModal("#infoMod", "#infoModText", "Same filename found in your directory, please enter another filename.")
-                                        }
-                                    } else {
-                                        showInfoModal("#infoMod", "#infoModText", "Please enter valid filename.")
-                                    }
-                                });
-                            }
-
-
-                            var createDropzone = function (){
-                                console.log("createDropzone")
-                                if (Dropzone.options.dynRowsUploadForm){
-                                    $("#dynRowsUploadForm")[0].dropzone.destroy()
-                                    $("#dynRowsUploadForm").off()
-                                }
-                                // Configuriation of dropzone of id:dynRowsUploadForm in mdEditorInfo modal
-                                window.dynRows = {};
-                                window.dynRows.filename = "";
-                                Dropzone.options.dynRowsUploadForm = {
-                                    paramName: "pubweb", // The name that will be used to transfer the file
-                                    maxFilesize: 30, // MB
-                                    maxFiles:10,
-                                    createImageThumbnails: false,
-                                    dictDefaultMessage: 'Drop your file here or <button type="button" class="btn btn-default" >Select File </button>',
-                                    accept: function (file, done) {
-                                        window.dynRows.filename= file.name
-                                        done();
-                                        $('#dynRows_upload_name_span').text(file.name)
-                                    },
-                                    init: function() {
-                                        this.on("sending", function(file, xhr, formData){
-                                            formData.append("uuid", run_log_uuid);
-                                            formData.append("dir", oData.name);
-                                        });
-                                    }
-                                }; 
-                                $("#dynRowsUploadForm").dropzone();  
-
-                            }
-                            createModal()
-                            createDropzone()
-                            bindEventHandlerModal()
-                        }
-
-                        var getFileListHeaderIconDiv = function (id) {
-                            var border = "border-right: 1px solid lightgray;"
-                            var addIcon = `<li role="presentation"><a id="addIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Add File"><i style="font-size: 18px;" class="fa fa-plus"></i></a></li>`;
-                            var renameIcon = `<li role="presentation"><a id="renameIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Rename File"><i style="font-size: 18px;" class="fa fa-pencil"></i></a></li>`;
-                            var deleteIcon = `<li role="presentation"><a  id="deleteIcon-` + id + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Delete File"><i style="font-size: 18px;" class="fa fa-trash"></i></a></li>`;
-                            var content = `<ul style="float:right"  class="nav nav-pills panelheader">` + addIcon + renameIcon + deleteIcon + `</ul>`;
-                            var wrapDiv = '<div id="' + id + '-ListHeaderIconDiv" style="'+border+'height:35px; width:100%;">' + content + '</div>';
-                            return wrapDiv;
-                        }
-                        var IconDiv = "";
-                        var writePerm= $runscope.checkUserWritePerm();
-                        //allows user to edit run page
-                        if (writePerm){
-                            if (oData.pubWeb == "run_description"){
-                                IconDiv = getFileListHeaderIconDiv(oData.id);
-                                addEveHandlerIconDiv(oData.id)
-                            }
-                        }
-                        if (!liText) {
-                            liText = '<div style="margin:10px;"> No data available</div>';
-                        }
-                        var allText = IconDiv + liText;
-                        $(nTd).html('<ul class="nav nav-pills nav-stacked">' + allText + '</ul>');
-                    },
-                }, {
-                    //file content
-                    data: null,
-                    colPercent: "85",
-                    fnCreatedCell: function (nTd, oData) {
-                        var fileList = oData.fileList;
-                        if ($(nTd).is(':empty')) {
-                            var navTabDiv = "";
-                            navTabDiv += '<div style="height:inherit;" class="tab-content">';
-                            var liText = "";
-                            var active = "";
-                            $.each(fileList, function (el) {
-                                var filenameCl = cleanProcessName(fileList[el])
-                                var tabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                var active = "";
-                                if (el == 0) {
-                                    active = 'in active';
-                                }
-                                navTabDiv += '<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
-                            });
-                            navTabDiv += '</div>';
-                            $(nTd).html(navTabDiv);
-                        } else {
-                            //when dynamicRows.fnrefresh is executed following code will update the tabid section
-                            var newTabIdList = []
-                            $.each(fileList, function (el) {
-                                var filenameCl = cleanProcessName(fileList[el])
-                                var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                newTabIdList.push(newTabID)
-                            });
-
-                            //get all existing tabs
-                            var alltabs = $(nTd).find("div[dynamicrowstabs]");
-                            for (var k = 0; k < alltabs.length; k++) {
-                                var oldTabID = $(alltabs[k]).attr("id");
-                                if($.inArray(oldTabID, newTabIdList) === -1){
-                                    //remove oldTabID from DOM, since it doesn't found in newTabIdList
-                                    $(alltabs[k]).remove();
-                                }
-                            }
-                            //add new tabs
-                            $.each(fileList, function (el) {
-                                var filenameCl = cleanProcessName(fileList[el])
-                                var newTabID = 'reportTab' + oData.id + "_" + filenameCl;
-                                if (!$(nTd).find("div#" + newTabID).length) {
-                                    $(nTd).children().append('<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + newTabID + '" class = "tab-pane fade fullsize" ></div>')
-                                }
-                                if (el == 0){
-                                    $("#"+newTabID).addClass("in active").removeClass("fade");
-                                }
-                            });
-                        }
-                    },
-                }],
-                columnsHeader: [{
-                    data: null,
-                    colPercent: "4",
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span class="info-box-icon" style="height:60px; line-height:60px; width:30px; font-size:18px;  background:rgba(0,0,0,0.2);"><i class="fa fa-folder"></i></span>');
-                    },
-                }, {
-                    data: null,
-                    fnCreatedCell: function (nTd, oData) {
-                        var gNum = oData.id.split("_")[0].split("-")[1];
-                        var rowID = "outputTa-" + gNum;
-                        var processName = $('#' + rowID + ' > :nth-child(5)').text();
-                        if (oData.pubWeb == "run_description"){
-                            processName = "Run Notes"
-                        }
-                        var processID = $('#' + rowID + ' > :nth-child(5)').text();
-                        $(nTd).html('<span  gnum="' + gNum + '" processid="' + processID + '">' + createLabel(processName) + '</span>');
-                    },
-                    colPercent: "37"
-                }, {
-                    data: null,
-                    colPercent: "39",
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span>' + createLabel(oData.name) + '</span>');
-                    }
-                }, {
-                    data: null,
-                    colPercent: "20",
-                    fnCreatedCell: function (nTd, oData) {
-                        var visType = oData.pubWeb
-                        var icon = "fa fa-file-text-o";
-                        var text = visType;
-                        if (visType === "table" || visType === "table-percent") {
-                            icon = "fa fa-table";
-                            text = "Table";
-                        } else if (visType === "html") {
-                            icon = "fa fa-file-code-o";
-                            text = "HTML";
-                        } else if (visType === "pdf") {
-                            icon = "fa fa-file-pdf-o";
-                            text = "PDF";
-                        } else if (visType === "rmarkdown") {
-                            icon = "fa fa-pie-chart";
-                            text = "R-Markdown";
-                        } else if (visType === "highcharts") {
-                            icon = "fa fa-line-chart";
-                            text = "Charts";
-                        } else if (visType === "debrowser") {
-                            icon = "glyphicon glyphicon-stats";
-                            text = "DE-Browser";
-                        } else if (visType === "image") {
-                            icon = "fa fa-file-image-o";
-                            text = "Image";
-                        } else if (visType === "run_description") {
-                            icon = "fa fa-edit";
-                            text = "Markdown";
-                        }
-                        $(nTd).html('<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' + icon + '"></i> ' + text + '</a>');
-                    }
-                }],
-                columnsTitle: [{
-                    data: null,
-                    colPercent: "4"
-
-                }, {
-                    data: null,
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span>PROCESS</span>');
-                    },
-                    colPercent: "37"
-                }, {
-                    data: "name",
-                    colPercent: "39",
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span>PUBLISHED DIRECTORY</span>');
-                    },
-                }, {
-                    data: null,
-                    colPercent: "20",
-                    fnCreatedCell: function (nTd, oData) {
-                        $(nTd).html('<span>VIEW FORMAT</span>');
-                    }
-                }],
-                backgroundcolorenter: "#ced9e3",
-                backgroundcolorleave: "#ECF0F4",
-                heightHeader: "60px"
-            });
-        }
-
-        $(document).on('click', '#refreshVerReport', function (event) {
-            reloadReportRows();
-        });
-
-
-        $(document).on('change', '#runVerReport', function (event) {
-            var run_log_uuid = $(this).val();
-            var reload = true
-            if (run_log_uuid) {
-                var prevUUID = $(this).attr("prev")
-                $(this).attr("prev", run_log_uuid)
-                var savedReportData = $.data(this, "reportData")
-                var reportData = getValues({ "p": "getReportData", uuid: run_log_uuid, path: "pubweb", pipeline_id: pipeline_id })
-                $.data(this, "reportData", reportData);
-                if (prevUUID) {
-                    if (prevUUID == run_log_uuid) {
-                        if (savedReportData && reportData) {
-                            if (savedReportData.length && reportData.length) {
-                                if (savedReportData.length == reportData.length) {
-                                    reload = false
-                                }
-                            }
-                        }
-                    }
-                }
-                var version = $('option:selected', this).attr('ver');
-                if (version) {
-                    var runTitleLog = "Run Report " + version + ":"
-                    $('a[href="#reportTab"]').css("display", "block")
-                } else {
-                    var runTitleLog = "";
-                    $('a[href="#reportTab"]').css("display", "none")
-                }
-
-                $("#runTitleReport").text(runTitleLog)
-                if (reload){
-                    reloadReportRows();
-                }
-
-            }
-        });
-    });
 
 
     $('#manualRunModal').on('show.bs.modal', function () {
@@ -10172,10 +11155,7 @@ $(document).ready(function () {
                 profVar += el + " = "+ '"'+formObj[el] +'"\n';
             }
         });
-        console.log(profVar)
         profVar = $.trim(profVar);
-        console.log(profVar)
-
         if (profVar){
             profVar = encodeURIComponent(profVar);
             $.ajax({

@@ -69,6 +69,17 @@ function IsJsonString(str) {
     return true;
 }
 
+//formatSizeUnits(4000*1024)  // beacuse 4000 KB to convert MB 
+function formatSizeUnits(bytes){
+      if      (bytes>=1073741824) {bytes=(bytes/1073741824).toFixed(2)+' GB';}
+      else if (bytes>=1048576)    {bytes=(bytes/1048576).toFixed(2)+' MB';}
+      else if (bytes>=1024)       {bytes=(bytes/1024).toFixed(2)+' KB';}
+      else if (bytes>1)           {bytes=bytes+' bytes';}
+      else if (bytes==1)          {bytes=bytes+' byte';}
+      else                        {bytes='0 byte';}
+      return bytes;
+}
+
 // example:
 //var filteredNames = filterObjKeys(names, /Peter/); // second parameter is a javascript regex object, so for exemple for case insensitive you would do /Peter/i  
 //third parameter is optional: return(array if keys/array of obj)=(keys/obj)
@@ -155,6 +166,8 @@ function combineLinuxCmd(cmdAr){
     return ret;
 }
 
+
+
 function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
     $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon" style=" position: absolute; top: 0; right: 0; bottom: 0; left: 0;" src="css/loader.gif" alt="Loading..." /></div>');
@@ -194,10 +207,12 @@ function showInfoModal(modalId, textID, text) {
 //text: show in browser, 
 //savedData: save data to delete button
 //execFunc: execute execFunc(savedData) when clicking on delete button
-function showConfirmDeleteModal(text, savedData, execFunc) {
+function showConfirmDeleteModal(text, savedData, execFunc, buttonText) {
     var modalId = "#confirmDeleteModal";
     var textID = "#confirmDeleteModalText";
     var clickid = "#confirmDeleteModalDelBtn";
+    var btnText = buttonText || "Delete";
+    $(clickid).text(btnText)
     //true if modal is open
     if (($(modalId).data('bs.modal') || {}).isShown ){
         $(textID).html(text);
@@ -257,7 +272,6 @@ window.setInterval( function() {
 
 
 
-// check the cloud profiles activity each 40 sec.
 checkCloudProfiles("timer", "amazon");
 checkCloudProfiles("timer", "google");
 
@@ -280,6 +294,7 @@ function checkCloudProfiles(timer, cloud) {
                     countActive++;
                 }
                 if (timer === "timer") {
+                    // check the cloud profiles activity each 60 sec.
                     checkCloudTimer(proData[k].id, 60000, cloud);
                 }
                 window.modalRec = {};
@@ -451,6 +466,8 @@ function checkCloudStatus(proId, cloud) {
         $('#'+cloud+'CloudListLog-'+proId).data("logData", checkCloudStatusLog.logCloudList)
     }
 
+    // update active number:
+    checkCloudProfiles("notimer", cloud);
     // set autoshutdown counter
     var proData = getValues({ p: "getProfileCloud", cloud:cloud, id:proId });
     var autoshutdown_check = proData[0].autoshutdown_check;
@@ -778,6 +795,21 @@ $(document).ready(function () {
     initCloudConsole("amazon");
     initCloudConsole("google");
 
+    // example link 'UID: <a class="showHideSpan" data-toggle="tooltip" data-placement="bottom" data-original-title="Show/Hide Unique Run ID"><span  short="'+shortUID+'" long="'+run_log_uuid+'" last="short">'+shortUID+'<span></a>';
+    $(document).on('click', '.showHideSpan', function (event) {
+        var short = $(this).find("span").attr("short");
+        var long = $(this).find("span").attr("long");
+        var last = $(this).find("span").attr("last");
+        if (last == "short"){
+            $(this).find("span").text(long)
+            $(this).find("span").attr("last", "long");
+        } else if (last == "long"){
+            $(this).find("span").text(short);
+            $(this).find("span").attr("last", "short");
+        }
+    });
+
+
     $(function () {
         $(document).on('change', '.autoShutCheck', function (event) {
             var cloud = $(this).attr("cloud");
@@ -1004,7 +1036,7 @@ $(document).ready(function () {
                 error:function () {
                     toastr.error("Error occured.");
                 }
-                
+
             });
         }
     });
@@ -1530,6 +1562,10 @@ function getValuesAsync(data, callback) {
         success: function (data) {
             result = data;
             callback(result);
+        },
+        error: function (errorThrown) {
+            console.log("AJAX Error occured.", data)
+            toastr.error("Error occured.");
         }
     });
 }

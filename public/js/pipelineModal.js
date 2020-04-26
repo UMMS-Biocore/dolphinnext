@@ -3449,17 +3449,23 @@ $(document).ready(function () {
         }
         var checkValue = $(checkId).is(":checked").toString();
         if (checkValue === "true" && attr == "showSett"){
+            value= value.replace(/'/gi, "");
+            value = value.replace(/"/gi, "");
             $("#" + renameTextID).attr(attr, value)
         } else if (checkValue === "true" && attr == "inDescOpt"){
             value = value.replace(/\n/g, "</br>")
             value = escapeHtml(value);
             $("#" + renameTextID).data(attr, value);
         } else if (checkValue === "true" && value !== "") {
+            value= value.replace(/'/gi, "");
+            value = value.replace(/"/gi, "");
             $("#" + renameTextID).attr(attr, value)
         } else {
             if (attr == "inDescOpt"){
                 $("#" + renameTextID).removeData(attr);
             } else {
+                value= value.replace(/'/gi, "");
+            value = value.replace(/"/gi, "");
                 $("#" + renameTextID).removeAttr(attr);
             }
         }

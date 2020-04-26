@@ -288,31 +288,33 @@ $GOOGPATH=GOOGPATH;
                     <?php 
                     if ($login == 1 && $role == "admin"){
                         echo '<div class="tab-pane" id="adminTab">
-                            <div class="panel panel-default">
-                                <div class="panel-heading clearfix">
-                                    <div class="pull-right">
-                                        <button type="button" class="btn btn-primary btn-sm" id="addUser" data-toggle="modal" data-target="#userModal">Add User</button>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading clearfix">
+                                        <div class="pull-right">
+                                            <button type="button" class="btn btn-primary btn-sm" id="addUser" data-toggle="modal" data-target="#userModal">Add User</button>
+                                        </div>
+                                        <div class="pull-left">
+                                            <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> User Panel</h5>
+                                        </div>
                                     </div>
-                                    <div class="pull-left">
-                                        <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> User Panel</h5>
-                                    </div>
-                                </div>
-                                <div class="panel-body">
-                                    <table id="AdminUserTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
-                                        <thead>
+                                    <div class="panel-body">
+                                        <table id="AdminUserTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                            <thead>
                                             <tr>
                                                 <th>ID</th>
                                                 <th>Name</th>
                                                 <th>Username</th>
                                                 <th>E-mail</th>
                                                 <th>Institute</th>
+                                                <th>Usage(MB)</th>
                                                 <th>Role</th>
                                                 <th>Active</th>
                                                 <th>Member Date</th>
                                                 <th>Options</th>
                                             </tr>
-                                        </thead>
-                                    </table>
+                                            </thead>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>';
                     }
@@ -662,9 +664,9 @@ $GOOGPATH=GOOGPATH;
                 <h4 class="modal-title" id="joinmodallabel">Join a group</h4>
             </div>
             <div class="modal-body">
-                
+
                 <form id="joinmodaladd" class="form-horizontal" style="margin-bottom:40px;">
-                   <h5 style="margin-bottom:20px;">Add New Member</h5>
+                    <h5 style="margin-bottom:20px;">Add New Member</h5>
                     <div class="form-group" >
                         <label class="col-sm-2 control-label" style="padding-left:30px;">E-Mail of the User <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter e-mail address of the user and press add button."><i class="glyphicon glyphicon-info-sign"></i></a></span> </label>
                         <div class="col-sm-8">

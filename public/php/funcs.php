@@ -1,6 +1,19 @@
 <?php
 
-
+/**
+ *  Forces the browser to reload cached CSS/JS files when it's modified
+ *  Given a file, i.e. base.css, replaces it with a string containing the
+ *  file's mtime, i.e. base.1221534296.css
+ *  update .htaccess: RewriteRule  ^(.*)\.[\d]{10}\.(css|js)$ public/$1.$2 [L]
+ */
+function auto_version($file)
+{
+    if (!file_exists($file)){
+        return $file;
+    }
+    $mtime = filemtime($file);
+    return preg_replace('{\\.([^./]+)$}', ".$mtime.\$1", $file);
+}
 
 function getTitle($np)
 {
@@ -36,22 +49,42 @@ function getSidebarMenu($np,$login)
 
 function getJS($np, $login, $id)
 {
-    $js = "<script src=\"js/jsfuncs.js\"></script><script src=\"js/wizard.js\"></script>";
-    if ($np==1 && $login==1 && !empty($id)){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
-  <script src=\"js/pipelineD3core.js\"></script><script src=\"js/pipelineD3.js\"></script><script src=\"js/pipelineModal.js\"></script>
-  <script src=\"js/import.js\"></script><script src=\"js/nextflowText.js\"></script>";}
-    else if ($np==1 && $login!=1 && !empty($id)){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
-  <script src=\"js/publicpipeline.js\"></script>";}
-    else if ($np==1 && $login==1 && empty($id)){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
-  <script src=\"js/pipelineD3core.js\"></script><script src=\"js/pipelineD3.js\"></script><script src=\"js/pipelineModal.js\"></script>
-  <script src=\"js/import.js\"></script><script src=\"js/nextflowText.js\"></script><script src=\"js/public.js\"></script>";} 
-    else if ($np==2 && $login==1 && empty($id)){$js .= "<script src=\"js/projects.js\"></script>"; }
-    else if ($np==2 && $login==1 && !empty($id)){$js .= "<script src=\"js/projectsDetail.js\"></script>"; }
-    else if ($np==3 && $login==1 && !empty($id)){$js .= "<script src=\"bower_components/d3/d3.v3.min.js\" charset=\"utf-8\"></script> 
-  <script src=\"js/pipelineD3core.js\"></script><script src=\"js/runpipeline.js\"></script><script src=\"js/nextflowText.js\"></script>";}
-    else if ($np==4 && $login==1){$js .= "<script src=\"js/profile.js\"></script>"; }
-    else if ($np==5 && $login==1){$js .= "<script src=\"js/runstatus.js\"></script>"; }
-    else {$js .= "<script src=\"js/public.js\"></script>";}
+    $js = '<script src="'.auto_version("js/jsfuncs.js").'"></script>
+           <script src="'.auto_version("js/wizard.js").'"></script>';
+    if ($np==1 && $login==1 && !empty($id)){
+        $js .= '<script src="bower_components/d3/d3.v3.min.js" charset="utf-8"></script> 
+                <script src="'.auto_version("js/pipelineD3core.js").'"></script>
+                <script src="'.auto_version("js/pipelineD3.js").'"></script>
+                <script src="'.auto_version("js/pipelineModal.js").'"></script>
+                <script src="'.auto_version("js/import.js").'"></script>
+                <script src="'.auto_version("js/nextflowText.js").'"></script>';
+    } else if ($np==1 && $login!=1 && !empty($id)){
+        $js .= '<script src="bower_components/d3/d3.v3.min.js" charset="utf-8"></script> 
+                <script src="'.auto_version("js/publicpipeline.js").'"></script>';
+    } else if ($np==1 && $login==1 && empty($id)){
+        $js .= '<script src="bower_components/d3/d3.v3.min.js" charset="utf-8"></script> 
+                <script src="'.auto_version("js/pipelineD3core.js").'"></script>
+                <script src="'.auto_version("js/pipelineD3.js").'"></script>
+                <script src="'.auto_version("js/pipelineModal.js").'"></script>
+                <script src="'.auto_version("js/import.js").'"></script>
+                <script src="'.auto_version("js/nextflowText.js").'"></script>
+                <script src="'.auto_version("js/public.js").'"></script>';
+    } else if ($np==2 && $login==1 && empty($id)){
+        $js .= '<script src="'.auto_version("js/projects.js").'"></script>'; 
+    } else if ($np==2 && $login==1 && !empty($id)){
+        $js .= '<script src="'.auto_version("js/projectsDetail.js").'"></script>'; 
+    } else if ($np==3 && $login==1 && !empty($id)){
+        $js .= '<script src="bower_components/d3/d3.v3.min.js" charset="utf-8"></script> 
+                <script src="'.auto_version("js/pipelineD3core.js").'"></script>
+                <script src="'.auto_version("js/runpipeline.js").'"></script>
+                <script src="'.auto_version("js/nextflowText.js").'"></script>';
+    } else if ($np==4 && $login==1){
+        $js .= '<script src="'.auto_version("js/profile.js").'"></script>'; 
+    } else if ($np==5 && $login==1){
+        $js .= '<script src="'.auto_version("js/runstatus.js").'"></script>'; 
+    } else {
+        $js .= '<script src="'.auto_version("js/public.js").'"></script>'; 
+    }
     return $js;
 }
 
