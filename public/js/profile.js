@@ -1696,7 +1696,7 @@ $(document).ready(function () {
             }, {
                 "data": "institute"
             }, {
-                "data": null,
+                "data": "disk_usage",
                 "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                     var sizeInMB = 0;
                     if (oData.disk_usage) {

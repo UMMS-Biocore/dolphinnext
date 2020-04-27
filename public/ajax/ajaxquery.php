@@ -92,14 +92,20 @@ else if ($p=="saveRunLogName"){
 }
 else if ($p=="saveRunLogSizeAllUsers"){
     $userRole = $db->getUserRoleVal($ownerID);
+    $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     $data = json_encode("");
     if ($userRole == "admin"){
-        $sql = "SELECT * FROM users WHERE deleted=0";
+        $sql = "SELECT id, IF(disk_usage IS NULL,0,1) as disk_usage_check FROM users WHERE deleted=0";
         $usersRaw=$db->queryTable($sql);
         $users = json_decode($usersRaw);
         foreach ($users as $user):
         $userID = $user->{'id'};
-        $db->saveRunLogSizeUser($userID,$ownerID);
+        $disk_usage_check = $user->{'disk_usage_check'};
+        if ($type == "all"){
+            $db->saveRunLogSizeUser($userID,$ownerID);
+        } else if (empty($disk_usage_check)){
+            $db->saveRunLogSizeUser($userID,$ownerID);
+        }
         endforeach;
     }
 }
