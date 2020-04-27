@@ -1529,6 +1529,7 @@ class dbfuncs {
     }
 
     function saveRunLogSizeUser($userID,$ownerID){
+        error_log("saveRunLogSizeUser");
         if (!empty($userID) &&!empty($ownerID) ){
             $userLogRaw = $this->getRunLogUser($userID, "all");
             $userLog = json_decode($userLogRaw);
