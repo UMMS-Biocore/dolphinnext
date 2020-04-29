@@ -2,6 +2,8 @@
 
 ### A platform to create reproducible, portable and highly parallel pipelines
 
+**Citation:** Yukselen, O., Turkyilmaz, O., Ozturk, A.R. et al. DolphinNext: a distributed data processing platform for high throughput genomics. BMC Genomics 21, 310 (2020). https://doi.org/10.1186/s12864-020-6714-x
+
 [![Build Status](https://api.travis-ci.com/UMMS-Biocore/dolphinnext.svg?branch=master)](https://api.travis-ci.com/UMMS-Biocore/dolphinnext)[![DOI:10.1101/689539](https://zenodo.org/badge/DOI/10.1101/689539.svg)](https://doi.org/10.1101/689539)
 
 -----
@@ -66,6 +68,11 @@
 
 [*Developer Tutorial*](https://github.com/UMMS-Biocore/dolphinnext-tutorial) is available which explains the basics of DolphinNext. You can use our [website](https://dolphinnext.umassmed.edu/), or easily pull Docker image of Dolphinnext and start creating pipelines in your local server.
 
+## Citation:
+
+If you use DolphinNext in your research, please cite:
+
+Yukselen, O., Turkyilmaz, O., Ozturk, A.R. et al. DolphinNext: a distributed data processing platform for high throughput genomics. BMC Genomics 21, 310 (2020). https://doi.org/10.1186/s12864-020-6714-x
 
 ## Support
 
