@@ -17,6 +17,7 @@ Contents:
    dolphinNext/overview
    dolphinNext/example
    dolphinNext/about
+   dolphinNext/cite
    dolphinNext/support
 
 .. _User Guide:
@@ -45,6 +46,14 @@ Contents:
    dolphinNext/process
    dolphinNext/pipeline
 
-   
+.. _Administrator Guide:
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Administrator Guide
+
+   dolphinNext/admin_quick
+   dolphinNext/admin_faq
 
 

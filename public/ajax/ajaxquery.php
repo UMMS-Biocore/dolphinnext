@@ -756,6 +756,7 @@ else if ($p=="removeUserFromGroup"){
 }
 else if ($p=="removeProjectPipeline"){  
     $db -> removeRun($id);
+    $db -> removeRunLogByPipe($id);
     $db -> removeProjectPipelineInputByPipe($id);
     $data = $db -> removeProjectPipeline($id);
 }

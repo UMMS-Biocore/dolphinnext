@@ -4660,7 +4660,7 @@ function autoCheck(type) {
             if (changeOnchooseEnv != undefined){
                 if (changeOnchooseEnv == true){
                     //save run after all parameters loaded on change of chooseEnv
-                    saveRun(false);
+                    saveRun(false, true);
                 } 
             }
 
@@ -5238,6 +5238,7 @@ function runProjectPipe(runProPipeCall, checkType) {
     if (window.sshCheck || manualRunCheck == "true"){
         if (manualRunCheck != "true"){
             displayButton('connectingProPipe');
+            $('#runLogArea').val("");
         }
         //create uuid for run
         $.ajax({
@@ -5251,7 +5252,6 @@ function runProjectPipe(runProPipeCall, checkType) {
             type: "POST",
             success: function (uuid) {
                 updateNewRunStatus("0")
-                $('#runLogArea').val("");
                 var hostname = $('#chooseEnv').find('option:selected').attr('host');
                 pathArray = getPathArray();
                 //autofill for ghpcc06 cluster to mount all directories before run executed.
@@ -5267,7 +5267,7 @@ function runProjectPipe(runProPipeCall, checkType) {
                 var runAfterSave = function (){
                     runProPipeCall(keepCheckType, uuid);
                 }
-                saveRun(runAfterSave);
+                saveRun(runAfterSave, true);
             },
             error: function (jqXHR, exception) {
                 toastr.error("Error occured.")
@@ -5951,25 +5951,25 @@ function createNewRunFunc(newRunExist){
 function saveRunIcon() {
     //check if lastrun is running, then show warning
     if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init"){
-        saveRun(false);
+        saveRun(false, true);
     } else {
         var newRunExist =checkNewRunStatus();
         var newRun = $('option:selected', "#runVerLog").attr('newrun') || false;
         if (newRunExist && newRun){
-            saveRun(false);
+            saveRun(false, true);
             checkReadytoRun();
         } else if (!newRunExist){
             var sucFunc = function(){
                 $('.nav-tabs a[href="#configTab"]').tab('show');
                 createNewRunFunc(newRunExist)
             }
-            saveRun(sucFunc);
+            saveRun(sucFunc, true);
             checkReadytoRun();
         }
     }
 }
 
-function saveRun(sucFunc) {
+function saveRun(sucFunc, showToastr) {
     var data = [];
     var runSummary = encodeURIComponent($('#runSum').val());
     var run_name = $('#run-title').val();
@@ -6076,8 +6076,9 @@ function saveRun(sucFunc) {
             data: data,
             async: true,
             success: function (s) {
-                console.log(s)
-                toastr.info('All changes are saved.');
+                if (showToastr){
+                    toastr.info('All changes are saved.');
+                }
                 if (typeof sucFunc === "function") {
                     sucFunc()
                 }
@@ -6291,7 +6292,7 @@ function duplicateProPipe(type) {
         $('#confirmDuplicate').modal("show");  
     } else if (type == "move" || type == "changeproject"){
         refreshProjectDatatable("default");
-        saveRun(false);
+        saveRun(false, true);
         $('#copyRunBut').css("display","none");
         $('#moveRunBut').css("display","inline-block");
         $('#pipelineRevsDiv').css("display","none");
@@ -6340,7 +6341,10 @@ function fillRunVerOpt(dropDownId) {
         var date_created = newRunLogs[el].date_created
         var project_pipeline_id = newRunLogs[el].project_pipeline_id
         var sizeInKB = newRunLogs[el].size
-        tsize += parseInt(sizeInKB);
+        if (sizeInKB){
+            tsize += parseInt(sizeInKB);
+        }
+        
         var sizeText = "";
         var runName = "";
         if (run_log_uuid || project_pipeline_id) {
@@ -7369,7 +7373,7 @@ $(function () {
         var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
         // if prevUID belong to newrun then saveRun before loadRunLogOpt 
         if (projectpipelineOwn == "1" && prevnewRun || (!newRunExist && prevlastrun)){
-            saveRun(loadRunLogOpt);
+            saveRun(loadRunLogOpt, false);
         } else {
             loadRunLogOpt();
         }
@@ -9499,7 +9503,7 @@ $(document).ready(function () {
             checkReadytoRun();
             updateDiskSpace();
             //save run in change 
-            saveRun(false);
+            saveRun(false, true);
 
         });
     });
@@ -10587,7 +10591,7 @@ $(document).ready(function () {
         } else {
             confirmNewRev = true;
             dupliProPipe = true; 
-            saveRun(false);
+            saveRun(false, true);
         }
     });
 
