@@ -1,9 +1,9 @@
 05.05.2020 Version 1.1.14
-Administrator guide added to documentation.
+Administrator guide added to the documentation.
+How to cite added to the documentation.
 * Minor updates:
-- All changes are saved warning is hidden when user open previous run.
-- readlink command added to work directory size checking function. 
-
+  - All changes are saved warning is hidden when the user opens the previous run.
+  - Readlink command added to work directory size checking function. 
 
 26.04.2020 Version 1.1.14
 Minor fix for shared runs.
