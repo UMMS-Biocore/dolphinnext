@@ -893,7 +893,7 @@ class dbfuncs {
             $queueText = $this->getQueue($next_queue, $executor);
             $cpuText = $this->getCPU($next_cpu, $executor);
             $lsfRunFile = "printf '#!/bin/bash \\n".$queueText.$jobnameText.$cpuText.$timeText.$memoryText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
-            $exec_string = "bsub -e $dolphin_path_real/err.log $next_clu_opt < $dolphin_path_real/.dolphinnext.run";
+            $exec_string = "bsub -o $dolphin_path_real/out.log -e $dolphin_path_real/err.log $next_clu_opt < $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $lsfRunFile && $exec_string";
         } else if ($executor == "sge"){
             $jobnameText = $this->getJobName($jobname, $executor);
@@ -1044,9 +1044,9 @@ class dbfuncs {
         $pathArr = array($dolphin_path_real, "$dolphin_path_real/initialrun");
         foreach ($pathArr as $path):
         if ($path == $dolphin_path_real){
-            $renameArr= array("log.txt", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log");
+            $renameArr= array("log.txt", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log", "out.log");
         } else {
-            $renameArr= array("initial.log", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log");
+            $renameArr= array("initial.log", "timeline.html", "trace.txt", "dag.html", "report.html", ".nextflow.log", "err.log", "out.log");
         }
         foreach ($renameArr as $item):
         if ($item == "log.txt" || $item == "initial.log"){
@@ -3073,6 +3073,10 @@ class dbfuncs {
         $sql = "UPDATE run SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id'";
         return self::runSQL($sql);
     }
+    function removeRunLogByPipe($id) {
+        $sql = "UPDATE run_log SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id'";
+        return self::runSQL($sql);
+    }
     function removeRunLog($id,$ownerID) {
         $sql = "UPDATE run_log SET deleted = 1, date_modified = now() WHERE id = '$id' AND owner_id='$ownerID'";
         return self::runSQL($sql);
@@ -3680,14 +3684,11 @@ class dbfuncs {
 
     function retrieve_remote_file_size($url){
         $ch = curl_init($url);
-
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         curl_setopt($ch, CURLOPT_HEADER, TRUE);
         curl_setopt($ch, CURLOPT_NOBODY, TRUE);
-
         $data = curl_exec($ch);
         $size = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-
         curl_close($ch);
         return $size;
     }
@@ -3707,7 +3708,7 @@ class dbfuncs {
                     $ssh_own_id = $cluDataArr[0]["owner_id"];
                     $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
                     if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
-                    $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"df -hP $checkdir\" 2>&1 &";
+                    $cmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"df -hP \\$(readlink -f $checkdir)\" 2>&1 &";
                     $log["ret"] = shell_exec($cmd);
                     if (!is_null($log["ret"]) && isset($log["ret"])){
                         $ret_blocks = explode("\n", $log["ret"]);

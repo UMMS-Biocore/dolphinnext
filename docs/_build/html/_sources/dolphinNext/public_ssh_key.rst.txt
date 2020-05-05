@@ -49,7 +49,7 @@ In order to make an SSH connection to your host machine, you need to use program
 
     A.5. If this is the first time that you login to your host machine, you might need to reset your password. Please enter the new password and press Enter. Note that passwords are not echoed to the screen. After changing your password, you will be logged out and you need to reconnect to your host machine.
 
-    A.6. If you have entered the correct root password, the prompt responds with a shell prompt::
+    A.6. If you have entered the correct password, the prompt responds with a shell prompt::
 
         [us2r@yourhostname ~]#
 
@@ -58,13 +58,13 @@ B. If you're using Linux or MacOS
 
 If you are a MacOS or Linux user, you can make an SSH connection by using **Terminal**, a console program included with the operating system.
 
-    A.1. Search for the **Terminal** program in your operating system and click to open it.
+    B.1. Search for the **Terminal** program in your operating system and click to open it.
     
         .. image:: dolphinnext_images/terminal.png
 	       :align: center
 	       :width: 80%
     
-    A.2. First, you should type the ``ssh`` command in the console. Then enter your username and hostname and add ``@`` sign in between (eg. ``yourusername@yourhostname``, ``user@ghpcc06.umassrc.org``) and press enter::
+    B.2. First, you should type the ``ssh`` command in the console. Then enter your username and hostname and add ``@`` sign in between (eg. ``yourusername@yourhostname``, ``user@ghpcc06.umassrc.org``) and press enter::
     
         ssh us2r@yourhostname
         
@@ -72,14 +72,14 @@ If you are a MacOS or Linux user, you can make an SSH connection by using **Term
 	   :align: center
 	   :width: 95%
     
-    A.3. The terminal prompts you for your password. Please enter your password and press enter.
+    B.3. The terminal prompts you for your password. Please enter your password and press enter.
 
         .. caution:: - The password is not echoed back to the screen as it is entered.
                     - You can still **copy and paste your password**, but it won't appear in your screen.
                     
-    A.4. If this is the first time that you login to your host machine, you might need to reset your password. Please enter the new password and press Enter. Note that passwords are not echoed to the screen. After changing your password, you will be logged out and you need to reconnect to your host machine.
+    B.4. If this is the first time that you login to your host machine, you might need to reset your password. Please enter the new password and press Enter. Note that passwords are not echoed to the screen. After changing your password, you will be logged out and you need to reconnect to your host machine.
 
-    A.5. If you have entered the correct root password, the prompt responds with a shell prompt::
+    B.5. If you have entered the correct password, the prompt responds with a shell prompt::
 
         [us2r@yourhostname ~]#
 
