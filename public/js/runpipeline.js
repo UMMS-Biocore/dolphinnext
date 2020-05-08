@@ -5445,12 +5445,8 @@ function autoScrollLogArea() {
 }
 
 $('a[href="#logTab"]').on('shown.bs.tab', function (e) {
-    //check if div is empty
-    if (!$.trim($('#logContentDiv').html()).length) {
-        $("#runVerLog").trigger("change");
-    } else {
-        autoScrollLogArea()
-    }
+    $("#runVerLog").trigger("change");
+    autoScrollLogArea()
 });
 
 $('a[href="#reportTab"]').on('shown.bs.tab', function (e) {
@@ -6344,7 +6340,7 @@ function fillRunVerOpt(dropDownId) {
         if (sizeInKB){
             tsize += parseInt(sizeInKB);
         }
-        
+
         var sizeText = "";
         var runName = "";
         if (run_log_uuid || project_pipeline_id) {
@@ -7563,11 +7559,11 @@ $(function () {
             readNextLog(proTypeWindow, proIdWindow, "no_reload");
             //history mode
         } else {
-//            if (projectpipelineOwn == "1"){
-//                toogleStatusMode("oneOption");
-//            } else {
-//                toogleStatusMode("noOption");
-//            }
+            //            if (projectpipelineOwn == "1"){
+            //                toogleStatusMode("oneOption");
+            //            } else {
+            //                toogleStatusMode("noOption");
+            //            }
             tooglePermsGroupsDiv("hide");
             toogleMainIcons("hide");
             toogleRunInputs("disable");
