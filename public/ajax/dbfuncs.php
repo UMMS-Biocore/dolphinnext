@@ -2235,6 +2235,7 @@ class dbfuncs {
                 } else if (!empty($nextflowLog)){
                     if (preg_match("/N E X T F L O W/",$nextflowLog)){
                         //run completed with error
+                        //load initial .nextflow.log and add && preg_match("/DEBUG nextflow.script.ScriptRunner - > Execution complete/",$dotInitNextflowLog)
                         if (preg_match("/##Success: failed/",$nextflowLog)){
                             preg_match("/##Duration:(.*)\n/",$nextflowLog, $matchDur);
                             $duration = !empty($matchDur[1]) ? $matchDur[1] : "";
