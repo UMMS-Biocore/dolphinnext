@@ -2116,10 +2116,14 @@ else if ($p=="getMaxRev_id")
     $process_gid = $_REQUEST['process_gid'];
     $data = $db->getMaxRev_id($process_gid);
 }
-else if ($p=="getMaxPipRev_id")
-{
+else if ($p=="getMaxPipRev_id"){
+    $data = json_encode("");
     $pipeline_gid = $_REQUEST['pipeline_gid'];
-    $data = $db->getMaxPipRev_id($pipeline_gid);
+    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE pipeline_gid='$pipeline_gid'");
+    $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    if (!empty($permCheck)){
+        $data = $db->getMaxPipRev_id($pipeline_gid);
+    }
 }
 else if ($p=="getInputsPP")
 {
@@ -2139,17 +2143,27 @@ else if ($p=="saveAllPipeline")
     foreach ($obj as $item):
     foreach($item as $k => $v) $newObj->$k = $v;
     endforeach;
-
-    $data = $db->saveAllPipeline($newObj,$ownerID);
     $id = $newObj->{"id"};
     $group_id = $newObj->{"group_id"};
     settype($group_id, 'integer');
     $perms = $newObj->{"perms"};
+    $permCheck = 1;
+    $userRole = $db->getUserRoleVal($ownerID);
+    //don't allow to update if user not own the pipeline.
+    if ($userRole != "admin" && !empty($id)){
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    }
+    if (!empty($permCheck)){
+        $data = $db->saveAllPipeline($newObj,$userRole,$ownerID);
+    }
     //update
     if (!empty($id)){
-        $listPermsDenied = array();
-        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
-        $data = json_encode($listPermsDenied);
+        if (!empty($permCheck)){
+            $listPermsDenied = array();
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
+            $data = json_encode($listPermsDenied);
+        }
         //insert
     } else {
         $idArray = json_decode($data,true);
@@ -2171,15 +2185,15 @@ else if ($p=="savePipelineDetails")
 {
     $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
     $group_id = $_REQUEST['group_id'];
-    $nodesRaw = $_REQUEST['nodes'];
+    $nodesRaw = isset($_REQUEST['nodes']) ? $_REQUEST['nodes'] : "";
     $perms = $_REQUEST['perms'];
     $pin = $_REQUEST['pin'];
     $pin_order = $_REQUEST['pin_order'];
-    $publish = $_REQUEST['publish'];
+    $publicly_searchable = isset($_REQUEST['publicly_searchable']) ? $_REQUEST['publicly_searchable'] : "false";
     $pipeline_group_id = $_REQUEST['pipeline_group_id'];
     settype($group_id, 'integer');
     settype($pin_order, "integer");
-    $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publish,$pipeline_group_id,$ownerID);
+    $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publicly_searchable,$pipeline_group_id,$ownerID);
     //update permissions
     if (!empty($nodesRaw)){
         $listPermsDenied = array();

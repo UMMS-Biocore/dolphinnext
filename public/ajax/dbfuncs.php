@@ -2299,7 +2299,7 @@ class dbfuncs {
 
 
     //------------- SideBar Funcs --------
-    public function getParentSideBar($ownerID){
+    function getParentSideBar($ownerID){
         if ($ownerID != ''){
             $userRoleArr = json_decode($this->getUserRole($ownerID));
             $userRole = $userRoleArr[0]->{'role'};
@@ -2317,7 +2317,7 @@ class dbfuncs {
         }
         return self::queryTable($sql);
     }
-    public function getParentSideBarPipeline($ownerID){
+    function getParentSideBarPipeline($ownerID){
         if ($ownerID != ''){
             $userRoleArr = json_decode($this->getUserRole($ownerID));
             $userRole = $userRoleArr[0]->{'role'};
@@ -2338,7 +2338,7 @@ class dbfuncs {
 
 
 
-    public function getPipelineSideBar($ownerID){
+    function getPipelineSideBar($ownerID){
         if ($ownerID != ''){
             $userRoleArr = json_decode($this->getUserRole($ownerID));
             $userRole = $userRoleArr[0]->{'role'};
@@ -2406,7 +2406,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     //new
-    public function getSubMenuFromSideBarPipe($parent, $ownerID){
+    function getSubMenuFromSideBarPipe($parent, $ownerID){
         $admin_only = "";
         $admin_only_group_by = "";
         if ($ownerID != ''){
@@ -2448,39 +2448,39 @@ class dbfuncs {
 
 
     //    ---------------  Users ---------------
-    public function getUserByGoogleId($google_id) {
+    function getUserByGoogleId($google_id) {
         $sql = "SELECT * FROM users WHERE google_id = '$google_id' AND deleted=0";
         return self::queryTable($sql);
     }
-    public function getUserById($id) {
+    function getUserById($id) {
         $sql = "SELECT * FROM users WHERE id = '$id' AND deleted=0";
         return self::queryTable($sql);
     }
-    public function getUserByEmail($email) {
+    function getUserByEmail($email) {
         $email = str_replace("'", "''", $email);
         $sql = "SELECT * FROM users WHERE email = '$email' AND deleted=0";
         return self::queryTable($sql);
     }
-    public function getUserByEmailorUsername($emailusername) {
+    function getUserByEmailorUsername($emailusername) {
         $emailusername = strtolower(str_replace("'", "''", $emailusername));
         $sql = "SELECT * FROM users WHERE (email = '$emailusername' OR username = '$emailusername' ) AND deleted=0";
         return self::queryTable($sql);
     }
-    public function updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID) {
+    function updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID) {
         $email = str_replace("'", "''", $email);
         $sql = "UPDATE users SET name='$name', institute='$institute', username='$username', lab='$lab', logintype='$logintype', email='$email', last_modified_user='$ownerID' WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function updateUserPassword($id, $pass_hash, $ownerID) {
+    function updateUserPassword($id, $pass_hash, $ownerID) {
         $sql = "UPDATE users SET pass_hash='$pass_hash', last_modified_user='$ownerID' WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function insertUserManual($name, $email, $username, $institute, $lab, $logintype, $role, $active, $pass_hash, $verify, $google_id) {
+    function insertUserManual($name, $email, $username, $institute, $lab, $logintype, $role, $active, $pass_hash, $verify, $google_id) {
         $email = str_replace("'", "''", $email);
         $sql = "INSERT INTO users(name, email, username, institute, lab, logintype, role, active, memberdate, date_created, date_modified, perms, pass_hash, verification, google_id) VALUES ('$name', '$email', '$username', '$institute', '$lab', '$logintype','$role', $active, now() , now(), now(), '3', '$pass_hash', '$verify', '$google_id')";
         return self::insTable($sql);
     }
-    public function checkExistUser($id,$username,$email) {
+    function checkExistUser($id,$username,$email) {
         $email = str_replace("'", "''", $email);
         $error = array();
         if (!empty($id)){//update
@@ -2507,7 +2507,7 @@ class dbfuncs {
         return $error;
     }
 
-    public function changeActiveUser($user_id, $type) {
+    function changeActiveUser($user_id, $type) {
         if ($type == "activate" || $type == "activateSendUser"){
             $active = 1;
             $verify = "verification=NULL,";
@@ -3435,15 +3435,15 @@ class dbfuncs {
         unlink($filename);
         return json_encode("file deleted");
     }
-    public function getRun($project_pipeline_id,$ownerID) {
+    function getRun($project_pipeline_id,$ownerID) {
         $sql = "SELECT * FROM run WHERE deleted = 0 AND project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
-    public function getRunStatus($project_pipeline_id,$ownerID) {
+    function getRunStatus($project_pipeline_id,$ownerID) {
         $sql = "SELECT run_status FROM run WHERE deleted = 0 AND project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
-    public function getCloudStatus($id, $cloud, $ownerID) {
+    function getCloudStatus($id, $cloud, $ownerID) {
         if ($cloud == "amazon"){
             $sql = "SELECT status, node_status FROM profile_amazon WHERE id = '$id'";
         } else if ($cloud == "google"){
@@ -3938,7 +3938,7 @@ class dbfuncs {
         }
         return json_encode($data);
     }
-    public function readFileSubDir($path) {
+    function readFileSubDir($path) {
         $scanned_directory = array_diff(scandir($path), array('..', '.'));
         foreach ($scanned_directory as $fileItem) {
             // skip '.' and '..' and .tmp hidden directories
@@ -3957,7 +3957,7 @@ class dbfuncs {
 
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
     //$opt = "onlyfile", "filedir"
-    public function getFileList($uuid, $last_server_dir, $opt) {
+    function getFileList($uuid, $last_server_dir, $opt) {
         $path= "{$this->run_path}/$uuid/$last_server_dir";
         $scanned_directory = array();
         if (file_exists($path)) {
@@ -4514,7 +4514,7 @@ class dbfuncs {
 
         return self::queryTable($sql);
     }
-    public function getProPipeDataByUUID($uuid, $rev_uuid, $type, $ownerID) {
+    function getProPipeDataByUUID($uuid, $rev_uuid, $type, $ownerID) {
         if ($type == "process"){
             $table = "process";
         } else if ($type == "pipeline"){
@@ -4571,7 +4571,7 @@ class dbfuncs {
                             where p.id = '$id' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
         return self::queryTable($sql);
     }
-    public function getProcessRevision($process_gid,$ownerID) {
+    function getProcessRevision($process_gid,$ownerID) {
         if ($ownerID != ""){
             $userRoleCheck = $this->getUserRole($ownerID);
             if (isset(json_decode($userRoleCheck)[0])){
@@ -4590,7 +4590,7 @@ class dbfuncs {
                             WHERE p.process_gid = '$process_gid' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
         return self::queryTable($sql);
     }
-    public function getPipelineRevision($pipeline_gid,$ownerID) {
+    function getPipelineRevision($pipeline_gid,$ownerID) {
         if ($ownerID != ""){
             $userRoleCheck = $this->getUserRole($ownerID);
             if (isset(json_decode($userRoleCheck)[0])){
@@ -4608,22 +4608,22 @@ class dbfuncs {
         return self::queryTable($sql);
     }
 
-    public function getInputsPP($id) {
+    function getInputsPP($id) {
         $sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, pp.optional, p.name, p.file_type, p.qualifier
                             FROM process_parameter pp
                             INNER JOIN parameter p ON pp.parameter_id = p.id
                             WHERE pp.process_id = '$id' and pp.type = 'input'";
         return self::queryTable($sql);
     }
-    public function checkPipeline($process_id, $ownerID) {
+    function checkPipeline($process_id, $ownerID) {
         $sql = "SELECT id, name FROM biocorepipe_save WHERE deleted = 0 AND owner_id = '$ownerID' AND nodes LIKE '%\"$process_id\",\"%'";
         return self::queryTable($sql);
     }
-    public function checkInput($name,$type) {
+    function checkInput($name,$type) {
         $sql = "SELECT id, name FROM input WHERE name = BINARY '$name' AND type='$type'";
         return self::queryTable($sql);
     }
-    public function checkProjectInput($project_id, $input_id) {
+    function checkProjectInput($project_id, $input_id) {
         $sql = "SELECT id FROM project_input WHERE input_id = '$input_id' AND project_id = '$project_id'";
         return self::queryTable($sql);
     }
@@ -5008,7 +5008,7 @@ class dbfuncs {
         return $listPermsDeniedUniq;
     }
 
-    public function updateUUID ($id, $type, $res){
+    function updateUUID ($id, $type, $res){
         $update = "";
         if ($type == "process"){
             $table = "process";
@@ -5044,7 +5044,7 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-    public function getUUIDLocal($type){
+    function getUUIDLocal($type){
         $params=[];
         $params["type"]=$type;
         $myClass = new funcs();
@@ -5065,7 +5065,7 @@ class dbfuncs {
         return json_encode($res);
     }
 
-    public function tsvConvert($tsv, $format){
+    function tsvConvert($tsv, $format){
         ini_set('memory_limit','900M');
         $tsv = trim($tsv);
         $lines = explode("\n", $tsv);
@@ -5084,7 +5084,7 @@ class dbfuncs {
     }
 
 
-    public function callDebrowser($uuid, $dir, $filename){
+    function callDebrowser($uuid, $dir, $filename){
         $targetDir = "{$this->run_path}/$uuid/pubweb/$dir";
         $targetFile = "{$targetDir}/{$filename}";
         $targetJson = "{$targetDir}/.{$filename}";
@@ -5093,7 +5093,7 @@ class dbfuncs {
         file_put_contents($targetJson, json_encode($array));
         return json_encode("$dir/.{$filename}");
     }
-    public function callRmarkdown($type, $uuid, $text, $dir, $filename){
+    function callRmarkdown($type, $uuid, $text, $dir, $filename){
         //travis fix
         if (!headers_sent()) {
             ob_start();
@@ -5191,7 +5191,7 @@ class dbfuncs {
         }
     }
 
-    public function getUUIDAPI($data,$type,$id){
+    function getUUIDAPI($data,$type,$id){
         //travis fix
         if (!headers_sent()) {
             ob_start();
@@ -5245,7 +5245,7 @@ class dbfuncs {
     }
 
 
-    public function convert_array_to_obj_recursive($a) {
+    function convert_array_to_obj_recursive($a) {
         if (is_array($a) ) {
             foreach($a as $k => $v) {
                 if (is_integer($k)) {
@@ -5267,7 +5267,7 @@ class dbfuncs {
 
 
     //if you add new field here, please consider import/export functionality(import.js - itemOrder)
-    function saveAllPipeline($newObj,$ownerID) {
+    function saveAllPipeline($newObj,$userRole,$ownerID) {
         $name =  $newObj->{"name"};
         $id = $newObj->{"id"};
         $nodes = json_encode($newObj->{"nodes"});
@@ -5278,7 +5278,7 @@ class dbfuncs {
         $perms = $newObj->{"perms"};
         $pin = $newObj->{"pin"};
         $pin_order = $newObj->{"pin_order"};
-        $publish = $newObj->{"publish"};
+        $publicly_searchable = isset($newObj->{"publicly_searchable"}) ? $newObj->{"publicly_searchable"} : "false";
         $script_pipe_header = addslashes(htmlspecialchars(urldecode($newObj->{"script_pipe_header"}), ENT_QUOTES));
         $script_pipe_footer = addslashes(htmlspecialchars(urldecode($newObj->{"script_pipe_footer"}), ENT_QUOTES));
         $script_pipe_config = addslashes(htmlspecialchars(urldecode($newObj->{"script_pipe_config"}), ENT_QUOTES));
@@ -5307,19 +5307,28 @@ class dbfuncs {
         settype($pipeline_gid, "integer");
         settype($perms, "integer");
         settype($group_id, "integer");
-        settype($publish, "integer");
         settype($pin_order, "integer");
         settype($id, 'integer');
 
+        
+        $admin_settings = "";
+        $admin_items = "";
         if ($id > 0){
-            $sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', pin = '$pin', publish = '$publish', script_pipe_header = '$script_pipe_header', script_pipe_config = '$script_pipe_config', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', publish_web_dir='$publish_web_dir', pin_order = '$pin_order', last_modified_user = '$ownerID' where id = '$id'";
+            if ($userRole == "admin"){
+                $admin_settings = "publicly_searchable='$publicly_searchable', pin='$pin', pin_order='$pin_order',";
+            }
+            $sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', $admin_settings script_pipe_header = '$script_pipe_header', script_pipe_config = '$script_pipe_config', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', publish_web_dir='$publish_web_dir', last_modified_user = '$ownerID' where id = '$id'";
         }else{
-            $sql = "INSERT INTO biocorepipe_save(owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, pin, pin_order, publish, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid, publish_web_dir, script_pipe_config) VALUES ('$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms', '$pin', '$pin_order', $publish, '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid', '$publish_web_dir', '$script_pipe_config')";
+            if ($userRole == "admin"){
+                $admin_settings = "'$pin', '$pin_order', '$publicly_searchable',";
+                $admin_items = "pin, pin_order, publicly_searchable,";
+            }
+            $sql = "INSERT INTO biocorepipe_save($admin_items owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid, publish_web_dir, script_pipe_config) VALUES ($admin_settings '$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms',  '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid', '$publish_web_dir', '$script_pipe_config')";
         }
         return self::insTable($sql);
 
     }
-    public function getSavedPipelines($ownerID) {
+    function getSavedPipelines($ownerID) {
         if ($ownerID == ""){
             $ownerID ="''";
         } else {
@@ -5342,7 +5351,7 @@ class dbfuncs {
                             $where";
         return self::queryTable($sql);
     }
-    public function loadPipeline($id,$ownerID) {
+    function loadPipeline($id,$ownerID) {
         if ($ownerID != ""){
             $userRoleCheck = $this->getUserRole($ownerID);
             if (isset(json_decode($userRoleCheck)[0])){
@@ -5365,15 +5374,21 @@ class dbfuncs {
                             where pip.deleted=0 AND pip.id = '$id' AND (pip.owner_id = '$ownerID' OR pip.perms = 63 OR (ug.u_id ='$ownerID' and pip.perms = 15))";
         return self::queryTable($sql);
     }
-    public function removePipelineById($id) {
+    function removePipelineById($id) {
         $sql = "UPDATE biocorepipe_save SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publish, $pipeline_group_id, $ownerID) {
-        $sql = "UPDATE biocorepipe_save SET summary='$summary', group_id='$group_id', publish='$publish', perms='$perms', pin='$pin', pin_order='$pin_order', last_modified_user = '$ownerID', pipeline_group_id='$pipeline_group_id'  WHERE id = '$id'";
+    function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publicly_searchable, $pipeline_group_id, $ownerID) {
+        $userRole = $this->getUserRoleVal($ownerID);
+        $admin_settings = "";
+        if ($userRole == "admin"){
+            $admin_settings = "publicly_searchable='$publicly_searchable', pin='$pin', pin_order='$pin_order',";
+        }
+
+        $sql = "UPDATE biocorepipe_save SET summary='$summary', group_id='$group_id',  perms='$perms', $admin_settings last_modified_user = '$ownerID', pipeline_group_id='$pipeline_group_id'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    public function exportPipeline($id, $ownerID, $type, $layer) {
+    function exportPipeline($id, $ownerID, $type, $layer) {
         $layer += 1;
         $data = $this->loadPipeline($id,$ownerID);
         $new_obj = json_decode($data,true);

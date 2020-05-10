@@ -226,7 +226,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="permsPipeDiv" class="col-md-4">
+                <div id="permsPipeDiv" class="col-md-6">
                     <div class="form-group">
                         <label class="col-sm-12 control-label">Permissions to View</label>
                         <select id="permsPipe" class="fbtn btn-default form-control permscheck" name="perms">
@@ -236,7 +236,7 @@
                         </select>
                     </div>
                 </div>
-                <div id="groupSelPipeDiv" class="col-md-4">
+                <div id="groupSelPipeDiv" class="col-md-6">
                     <div class="form-group">
                         <label class="col-sm-12 control-label">Group Selection</label>
                         <select id="groupSelPipe" class="fbtn btn-default form-control permscheck" name="group_id">
@@ -244,6 +244,7 @@
                         </select>
                     </div>
                 </div>
+<!--
                 <div id="publishPipeDiv" class="col-md-4">
                     <div class="form-group">
                         <label class="col-sm-12 control-label">Publish</label>
@@ -253,6 +254,7 @@
                         </select>
                     </div>
                 </div>
+-->
                 <div id="pipeMenuGroupBottom" class="col-md-4" style="display:none; margin-top:10px; margin-bottom:20px;">
                 </div>
 
@@ -264,7 +266,12 @@
                         <input id="pin_order">
                     </div>
                 </div>
-
+                <div id="publiclySearchDiv" style="display:none; margin-top:10px; margin-bottom:20px;" class="col-md-4">
+                    <div class="form-group">
+                        <label>Publicly Searchable </label>
+                        <input id="publicly_searchable" type="checkbox">
+                    </div>
+                </div>
 
                 <div name="empty_space" style="height:100px; width:100%; clear:both;"></div>
             </div>

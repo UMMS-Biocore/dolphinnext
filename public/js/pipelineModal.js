@@ -1578,20 +1578,25 @@ function createRevPipeline(savedList, id, sName) {
         if (revComment === '') { //xxx warn user to enter comment
         } else if (revComment !== '') {
             var pipeline_gid = getValues({ p: "getPipeline_gid", "pipeline_id": id })[0].pipeline_gid;
-            var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid })[0].rev_id;
-            var newPipRev_id = parseInt(maxPipRev_id) + 1;
-            savedList[1].id = '';
-            savedList[7].perms = '3';
-            savedList[7].pin = 'false';
-            savedList[10].publish = '0';
-            savedList.push({ "pipeline_gid": pipeline_gid });
-            savedList.push({ "rev_comment": revComment });
-            savedList.push({ "rev_id": newPipRev_id });
-            sl = JSON.stringify(savedList);
-            var ret = getValues({ p: "saveAllPipeline", dat: sl });
-            $('#confirmRevision').modal('hide');
-            $('#autosave').text('Changes saved on new revision');
-            setTimeout(function () { window.location.replace("index.php?np=1&id=" + ret.id); }, 700);
+            var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid });
+                        console.log(maxPipRev_id)
+            
+            if (maxPipRev_id[0]){
+                var newPipRev_id = parseInt(maxPipRev_id[0].rev_id) + 1;
+                savedList[1].id = '';
+                savedList[7].perms = '3';
+                savedList[7].pin = 'false';
+                savedList[10].publish = '0';
+                savedList.push({ "pipeline_gid": pipeline_gid });
+                savedList.push({ "rev_comment": revComment });
+                savedList.push({ "rev_id": newPipRev_id });
+                sl = JSON.stringify(savedList);
+                var ret = getValues({ p: "saveAllPipeline", dat: sl });
+                $('#confirmRevision').modal('hide');
+                $('#autosave').text('Changes saved on new revision');
+                setTimeout(function () { window.location.replace("index.php?np=1&id=" + ret.id); }, 700);
+            }
+
         }
     });
     $('#confirmRevision').modal('show');
@@ -1762,7 +1767,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     editorPipeFooter.setReadOnly(true);
                     $('#permsPipeDiv').css('display', 'none');
                     $('#groupSelPipeDiv').css('display', 'none');
-                    $('#publishPipeDiv').css('display', 'none');
+                    $('#publiclySearchDiv').css('display', 'none');
                     $('#gitConsoleBtn').css('display', 'none');
                     $('#pipeMenuGroupBottom').css('display', 'none');
                 }
@@ -1771,7 +1776,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     $('#savePipeline').css('display', 'inline');
                     $('#permsPipeDiv').css('display', 'inline');
                     $('#groupSelPipeDiv').css('display', 'inline');
-                    $('#publishPipeDiv').css('display', 'inline');
+                    $('#publiclySearchDiv').css('display', 'inline');
                     $('#importPipeline').css('display', 'inline');
                     $('#exportPipeline').css('display', 'inline');
                     $('#pipeMenuGroupBottom').css('display', 'inline');
@@ -1818,12 +1823,16 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 if (pData[0].group_id !== "0") {
                     $('#groupSelPipe').val(pData[0].group_id);
                 }
-                $('#publishPipe').val(pData[0].publish);
+                if (pData[0].publicly_searchable === 'true') {
+                    $('#publicly_searchable').attr('checked', true);
+                } else if (pData[0].publicly_searchable === "false") {
+                    $('#publicly_searchable').removeAttr('checked');
+                }
                 // permissions
                 $('#permsPipe').val(pData[0].perms);
                 if (pData[0].perms === "63" && usRole !== "admin") {
                     $("#permsPipe").attr('disabled', "disabled");
-                    $("#publishPipe").attr('disabled', "disabled");
+                    $("#publicly_searchable").attr('disabled', "disabled");
                     $('#pipeGroupAll')[0].selectize.disable();
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
@@ -3465,7 +3474,7 @@ $(document).ready(function () {
                 $("#" + renameTextID).removeData(attr);
             } else {
                 value= value.replace(/'/gi, "");
-            value = value.replace(/"/gi, "");
+                value = value.replace(/"/gi, "");
                 $("#" + renameTextID).removeAttr(attr);
             }
         }
