@@ -5855,11 +5855,12 @@ function formToJsonEachPro() {
         var patt = /(.*)-(.*)/;
         var proGnum = boxId.replace(patt, '$2');
         var selectedRow = $('#procGnum-' + proGnum).find('input');
+//        console.log(selectedRow)
         var selectedRowJson = formToJson(selectedRow, 'stringfy');
         formDataArr['procGnum-' + proGnum] = selectedRowJson;
     });
+//    console.log(formDataArr)
     return encodeURIComponent(JSON.stringify(formDataArr))
-
 }
 
 function checkNewRunStatus(){

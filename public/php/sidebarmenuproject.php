@@ -37,7 +37,7 @@ class sidemenufuncs {
             $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
         }
         $menuhtml.='<li class="treeview" '.$tooltip.'>';
-        $menuhtml.='<a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span>'.$showName.'</span>';
+        $menuhtml.='<a href="javascript:void(0)" draggable="false"><i  class="fa fa-circle-o"></i> <span>'.$showName.'</span>';
         $items = json_decode($db->getSubMenuFromSideBarProject($parentitem->{'id'}, $ownerID));
         $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
         $menuhtml.='<ul id="side-'.$parentitem->{'id'}.'" class="treeview-menu">';

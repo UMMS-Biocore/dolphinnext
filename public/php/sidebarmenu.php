@@ -93,7 +93,7 @@ $items = json_decode($db->getSubMenuFromSideBarPipe($parentitem->{'name'}, $owne
 if (count($items) > 0){
     $showLi= getShowLi($items);
     $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
-    $menuhtml.='<a href="" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
+    $menuhtml.='<a href="javascript:void(0)" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
     $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
     $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
     $menuhtml.= getSideMenuItem($items, "pipeline");
@@ -115,7 +115,7 @@ $items = json_decode($db->getSubMenuFromSideBar($parentitem->{'name'}, $ownerID)
 if (count($items) > 0){
     $showLi= getShowLi($items);
     $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
-    $menuhtml.='<a href="" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
+    $menuhtml.='<a href="javascript:void(0)" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
     $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
     $menuhtml.='<ul id="side-'.$parentitem->{'id'}.'" class="treeview-menu">';
     $menuhtml.= getSideMenuItem($items, "process");

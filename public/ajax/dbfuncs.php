@@ -2948,13 +2948,13 @@ class dbfuncs {
         return self::queryTable($sql);
     }
 
-    function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID) {
-        $sql = "INSERT INTO process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, publish, script_mode, script_mode_header, process_uuid, process_rev_uuid) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group', '$publish','$script_mode', '$script_mode_header', '$process_uuid', '$process_rev_uuid')";
+    function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID) {
+        $sql = "INSERT INTO process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, script_mode, script_mode_header, process_uuid, process_rev_uuid) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group','$script_mode', '$script_mode_header', '$process_uuid', '$process_rev_uuid')";
         return self::insTable($sql);
     }
 
-    function updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group, $perms, $publish, $script_mode, $script_mode_header, $ownerID) {
-        $sql = "UPDATE process SET name= '$name', process_gid='$process_gid', summary='$summary', process_group_id='$process_group_id', script='$script', script_header='$script_header',  script_footer='$script_footer', last_modified_user='$ownerID', group_id='$group', perms='$perms', publish='$publish', script_mode='$script_mode', date_modified = now(), script_mode_header='$script_mode_header' WHERE id = '$id'";
+    function updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group, $perms, $script_mode, $script_mode_header, $ownerID) {
+        $sql = "UPDATE process SET name= '$name', process_gid='$process_gid', summary='$summary', process_group_id='$process_group_id', script='$script', script_header='$script_header',  script_footer='$script_footer', last_modified_user='$ownerID', group_id='$group', perms='$perms', script_mode='$script_mode', date_modified = now(), script_mode_header='$script_mode_header' WHERE id = '$id'";
         return self::runSQL($sql);
     }
     function removeProcess($id) {
@@ -5310,7 +5310,7 @@ class dbfuncs {
         settype($pin_order, "integer");
         settype($id, 'integer');
 
-        
+
         $admin_settings = "";
         $admin_items = "";
         if ($id > 0){
@@ -5378,8 +5378,7 @@ class dbfuncs {
         $sql = "UPDATE biocorepipe_save SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publicly_searchable, $pipeline_group_id, $ownerID) {
-        $userRole = $this->getUserRoleVal($ownerID);
+    function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publicly_searchable, $pipeline_group_id, $userRole, $ownerID) {
         $admin_settings = "";
         if ($userRole == "admin"){
             $admin_settings = "publicly_searchable='$publicly_searchable', pin='$pin', pin_order='$pin_order',";

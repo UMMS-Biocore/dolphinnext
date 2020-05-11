@@ -135,7 +135,7 @@ folder instead of downloading all of them to reduce the load. -->
         .selectize-dropdown {
             width: 350px !important;
         }
-
+        
         /*    D3 tooltip*/
 
         div.tooltip-svg {

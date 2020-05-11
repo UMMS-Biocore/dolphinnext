@@ -413,6 +413,7 @@
                         </div>
                         <div class="form-horizontal">
                             <div id="proPermGroPubDiv">
+                            <label  class="col-sm-1 control-label"></label>
                                 <div class="col-sm-4">
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Permissions to View</label>
@@ -425,23 +426,12 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-sm-4">
+                                <div class="col-sm-5">
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Group Selection</label>
                                         <div class="col-sm-6">
                                             <select id="groupSelPro" class="fbtn btn-default form-control permscheck" name="group_id">
                                                 <option value="" selected>Choose group </option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-4">
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">Publish</label>
-                                        <div class="col-sm-3">
-                                            <select id="publishPro" class="fbtn btn-default form-control" name="publish">
-                                                <option value="0">No</option>
-                                                <option value="1">Yes</option>
                                             </select>
                                         </div>
                                     </div>

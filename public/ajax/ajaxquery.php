@@ -1701,20 +1701,18 @@ else if ($p=="saveProcess"){
     $rev_comment = isset($_REQUEST['rev_comment']) ? $_REQUEST['rev_comment'] : "";
     $group_id = $_REQUEST['group']; 
     $perms = $_REQUEST['perms']; 
-    $publish = $_REQUEST['publish']; 
     settype($id, 'integer');
     settype($rev_id, 'integer');
     settype($group_id, 'integer');
     settype($process_gid, "integer");
     settype($perms, "integer");
-    settype($publish, "integer");
     settype($process_group_id, "integer");
     if (!empty($id)) {
         $db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
         $db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
-        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $publish, $script_mode, $script_mode_header, $ownerID);
+        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $ownerID);
     } else {
-        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID);
+        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID);
         $idArray = json_decode($data,true);
         $new_pro_id = $idArray["id"];
         if (empty($id) && empty($process_uuid)) {
@@ -2183,6 +2181,7 @@ else if ($p=="saveAllPipeline")
 }
 else if ($p=="savePipelineDetails")
 {
+    $data = json_encode("");
     $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
     $group_id = $_REQUEST['group_id'];
     $nodesRaw = isset($_REQUEST['nodes']) ? $_REQUEST['nodes'] : "";
@@ -2193,11 +2192,20 @@ else if ($p=="savePipelineDetails")
     $pipeline_group_id = $_REQUEST['pipeline_group_id'];
     settype($group_id, 'integer');
     settype($pin_order, "integer");
-    $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publicly_searchable,$pipeline_group_id,$ownerID);
-    //update permissions
-    if (!empty($nodesRaw)){
-        $listPermsDenied = array();
-        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
+    $permCheck = 1;
+    $userRole = $db->getUserRoleVal($ownerID);
+    //don't allow to update if user not own the pipeline.
+    if ($userRole != "admin" && !empty($id)){
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    }
+    if (!empty($permCheck)){
+        $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publicly_searchable,$pipeline_group_id,$userRole, $ownerID);
+        //update permissions
+        if (!empty($nodesRaw)){
+            $listPermsDenied = array();
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
+        }
     }
 }
 else if ($p=="getSavedPipelines") {

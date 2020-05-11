@@ -572,7 +572,6 @@ function cleanProcessModal() {
     $('#mProRevSpan').css('display', "none");
     $('#mName').removeAttr('disabled');
     $('#permsPro').removeAttr('disabled');
-    $('#publishPro').removeAttr('disabled');
     var advOptProClass = $('#advOptPro').attr('class');
     if (advOptProClass !== "row collapse") {
         $('#mAdvProCollap').trigger("click");
@@ -779,9 +778,6 @@ function loadSelectedProcess(selProcessId) {
     if (showProcess.group_id !== "" && showProcess.group_id !== null) {
         $('#groupSelPro').val(showProcess.group_id);
     }
-    if (showProcess.publish !== "" && showProcess.publish !== null) {
-        $('#publishPro').val(showProcess.publish);
-    }
     if (showProcess.script_mode !== "" && showProcess.script_mode !== null) {
         $('#script_mode').val(showProcess.script_mode);
         $("#script_mode").trigger("change");
@@ -868,7 +864,6 @@ function loadSelectedProcess(selProcessId) {
         $("#permsPro option[value='63']").attr("disabled", false);
     } else if (processOwn === "1" && showProcess.perms === "63") {
         $('#permsPro').attr('disabled', "disabled");
-        $('#publishPro').attr('disabled', "disabled");
         //allow to create new revision by showing #createRevisionBut
         disableProModalPublic(selProcessId);
     } else if (processOwn === "0") {
@@ -2638,13 +2633,10 @@ $(document).ready(function () {
         event.preventDefault();
         var savetype = $('#mIdPro').val();
         $('#permsPro').removeAttr('disabled');
-        $('#publishPro').removeAttr('disabled');
         $("#permsPro option[value='63']").attr("disabled", false);
         var perms = $('#permsPro').val();
-        var publish = $('#publishPro').val();
         $("#permsPro option[value='63']").attr("disabled", true);
         $('#permsPro').attr('disabled', "disabled");
-        $('#publishPro').attr('disabled', "disabled");
         var group = $('#groupSelPro').val();
         if (!group) {
             group = "";
@@ -2667,7 +2659,6 @@ $(document).ready(function () {
             var script_mode_header = $('#script_mode_header').val();
             dataToProcess.push({ name: "perms", value: perms });
             dataToProcess.push({ name: "group", value: group });
-            dataToProcess.push({ name: "publish", value: publish });
             dataToProcess.push({ name: "process_gid", value: "" });
             dataToProcess.push({ name: "script", value: scripteditor });
             dataToProcess.push({ name: "script_mode", value: script_mode });
@@ -2738,7 +2729,6 @@ $(document).ready(function () {
                 dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
                 dataToProcess.push({ name: "perms", value: perms });
                 dataToProcess.push({ name: "group", value: group });
-                dataToProcess.push({ name: "publish", value: publish });
                 dataToProcess.push({ name: "process_gid", value: process_gid });
                 dataToProcess.push({ name: "process_uuid", value: process_uuid });
                 dataToProcess.push({ name: "script_header", value: scripteditorProHeader });
@@ -2809,7 +2799,6 @@ $(document).ready(function () {
                     dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
                     dataToProcess.push({ name: "perms", value: perms });
                     dataToProcess.push({ name: "group", value: group });
-                    dataToProcess.push({ name: "publish", value: publish });
                     dataToProcess.push({ name: "process_gid", value: process_gid });
                     dataToProcess.push({ name: "process_uuid", value: process_uuid });
                     dataToProcess.push({ name: "script_header", value: scripteditorProHeader });
@@ -2873,7 +2862,6 @@ $(document).ready(function () {
                         dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
                         dataToProcess.push({ name: "perms", value: "3" });
                         dataToProcess.push({ name: "group", value: group });
-                        dataToProcess.push({ name: "publish", value: "0" });
                         dataToProcess.push({ name: "rev_comment", value: revComment });
                         dataToProcess.push({ name: "rev_id", value: newRev_id });
                         dataToProcess.push({ name: "process_gid", value: process_gid });
