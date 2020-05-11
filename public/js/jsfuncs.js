@@ -55,6 +55,19 @@ toastr.options = {
     "hideMethod": "fadeOut"
 }
 
+
+// alternative of serializeArray function since it doesn't work when inputs are disabled.
+function serializeDisabledArray(arr){
+    var ret = [];
+    $.each(arr, function (i) {
+        var obj = {};
+        obj["name"] = arr[i].name;
+        obj["value"] = $(arr[i]).val(); 
+        ret.push(obj);
+    });
+    return ret;
+}
+
 //jquery clean css notation and add # sign to beginning
 function jqcss(myid) {
     return "#" + myid.replace(/(:|\.|\[|\]|,|=|@)/g, "\\$1");
@@ -71,13 +84,13 @@ function IsJsonString(str) {
 
 //formatSizeUnits(4000*1024)  // beacuse 4000 KB to convert MB 
 function formatSizeUnits(bytes){
-      if      (bytes>=1073741824) {bytes=(bytes/1073741824).toFixed(2)+' GB';}
-      else if (bytes>=1048576)    {bytes=(bytes/1048576).toFixed(2)+' MB';}
-      else if (bytes>=1024)       {bytes=(bytes/1024).toFixed(2)+' KB';}
-      else if (bytes>1)           {bytes=bytes+' bytes';}
-      else if (bytes==1)          {bytes=bytes+' byte';}
-      else                        {bytes='0 byte';}
-      return bytes;
+    if      (bytes>=1073741824) {bytes=(bytes/1073741824).toFixed(2)+' GB';}
+    else if (bytes>=1048576)    {bytes=(bytes/1048576).toFixed(2)+' MB';}
+    else if (bytes>=1024)       {bytes=(bytes/1024).toFixed(2)+' KB';}
+    else if (bytes>1)           {bytes=bytes+' bytes';}
+    else if (bytes==1)          {bytes=bytes+' byte';}
+    else                        {bytes='0 byte';}
+    return bytes;
 }
 
 // example:
