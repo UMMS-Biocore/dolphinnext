@@ -5663,13 +5663,13 @@ function filterKeys(obj, filter) {
 }
 
 function formToJson(rawFormData, stringify) {
-    var formDataSerial = rawFormData.serializeArray();
+    var formDataSerial = serializeDisabledArray(rawFormData);
     var formDataArr = {};
     $.each(formDataSerial, function (el) {
         formDataArr[formDataSerial[el].name] = formDataSerial[el].value;
     });
     if (stringify && stringify === 'stringify') {
-        return encodeURIComponent(JSON.stringify(formDataArr))
+        return encodeURIComponent(JSON.stringify(formDataArr));
     } else {
         return formDataArr;
     }
@@ -6073,6 +6073,7 @@ function saveRun(sucFunc, showToastr) {
             data: data,
             async: true,
             success: function (s) {
+                console.log("**** Saved")
                 if (showToastr){
                     toastr.info('All changes are saved.');
                 }
