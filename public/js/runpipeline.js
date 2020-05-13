@@ -5459,11 +5459,6 @@ $('a[href="#advancedTab"]').on('shown.bs.tab', function (e) {
     $("#runVerLog").trigger("change");
 });
 
-$(document).on('click', '#errorProPipe', function (e) {
-    $('.nav-tabs a[href="#logTab"]').tab('show');
-});
-
-
 window.saveNextLog = false;
 
 function callAsyncSaveNextLog(data) {
