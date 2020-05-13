@@ -240,7 +240,6 @@ function createSVG() {
     candidates = []
     saveNodes = []
 
-    createPipeRev = "";
     dupliPipe = false
     binding = false
     renameTextID = ""
@@ -6073,7 +6072,6 @@ function saveRun(sucFunc, showToastr) {
             data: data,
             async: true,
             success: function (s) {
-                console.log("**** Saved")
                 if (showToastr){
                     toastr.info('All changes are saved.');
                 }

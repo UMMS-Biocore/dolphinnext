@@ -2378,17 +2378,16 @@ class dbfuncs {
     function getSubMenuFromSideBar($parent, $ownerID){
         $admin_only = "";
         $admin_only_group_by = "";
-        if ($ownerID != ''){
-            $userRoleArr = json_decode($this->getUserRole($ownerID));
-            $userRole = $userRoleArr[0]->{'role'};
-            $where_pr = "pr.deleted=0 AND (pr.owner_id='$ownerID' OR pr.perms = 63 OR (ug.u_id ='$ownerID' and pr.perms = 15))";
+        if (!empty($ownerID)){
+            $userRole = $this->getUserRoleVal($ownerID);
+            $where_pr = "pr.deleted=0 AND (pr.owner_id='$ownerID' OR (pr.perms = 63 AND pr.publicly_searchable = 'true') OR (ug.u_id ='$ownerID' and pr.perms = 15))";
             if ($userRole == "admin"){
-                $admin_only = ", p.owner_id, p.publish, MIN(IF((p.owner_id='$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)),0,1)) as admin_only";
+                $admin_only = ", p.owner_id, p.publish, MIN(IF((p.owner_id='$ownerID' OR (p.perms = 63 AND p.publicly_searchable = 'true') OR (ug.u_id ='$ownerID' and p.perms = 15)),0,1)) as admin_only";
                 $where_pr = "pr.deleted=0";
                 $admin_only_group_by = " GROUP BY p.id";
             }
         } else {
-            $where_pr = "pr.deleted=0 AND pr.perms = 63";
+            $where_pr = "pr.deleted=0 AND (pr.perms = 63 AND pr.publicly_searchable = 'true') ";
         }
         $sql="SELECT DISTINCT p.id, p.name, p.perms, p.group_id $admin_only
               FROM process p
@@ -2405,21 +2404,20 @@ class dbfuncs {
 
         return self::queryTable($sql);
     }
-    //new
+    // get pipelines belong to pipeline_group name=$parent
     function getSubMenuFromSideBarPipe($parent, $ownerID){
         $admin_only = "";
         $admin_only_group_by = "";
-        if ($ownerID != ''){
-            $userRoleArr = json_decode($this->getUserRole($ownerID));
-            $userRole = $userRoleArr[0]->{'role'};
-            $where_pr = "pr.deleted=0 AND (pr.owner_id='$ownerID' OR pr.perms = 63 OR (ug.u_id ='$ownerID' and pr.perms = 15))";
+        if (!empty($ownerID)){
+            $userRole = $this->getUserRoleVal($ownerID);
+            $where_pr = "pr.deleted=0 AND (pr.owner_id='$ownerID' OR (pr.perms = 63 AND pr.publicly_searchable = 'true') OR (ug.u_id ='$ownerID' and pr.perms = 15))";
             if ($userRole == "admin"){
-                $admin_only = ", p.owner_id, p.publish, MIN(IF((p.owner_id='$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)),0,1)) as admin_only";
+                $admin_only = ", p.owner_id, p.publish, MIN(IF((p.owner_id='$ownerID' OR (p.publicly_searchable = 'true' AND p.perms = 63) OR (ug.u_id ='$ownerID' and p.perms = 15)),0,1)) as admin_only";
                 $where_pr = "pr.deleted=0";
                 $admin_only_group_by = " GROUP BY p.id";
             }
         } else {
-            $where_pr = "pr.deleted=0 AND pr.perms = 63";
+            $where_pr = "pr.deleted=0 AND (pr.publicly_searchable = 'true' AND pr.perms = 63)";
         }
         $sql="SELECT DISTINCT p.id, p.name, p.perms, p.group_id, p.pin $admin_only
               FROM biocorepipe_save p
@@ -2438,7 +2436,7 @@ class dbfuncs {
 
 
     function getSubMenuFromSideBarProject($parent, $ownerID){
-        $where = "pp.deleted = 0 AND (pp.project_id='$parent' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15)))";
+        $where = "pp.deleted = 0 AND (pp.project_id='$parent' AND (pp.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and pp.perms = 15)))";
         $sql="SELECT DISTINCT pp.id, pp.name, pj.owner_id, pp.project_id
               FROM project_pipeline pp
               LEFT JOIN user_group ug ON pp.group_id=ug.g_id
@@ -4314,13 +4312,7 @@ class dbfuncs {
                     WHERE id='$old_id'";
         return self::insTable($sql);
     }
-    function createProcessRev($new_process_gid, $rev_comment, $rev_id, $old_id, $ownerID) {
-        $sql = "INSERT INTO process(process_uuid, process_rev_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid, rev_comment)
-                    SELECT process_uuid, '', process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, '$ownerID', '3', now(), now(),'$ownerID', '$rev_id', '$new_process_gid', '$rev_comment'
-                    FROM process
-                    WHERE id='$old_id'";
-        return self::insTable($sql);
-    }
+    
     function duplicateProcessParameter($new_pro_id, $old_id, $ownerID){
         $sql = "INSERT INTO process_parameter(process_id, parameter_id, type, sname, operator, closure, reg_ex, optional, owner_id, perms, date_created, date_modified, last_modified_user)
                     SELECT '$new_pro_id', parameter_id, type, sname, operator, closure, reg_ex, optional, '$ownerID', '3', now(), now(),'$ownerID'
@@ -4764,7 +4756,13 @@ class dbfuncs {
     function updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID) {
         error_log("updated pipeline_id:$id, perms:$perms, group_id:$group_id");
         $sql = "UPDATE biocorepipe_save pi
-                            SET pi.group_id='$group_id', pi.perms='$perms', pi.date_modified=now(), pi.last_modified_user ='$ownerID'  WHERE pi.deleted=0 AND pi.id = '$id'";
+                SET pi.group_id='$group_id', pi.perms='$perms', pi.date_modified=now(), pi.last_modified_user ='$ownerID'  WHERE pi.deleted=0 AND pi.id = '$id'";
+        return self::runSQL($sql);
+    }
+
+    //controlled by admin
+    function updatePubliclySearchableById($id, $table, $publicly_searchable, $ownerID) {
+        $sql = "UPDATE $table SET publicly_searchable='$publicly_searchable',  date_modified=now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
@@ -4920,8 +4918,8 @@ class dbfuncs {
             $ownCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
             list($permCheck,$warnName) = $this->checkUserPermission($table, $id, $ownerID, "w");
             list($checkUsed,$warn) = $this->checkUsed($table, $warnName, $id, $ownerID);
-            //error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
-            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms) && !empty($ownCheck) && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms>=$curr_perms)) ){
+//            error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
+            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms || ($perms == $curr_perms && empty($curr_group_id) && !empty($group_id))) && !empty($ownCheck) && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms>=$curr_perms)) ){
                 if (!preg_match("/dry-run/i", $type)){
                     if ($table == "biocorepipe_save"){
                         $this->updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID);
@@ -4954,7 +4952,21 @@ class dbfuncs {
         return $listPermsDenied;
     }
 
-    function recursivePermUpdtPipeline($type, $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID) {
+    function pubSearchUpdtModule($table, $id, $publicly_searchable, $curr_publicly_searchable, $ownerID){
+        // check if current value of the publicly_searchable is the same as expected value
+        if ($curr_publicly_searchable != $publicly_searchable){
+            list($checkUsed,$warn) = $this->checkUsed($table, "", $id, $ownerID);
+            // only allow change from true to false when it's not used by others.
+            if (empty($checkUsed) || $publicly_searchable == "true"){
+                if ($table == "biocorepipe_save" || $table == "process"){
+                    $this->updatePubliclySearchableById($id, $table, $publicly_searchable, $ownerID);
+                } 
+            }
+
+        }
+    }
+
+    function recursivePermUpdtPipeline($type, $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, $publicly_searchable) {
         settype($pipeline_id, "integer");
         $pipe = $this->loadPipeline($pipeline_id,$ownerID);
         $pipeData = json_decode($pipe,true);
@@ -4963,7 +4975,11 @@ class dbfuncs {
             $pipe_group_id = $pipeData[0]["group_id"];
             $pipe_perms = $pipeData[0]["perms"];
             $pipe_owner_id = $pipeData[0]["owner_id"];
+            $pipe_publicly_searchable = $pipeData[0]["publicly_searchable"];
             $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "biocorepipe_save", $pipeline_id, $pipe_group_id, $pipe_perms, $group_id, $perms, $pipe_owner_id, $ownerID);
+            if ($type == "default"){
+                $this->pubSearchUpdtModule("biocorepipe_save", $pipeline_id, $publicly_searchable, $pipe_publicly_searchable, $ownerID);
+            }
             if (!empty($nodes)){
                 foreach ($nodes as $item):
                 if ($item[2] !== "inPro" && $item[2] !== "outPro" ){
@@ -4971,7 +4987,7 @@ class dbfuncs {
                     if (preg_match("/p(.*)/", $item[2], $matches)){
                         $pipeModId = $matches[1];
                         if (!empty($pipeModId)){
-                            $listPermsDenied = $this->recursivePermUpdtPipeline($type, $listPermsDenied, $pipeModId, $group_id, $perms, $ownerID);
+                            $listPermsDenied = $this->recursivePermUpdtPipeline($type, $listPermsDenied, $pipeModId, $group_id, $perms, $ownerID, $publicly_searchable);
                         }
                         //processes
                     } else {
@@ -4981,7 +4997,11 @@ class dbfuncs {
                             $pro_group_id = $process_data[0]["group_id"];
                             $pro_perms = $process_data[0]["perms"];
                             $pro_owner_id = $process_data[0]["owner_id"];
+                            $pro_publicly_searchable = $process_data[0]["publicly_searchable"];
                             $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "process", $proId, $pro_group_id, $pro_perms, $group_id, $perms, $pro_owner_id, $ownerID);
+                            if ($type == "default"){
+                                $this->pubSearchUpdtModule("process", $proId, $publicly_searchable, $pro_publicly_searchable, $ownerID);
+                            }
                         }
                     }
                 }

@@ -1327,31 +1327,7 @@ class ajaxQueryTest extends TestCase
 		$this->assertEquals(json_decode($data)[0]->sname, 'filelist.txt');
 		ob_end_clean();
 	}
-    /**
-     * @depends testduplicateProcess
-     */
-    public function testcreateProcessRev() {
-		ob_start();
-		$_REQUEST['p'] = 'createProcessRev';
-		$_REQUEST['rev_comment'] = "test_comment";
-		$_REQUEST['rev_id'] = "1";
-		$_REQUEST['process_gid'] = "1";
-		$_REQUEST['id'] = "1";
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)->id,'3');
-        //check duplicated process parameters
-        $_REQUEST['p'] = 'getInputsPP';
-		$_REQUEST['process_id'] = '3';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->id, '6');
-		$this->assertEquals(json_decode($data)[0]->sname, 'test_input');
-        $_REQUEST['p'] = 'getOutputsPP';
-		$_REQUEST['process_id'] = '3';
-		include('ajaxquery.php');
-		$this->assertEquals(json_decode($data)[0]->id, '7');
-		$this->assertEquals(json_decode($data)[0]->sname, 'filelist.txt');
-		ob_end_clean();
-	}
+    
     /**
      * @depends testInsertProPipeInput
      */

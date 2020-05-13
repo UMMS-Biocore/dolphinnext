@@ -5,15 +5,12 @@
             <div id="pipeGroupFloatLeft" style="float:left;">
                 <i class="fa fa-spinner " style="margin-left:0px; margin-right:0px;"></i> Pipeline:
                 <input class="box-dynamic width-dynamic" type="text" pipelineid="<?php if ($id != "0") {echo $id;}?>" name="pipelineTitle" autocomplete="off" placeholder="Enter Pipeline Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="pipeline-title"><span class="width-dynamic" style="display:none"></span></input>
-                <button type="submit" id="savePipeline" class="btn" name="button" data-backdrop="false" onclick="save()" style="background:none; margin:0px; padding:0px;">
-                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Pipeline">
-                        <i class="fa fa-save" style="font-size: 17px;"></i></a></button>
-                <button type="button" id="dupPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;">
-                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Duplicate Pipeline">
-                        <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
-                <button type="submit" id="createRevPipeIcon" class="btn" name="button" data-backdrop="false" onclick="createRevPipeline()" style=" background:none; margin:0px; padding:0px; display:none;">
-                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Create Revision">
-                        <i class="fa fa-chain" style="font-size: 16px;"></i></a></button>
+                
+                <button type="submit" id="savePipeline" class="btn" data-backdrop="false" onclick="save(&#34;default&#34;)" style="background:none; margin:0px; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Pipeline"><i class="fa fa-save" style="font-size: 17px;"></i></a></button>
+                
+                <button type="button" id="newRevPipeline" class="btn" data-backdrop="false" onclick="save(&#34;rev&#34;)" style="background:none; margin:0px; padding:0px;"><a  data-toggle="tooltip" data-placement="bottom" data-original-title="Create Revision"><i class="glyphicon glyphicon-open-file" style="font-size: 16px; padding-top:3px;"></i></a></button>
+            
+                <button type="button" id="dupPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;"> <a data-toggle="tooltip" data-placement="bottom" data-original-title="Duplicate Pipeline"> <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
 
                 <button type="button" id="downPipeline" class="btn" name="button" data-backdrop="false" style="background:none;  margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Pipeline">
@@ -232,7 +229,7 @@
                         <select id="permsPipe" class="fbtn btn-default form-control permscheck" name="perms">
                             <option value="3" selected="">Only me </option>
                             <option value="15">Only my group</option>
-                            <option disabled value="63">Everyone </option>
+                            <option value="63">Everyone </option>
                         </select>
                     </div>
                 </div>
@@ -244,7 +241,7 @@
                         </select>
                     </div>
                 </div>
-<!--
+                <!--
                 <div id="publishPipeDiv" class="col-md-4">
                     <div class="form-group">
                         <label class="col-sm-12 control-label">Publish</label>
@@ -258,18 +255,15 @@
                 <div id="pipeMenuGroupBottom" class="col-md-4" style="display:none; margin-top:10px; margin-bottom:20px;">
                 </div>
 
-                <div id="pinMainPage" style="display:none; margin-top:10px; margin-bottom:20px;" class="col-md-4">
-                    <div class="form-group">
-                        <label>Pin to Main Page </label>
-                        <input id="pin" type="checkbox">
-                        <label> Order </label>
-                        <input id="pin_order">
-                    </div>
-                </div>
-                <div id="publiclySearchDiv" style="display:none; margin-top:10px; margin-bottom:20px;" class="col-md-4">
+                <div id="pinMainPage" style="display:none; margin-top:10px; margin-bottom:20px;" class="col-md-8">
                     <div class="form-group">
                         <label>Publicly Searchable </label>
                         <input id="publicly_searchable" type="checkbox">
+                        <label style="margin-left:10px;">Pin to Main Page </label>
+                        <input id="pin" type="checkbox">
+                        <label style="margin-left:10px;"> Order </label>
+                        <input maxlength="4" size="4" id="pin_order">
+
                     </div>
                 </div>
 

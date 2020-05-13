@@ -581,6 +581,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <select id="permsRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="perms">
             <option value="3" selected>Only me </option>
             <option value="15">Only my group</option>
+            <option value="63">Everyone</option>
         </select>
     </div>
 </div>

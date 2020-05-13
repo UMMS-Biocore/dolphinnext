@@ -1,3 +1,4 @@
+<!--  when $np is not exist (main page), load this sidemenu}-->
 <?php
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";

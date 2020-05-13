@@ -1842,17 +1842,6 @@ else if ($p=="duplicateProcess"){
     $db->getUUIDAPI($data, "process", $new_pro_id);
 
 }
-else if ($p=="createProcessRev"){
-    $rev_comment = $_REQUEST['rev_comment'];
-    $rev_id = $_REQUEST['rev_id'];
-    $new_process_gid = $_REQUEST['process_gid'];
-    $old_id = $_REQUEST['id'];
-    $data = $db->createProcessRev($new_process_gid, $rev_comment, $rev_id, $old_id, $ownerID);
-    $idArray = json_decode($data,true);
-    $new_pro_id = $idArray["id"];
-    $db->duplicateProcessParameter($new_pro_id, $old_id, $ownerID);
-    $db->getUUIDAPI($data, "process_rev", $new_pro_id);
-}
 else if ($p=="saveProjectPipeline"){
     $pipeline_id = $_REQUEST['pipeline_id'];
     $project_id = $_REQUEST['project_id'];
@@ -1894,7 +1883,7 @@ else if ($p=="saveProjectPipeline"){
         $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
         $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
         $listPermsDenied = array();
-        $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+        $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null);
         $listPermsDenied = $db->checkPermUpdtProject("greaterOrEqual", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
         $data = json_encode($listPermsDenied);  
     } else {
@@ -2008,7 +1997,7 @@ else if ($p=="checkPermUpdtPipeline"){
     settype($group_id, 'integer');
     settype($perms, 'integer');
     $listPermsDenied = array();
-    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run-strict", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null);
     $data = json_encode($listPermsDenied);
 }
 else if ($p=="checkPermUpdtRun"){
@@ -2019,7 +2008,7 @@ else if ($p=="checkPermUpdtRun"){
     settype($group_id, 'integer');
     settype($perms, 'integer');
     $listPermsDenied = array();
-    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null);
     $listPermsDenied = $db->checkPermUpdtProject("dry-run", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
     $data = json_encode($listPermsDenied);
 }
@@ -2145,6 +2134,7 @@ else if ($p=="saveAllPipeline")
     $group_id = $newObj->{"group_id"};
     settype($group_id, 'integer');
     $perms = $newObj->{"perms"};
+    $publicly_searchable = $newObj->{"publicly_searchable"};
     $permCheck = 1;
     $userRole = $db->getUserRoleVal($ownerID);
     //don't allow to update if user not own the pipeline.
@@ -2159,7 +2149,7 @@ else if ($p=="saveAllPipeline")
     if (!empty($id)){
         if (!empty($permCheck)){
             $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable);
             $data = json_encode($listPermsDenied);
         }
         //insert
@@ -2204,7 +2194,7 @@ else if ($p=="savePipelineDetails")
         //update permissions
         if (!empty($nodesRaw)){
             $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable);
         }
     }
 }

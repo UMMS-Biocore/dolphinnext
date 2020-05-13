@@ -702,7 +702,7 @@ function checkImport(optObj) {
                     window.importObj[rowID]["commandProPara"] = null;
 
                 } else if (status === "warnUser") {
-                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported processes. Please proceed to view conflict and save on existing revision"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported processes. Please proceed to view conflict and overwrite existing version"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
                     //process
                     sendJSONprocess.rev_id = checkUUID.process_rev_uuid.rev_id;
                     sendJSONprocess.process_gid = checkUUID.process_rev_uuid.process_gid;
@@ -773,7 +773,7 @@ function checkImport(optObj) {
                     window.importObj[fileId].dict[type][importJSON.id] = pipeUUID.pipeline_rev_uuid.id;
 
                 } else if (status === "warnUser") {
-                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported pipelines. Please proceed to view conflict and save on existing revision"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported pipelines. Please proceed to view conflict and overwrite existing version."><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
                     sendJSONpipeline.rev_id = pipeUUID.pipeline_rev_uuid.rev_id;
                     sendJSONpipeline.pipeline_gid = pipeUUID.pipeline_rev_uuid.pipeline_gid;
                     sendJSONpipeline.id = pipeUUID.pipeline_rev_uuid.id;
