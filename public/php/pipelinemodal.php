@@ -413,7 +413,7 @@
                         </div>
                         <div class="form-horizontal">
                             <div id="proPermGroPubDiv">
-                            <label  class="col-sm-1 control-label"></label>
+                                <label class="col-sm-1 control-label"></label>
                                 <div class="col-sm-4">
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Permissions to View</label>
@@ -445,10 +445,10 @@
             </div>
             <div class="modal-footer">
                 <div>
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" data-container="body" data-toggle="tooltip" data-placement="top" title="Use the revision of the process in the workflow" class="btn btn-info" style="display:none" id="selectProcess">Select Revision </button>
-                <button type="button" class="btn btn-primary saveprocess" id="saveprocess">Save changes</button>
-                <button type="button" class="btn btn-primary saveprocess" style="display:none" id="createRevisionBut" >Create Revision</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" data-container="body" data-toggle="tooltip" data-placement="top" title="Use the revision of the process in the workflow" class="btn btn-info" style="display:none" id="selectProcess">Select Revision </button>
+                    <button type="button" class="btn btn-primary saveprocess" id="saveprocess">Save changes</button>
+                    <button type="button" class="btn btn-primary saveprocess" style="display:none" id="createRevisionBut">Create Revision</button>
                 </div>
             </div>
         </div>
@@ -939,6 +939,31 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="releaseModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close cancelReleaseDateBut" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Release Date</h4>
+            </div>
+            <div class="modal-body">
+                <p id="releaseModalText" >Text</p>
+                <label class="col-md-3" style="padding-top:5px;" >Release Date:</label>
+                <div id="datePipeDiv" class="col-md-6 input-group date">
+                    <input id="datePipeInput" type="text" class="form-control">
+                    <div class="input-group-addon">
+                        <span class="fa fa-calendar"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default cancelReleaseDateBut" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="setReleaseDateBut">Set Release Date</button>
             </div>
         </div>
     </div>

@@ -1644,6 +1644,21 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 }
                 pipelineOwn = pData[0].own;
                 pipelinePerm = pData[0].perms;
+                if (pData[0].release_date){
+                    $('#releaseVal').attr("date",pData[0].release_date);
+                    var today = new Date( getCurrDate())
+                    var releaseDate=new Date(pData[0].release_date);
+                    if (today <= releaseDate){
+                        $('#releaseVal').text(pData[0].release_date);
+                    } else {
+                        $('#releaseVal').text("");
+                        $('#releaseValFinal').text(pData[0].release_date);
+                        
+                    }
+                    
+                }
+                toogleReleaseDiv("pipeline",pipelinePerm, pipelineOwn);
+
                 // if user not own it, cannot change or delete pipeline
                 if (pipelineOwn === "0") {
                     $('#delPipeline').remove();
@@ -1993,6 +2008,7 @@ $(document).ready(function () {
         loadPipelineDetails(pipeline_id, usRole);
 
     } else { // fresh page
+        toogleReleaseDiv("pipeline",3, null)
         $('#pipeMenuGroupTop').css('display', 'inline')
         if (usRole == "admin") {
             $('#importPipeline').css('display', 'inline');
@@ -2022,6 +2038,45 @@ $(document).ready(function () {
     //Make modal draggable    
     $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amazonTable, #googleTable' });
 
+    $('#datePipeDiv').datepicker({
+        format: 'mm/dd/yyyy',
+        startDate: '0',
+        autoclose:true
+    });
+    
+    $('#setReleasePipe').on('click',  function(e) {
+        e.preventDefault();
+        $("#releaseModalText").html("If you want to limit the access of the pipeline until certain date, you can set a release date below. We will create temporary link for your pipeline and only people who have the link could view the pipeline.");
+        $('#datePipeDiv').data('datepicker').setDate(null);
+        $('#releaseModal').modal("show");
+    });
+
+    $('#releaseModal').on('hide.bs.modal',  function(e) {
+        var currRelDate = $('#releaseVal').attr("date");
+        if (!currRelDate){
+            var today = getCurrDate()
+            $('#releaseVal').attr("date", today);
+            var sucFunc = function (){
+                $('#releaseVal').text(today);
+                $('#releaseModal').modal("hide");
+            }
+            saveDetails(sucFunc);
+        }
+    });
+    
+    $('#setReleaseDateBut').on('click',  function(e) {
+        var date = $('#datePipeInput').val();
+        if (!date){
+            showInfoModal("#infoMod", "#infoModText", "Please enter the release date.")
+        } else {
+            $('#releaseVal').attr("date", date);
+            var sucFunc = function (){
+                $('#releaseVal').text(date);
+                $('#releaseModal').modal("hide");
+            }
+            saveDetails(sucFunc);
+        }
+    });
 
 
     stateModule = (function () {

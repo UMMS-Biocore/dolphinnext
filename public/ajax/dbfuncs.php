@@ -2159,6 +2159,11 @@ class dbfuncs {
     }
 
     function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
+        $curr_ownerID= $this->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
+        $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (empty($permCheck)){
+            exit();
+        }
         // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted, Manual
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
         $out = array();
@@ -3347,6 +3352,11 @@ class dbfuncs {
     }
     //get maximum of $project_pipeline_id
     function updateRunLog($project_pipeline_id, $status, $duration, $ownerID) {
+        $curr_ownerID= $this->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
+        $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (empty($permCheck)){
+            exit();
+        }
         $sql = "UPDATE run_log SET run_status='$status', duration='$duration', date_ended= now(), date_modified= now(), last_modified_user ='$ownerID'  WHERE deleted=0 AND project_pipeline_id = '$project_pipeline_id' ORDER BY id DESC LIMIT 1";
         return self::runSQL($sql);
     }
@@ -3400,6 +3410,11 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     function updateRunStatus($project_pipeline_id, $status, $ownerID) {
+        $curr_ownerID= $this->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
+        $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (empty($permCheck)){
+            exit();
+        }
         $sql = "UPDATE run SET run_status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
@@ -4249,13 +4264,13 @@ class dbfuncs {
                       INNER JOIN biocorepipe_save pip ON pip.id = pp.pipeline_id
                       INNER JOIN users u ON pp.owner_id = u.id
                       LEFT JOIN user_group ug ON pp.group_id=ug.g_id
-                      WHERE pp.deleted = 0 AND pip.deleted = 0 AND pp.project_id = '$project_id' AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
+                      WHERE pp.deleted = 0 AND pip.deleted = 0 AND pp.project_id = '$project_id' AND (pp.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and pp.perms = 15))";
                 //for run status page 
             } else {
                 if ($userRole == "admin"){
                     $where = " WHERE pp.deleted = 0";
                 } else {
-                    $where = " WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
+                    $where = " WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and pp.perms = 15))";
                 }
                 $sql = "SELECT DISTINCT rr.date_created as run_date_created, rr.run_status,  b.project_pipeline_id, b.name, b.summary, b.output_dir, b.run_log_id, b.pp_date_created, pip.name as pipeline_name, pip.rev_id as pipeline_rev, pip.id as pipeline_id, u.email, u.username, b.owner_id, b.own
                     FROM run_log rr
@@ -4312,7 +4327,7 @@ class dbfuncs {
                     WHERE id='$old_id'";
         return self::insTable($sql);
     }
-    
+
     function duplicateProcessParameter($new_pro_id, $old_id, $ownerID){
         $sql = "INSERT INTO process_parameter(process_id, parameter_id, type, sname, operator, closure, reg_ex, optional, owner_id, perms, date_created, date_modified, last_modified_user)
                     SELECT '$new_pro_id', parameter_id, type, sname, operator, closure, reg_ex, optional, '$ownerID', '3', now(), now(),'$ownerID'
@@ -4733,6 +4748,7 @@ class dbfuncs {
                             WHERE pp.process_id = '$id' and pp.type = 'output'";
         return self::queryTable($sql);
     }
+
     //update if user owns the project
     function updateProjectGroupPerm($id, $group_id, $perms, $ownerID) {
         $sql = "UPDATE project p
@@ -4766,7 +4782,10 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-
+    function updateReleaseDateById($id, $table, $release_date, $ownerID) {
+        $sql = "UPDATE $table SET release_date='$release_date',  date_modified=now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
 
     //3 -> user r+w
     //11-> user r+w, group r
@@ -4918,7 +4937,7 @@ class dbfuncs {
             $ownCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
             list($permCheck,$warnName) = $this->checkUserPermission($table, $id, $ownerID, "w");
             list($checkUsed,$warn) = $this->checkUsed($table, $warnName, $id, $ownerID);
-//            error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
+            //            error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
             if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms || ($perms == $curr_perms && empty($curr_group_id) && !empty($group_id))) && !empty($ownCheck) && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms>=$curr_perms)) ){
                 if (!preg_match("/dry-run/i", $type)){
                     if ($table == "biocorepipe_save"){
@@ -4966,7 +4985,16 @@ class dbfuncs {
         }
     }
 
-    function recursivePermUpdtPipeline($type, $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, $publicly_searchable) {
+    function releaseDateUpdtModule($table, $id, $release_date, $pipe_release_date, $ownerID){
+        // check if current value of the $release_date is the same as expected value
+        if ($pipe_release_date != $release_date){
+            if ($table == "biocorepipe_save"){
+                $this->updateReleaseDateById($id, $table, $release_date, $ownerID);
+            } 
+        }
+    }
+
+    function recursivePermUpdtPipeline($type, $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date) {
         settype($pipeline_id, "integer");
         $pipe = $this->loadPipeline($pipeline_id,$ownerID);
         $pipeData = json_decode($pipe,true);
@@ -4976,9 +5004,11 @@ class dbfuncs {
             $pipe_perms = $pipeData[0]["perms"];
             $pipe_owner_id = $pipeData[0]["owner_id"];
             $pipe_publicly_searchable = $pipeData[0]["publicly_searchable"];
+            $pipe_release_date = $pipeData[0]["release_date"];
             $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "biocorepipe_save", $pipeline_id, $pipe_group_id, $pipe_perms, $group_id, $perms, $pipe_owner_id, $ownerID);
             if ($type == "default"){
                 $this->pubSearchUpdtModule("biocorepipe_save", $pipeline_id, $publicly_searchable, $pipe_publicly_searchable, $ownerID);
+                $this->releaseDateUpdtModule("biocorepipe_save", $pipeline_id, $release_date, $pipe_release_date, $ownerID);
             }
             if (!empty($nodes)){
                 foreach ($nodes as $item):
@@ -4987,7 +5017,7 @@ class dbfuncs {
                     if (preg_match("/p(.*)/", $item[2], $matches)){
                         $pipeModId = $matches[1];
                         if (!empty($pipeModId)){
-                            $listPermsDenied = $this->recursivePermUpdtPipeline($type, $listPermsDenied, $pipeModId, $group_id, $perms, $ownerID, $publicly_searchable);
+                            $listPermsDenied = $this->recursivePermUpdtPipeline($type, $listPermsDenied, $pipeModId, $group_id, $perms, $ownerID, $publicly_searchable, $release_date);
                         }
                         //processes
                     } else {
@@ -5398,13 +5428,13 @@ class dbfuncs {
         $sql = "UPDATE biocorepipe_save SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publicly_searchable, $pipeline_group_id, $userRole, $ownerID) {
+    function savePipelineDetails($id, $summary,$group_id, $perms, $pin, $pin_order, $publicly_searchable, $pipeline_group_id, $userRole, $release_date, $ownerID) {
         $admin_settings = "";
         if ($userRole == "admin"){
             $admin_settings = "publicly_searchable='$publicly_searchable', pin='$pin', pin_order='$pin_order',";
         }
 
-        $sql = "UPDATE biocorepipe_save SET summary='$summary', group_id='$group_id',  perms='$perms', $admin_settings last_modified_user = '$ownerID', pipeline_group_id='$pipeline_group_id'  WHERE id = '$id'";
+        $sql = "UPDATE biocorepipe_save SET summary='$summary', group_id='$group_id',  perms='$perms', $admin_settings last_modified_user = '$ownerID', pipeline_group_id='$pipeline_group_id', release_date=".($release_date==NULL ? "NULL" : "'$release_date'")." WHERE id = '$id'";
         return self::runSQL($sql);
     }
     function exportPipeline($id, $ownerID, $type, $layer) {

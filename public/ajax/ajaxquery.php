@@ -37,33 +37,42 @@ if ($p=="saveRun"){
     $runType = $_REQUEST['runType'];
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
-    $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
-    $db->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
-    $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
-    $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
-    if (empty($attempt) || $attempt == 0 || $attempt == "0"){
-        $attempt = "0";
+    $permCheck = 1;
+    //don't allow to update if user not own the project_pipeline.
+    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
+    $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    if (!empty($permCheck)){
+        $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
+        $db->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
+        $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
+        $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
+        if (empty($attempt) || $attempt == 0 || $attempt == "0"){
+            $attempt = "0";
+        }
+        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        $db->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$ownerID);
+        $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
+        list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
+        $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+        $getCloudConfigFileDir = $db->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
+        //create file and folders
+        list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
+        if ($manualRun == "true"){
+            $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
+        } else {
+            //run the script in remote machine
+            $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
+            //activate autoshutdown feature for cloud
+            if  ($profileType == "amazon" || $profileType == "google"){
+                $autoshutdown_active = "true";
+                $db->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
+                $db->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
+            } 
+        }
     }
-    $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-    $db->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$ownerID);
-    $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
-    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
-    $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
-    $getCloudConfigFileDir = $db->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
-    //create file and folders
-    list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
-    if ($manualRun == "true"){
-        $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
-    } else {
-        //run the script in remote machine
-        $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
-        //activate autoshutdown feature for cloud
-        if  ($profileType == "amazon" || $profileType == "google"){
-            $autoshutdown_active = "true";
-            $db->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
-            $db->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
-        } 
-    }
+
+
+
 
 }
 else if ($p=="updateRunAttemptLog") {
@@ -624,6 +633,18 @@ else if ($p=="updateProjectPipelineWithOldRun"){
     $run_log_uuid = $_REQUEST['run_log_uuid'];
     //only use when newrun is exist
     $data = $db -> updateProjectPipelineWithOldRun($project_pipeline_id,$run_log_uuid,$ownerID);
+}
+else if ($p=="updateReleaseDate"){
+    $type = $_REQUEST['type'];
+    $permCheck = 0;
+    //don't allow to update if user not own the pipeline.
+    if ($type == "pipeline" && !empty($id)){
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    }
+    if (!empty($permCheck)){
+        $data = $db -> updateReleaseDate($id,$type,$ownerID);
+    }
 }
 else if ($p=="getRunLog"){
     $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
@@ -1880,13 +1901,20 @@ else if ($p=="saveProjectPipeline"){
     settype($amazon_cre_id, 'integer');
     settype($google_cre_id, 'integer');
     if (!empty($id)) {
-        $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
-        $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
-        $listPermsDenied = array();
-        $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null);
-        $listPermsDenied = $db->checkPermUpdtProject("greaterOrEqual", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
-        $data = json_encode($listPermsDenied);  
+        //don't allow to update if user not own the project_pipeline.
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (!empty($permCheck)){
+            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
+            $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
+            $listPermsDenied = array();
+            $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
+            $listPermsDenied = $db->checkPermUpdtProject("greaterOrEqual", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
+            $data = json_encode($listPermsDenied);  
+        }
     } else {
+        error_log("3");
+
         $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $ownerID);
     }
 }
@@ -1997,7 +2025,7 @@ else if ($p=="checkPermUpdtPipeline"){
     settype($group_id, 'integer');
     settype($perms, 'integer');
     $listPermsDenied = array();
-    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run-strict", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null);
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run-strict", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
     $data = json_encode($listPermsDenied);
 }
 else if ($p=="checkPermUpdtRun"){
@@ -2008,7 +2036,7 @@ else if ($p=="checkPermUpdtRun"){
     settype($group_id, 'integer');
     settype($perms, 'integer');
     $listPermsDenied = array();
-    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null);
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
     $listPermsDenied = $db->checkPermUpdtProject("dry-run", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
     $data = json_encode($listPermsDenied);
 }
@@ -2135,6 +2163,10 @@ else if ($p=="saveAllPipeline")
     settype($group_id, 'integer');
     $perms = $newObj->{"perms"};
     $publicly_searchable = $newObj->{"publicly_searchable"};
+    $release_date = $newObj->{"release_date"};
+    if (!empty($release_date)){
+        $release_date = date('Y-m-d', strtotime($release_date));
+    }
     $permCheck = 1;
     $userRole = $db->getUserRoleVal($ownerID);
     //don't allow to update if user not own the pipeline.
@@ -2149,7 +2181,7 @@ else if ($p=="saveAllPipeline")
     if (!empty($id)){
         if (!empty($permCheck)){
             $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable);
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date);
             $data = json_encode($listPermsDenied);
         }
         //insert
@@ -2180,6 +2212,10 @@ else if ($p=="savePipelineDetails")
     $pin_order = $_REQUEST['pin_order'];
     $publicly_searchable = isset($_REQUEST['publicly_searchable']) ? $_REQUEST['publicly_searchable'] : "false";
     $pipeline_group_id = $_REQUEST['pipeline_group_id'];
+    $release_date = $_REQUEST['release_date'];
+    if (!empty($release_date)){
+        $release_date = date('Y-m-d', strtotime($release_date));
+    }
     settype($group_id, 'integer');
     settype($pin_order, "integer");
     $permCheck = 1;
@@ -2190,11 +2226,11 @@ else if ($p=="savePipelineDetails")
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
     }
     if (!empty($permCheck)){
-        $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publicly_searchable,$pipeline_group_id,$userRole, $ownerID);
+        $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publicly_searchable,$pipeline_group_id,$userRole, $release_date, $ownerID);
         //update permissions
         if (!empty($nodesRaw)){
             $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable);
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date);
         }
     }
 }

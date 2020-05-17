@@ -26,18 +26,30 @@ function getTitle($np)
     return $ret; 
 }
 
-function getPage($np, $login, $id)
-{
-    if ($np==1 && $login==1 && (!empty($id) || $id != "")){include("php/pipeline.php"); include("php/pipelinemodal.php"); }
-    else if ($np==1 && $login==1 && empty($id)){ include("php/public.php"); include("php/pipelinemodal.php");}
-    else if ($np==1 && $login!=1 && !empty($id)){include("php/publicpipeline.php"); }
-    else if ($np==2 && $login==1 && empty($id)){include("php/projects.php");}
-    else if ($np==2 && $login==1 && !empty($id)){include("php/projectsDetail.php");}
-    else if ($np==3 && $login==1 && !empty($id)){include("php/runpipeline.php");}
-    else if ($np==4 && $login==1){include("php/profile.php");}
-    else if ($np==5 && $login==1 && empty($id)){include("php/runstatus.php");}
-    else if ($np==6 ){include("php/terms.php");}
-    else {include("php/public.php");}
+function getPage($np, $login, $id){
+    if ($np==1 && $login==1 && !empty($id)){
+        include("php/pipeline.php"); 
+        include("php/pipelinemodal.php"); 
+    } else if ($np==1 && $login==1 && empty($id)){ 
+        include("php/public.php"); 
+        include("php/pipelinemodal.php");
+    } else if ($np==1 && $login!=1 && !empty($id)){
+        include("php/publicpipeline.php"); 
+    } else if ($np==2 && $login==1 && empty($id)){
+        include("php/projects.php");
+    } else if ($np==2 && $login==1 && !empty($id)){
+        include("php/projectsDetail.php");
+    } else if ($np==3 && $login==1 && !empty($id)){
+        include("php/runpipeline.php");
+    } else if ($np==4 && $login==1){
+        include("php/profile.php");
+    } else if ($np==5 && $login==1 && empty($id)){
+        include("php/runstatus.php");
+    } else if ($np==6 ){
+        include("php/terms.php");
+    } else {
+        include("php/public.php");
+    }
 }
 
 function getSidebarMenu($np,$login)

@@ -1974,42 +1974,48 @@ function warnUserSave(res){
 }
 
 //Revision is not required for advanced options, description
-function saveDetails() {
+function saveDetails(sucFunc) {
     var id = $("#pipeline-title").attr('pipelineid');
-    var scriptSumEditor = pipelineSumEditor.getValue();
-    var summary = encodeURIComponent(scriptSumEditor);
-    var group_id = $('#groupSelPipe').val();
-    var perms = $('#permsPipe').val();
-    var pin = $('#pin').is(":checked").toString();
-    var pin_order = $('#pin_order').val();
-    var publicly_searchable = $('#publicly_searchable').is(":checked").toString();
-    var pipGroup = $('#pipeGroupAll').val()
-    var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
-    sName = document.getElementById("pipeline-title").value;
-    sName = sName.replace(/\"/g, "").replace(/\'/g, "").replace(/\\/g, "");
-    $("#pipeline-title").changeVal(sName);
-    if (oldPipeGroupId != pipGroup) {
-        modifyPipelineSideBar(pipGroup, id, sName, "move")
-    }
-    createSaveNodes();
-    var data = {
-        p: "savePipelineDetails",
-        id: id,
-        summary: summary,
-        group_id: group_id,
-        perms: perms,
-        pin: pin,
-        pin_order: pin_order,
-        publicly_searchable: publicly_searchable,
-        pipeline_group_id: pipGroup,
-        nodes: saveNodes
-    };
-    if (id !== '') {
-        var saveDetails = getValues(data);
-        if (saveDetails) {
-            changeAutoSaveText('Details are saved')
+    if (id) {
+        var scriptSumEditor = pipelineSumEditor.getValue();
+        var summary = encodeURIComponent(scriptSumEditor);
+        var group_id = $('#groupSelPipe').val();
+        var perms = $('#permsPipe').val();
+        var pin = $('#pin').is(":checked").toString();
+        var pin_order = $('#pin_order').val();
+        var publicly_searchable = $('#publicly_searchable').is(":checked").toString();
+        var pipGroup = $('#pipeGroupAll').val()
+        var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
+        var releaseVal = $('#releaseVal').attr("date");
+        sName = document.getElementById("pipeline-title").value;
+        sName = sName.replace(/\"/g, "").replace(/\'/g, "").replace(/\\/g, "");
+        $("#pipeline-title").changeVal(sName);
+        createSaveNodes();
+        var data = {
+            p: "savePipelineDetails",
+            id: id,
+            summary: summary,
+            group_id: group_id,
+            perms: perms,
+            pin: pin,
+            pin_order: pin_order,
+            publicly_searchable: publicly_searchable,
+            pipeline_group_id: pipGroup,
+            nodes: saveNodes,
+            release_date: releaseVal
+        };
 
-        }
+        getValuesAsync(data, function (s) {
+            if (s){
+                if (oldPipeGroupId != pipGroup) {
+                    modifyPipelineSideBar(pipGroup, id, sName, "move")
+                }
+                changeAutoSaveText('Details are saved')
+                if (typeof sucFunc === "function") {
+                    sucFunc()
+                }
+            }
+        });
     }
 }
 

@@ -62,6 +62,7 @@ folder instead of downloading all of them to reduce the load. -->
     <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
     <!-- toastr -->
     <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
+    <link rel="stylesheet" href="bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker3.min.css" type="text/css" />
     <!-- to fix favicon.ico not found error-->
     <link rel="shortcut icon" href="#">
     <style>
@@ -257,7 +258,7 @@ folder instead of downloading all of them to reduce the load. -->
             justify-content: center;
         }
 
-        /*        Hover property for boostrap panel headers */
+        /*        Hover property for bootstrap panel headers */
 
         .collapsible:hover {
             background-color: lightgray;
@@ -990,6 +991,7 @@ immediately after the control sidebar -->
         <script src="bower_components/plupload/js/jquery.plupload.queue/jquery.plupload.queue.js"></script>
         <script type="text/javascript" src="dist/js/dataTables.checkboxes.js"></script>
         <script type="text/javascript" src="bower_components/toastr/build/toastr.min.js"></script>
+        <script type="text/javascript" src="bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
         <?php print getJS($np, $login, $id); ?>
 
 </body>

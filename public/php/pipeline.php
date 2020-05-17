@@ -5,11 +5,11 @@
             <div id="pipeGroupFloatLeft" style="float:left;">
                 <i class="fa fa-spinner " style="margin-left:0px; margin-right:0px;"></i> Pipeline:
                 <input class="box-dynamic width-dynamic" type="text" pipelineid="<?php if ($id != "0") {echo $id;}?>" name="pipelineTitle" autocomplete="off" placeholder="Enter Pipeline Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="pipeline-title"><span class="width-dynamic" style="display:none"></span></input>
-                
+
                 <button type="submit" id="savePipeline" class="btn" data-backdrop="false" onclick="save(&#34;default&#34;)" style="background:none; margin:0px; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Pipeline"><i class="fa fa-save" style="font-size: 17px;"></i></a></button>
-                
-                <button type="button" id="newRevPipeline" class="btn" data-backdrop="false" onclick="save(&#34;rev&#34;)" style="background:none; margin:0px; padding:0px;"><a  data-toggle="tooltip" data-placement="bottom" data-original-title="Create Revision"><i class="glyphicon glyphicon-open-file" style="font-size: 16px; padding-top:3px;"></i></a></button>
-            
+
+                <button type="button" id="newRevPipeline" class="btn" data-backdrop="false" onclick="save(&#34;rev&#34;)" style="background:none; margin:0px; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Create Revision"><i class="glyphicon glyphicon-open-file" style="font-size: 16px; padding-top:3px;"></i></a></button>
+
                 <button type="button" id="dupPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;"> <a data-toggle="tooltip" data-placement="bottom" data-original-title="Duplicate Pipeline"> <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
 
                 <button type="button" id="downPipeline" class="btn" name="button" data-backdrop="false" style="background:none;  margin:0px; padding:0px;">
@@ -36,11 +36,11 @@
                 </span>
                 <div id="pipeMenuGroupTop" style="display:inline;">
                     <i id="pipeSepBar" style="color:grey; font-size:25px; padding-top:12px; margin-left:10px; margin-right:10px; ">|</i>
-                    <i id="pipeGroupIcon" class="fa fa-th-list " style="margin-left:0px; margin-right:0px; font-size:16px;"></i> Menu Group:
+                    <i id="pipeGroupIcon" class="fa fa-th-list " style="margin-left:0px; margin-right:0px; font-size:16px;"></i> <label>Menu Group:</label>
                     <select id="pipeGroupAll" style="width:165px; font-style: italic; font-size:17px;" class="form-control" pipe_group_id=""></select>
-                    <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:7px; padding-right:7px; margin-bottom:3px;" id="pipeGroupAdd" data-toggle="modal" data-target="#pipeGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Add Pipeline Menu Group"><span><i class="glyphicon glyphicon-plus"></i></span></a></button>
-                    <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:7px; padding-right:7px; margin-bottom:3px;" id="pipeGroupEdit" data-toggle="modal" data-target="#pipeGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Edit Pipeline Menu Group"><span><i class="fa fa-pencil-square-o"></i></span></a></button>
-                    <button type="button" class="btn btn-default btn-sm" style="font-size:11px; padding:4px; padding-left:8px; padding-right:8px; margin-bottom:3px;" id="pipeGroupDel" data-toggle="modal" data-target="#pipeDelGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Pipeline Menu Group"><span><i class="fa fa-trash-o"></i></span></a></button>
+                    <button type="button" class="btn btn-default btn-sm" style="background-color:white; font-size:11px; padding:8px; padding-left:9px; padding-right:8px; margin-bottom:3px;" id="pipeGroupAdd" data-toggle="modal" data-target="#pipeGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Add Pipeline Menu Group"><span><i class="glyphicon glyphicon-plus"></i></span></a></button>
+                    <button type="button" class="btn btn-default btn-sm" style="background-color:white; font-size:11px; padding:8px; padding-left:9px; padding-right:8px; margin-bottom:3px;" id="pipeGroupEdit" data-toggle="modal" data-target="#pipeGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Edit Pipeline Menu Group"><span><i class="fa fa-pencil-square-o"></i></span></a></button>
+                    <button type="button" class="btn btn-default btn-sm" style="background-color:white; font-size:11px; padding:8px; padding-left:10px; padding-right:10px; margin-bottom:3px;" id="pipeGroupDel" data-toggle="modal" data-target="#pipeDelGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Pipeline Menu Group"><span><i class="fa fa-trash-o"></i></span></a></button>
                 </div>
             </div>
 
@@ -223,9 +223,12 @@
                         </div>
                     </div>
                 </div>
+                <div id="pipeMenuGroupBottom" class="col-md-12" style="display:none; margin-top:10px; margin-bottom:20px;">
+                </div>
+
                 <div id="permsPipeDiv" class="col-md-6">
                     <div class="form-group">
-                        <label class="col-sm-12 control-label">Permissions to View</label>
+                        <label class="control-label">Permissions to View</label>
                         <select id="permsPipe" class="fbtn btn-default form-control permscheck" name="perms">
                             <option value="3" selected="">Only me </option>
                             <option value="15">Only my group</option>
@@ -235,35 +238,32 @@
                 </div>
                 <div id="groupSelPipeDiv" class="col-md-6">
                     <div class="form-group">
-                        <label class="col-sm-12 control-label">Group Selection</label>
+                        <label class="control-label">Group Selection</label>
                         <select id="groupSelPipe" class="fbtn btn-default form-control permscheck" name="group_id">
                             <option value="" selected>Choose group </option>
                         </select>
                     </div>
                 </div>
-                <!--
-                <div id="publishPipeDiv" class="col-md-4">
+
+                <div id="releasePipeDiv" style="margin-top:5px;" class="col-md-12">
                     <div class="form-group">
-                        <label class="col-sm-12 control-label">Publish</label>
-                        <select id="publishPipe" class="fbtn btn-default form-control" name="publish">
-                            <option value="0">No</option>
-                            <option value="1">Yes</option>
-                        </select>
+                        <label class="control-label">Release Date:</label>
+                        <a id="setReleasePipe" href="#"><span date="" id="releaseVal">Set Release Date</span></a><span id="releaseValFinal"></span>
+                        <span>
+                            <a id="editReleasePipe" data-toggle="tooltip" data-placement="bottom" data-original-title="Edit Release Date"><i style="display:none; font-size: 15px;" class="fa fa-pencil"></i></a>
+                            <a id="getTokenLink" token-link="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="-- Get Link --<br> Only people who have the link can view the pipeline until release date"><i style="display:none;  font-size: 15px;" class="fa fa-chain"></i></a></span>
                     </div>
                 </div>
--->
-                <div id="pipeMenuGroupBottom" class="col-md-4" style="display:none; margin-top:10px; margin-bottom:20px;">
-                </div>
 
-                <div id="pinMainPage" style="display:none; margin-top:10px; margin-bottom:20px;" class="col-md-8">
+                <div id="pinMainPage" style="display:none; margin-bottom:20px;" class="col-md-12">
+                    <label class="form-group" style="margin-bottom:5px;">Admin Settings </label>
                     <div class="form-group">
-                        <label>Publicly Searchable </label>
+                        <span>Publicly Searchable </span>
                         <input id="publicly_searchable" type="checkbox">
-                        <label style="margin-left:10px;">Pin to Main Page </label>
+                        <span style="margin-left:10px;">Pin to Main Page </span>
                         <input id="pin" type="checkbox">
-                        <label style="margin-left:10px;"> Order </label>
+                        <span style="margin-left:10px;"> Order </span>
                         <input maxlength="4" size="4" id="pin_order">
-
                     </div>
                 </div>
 

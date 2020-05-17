@@ -804,6 +804,32 @@ function updateMarkdown (text, targetDiv){
     target.innerHTML = html;
 }
 
+function getCurrDate(){
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+    today = mm + '/' + dd + '/' + yyyy;
+    return today;
+}
+
+function toogleReleaseDiv(type,selPerm, own){
+    selPerm = parseInt(selPerm);
+    console.log(selPerm)
+    console.log(selPerm >= 43)
+    if (type == "pipeline"){
+        if (selPerm >= 43){
+            $("#releasePipeDiv").css("display", "block")
+            var releaseVal = $('#releaseVal').attr("date");
+            if (!releaseVal){
+                $('#setReleasePipe').trigger('click');
+            }
+        } else {
+            $("#releasePipeDiv").css("display", "none")
+        }
+    }
+}
+
 $(document).ready(function () {
     initCloudConsole("amazon");
     initCloudConsole("google");
@@ -980,9 +1006,11 @@ $(document).ready(function () {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
                     } else {
+                        toogleReleaseDiv("pipeline", selPerm, null)
                         autosaveDetails();
                     }
                 } else {
+                    toogleReleaseDiv("pipeline", selPerm,null);
                     autosaveDetails();
                 }
             } else if (dropdownID == "permsRun" || dropdownID == "groupSelRun"){
