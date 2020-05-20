@@ -593,6 +593,22 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         </select>
                     </div>
                 </div>
+                <div id="releaseDiv" style="margin-top:5px;" class="col-md-12">
+                    <div class="form-group">
+                        <label id="releaseLabel" class="control-label">Release Date:</label>
+                        <a id="setRelease" href="#"><span date="" id="releaseVal">Set Release Date</span></a>
+                        <span id="releaseValFinal"></span>
+                        <span>
+                            <a id="getTokenLink" style="display:none;" token="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="Get Link <br> Only people who have the link can access the run until release date"><i style="font-size: 15px;" class="fa fa-chain"></i></a>
+                            <div id="showTokenLink" style="display:none;" class="col-md-6 input-group">
+                                <input readonly id="tokenInput" type="text" class="form-control">
+                                <div id="copyToken" class="input-group-addon">
+                                    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Copy Link to Clipboard"><span><i class="glyphicon glyphicon-copy"></i></span></a>
+                                </div>
+                            </div>
+                        </span>
+                    </div>
+                </div>
             </div>
             <!-- collapsed settings ended-->
         </div>
@@ -1595,6 +1611,32 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
     </div>
 </div>
 <!--New Collection Modal ENDs-->
+
+<div id="releaseModal" class="modal fade" tabindex="-1" role="dialog" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Release Date</h4>
+            </div>
+            <div class="modal-body">
+                <p id="releaseModalText">Text</p>
+                <label class="col-md-3" style="padding-top:5px;">Release Date:</label>
+                <div id="relDateDiv" class="col-md-6 input-group date">
+                    <input id="relDateInput" type="text" class="form-control">
+                    <div class="input-group-addon">
+                        <span class="fa fa-calendar"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary cancelReleaseDateBut" data-dismiss="modal">Release Immediately</button>
+                <button type="button" class="btn btn-primary" id="setReleaseDateBut">Set Release Date</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!--Confirm Modal-->
 <div id="confirmModal" class="modal fade" tabindex="-1" role="dialog">

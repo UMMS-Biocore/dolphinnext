@@ -813,20 +813,16 @@ function getCurrDate(){
     return today;
 }
 
-function toogleReleaseDiv(type,selPerm, own){
+function toogleReleaseDiv(selPerm, own){
     selPerm = parseInt(selPerm);
-    console.log(selPerm)
-    console.log(selPerm >= 43)
-    if (type == "pipeline"){
-        if (selPerm >= 43){
-            $("#releasePipeDiv").css("display", "block")
-            var releaseVal = $('#releaseVal').attr("date");
-            if (!releaseVal){
-                $('#setReleasePipe').trigger('click');
-            }
-        } else {
-            $("#releasePipeDiv").css("display", "none")
+    if (selPerm >= 43){
+        $("#releaseDiv").css("display", "block")
+        var releaseVal = $('#releaseVal').attr("date");
+        if (!releaseVal && own === "1"){
+            $('#releaseLabel').text("Release Date:");
         }
+    } else {
+        $("#releaseDiv").css("display", "none")
     }
 }
 
@@ -1006,11 +1002,11 @@ $(document).ready(function () {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
                     } else {
-                        toogleReleaseDiv("pipeline", selPerm, null)
+                        toogleReleaseDiv(selPerm, pipelineOwn)
                         autosaveDetails();
                     }
                 } else {
-                    toogleReleaseDiv("pipeline", selPerm,null);
+                    toogleReleaseDiv(selPerm, pipelineOwn);
                     autosaveDetails();
                 }
             } else if (dropdownID == "permsRun" || dropdownID == "groupSelRun"){
@@ -1019,6 +1015,7 @@ $(document).ready(function () {
                 var pipeline_id = $('#pipeline-title').attr('pipeline_id');
                 var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
                 var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+                var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
                 var project_id = pipeData[0].project_id;
                 if (pipeline_id && project_id){
                     var warnUser = false;
@@ -1031,7 +1028,9 @@ $(document).ready(function () {
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
-                    } 
+                    } else {
+                        toogleReleaseDiv(selPerm, projectpipelineOwn);
+                    }
                 }
             } else if (dropdownID == "permsPro" || dropdownID == "groupSelPro"){
                 var selGroup = $("#groupSelPro").val();

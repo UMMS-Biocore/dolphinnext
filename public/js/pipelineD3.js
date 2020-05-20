@@ -178,9 +178,13 @@ $('#editorPipeFooter').keyup(function () {
     autosave();
 });
 
-$('#groupSelPipe').change(function () {
-    autosaveDetails();
-});
+//autosave of permsPipe and groupSelPipe changes are disabled.
+//$('#permsPipe').change(function () {
+//    autosaveDetails();
+//});
+//$('#groupSelPipe').change(function () {
+//    autosaveDetails();
+//});
 $('#pin').click(function () {
     autosaveDetails();
 });
@@ -222,9 +226,10 @@ function autosave() {
 
 function autosaveDetails() {
     if (toogleAutosave && ((pipelineOwn === '' || pipelineOwn === "1") && pipelinePerm !== "63") || usRole === "admin") {
-        var pipName = $('#pipeline-title').val()
-        var pipGroup = $('#pipeGroupAll').val()
-        if (pipName !== '' && pipGroup != '') {
+        var pipName = $('#pipeline-title').val();
+        var pipGroup = $('#pipeGroupAll').val();
+        var id = $("#pipeline-title").attr('pipelineid');
+        if (pipName !== '' && pipGroup != '' && id) {
             $('#autosave').text('Saving...');
             if (timeoutId) clearTimeout(timeoutId);
             timeoutId = setTimeout(function () { saveDetails() }, 1300);

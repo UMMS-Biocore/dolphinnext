@@ -950,6 +950,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['perms'] = '63';
 		$_REQUEST['pin'] = 'true';
 		$_REQUEST['pin_order'] = '0';
+		$_REQUEST['publicly_searchable'] = 'true';
 		$_REQUEST['publish'] = '0';
 		$_REQUEST['pipeline_group_id'] = '1';
 		include('ajaxquery.php');

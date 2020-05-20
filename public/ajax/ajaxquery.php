@@ -622,6 +622,55 @@ else if ($p=="getProjectPipelines"){
     $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
     $data = $db -> getProjectPipelines($id,$project_id,$ownerID,$userRole);
 }
+
+else if ($p=="checkNewRunParam"){
+    $uuid= $db->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$id'");
+    //return 1 if parameters have changed.
+    $data = json_encode(0);
+    $pipeData = json_decode($db->getProjectPipelines($id,"",$ownerID,$userRole), true)[0];
+    $inputData = json_decode($db->getProjectPipelineInputs($id,$ownerID), true);
+    if (!empty($pipeData)){
+        //last run info in run_logs
+        $raw_data = json_decode($db->getRunLogOpt($uuid),true);
+        if (!empty($raw_data[0])){
+            $raw_data[0]['run_opt'] = str_replace('\\', '\\\\', $raw_data[0]['run_opt']);
+            $run_opt = json_decode($raw_data[0]['run_opt'], true);
+            $run_input = $run_opt["project_pipeline_input"];
+            //remove collection-id and project_pipeline_input keys
+            unset($run_opt['project_pipeline_input']);
+            foreach( $run_opt as $key => $value ) {
+                if( strpos( $key, 'collection-' ) === 0 ) {
+                    unset( $run_opt[ $key ] );
+                }
+            }
+            //don't check these keys
+            $run_exclude = array("date_modified", "new_run", "summary", "project_name", "group_id", "perms","onload", "release_date", "pp_name");
+            $input_exclude = array("id");
+            foreach( $run_opt as $key => $value ) {
+                if (!in_array($key, $run_exclude)) {
+                    if( $value != $pipeData[ $key ] ) {
+                        error_log($key);
+                        $data = json_encode(1);
+                        break;
+                    }
+                }
+            }
+            for ($i = 0; $i < count($run_input); $i++) {
+                $inItem = $inputData[$i];
+                foreach($run_input[$i] as $k => $v) {
+                    if (!in_array($k, $input_exclude)) {
+                        if( $v != $inItem[$k] ) {
+                            error_log("$k $v");
+                            $data = json_encode(1);
+                            break;
+                        }
+                    }
+                } 
+            }
+        }
+    }
+
+}
 else if ($p=="updateProjectPipelineNewRun"){
     $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
     $new_run = $_REQUEST['newrun'];
@@ -644,6 +693,42 @@ else if ($p=="updateReleaseDate"){
     }
     if (!empty($permCheck)){
         $data = $db -> updateReleaseDate($id,$type,$ownerID);
+    }
+}
+else if ($p=="saveToken"){
+    $type = $_REQUEST['type'];
+    if ($type == "pipeline"){
+        $np = 1;
+        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+    } else if ($type == "project_pipeline"){
+        $np = 3;
+        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
+    }
+    $ownCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    if (empty($curr_token)){
+        if (!empty($ownCheck)){
+            $data = $db -> insertToken($id, $np, $ownerID);
+        }
+    } else {
+        $ret= array();
+        $ret["token"] = $curr_token;
+        $data = json_encode($ret);
+    }
+}
+else if ($p=="getToken"){
+    $type = $_REQUEST['type'];
+    $ret= array();
+    if ($type == "pipeline"){
+        $np = 1;
+        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id' AND owner_id='$ownerID'");
+    }
+    if (empty($curr_token)){
+        $data = json_encode($ret);
+    } else {
+        $ret["token"] = $curr_token;
+        $data = json_encode($ret);
     }
 }
 else if ($p=="getRunLog"){
@@ -1896,16 +1981,20 @@ else if ($p=="saveProjectPipeline"){
     $withDag = isset($_REQUEST['withDag']) ? $_REQUEST['withDag'] : "";
     $process_opt = isset($_REQUEST['process_opt']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['process_opt']), ENT_QUOTES)) : "";
     $onload = isset($_REQUEST['onload']) ? $_REQUEST['onload'] : "";
+    $release_date = isset($_REQUEST['release_date']) ? $_REQUEST['release_date'] : "";
+    if (!empty($release_date)){
+        $release_date = date('Y-m-d', strtotime($release_date));
+    }
     settype($perms, 'integer');
     settype($group_id, 'integer');
     settype($amazon_cre_id, 'integer');
     settype($google_cre_id, 'integer');
     if (!empty($id)) {
-        //don't allow to update if user not own the project_pipeline.
+        //don't allow to update if user doesn't own the project_pipeline.
         $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
         if (!empty($permCheck)){
-            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
+            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
             $listPermsDenied = array();
             $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
@@ -1913,8 +2002,6 @@ else if ($p=="saveProjectPipeline"){
             $data = json_encode($listPermsDenied);  
         }
     } else {
-        error_log("3");
-
         $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $ownerID);
     }
 }

@@ -1,3 +1,4 @@
+
 //################################
 // --textEditor jquery plugin --
 //################################
@@ -478,6 +479,10 @@
 
 //--end of textEditor jquery plugin --
 //#####################################
+
+
+
+
 
 //template text for ace editor
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
@@ -1644,20 +1649,26 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 }
                 pipelineOwn = pData[0].own;
                 pipelinePerm = pData[0].perms;
+                //release
                 if (pData[0].release_date){
-                    $('#releaseVal').attr("date",pData[0].release_date);
-                    var today = new Date( getCurrDate())
-                    var releaseDate=new Date(pData[0].release_date);
-                    if (today <= releaseDate){
-                        $('#releaseVal').text(pData[0].release_date);
+                    var parts =pData[0].release_date.split('-'); //YYYY-MM-DD
+                    var releaseDate = parts[1]+"/"+ parts[2] +"/"+ parts[0] //MM,DD,YYYY
+                    $('#releaseVal').attr("date",releaseDate);
+                    if (pipelineOwn == "1"){
+                        $("#getTokenLink").css("display", "inline")
+                        $('#releaseVal').text(releaseDate);
                     } else {
                         $('#releaseVal').text("");
-                        $('#releaseValFinal').text(pData[0].release_date);
-                        
+                        $('#releaseValFinal').text(releaseDate);
                     }
-                    
+                } else {
+                    if (pipelineOwn !== "1"){
+                        $('#releaseVal').text("");
+                        $('#releaseLabel').text("");
+                    }
                 }
-                toogleReleaseDiv("pipeline",pipelinePerm, pipelineOwn);
+                toogleReleaseDiv(pipelinePerm, pipelineOwn);
+                //release ends --
 
                 // if user not own it, cannot change or delete pipeline
                 if (pipelineOwn === "0") {
@@ -2008,7 +2019,8 @@ $(document).ready(function () {
         loadPipelineDetails(pipeline_id, usRole);
 
     } else { // fresh page
-        toogleReleaseDiv("pipeline",3, null)
+        pipelineOwn = "1";
+        toogleReleaseDiv(3, pipelineOwn)
         $('#pipeMenuGroupTop').css('display', 'inline')
         if (usRole == "admin") {
             $('#importPipeline').css('display', 'inline');
@@ -2038,45 +2050,79 @@ $(document).ready(function () {
     //Make modal draggable    
     $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amazonTable, #googleTable' });
 
-    $('#datePipeDiv').datepicker({
+
+    // release date section:
+    $('#relDateDiv').datepicker({
         format: 'mm/dd/yyyy',
         startDate: '0',
         autoclose:true
     });
-    
-    $('#setReleasePipe').on('click',  function(e) {
+
+    $('#setRelease').on('click',  function(e) {
         e.preventDefault();
-        $("#releaseModalText").html("If you want to limit the access of the pipeline until certain date, you can set a release date below. We will create temporary link for your pipeline and only people who have the link could view the pipeline.");
-        $('#datePipeDiv').data('datepicker').setDate(null);
+        $("#releaseModalText").html("If you want to limit the access of the pipeline until certain date, you can set a release date below. We will create temporary link for your pipeline and only people who have the link could access the pipeline.");
+        $('#relDateDiv').data('datepicker').setDate(null);
         $('#releaseModal').modal("show");
     });
 
-    $('#releaseModal').on('hide.bs.modal',  function(e) {
+    $('.cancelReleaseDateBut').on('click',  function(e) {
         var currRelDate = $('#releaseVal').attr("date");
-        if (!currRelDate){
-            var today = getCurrDate()
-            $('#releaseVal').attr("date", today);
-            var sucFunc = function (){
-                $('#releaseVal').text(today);
-                $('#releaseModal').modal("hide");
-            }
-            saveDetails(sucFunc);
+        var today = getCurrDate()
+        $('#releaseVal').attr("date", today);
+        var sucFunc = function (){
+            $('#releaseVal').text(today);
+            $("#getTokenLink").css("display", "inline")
+            $('#releaseModal').modal("hide");
         }
+        saveDetails(sucFunc);
     });
-    
+
     $('#setReleaseDateBut').on('click',  function(e) {
-        var date = $('#datePipeInput').val();
+        var date = $('#relDateInput').val();
         if (!date){
             showInfoModal("#infoMod", "#infoModText", "Please enter the release date.")
         } else {
             $('#releaseVal').attr("date", date);
             var sucFunc = function (){
                 $('#releaseVal').text(date);
+                $("#getTokenLink").css("display", "inline")
                 $('#releaseModal').modal("hide");
             }
             saveDetails(sucFunc);
         }
     });
+
+    $( "#copyToken" ).on('click', function (e) {
+        var copyText = document.getElementById("tokenInput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        copyText.setSelectionRange(0, 0);
+        toastr.info("Link copied to the clipboard");
+    });
+
+    $('#getTokenLink').on('click',  function(e) {
+        var currToken = $(this).attr("token");
+        var showToken = function(token){
+            $("#showTokenLink").css("display","table")
+            var basepath = $("#basepathinfo").attr("basepath");
+            $("#tokenInput").val(basepath+"/index.php?t="+token)
+            $("#copyToken").trigger("click"); 
+        }
+        if (currToken){
+            showToken(currToken);
+        } else {
+            //insert token
+            getValuesAsync({p:"saveToken", type:"pipeline", id:pipeline_id}, function (s) {
+                console.log(s)
+                if (s.token){
+                    $(this).attr("token", s.token);
+                    showToken(s.token);
+                }
+            });
+        }
+    });
+    //release date section ends
 
 
     stateModule = (function () {

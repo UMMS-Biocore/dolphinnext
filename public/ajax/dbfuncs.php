@@ -375,6 +375,32 @@ class dbfuncs {
         return array($connect, $ssh_port, $scp_port, $cluDataArr);
     }
 
+    function getKey($len) {
+        $characters = "0123456789abcdefghijklmnopqrstuvwxyz";
+        $token       = "";
+        $ret        = "";
+        for ($i = 0; $i < $len; $i++) {
+            $token .= $characters[rand(0, strlen($characters) - 1)];
+        }
+        # If this random key exist it randomize another key
+        if ($this->checkUniqToken($token))
+            $ret = $this->getKey($len);
+        else
+            $ret = $token;
+        return $ret;
+    }
+
+    function checkUniqToken($token)
+    {
+        $curr_token= $this->queryAVal("SELECT token FROM token WHERE token='$token'");
+        if (empty($curr_token)){
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
+
 
     function getReportDir($proPipeAll){
         $project_pipeline_id = $proPipeAll[0]->{'id'};
@@ -1603,6 +1629,28 @@ class dbfuncs {
         return "";
     }
 
+    function validateToken($tk, $id, $np){
+        $ret = 0;
+        $sql = "SELECT id, np FROM token WHERE token = '$tk'";
+        $lData = $this->queryTable($sql);
+        $ln = json_decode($lData,true);
+        if (isset($ln[0])){
+            $tk_id = $ln[0]["id"];
+            $tk_np = $ln[0]["np"];
+        }
+        if ($tk_np == $np && $tk_id == $id){
+            $ret = 1;
+        }
+        // if token belong to project_pipeline -> allow acces to pipeline
+        if (empty($ret) && $tk_np == "3" && $np == "1"){
+            $pipeline_id= $this->queryAVal("SELECT pipeline_id FROM project_pipeline WHERE id='$tk_id'");
+            if ($pipeline_id == $id){
+                $ret = 1;
+            }
+        }
+        return $ret;
+    }
+
     function validateSSH($connect, $ssh_id, $ssh_port, $type, $cmd, $path, $ownerID) {
         $ret = array();
         if (!empty($cmd)){
@@ -2578,6 +2626,21 @@ class dbfuncs {
         $sql = "UPDATE google_credentials SET name='$name', project_id='$project_id', key_name='$key_name', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function insertToken($id, $np, $ownerID ){
+        $token= $this->getKey(10);
+        if (empty($token)){
+            exit();
+        }
+        $sql = "INSERT INTO token (id, np, token, date_created, owner_id) 
+                    VALUES ('$id', '$np', '$token', now() , '$ownerID')";
+        self::insTable($sql);
+        $curr_token= $this->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id'");
+        $ret= array();
+        $ret["token"] = $curr_token;
+        return json_encode($ret);
+
+    }
+
     function insertGithub($username, $email, $password, $ownerID) {
         $sql = "INSERT INTO github (username, email, password, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
               ('$username', '$email', '$password', now() , now(), '$ownerID', '3', '$ownerID')";
@@ -4229,8 +4292,8 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID) {
-        $sql = "UPDATE project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload' WHERE id = '$id'";
+    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $ownerID) {
+        $sql = "UPDATE project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', release_date=".($release_date==NULL ? "NULL" : "'$release_date'")." WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
@@ -4249,7 +4312,7 @@ class dbfuncs {
                 $where = " where pp.id = '$id' AND pip.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
             }
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, IF(pp.owner_id='$ownerID',1,0) as own
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM project_pipeline pp
                       INNER JOIN users u ON pp.owner_id = u.id
                       INNER JOIN project p ON pp.project_id = p.id
@@ -4865,7 +4928,6 @@ class dbfuncs {
             //$id -> project_id
             $data = json_decode($this->checkSharedRunInProject($id, $userID));
             // if project shared with group, then don't allow to share with another group.
-
             if (!empty($data[0])){
                 $ret = 1;
                 $warn .= "Project: $name has group/public runs.\n";
@@ -4885,10 +4947,14 @@ class dbfuncs {
     function checkUserPermission($table, $id, $userID, $mode){
         $ret = 0;
         $name = "";
+        $releaseCheck = "";
+        if ($table == "biocorepipe_save" || $table == "project_pipeline" ){
+            $releaseCheck = "AND (pip.release_date IS NULL OR pip.release_date <= CURDATE() )";
+        }
         if ($mode == "w"){
-            $where = "(pip.owner_id='$userID' OR (ug.u_id ='$userID' and pip.perms = 15))";
+            $where = "(pip.owner_id='$userID' OR (ug.u_id ='$userID' AND (pip.perms = 15 OR pip.perms = 47 OR pip.perms = 63)))";
         } else if ($mode == "r"){
-            $where = "(pip.owner_id='$userID' OR pip.perms = 63 OR pip.perms = 43 OR pip.perms = 47 OR (ug.u_id ='$userID' and pip.perms = 15))";
+            $where = "(pip.owner_id='$userID' OR ((pip.perms = 63 OR pip.perms = 43 OR pip.perms = 47) $releaseCheck) OR (ug.u_id ='$userID' AND (pip.perms = 15 OR pip.perms = 43 OR pip.perms = 47 OR pip.perms = 63))) ";
         }
         $sql = "SELECT DISTINCT pip.name, pip.perms, pip.group_id
                 FROM $table pip
@@ -4985,12 +5051,17 @@ class dbfuncs {
         }
     }
 
-    function releaseDateUpdtModule($table, $id, $release_date, $pipe_release_date, $ownerID){
+    function releaseDateUpdtModule($table, $id, $release_date, $pipe_release_date, $curr_ownerID, $ownerID){
         // check if current value of the $release_date is the same as expected value
         if ($pipe_release_date != $release_date){
-            if ($table == "biocorepipe_save"){
-                $this->updateReleaseDateById($id, $table, $release_date, $ownerID);
-            } 
+            // if user doesn't own the process then don't allow to change.
+            $ownCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+            if (!empty($ownCheck)){
+                if ($table == "biocorepipe_save"){
+                    $this->updateReleaseDateById($id, $table, $release_date, $ownerID);
+                } 
+            }
+
         }
     }
 
@@ -5008,7 +5079,7 @@ class dbfuncs {
             $listPermsDenied = $this->permUpdtModule($listPermsDenied, $type, "biocorepipe_save", $pipeline_id, $pipe_group_id, $pipe_perms, $group_id, $perms, $pipe_owner_id, $ownerID);
             if ($type == "default"){
                 $this->pubSearchUpdtModule("biocorepipe_save", $pipeline_id, $publicly_searchable, $pipe_publicly_searchable, $ownerID);
-                $this->releaseDateUpdtModule("biocorepipe_save", $pipeline_id, $release_date, $pipe_release_date, $ownerID);
+                $this->releaseDateUpdtModule("biocorepipe_save", $pipeline_id, $release_date, $pipe_release_date, $pipe_owner_id, $ownerID);
             }
             if (!empty($nodes)){
                 foreach ($nodes as $item):

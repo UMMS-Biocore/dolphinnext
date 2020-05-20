@@ -3,6 +3,7 @@ $runscope = {
     //-------- Store data:
     checkUserWritePermRun : null,
     getProjectPipelines: null,
+    beforeunload: "",
 
     //-------- Functions:
     //Generic function to save ajax data
@@ -3985,6 +3986,27 @@ function loadProjectPipeline(pipeData) {
     $('#ownUserNamePip').text(pipeData[0].username);
     $('#datecreatedPip').text(pipeData[0].date_created);
     $('.lasteditedPip').text(pipeData[0].date_modified);
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+    // release
+    if (pipeData[0].release_date){
+        var parts =pipeData[0].release_date.split('-'); //YYYY-MM-DD
+        var releaseDate = parts[1]+"/"+ parts[2] +"/"+ parts[0] //MM,DD,YYYY
+        $('#releaseVal').attr("date",releaseDate);
+        if (projectpipelineOwn == "1"){
+            $("#getTokenLink").css("display", "inline")
+            $('#releaseVal').text(releaseDate);
+        } else {
+            $('#releaseVal').text("");
+            $('#releaseValFinal').text(releaseDate);
+        }
+    } else {
+        if (projectpipelineOwn !== "1"){
+            $('#releaseVal').text("");
+            $('#releaseLabel').text("");
+        }
+    }
+    toogleReleaseDiv(pipeData[0].perms, projectpipelineOwn);
+    // release ends --
 
     loadRunSettings(pipeData);
     checkShub()
@@ -4022,7 +4044,6 @@ function loadProjectPipeline(pipeData) {
     // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
     cleanDepProPipeInputs();
     //after loading pipeline disable all the inputs
-    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
     if (projectpipelineOwn !== "1") {
         toogleRunInputs("disable");
     }
@@ -4903,34 +4924,39 @@ function displayButton(idButton) {
 }
 //xxxxx
 function terminateProjectPipe() {
-    var proType = proTypeWindow;
-    var proId = proIdWindow;
-    var [allProSett, profileData] = getJobData("both");
-    var executor = profileData[0].executor;
-    if (runPid && executor != "local") {
-        var terminateRun = getValues({ p: "terminateRun", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, executor: executor });
-        console.log(terminateRun)
-        var pidStatus = checkRunPid(runPid, proType, proId);
-        if (pidStatus) { // if true, then it is exist in queue
-            console.log("pid exist1")
-        } else { //pid not exist
-            console.log("give error1")
+    if ($runscope.beforeunload){
+        showInfoModal("#infoModal", "#infoModalText", "Please wait for the submission.");
+    } else {
+        var proType = proTypeWindow;
+        var proId = proIdWindow;
+        var [allProSett, profileData] = getJobData("both");
+        var executor = profileData[0].executor;
+        if (runPid && executor != "local") {
+            var terminateRun = getValues({ p: "terminateRun", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, executor: executor });
+            console.log(terminateRun)
+            var pidStatus = checkRunPid(runPid, proType, proId);
+            if (pidStatus) { // if true, then it is exist in queue
+                console.log("pid exist1")
+            } else { //pid not exist
+                console.log("give error1")
+            }
+        } else if (executor == "local") {
+            var terminateRun = getValues({ p: "terminateRun", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, executor: executor });
+            console.log(terminateRun)
         }
-    } else if (executor == "local") {
-        var terminateRun = getValues({ p: "terminateRun", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, executor: executor });
-        console.log(terminateRun)
+
+        var setStatus = getValues({ p: "updateRunStatus", run_status: "Terminated", project_pipeline_id: project_pipeline_id });
+        if (setStatus) {
+            displayButton('terminatedProPipe');
+            window.runStatus = "Terminated";
+            //trigger saving newxtflow log file
+            setTimeout(function () {
+                clearIntNextLog(proType, proId)
+            }, 3000);
+            readPubWeb(proType, proId, "no_reload")
+        }
     }
 
-    var setStatus = getValues({ p: "updateRunStatus", run_status: "Terminated", project_pipeline_id: project_pipeline_id });
-    if (setStatus) {
-        displayButton('terminatedProPipe');
-        window.runStatus = "Terminated";
-        //trigger saving newxtflow log file
-        setTimeout(function () {
-            clearIntNextLog(proType, proId)
-        }, 3000);
-        readPubWeb(proType, proId, "no_reload")
-    }
 
 }
 
@@ -5280,6 +5306,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 //click on run button (callback function)
 function runProPipeCall(checkType, uuid) {
     console.log("runProPipeCall")
+    $runscope.beforeunload = "Please wait for the submission."
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
@@ -5390,6 +5417,7 @@ function runProPipeCall(checkType, uuid) {
         cache: false,
         type: "POST",
         success: function (serverLogGet) {
+            $runscope.beforeunload = "";
             updateNewRunStatus("0")
             fillRunVerOpt("#runVerLog");
             updateRunVerNavBar()
@@ -5406,6 +5434,7 @@ function runProPipeCall(checkType, uuid) {
             readNextflowLogTimer(proType, proId, "default");
         },
         error: function (jqXHR, exception) {
+            $runscope.beforeunload = "";
             toastr.error("Error occured.")
         }
     });
@@ -5849,11 +5878,11 @@ function formToJsonEachPro() {
         var patt = /(.*)-(.*)/;
         var proGnum = boxId.replace(patt, '$2');
         var selectedRow = $('#procGnum-' + proGnum).find('input');
-//        console.log(selectedRow)
+        //        console.log(selectedRow)
         var selectedRowJson = formToJson(selectedRow, 'stringfy');
         formDataArr['procGnum-' + proGnum] = selectedRowJson;
     });
-//    console.log(formDataArr)
+    //    console.log(formDataArr)
     return encodeURIComponent(JSON.stringify(formDataArr))
 }
 
@@ -5880,7 +5909,10 @@ function updateNewRunStatus(stat){
 
 function createNewRunFunc(newRunExist){
     var run_log_uuid = $('#runVerLog').val();
-    if (!newRunExist){
+    var lastrun = $('option:selected', "#runVerLog").attr('lastrun') || false;
+    //load from projectpipelinedata
+    if (!newRunExist && lastrun){
+        //if run_log_uuid is the last run
         $.ajax({
             url: "ajax/ajaxquery.php",
             data: {
@@ -5951,8 +5983,12 @@ function saveRunIcon() {
             checkReadytoRun();
         } else if (!newRunExist){
             var sucFunc = function(){
-                $('.nav-tabs a[href="#configTab"]').tab('show');
-                createNewRunFunc(newRunExist)
+                getValuesAsync({p:"checkNewRunParam", id:project_pipeline_id}, function (s) {
+                    if (s == "1"){
+                        $('.nav-tabs a[href="#configTab"]').tab('show');
+                        createNewRunFunc(newRunExist);
+                    }
+                }); 
             }
             saveRun(sucFunc, true);
             checkReadytoRun();
@@ -6027,6 +6063,7 @@ function saveRun(sucFunc, showToastr) {
     var withTimeline = $('#withTimeline').is(":checked").toString();
     var withDag = $('#withDag').is(":checked").toString();
     var process_opt = getProcessOpt();
+    var release_date = $('#releaseVal').attr("date");
     if (run_name && project_id && newpipelineID) {
         data.push({ name: "id", value: project_pipeline_id });
         data.push({ name: "name", value: run_name });
@@ -6060,6 +6097,7 @@ function saveRun(sucFunc, showToastr) {
         data.push({ name: "withDag", value: withDag });
         data.push({ name: "process_opt", value: process_opt });
         data.push({ name: "onload", value: onload });
+        data.push({ name: "release_date", value: release_date });
         data.push({ name: "p", value: "saveProjectPipeline" });
         $.ajax({
             type: "POST",
@@ -6275,7 +6313,7 @@ function duplicateProPipe(type) {
         $('#pipelineRevsDiv').css("display","block");
         $('#chooseTargetProjectLabel').css("display","block");
         if (askNewRev === true) {
-            $("#confirmDuplicateText").html('New revision of this pipeline is available. If you change your pipeline revision, we will transfer your input parameters into your new run. However, you might need to re-enter your custom pipeline options.');
+            $("#confirmDuplicateText").html('<b>New revision of this pipeline is available!</b> If you change your pipeline revision, we will transfer your inputs into your new run. However, you might need to re-enter your custom pipeline options.');
         } else {
             $("#confirmDuplicateText").text('Please select target project to copy your run. If you change your pipeline revision, we will transfer your input parameters into your new run. However, you might need to re-enter your custom pipeline options.');
         }
@@ -6612,9 +6650,11 @@ function tooglePermsGroupsDiv(mode){
     if (mode == "show"){
         $('#groupsDiv').css("display", "block");
         $('#permsDiv').css("display", "block");
+        $('#releaseDiv').css("display", "block");
     } else if (mode == "hide"){
         $('#groupsDiv').css("display", "none");
         $('#permsDiv').css("display", "none");
+        $('#releaseDiv').css("display", "none");
     }
 }
 
@@ -7363,7 +7403,7 @@ $(function () {
         var newRunExist =checkNewRunStatus();
         var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
         // if prevUID belong to newrun then saveRun before loadRunLogOpt 
-        if (projectpipelineOwn == "1" && prevnewRun || (!newRunExist && prevlastrun)){
+        if (projectpipelineOwn == "1" && (prevnewRun || (!newRunExist && prevlastrun))){
             saveRun(loadRunLogOpt, false);
         } else {
             loadRunLogOpt();
@@ -11096,6 +11136,7 @@ $(document).ready(function () {
         copyText.select();
         copyText.setSelectionRange(0, 99999);
         document.execCommand("copy");
+        copyText.setSelectionRange(0, 0);
     });
 
 
@@ -11184,5 +11225,83 @@ $(document).ready(function () {
     });
 
 
+    // release date section:
+    $('#relDateDiv').datepicker({
+        format: 'mm/dd/yyyy',
+        startDate: '0',
+        autoclose:true
+    });
+
+    $('#setRelease').on('click',  function(e) {
+        e.preventDefault();
+        $("#releaseModalText").html("If you want to limit the access of the run until certain date, you can set a release date below. We will create temporary link for your run and only people who have the link could access the run.");
+        $('#relDateDiv').data('datepicker').setDate(null);
+        $('#releaseModal').modal("show");
+    });
+
+    $('.cancelReleaseDateBut').on('click',  function(e) {
+        var currRelDate = $('#releaseVal').attr("date");
+        var today = getCurrDate()
+        $('#releaseVal').attr("date", today);
+        var sucFunc = function (){
+            $('#releaseVal').text(today);
+            $("#getTokenLink").css("display", "inline")
+            $('#releaseModal').modal("hide");
+        }
+        saveRun(sucFunc, false)
+    });
+
+    $('#setReleaseDateBut').on('click',  function(e) {
+        var date = $('#relDateInput').val();
+        if (!date){
+            showInfoModal("#infoMod", "#infoModText", "Please enter the release date.")
+        } else {
+            $('#releaseVal').attr("date", date);
+            var sucFunc = function (){
+                $('#releaseVal').text(date);
+                $("#getTokenLink").css("display", "inline")
+                $('#releaseModal').modal("hide");
+            }
+            saveRun(sucFunc, false)
+        }
+    });
+
+    $( "#copyToken" ).on('click', function (e) {
+        var copyText = document.getElementById("tokenInput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        copyText.setSelectionRange(0, 0);
+        toastr.info("Link copied to the clipboard");
+    });
+
+    $('#getTokenLink').on('click',  function(e) {
+        var currToken = $(this).attr("token");
+        var showToken = function(token){
+            $("#showTokenLink").css("display","table")
+            var basepath = $("#basepathinfo").attr("basepath");
+            $("#tokenInput").val(basepath+"/index.php?t="+token)
+            $("#copyToken").trigger("click"); 
+        }
+        if (currToken){
+            showToken(currToken);
+        } else {
+            //insert token
+            getValuesAsync({p:"saveToken", type:"project_pipeline", id:project_pipeline_id}, function (s) {
+                if (s.token){
+                    $(this).attr("token", s.token);
+                    showToken(s.token);
+                }
+            });
+        }
+    });
+    //release date section ends
+
+
+    // prevent closing window before run submission
+    $(window).bind('beforeunload', function(e){
+        if($runscope.beforeunload)return true;
+        else e=null; 
+    });
 
 });

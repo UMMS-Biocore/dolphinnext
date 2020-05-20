@@ -245,13 +245,20 @@
                     </div>
                 </div>
 
-                <div id="releasePipeDiv" style="margin-top:5px;" class="col-md-12">
+                <div id="releaseDiv" style="margin-top:5px;" class="col-md-12">
                     <div class="form-group">
-                        <label class="control-label">Release Date:</label>
-                        <a id="setReleasePipe" href="#"><span date="" id="releaseVal">Set Release Date</span></a><span id="releaseValFinal"></span>
+                        <label id="releaseLabel" class="control-label">Release Date:</label>
+                        <a id="setRelease" href="#"><span date="" id="releaseVal">Set Release Date</span></a>
+                        <span id="releaseValFinal"></span>
                         <span>
-                            <a id="editReleasePipe" data-toggle="tooltip" data-placement="bottom" data-original-title="Edit Release Date"><i style="display:none; font-size: 15px;" class="fa fa-pencil"></i></a>
-                            <a id="getTokenLink" token-link="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="-- Get Link --<br> Only people who have the link can view the pipeline until release date"><i style="display:none;  font-size: 15px;" class="fa fa-chain"></i></a></span>
+                            <a id="getTokenLink" style="display:none;" token="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="Get Link <br> Only people who have the link can access the pipeline until release date"><i style="font-size: 15px;" class="fa fa-chain"></i></a>
+                            <div id="showTokenLink" style="display:none;"  class="col-md-6 input-group">
+                                <input readonly id="tokenInput" type="text" class="form-control">
+                                <div id="copyToken" class="input-group-addon">
+                                    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Copy Link to Clipboard"><span><i class="glyphicon glyphicon-copy"></i></span></a>
+                                </div>
+                            </div>
+                        </span>
                     </div>
                 </div>
 
