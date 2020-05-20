@@ -5038,16 +5038,19 @@ class dbfuncs {
     }
 
     function pubSearchUpdtModule($table, $id, $publicly_searchable, $curr_publicly_searchable, $ownerID){
-        // check if current value of the publicly_searchable is the same as expected value
-        if ($curr_publicly_searchable != $publicly_searchable){
-            list($checkUsed,$warn) = $this->checkUsed($table, "", $id, $ownerID);
-            // only allow change from true to false when it's not used by others.
-            if (empty($checkUsed) || $publicly_searchable == "true"){
-                if ($table == "biocorepipe_save" || $table == "process"){
-                    $this->updatePubliclySearchableById($id, $table, $publicly_searchable, $ownerID);
-                } 
+        $userRole = $this->getUserRoleVal($ownerID);
+        //only admin can update this section
+        if ($userRole == "admin" ){
+            // check if current value of the publicly_searchable is the same as expected value
+            if ($curr_publicly_searchable != $publicly_searchable){
+                list($checkUsed,$warn) = $this->checkUsed($table, "", $id, $ownerID);
+                // only allow change from true to false when it's not used by others.
+                if (empty($checkUsed) || $publicly_searchable == "true"){
+                    if ($table == "biocorepipe_save" || $table == "process"){
+                        $this->updatePubliclySearchableById($id, $table, $publicly_searchable, $ownerID);
+                    } 
+                }
             }
-
         }
     }
 

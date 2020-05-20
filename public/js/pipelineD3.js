@@ -1991,7 +1991,7 @@ function saveDetails(sucFunc) {
         var publicly_searchable = $('#publicly_searchable').is(":checked").toString();
         var pipGroup = $('#pipeGroupAll').val()
         var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
-        var releaseVal = $('#releaseVal').attr("date");
+        var release_date = $('#releaseVal').attr("date");
         sName = document.getElementById("pipeline-title").value;
         sName = sName.replace(/\"/g, "").replace(/\'/g, "").replace(/\\/g, "");
         $("#pipeline-title").changeVal(sName);
@@ -2007,7 +2007,7 @@ function saveDetails(sucFunc) {
             publicly_searchable: publicly_searchable,
             pipeline_group_id: pipGroup,
             nodes: saveNodes,
-            release_date: releaseVal
+            release_date: release_date
         };
 
         getValuesAsync(data, function (s) {
@@ -2205,6 +2205,8 @@ function save(type) {
     var perms = $('#permsPipe').val();
     var pin = $('#pin').is(":checked").toString();
     var publicly_searchable = $('#publicly_searchable').is(":checked").toString();
+        var release_date = $('#releaseVal').attr("date");
+    
     var pin_order = $('#pin_order').val();
     var script_mode_header = $('#script_mode_pipe_header').val();
     var script_mode_footer = $('#script_mode_pipe_footer').val();
@@ -2247,6 +2249,8 @@ function save(type) {
         "pin_order": pin_order
     }, {
         "publicly_searchable": publicly_searchable
+    }, {
+        "release_date": release_date
     }, {
         "script_pipe_header": script_pipe_header
     }, {

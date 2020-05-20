@@ -835,7 +835,7 @@ class ajaxQueryTest extends TestCase
     public function testsaveAllPipeline() {
 		ob_start();
 		$_REQUEST['p'] = 'saveAllPipeline';
-		$_REQUEST['dat'] = '[{"name":"test_pipeline"},{"id":""},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":""},{"group_id":""},{"perms":"3"},{"pin":"false"},{"pin_order":""},{"script_pipe_header":""},{"script_pipe_config":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":""},{"pipeline_list":""},{"publish_web_dir":""},{"pipeline_gid":null},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
+		$_REQUEST['dat'] = '[{"name":"test_pipeline"},{"id":""},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":""},{"group_id":""},{"perms":"3"},{"pin":"false"},{"pin_order":""},{"release_date":""},{"script_pipe_header":""},{"script_pipe_config":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":""},{"pipeline_list":""},{"publish_web_dir":""},{"pipeline_gid":null},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'1');
 		ob_end_clean();
@@ -891,7 +891,7 @@ class ajaxQueryTest extends TestCase
     public function testsaveAllPipelineUpdate() {
 		ob_start();
 		$_REQUEST['p'] = 'saveAllPipeline';
-		$_REQUEST['dat'] = '[{"name":"test_pipeline"},{"id":"1"},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":"pipeline_summary_updated"},{"group_id":""},{"perms":"63"},{"pin":"true"},{"pin_order":""},{"publicly_searchable":"true"},{"script_pipe_header":""},{"script_pipe_config":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":"1"},{"pipeline_list":"2,3"},{"publish_web_dir":""},{"pipeline_gid":null},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
+		$_REQUEST['dat'] = '[{"name":"test_pipeline"},{"id":"1"},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":"pipeline_summary_updated"},{"group_id":""},{"perms":"63"},{"pin":"true"},{"pin_order":""},{"release_date":""},{"publicly_searchable":"true"},{"script_pipe_header":""},{"script_pipe_config":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":"1"},{"pipeline_list":"2,3"},{"publish_web_dir":""},{"pipeline_gid":null},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
 		include('ajaxquery.php');
         $_REQUEST['p'] = 'loadPipeline';
 		$_REQUEST['id'] = '1';
@@ -951,6 +951,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['pin'] = 'true';
 		$_REQUEST['pin_order'] = '0';
 		$_REQUEST['publicly_searchable'] = 'true';
+		$_REQUEST['release_date'] = '';
 		$_REQUEST['publish'] = '0';
 		$_REQUEST['pipeline_group_id'] = '1';
 		include('ajaxquery.php');
@@ -980,7 +981,7 @@ class ajaxQueryTest extends TestCase
 		ob_start();
 		$_SESSION['ownerID'] = '2';
 		$_REQUEST['p'] = 'saveAllPipeline';
-		$_REQUEST['dat'] = '[{"name":"test_pipeline2"},{"id":""},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":""},{"group_id":""},{"perms":"3"},{"pin":"false"},{"pin_order":""},{"publicly_searchable":"false"},{"script_pipe_config":""},{"script_pipe_header":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":"1,4"},{"pipeline_list":"2,3"},{"publish_web_dir":""},{"pipeline_gid":1},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
+		$_REQUEST['dat'] = '[{"name":"test_pipeline2"},{"id":""},{"nodes":{"g-0":[318.6666564941406,106.66666412353516,"1","test_process"]}},{"mainG":[0,0,1]},{"edges":[]},{"summary":""},{"group_id":""},{"perms":"3"},{"pin":"false"},{"pin_order":""},{"release_date":""},{"publicly_searchable":"false"},{"script_pipe_config":""},{"script_pipe_header":""},{"script_pipe_footer":"0"},{"script_mode_header":"0"},{"script_mode_footer":"0"},{"pipeline_group_id":"1"},{"process_list":"1,4"},{"pipeline_list":"2,3"},{"publish_web_dir":""},{"pipeline_gid":1},{"rev_comment":""},{"rev_id":0},{"pipeline_uuid":""}]';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'2');
 		ob_end_clean();
