@@ -5307,6 +5307,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 function runProPipeCall(checkType, uuid) {
     console.log("runProPipeCall")
     $runscope.beforeunload = "Please wait for the submission."
+    console.log("** Start")
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
@@ -5417,6 +5418,8 @@ function runProPipeCall(checkType, uuid) {
         cache: false,
         type: "POST",
         success: function (serverLogGet) {
+    console.log("** End")
+            
             $runscope.beforeunload = "";
             updateNewRunStatus("0")
             fillRunVerOpt("#runVerLog");

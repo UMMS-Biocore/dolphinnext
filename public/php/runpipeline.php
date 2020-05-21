@@ -596,7 +596,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <div id="releaseDiv" style="margin-top:5px;" class="col-md-12">
                     <div class="form-group">
                         <label id="releaseLabel" class="control-label">Release Date:</label>
-                        <a id="setRelease" href="#"><span date="" id="releaseVal">Set Release Date</span></a>
+                        <a id="setRelease" href="#"><span date="" id="releaseVal">Set a Date</span></a>
                         <span id="releaseValFinal"></span>
                         <span>
                             <a id="getTokenLink" style="display:none;" token="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="Get Link <br> Only people who have the link can access the run until release date"><i style="font-size: 15px;" class="fa fa-chain"></i></a>
