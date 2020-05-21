@@ -3955,6 +3955,8 @@ function loadRunSettings(pipeData){
     $('#docker_opt').val(pipeData[0].docker_opt);
     $('#singu_img').val(pipeData[0].singu_img);
     $('#singu_opt').val(pipeData[0].singu_opt);
+    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+    toogleReleaseDiv(pipeData[0].perms, projectpipelineOwn);
     updateCheckBox('#publish_dir_check', pipeData[0].publish_dir_check);
     updateCheckBox('#intermeDel', pipeData[0].interdel);
     updateCheckBox('#exec_each', decodeHtml(pipeData[0].exec_each));
@@ -4005,7 +4007,7 @@ function loadProjectPipeline(pipeData) {
             $('#releaseLabel').text("");
         }
     }
-    toogleReleaseDiv(pipeData[0].perms, projectpipelineOwn);
+    
     // release ends --
 
     loadRunSettings(pipeData);
@@ -5306,8 +5308,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 //click on run button (callback function)
 function runProPipeCall(checkType, uuid) {
     console.log("runProPipeCall")
-    $runscope.beforeunload = "Please wait for the submission."
-    console.log("** Start")
+    $runscope.beforeunload = "Please wait for the submission.";
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
@@ -5418,8 +5419,6 @@ function runProPipeCall(checkType, uuid) {
         cache: false,
         type: "POST",
         success: function (serverLogGet) {
-    console.log("** End")
-            
             $runscope.beforeunload = "";
             updateNewRunStatus("0")
             fillRunVerOpt("#runVerLog");
@@ -6653,11 +6652,11 @@ function tooglePermsGroupsDiv(mode){
     if (mode == "show"){
         $('#groupsDiv').css("display", "block");
         $('#permsDiv').css("display", "block");
-        $('#releaseDiv').css("display", "block");
+        $('#releaseDivParent').css("display", "block");
     } else if (mode == "hide"){
         $('#groupsDiv').css("display", "none");
         $('#permsDiv').css("display", "none");
-        $('#releaseDiv').css("display", "none");
+        $('#releaseDivParent').css("display", "none");
     }
 }
 
