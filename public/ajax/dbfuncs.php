@@ -539,12 +539,16 @@ class dbfuncs {
             if (!empty($collection_id)){
                 $inputsPath = "$dolphin_path_real_coll/inputs/$collection_id";
                 $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
+                $reg = "*";
+                if (count($allfiles) == 1){
+                    $reg = $allfiles[0]->{'name'};
+                } 
                 $file_type = $allfiles[0]->{'file_type'};
                 $collection_type = $allfiles[0]->{'collection_type'};
                 if ($collection_type == "single"){
-                    $inputName = "$inputsPath/*.$file_type";
+                    $inputName = "$inputsPath/$reg.$file_type";
                 } else if ($collection_type == "pair"){
-                    $inputName = "$inputsPath/*.{R1,R2}.$file_type";
+                    $inputName = "$inputsPath/$reg.{R1,R2}.$file_type";
                 }
             }
             //if profile variable not defined in the profile then use run_work directory (eg. ${params.DOWNDIR}) 
