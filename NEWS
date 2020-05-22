@@ -1,6 +1,24 @@
+08.05.2020 Version 1.1.17
+* Major Upgrades: 
+  - Sharing pipeline/run with everyone feature is added. 
+  - Access of the public pipeline/run could be controlled by setting a release date and getting a sharable link.
+  - create a temporary link till release date (e.g., for the reviewer) feature added.
+  - Permission control added for the pipeline and run pages.
+  - Publicly searchable feature added for admin, which will control the listed pipeline and processes.
+
+* Minor Upgrades:
+  - Pipeline autosave disabled after clicking cancel on saving.
+  - New revision button added for process and pipeline.
+  - Warning added to prevent leaving web page before run submission
+  - Run termination blocked until run submission.
+  - Creating a new run page is prevented when only the description or permission of the run edited. 
+
+* Bug Fixes:
+  - Bug fixed by cleaning single quotes in the pipeline name.
+
 08.05.2020 Version 1.1.16
 * Fixes:
-Minor bug fixed regarding to loading log section.
+Minor bug fixed regarding the loading log section.
 
 05.05.2020 Version 1.1.15
 Administrator guide added to the documentation.

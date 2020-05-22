@@ -804,6 +804,28 @@ function updateMarkdown (text, targetDiv){
     target.innerHTML = html;
 }
 
+function getCurrDate(){
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+    today = mm + '/' + dd + '/' + yyyy;
+    return today;
+}
+
+function toogleReleaseDiv(selPerm, own){
+    selPerm = parseInt(selPerm);
+    if (selPerm >= 43){
+        $("#releaseDiv").css("display", "block")
+        var releaseVal = $('#releaseVal').attr("date");
+        if (!releaseVal && own === "1"){
+            $('#releaseLabel').text("Release Date:");
+        }
+    } else {
+        $("#releaseDiv").css("display", "none")
+    }
+}
+
 $(document).ready(function () {
     initCloudConsole("amazon");
     initCloudConsole("google");
@@ -980,9 +1002,11 @@ $(document).ready(function () {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
                     } else {
+                        toogleReleaseDiv(selPerm, pipelineOwn)
                         autosaveDetails();
                     }
                 } else {
+                    toogleReleaseDiv(selPerm, pipelineOwn);
                     autosaveDetails();
                 }
             } else if (dropdownID == "permsRun" || dropdownID == "groupSelRun"){
@@ -991,6 +1015,7 @@ $(document).ready(function () {
                 var pipeline_id = $('#pipeline-title').attr('pipeline_id');
                 var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
                 var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+                var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
                 var project_id = pipeData[0].project_id;
                 if (pipeline_id && project_id){
                     var warnUser = false;
@@ -1003,7 +1028,9 @@ $(document).ready(function () {
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
-                    } 
+                    } else {
+                        toogleReleaseDiv(selPerm, projectpipelineOwn);
+                    }
                 }
             } else if (dropdownID == "permsPro" || dropdownID == "groupSelPro"){
                 var selGroup = $("#groupSelPro").val();

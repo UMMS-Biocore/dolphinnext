@@ -1,7 +1,6 @@
 <?php
-
 /**
- *  Forces the browser to reload cached CSS/JS files when it's modified
+ *  auto_version($file): Forces the browser to reload cached CSS/JS files when it's modified
  *  Given a file, i.e. base.css, replaces it with a string containing the
  *  file's mtime, i.e. base.1221534296.css
  *  update .htaccess: RewriteRule  ^(.*)\.[\d]{10}\.(css|js)$ public/$1.$2 [L]
@@ -26,18 +25,65 @@ function getTitle($np)
     return $ret; 
 }
 
-function getPage($np, $login, $id)
-{
-    if ($np==1 && $login==1 && (!empty($id) || $id != "")){include("php/pipeline.php"); include("php/pipelinemodal.php"); }
-    else if ($np==1 && $login==1 && empty($id)){ include("php/public.php"); include("php/pipelinemodal.php");}
-    else if ($np==1 && $login!=1 && !empty($id)){include("php/publicpipeline.php"); }
-    else if ($np==2 && $login==1 && empty($id)){include("php/projects.php");}
-    else if ($np==2 && $login==1 && !empty($id)){include("php/projectsDetail.php");}
-    else if ($np==3 && $login==1 && !empty($id)){include("php/runpipeline.php");}
-    else if ($np==4 && $login==1){include("php/profile.php");}
-    else if ($np==5 && $login==1 && empty($id)){include("php/runstatus.php");}
-    else if ($np==6 ){include("php/terms.php");}
-    else {include("php/public.php");}
+function getPage($np, $login, $id, $ownerID){
+    $db=new dbfuncs();
+    if ($np==1 && $login==1 && (!empty($id) || $id === "0")){
+        list($permCheck,$warnName) = $db->checkUserPermission("biocorepipe_save", $id, $ownerID, "r");
+        if (!empty($permCheck) || $id === "0"){
+            include("php/pipeline.php"); 
+            include("php/pipelinemodal.php");
+        } else {
+            $val = 0;
+            $tokens = isset($_SESSION['token']) ? $_SESSION['token'] : [];
+            foreach ($tokens as $tk):
+            $val = $db->validateToken($tk, $id, $np);
+            if (!empty($val)){
+                break;
+            }
+            endforeach;
+            if (!empty($val)) {
+                include("php/pipeline.php"); 
+                include("php/pipelinemodal.php");
+            } else {
+                include("php/error403.php"); 
+            }
+        }
+    } else if ($np==1 && $login==1 && empty($id)){ 
+        include("php/public.php"); 
+        include("php/pipelinemodal.php");
+    } else if ($np==1 && $login!=1 && !empty($id)){
+        include("php/publicpipeline.php"); 
+    } else if ($np==2 && $login==1 && empty($id)){
+        include("php/projects.php");
+    } else if ($np==2 && $login==1 && !empty($id)){
+        include("php/projectsDetail.php");
+    } else if ($np==3 && $login==1 && !empty($id)){
+        list($permCheck,$warnName) = $db->checkUserPermission("project_pipeline", $id, $ownerID, "r");
+        if (!empty($permCheck)){
+            include("php/runpipeline.php");
+        } else {
+            $tokens = isset($_SESSION['token']) ? $_SESSION['token'] : [];
+            foreach ($tokens as $tk):
+            $val = $db->validateToken($tk, $id, $np);
+            if (!empty($val)){
+                break;
+            }
+            endforeach;
+            if (!empty($val)){
+                include("php/runpipeline.php");
+            } else {
+                include("php/error403.php"); 
+            }
+        }
+    } else if ($np==4 && $login==1){
+        include("php/profile.php");
+    } else if ($np==5 && $login==1 && empty($id)){
+        include("php/runstatus.php");
+    } else if ($np==6 ){
+        include("php/terms.php");
+    } else {
+        include("php/public.php");
+    }
 }
 
 function getSidebarMenu($np,$login)

@@ -57,7 +57,7 @@
                     <button class="btn btn-default dropdown-toggle" type="button" id="mProActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;"><span class="fa fa-ellipsis-h"></span></button>
                     <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
                         <li><a id="deleteRevision" data-toggle="modal" href="#confirmModal">Delete Revision</a></li>
-                        <li><a id="createRevision" style="display:none;" onclick="createRevision()">Create Revision</a></li>
+                        <li><a id="createRevision" class="saveprocess" style="display:none;">Create Revision</a></li>
                         <li><a id="duplicaProRev" onclick="duplicateProcessRev()">Copy Process</a></li>
 
                     </ul>
@@ -413,6 +413,7 @@
                         </div>
                         <div class="form-horizontal">
                             <div id="proPermGroPubDiv">
+                                <label class="col-sm-1 control-label"></label>
                                 <div class="col-sm-4">
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Permissions to View</label>
@@ -420,28 +421,17 @@
                                             <select id="permsPro" class="fbtn btn-default form-control permscheck" name="perms">
                                                 <option value="3" selected="">Only me </option>
                                                 <option value="15">Only my groups</option>
-                                                <option disabled value="63">Everyone </option>
+                                                <option value="63">Everyone </option>
                                             </select>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-sm-4">
+                                <div class="col-sm-5">
                                     <div class="form-group">
                                         <label class="col-sm-6 control-label">Group Selection</label>
                                         <div class="col-sm-6">
                                             <select id="groupSelPro" class="fbtn btn-default form-control permscheck" name="group_id">
                                                 <option value="" selected>Choose group </option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-4">
-                                    <div class="form-group">
-                                        <label class="col-sm-4 control-label">Publish</label>
-                                        <div class="col-sm-3">
-                                            <select id="publishPro" class="fbtn btn-default form-control" name="publish">
-                                                <option value="0">No</option>
-                                                <option value="1">Yes</option>
                                             </select>
                                         </div>
                                     </div>
@@ -454,10 +444,12 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-info" style="display:none" id="selectProcess">Select Revision</button>
-                <button type="button" class="btn btn-primary" id="saveprocess">Save changes</button>
-                <button type="button" class="btn btn-primary" style="display:none" id="createRevisionBut" onclick="createRevision()">Create Revision</button>
+                <div>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" data-container="body" data-toggle="tooltip" data-placement="top" title="Use the revision of the process in the workflow" class="btn btn-info" style="display:none" id="selectProcess">Select Revision </button>
+                    <button type="button" class="btn btn-primary saveprocess" id="saveprocess">Save changes</button>
+                    <button type="button" class="btn btn-primary saveprocess" style="display:none" id="createRevisionBut">Create Revision</button>
+                </div>
             </div>
         </div>
     </div>
@@ -910,7 +902,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close cancelRev" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="confirmYesNoTitle">Confirm revision</h4>
+                <h4 class="modal-title" id="confirmYesNoTitle">Confirm</h4>
             </div>
             <div class="modal-body">
                 <span id="confirmYesNoText">Text</span>
@@ -925,9 +917,9 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-warning" style="display:none;" id="saveOnExist">Save on Existing</button>
                 <button type="button" class="btn btn-default cancelRev" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveRev">Save</button>
+                <button type="button" class="btn btn-warning" style="display:none;" id="saveOnExist">Overwrite</button>
+                <button type="button" class="btn btn-primary" id="saveRev">Save As New Revision</button>
             </div>
         </div>
     </div>
@@ -952,6 +944,32 @@
     </div>
 </div>
 
+<div id="releaseModal" class="modal fade" tabindex="-1" role="dialog" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Release Date</h4>
+            </div>
+            <div class="modal-body">
+                <p id="releaseModalText" >Text</p>
+                <label class="col-md-3" style="padding-top:5px;" >Release Date:</label>
+                <div id="relDateDiv" class="col-md-6 input-group date">
+                    <input id="relDateInput" type="text" class="form-control">
+                    <div class="input-group-addon">
+                        <span class="fa fa-calendar"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary cancelReleaseDateBut" data-dismiss="modal">Release Immediately</button>
+                <button type="button" class="btn btn-primary" id="setReleaseDateBut">Set Release Date</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="warnUserImport" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -965,7 +983,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" data-dismiss="modal" id="saveOnExistImport">Save on Existing</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" id="saveOnExistImport">Overwrite</button>
             </div>
         </div>
     </div>

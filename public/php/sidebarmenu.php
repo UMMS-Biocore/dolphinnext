@@ -68,8 +68,9 @@ function getSideMenuItem($obj, $type)
     return $html;
 }
 
-
+// get process_groups
 $parentMenus = json_decode($db->getParentSideBar($ownerID));
+// get pipeline_groups
 $parentMenusPipeline = json_decode($db->getParentSideBarPipeline($ownerID));
 //style="overflow-y: scroll; width: auto; height: calc(100vh - 250px);"
 $menuhtml='<ul id="autocompletes1" class="sidebar-menu" data-widget="tree" >';
@@ -87,13 +88,14 @@ if (strlen($orgName) >19){
     $showName = substr($orgName, 0, 19);
     $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
 }
+// get pipelines belong to pipeline_group name
 $items = json_decode($db->getSubMenuFromSideBarPipe($parentitem->{'name'}, $ownerID));
 
 
 if (count($items) > 0){
     $showLi= getShowLi($items);
     $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
-    $menuhtml.='<a href="" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
+    $menuhtml.='<a href="javascript:void(0)" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
     $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
     $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
     $menuhtml.= getSideMenuItem($items, "pipeline");
@@ -111,11 +113,13 @@ if (strlen($orgName) >15){
     $showName = substr($orgName, 0, 15);
     $tooltip = 'data-toggle="tooltip" data-placement="right" data-original-title="'.$orgName.'"';
 }
+// get processes belong to process_group name
 $items = json_decode($db->getSubMenuFromSideBar($parentitem->{'name'}, $ownerID));
+
 if (count($items) > 0){
     $showLi= getShowLi($items);
     $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
-    $menuhtml.='<a href="" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
+    $menuhtml.='<a href="javascript:void(0)" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
     $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
     $menuhtml.='<ul id="side-'.$parentitem->{'id'}.'" class="treeview-menu">';
     $menuhtml.= getSideMenuItem($items, "process");

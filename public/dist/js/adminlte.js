@@ -646,6 +646,8 @@ throw new Error('AdminLTE requires jQuery')
           height: ($(window).height() - $(Selector.mainHeader).height()) + 'px',
           color:'#E7E7E7',size:'5px',railVisible: true
         })
+          //fix hidden tooltip 
+//          $('.slimScrollDiv').css('overflow', '');
       }
     }
   }

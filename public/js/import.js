@@ -490,7 +490,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
         sendJSON.script_mode_header = importJSON.script_mode_header
         sendJSON.rev_comment = "imported";
         sendJSON.group = ""
-        sendJSON.publish = ""
+        sendJSON.publicly_searchable = "false";
         if (importJSON.perms == 15) {
             sendJSON.perms = 3;
         } else {
@@ -562,7 +562,11 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
         sendJSON.script_mode_header = importJSON.script_mode_header
         sendJSON.rev_comment = importJSON.rev_comment;
         sendJSON.group_id = ""
-        sendJSON.publish = ""
+        if (importJSON.publicly_searchable){
+            sendJSON.publicly_searchable = importJSON.publicly_searchable;
+        } else {
+            sendJSON.publicly_searchable = "false";
+        }
         sendJSON.pin = importJSON.pin
         sendJSON.pin_order = importJSON.pin_order
         if (importJSON.perms == 15) {
@@ -702,7 +706,7 @@ function checkImport(optObj) {
                     window.importObj[rowID]["commandProPara"] = null;
 
                 } else if (status === "warnUser") {
-                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported processes. Please proceed to view conflict and save on existing revision"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported processes. Please proceed to view conflict and overwrite existing version"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
                     //process
                     sendJSONprocess.rev_id = checkUUID.process_rev_uuid.rev_id;
                     sendJSONprocess.process_gid = checkUUID.process_rev_uuid.process_gid;
@@ -773,7 +777,7 @@ function checkImport(optObj) {
                     window.importObj[fileId].dict[type][importJSON.id] = pipeUUID.pipeline_rev_uuid.id;
 
                 } else if (status === "warnUser") {
-                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported pipelines. Please proceed to view conflict and save on existing revision"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
+                    $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported pipelines. Please proceed to view conflict and overwrite existing version."><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
                     sendJSONpipeline.rev_id = pipeUUID.pipeline_rev_uuid.rev_id;
                     sendJSONpipeline.pipeline_gid = pipeUUID.pipeline_rev_uuid.pipeline_gid;
                     sendJSONpipeline.id = pipeUUID.pipeline_rev_uuid.id;
@@ -1031,9 +1035,9 @@ function encodeElement(type, importJSON, fileID) {
         importJSON.pipeline_list = encodeProPipeList(importJSON.pipeline_list, fileID, "pipeline")
         importJSON.process_list = encodeProPipeList(importJSON.process_list, fileID, "process")
         var savedList = [];
-        var itemOrder = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publish", "script_pipe_header", "script_pipe_config", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
-        for (var i = 0; i < itemOrder.length; i++) {
-            var key = itemOrder[i];
+        var pipelineColums = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publicly_searchable", "script_pipe_header", "script_pipe_config", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
+        for (var i = 0; i < pipelineColums.length; i++) {
+            var key = pipelineColums[i];
             var tObj = {};
             if (importJSON[key] !== undefined) {
                 tObj[key] = importJSON[key]
@@ -1041,7 +1045,6 @@ function encodeElement(type, importJSON, fileID) {
                 tObj[key] = ""
             }
             savedList.push(tObj)
-
         }
         var sl = JSON.stringify(savedList);
         importJSON = { p: "saveAllPipeline", dat: sl };

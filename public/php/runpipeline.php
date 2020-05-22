@@ -278,7 +278,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
             <select id="runVerLog" class="fbtn btn-default form-control"></select>
         </div>
         <div style="float:right; padding-top:6px; padding-right:10px;">
-            <span id="runLogSize" ></span>
+            <span id="runLogSize"></span>
         </div>
     </div>
 
@@ -311,7 +311,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     <div class="row" id="rOut_dirDiv">
                         <div class="col-md-12">
                             <label style="float:left; margin-right:4px;"> Work Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the work directory in your host. eg. /project/rna-seq/run1"><i style="font-size: 14px;" class='fa fa-info-circle'></i></a></span></label>
-<!--                            <button id="refreshDiskSpaceBut" type="button" class="btn" data-backdrop="false" onclick="updateDiskSpace()" style="display:none; float:left; background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check Disk Space"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>-->
+                            <!--                            <button id="refreshDiskSpaceBut" type="button" class="btn" data-backdrop="false" onclick="updateDiskSpace()" style="display:none; float:left; background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check Disk Space"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>-->
                             <span title="Check Disk Space" style="cursor:pointer;" onclick="updateDiskSpace()">
                                 <div id="workdir_diskpercent_div" class="col-md-1 progress" style=" display:none; margin-bottom:0px; padding-left:0px; padding-right:0px; margin-right:5px; margin-left:5px;">
                                     <div id="workdir_diskpercent" class="progress-bar progress-bar-info" role="progressbar" style="padding-left:3px; color:black; width:60%"></div>
@@ -581,6 +581,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <select id="permsRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="perms">
             <option value="3" selected>Only me </option>
             <option value="15">Only my group</option>
+            <option value="63">Everyone</option>
         </select>
     </div>
 </div>
@@ -590,6 +591,24 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <select id="groupSelRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="group_id">
             <option value="" selected>Choose group </option>
         </select>
+    </div>
+</div>
+<div id="releaseDivParent">
+    <div id="releaseDiv" style="margin-top:5px;" class="col-md-12">
+        <div class="form-group">
+            <label id="releaseLabel" class="control-label">Release Date:</label>
+            <a id="setRelease" href="#"><span date="" id="releaseVal">Set a Date</span></a>
+            <span id="releaseValFinal"></span>
+            <span>
+                <a id="getTokenLink" style="display:none;" token="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="Get Link <br> Only people who have the link can access the run until release date"><i style="font-size: 15px;" class="fa fa-chain"></i></a>
+                <div id="showTokenLink" style="display:none;" class="col-md-6 input-group">
+                    <input readonly id="tokenInput" type="text" class="form-control">
+                    <div id="copyToken" class="input-group-addon">
+                        <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Copy Link to Clipboard"><span><i class="glyphicon glyphicon-copy"></i></span></a>
+                    </div>
+                </div>
+            </span>
+        </div>
     </div>
 </div>
 </div>
@@ -1595,6 +1614,32 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 </div>
 <!--New Collection Modal ENDs-->
 
+<div id="releaseModal" class="modal fade" tabindex="-1" role="dialog" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Release Date</h4>
+            </div>
+            <div class="modal-body">
+                <p id="releaseModalText">Text</p>
+                <label class="col-md-3" style="padding-top:5px;">Release Date:</label>
+                <div id="relDateDiv" class="col-md-6 input-group date">
+                    <input id="relDateInput" type="text" class="form-control">
+                    <div class="input-group-addon">
+                        <span class="fa fa-calendar"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary cancelReleaseDateBut" data-dismiss="modal">Release Immediately</button>
+                <button type="button" class="btn btn-primary" id="setReleaseDateBut">Set Release Date</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!--Confirm Modal-->
 <div id="confirmModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -1682,14 +1727,14 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" >Edit</h4>
+                <h4 class="modal-title">Edit</h4>
             </div>
             <div class="modal-body">
                 <form class="form-horizontal">
                     <div class="form-group">
                         <label for="editRunName" class="col-sm-2 control-label">Name</label>
                         <div class="col-sm-10">
-                            <input type="text" class="form-control" id="editRunName" >
+                            <input type="text" class="form-control" id="editRunName">
                         </div>
                     </div>
                 </form>

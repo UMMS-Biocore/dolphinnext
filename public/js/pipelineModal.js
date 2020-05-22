@@ -1,3 +1,4 @@
+
 //################################
 // --textEditor jquery plugin --
 //################################
@@ -479,6 +480,10 @@
 //--end of textEditor jquery plugin --
 //#####################################
 
+
+
+
+
 //template text for ace editor
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
 templateperl = '#perl example: \n\n#!/usr/bin/perl \n print \'Hi there!\' . \'\\n\';';
@@ -572,7 +577,6 @@ function cleanProcessModal() {
     $('#mProRevSpan').css('display', "none");
     $('#mName').removeAttr('disabled');
     $('#permsPro').removeAttr('disabled');
-    $('#publishPro').removeAttr('disabled');
     var advOptProClass = $('#advOptPro').attr('class');
     if (advOptProClass !== "row collapse") {
         $('#mAdvProCollap').trigger("click");
@@ -779,9 +783,6 @@ function loadSelectedProcess(selProcessId) {
     if (showProcess.group_id !== "" && showProcess.group_id !== null) {
         $('#groupSelPro').val(showProcess.group_id);
     }
-    if (showProcess.publish !== "" && showProcess.publish !== null) {
-        $('#publishPro').val(showProcess.publish);
-    }
     if (showProcess.script_mode !== "" && showProcess.script_mode !== null) {
         $('#script_mode').val(showProcess.script_mode);
         $("#script_mode").trigger("change");
@@ -864,16 +865,12 @@ function loadSelectedProcess(selProcessId) {
         }
     }
     // disable modal based on permissions
-    if (usRole === "admin") {
-        $("#permsPro option[value='63']").attr("disabled", false);
-    } else if (processOwn === "1" && showProcess.perms === "63") {
-        $('#permsPro').attr('disabled', "disabled");
-        $('#publishPro').attr('disabled', "disabled");
-        //allow to create new revision by showing #createRevisionBut
-        disableProModalPublic(selProcessId);
-    } else if (processOwn === "0") {
+    if (processOwn === "1") {
+        $('#createRevision').css('display', "inline");
+    } else {
         $('#mProActionsDiv').css('display', "none");
         $('#proPermGroPubDiv').css('display', "none");
+        $('#createRevision').css('display', "none");
         $('#createRevisionBut').css('display', "none");
         disableProModal(selProcessId);
     }
@@ -1319,7 +1316,7 @@ function checkRevisionPipe(pipeline_id) {
             }
             warnPipeText +=  '"' + checkProj[element].name + '"';
         });
-        warnPipeText = warnPipeText + '</br></br>Your changes may effect the current run/runs. If you still want to save on existing revision, please click on "save on existing" button. </br></br>Otherwise you can save as a new revision by entering revision comment at below and clicking the save button.'
+        warnPipeText = warnPipeText + '</br></br>If you want to overwrite existing revision, please click on "overwrite" button. Otherwise, you can save as a new revision after entering revision comment.</br>';
     } else if (numOfProjectPublic > 0) {
         warnUserPipe = true;
         warnPipeText +=  'This revision of pipeline already used in following group/public projects: ';
@@ -1329,7 +1326,7 @@ function checkRevisionPipe(pipeline_id) {
             }
             warnPipeText +=  '"' + checkProjPublic[element].name + '"';
         });
-        warnPipeText += '</br></br>You can save as a new revision by entering revision comment at below and clicking the save button.'
+        warnPipeText += '</br></br>You can save as a new revision after entering revision comment.'
     }
 
     return [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic];
@@ -1341,37 +1338,31 @@ function checkRevisionProc(data, proID) {
     var startPoint = 6;
     var inputProParams = prepareProParam(data, startPoint, 'inputs');
     var outputProParams = prepareProParam(data, startPoint, 'outputs');
-    //Check if process name is changed 
-    //xx
-    //Check if process parameters is changed 
-    var checkResult = checkProParameters(inputProParams, outputProParams, proID);
-    if (checkResult === false) {
-        //has edited process ever used in other pipelines?
-        var checkPipe = checkPipeline(proID);
-        var checkPipePublic = checkPipelinePublic(proID);
-        var checkProPipePublic = checkProjectPipelinePublic(proID);
-        var numOfProcess = checkPipe.length;
-        var numOfProcessPublic = checkPipePublic.length;
-        var numOfProPipePublic = checkProPipePublic.length;
-        if (numOfProcess > 0 && numOfProcessPublic === 0) {
-            warnUser = true;
-            infoText = infoText + 'This revision of process already used in following pipeline/pipelines: ';
-            $.each(checkPipe, function (element) {
-                if (element !== 0) {
-                    infoText = infoText + ', ';
-                }
-                infoText = infoText + '"' + checkPipe[element].name + '"';
-            });
-            infoText = infoText + '</br></br>Your changes may effect the current pipeline. If you still want to save on existing revision, please click on "save on existing" button. </br></br>Otherwise you can save as a new revision by entering revision comment at below and clicking the save button.'
-        } else if (numOfProcessPublic > 0) {
-            warnUser = true;
-            infoText = infoText + 'This revision of process already used in group/public pipelines.';
-            infoText = infoText + '</br></br>You can save as a new revision by entering revision comment at below and clicking the save button.'
-        } else if (numOfProPipePublic > 0) {
-            warnUser = true;
-            infoText = infoText + 'This revision of process already used in group/public runs.';
-            infoText = infoText + '</br></br>You can save as a new revision by entering revision comment at below and clicking the save button.'
-        }
+    //has edited process ever used in other pipelines?
+    var checkPipe = checkPipeline(proID);
+    var checkPipePublic = checkPipelinePublic(proID);
+    var checkProPipePublic = checkProjectPipelinePublic(proID);
+    var numOfProcess = checkPipe.length;
+    var numOfProcessPublic = checkPipePublic.length;
+    var numOfProPipePublic = checkProPipePublic.length;
+    if (numOfProcess > 0 && numOfProcessPublic === 0 && numOfProPipePublic === 0) {
+        warnUser = true;
+        infoText = infoText + 'This revision of process already used in following pipeline(s): ';
+        $.each(checkPipe, function (element) {
+            if (element !== 0) {
+                infoText = infoText + ', ';
+            }
+            infoText = infoText + '"' + checkPipe[element].name + '"';
+        });
+        infoText = infoText + '</br></br>If you want to overwrite existing version, please click on "overwrite" button. Otherwise, you can save as a new revision after entering revision comment.</br>'
+    } else if (numOfProcessPublic > 0) {
+        warnUser = true;
+        infoText = infoText + 'This revision of process already used in group/public pipelines.';
+        infoText = infoText + '</br></br>You can save as a new revision after entering revision comment.</br>'
+    } else if (numOfProPipePublic > 0) {
+        warnUser = true;
+        infoText = infoText + 'This revision of process already used in group/public runs.';
+        infoText = infoText + '</br></br>You can save as a new revision after entering revision comment.</br>'
     }
     return [warnUser, infoText, numOfProcess, numOfProcessPublic, numOfProPipePublic];
 }
@@ -1561,100 +1552,6 @@ function disableProModalPublic(selProcessId) {
     $('#createRevisionBut').css('display', "inline");
 };
 
-function createRevPipeline(savedList, id, sName) {
-    createPipeRev = "true";
-    [savedList, id, sName] = save();
-
-    var infoText = "Since this pipeline is public, it is not allowed for modification. You can save the pipeline as a new revision by entering revision comment and clicking the save button."
-    $('#confirmRevision').off();
-    $('#confirmRevision').on('show.bs.modal', function (event) {
-        $(this).find('form').trigger('reset');
-        $('#confirmYesNoText').html(infoText);
-    });
-    $('#confirmRevision').on('click', '#saveRev', function (event) {
-        var confirmformValues = $('#confirmRevision').find('input');
-        var revCommentData = confirmformValues.serializeArray();
-        var revComment = revCommentData[0].value;
-        if (revComment === '') { //xxx warn user to enter comment
-        } else if (revComment !== '') {
-            var pipeline_gid = getValues({ p: "getPipeline_gid", "pipeline_id": id })[0].pipeline_gid;
-            var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid })[0].rev_id;
-            var newPipRev_id = parseInt(maxPipRev_id) + 1;
-            savedList[1].id = '';
-            savedList[7].perms = '3';
-            savedList[7].pin = 'false';
-            savedList[10].publish = '0';
-            savedList.push({ "pipeline_gid": pipeline_gid });
-            savedList.push({ "rev_comment": revComment });
-            savedList.push({ "rev_id": newPipRev_id });
-            sl = JSON.stringify(savedList);
-            var ret = getValues({ p: "saveAllPipeline", dat: sl });
-            $('#confirmRevision').modal('hide');
-            $('#autosave').text('Changes saved on new revision');
-            setTimeout(function () { window.location.replace("index.php?np=1&id=" + ret.id); }, 700);
-        }
-    });
-    $('#confirmRevision').modal('show');
-
-}
-
-
-function createRevision() {
-    var infoText = "You can save the process as a new revision by entering revision comment at below and clicking the save button."
-    $('#confirmRevision').off();
-    $('#confirmRevision').on('show.bs.modal', function (event) {
-        $(this).find('form').trigger('reset');
-        $('#confirmYesNoText').html(infoText);
-    });
-    $('#confirmRevision').on('click', '#saveRev', function (event) {
-        var proID = $('#mIdPro').val();
-        $('#mName').removeAttr('disabled');
-        var proName = $('#mName').val();
-        var confirmformValues = $('#confirmRevision').find('input');
-        var revCommentData = confirmformValues.serializeArray();
-        var revComment = revCommentData[0].value;
-        if (revComment === '') { //warn user to enter comment
-
-        } else if (revComment !== '') {
-            var proGroId = $('#mProcessGroup').val();
-            var sMenuProIdFinal = proName + '@' + proID;
-            var sMenuProGroupIdFinal = proGroId;
-            var dataToProcess = []; //dataToProcess to save in process table
-            var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
-            var maxRev_id = getValues({ p: "getMaxRev_id", "process_gid": process_gid })[0].rev_id;
-            var newRev_id = parseInt(maxRev_id) + 1;
-            dataToProcess.push({ name: "id", value: proID });
-            dataToProcess.push({ name: "rev_comment", value: revComment });
-            dataToProcess.push({ name: "rev_id", value: newRev_id });
-            dataToProcess.push({ name: "process_gid", value: process_gid });
-            dataToProcess.push({ name: "p", value: "createProcessRev" });
-
-            if (dataToProcess.length > 0) {
-                $.ajax({
-                    type: "POST",
-                    url: "ajax/ajaxquery.php",
-                    data: dataToProcess,
-                    async: true,
-                    success: function (s) {
-                        var newProcess_id = s.id;
-                        //update process link into sidebar menu
-                        sMenuProIdFinal = proName + '@' + newProcess_id;
-                        updateSideBar(sMenuProIdFinal, sMenuProGroupIdFinal);
-                        refreshDataset();
-                        $('#addProcessModal').modal('hide');
-                    },
-                    error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
-                    }
-                });
-            }
-            $('#confirmRevision').modal('hide');
-        }
-    });
-    $('#confirmRevision').modal('show');
-
-}
-
 function prepareInfoModal() {
     $('#processmodaltitle').html('Select Process Revision');
     $('#mProActionsDiv').css('display', "none");
@@ -1752,31 +1649,50 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 }
                 pipelineOwn = pData[0].own;
                 pipelinePerm = pData[0].perms;
+                //release
+                if (pData[0].release_date){
+                    var parts =pData[0].release_date.split('-'); //YYYY-MM-DD
+                    var releaseDate = parts[1]+"/"+ parts[2] +"/"+ parts[0] //MM,DD,YYYY
+                    $('#releaseVal').attr("date",releaseDate);
+                    if (pipelineOwn == "1"){
+                        $("#getTokenLink").css("display", "inline")
+                        $('#releaseVal').text(releaseDate);
+                    } else {
+                        $('#releaseVal').text("");
+                        $('#releaseValFinal').text(releaseDate);
+                    }
+                } else {
+                    if (pipelineOwn !== "1"){
+                        $('#releaseVal').text("");
+                        $('#releaseLabel').text("");
+                    }
+                }
+                toogleReleaseDiv(pipelinePerm, pipelineOwn);
+                //release ends --
+
                 // if user not own it, cannot change or delete pipeline
                 if (pipelineOwn === "0") {
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
+                    $('#newRevPipeline').css('display', 'none');
                     $('#editPipeSum').remove();
                     $('#confirmPipeSum').remove();
                     editorPipeHeader.setReadOnly(true);
                     editorPipeFooter.setReadOnly(true);
                     $('#permsPipeDiv').css('display', 'none');
                     $('#groupSelPipeDiv').css('display', 'none');
-                    $('#publishPipeDiv').css('display', 'none');
                     $('#gitConsoleBtn').css('display', 'none');
                     $('#pipeMenuGroupBottom').css('display', 'none');
                 }
                 if (usRole === "admin") {
                     $('#pinMainPage').css("display", "inline");
                     $('#savePipeline').css('display', 'inline');
+                    $('#newRevPipeline').css('display', 'inline');
                     $('#permsPipeDiv').css('display', 'inline');
                     $('#groupSelPipeDiv').css('display', 'inline');
-                    $('#publishPipeDiv').css('display', 'inline');
                     $('#importPipeline').css('display', 'inline');
                     $('#exportPipeline').css('display', 'inline');
                     $('#pipeMenuGroupBottom').css('display', 'inline');
-                    $("#permsPro option[value='63']").attr("disabled", false);
-                    $("#permsPipe option[value='63']").attr("disabled", false);
                 }
                 // fill Script_modes
                 if (pData[0].script_mode_header) {
@@ -1818,16 +1734,13 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 if (pData[0].group_id !== "0") {
                     $('#groupSelPipe').val(pData[0].group_id);
                 }
-                $('#publishPipe').val(pData[0].publish);
+                if (pData[0].publicly_searchable === 'true') {
+                    $('#publicly_searchable').attr('checked', true);
+                } else if (pData[0].publicly_searchable === "false") {
+                    $('#publicly_searchable').removeAttr('checked');
+                }
                 // permissions
                 $('#permsPipe').val(pData[0].perms);
-                if (pData[0].perms === "63" && usRole !== "admin") {
-                    $("#permsPipe").attr('disabled', "disabled");
-                    $("#publishPipe").attr('disabled', "disabled");
-                    $('#pipeGroupAll')[0].selectize.disable();
-                    $('#delPipeline').remove();
-                    $('#savePipeline').css('display', 'none');
-                }
                 if (pData[0].pin === 'true') {
                     $('#pin').attr('checked', true);
                 } else if (pData[0].pin === "false") {
@@ -2106,6 +2019,8 @@ $(document).ready(function () {
         loadPipelineDetails(pipeline_id, usRole);
 
     } else { // fresh page
+        pipelineOwn = "1";
+        toogleReleaseDiv(3, pipelineOwn)
         $('#pipeMenuGroupTop').css('display', 'inline')
         if (usRole == "admin") {
             $('#importPipeline').css('display', 'inline');
@@ -2135,6 +2050,79 @@ $(document).ready(function () {
     //Make modal draggable    
     $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amazonTable, #googleTable' });
 
+
+    // release date section:
+    $('#relDateDiv').datepicker({
+        format: 'mm/dd/yyyy',
+        startDate: '0',
+        autoclose:true
+    });
+
+    $('#setRelease').on('click',  function(e) {
+        e.preventDefault();
+        $("#releaseModalText").html("If you want to limit the access of the pipeline until certain date, you can set a release date below. We will create temporary link for your pipeline and only people who have the link could access the pipeline.");
+        $('#relDateDiv').data('datepicker').setDate(null);
+        $('#releaseModal').modal("show");
+    });
+
+    $('.cancelReleaseDateBut').on('click',  function(e) {
+        var currRelDate = $('#releaseVal').attr("date");
+        var today = getCurrDate()
+        $('#releaseVal').attr("date", today);
+        var sucFunc = function (){
+            $('#releaseVal').text(today);
+            $("#getTokenLink").css("display", "inline")
+            $('#releaseModal').modal("hide");
+        }
+        saveDetails(sucFunc);
+    });
+
+    $('#setReleaseDateBut').on('click',  function(e) {
+        var date = $('#relDateInput').val();
+        if (!date){
+            showInfoModal("#infoMod", "#infoModText", "Please enter the release date.")
+        } else {
+            $('#releaseVal').attr("date", date);
+            var sucFunc = function (){
+                $('#releaseVal').text(date);
+                $("#getTokenLink").css("display", "inline")
+                $('#releaseModal').modal("hide");
+            }
+            saveDetails(sucFunc);
+        }
+    });
+
+    $( "#copyToken" ).on('click', function (e) {
+        var copyText = document.getElementById("tokenInput");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        copyText.setSelectionRange(0, 0);
+        toastr.info("Link copied to the clipboard");
+    });
+
+    $('#getTokenLink').on('click',  function(e) {
+        var currToken = $(this).attr("token");
+        var showToken = function(token){
+            $("#showTokenLink").css("display","table")
+            var basepath = $("#basepathinfo").attr("basepath");
+            $("#tokenInput").val(basepath+"/index.php?t="+token)
+            $("#copyToken").trigger("click"); 
+        }
+        if (currToken){
+            showToken(currToken);
+        } else {
+            //insert token
+            getValuesAsync({p:"saveToken", type:"pipeline", id:pipeline_id}, function (s) {
+                console.log(s)
+                if (s.token){
+                    $(this).attr("token", s.token);
+                    showToken(s.token);
+                }
+            });
+        }
+    });
+    //release date section ends
 
 
     stateModule = (function () {
@@ -2526,7 +2514,7 @@ $(document).ready(function () {
         } else if (button.attr('id') === 'delPipeline') {
             $("#deleteBtn").text("Delete")
             $('#deleteBtn').attr('class', 'btn btn-primary delpipeline');
-            $('#confirmModalText').html('Are you sure you want to delete this pipeline?');
+            $('#confirmModalText').html('Are you sure you want to delete this pipeline revision?');
         } else if (button.attr('id') === 'dupPipeline') {
             $("#deleteBtn").text("Duplicate")
             $('#deleteBtn').attr('class', 'btn btn-primary dupPipeline');
@@ -2625,17 +2613,13 @@ $(document).ready(function () {
 
 
     // Add process modal to database
-    $('#addProcessModal').on('click', '#saveprocess', function (event) {
+    $('#addProcessModal').on('click', '.saveprocess', function (event) {
+        var clickedButID = $(this).attr("id");  //saveprocess, createRevision, createRevisionBut
         event.preventDefault();
         var savetype = $('#mIdPro').val();
         $('#permsPro').removeAttr('disabled');
-        $('#publishPro').removeAttr('disabled');
-        $("#permsPro option[value='63']").attr("disabled", false);
         var perms = $('#permsPro').val();
-        var publish = $('#publishPro').val();
-        $("#permsPro option[value='63']").attr("disabled", true);
         $('#permsPro').attr('disabled', "disabled");
-        $('#publishPro').attr('disabled', "disabled");
         var group = $('#groupSelPro').val();
         if (!group) {
             group = "";
@@ -2658,7 +2642,6 @@ $(document).ready(function () {
             var script_mode_header = $('#script_mode_header').val();
             dataToProcess.push({ name: "perms", value: perms });
             dataToProcess.push({ name: "group", value: group });
-            dataToProcess.push({ name: "publish", value: publish });
             dataToProcess.push({ name: "process_gid", value: "" });
             dataToProcess.push({ name: "script", value: scripteditor });
             dataToProcess.push({ name: "script_mode", value: script_mode });
@@ -2709,7 +2692,7 @@ $(document).ready(function () {
             var numOfProPipePublic = '';
             [warnUser, infoText, numOfProcess, numOfProcessPublic, numOfProPipePublic] = checkRevisionProc(data, proID);
             //B.1)Save on current process
-            if (warnUser === false) {
+            if (warnUser === false && clickedButID == "saveprocess") {
                 var proGroId = data[5].value;
                 var sMenuProIdFinal = proName + '@' + proID;
                 var sMenuProGroupIdFinal = proGroId;
@@ -2729,7 +2712,6 @@ $(document).ready(function () {
                 dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
                 dataToProcess.push({ name: "perms", value: perms });
                 dataToProcess.push({ name: "group", value: group });
-                dataToProcess.push({ name: "publish", value: publish });
                 dataToProcess.push({ name: "process_gid", value: process_gid });
                 dataToProcess.push({ name: "process_uuid", value: process_uuid });
                 dataToProcess.push({ name: "script_header", value: scripteditorProHeader });
@@ -2764,17 +2746,23 @@ $(document).ready(function () {
                     });
                 }
                 //B.2) Save on new revision
-            } else if (warnUser === true) {
+            } else {
                 // ConfirmYesNo process modal 
                 $('#confirmRevision').off();
                 $('#confirmRevision').on('show.bs.modal', function (event) {
                     $(this).find('form').trigger('reset');
-                    $('#confirmYesNoText').html(infoText);
-                    if ((numOfProcessPublic === 0 && numOfProPipePublic === 0) || usRole == "admin") {
-                        $('#saveOnExist').css('display', 'inline');
-                        if (usRole == "admin" && !(numOfProcessPublic === 0 && numOfProPipePublic === 0)) {
-                            $('#saveOnExist').attr('class', 'btn btn-danger');
+                    if (clickedButID == "saveprocess"){
+                        $('#confirmYesNoText').html(infoText);
+                        if ((numOfProcessPublic === 0 && numOfProPipePublic === 0) || usRole == "admin") {
+                            $('#saveOnExist').css('display', 'inline');
+                            if (usRole == "admin" && !(numOfProcessPublic === 0 && numOfProPipePublic === 0)) {
+                                $('#saveOnExist').attr('class', 'btn btn-danger');
+                            }
                         }
+                        // if clickedButID is createRevision or createRevisionBut
+                    } else {
+                        $('#confirmYesNoText').html("Please enter the revision comment to create new revision.</br>");
+                        $('#saveOnExist').css('display', 'none');
                     }
                 });
                 $('#confirmRevision').on('hide.bs.modal', function (event) {
@@ -2800,7 +2788,6 @@ $(document).ready(function () {
                     dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
                     dataToProcess.push({ name: "perms", value: perms });
                     dataToProcess.push({ name: "group", value: group });
-                    dataToProcess.push({ name: "publish", value: publish });
                     dataToProcess.push({ name: "process_gid", value: process_gid });
                     dataToProcess.push({ name: "process_uuid", value: process_uuid });
                     dataToProcess.push({ name: "script_header", value: scripteditorProHeader });
@@ -2864,7 +2851,6 @@ $(document).ready(function () {
                         dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
                         dataToProcess.push({ name: "perms", value: "3" });
                         dataToProcess.push({ name: "group", value: group });
-                        dataToProcess.push({ name: "publish", value: "0" });
                         dataToProcess.push({ name: "rev_comment", value: revComment });
                         dataToProcess.push({ name: "rev_id", value: newRev_id });
                         dataToProcess.push({ name: "process_gid", value: process_gid });
@@ -3465,7 +3451,7 @@ $(document).ready(function () {
                 $("#" + renameTextID).removeData(attr);
             } else {
                 value= value.replace(/'/gi, "");
-            value = value.replace(/"/gi, "");
+                value = value.replace(/"/gi, "");
                 $("#" + renameTextID).removeAttr(attr);
             }
         }
