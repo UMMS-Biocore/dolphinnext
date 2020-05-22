@@ -4870,8 +4870,6 @@ function configTextAllProcess(confText, exec_all_settings, type, proName, execut
 
 //type="" or "Opt"
 function displayStatButton(idButton, type) {
-    console.log(idButton)
-    console.log(type)
     var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual", "runStatErrorOpt", "runStatCompleteOpt", "runStatRunningOpt", "runStatWaitingOpt", "runStatConnectingOpt", "runStatTerminatedOpt", "runStatAbortedOpt", "runStatManualOpt", "runStatErrorNoOpt", "runStatCompleteNoOpt", "runStatRunningNoOpt", "runStatWaitingNoOpt", "runStatConnectingNoOpt", "runStatTerminatedNoOpt", "runStatAbortedNoOpt", "runStatManualNoOpt"];
     for (var i = 0; i < buttonList.length; i++) {
         if (document.getElementById(buttonList[i])){
@@ -5264,6 +5262,7 @@ function runProjectPipe(runProPipeCall, checkType) {
     //sshCheck should be true or manualRunModal should be open to initiate run with runProPipeCall
     if (window.sshCheck || manualRunCheck == "true"){
         if (manualRunCheck != "true"){
+            $runscope.beforeunload = "Please wait for the submission.";
             displayButton('connectingProPipe');
             $('#runLogArea').val("");
         }
@@ -5308,7 +5307,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 //click on run button (callback function)
 function runProPipeCall(checkType, uuid) {
     console.log("runProPipeCall")
-    $runscope.beforeunload = "Please wait for the submission.";
+    
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;

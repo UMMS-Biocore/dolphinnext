@@ -1,4 +1,7 @@
-08.05.2020 Version 1.1.17
+21.05.2020 Version 1.1.18
+Minor upgrade to support single files in a collection.
+
+20.05.2020 Version 1.1.17
 * Major Upgrades: 
   - Sharing pipeline/run with everyone feature is added. 
   - Access of the public pipeline/run could be controlled by setting a release date and getting a sharable link.
