@@ -1734,8 +1734,8 @@ function download_file(fileURL, fileName) {
         var filename = fileURL.substring(fileURL.lastIndexOf('/') + 1);
         save.download = fileName || filename;
         if (navigator.userAgent.toLowerCase().match(/(ipad|iphone|safari)/) && navigator.userAgent.search("Chrome") < 0) {
-            document.location = save.href;
             // window event not working here
+            downloadUrl(fileURL, fileName)
         } else {
             var evt = new MouseEvent('click', {
                 'view': window,
@@ -1753,6 +1753,13 @@ function download_file(fileURL, fileName) {
         _window.document.execCommand('SaveAs', true, fileName || fileURL)
         _window.close();
     }
+}
+
+function downloadUrl(url, filename) {
+  var a = document.createElement("a");
+  a.href = url;
+  a.setAttribute("download", filename);
+  a.click();
 }
 
 function downloadText(text, filename) {
