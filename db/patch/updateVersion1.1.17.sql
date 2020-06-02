@@ -1,5 +1,5 @@
 ALTER TABLE `project_pipeline`
-ADD `release_date` date DEFAULT NULL AFTER `new_run`;
+ADD `release_date` date DEFAULT NULL AFTER `onload`;
 
 ALTER TABLE `biocorepipe_save`
 ADD `release_date` date DEFAULT NULL AFTER `publish`,
