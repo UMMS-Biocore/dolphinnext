@@ -5511,7 +5511,6 @@ function readPubWeb(proType, proId, type) {
 }
 
 function saveNexLg(proType, proId) {
-    console.log("saveNextLog")
     callAsyncSaveNextLog({ p: "saveNextflowLog", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId })
     //update log navbar after saving files
     setTimeout(function () { updateRunVerNavBar() }, 2500);
@@ -6358,7 +6357,6 @@ function fillRunVerOpt(dropDownId) {
             newRunLogs.push(runLogs[el])
         }
     });
-    console.log(newRunLogs)
     var nRun = $(newRunLogs).size()
     var n = 0;
     var lastDropdownVal = '';
@@ -6422,8 +6420,6 @@ function fillRunVerOpt(dropDownId) {
         updateNewRunStatus("1");
         newrunCheck = "1";
     }
-    console.log(newrunCheck)
-    console.log(lastDropdownVal)
     //if new_run is selected then select first "Run History" option
     if (newrunCheck){
         n++;
@@ -6438,7 +6434,6 @@ function fillRunVerOpt(dropDownId) {
         }
         // else choose second option
     } else {
-        console.log($(dropDownId + ' option[value="'+lastDropdownVal+'"]').val())
         $(dropDownId).val($(dropDownId + ' option[value="'+lastDropdownVal+'"]').val());
         // don't allow to reload configtab unless another log is selected 
         //        $(dropDownId).attr("configTabUID",lastDropdownVal);
@@ -6449,7 +6444,6 @@ function fillRunVerOpt(dropDownId) {
 
 
 function updateRunVerNavBar() {
-    console.log("updateRunVerNavBar")
     var run_log_uuid = $("#runVerLog").val();
     var lastrun = $('option:selected', "#runVerLog").attr('lastrun');
     if (lastrun) {
@@ -6671,7 +6665,6 @@ function toogleMainIcons(mode){
     }
 }
 function toogleStatusMode(mode){
-    console.log("mode",mode)
     if (mode == "default"){
         $('#pipeRunDiv').css("display", "block");
         $('#runStatDiv').css("display", "none");
@@ -6690,7 +6683,6 @@ function toogleStatusMode(mode){
 
 // show old run_status of the logs//Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
 function runLogStatUpdate(runStatus, type){
-    console.log(type)
     if (runStatus === "NextSuc") {
         displayStatButton('runStatComplete', type);
     } else if (runStatus === "Error" || runStatus === "NextErr") {
@@ -6699,12 +6691,12 @@ function runLogStatUpdate(runStatus, type){
         displayStatButton('runStatTerminated', type);
     } else if (runStatus === "Manual") {
         displayStatButton('runStatManual', type);
-        //  if runStatus states that run is still running then there must be some error occured. show errorProPipe
-    } else if (runStatus === "NextRun" || runStatus === "Waiting" || runStatus === "init") {
-        displayStatButton('runStatError', type);
-    } 
+    } else if (runStatus === "NextRun" ) {
+        displayStatButton('runStatRunning', type);
+    } else if ( runStatus === "Waiting" || runStatus === "init") {
+        displayStatButton('runStatWaiting', type);
+    }  
 }
-
 
 
 function toogleRunInputs(type){
@@ -7592,7 +7584,7 @@ $(function () {
             toogleMainIcons("show");
             toogleRunInputs("enable");
             checkType="";
-            readNextLog(proTypeWindow, proIdWindow, "no_reload");
+            
             //history mode
         } else {
             //            if (projectpipelineOwn == "1"){
@@ -7608,12 +7600,10 @@ $(function () {
             }
         }
         console.log("activeID",activeID)
-        console.log("run_log_uuid",run_log_uuid)
-        console.log("reportTabUID",reportTabUID)
-        console.log("configTabUID",configTabUID)
         if (activeID == "#logTab"){
             if (logTabUID != run_log_uuid){
                 $('#runVerLog').attr("logTabUID", run_log_uuid)
+                readNextLog(proTypeWindow, proIdWindow, "no_reload");
                 updateRunLogTab(run_log_uuid);
             }
         } else if (activeID == "#reportTab"){
