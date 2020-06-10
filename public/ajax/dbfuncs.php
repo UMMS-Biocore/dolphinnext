@@ -329,7 +329,7 @@ class dbfuncs {
 
     //default singularity
     function getInitialRunImg($docker_check){
-        $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-07.01.2020.simg"; 
+        $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-09.06.2020.simg"; 
         if ($docker_check == "true"){
             $initialrun_img = "ummsbiocore/initialrun-docker:1.0";
         }

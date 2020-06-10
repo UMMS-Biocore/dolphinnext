@@ -1,3 +1,7 @@
+08.06.2020 Version 1.2.1
+Minor bug fixed in the updateDN script.
+Initial run image updated to fix fastq-dump.
+
 29.05.2020 Version 1.2.0
 Minor fix for safari file download in report page.
 
