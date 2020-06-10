@@ -1,3 +1,6 @@
+10.06.2020 Version 1.2.2
+Run status page upgraded and separate impersonate button added for admin.
+
 08.06.2020 Version 1.2.1
 Minor bug fixed in the updateDN script.
 Initial run image updated to fix fastq-dump.
