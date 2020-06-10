@@ -84,9 +84,7 @@ def updateDB(db, user, p, host, port):
         exist_patch = listdir_nohidden(scriptDir+'/../db/patch')
         ret += "\nINFO: Checking exist patches: "+str(len(exist_patch))
         not_exist_db = list(set(exist_patch) - set(exist_db))
-        print not_exist_db
         not_exist_db = sorted(not_exist_db, key=parse_version)
-        print not_exist_db
     elif exist_table == 0:
         ret += "INFO: update_db table not found."
         not_exist_db = listdir_nohidden(scriptDir+'/../db/patch')
