@@ -28,6 +28,14 @@ function getTitle($np)
 function getPage($np, $login, $id, $ownerID){
     $db=new dbfuncs();
     if ($np==1 && $login==1 && (!empty($id) || $id === "0")){
+        //check if user is admin
+        $userRole = $db->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            include("php/pipeline.php"); 
+            include("php/pipelinemodal.php");
+            return;
+        } 
+        //if user not admin then checkUserPermission
         list($permCheck,$warnName) = $db->checkUserPermission("biocorepipe_save", $id, $ownerID, "r");
         if (!empty($permCheck) || $id === "0"){
             include("php/pipeline.php"); 
@@ -58,6 +66,13 @@ function getPage($np, $login, $id, $ownerID){
     } else if ($np==2 && $login==1 && !empty($id)){
         include("php/projectsDetail.php");
     } else if ($np==3 && $login==1 && !empty($id)){
+        //check if user is admin
+        $userRole = $db->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            include("php/runpipeline.php");
+            return;
+        } 
+        //if user not admin then checkUserPermission
         list($permCheck,$warnName) = $db->checkUserPermission("project_pipeline", $id, $ownerID, "r");
         if (!empty($permCheck)){
             include("php/runpipeline.php");

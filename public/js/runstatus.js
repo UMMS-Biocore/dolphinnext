@@ -80,6 +80,33 @@ $(document).ready(function () {
 
 
 
+    $('#runstatustable').on('click', '.runLinkImpersonate', function (event) {
+        event.preventDefault();
+        var clickedRow = $(this).closest('tr');
+        var rowData = runStatusTable.row(clickedRow).data();
+        var runId = rowData.project_pipeline_id
+        var owner_id = rowData.owner_id
+        var own = rowData.own
+        if (runId) {
+            var userData = [];
+            userData.push({ name: "user_id", value: owner_id });
+            userData.push({ name: "p", value: 'impersonUser' });
+            $.ajax({
+                type: "POST",
+                data: userData,
+                url: "ajax/ajaxquery.php",
+                async: false,
+                success: function (msg) {
+                    var logInSuccess = true;
+                    window.location.replace("index.php?np=3&id=" + runId);
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
+    });
+
     $('#runstatustable').on('click', '.runLink', function (event) {
         event.preventDefault();
         var clickedRow = $(this).closest('tr');
@@ -87,27 +114,8 @@ $(document).ready(function () {
         var runId = rowData.project_pipeline_id
         var owner_id = rowData.owner_id
         var own = rowData.own
-        if (runId !== '') {
-            if ((usRole === "admin" && own == "1") || usRole !== "admin") {
-                window.location.replace("index.php?np=3&id=" + runId);
-            } else if (usRole === "admin" && own !== "1") {
-                var userData = [];
-                userData.push({ name: "user_id", value: owner_id });
-                userData.push({ name: "p", value: 'impersonUser' });
-                $.ajax({
-                    type: "POST",
-                    data: userData,
-                    url: "ajax/ajaxquery.php",
-                    async: false,
-                    success: function (msg) {
-                        var logInSuccess = true;
-                        window.location.replace("index.php?np=3&id=" + runId);
-                    },
-                    error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
-                    }
-                });
-            }
+        if (runId) {
+            window.location.replace("index.php?np=3&id=" + runId);
         }
     });
 
@@ -122,11 +130,11 @@ $(document).ready(function () {
         }, {
             "data": null,
             "render": function (data, type, row) {
-                var href = "";
-                if (row.own === "1" || usRole === "admin") {
-                    href = 'href=""';
+                var imperBut = "";
+                if (row.own !== "1" && usRole === "admin") {
+                    imperBut = '<button type="button" class="btn runLinkImpersonate" data-backdrop="false"  style="background: none; margin: 0px; margin-left:5px; padding-left: 0px; padding-top: 1px; display: inline;"><a style=""  data-toggle="tooltip" data-placement="bottom" data-original-title="Impersonate User"><i style="font-size:12px;" class="glyphicon  glyphicon-log-out"></i></a></button>';
                 }
-                return '<a ' + href + ' class="runLink">' + row.name + '</a>';
+                return '<a href="index.php?np=3&amp;id=' + row.project_pipeline_id + '" >' + row.name + '</a>   ' + imperBut;
             }
         }, {
             data: null,
@@ -148,26 +156,23 @@ $(document).ready(function () {
             data: null,
             render: function ( data, type, row ) {
                 var st = row.run_status;
-                var href = "";
-                if (row.own === "1" || usRole === "admin") {
-                    href = 'href=""';
-                }
+                var href='href="index.php?np=3&amp;id=' + row.project_pipeline_id+'"';
                 if (st == "NextErr" || st == "Error") {
-                    return '<a ' + href + ' class="runLink">Error</a>';
+                    return '<a ' + href + ' >Error</a>';
                 } else if (st == "Terminated") {
-                    return '<a ' + href + ' class="runLink">Terminated</a>';
+                    return '<a ' + href + ' >Terminated</a>';
                 } else if (st == "NextSuc") {
-                    return '<a ' + href + ' class="runLink">Completed</a>';
+                    return '<a ' + href + ' >Completed</a>';
                 } else if (st == "init" || st == "Waiting") {
-                    return '<a ' + href + ' class="runLink">Initializing</a>';
+                    return '<a ' + href + ' >Initializing</a>';
                 } else if (st == "NextRun") {
-                    return '<a ' + href + ' class="runLink">Running</a>';
+                    return '<a ' + href + ' >Running</a>';
                 } else if (st == "Aborted") {
-                    return '<a ' + href + ' class="runLink">Reconnecting</a>';
+                    return '<a ' + href + ' >Reconnecting</a>';
                 } else if (st == "Manual") {
-                    return '<a ' + href + ' class="runLink">Manual</a>';
+                    return '<a ' + href + ' >Manual</a>';
                 } else {
-                    return '<a ' + href + ' class="runLink">Not Submitted</a>';
+                    return '<a ' + href + ' >Not Submitted</a>';
                 }
             }
         },  {
