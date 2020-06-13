@@ -40,7 +40,11 @@ Start the container
 
     startup
 
-4. Now, you can open your browser to access dolphinnext using the url below::
+4. Verify that **dolphinnext** and **mysql** folders located inside of the **/export** folder::
+
+    ls /export
+
+5. Now, you can open your browser to access dolphinnext using the url below::
 
     http://localhost:8080/dolphinnext
 

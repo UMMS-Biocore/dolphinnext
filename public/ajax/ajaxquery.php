@@ -2250,7 +2250,7 @@ else if ($p=="saveAllPipeline")
     settype($group_id, 'integer');
     $perms = $newObj->{"perms"};
     $publicly_searchable = isset($newObj->{"publicly_searchable"}) ? $newObj->{"publicly_searchable"} : "false"; // only effective if user is admin
-    $release_date = $newObj->{"release_date"};
+    $release_date = !empty($newObj->{"release_date"}) ? $newObj->{"release_date"} : NULL; 
     if (!empty($release_date)){
         $release_date = date('Y-m-d', strtotime($release_date));
     }

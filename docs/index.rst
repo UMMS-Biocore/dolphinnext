@@ -43,6 +43,7 @@ Contents:
    :caption: Developer Guide
 
    dolphinNext/dev_quick
+   dolphinNext/known_issues
    dolphinNext/process
    dolphinNext/pipeline
 

@@ -493,9 +493,10 @@
                         <div class="col-sm-8">
                             <select class="form-control" id="modalQualifier" name="qualifier">
                                 <option value="file">file</option>
-                                <option value="set">set</option>
+                                <option value="set">set/tuple</option>
                                 <option value="val">val</option>
                                 <option value="each">each</option>
+                                <option value="env">env</option>
                             </select>
                         </div>
                     </div>

@@ -83,26 +83,26 @@ if (!isset($_SESSION['username']) && $google_login != ""){
                     ?></h2>
                 </div>
                 <div class="text-center form-group">
-                    <input type="text" name="firstname" class="form-control" placeholder="First name" value="<?php 
+                    <input type="text" name="firstname" class="form-control" placeholder="First name" maxlength="25" value="<?php 
                         if (isset($firstname_val)) {echo $firstname_val; } 
                         else if ($first_name != "") {echo $first_name;}
                         ?>" />
                     <?php  if (isset($err_firstname)) echo $err_firstname; ?>
                 </div>
                 <div class="text-center form-group">
-                    <input type="text" name="lastname" class="form-control" placeholder="Last name" value="<?php 
+                    <input type="text" name="lastname" class="form-control" placeholder="Last name" maxlength="20" value="<?php 
                         if (isset($lastname_val)) {echo $lastname_val;}
                         else if ($last_name != "") {echo $last_name;} 
                     ?>" />
                     <?php if (isset($err_lastname)) echo $err_lastname;  ?>
                 </div>
                 <div class="text-center form-group">
-                    <input type="text" name="username" class="form-control" placeholder="Username" value="<?php if (isset($username_val)) echo $username_val ?>" />
+                    <input type="text" name="username" class="form-control" placeholder="Username" maxlength="45" value="<?php if (isset($username_val)) echo $username_val ?>" />
                     <?php if (isset($err_username)) echo $err_username;  ?>
                 </div>
                 <?php
                 if ($google_singup == false){
-                    echo '<div class="text-center form-group"><input type="text" name="email" class="form-control" placeholder="Email" value="';
+                    echo '<div class="text-center form-group"><input type="text" name="email" class="form-control" maxlength="45" placeholder="Email" value="';
                     if (isset($email_val)) echo $email_val;
                     echo '" />';
                     if (isset($err_email)) echo $err_email; 
@@ -110,11 +110,11 @@ if (!isset($_SESSION['username']) && $google_login != ""){
                 }
                 ?>
                 <div class="text-center form-group">
-                    <input type="text" name="institute" class="form-control" placeholder="Institute" value="<?php if (isset($institute_val)) echo $institute_val ?>" />
+                    <input type="text" maxlength="45" name="institute" class="form-control" placeholder="Institute" value="<?php if (isset($institute_val)) echo $institute_val ?>" />
                     <?php if (isset($err_institute)) echo $err_institute;  ?>
                 </div>
                 <div class="text-center form-group">
-                    <input type="text" name="lab" class="form-control" placeholder="Lab/Department" value="<?php if (isset($lab_val)) echo $lab_val ?>" />
+                    <input type="text" name="lab" class="form-control" placeholder="Lab/Department" maxlength="45" value="<?php if (isset($lab_val)) echo $lab_val ?>" />
                     <?php if (isset($err_lab)) echo $err_lab ?>
                 </div>
                 <?php
