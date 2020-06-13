@@ -3099,8 +3099,8 @@ $(document).ready(function () {
         } else {
             $('#mFileTypeDiv').css('display', 'block');
         }
-        if ($('#modalQualifier').val() === 'each') {
-            $('#mFileTypeLabel').html('File Type/Identifier <span><a id="mFileTypeTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores. If qualifier is set to each, you may enter both file type (if you\'re planing to connect with file nodes) or identifier(in case of connecting to val nodes.)"><i class=\'glyphicon glyphicon-info-sign\'></i></a></span>');
+        if ($('#modalQualifier').val() === "each" || $('#modalQualifier').val() === "env") {
+            $('#mFileTypeLabel').html('File Type/Identifier <span><a id="mFileTypeTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores. You may enter file type (if you\'re planing to connect with file input) or identifier (when planing to connect with val input.)"><i class=\'glyphicon glyphicon-info-sign\'></i></a></span>');
         } else {
             $('#mFileTypeLabel').html('File Type <span><a id="mFileTypeTool" data-toggle="tooltip" data-placement="bottom" title="Must begin with a letter ([A-Za-z]) and may be followed by letters, digits or underscores."><i class=\'glyphicon glyphicon-info-sign\'></i></a></span>');
         }

@@ -517,7 +517,6 @@ folder instead of downloading all of them to reduce the load. -->
                                     <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Quick Start Guide</a></li>
                                     <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/dev_quick.html" target="_blank">Developer Tutorial</a></li>
                                     <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/faq.html" target="_blank">Frequently Asked Questions</a></li>
-
                                     <!--                                    <li class="divider"></li>-->
                                     <!--                                    <li><a href="#">One more separated link</a></li>-->
                                 </ul>
@@ -705,6 +704,7 @@ immediately after the control sidebar -->
                                 <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#running-pipelines" target="_blank">Running Pipelines</a></li>
                                 <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#adding-files" target="_blank">Adding Files</a></li>
                                 <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/faq.html" target="_blank">Frequently Asked Questions</a></li>
+                                <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/known_issues.html" target="_blank">Known Issues</a></li>
                             </ul>
                             Not finding what you need? Visit our <a class="link-underline" href="https://dolphinnext.readthedocs.io" target="_blank">Reference Documentation</a></li>
                         </div>

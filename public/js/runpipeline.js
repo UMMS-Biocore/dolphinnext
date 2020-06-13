@@ -3200,47 +3200,49 @@ function showHideColumnRunSett(colList, type) {
     }
 }
 
-function showhideOnEnv(allProSett, profileData){
-    var perms = profileData[0].perms;
-    var executor_job = profileData[0].executor_job;
-    // shared run environments
-    if (perms == "15"){
-        $('#rOut_dirDiv').css("display", "none");
-        $('#publishDirHide').css("display", "none");
-        $('#jobSettingsDiv').css("display", "none");
-        $('#runCmdDiv').css("display", "none");
-        $('#intermeDelDiv').css("display", "none");
-        $('#target_dir_div').css("display", "none");
-        $('#archive_dir_geo_div').css("display", "none");
-        $('#archive_dir_div').css("display", "none");
-    } else {
-        if (profileData[0].google_cre_id != undefined){
+function showhideOnEnv(profileData){
+    if (profileData[0]){
+        var perms = profileData[0].perms;
+        var executor_job = profileData[0].executor_job;
+        // shared run environments
+        if (perms == "15"){
             $('#rOut_dirDiv').css("display", "none");
+            $('#publishDirHide').css("display", "none");
+            $('#jobSettingsDiv').css("display", "none");
+            $('#runCmdDiv').css("display", "none");
+            $('#intermeDelDiv').css("display", "none");
+            $('#target_dir_div').css("display", "none");
+            $('#archive_dir_geo_div').css("display", "none");
+            $('#archive_dir_div').css("display", "none");
         } else {
-            $('#rOut_dirDiv').css("display", "block");
+            if (profileData[0].google_cre_id != undefined){
+                $('#rOut_dirDiv').css("display", "none");
+            } else {
+                $('#rOut_dirDiv').css("display", "block");
+            }
+            $('#publishDirHide').css("display", "block");
+            $('#jobSettingsDiv').css("display", "block");
+            $('#runCmdDiv').css("display", "block");
+            $('#intermeDelDiv').css("display", "block");
+            $('#target_dir_div').css("display", "block");
+            $('#archive_dir_geo_div').css("display", "block");
+            $('#archive_dir_div').css("display", "block");
         }
-        $('#publishDirHide').css("display", "block");
-        $('#jobSettingsDiv').css("display", "block");
-        $('#runCmdDiv').css("display", "block");
-        $('#intermeDelDiv').css("display", "block");
-        $('#target_dir_div').css("display", "block");
-        $('#archive_dir_geo_div').css("display", "block");
-        $('#archive_dir_div').css("display", "block");
-    }
-    if (executor_job === 'ignite') {
-        showHideColumnRunSett([1, 4, 5], "show")
-        showHideColumnRunSett([1, 4], "hide")
-    } else if (executor_job === 'local') {
-        showHideColumnRunSett([1, 4, 5], "hide")
-    } else {
-        showHideColumnRunSett([1, 4, 5], "show")
-    }
-    if (executor_job === "slurm"){
-        $('#eachProcessQueue').text('Partition');
-        $('#allProcessQueue').text('Partition');
-    }else {
-        $('#eachProcessQueue').text('Queue');
-        $('#allProcessQueue').text('Queue');
+        if (executor_job === 'ignite') {
+            showHideColumnRunSett([1, 4, 5], "show")
+            showHideColumnRunSett([1, 4], "hide")
+        } else if (executor_job === 'local') {
+            showHideColumnRunSett([1, 4, 5], "hide")
+        } else {
+            showHideColumnRunSett([1, 4, 5], "show")
+        }
+        if (executor_job === "slurm"){
+            $('#eachProcessQueue').text('Partition');
+            $('#allProcessQueue').text('Partition');
+        }else {
+            $('#eachProcessQueue').text('Queue');
+            $('#allProcessQueue').text('Queue');
+        } 
     }
 }
 
@@ -3887,9 +3889,17 @@ function refreshCreatorData(project_pipeline_id) {
 
 function loadExecSettings(pipeData){
     var chooseEnv = $('#chooseEnv option:selected').val();
-    if (pipeData[0].profile !== "" && chooseEnv) {
-        var [allProSett, profileData] = getJobData("both");
-        showhideOnEnv(allProSett, profileData)
+    if (pipeData[0].profile !== "") {
+        if (chooseEnv){
+            var [allProSett, profileData] = getJobData("both");
+        } else {
+            var prof = pipeData[0].profile;
+            var patt = /(.*)-(.*)/;
+            var proType = prof.replace(patt, '$1');
+            var proId = prof.replace(patt, '$2');
+            var profileData = getProfileData(proType, proId);
+        }
+        showhideOnEnv(profileData)
 
         //insert exec_all_settings data into allProcessSettTable table
         if (IsJsonString(decodeHtml(pipeData[0].exec_all_settings))) {
@@ -4007,7 +4017,7 @@ function loadProjectPipeline(pipeData) {
             $('#releaseLabel').text("");
         }
     }
-    
+
     // release ends --
 
     loadRunSettings(pipeData);
@@ -5307,7 +5317,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 //click on run button (callback function)
 function runProPipeCall(checkType, uuid) {
     console.log("runProPipeCall")
-    
+
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
@@ -5878,11 +5888,9 @@ function formToJsonEachPro() {
         var patt = /(.*)-(.*)/;
         var proGnum = boxId.replace(patt, '$2');
         var selectedRow = $('#procGnum-' + proGnum).find('input');
-        //        console.log(selectedRow)
         var selectedRowJson = formToJson(selectedRow, 'stringfy');
         formDataArr['procGnum-' + proGnum] = selectedRowJson;
     });
-    //    console.log(formDataArr)
     return encodeURIComponent(JSON.stringify(formDataArr))
 }
 
@@ -7584,7 +7592,7 @@ $(function () {
             toogleMainIcons("show");
             toogleRunInputs("enable");
             checkType="";
-            
+
             //history mode
         } else {
             //            if (projectpipelineOwn == "1"){
@@ -9510,7 +9518,7 @@ $(document).ready(function () {
             changeOnchooseEnv = true;
             $('#runCmd').val("");
             var [allProSett, profileData] = getJobData("both");
-            showhideOnEnv(allProSett, profileData);
+            showhideOnEnv(profileData);
             var profileTypeId = $('#chooseEnv').find(":selected").val();
             var patt = /(.*)-(.*)/;
             var proType = profileTypeId.replace(patt, '$1');
@@ -9590,7 +9598,7 @@ $(document).ready(function () {
         var table_nodes = window[tableId].fnGetNodes();
         for (var y = 0; y < table_data.length; y++) {
             var name = $.trim(table_nodes[y].children[0].children[0].id)
-            name = name.replace(/:/g, "_").replace(/,/g, "_").replace(/\$/g, "_").replace(/\!/g, "_").replace(/\</g, "_").replace(/\>/g, "_").replace(/\?/g, "_").replace(/\(/g, "-").replace(/\)/g, "-").replace(/\"/g, "_").replace(/\'/g, "_").replace(/\//g, "_").replace(/\\/g, "_");
+            name = name.replace(/:/g, "_").replace(/,/g, "_").replace(/\$/g, "_").replace(/\!/g, "_").replace(/\</g, "_").replace(/\>/g, "_").replace(/\?/g, "_").replace(/\(/g, "-").replace(/\)/g, "-").replace(/\"/g, "_").replace(/\'/g, "_").replace(/\//g, "_").replace(/\\/g, "_").replace(/ /g, "_");
             if (!name) {
                 warnUser = 'Please fill all the filenames in the table.'
             }

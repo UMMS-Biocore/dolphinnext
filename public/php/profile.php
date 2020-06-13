@@ -976,31 +976,31 @@ $GOOGPATH=GOOGPATH;
                     <div class="form-group">
                         <label for="mUserName" class="col-sm-3 control-label">Name</label>
                         <div class="col-sm-9">
-                            <input type="text" required class="form-control" id="mUserName" name="name">
+                            <input type="text" maxlength="45" required class="form-control" id="mUserName" name="name">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="mUserUsername" class="col-sm-3 control-label">Username</label>
                         <div class="col-sm-9">
-                            <input type="text" required class="form-control" id="mUserUsername" name="username">
+                            <input type="text" maxlength="45" required class="form-control" id="mUserUsername" name="username">
                         </div>
                     </div>
                     <div class="form-group has-feedback">
                         <label for="mUserEmail" class="col-sm-3 control-label">E-mail</label>
                         <div class="col-sm-9">
-                            <input type="email" required class="form-control" id="mUserEmail" name="email">
+                            <input type="email" maxlength="45" required class="form-control" id="mUserEmail" name="email">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="mUserInstitute" class="col-sm-3 control-label">Institute</label>
                         <div class="col-sm-9">
-                            <input type="text" required class="form-control" id="mUserInstitute" name="institute">
+                            <input type="text" maxlength="45" required class="form-control" id="mUserInstitute" name="institute">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="mUserLab" class="col-sm-3 control-label">Lab</label>
                         <div class="col-sm-9">
-                            <input type="text" class="form-control" id="mUserLab" name="lab">
+                            <input type="text" maxlength="45" class="form-control" id="mUserLab" name="lab">
                         </div>
                     </div>
                     <div class="form-group">

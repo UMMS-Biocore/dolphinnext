@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Frequently Asked Questions &mdash; DolphinNext v1.1.3 documentation</title>
+  <title>Known Issues &mdash; DolphinNext v1.1.3 documentation</title>
   
 
   
@@ -35,7 +35,9 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/> 
+    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/>
+        <link rel="next" title="Process Guide" href="process.html"/>
+        <link rel="prev" title="Developer Tutorial" href="dev_quick.html"/> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -108,8 +110,13 @@
 <li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Developer Guide</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Known Issues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#updating-workflow">Updating Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#file-upload">File Upload</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
 </ul>
@@ -161,13 +168,13 @@
     
       <li><a href="../index.html">Docs</a> &raquo;</li>
         
-      <li>Frequently Asked Questions</li>
+      <li>Known Issues</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/dolphinNext/dev_faq.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/dolphinNext/known_issues.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -180,25 +187,28 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="frequently-asked-questions">
-<h1><a class="toc-backref" href="#id1">Frequently Asked Questions</a><a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="known-issues">
+<h1><a class="toc-backref" href="#id1">Known Issues</a><a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h1>
 <div class="contents topic" id="table-of-contents">
 <p class="topic-title first">Table of Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#frequently-asked-questions" id="id1">Frequently Asked Questions</a><ul>
-<li><a class="reference internal" href="#section" id="id2">Section</a><ul>
-<li><a class="reference internal" href="#question" id="id3">Question?</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#known-issues" id="id1">Known Issues</a><ul>
+<li><a class="reference internal" href="#updating-workflow" id="id2">Updating Workflow</a></li>
+<li><a class="reference internal" href="#file-upload" id="id3">File Upload</a></li>
 </ul>
 </li>
 </ul>
 </div>
-<div class="section" id="section">
-<h2><a class="toc-backref" href="#id2">Section</a><a class="headerlink" href="#section" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="question">
-<h3><a class="toc-backref" href="#id3">Question?</a><a class="headerlink" href="#question" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="updating-workflow">
+<h2><a class="toc-backref" href="#id2">Updating Workflow</a><a class="headerlink" href="#updating-workflow" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>When you edit the process nodes, the workflow doesn’t instantly update itself. You need to refresh the page to see the updated version of the pipeline.</li>
+<li>Similarly, when you update the process nodes, you need to refresh the pipeline page before submitting your run.</li>
+</ul>
 </div>
+<div class="section" id="file-upload">
+<h2><a class="toc-backref" href="#id3">File Upload</a><a class="headerlink" href="#file-upload" title="Permalink to this headline">¶</a></h2>
+<p>File upload module gives error when connection is not stable.</p>
 </div>
 </div>
 
@@ -209,6 +219,15 @@
            </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="process.html" class="btn btn-neutral float-right" title="Process Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="dev_quick.html" class="btn btn-neutral" title="Developer Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

@@ -2703,11 +2703,16 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     function getProfileClusterbyID($id, $ownerID) {
+        $where = " WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
+        $userRole = $this->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            $where = " WHERE p.id = '$id'";
+        }
         $sql = "SELECT p.* 
                 FROM profile_cluster p
                 INNER JOIN users u ON p.owner_id = u.id
                 LEFT JOIN user_group ug ON p.group_id=ug.g_id
-                WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
+                $where";
         return self::queryTable($sql);
     }
     function getProfileCluster($ownerID) {
@@ -2779,11 +2784,16 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     function getProfileCloudbyID($id, $cloud, $ownerID) {
+        $where = " WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
+        $userRole = $this->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            $where = " WHERE p.id = '$id'";
+        }
         $sql = "SELECT p.*, u.username
                 FROM profile_{$cloud} p
                 INNER JOIN users u ON p.owner_id = u.id
                 LEFT JOIN user_group ug ON p.group_id=ug.g_id
-                WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
+                $where";
         return self::queryTable($sql);
     }
     function getActiveRunbyProID($id, $cloud, $ownerID) {
@@ -4423,6 +4433,11 @@ class dbfuncs {
 
     function getProjectPipelineInputs($project_pipeline_id,$ownerID) {
         $where = " where (c.deleted = 0 OR c.deleted IS NULL) AND ppi.deleted=0 AND ppi.project_pipeline_id = '$project_pipeline_id' AND (ppi.owner_id = '$ownerID' OR ppi.perms = 63 OR (ug.u_id ='$ownerID' and ppi.perms = 15))";
+        $userRole = $this->getUserRoleVal($ownerID);
+        if ($userRole == "admin"){
+            $where = " where (c.deleted = 0 OR c.deleted IS NULL) AND ppi.deleted=0 AND ppi.project_pipeline_id = '$project_pipeline_id'";
+        } 
+
         $sql = "SELECT DISTINCT ppi.id, i.id as input_id, ppi.qualifier, i.name, ppi.given_name, ppi.g_num, ppi.collection_id, c.name as collection_name, i2.name as url, i3.name as urlzip, i4.name as checkpath
                     FROM project_pipeline_input ppi
                     LEFT JOIN input i ON (i.id = ppi.input_id)
@@ -4850,7 +4865,8 @@ class dbfuncs {
     }
 
     function updateReleaseDateById($id, $table, $release_date, $ownerID) {
-        $sql = "UPDATE $table SET release_date='$release_date',  date_modified=now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+        $release_date = !empty($release_date) ? "'$release_date'" : "NULL"; 
+        $sql = "UPDATE $table SET release_date=$release_date,  date_modified=now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
