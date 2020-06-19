@@ -4352,9 +4352,13 @@ class dbfuncs {
                 $sql = "SELECT DISTINCT rr.date_created as run_date_created, rr.run_status,  b.project_pipeline_id, b.name, b.summary, b.output_dir, b.run_log_id, b.pp_date_created, pip.name as pipeline_name, pip.rev_id as pipeline_rev, pip.id as pipeline_id, u.email, u.username, b.owner_id, b.own
                     FROM run_log rr
                     RIGHT JOIN (
-                        SELECT DISTINCT pp.id as project_pipeline_id, pp.name,  pp.summary, max(r.id) as run_log_id,  pp.date_created as pp_date_created, pp.output_dir, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own, pp.pipeline_id, pp.group_id
+                        SELECT DISTINCT pp.id as project_pipeline_id, pp.name,  pp.summary, r.run_log_id,  pp.date_created as pp_date_created, pp.output_dir, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own, pp.pipeline_id, pp.group_id
                         FROM project_pipeline pp
-                        LEFT JOIN run_log r  ON r.project_pipeline_id=pp.id AND r.deleted = 0
+                        LEFT JOIN (SELECT deleted, project_pipeline_id, MAX(id) AS run_log_id
+                                   FROM run_log
+                                   WHERE run_log.deleted = 0
+                                   GROUP BY project_pipeline_id) AS r
+                                   ON r.project_pipeline_id=pp.id
                         LEFT JOIN user_group ug ON pp.group_id=ug.g_id
                         $where
                         GROUP BY pp.id 
@@ -4365,6 +4369,12 @@ class dbfuncs {
         }
         return self::queryTable($sql);
     }
+    
+                     
+    
+    
+    
+    
     function getExistProjectPipelines($pipeline_id,$type,$ownerID) {
         if ($type == "user"){
             $where = " where u.deleted=0 AND pp.deleted = 0 AND pp.pipeline_id = '$pipeline_id' AND pp.owner_id = '$ownerID'";
