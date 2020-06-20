@@ -11,20 +11,15 @@ initCloudData("google");
 
 //user role
 function callusRole() {
+    var usRole = "";
     var userRole = getValues({ p: "getUserRole" });
     if (userRole && userRole != '') {
         if (userRole[0].role !== null) {
             if (userRole[0].role === "admin") {
-                var usRole = "admin";
-            } else {
-                var usRole = "";
-            }
-        } else {
-            var usRole = "";
-        }
-    } else {
-        var usRole = "";
-    }
+                usRole = "admin";
+            } 
+        } 
+    } 
     return usRole;
 }
 usRole = callusRole();
@@ -297,32 +292,35 @@ function checkCloudProfiles(timer, cloud) {
         var icon = '#manageGoog';
         var amountIcon = '#googAmount';
     }
-    var proData = getValues({ p: "getProfileCloud", cloud:cloud });
-    if (proData) {
-        if (proData.length > 0) {
-            $(icon).css('display', 'inline');
-            var countActive = 0;
-            for (var k = 0; k < proData.length; k++) {
-                if (proData[k].status === "running" || proData[k].status === "waiting" || proData[k].status === "initiated" || proData[k].status === "retry") {
-                    countActive++;
+    getValuesAsync({p: "getProfileCloud", cloud:cloud}, function (proData) {
+        if (proData) {
+            if (proData.length > 0) {
+                $(icon).css('display', 'inline');
+                var countActive = 0;
+                for (var k = 0; k < proData.length; k++) {
+                    if (proData[k].status === "running" || proData[k].status === "waiting" || proData[k].status === "initiated" || proData[k].status === "retry") {
+                        countActive++;
+                    }
+                    if (timer === "timer") {
+                        // check the cloud profiles activity each 60 sec.
+                        checkCloudTimer(proData[k].id, 60000, cloud);
+                    }
+                    window.modalRec = {};
+                    window.modalRec[cloud+'last_status_log_' + proData[k].id] = "";
+                    window.modalRec[cloud+'last_status_' + proData[k].id] = proData[k].status;
                 }
-                if (timer === "timer") {
-                    // check the cloud profiles activity each 60 sec.
-                    checkCloudTimer(proData[k].id, 60000, cloud);
+                if (countActive > 0) {
+                    $(amountIcon).css('display', 'inline');
+                    $(amountIcon).text(countActive);
+                } else {
+                    $(amountIcon).text(countActive);
+                    $(amountIcon).css('display', 'none');
                 }
-                window.modalRec = {};
-                window.modalRec[cloud+'last_status_log_' + proData[k].id] = "";
-                window.modalRec[cloud+'last_status_' + proData[k].id] = proData[k].status;
-            }
-            if (countActive > 0) {
-                $(amountIcon).css('display', 'inline');
-                $(amountIcon).text(countActive);
-            } else {
-                $(amountIcon).text(countActive);
-                $(amountIcon).css('display', 'none');
             }
         }
-    }
+    });
+
+
 }
 
 //interval will decide the check period: default: 20 sec. for termination 5 sec
@@ -1090,13 +1088,18 @@ if (usRole === "admin") {
 }
 $("#filterMenu").append('<li><a href="#" data-value="3" tabIndex="-1"><input type="checkbox"/>&nbsp;Private</a></li>');
 $("#filterMenu").append('<li><a href="#" data-value="63" tabIndex="-1"><input type="checkbox"/>&nbsp;Public</a></li>');
-allUserGrp = getValues({ p: "getUserGroups" });
-if (allUserGrp && allUserGrp != '') {
-    for (var i = 0; i < allUserGrp.length; i++) {
-        var param = allUserGrp[i];
-        $("#filterMenu").append('<li><a href="#" data-value="group-' + param.id + '" tabIndex="-1"><input type="checkbox"/>&nbsp;' + param.name + '</a></li>');
+
+
+getValuesAsync({p: "getUserGroups"}, function (allUserGrp) {
+    if (allUserGrp && allUserGrp != '') {
+        for (var i = 0; i < allUserGrp.length; i++) {
+            var param = allUserGrp[i];
+            $("#filterMenu").append('<li><a href="#" data-value="group-' + param.id + '" tabIndex="-1"><input type="checkbox"/>&nbsp;' + param.name + '</a></li>');
+        }
     }
-}
+});
+
+
 
 //filter sidebar menu (multiple selection feature)
 var optionsFilter = [];
@@ -1756,10 +1759,10 @@ function download_file(fileURL, fileName) {
 }
 
 function downloadUrl(url, filename) {
-  var a = document.createElement("a");
-  a.href = url;
-  a.setAttribute("download", filename);
-  a.click();
+    var a = document.createElement("a");
+    a.href = url;
+    a.setAttribute("download", filename);
+    a.click();
 }
 
 function downloadText(text, filename) {
