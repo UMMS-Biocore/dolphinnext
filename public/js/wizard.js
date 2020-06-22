@@ -99,12 +99,14 @@ function checkPublicProfileSelected(){
     //check if public profile settings are available in the #pw-hostname
     var hostname = $('#pw-hostname').val()
     var publicProfile = $('#pw-hostname')[0].selectize.options[hostname]
-    if (publicProfile["date_created"]){
-        //autofill other options, and go to last section
-        return publicProfile;
-    } else {
-        return false;
+    var ret = false;
+    if (publicProfile){
+        if (publicProfile["date_created"]){
+            //autofill other options, and go to last section
+            return publicProfile;
+        }
     }
+    return ret;
 }
 
 function selectizePubProfileHostname(dropdown_id) {
