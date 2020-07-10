@@ -504,6 +504,7 @@ function createAceEditors(editorId, script_modeId) {
         window[editorId] = ace.edit(editorId);
         window[editorId].setTheme("ace/theme/tomorrow");
         window[editorId].getSession().setMode("ace/mode/sh");
+        window[editorId].setOptions({useSoftTabs: false });
         window[editorId].$blockScrolling = Infinity;
         //If mode is exist, then apply it
         var mode = $(script_modeId).val();
@@ -1408,29 +1409,30 @@ function insertSidebarProcess(sideGroupID, proID, name){
 
 function updateSideBar(sMenuProIdFinal, sMenuProGroupIdFinal) {
     var prodata = $('#addProcessModal').data("prodata");
-    var oldProGroupId = prodata.process_group_id
-    var oldProName = prodata.name 
-    var oldProID = prodata.id;
-    // find process item in the sidebar.
-    // prodata.name + "@" + id should be in the sidebar
-    var sMenuProIdFirst = ""
-    var revisions = getValues({ p: "getProcessRevision", "process_id": oldProID });
-    for (var k = 0; k < revisions.length; k++) {
-        sMenuProIdFirst = oldProName+"@"+revisions[k].id;
-        if ($(document.getElementById(sMenuProIdFirst)).length > 0) {
-            if ($(document.getElementById(sMenuProIdFirst)).hasClass( "processItems" )){
-                $(document.getElementById(sMenuProIdFirst)).attr("id", sMenuProIdFinal);
-                var PattMenu = /(.*)@(.*)/; //Map_Tophat2@11
-                var nMenuProName = sMenuProIdFinal.replace(PattMenu, '$1');
-                $(document.getElementById(sMenuProIdFinal)).html('<i class="fa fa-angle-double-right"></i>' + truncateName(nMenuProName, 'sidebarMenu'));
-                if (oldProGroupId !== sMenuProGroupIdFinal) {
-                    $(document.getElementById(sMenuProIdFinal)).remove();
-                    insertSidebarProcess("#side-"+sMenuProGroupIdFinal, sMenuProIdFinal, nMenuProName)
+    if (prodata){
+        var oldProGroupId = prodata.process_group_id
+        var oldProName = prodata.name 
+        var oldProID = prodata.id;
+        // find process item in the sidebar.
+        // prodata.name + "@" + id should be in the sidebar
+        var sMenuProIdFirst = ""
+        var revisions = getValues({ p: "getProcessRevision", "process_id": oldProID });
+        for (var k = 0; k < revisions.length; k++) {
+            sMenuProIdFirst = oldProName+"@"+revisions[k].id;
+            if ($(document.getElementById(sMenuProIdFirst)).length > 0) {
+                if ($(document.getElementById(sMenuProIdFirst)).hasClass( "processItems" )){
+                    $(document.getElementById(sMenuProIdFirst)).attr("id", sMenuProIdFinal);
+                    var PattMenu = /(.*)@(.*)/; //Map_Tophat2@11
+                    var nMenuProName = sMenuProIdFinal.replace(PattMenu, '$1');
+                    $(document.getElementById(sMenuProIdFinal)).html('<i class="fa fa-angle-double-right"></i>' + truncateName(nMenuProName, 'sidebarMenu'));
+                    if (oldProGroupId !== sMenuProGroupIdFinal) {
+                        $(document.getElementById(sMenuProIdFinal)).remove();
+                        insertSidebarProcess("#side-"+sMenuProGroupIdFinal, sMenuProIdFinal, nMenuProName)
+                    }
+                    break; 
                 }
-                break; 
             }
-
-        }
+        } 
     }
 }
 
