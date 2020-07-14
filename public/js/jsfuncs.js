@@ -1387,17 +1387,17 @@ function tsvPercent(tsv) {
 //var tsv is the TSV file with headers
 //columns: [{title: "Id", data: "Id"} 1: {title: "Name", data: "Name"}]
 //data: [{Id: "123", Name: "John Doe Fresno"},{Id: "124", Name: "Alice Alicia"}]
-function tsvConvert(tsv, format, fixHeader) {
+function tsvCsvConvert(tsv, format, fixHeader, sep) {
     var tsv = $.trim(tsv);
     var lines = tsv.split("\n");
     if (fixHeader){
         lines[0] = lines[0].replace(/\./g, "_");
     }
-    var headers = lines[0].split("\t");
+    var headers = lines[0].split(sep);
     var data = [];
     for (var i = 1; i < lines.length; i++) {
         var obj = {};
-        var currentline = lines[i].split("\t");
+        var currentline = lines[i].split(sep);
         for (var j = 0; j < headers.length; j++) {
             obj[headers[j]] = currentline[j];
         }

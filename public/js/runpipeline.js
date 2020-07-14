@@ -10755,12 +10755,21 @@ $(document).ready(function () {
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; overflow-x:auto; width:calc(100% - 35px);" class="table-responsive"><table style="'+headerStyle+' border:none;  width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"><thead style="'+tableStyle+'" "></thead></table></div>';
                     $(href).append(contentDiv)
                     var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
-                    if (visType == "table-percent") {
-                        //by default based on second column data, calculate percentages for each row
-                        data = tsvPercent(data)
-                    }
+
+                    var splitted = filePath.split(".");
+                    var ext = splitted[splitted.length - 1];
                     var fixHeader = true;
-                    var dataTableObj = tsvConvert(data, "json2", fixHeader)
+                    var dataTableObj;
+                    if (ext && ext.toLowerCase() == "csv" ){
+                        dataTableObj = tsvCsvConvert(data, "json2", fixHeader, ",")
+                    } else {
+                        if (visType == "table-percent") {
+                            //by default based on second column data, calculate percentages for each row
+                            data = tsvPercent(data)
+                        }
+                        dataTableObj = tsvCsvConvert(data, "json2", fixHeader, "\t")
+                    }
+
                     //speed up the table loading
                     dataTableObj.deferRender = true
                     dataTableObj.scroller = true
