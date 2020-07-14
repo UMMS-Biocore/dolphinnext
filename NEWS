@@ -1,3 +1,7 @@
+10.07.2020 Version 1.2.7
+useSoftTabs disabled for script editor to use tab instead of four spaces.
+Fastqc added to top of the report list.
+
 22.06.2020 Version 1.2.6
 Minor bug fixed in the wizard.
 
