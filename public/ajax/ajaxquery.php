@@ -190,7 +190,7 @@ else if ($p=="getReportData"){
             $name = $item[3];
             $processOpt = $item[4];
             $out["id"] = $gNum;
-            $out["name"] = $name; //directory name which has report files
+            $out["name"] = $name; //directory name which has the report files
             foreach ($processOpt as $key => $feature):
             if ($key == "pubWeb"){
                 $push = true;
@@ -217,7 +217,23 @@ else if ($p=="getReportData"){
             }
         }
         endforeach;
-        $data = $db->checkDescriptionBox($data, $uuid, $path);
+        // sort the reports by given $order
+        $order= array("multiqc","fastqc","summary" );
+        $ordered = array();
+        foreach ($order as $key) {
+            foreach ($data as $k => $content) {
+                if (strtolower($content["name"]) == $key ){
+                    $ordered[] = $content;
+                    unset($data[$k]);
+                    break;
+                }
+            }
+        }
+        // add the rest of the content
+        foreach ($data as $k => $content) {
+            $ordered[] = $content;
+        }
+        $data = $db->checkDescriptionBox($ordered, $uuid, $path);
     }
     $data = json_encode($data);
 }
