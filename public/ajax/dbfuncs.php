@@ -3814,12 +3814,12 @@ class dbfuncs {
                                 break;
                             }
                         }
-//                        $duCmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"du -hs $dir\" 2>&- | cut -f1";
-//                        $log["ret_duCmd"] = shell_exec($duCmd);
-//                        $log["ret_duCmd"] = trim($log["ret_duCmd"]);
-//                        if (!empty($log["ret_duCmd"])){
-//                            $log["workdir_size"] = $log["ret_duCmd"];
-//                        }
+                        $duCmd="ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"timeout 30 du -hs $dir\" 2>&- | cut -f1";
+                        $log["ret_duCmd"] = shell_exec($duCmd);
+                        $log["ret_duCmd"] = trim($log["ret_duCmd"]);
+                        if (!empty($log["ret_duCmd"])){
+                            $log["workdir_size"] = $log["ret_duCmd"];
+                        }
                     } else {
                         $log["ret"] = "Query failed! Please check your query, connection profile or internet connection";
                     }
