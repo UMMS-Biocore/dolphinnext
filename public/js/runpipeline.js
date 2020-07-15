@@ -4573,6 +4573,7 @@ function updateDiskSpace(){
                 },
                 success: function (s) {
                     if (s){
+                        console.log(s)
                         if (s.percent && s.free) {
                             $("#workdir_diskpercent").css("width",s.percent);
                             $("#workdir_diskpercent").html(s.percent);

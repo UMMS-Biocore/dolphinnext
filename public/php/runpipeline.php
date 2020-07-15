@@ -551,7 +551,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 </div>
 <div class="col-md-12" id="intermeDelDiv">
     <div class="form-group">
-        <label> <input type="checkbox" id="intermeDel" name="interDelete" value="interDel" checked> Delete intermadiate files after run</input></label>
+        <label> <input type="checkbox" id="intermeDel" name="interDelete" value="interDel" checked> Delete intermediate files after run</input></label>
 </div>
 </div>
 <div class="col-md-12">
