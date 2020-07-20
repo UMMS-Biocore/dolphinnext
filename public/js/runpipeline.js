@@ -6741,14 +6741,6 @@ $(function () {
                 colPercent: "15",
                 overflow: "scroll",
                 fnCreatedCell: function (nTd, oData) {
-                    var getExtension = function (filename){
-                        var re = /(?:\.([^.]+))?$/;
-                        var ext = re.exec(filename)[1];   // "txt"
-                        if (!ext){
-                            ext = "";
-                        }
-                        return ext;
-                    }
                     var getIconByExtension = function(ext){
                         var icon = "fa fa-file-text-o";
                         if (ext == "tsv" || ext == "csv" || ext === "xls" || ext === "xlsx") {
@@ -10705,8 +10697,8 @@ $(document).ready(function () {
                             toogleFullSize(this, "compress");
                         }
                     });
-                    $('#downUrl-' + fileid).on('click', function (event) {
-                        var fileid = $(this).attr("fileid")
+                    $(document).on('click', '#downUrl-' + fileid, function (event) {
+                    var fileid = $(this).attr("fileid")
                         var filename = $("#" + fileid).attr("filename")
                         var filepath = $("#" + fileid).attr("filepath")
                         var a = document.createElement('A');
@@ -10755,32 +10747,50 @@ $(document).ready(function () {
                     }
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; overflow-x:auto; width:calc(100% - 35px);" class="table-responsive"><table style="'+headerStyle+' border:none;  width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"><thead style="'+tableStyle+'" "></thead></table></div>';
                     $(href).append(contentDiv)
-                    var data = getValues({ p: "getFileContent", uuid: uuid, filename: "pubweb/" + filePath });
-
-                    var splitted = filePath.split(".");
-                    var ext = splitted[splitted.length - 1];
-                    var fixHeader = true;
-                    var dataTableObj;
-                    if (ext && ext.toLowerCase() == "csv" ){
-                        dataTableObj = tsvCsvConvert(data, "json2", fixHeader, ",")
-                    } else {
-                        if (visType == "table-percent") {
-                            //by default based on second column data, calculate percentages for each row
-                            data = tsvPercent(data)
+                    $.ajax({
+                        url: "ajax/ajaxquery.php",
+                        data: {p:"getFileContent", uuid: uuid, filename: "pubweb/" + filePath},
+                        async: true,
+                        beforeSend: function() {
+                            showLoadingDiv(href.substr(1))
+                        },
+                        cache: false,
+                        type: "POST",
+                        success: function (data) {
+                            var ext = getExtension(filePath);
+                            var fixHeader = true;
+                            var dataTableObj;
+                            if (ext && ext.toLowerCase() == "csv" ){
+                                dataTableObj = tsvCsvDatatablePrep(data, fixHeader, ",")
+                            } else {
+                                if (visType == "table-percent") {
+                                    //by default based on second column data, calculate percentages for each row
+                                    data = tsvPercent(data)
+                                }
+                                dataTableObj = tsvCsvDatatablePrep(data, fixHeader, "\t")
+                            }
+                            //speed up the table loading
+                            dataTableObj.deferRender = true
+                            dataTableObj.scroller = true
+                            dataTableObj.scrollCollapse = true
+                            dataTableObj.scrollY = 395
+                            dataTableObj.scrollX = true
+                            dataTableObj.sScrollX = true
+                            //hides undefined error
+                            dataTableObj.columnDefs = [{"defaultContent": "-","targets": "_all"}]; 
+                            $("#" + fileid).DataTable(dataTableObj);
+                            hideLoadingDiv(href.substr(1))
+                            bindEveHandlerIcon(fileid)
+                        },
+                        error: function (errorThrown) {
+                            hideLoadingDiv(href.substr(1))
+                            console.log("AJAX Error occured.", data)
+                            toastr.error("Error occured.");
                         }
-                        dataTableObj = tsvCsvConvert(data, "json2", fixHeader, "\t")
-                    }
+                    });
 
-                    //speed up the table loading
-                    dataTableObj.deferRender = true
-                    dataTableObj.scroller = true
-                    dataTableObj.scrollCollapse = true
-                    dataTableObj.scrollY = 395
-                    dataTableObj.scrollX = true
-                    dataTableObj.sScrollX = true
-                    dataTableObj.columnDefs = [{"defaultContent": "-","targets": "_all"}]; //hides undefined error
-                    $("#" + fileid).DataTable(dataTableObj);
-                    bindEveHandlerIcon(fileid)
+
+
                 } else if (visType == "rmarkdown") {
                     var contentDiv = '<div style="width:100%;" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"></div>';
                     $(href).append(contentDiv)
@@ -10814,28 +10824,57 @@ $(document).ready(function () {
                         height: "565px"
                     });
                 } else if (visType == "html" || visType == "pdf" || visType == "text" || visType == "image" ) {
+                    var ext = getExtension(filePath);
                     var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
-                    if (visType == "pdf") {
-                        var iframe = '<object style="width:100%; height:100%;"  data="' + link + '" type="application/pdf"><embed src="' + link + '" type="application/pdf" /></object>';
-                    } else {
-                        var iframe = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>';
+                    var checkIfValidIframeExt = function(ext){
+                        var ret = false;
+                        var validList = ["pdf", "jpeg","html", "jpg", "png", "gif", "tif", "tiff", "svg", "txt"];
+                        if ( validList.includes(ext)){
+                            ret = true;
+                        }
+                        return ret;
                     }
-                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
+                    var content = "";
+                    if (visType == "pdf" && ext && ext.toLowerCase() == "pdf") {
+                        content = '<object style="width:100%; height:100%;"  data="' + link + '" type="application/pdf"><embed src="' + link + '" type="application/pdf" /></object>';
+                    } else {
+                        var validExt = checkIfValidIframeExt(ext);
+                        if (validExt){
+                           content = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>'; 
+                        } else {
+                           content = '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' + fileid + '" id="downUrl-' + fileid + '" href="#">download</a> the file.</div>'; 
+                        }
+                    }
+                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + content + '</div>';
                     $(href).append(contentDiv);
                     bindEveHandlerIcon(fileid)
                 } else if (visType == "debrowser") {
-                    var filePathJson = getValues({ p: "callDebrowser", dir: dir, uuid: uuid, filename: filename });
-                    var link = encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson);
-                    var debrowserlink = debrowserUrl + '/debrowser/R/?jsonobject=' + link;
-                    console.log(debrowserlink)
-                    var iframe = '<iframe id="deb-' + fileid + '" frameborder="0"  style="width:100%; height:100%;" src="' + debrowserlink + '"></iframe>';
-                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
-                    $(href).append(contentDiv);
-                    bindEveHandlerIcon(fileid)
-                    //$("#deb-" + fileid).load(function () {
-                    //           $("#deb-" + fileid).loading('stop');
-                    //});
-                    //$("#deb-" + fileid).loading('start');
+                    $.ajax({
+                        url: "ajax/ajaxquery.php",
+                        data: {p: "callDebrowser", dir: dir, uuid: uuid, filename: filename},
+                        async: true,
+                        cache: false,
+                        beforeSend: function() {
+                            showLoadingDiv(href.substr(1))
+                        },
+                        type: "POST",
+                        success: function (filePathJson) {
+                            var link = encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson);
+                            var debrowserlink = debrowserUrl + '/debrowser/R/?jsonobject=' + link;
+                            var iframe = '<iframe id="deb-' + fileid + '" frameborder="0"  style="width:100%; height:100%;" src="' + debrowserlink + '"></iframe>';
+                            var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + iframe + '</div>';
+                            $(href).append(contentDiv);
+                            $("#deb-" + fileid).load(function () {
+                                hideLoadingDiv(href.substr(1))
+                            });
+                            bindEveHandlerIcon(fileid)
+                        },
+                        error: function (errorThrown) {
+                            console.log("AJAX Error occured.", data)
+                            hideLoadingDiv(href.substr(1))
+                            toastr.error("Error occured.");
+                        }
+                    });
                 }
             }
         })
@@ -11075,7 +11114,6 @@ $(document).ready(function () {
                     cache: false,
                     success: function (results) {
                         res = results
-
                     },
                     error: function (errorThrown) {
                         console.log("##Error: ");
