@@ -10685,20 +10685,43 @@ $(document).ready(function () {
                 var fileid = $(this).attr("fileid");
                 var pubWebPath = $("#basepathinfo").attr("pubweb");
                 var debrowserUrl = $("#basepathinfo").attr("debrowser");
+
+                var toogleEditorSize = function (toogleType) {
+                    var editorID = "textEditorID_" + fileid;
+                    if (toogleType == "expand") {
+                        $("#" + editorID ).css("height", $(window).height() - 35 -45)
+                    } else {
+                        $("#" + editorID).css("height", "525px")
+                    }
+                    setTimeout(function () { 
+                        window[editorID].resize();
+                        window[editorID].setOption("wrap", false);
+                        window[editorID].setOption("wrapBehavioursEnabled", false);
+                        window[editorID].setOption("wrap", true); 
+                    }, 100);
+                }
+
                 var bindEveHandlerIcon = function (fileid) {
                     $('[data-toggle="tooltip"]').tooltip();
                     $('#fullscr-' + fileid).on('click', function (event) {
                         var iconClass = $(this).children().attr("class");
+                        var toogleType;
                         if (iconClass == "fa fa-expand") {
                             $(this).children().attr("class", "fa fa-compress")
-                            toogleFullSize(this, "expand");
+                            toogleType = "expand"
                         } else {
                             $(this).children().attr("class", "fa fa-expand")
-                            toogleFullSize(this, "compress");
+                            toogleType = "compress"
                         }
+                        toogleFullSize(this, toogleType);
+                        if (visType == "text"){
+                            toogleEditorSize(toogleType)
+                        }
+
                     });
                     $(document).on('click', '#downUrl-' + fileid, function (event) {
-                    var fileid = $(this).attr("fileid")
+                        event.preventDefault();
+                        var fileid = $(this).attr("fileid")
                         var filename = $("#" + fileid).attr("filename")
                         var filepath = $("#" + fileid).attr("filepath")
                         var a = document.createElement('A');
@@ -10823,7 +10846,7 @@ $(document).ready(function () {
                         backgroundcolorleave: "#ECF0F4",
                         height: "565px"
                     });
-                } else if (visType == "html" || visType == "pdf" || visType == "text" || visType == "image" ) {
+                } else if (visType == "html" || visType == "pdf" || visType == "image" ) {
                     var ext = getExtension(filePath);
                     var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
                     var checkIfValidIframeExt = function(ext){
@@ -10840,14 +10863,63 @@ $(document).ready(function () {
                     } else {
                         var validExt = checkIfValidIframeExt(ext);
                         if (validExt){
-                           content = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>'; 
+                            content = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>'; 
                         } else {
-                           content = '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' + fileid + '" id="downUrl-' + fileid + '" href="#">download</a> the file.</div>'; 
+                            content = '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' + fileid + '" id="downUrl-' + fileid + '" href="#">download</a> the file.</div>'; 
                         }
                     }
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + content + '</div>';
                     $(href).append(contentDiv);
                     bindEveHandlerIcon(fileid)
+                } else if (visType == "text" ) {
+                    var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
+                    var editorID = "textEditorID_" + fileid;
+                    var scriptModeDivID = "textScriptModeID_" + fileid;
+                    var scriptMode = "textScriptMode_" + fileid;
+                    var aceEditorDiv = `<div id="`+editorID+`" style="height:525px; width: 100%;"></div>
+<div style="display:none;" id="`+scriptModeDivID+`" class="row">
+<p class="col-sm-4" style="padding-top:4px; padding-right:0; padding-left:60px;">Language Mode:</p>
+<div class="col-sm-3">
+<select id="`+scriptMode+`" class="form-control">
+<option value="markdown">markdown</option>
+</select>
+</div>
+</div>`;
+                    var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + aceEditorDiv + '</div>';
+                    $(href).append(contentDiv);
+                    bindEveHandlerIcon(fileid);
+                    $.ajax({
+                        url: "ajax/ajaxquery.php",
+                        data: {p:"getFileContent", uuid: uuid, filename: "pubweb/" + filePath},
+                        async: true,
+                        beforeSend: function() {
+                            showLoadingDiv(href.substr(1))
+                        },
+                        cache: false,
+                        type: "POST",
+                        success: function (data) {
+                            // create ace editor
+                            window[editorID] = ace.edit(editorID);
+                            window[editorID].setValue(data)
+                            window[editorID].clearSelection();
+                            window[editorID].setOption("wrap", true);
+                            window[editorID].setOption("indentedSoftWrap", false);
+                            window[editorID].setTheme("ace/theme/tomorrow");
+                            window[editorID].$blockScrolling = Infinity;
+                            window[editorID].setReadOnly(true);
+                            window[editorID].setShowPrintMargin(false);
+                            hideLoadingDiv(href.substr(1))
+                        },
+                        error: function (errorThrown) {
+                            hideLoadingDiv(href.substr(1))
+                            console.log("AJAX Error occured.", data)
+                            toastr.error("Error occured.");
+                        }
+                    });
+
+
+
+
                 } else if (visType == "debrowser") {
                     $.ajax({
                         url: "ajax/ajaxquery.php",
