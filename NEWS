@@ -1,5 +1,9 @@
+20.07.2020 Version 1.2.9
+Asynchronous loading and warning added for report page.
+
 14.07.2020 Version 1.2.8
 CSV file support added to datatables reporting option.
+30 sec. timeout added to du command.
 
 10.07.2020 Version 1.2.7
 useSoftTabs disabled for script editor to use tab instead of four spaces.
