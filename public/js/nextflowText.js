@@ -36,7 +36,7 @@ var fillJsonPattern = function (tx, run_log_uuid) {
                             pubWebPath = "";
                         }
                         if (!run_log_uuid) {
-                            run_log_uuid = $("#runVerReport").val();
+                            run_log_uuid = $("#runVerLog").val();
                         }
                         var link = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + json.webpath;
                         res = '"' + link + '"';

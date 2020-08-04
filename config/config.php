@@ -19,6 +19,7 @@ if (!empty($sec)){
 }
 $secConf = $secRaw['CONFIG'];
 if (!empty($secConf)){
+    $CENTRAL_API_URL = "https://www.dolphinnext.com";
     $DEBROWSER_URL = isset($secConf['DEBROWSER_URL']) ? $secConf['DEBROWSER_URL'] : "";
     $OCPU_URL = isset($secConf['OCPU_URL']) ? $secConf['OCPU_URL'] : "";
     $OCPU_PUBWEB_URL= isset($secConf['OCPU_PUBWEB_URL']) ? $secConf['OCPU_PUBWEB_URL'] : "";
@@ -30,7 +31,6 @@ if (!empty($secConf)){
     $BIND_PASS= isset($secConf['BIND_PASS']) ? $secConf['BIND_PASS'] : "";
     $EMAIL_SENDER= isset($secConf['EMAIL_SENDER']) ? $secConf['EMAIL_SENDER'] : "";
     $EMAIL_ADMIN= isset($secConf['EMAIL_ADMIN']) ? $secConf['EMAIL_ADMIN'] : "";
-    $CENTRAL_API_URL = isset($secConf['CENTRAL_API_URL']) ? $secConf['CENTRAL_API_URL'] : "";
     $ENV_PATH = isset($secConf['ENV_PATH']) ? $secConf['ENV_PATH'] : "";
     date_default_timezone_set($secConf['TIMEZONE']);
 

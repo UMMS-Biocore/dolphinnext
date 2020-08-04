@@ -1,5 +1,6 @@
 #!/share/bin/python
 
+from pkg_resources import parse_version
 from optparse import OptionParser
 import os, argparse, mysql.connector
 try:
@@ -22,6 +23,7 @@ def getConf():
         ret['DBHOST'] = config.get('Dolphinnext', 'DBHOST')
         ret['DBPORT'] = config.get('Dolphinnext', 'DBPORT')
     except:
+        #When .sec file is not found (eg. docker tests), use following defaults:     
         ret['DB']     = 'dolphinnext'
         ret['DBUSER'] = 'root'
         ret['DBPASS'] = ''
@@ -41,6 +43,7 @@ def executeScriptsFromFile(filename, cursor):
                 cursor.execute(command)
         except mysql.connector.Error as e:
             log += "\n"+str(e)
+            break;
             
     return log
 
@@ -81,6 +84,7 @@ def updateDB(db, user, p, host, port):
         exist_patch = listdir_nohidden(scriptDir+'/../db/patch')
         ret += "\nINFO: Checking exist patches: "+str(len(exist_patch))
         not_exist_db = list(set(exist_patch) - set(exist_db))
+        not_exist_db = sorted(not_exist_db, key=parse_version)
     elif exist_table == 0:
         ret += "INFO: update_db table not found."
         not_exist_db = listdir_nohidden(scriptDir+'/../db/patch')

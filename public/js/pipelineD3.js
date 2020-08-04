@@ -142,7 +142,6 @@ function createSVG() {
     candidates = []
     saveNodes = []
 
-    createPipeRev = "";
     dupliPipe = false
     binding = false
     renameTextID = ""
@@ -179,41 +178,58 @@ $('#editorPipeFooter').keyup(function () {
     autosave();
 });
 
-$('#groupSelPipe').change(function () {
-    autosaveDetails();
-});
+//autosave of permsPipe and groupSelPipe changes are disabled.
+//$('#permsPipe').change(function () {
+//    autosaveDetails();
+//});
+//$('#groupSelPipe').change(function () {
+//    autosaveDetails();
+//});
 $('#pin').click(function () {
     autosaveDetails();
 });
 
-$('#publishPipe').change(function () {
+$('#publicly_searchable').change(function () {
     autosaveDetails();
 });
 $("#pipeline-title").keyup(function () { //Click outside of the field or enter
     autosave();
 });
 
-var timeoutId = 0;
+function changeAutoSaveText(text){
+    $('#autosave').text(text);
+    setTimeout(  function () { 
+        var curr = $('#autosave').text();
+        if (curr !== "Saving..."){
+            $('#autosave').text("") 
+        }
+    }, 5000);
+}
+
+
+timeoutId = 0;
+toogleAutosave = true;
 pipelineOwn = '';
 pipelinePerm = '';
 
 function autosave() {
-    if ((pipelineOwn === '' || pipelineOwn === "1") && pipelinePerm !== "63") {
+    if ((pipelineOwn === '' || pipelineOwn === "1") && pipelinePerm !== "63" && toogleAutosave) {
         var pipName = $('#pipeline-title').val()
         var pipGroup = $('#pipeGroupAll').val()
         if (pipName !== '' && pipGroup != '') {
             $('#autosave').text('Saving...');
             if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(function () { save() }, 2000);
+            timeoutId = setTimeout(function () { save("default") }, 2000);
         }
     }
 }
 
 function autosaveDetails() {
-    if (((pipelineOwn === '' || pipelineOwn === "1") && pipelinePerm !== "63") || usRole === "admin") {
-        var pipName = $('#pipeline-title').val()
-        var pipGroup = $('#pipeGroupAll').val()
-        if (pipName !== '' && pipGroup != '') {
+    if (toogleAutosave && ((pipelineOwn === '' || pipelineOwn === "1") && pipelinePerm !== "63") || usRole === "admin") {
+        var pipName = $('#pipeline-title').val();
+        var pipGroup = $('#pipeGroupAll').val();
+        var id = $("#pipeline-title").attr('pipelineid');
+        if (pipName !== '' && pipGroup != '' && id) {
             $('#autosave').text('Saving...');
             if (timeoutId) clearTimeout(timeoutId);
             timeoutId = setTimeout(function () { saveDetails() }, 1300);
@@ -223,7 +239,7 @@ function autosaveDetails() {
 
 function duplicatePipeline() {
     dupliPipe = true
-    save()
+    save("default")
 }
 
 function delPipeline() {
@@ -414,7 +430,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -506,6 +522,9 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
     if (showSett != null) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('showSett', showSett)
     }
+    if (inDescOpt != null) {
+        $("#text" + MainGNum + "-" + pObj.gNum).data('inDescOpt', inDescOpt)
+    }
     if (pubWeb) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('pubWeb', pubWeb)
     }
@@ -586,6 +605,7 @@ function addProcess(processDat, xpos, ypos) {
     var dropDown = null;
     var pubWeb = null;
     var showSett = null;
+    var inDescOpt = null;
     //var process_id = processData[index].id;
     //for input parameters:  
     if (processDat === "inputparam@inPro") {
@@ -603,7 +623,7 @@ function addProcess(processDat, xpos, ypos) {
         var init = "o"
         var pColor = "orange"
 
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, window)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, window)
         processList[("g-" + gNum)] = name
         processListNoOutput[("g-" + gNum)] = name
         gNum = gNum + 1
@@ -623,7 +643,7 @@ function addProcess(processDat, xpos, ypos) {
         var classtoparam = classtoparam || "connect_to_output input"
         var init = "i"
         var pColor = "green"
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, window)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, window)
 
         processList[("g-" + gNum)] = name
         gNum = gNum + 1
@@ -1740,7 +1760,7 @@ function createEdges(first, second, pObj) {
 
         pObj.edges.push(prefix + pObj.fClick + "_" + prefix + pObj.sClick);
     } else {
-        console.log("EDGE FAILED: prefix:",prefix +" MainGNum:"+ MainGNum + "Edge" + first + "_" +second)
+        console.log("EDGE FAILED: prefix: ",prefix +" MainGNum: "+ MainGNum + "Edge: " + first + "_" +second)
     }
 }
 
@@ -1819,6 +1839,7 @@ function rename() {
     renameTextDefVal = d3.select("#" + this.id).attr('defVal');
     renameTextDropDown = d3.select("#" + this.id).attr('dropDown');
     renameTextShowSett = d3.select("#" + this.id).attr('showSett');
+    renameTextInDesc = $("#" + this.id).data('inDescOpt');
     renameTextPubWeb = d3.select("#" + this.id).attr('pubWeb');
     body = document.body;
     bodyW = body.offsetWidth;
@@ -1958,39 +1979,48 @@ function warnUserSave(res){
 }
 
 //Revision is not required for advanced options, description
-function saveDetails() {
+function saveDetails(sucFunc) {
     var id = $("#pipeline-title").attr('pipelineid');
-    var scriptSumEditor = pipelineSumEditor.getValue();
-    var summary = encodeURIComponent(scriptSumEditor);
-    var group_id = $('#groupSelPipe').val();
-    var perms = $('#permsPipe').val();
-    var pin = $('#pin').is(":checked").toString();
-    var pin_order = $('#pin_order').val();
-    var publish = $('#publishPipe').val();
-    var pipGroup = $('#pipeGroupAll').val()
-    var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
-    sName = document.getElementById("pipeline-title").value;
-    if (oldPipeGroupId != pipGroup) {
-        modifyPipelineSideBar(pipGroup, id, sName, "move")
-    }
-    createSaveNodes();
-    var data = {
-        p: "savePipelineDetails",
-        id: id,
-        summary: summary,
-        group_id: group_id,
-        perms: perms,
-        pin: pin,
-        pin_order: pin_order,
-        publish: publish,
-        pipeline_group_id: pipGroup,
-        nodes: saveNodes
-    };
-    if (id !== '') {
-        var saveDetails = getValues(data);
-        if (saveDetails) {
-            $('#autosave').text('Details are saved');
-        }
+    if (id) {
+        var scriptSumEditor = pipelineSumEditor.getValue();
+        var summary = encodeURIComponent(scriptSumEditor);
+        var group_id = $('#groupSelPipe').val();
+        var perms = $('#permsPipe').val();
+        var pin = $('#pin').is(":checked").toString();
+        var pin_order = $('#pin_order').val();
+        var publicly_searchable = $('#publicly_searchable').is(":checked").toString();
+        var pipGroup = $('#pipeGroupAll').val()
+        var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
+        var release_date = $('#releaseVal').attr("date");
+        sName = document.getElementById("pipeline-title").value;
+        sName = sName.replace(/\"/g, "").replace(/\'/g, "").replace(/\\/g, "");
+        $("#pipeline-title").changeVal(sName);
+        createSaveNodes();
+        var data = {
+            p: "savePipelineDetails",
+            id: id,
+            summary: summary,
+            group_id: group_id,
+            perms: perms,
+            pin: pin,
+            pin_order: pin_order,
+            publicly_searchable: publicly_searchable,
+            pipeline_group_id: pipGroup,
+            nodes: saveNodes,
+            release_date: release_date
+        };
+
+        getValuesAsync(data, function (s) {
+            if (s){
+                if (oldPipeGroupId != pipGroup) {
+                    modifyPipelineSideBar(pipGroup, id, sName, "move")
+                }
+                changeAutoSaveText('Details are saved')
+                if (typeof sucFunc === "function") {
+                    sucFunc()
+                }
+            }
+        });
     }
 }
 
@@ -2100,7 +2130,7 @@ function getAllProcessID(){
         processListPipeMod = window["pObj" + piGnumList[p]].processListMain;
         addIds2processList(processListPipeMod);
     }
-return processListDb;
+    return processListDb;
 }
 
 function createSaveNodes() {
@@ -2125,6 +2155,7 @@ function createSaveNodes() {
         var defVal = $("#text-" + gNum).attr("defVal");
         var dropDown = $("#text-" + gNum).attr("dropDown");
         var showSett = $("#text-" + gNum).attr("showSett");
+        var inDescOpt = $("#text-" + gNum).data("inDescOpt");
         var pubWeb = $("#text-" + gNum).attr("pubWeb");
         var processModule = {};
         if (defVal) {
@@ -2135,6 +2166,9 @@ function createSaveNodes() {
         }
         if (showSett != undefined) {
             processModule["showSett"] = showSett;
+        }
+        if (inDescOpt != undefined) {
+            processModule["inDescOpt"] = inDescOpt;
         }
         if (pubWeb) {
             processModule["pubWeb"] = pubWeb;
@@ -2149,7 +2183,7 @@ function createSaveNodes() {
 
 
 //Save pipeline
-function save() {
+function save(type) {
     saveMainG = {}
     //check if process and parameter names are unique in pipeline
     checkNameUnique(processListNoOutput);
@@ -2162,14 +2196,18 @@ function save() {
     var svgW = $("#pipeTabDiv").width() - 32; //container div is 32px smaller than pipeTabDiv
     var svgH = $("#container").height();
     sName = document.getElementById("pipeline-title").value;
+    sName = sName.replace(/\"/g, "").replace(/\'/g, "").replace(/\\/g, "");
+    $("#pipeline-title").changeVal(sName);
     warnUserRedBorder('#pipeline-title', sName)
     var scriptSumEditor = pipelineSumEditor.getValue();
     var pipelineSummary = encodeURIComponent(scriptSumEditor);
     var group_id = $('#groupSelPipe').val();
     var perms = $('#permsPipe').val();
     var pin = $('#pin').is(":checked").toString();
+    var publicly_searchable = $('#publicly_searchable').is(":checked").toString();
+        var release_date = $('#releaseVal').attr("date");
+    
     var pin_order = $('#pin_order').val();
-    var publish = $('#publishPipe').val();
     var script_mode_header = $('#script_mode_pipe_header').val();
     var script_mode_footer = $('#script_mode_pipe_footer').val();
     var script_pipe_header = getScriptEditor('editorPipeHeader');
@@ -2178,7 +2216,7 @@ function save() {
     pipeline_group_id = $('#pipeGroupAll').val();
     var pipeGroupWarn = false;
     if (!pipeline_group_id || pipeline_group_id == "") {
-        var pipeGroupWarn = true;
+        pipeGroupWarn = true;
     }
     warnUserRedBorder($("#pipeGroupAll").next().children()[0], pipeline_group_id)
     id = 0
@@ -2210,7 +2248,9 @@ function save() {
     }, {
         "pin_order": pin_order
     }, {
-        "publish": publish
+        "publicly_searchable": publicly_searchable
+    }, {
+        "release_date": release_date
     }, {
         "script_pipe_header": script_pipe_header
     }, {
@@ -2230,43 +2270,87 @@ function save() {
     }, {
         "publish_web_dir": pubWebDirListDb.toString()
     }];
-    if (createPipeRev === "true") {
-        return [savedList, id, sName];
-    } else {
-        //A. Add new pipeline
-        if (sName !== "" && id === '' && !pipeGroupWarn) {
-            var maxPipeline_gid = getValues({ p: "getMaxPipeline_gid" })[0].pipeline_gid;
-            var newPipeline_gid = parseInt(maxPipeline_gid) + 1;
-            savedList.push({ "pipeline_gid": newPipeline_gid });
-            savedList.push({ "rev_id": 0 });
-            savedList.push({ "rev_comment": "" });
-            savedList.push({ "pipeline_uuid": "" });
-            savedList.push({ "pipeline_rev_uuid": "" });
+
+    //A. Add new pipeline
+    if (sName && id === "" && !pipeGroupWarn) {
+        var maxPipeline_gid = getValues({ p: "getMaxPipeline_gid" })[0].pipeline_gid;
+        var newPipeline_gid = parseInt(maxPipeline_gid) + 1;
+        savedList.push({ "pipeline_gid": newPipeline_gid });
+        savedList.push({ "rev_id": 0 });
+        savedList.push({ "rev_comment": "" });
+        savedList.push({ "pipeline_uuid": "" });
+        savedList.push({ "pipeline_rev_uuid": "" });
+        sl = JSON.stringify(savedList);
+        var ret = getValues({ p: "saveAllPipeline", dat: sl });
+        pipeline_id = ret.id;
+        $("#pipeline-title").attr('pipelineid', pipeline_id);
+        modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "insert")
+        //keep record for last group_id
+        $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
+        if (dupliPipe === true) {
+            setTimeout(function () { window.location.replace("index.php?np=1&id=" + pipeline_id); }, 0);
+            dupliPipe = false;
+        }
+        changeAutoSaveText('All changes saved');
+
+        //B. pipeline already exist
+    } else if (sName && id !== "" && !pipeGroupWarn) {
+        var warnUserPipe = false;
+        var warnPipeText = '';
+        var numOfProject = '';
+        var numOfProjectPublic = '';
+        [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic] = checkRevisionPipe(id);
+        //B.1 allow updating on existing pipeline
+        if ((warnUserPipe === false || saveOnExist === true) && type == "default") {
             sl = JSON.stringify(savedList);
             var ret = getValues({ p: "saveAllPipeline", dat: sl });
-            pipeline_id = ret.id;
-            $("#pipeline-title").attr('pipelineid', pipeline_id);
-            modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "insert")
-            //keep record for last group_id
-            $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
-            if (dupliPipe === true) {
-                setTimeout(function () { window.location.replace("index.php?np=1&id=" + pipeline_id); }, 0);
-                dupliPipe = false;
+            warnUserSave(ret)
+            pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
+            refreshCreatorData(pipeline_id);
+            var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
+            if (oldPipeGroupId != pipeline_group_id) {
+                modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "move")
             }
-            $('#autosave').text('All changes saved');
-        }
-        //B. pipeline already exist
-        else if (sName !== "" && id !== '' && !pipeGroupWarn) {
-            var warnUserPipe = false;
-            var warnPipeText = '';
-            var numOfProject = '';
-            var numOfProjectPublic = '';
-            [warnUserPipe, warnPipeText, numOfProject, numOfProjectPublic] = checkRevisionPipe(id);
-            //B.1 allow updating on existing pipeline
-            if (warnUserPipe === false || saveOnExist === true) {
+            //keep track of latest pipeline_group_id
+            $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
+
+            var numRev = $("#pipeRev option").length;
+            if (numRev === 0 || numRev === 1) { //sidebar name change
+                document.getElementById('pipeline-' + pipeline_id).innerHTML = '<i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu');
+            }
+            changeAutoSaveText('All changes saved');
+            //B.2 allow save on new revision
+        } else {
+            // ConfirmYesNo pipeline modal 
+            $('#confirmRevision').off();
+            $('#confirmRevision').on('show.bs.modal', function (event) {
+                $(this).find('form').trigger('reset');
+                if (type == "rev"){
+                    $('#saveOnExist').css('display', 'none');
+                    $('#confirmYesNoText').html("Please enter the revision comment to create new revision.</br>");
+                } else {
+                    $('#confirmYesNoText').html(warnPipeText);
+                    if (numOfProjectPublic === 0 || usRole === "admin") {
+                        $('#saveOnExist').css('display', 'inline');
+                        if (usRole == "admin" && numOfProjectPublic > 0) {
+                            $('#saveOnExist').attr('class', 'btn btn-danger');
+                        }
+                    }  
+                }
+            });
+            $('#confirmRevision').on('hide.bs.modal', function (event) {
+                $('#saveOnExist').css('display', 'none');
+                $('#saveOnExist').attr('class', 'btn btn-warning');
+            });
+
+            $('#confirmRevision').on('click', '.cancelRev', function (event) {
+                changeAutoSaveText('Changes not saved!');
+                toogleAutosave = false;
+            });
+            $('#confirmRevision').on('click', '#saveOnExist', function (event) {
                 sl = JSON.stringify(savedList);
                 var ret = getValues({ p: "saveAllPipeline", dat: sl });
-                warnUserSave(ret)
+
                 pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
                 refreshCreatorData(pipeline_id);
                 var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
@@ -2275,67 +2359,30 @@ function save() {
                 }
                 //keep track of latest pipeline_group_id
                 $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
-
                 var numRev = $("#pipeRev option").length;
                 if (numRev === 0 || numRev === 1) { //sidebar name change
                     document.getElementById('pipeline-' + pipeline_id).innerHTML = '<i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu');
                 }
-                $('#autosave').text('All changes saved');
-            }
-            //B.2 allow save on new revision
-            else if (warnUserPipe === true) {
-                // ConfirmYesNo pipeline modal 
-                $('#confirmRevision').off();
-                $('#confirmRevision').on('show.bs.modal', function (event) {
-                    $(this).find('form').trigger('reset');
-                    $('#confirmYesNoText').html(warnPipeText);
-                    if (numOfProjectPublic === 0 || usRole === "admin") {
-                        $('#saveOnExist').css('display', 'inline');
-                        if (usRole == "admin" && numOfProjectPublic > 0) {
-                            $('#saveOnExist').attr('class', 'btn btn-danger');
-                        }
-                    }
-                });
-                $('#confirmRevision').on('hide.bs.modal', function (event) {
-                    $('#saveOnExist').css('display', 'none');
-                    $('#saveOnExist').attr('class', 'btn btn-warning');
-                });
+                saveOnExist = true;
+                toogleAutosave = true;
+                changeAutoSaveText('All changes saved.');
 
-                $('#confirmRevision').on('click', '.cancelRev', function (event) {
-                    $('#autosave').text('Changes not saved!');
-                });
-                $('#confirmRevision').on('click', '#saveOnExist', function (event) {
-                    sl = JSON.stringify(savedList);
-                    var ret = getValues({ p: "saveAllPipeline", dat: sl });
-
-                    pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
-                    refreshCreatorData(pipeline_id);
-                    var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
-                    if (oldPipeGroupId != pipeline_group_id) {
-                        modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "move")
-                    }
-                    //keep track of latest pipeline_group_id
-                    $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
-                    var numRev = $("#pipeRev option").length;
-                    if (numRev === 0 || numRev === 1) { //sidebar name change
-                        document.getElementById('pipeline-' + pipeline_id).innerHTML = '<i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu');
-                    }
-                    saveOnExist = true;
-                    $('#autosave').text('All changes saved');
-                    $('#confirmRevision').modal('hide');
-                    warnUserSave(ret)
-                });
+                $('#confirmRevision').modal('hide');
+                warnUserSave(ret)
+            });
 
 
-                $('#confirmRevision').on('click', '#saveRev', function (event) {
-                    var confirmformValues = $('#confirmRevision').find('input');
-                    var revCommentData = confirmformValues.serializeArray();
-                    var revComment = revCommentData[0].value;
-                    if (revComment === '') { //xxx warn user to enter comment
-                    } else if (revComment !== '') {
-                        var pipeline_gid = getValues({ p: "getPipeline_gid", "pipeline_id": id })[0].pipeline_gid;
-                        var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid })[0].rev_id;
-                        var newPipRev_id = parseInt(maxPipRev_id) + 1;
+            $('#confirmRevision').on('click', '#saveRev', function (event) {
+                var confirmformValues = $('#confirmRevision').find('input');
+                var revCommentData = confirmformValues.serializeArray();
+                var revComment = revCommentData[0].value;
+                if (revComment === '') { //xxx warn user to enter comment
+                } else if (revComment !== '') {
+                    var pipeline_gid = getValues({ p: "getPipeline_gid", "pipeline_id": id })[0].pipeline_gid;
+                    var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid });
+                    console.log(maxPipRev_id)
+                    if (maxPipRev_id[0]){
+                        var newPipRev_id = parseInt(maxPipRev_id[0].rev_id) + 1;
                         var pipeline_uuid = getValues({ p: "getPipeline_uuid", "pipeline_id": id })[0].pipeline_uuid;
                         savedList[1].id = ''
                         savedList[7].perms = '3';
@@ -2346,14 +2393,16 @@ function save() {
                         sl = JSON.stringify(savedList);
                         var ret = getValues({ p: "saveAllPipeline", dat: sl });
                         $('#confirmRevision').modal('hide');
-                        $('#autosave').text('Changes saved on new revision');
+                        changeAutoSaveText('Changes saved on new revision');
+
                         setTimeout(function () { window.location.replace("index.php?np=1&id=" + ret.id); }, 700);
                     }
-                });
-                $('#confirmRevision').modal('show');
-                pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
-                refreshCreatorData(pipeline_id);
-            }
+
+                }
+            });
+            $('#confirmRevision').modal('show');
+            pipeline_id = $('#pipeline-title').attr('pipelineid'); //refresh pipeline_id
+            refreshCreatorData(pipeline_id);
         }
     }
 }
@@ -2362,7 +2411,9 @@ function modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, type) {
     if (type == "move") {
         $('#pipeline-' + pipeline_id).parent().remove();
     }
-    $('#pipeGr-' + pipeline_group_id).append('<li><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" draggable="false" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
+    var group_id = $('#groupSelPipe').val();
+    var perms = $('#permsPipe').val();
+    $('#pipeGr-' + pipeline_group_id).append('<li  p="'+perms+'" g="'+group_id+'" pin="false" admin="0"><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" origin="'+sName+'" draggable="false" ondragstart="dragStart(event)" ondrag="dragging(event)" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
 }
 
 function modifyPipelineParentSideBar(name, groupID) {
@@ -2416,6 +2467,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var defVal = null;
     var dropDown = null;
     var showSett = null;
+    var inDescOpt = null;
     var pubWeb = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
@@ -2426,6 +2478,9 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         }
         if (processModules.showSett != undefined) {
             showSett = processModules.showSett;
+        }
+        if (processModules.inDescOpt != undefined) {
+            inDescOpt = processModules.inDescOpt;
         }
         if (processModules.pubWeb) {
             pubWeb = processModules.pubWeb;
@@ -2462,7 +2517,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.processListNoOutput[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
@@ -2496,7 +2551,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 

@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Adding Public SSH Key &mdash; DolphinNext v1.1.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/>
+        <link rel="next" title="Frequently Asked Questions" href="faq.html"/>
+        <link rel="prev" title="Google Cloud Guide" href="google.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v1.1.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Short Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cite.html">How To Cite Us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.html">Google Cloud Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Adding Public SSH Key</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#step-1-connecting-to-host-machine">Step 1: Connecting to host machine</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-if-you-re-using-windows">A. If you’re using Windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#b-if-you-re-using-linux-or-macos">B. If you’re using Linux or MacOS</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#step-2-editing-authorized-keys-file">Step 2: Editing authorized_keys file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#step-3-setting-correct-directory-permissions">Step 3: Setting correct directory permissions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administrator Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="admin_quick.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin_faq.html">Frequently Asked Questions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Adding Public SSH Key</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/public_ssh_key.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="adding-public-ssh-key">
+<h1><a class="toc-backref" href="#id1">Adding Public SSH Key</a><a class="headerlink" href="#adding-public-ssh-key" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#adding-public-ssh-key" id="id1">Adding Public SSH Key</a><ul>
+<li><a class="reference internal" href="#step-1-connecting-to-host-machine" id="id2">Step 1: Connecting to host machine</a><ul>
+<li><a class="reference internal" href="#a-if-you-re-using-windows" id="id3">A. If you’re using Windows</a></li>
+<li><a class="reference internal" href="#b-if-you-re-using-linux-or-macos" id="id4">B. If you’re using Linux or MacOS</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#step-2-editing-authorized-keys-file" id="id5">Step 2: Editing authorized_keys file</a></li>
+<li><a class="reference internal" href="#step-3-setting-correct-directory-permissions" id="id6">Step 3: Setting correct directory permissions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>This guide shows how to connect to your host machine and insert your public key into <strong>authorized_keys</strong> file.</p>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p class="last">The authorized_keys file specifies the SSH keys that can be used for logging into the user account. Please read following guide carefully, since it is a highly important configuration file.</p>
+</div>
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; height: auto;">
+    <iframe src="https://www.youtube.com/embed/8y8Vo7iJh78" frameborder="0" allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+</div>
+</br><div class="section" id="step-1-connecting-to-host-machine">
+<h2><a class="toc-backref" href="#id2">Step 1: Connecting to host machine</a><a class="headerlink" href="#step-1-connecting-to-host-machine" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="a-if-you-re-using-windows">
+<h3><a class="toc-backref" href="#id3">A. If you’re using Windows</a><a class="headerlink" href="#a-if-you-re-using-windows" title="Permalink to this headline">¶</a></h3>
+<p>In order to make an SSH connection to your host machine, you need to use program like PuTTY.</p>
+<blockquote>
+<div><p>A.1. Download and open PuTTY from <a class="reference external" href="https://www.putty.org/">their website.</a></p>
+<p>A.2. Use the following info to configure your connection and click <strong>Open</strong> to start the SSH session.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Host Name:Enter the Internet Protocol (IP) address of your host. (eg. example.com OR s00000.testserver.com)</li>
+<li>Port: 22</li>
+<li>Connection Type: SSH</li>
+</ul>
+<a class="reference internal image-reference" href="../_images/putty.png"><img alt="../_images/putty.png" class="align-center" src="../_images/putty.png" style="width: 60%;" /></a>
+</div></blockquote>
+<p>A.3. If this is the first time that you have used PuTTY to log in to your account with SSH, a warning similar to the following one displays. If you are sure that you have entered the correct information, click Yes.</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="../_images/putty_warning.png"><img alt="../_images/putty_warning.png" class="align-center" src="../_images/putty_warning.png" style="width: 50%;" /></a>
+</div></blockquote>
+<p>A.4. After you accept the warning, the terminal prompts you for your username and password. Please enter these values and press enter.</p>
+<blockquote>
+<div><div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<ul class="last simple">
+<li>The password is not echoed back to the screen as it is entered.</li>
+<li>If you need to <strong>copy and paste your password</strong>, you can right-click (or use middle mouse button) to paste your password.</li>
+</ul>
+</div>
+</div></blockquote>
+<p>A.5. If this is the first time that you login to your host machine, you might need to reset your password. Please enter the new password and press Enter. Note that passwords are not echoed to the screen. After changing your password, you will be logged out and you need to reconnect to your host machine.</p>
+<p>A.6. If you have entered the correct password, the prompt responds with a shell prompt:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">us2r</span><span class="nd">@yourhostname</span> <span class="o">~</span><span class="p">]</span><span class="c1">#</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="b-if-you-re-using-linux-or-macos">
+<h3><a class="toc-backref" href="#id4">B. If you’re using Linux or MacOS</a><a class="headerlink" href="#b-if-you-re-using-linux-or-macos" title="Permalink to this headline">¶</a></h3>
+<p>If you are a MacOS or Linux user, you can make an SSH connection by using <strong>Terminal</strong>, a console program included with the operating system.</p>
+<blockquote>
+<div><p>B.1. Search for the <strong>Terminal</strong> program in your operating system and click to open it.</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="../_images/terminal.png"><img alt="../_images/terminal.png" class="align-center" src="../_images/terminal.png" style="width: 80%;" /></a>
+</div></blockquote>
+<p>B.2. First, you should type the <code class="docutils literal notranslate"><span class="pre">ssh</span></code> command in the console. Then enter your username and hostname and add <code class="docutils literal notranslate"><span class="pre">&#64;</span></code> sign in between (eg. <code class="docutils literal notranslate"><span class="pre">yourusername&#64;yourhostname</span></code>, <code class="docutils literal notranslate"><span class="pre">user&#64;ghpcc06.umassrc.org</span></code>) and press enter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span> <span class="n">us2r</span><span class="nd">@yourhostname</span>
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="../_images/terminal_ssh.png"><img alt="../_images/terminal_ssh.png" class="align-center" src="../_images/terminal_ssh.png" style="width: 95%;" /></a>
+<p>B.3. The terminal prompts you for your password. Please enter your password and press enter.</p>
+<blockquote>
+<div><div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<ul class="last simple">
+<li>The password is not echoed back to the screen as it is entered.</li>
+<li>You can still <strong>copy and paste your password</strong>, but it won’t appear in your screen.</li>
+</ul>
+</div>
+</div></blockquote>
+<p>B.4. If this is the first time that you login to your host machine, you might need to reset your password. Please enter the new password and press Enter. Note that passwords are not echoed to the screen. After changing your password, you will be logged out and you need to reconnect to your host machine.</p>
+<p>B.5. If you have entered the correct password, the prompt responds with a shell prompt:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">us2r</span><span class="nd">@yourhostname</span> <span class="o">~</span><span class="p">]</span><span class="c1">#</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="step-2-editing-authorized-keys-file">
+<h2><a class="toc-backref" href="#id5">Step 2: Editing authorized_keys file</a><a class="headerlink" href="#step-2-editing-authorized-keys-file" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">In order to edit <code class="docutils literal notranslate"><span class="pre">authorized_keys</span></code> file, we will use vi editor. Please enter following command to open vi editor:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vi</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">authorized_keys</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Press <code class="docutils literal notranslate"><span class="pre">i</span></code> button to change the editor mode to <strong>insert mode</strong>. Now you’re ready to insert new text into this file.</p>
+</li>
+<li><p class="first">Return back to DolphinNext website and copy <strong>all of your public ssh key</strong> (command + c for MacOS or ctrl + c for Linux/Windows).</p>
+<blockquote>
+<div><div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p>Please don’t forget to copy initial part of the ssh key(eg. <code class="docutils literal notranslate"><span class="pre">ssh-rsa</span></code>).
+It should cover all of the following example key file:</p>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ssh</span><span class="o">-</span><span class="n">rsa</span>
+<span class="n">AA1AB3N4nX3a</span><span class="o">....................</span>
+<span class="o">................................</span>
+<span class="o">................................</span>
+<span class="o">...............</span><span class="n">b9Rj</span> <span class="nd">@dolphinnext</span>
+</pre></div>
+</div>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Return back to terminal/Putty and paste your key (command + v for MacOS, ctrl + v for Linux, <strong>right-click</strong> for Windows).</p>
+</li>
+<li><p class="first">If you already have another public key in your file, please press <strong>enter</strong> to separate keys from each other.</p>
+</li>
+<li><p class="first">If you’ve successfully edited your file and ready to exit from the editor, please press <code class="docutils literal notranslate"><span class="pre">ESC</span></code> to exit from <strong>insert mode</strong> and type <code class="docutils literal notranslate"><span class="pre">:wq!</span></code> and press enter.</p>
+<blockquote>
+<div><div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">If something went wrong and you don’t want to save you changes, then please press <code class="docutils literal notranslate"><span class="pre">ESC</span></code> to exit from <strong>insert mode</strong> and type <code class="docutils literal notranslate"><span class="pre">:q!</span></code> and press enter to exit.</p>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="step-3-setting-correct-directory-permissions">
+<h2><a class="toc-backref" href="#id6">Step 3: Setting correct directory permissions</a><a class="headerlink" href="#step-3-setting-correct-directory-permissions" title="Permalink to this headline">¶</a></h2>
+<p>The SSH protocol requires following file/directory permissions to establish secure connections.</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">Please execute following commands to make sure SSH related files are not writeable by other users:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">chmod</span> <span class="mi">700</span> <span class="o">~/.</span><span class="n">ssh</span>
+<span class="n">chmod</span> <span class="mi">600</span> <span class="o">~/.</span><span class="n">ssh</span><span class="o">/</span><span class="n">authorized_keys</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p class="last">Your home directory shoudn’t be writeable by other users. If you need to share your files with everyone, don’t set permission of your home directory to 777. It creates security issues and blocks ssh connection. You can set to more secure options such as 750, 755 or 754.</p>
+</div>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="faq.html" class="btn btn-neutral float-right" title="Frequently Asked Questions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="google.html" class="btn btn-neutral" title="Google Cloud Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'v1.1.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

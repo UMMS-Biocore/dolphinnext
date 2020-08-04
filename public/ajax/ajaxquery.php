@@ -37,31 +37,42 @@ if ($p=="saveRun"){
     $runType = $_REQUEST['runType'];
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
-    $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
-    $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
-    $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
-    if (empty($attempt) || $attempt == 0 || $attempt == "0"){
-        $attempt = "0";
+    $permCheck = 1;
+    //don't allow to update if user not own the project_pipeline.
+    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
+    $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    if (!empty($permCheck)){
+        $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
+        $db->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
+        $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
+        $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
+        if (empty($attempt) || $attempt == 0 || $attempt == "0"){
+            $attempt = "0";
+        }
+        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        $db->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$ownerID);
+        $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
+        list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
+        $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+        $getCloudConfigFileDir = $db->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
+        //create file and folders
+        list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
+        if ($manualRun == "true"){
+            $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
+        } else {
+            //run the script in remote machine
+            $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
+            //activate autoshutdown feature for cloud
+            if  ($profileType == "amazon" || $profileType == "google"){
+                $autoshutdown_active = "true";
+                $db->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
+                $db->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
+            } 
+        }
     }
-    $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-    $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
-    list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
-    $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
-    $getCloudConfigFileDir = $db->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
-    //create file and folders
-    list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
-    if ($manualRun == "true"){
-        $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
-    } else {
-        //run the script in remote machine
-        $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
-        //activate autoshutdown feature for cloud
-        if  ($profileType == "amazon" || $profileType == "google"){
-            $autoshutdown_active = "true";
-            $db->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
-            $db->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
-        } 
-    }
+
+
+
 
 }
 else if ($p=="updateRunAttemptLog") {
@@ -78,6 +89,42 @@ else if ($p=="updateProPipeStatus") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $loadtype = "fast";
     $data = $db->updateProPipeStatus($project_pipeline_id, $loadtype, $ownerID);
+}
+else if ($p=="saveRunLogSize"){
+    $uuid = isset($_REQUEST['uuid']) ? $_REQUEST['uuid'] : "";
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $data = $db->saveRunLogSize($uuid, $project_pipeline_id, $ownerID);
+}
+else if ($p=="saveRunLogName"){
+    $name =  addslashes(htmlspecialchars(urldecode($_REQUEST['name']), ENT_QUOTES));
+    $data = $db->updateRunLogName($id, $name, $ownerID);
+}
+else if ($p=="saveRunLogSizeAllUsers"){
+    $userRole = $db->getUserRoleVal($ownerID);
+    $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
+    $data = json_encode("");
+    if ($userRole == "admin"){
+        $sql = "SELECT id, IF(disk_usage IS NULL,0,1) as disk_usage_check FROM users WHERE deleted=0";
+        $usersRaw=$db->queryTable($sql);
+        $users = json_decode($usersRaw);
+        foreach ($users as $user):
+        $userID = $user->{'id'};
+        $disk_usage_check = $user->{'disk_usage_check'};
+        if ($type == "all"){
+            $db->saveRunLogSizeUser($userID,$ownerID);
+        } else if (empty($disk_usage_check)){
+            $db->saveRunLogSizeUser($userID,$ownerID);
+        }
+        endforeach;
+    }
+}
+else if ($p=="saveRunLogSizeUser"){
+    $userRole = $db->getUserRoleVal($ownerID);
+    $data = json_encode("");
+    if ($userRole == "admin"){
+        $userID = $_REQUEST['userid'];
+        $db->saveRunLogSizeUser($userID,$ownerID);
+    }
 }
 else if ($p=="getFileContent"){
     $filename = $_REQUEST['filename'];
@@ -100,6 +147,11 @@ else if ($p=="saveFileContent"){
     $filename = $_REQUEST['filename'];
     $uuid = $_REQUEST['uuid'];
     $data = $db -> saveFileContent($text,$uuid,$filename,$ownerID);
+}
+else if ($p=="deleteFile"){
+    $filename = $_REQUEST['filename'];
+    $uuid = $_REQUEST['uuid'];
+    $data = $db -> deleteFile($uuid,$filename,$ownerID);
 }
 
 else if ($p=="getFileList"){
@@ -128,46 +180,60 @@ else if ($p=="getReportData"){
     $pipeline_id = $_REQUEST['pipeline_id'];
     $pipe = $db->loadPipeline($pipeline_id,$ownerID);
     $pipeData = json_decode($pipe,true);
-    $pubWebDir = $pipeData[0]['publish_web_dir'];
     $data = array();
-    if (!empty($pubWebDir)){
-        if (!empty($pipeData[0]["nodes"])){
-            $nodes = json_decode($pipeData[0]["nodes"]);
-            foreach ($nodes as $gNum => $item):
-            $out = array();
-            if ($item[2] == "outPro"){
-                $push = false;
-                $name = $item[3];
-                $processOpt = $item[4];
-                $out["id"] = $gNum;
-                $out["name"] = $name;
-                foreach ($processOpt as $key => $feature):
-                if ($key == "pubWeb"){
-                    $push = true;
-                    $pubWebAr = explode(",", $feature);
-                }
-                $out[$key] = $feature;
-                endforeach;
-                if ($push == true){
-                    $fileList = array_values((array)json_decode($db->getFileList($uuid, "$path/$name", "onlyfile")));
-                    $fileList = array_filter($fileList);
-                    if (!empty($fileList)){
-                        $out["fileList"] = $fileList;
-                        //split each view method into new array
-                        foreach ($pubWebAr as $eachPubWeb):
-                        $out["pubWeb"] = $eachPubWeb;
-                        $out["id"] = $out["id"]."_".$eachPubWeb;
-                        if (strtolower($name) == "summary"  || strtolower($name) == "multiqc"){
-                            array_unshift($data , $out); //push to the top of the array
-                        } else {
-                            $data[] = $out; //push $out object into array
-                        }
-                        endforeach;
+    if (!empty($pipeData[0]["nodes"])){
+        $nodes = json_decode($pipeData[0]["nodes"]);
+        foreach ($nodes as $gNum => $item):
+        $out = array();
+        if ($item[2] == "outPro"){
+            $push = false;
+            $name = $item[3];
+            $processOpt = $item[4];
+            $out["id"] = $gNum;
+            $out["name"] = $name; //directory name which has the report files
+            foreach ($processOpt as $key => $feature):
+            if ($key == "pubWeb"){
+                $push = true;
+                $pubWebAr = explode(",", $feature);
+            }
+            $out[$key] = $feature;
+            endforeach;
+            if ($push == true){
+                $fileList = array_values((array)json_decode($db->getFileList($uuid, "$path/$name", "onlyfile")));
+                $fileList = array_filter($fileList);
+                if (!empty($fileList)){
+                    $out["fileList"] = $fileList;
+                    //split each view method into new array
+                    foreach ($pubWebAr as $eachPubWeb):
+                    $out["pubWeb"] = $eachPubWeb;
+                    $out["id"] = $out["id"]."_".$eachPubWeb;
+                    if (strtolower($name) == "summary"  || strtolower($name) == "multiqc" || strtolower($name) == "fastqc"){
+                        array_unshift($data , $out); //push to the top of the array
+                    } else {
+                        $data[] = $out; //push $out object into array
                     }
+                    endforeach;
                 }
             }
-            endforeach;
         }
+        endforeach;
+        // sort the reports by given $order
+        $order= array("multiqc","fastqc","summary" );
+        $ordered = array();
+        foreach ($order as $key) {
+            foreach ($data as $k => $content) {
+                if (strtolower($content["name"]) == $key ){
+                    $ordered[] = $content;
+                    unset($data[$k]);
+                    break;
+                }
+            }
+        }
+        // add the rest of the content
+        foreach ($data as $k => $content) {
+            $ordered[] = $content;
+        }
+        $data = $db->checkDescriptionBox($ordered, $uuid, $path);
     }
     $data = json_encode($data);
 }
@@ -186,7 +252,7 @@ else if ($p=="saveNextflowLog"){
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
-    $data = "";
+    $data = json_encode("");
     if (!empty($uuid) && !empty($ownerID)){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
@@ -198,6 +264,13 @@ else if ($p=="saveNextflowLog"){
         unset($value);
         $data = $db -> saveNextflowLog($down_file_list, $uuid, "run", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
     }
+}
+
+else if ($p=="getDiskSpace"){
+    $dir = $_REQUEST['dir'];
+    $profileType = $_REQUEST['profileType'];
+    $profileId = $_REQUEST['profileId'];
+    $data = $db -> getDiskSpace($dir, $profileType, $profileId, $ownerID);
 }
 else if ($p=="getLsDir"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -319,10 +392,33 @@ else if ($p=="getEditDelParameters"){
     $data = $db -> getEditDelParameters($ownerID);
 }
 else if ($p=="savefeedback"){
-    $email = $_REQUEST['email'];
+    $email = "";
     $message = $_REQUEST['message'];
     $url = $_REQUEST['url'];
-    $data = $db -> savefeedback($email,$message,$url);
+    $userData = json_decode($db->getUserById($ownerID));
+    if (!empty($userData)){
+        if (!empty($userData[0])){
+            $email = $userData[0]->{'email'};
+            $name = $userData[0]->{'name'};
+            $username = $userData[0]->{'username'};
+            $institute = $userData[0]->{'institute'};
+            $lab = $userData[0]->{'lab'};
+            $from = EMAIL_SENDER;
+            $from_name = "DolphinNext Team";
+            $to =  EMAIL_ADMIN;
+            $subject = "User Message";
+            $send="New message has been received by the user.<br><br><b>User Information:</b>";
+            $send.="<br>Name: ".$name;
+            $send.="<br>Username: ".$username;
+            $send.="<br>Institute: ".$institute;
+            $send.="<br>Lab: ".$lab;
+            $send.="<br>Email: ".$email;
+            $send.="<br>Page: ".$url;
+            $send.="<br><br>Message:<br> ".$message;
+            $stat = $db->sendEmail($from, $from_name, $to, $subject, $send);  
+        }
+    }
+    $data = $db -> savefeedback($email,$message,$url,$ownerID);
 }
 else if ($p=="getUpload"){
     $name = $_REQUEST['name'];
@@ -333,18 +429,32 @@ else if ($p=="removeUpload"){
     $data = $db -> removeUpload($name,$ownerID);
 }
 else if ($p=="getAllGroups"){
-    $data = $db -> getAllGroups();
+    $data = $db -> getAllGroups($ownerID);
+}
+else if ($p=="getAllAvailableGroups"){
+    $user_id = $_REQUEST['user_id'];
+    $data = $db -> getAllAvailableGroups($user_id, $ownerID);
 }
 else if ($p=="viewGroupMembers"){
     $g_id = $_REQUEST['g_id'];
     $data = $db -> viewGroupMembers($g_id);
 }
-else if ($p=="getMemberAdd"){
+else if ($p=="saveGroupMemberByEmail"){
+    $email = $_REQUEST['email'];
     $g_id = $_REQUEST['g_id'];
-    $data = $db -> getMemberAdd($g_id);
+    $data = $db -> saveGroupMemberByEmail($email, $g_id, $ownerID);
 }
 else if ($p=="getProjects"){
-    $data = $db -> getProjects($id,$ownerID);
+    $type = "default";
+    $data = $db -> getProjects($id,$type,$ownerID);
+}
+else if ($p=="getUserProjects"){
+    $type = "user";
+    $data = $db -> getProjects($id,$type,$ownerID);
+}
+else if ($p=="getSharedProjects"){
+    $type = "shared";
+    $data = $db -> getProjects($id,$type,$ownerID);
 }
 else if ($p=="getGroups"){
     $data = $db -> getGroups($id,$ownerID);
@@ -392,7 +502,7 @@ else if ($p=="changeActiveUser"){
 else if ($p=="changeRoleUser"){
     $user_id = $_REQUEST['user_id'];
     $type = $_REQUEST['type'];
-    $data = $db->changeRoleUser($user_id, $type);  
+    $data = $db->changeRoleUser($user_id, $type, $ownerID);  
 }
 else if ($p=="changePassword"){
     $error = array();
@@ -430,7 +540,13 @@ else if ($p=="saveUserManual"){
         if (!empty($id)) {
             $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID);  
         } else {
-            $role = "user"; 
+            $any_user_check = $db->queryAVal("SELECT id FROM users");
+            $any_user_checkAr = json_decode($any_user_check,true); 
+            if (empty($any_user_checkAr)){
+                $role = "admin";
+            } else {
+                $role = "user"; 
+            }
             $active = 1; 
             $pass_hash = NULL;
             $verify = NULL;
@@ -504,16 +620,155 @@ else if ($p=="getUserRole"){
     $data = $db -> getUserRole($ownerID);
 }
 else if ($p=="getExistProjectPipelines"){
+    $type = "default";
     $pipeline_id = $_REQUEST['pipeline_id'];
-    $data = $db -> getExistProjectPipelines($pipeline_id,$ownerID);
+    $data = $db -> getExistProjectPipelines($pipeline_id,$type,$ownerID);
+}
+else if ($p=="getExistUserProjectPipelines"){
+    $type = "user";
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $data = $db -> getExistProjectPipelines($pipeline_id,$type,$ownerID);
+}
+else if ($p=="getExistSharedProjectPipelines"){
+    $type = "shared";
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $data = $db -> getExistProjectPipelines($pipeline_id,$type,$ownerID);
 }
 else if ($p=="getProjectPipelines"){
     $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
     $data = $db -> getProjectPipelines($id,$project_id,$ownerID,$userRole);
 }
+
+else if ($p=="checkNewRunParam"){
+    $uuid= $db->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$id'");
+    //return 1 if parameters have changed.
+    $data = json_encode(0);
+    $pipeData = json_decode($db->getProjectPipelines($id,"",$ownerID,$userRole), true)[0];
+    $inputData = json_decode($db->getProjectPipelineInputs($id,$ownerID), true);
+    if (!empty($pipeData)){
+        //last run info in run_logs
+        $raw_data = json_decode($db->getRunLogOpt($uuid),true);
+        if (!empty($raw_data[0])){
+            $raw_data[0]['run_opt'] = str_replace('\\', '\\\\', $raw_data[0]['run_opt']);
+            $run_opt = json_decode($raw_data[0]['run_opt'], true);
+            $run_input = $run_opt["project_pipeline_input"];
+            //remove collection-id and project_pipeline_input keys
+            unset($run_opt['project_pipeline_input']);
+            foreach( $run_opt as $key => $value ) {
+                if( strpos( $key, 'collection-' ) === 0 ) {
+                    unset( $run_opt[ $key ] );
+                }
+            }
+            //don't check these keys
+            $run_exclude = array("date_modified", "new_run", "summary", "project_name", "group_id", "perms","onload", "release_date", "pp_name");
+            $input_exclude = array("id");
+            foreach( $run_opt as $key => $value ) {
+                if (!in_array($key, $run_exclude)) {
+                    if( $value != $pipeData[ $key ] ) {
+                        error_log($key);
+                        $data = json_encode(1);
+                        break;
+                    }
+                }
+            }
+            for ($i = 0; $i < count($run_input); $i++) {
+                $inItem = $inputData[$i];
+                foreach($run_input[$i] as $k => $v) {
+                    if (!in_array($k, $input_exclude)) {
+                        if( $v != $inItem[$k] ) {
+                            error_log("$k $v");
+                            $data = json_encode(1);
+                            break;
+                        }
+                    }
+                } 
+            }
+        }
+    }
+
+}
+else if ($p=="updateProjectPipelineNewRun"){
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $new_run = $_REQUEST['newrun'];
+    //only use when newrun is not exist
+    $data = $db -> updateProjectPipelineNewRun($project_pipeline_id,$new_run,$ownerID);
+}
+else if ($p=="updateProjectPipelineWithOldRun"){
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $run_log_uuid = $_REQUEST['run_log_uuid'];
+    //only use when newrun is exist
+    $data = $db -> updateProjectPipelineWithOldRun($project_pipeline_id,$run_log_uuid,$ownerID);
+}
+else if ($p=="updateReleaseDate"){
+    $type = $_REQUEST['type'];
+    $permCheck = 0;
+    //don't allow to update if user not own the pipeline.
+    if ($type == "pipeline" && !empty($id)){
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    }
+    if (!empty($permCheck)){
+        $data = $db -> updateReleaseDate($id,$type,$ownerID);
+    }
+}
+else if ($p=="saveToken"){
+    $type = $_REQUEST['type'];
+    if ($type == "pipeline"){
+        $np = 1;
+        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+    } else if ($type == "project_pipeline"){
+        $np = 3;
+        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
+    }
+    $ownCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    if (empty($curr_token)){
+        if (!empty($ownCheck)){
+            $data = $db -> insertToken($id, $np, $ownerID);
+        }
+    } else {
+        $ret= array();
+        $ret["token"] = $curr_token;
+        $data = json_encode($ret);
+    }
+}
+else if ($p=="getToken"){
+    $type = $_REQUEST['type'];
+    $ret= array();
+    if ($type == "pipeline"){
+        $np = 1;
+        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id' AND owner_id='$ownerID'");
+    }
+    if (empty($curr_token)){
+        $data = json_encode($ret);
+    } else {
+        $ret["token"] = $curr_token;
+        $data = json_encode($ret);
+    }
+}
 else if ($p=="getRunLog"){
     $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
-    $data = $db -> getRunLog($project_pipeline_id);
+    $type = "default";
+    $data = $db -> getRunLog($project_pipeline_id, $type);
+}
+else if ($p=="getRunLogAll"){
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    $type = "all";
+    $data = $db -> getRunLog($project_pipeline_id, $type);
+}
+else if ($p=="getRunLogStatus"){
+    $uuid = $_REQUEST['uuid'];
+    $data = $db -> getRunLogStatus($uuid);
+}
+else if ($p=="getRunLogOpt"){
+    $data = json_encode("");
+    $uuid = $_REQUEST['uuid'];
+    $raw_data = json_decode($db->getRunLogOpt($uuid));
+    if (!empty($raw_data[0])){
+        $raw_data[0]->{'run_opt'} = str_replace('\\', '\\\\', $raw_data[0]->{'run_opt'});
+        $data = json_encode($raw_data[0]);
+    }
 }
 else if ($p=="sendEmail"){
     $adminemail = $_REQUEST['adminemail'];
@@ -609,21 +864,53 @@ else if ($p=="removeProcess"){
     $db->removeProcessParameterByProcessID($id);
     $data = $db -> removeProcess($id);
 }
-else if ($p=="removeProject"){   
-    $db -> removeProjectPipelineInputbyProjectID($id);
-    $db -> removeRunByProjectID($id);
-    $db -> removeProjectPipelinebyProjectID($id);
-    $db -> removeProjectInputbyProjectID($id);
-    $data = $db -> removeProject($id);
+else if ($p=="removeProject"){  
+    $name = $_REQUEST['name'];
+    $data = $db -> removeProject($id,$name,$ownerID);
 }
 else if ($p=="removeGroup"){   
-    $db -> removeUserGroup($id);
-    $data = $db -> removeGroup($id);
+    $data = $db -> removeGroup($id,$ownerID);
+}
+else if ($p=="removeUserFromGroup"){ 
+    $u_id = $_REQUEST['u_id'];
+    $g_id = $_REQUEST['g_id'];
+    $data = $db -> removeUserFromGroup($u_id, $g_id, $ownerID);
 }
 else if ($p=="removeProjectPipeline"){  
     $db -> removeRun($id);
+    $db -> removeRunLogByPipe($id);
     $db -> removeProjectPipelineInputByPipe($id);
     $data = $db -> removeProjectPipeline($id);
+}
+else if ($p=="removeRunLog"){ 
+    $data = json_encode("");
+    $runlogs = $_REQUEST['runlogs'];
+    $type = $_REQUEST['type'];
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    foreach ($runlogs as $runlog_id):
+    if ($type == "remove"){
+        $data = $db -> removeRunLog($runlog_id, $ownerID);
+    } else if ($type == "purge"){
+        $data = $db -> purgeRunLog($runlog_id, $ownerID);
+    } else if ($type == "recover"){
+        $data = $db -> recoverRunLog($runlog_id, $ownerID);
+    }
+    endforeach;
+    if ($type == "purge"){
+        $db->saveUserDiskUsage($ownerID, $ownerID);
+    } 
+    $runDataJS = $db->getLastRunData($project_pipeline_id);
+    $last_run_uuid = "";
+    $run_status = "";
+    if (!empty(json_decode($runDataJS,true))){
+        $runData = json_decode($runDataJS,true)[0];
+        if (!empty($runData)){
+            $last_run_uuid = $runData["last_run_uuid"];
+            $run_status = $runData["run_status"];
+        }
+    }
+    $db->updateProPipeLastRunUUID($project_pipeline_id,$last_run_uuid);
+    $db->updateRunStatus($project_pipeline_id, $run_status, $ownerID);
 }
 else if ($p=="removeProjectInput"){   
     $data = $db -> removeProjectInput($id);
@@ -777,7 +1064,6 @@ else if ($p=="generateKeys")
 {
     $data = $db->generateKeys($ownerID);
 }
-
 else if ($p=="getProfileVariables"){
     $proType = isset($_REQUEST['proType']) ? $_REQUEST['proType'] : "";
     if (!empty($id) && !empty($proType)) {
@@ -819,7 +1105,31 @@ else if ($p=="getProfileVariables"){
         }
         $data= json_encode($new_obj);  
     }
-
+}
+else if ($p=="appendProfileVariables"){
+    $data = json_encode("");
+    $new_variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
+    $proType = $_REQUEST['proType'];
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    if (!empty($id) && !empty($proType)) {
+        if ($proType == "cluster"){
+            $profdata = $db->getProfileClusterbyID($id, $ownerID);
+        } else if ($proType == "amazon" || $proType == "google"){
+            $profdata = $db->getProfileCloudbyID($id, $proType, $ownerID);
+        }
+    } 
+    $checkProData = json_decode($profdata,true);
+    if (isset($checkProData[0])){
+        $old_variable = $checkProData[0]["variable"];
+        if (empty($old_variable)){
+            $final_variable = $new_variable;
+        } else {
+            $final_variable = $old_variable."\n".$new_variable;
+        }
+        $db->updateProfileVariable($id, $proType, $final_variable, $ownerID);
+        $onload = "refreshEnv";
+        $data = $db->updateProjectPipelineOnload($project_pipeline_id, $onload, $ownerID);
+    }
 }
 else if ($p=="getProfiles")
 {
@@ -1489,16 +1799,16 @@ else if ($p=="saveProcessGroup"){
 }
 else if ($p=="saveProcess"){
     $name = $_REQUEST['name'];
-    $process_gid = $_REQUEST['process_gid'];
-    if (empty($process_gid)) {
+    $process_gid = isset($_REQUEST['process_gid']) ? $_REQUEST['process_gid'] : "";
+    if ($process_gid == "") {
         $max_gid = json_decode($db->getMaxProcess_gid(),true)[0]["process_gid"];
         settype($max_gid, "integer");
-        if (!empty($max_gid) && $max_gid != 0) {
+        if (!empty($max_gid)) {
             $process_gid = $max_gid +1;
         } else {
             $process_gid = 1;
         }
-    }
+    }  
     $process_uuid = isset($_REQUEST['process_uuid']) ? $_REQUEST['process_uuid'] : "";
     $process_rev_uuid = isset($_REQUEST['process_rev_uuid']) ? $_REQUEST['process_rev_uuid'] : "";
     $process_uuid = "$process_uuid";
@@ -1513,20 +1823,18 @@ else if ($p=="saveProcess"){
     $rev_comment = isset($_REQUEST['rev_comment']) ? $_REQUEST['rev_comment'] : "";
     $group_id = $_REQUEST['group']; 
     $perms = $_REQUEST['perms']; 
-    $publish = $_REQUEST['publish']; 
     settype($id, 'integer');
     settype($rev_id, 'integer');
     settype($group_id, 'integer');
     settype($process_gid, "integer");
     settype($perms, "integer");
-    settype($publish, "integer");
     settype($process_group_id, "integer");
     if (!empty($id)) {
         $db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
         $db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
-        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $publish, $script_mode, $script_mode_header, $ownerID);
+        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $ownerID);
     } else {
-        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $publish, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID);
+        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID);
         $idArray = json_decode($data,true);
         $new_pro_id = $idArray["id"];
         if (empty($id) && empty($process_uuid)) {
@@ -1577,10 +1885,16 @@ else if ($p=="savePublicInput"){
 }
 else if ($p=="saveGroup"){
     $name = $_REQUEST['name'];
-    $data = $db->insertGroup($name, $ownerID);
-    $idArray = json_decode($data,true);
-    $g_id = $idArray["id"];
-    $db->insertUserGroup($g_id, $ownerID, $ownerID);
+    $name = str_replace("'","",$name);  
+    if (!empty($id)){
+        $data = $db->updateGroup($id, $name, $ownerID);
+    } else {
+        $data = $db->insertGroup($name, $ownerID);
+        $idArray = json_decode($data,true);
+        $g_id = $idArray["id"];
+        $db->insertUserGroup($g_id, $ownerID, $ownerID);
+    }
+
 }
 else if ($p=="saveTestGroup"){
     $data = $db->saveTestGroup($ownerID);
@@ -1599,9 +1913,12 @@ else if ($p=="moveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $new_project_id = $_REQUEST['new_project_id'];
     $old_project_id = $_REQUEST['old_project_id'];
-    $data = $db->updateProPipe_ProjectID($project_pipeline_id, $new_project_id, $ownerID);
-    $db->updateProPipeInput_ProjectID($project_pipeline_id, $new_project_id, $ownerID);
-    //get project_pipeline_inputs belong to project_pipeline and add one by one
+    $group_id = $_REQUEST['group_id'];
+    $perms = $_REQUEST['perms'];
+    $old_project_id = $_REQUEST['old_project_id'];
+    $data = $db->updateProPipe_ProjectID($project_pipeline_id, $new_project_id, $group_id, $perms, $ownerID);
+    $db->updateProPipeInput_ProjectID($project_pipeline_id, $new_project_id, $group_id, $perms, $ownerID);
+    //get project_pipeline_inputs belong to project_pipeline and add into file_project and project_input tables
     $allinputs = json_decode($db->getProjectPipelineInputs($project_pipeline_id, $ownerID));
     foreach ($allinputs as $inputitem):
     $input_id = $inputitem->{'input_id'};
@@ -1628,7 +1945,7 @@ else if ($p=="moveRun"){
         // check if project input is exist
         $checkFilePro = $db->checkFileProject($new_project_id, $file_id);
         $checkFileProData = json_decode($checkFilePro,true);
-        //insert into file project table
+        //insert into file_project table
         if (!isset($checkFileProData[0])){
             $insertFileProject = $db->insertFileProject($file_id, $new_project_id, $ownerID);
         }
@@ -1647,17 +1964,6 @@ else if ($p=="duplicateProcess"){
     $db->getUUIDAPI($data, "process", $new_pro_id);
 
 }
-else if ($p=="createProcessRev"){
-    $rev_comment = $_REQUEST['rev_comment'];
-    $rev_id = $_REQUEST['rev_id'];
-    $new_process_gid = $_REQUEST['process_gid'];
-    $old_id = $_REQUEST['id'];
-    $data = $db->createProcessRev($new_process_gid, $rev_comment, $rev_id, $old_id, $ownerID);
-    $idArray = json_decode($data,true);
-    $new_pro_id = $idArray["id"];
-    $db->duplicateProcessParameter($new_pro_id, $old_id, $ownerID);
-    $db->getUUIDAPI($data, "process_rev", $new_pro_id);
-}
 else if ($p=="saveProjectPipeline"){
     $pipeline_id = $_REQUEST['pipeline_id'];
     $project_id = $_REQUEST['project_id'];
@@ -1666,11 +1972,11 @@ else if ($p=="saveProjectPipeline"){
     $output_dir = isset($_REQUEST['output_dir']) ? $_REQUEST['output_dir'] : "";
     $publish_dir = isset($_REQUEST['publish_dir']) ? $_REQUEST['publish_dir'] : "";
     $publish_dir_check = isset($_REQUEST['publish_dir_check']) ? $_REQUEST['publish_dir_check'] : "";
-    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : "";
+    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : 0;
     $profile = isset($_REQUEST['profile']) ? $_REQUEST['profile'] : "";
     $interdel = isset($_REQUEST['interdel']) ? $_REQUEST['interdel'] : "";
     $cmd = isset($_REQUEST['cmd']) ? urldecode($_REQUEST['cmd']) : "";
-    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
     $exec_each = isset($_REQUEST['exec_each']) ? $_REQUEST['exec_each'] : "";
     $exec_all = isset($_REQUEST['exec_all']) ? $_REQUEST['exec_all'] : "";
     $exec_all_settings = isset($_REQUEST['exec_all_settings']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['exec_all_settings']), ENT_QUOTES)) : "";
@@ -1691,21 +1997,28 @@ else if ($p=="saveProjectPipeline"){
     $withDag = isset($_REQUEST['withDag']) ? $_REQUEST['withDag'] : "";
     $process_opt = isset($_REQUEST['process_opt']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['process_opt']), ENT_QUOTES)) : "";
     $onload = isset($_REQUEST['onload']) ? $_REQUEST['onload'] : "";
+    $release_date = isset($_REQUEST['release_date']) ? $_REQUEST['release_date'] : "";
+    if (!empty($release_date)){
+        $release_date = date('Y-m-d', strtotime($release_date));
+    }
+    settype($perms, 'integer');
     settype($group_id, 'integer');
     settype($amazon_cre_id, 'integer');
     settype($google_cre_id, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
-        if ($perms !== "3"){
-            $db->updateProjectGroupPerm($id, $group_id, $perms, $ownerID);
-            $db->updateProjectInputGroupPerm($id, $group_id, $perms, $ownerID);
+        //don't allow to update if user doesn't own the project_pipeline.
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (!empty($permCheck)){
+            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
             $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+            $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
+            $listPermsDenied = $db->checkPermUpdtProject("greaterOrEqual", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
             $data = json_encode($listPermsDenied);  
         }
     } else {
-        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $ownerID);
+        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $ownerID);
     }
 }
 else if ($p=="saveProcessParameter"){
@@ -1801,9 +2114,10 @@ else if ($p=="checkPermUpdtProcess"){
     if (!empty($process_data[0])){
         $pro_group_id = $process_data[0]["group_id"];
         $pro_perms = $process_data[0]["perms"];
+        $pro_owner_id = $process_data[0]["owner_id"];
         settype($group_id, 'integer');
         settype($perms, 'integer');
-        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $ownerID);
+        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $pro_owner_id, $ownerID);
     }
     $data = json_encode($listPermsDenied);
 }
@@ -1814,11 +2128,31 @@ else if ($p=="checkPermUpdtPipeline"){
     settype($group_id, 'integer');
     settype($perms, 'integer');
     $listPermsDenied = array();
-    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID);
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run-strict", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
     $data = json_encode($listPermsDenied);
 }
-else if ($p=="checkProject")
-{
+else if ($p=="checkPermUpdtRun"){
+    $project_id = $_REQUEST['project_id'];
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
+    $perms = $_REQUEST['perms'];
+    settype($group_id, 'integer');
+    settype($perms, 'integer');
+    $listPermsDenied = array();
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
+    $listPermsDenied = $db->checkPermUpdtProject("dry-run", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
+    $data = json_encode($listPermsDenied);
+}
+else if ($p=="checkUserWritePermRun"){
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $checkUserWritePermRun = $db->checkUserWritePermRun($project_pipeline_id, $ownerID);
+    if (empty(json_decode($checkUserWritePermRun))){
+        $data = json_encode(0);
+    } else {
+        $data = json_encode(1);
+    }
+}
+else if ($p=="checkProject") {
     $pipeline_id = $_REQUEST['pipeline_id'];
     $data = $db->checkProject($pipeline_id, $ownerID);
 }
@@ -1900,10 +2234,14 @@ else if ($p=="getMaxRev_id")
     $process_gid = $_REQUEST['process_gid'];
     $data = $db->getMaxRev_id($process_gid);
 }
-else if ($p=="getMaxPipRev_id")
-{
+else if ($p=="getMaxPipRev_id"){
+    $data = json_encode("");
     $pipeline_gid = $_REQUEST['pipeline_gid'];
-    $data = $db->getMaxPipRev_id($pipeline_gid);
+    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE pipeline_gid='$pipeline_gid'");
+    $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    if (!empty($permCheck)){
+        $data = $db->getMaxPipRev_id($pipeline_gid);
+    }
 }
 else if ($p=="getInputsPP")
 {
@@ -1923,17 +2261,32 @@ else if ($p=="saveAllPipeline")
     foreach ($obj as $item):
     foreach($item as $k => $v) $newObj->$k = $v;
     endforeach;
-
-    $data = $db->saveAllPipeline($newObj,$ownerID);
     $id = $newObj->{"id"};
     $group_id = $newObj->{"group_id"};
     settype($group_id, 'integer');
     $perms = $newObj->{"perms"};
+    $publicly_searchable = isset($newObj->{"publicly_searchable"}) ? $newObj->{"publicly_searchable"} : "false"; // only effective if user is admin
+    $release_date = !empty($newObj->{"release_date"}) ? $newObj->{"release_date"} : NULL; 
+    if (!empty($release_date)){
+        $release_date = date('Y-m-d', strtotime($release_date));
+    }
+    $permCheck = 1;
+    $userRole = $db->getUserRoleVal($ownerID);
+    //don't allow to update if user not own the pipeline.
+    if ($userRole != "admin" && !empty($id)){
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    }
+    if (!empty($permCheck)){
+        $data = $db->saveAllPipeline($newObj,$userRole,$ownerID);
+    }
     //update
     if (!empty($id)){
-        $listPermsDenied = array();
-        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
-        $data = json_encode($listPermsDenied);
+        if (!empty($permCheck)){
+            $listPermsDenied = array();
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date);
+            $data = json_encode($listPermsDenied);
+        }
         //insert
     } else {
         $idArray = json_decode($data,true);
@@ -1953,21 +2306,35 @@ else if ($p=="saveAllPipeline")
 }
 else if ($p=="savePipelineDetails")
 {
+    $data = json_encode("");
     $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
     $group_id = $_REQUEST['group_id'];
-    $nodesRaw = $_REQUEST['nodes'];
+    $nodesRaw = isset($_REQUEST['nodes']) ? $_REQUEST['nodes'] : "";
     $perms = $_REQUEST['perms'];
     $pin = $_REQUEST['pin'];
     $pin_order = $_REQUEST['pin_order'];
-    $publish = $_REQUEST['publish'];
+    $publicly_searchable = isset($_REQUEST['publicly_searchable']) ? $_REQUEST['publicly_searchable'] : "false";
     $pipeline_group_id = $_REQUEST['pipeline_group_id'];
+    $release_date = $_REQUEST['release_date'];
+    if (!empty($release_date)){
+        $release_date = date('Y-m-d', strtotime($release_date));
+    }
     settype($group_id, 'integer');
     settype($pin_order, "integer");
-    $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publish,$pipeline_group_id,$ownerID);
-    //update permissions
-    if (!empty($nodesRaw)){
-        $listPermsDenied = array();
-        $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID);
+    $permCheck = 1;
+    $userRole = $db->getUserRoleVal($ownerID);
+    //don't allow to update if user not own the pipeline.
+    if ($userRole != "admin" && !empty($id)){
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    }
+    if (!empty($permCheck)){
+        $data = $db->savePipelineDetails($id,$summary,$group_id,$perms,$pin,$pin_order, $publicly_searchable,$pipeline_group_id,$userRole, $release_date, $ownerID);
+        //update permissions
+        if (!empty($nodesRaw)){
+            $listPermsDenied = array();
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date);
+        }
     }
 }
 else if ($p=="getSavedPipelines") {

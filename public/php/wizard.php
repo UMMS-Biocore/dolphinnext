@@ -198,14 +198,14 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                             </li>
                         </ul>
                     </div>
-                
+
                     <form role="form">
                         <div class="tab-content">
                             <div class="tab-pane active" role="tabpanel" id="pw-step-profiletype" style="min-height:400px;">
                                 <h3>Profile Type</h3>
-                                <p>Profile wizard will guide you to create your run environment. If you have an access to High Performance Computing (HPC) environments, or personal workstations please choose <b>Host</b>. If you have an Amazon Web Services (AWS) account or planning to create one then please choose <b>Amazon</b>. <?php
+                                <p>Profile wizard will guide you to create your run environment. If you have an access to High Performance Computing (HPC) environments, or personal workstations please choose <b>Host</b>. If you have an Amazon Web Services (AWS) or Google Cloud account or planning to create one, then please choose <b>Amazon</b> or <b>Google</b>. <?php
                                         if ($SHOW_TEST_PROFILE && !empty($TEST_PROFILE_GROUP_ID)){
-                                            echo 'Finally, if you want to use our MASS cluster please choose <b>MASS cluster</b> option.';
+                                            echo 'Finally, if you want to use our MGHPCC cluster please choose <b>MGHPCC cluster</b> option.';
                                         }
                                     ?> </p>
                                 <div class="form-group" style="margin:20px;">
@@ -217,15 +217,18 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                         <div class="radio">
                                             <label> <input type="radio" name="profiletype" value="amazon"> Amazon </label>
                                             <input id="pw-saveprofileamazon_id" style="display:none;" type="text" name="saveprofileamazon_id">
-
+                                        </div>
+                                        <div class="radio">
+                                            <label> <input type="radio" name="profiletype" value="google"> Google </label>
+                                            <input id="pw-saveprofilegoogle_id" style="display:none;" type="text" name="saveprofilegoogle_id">
                                         </div>
                                         <?php
                                         if ($SHOW_TEST_PROFILE && !empty($TEST_PROFILE_GROUP_ID)){
                                             echo '<div class="radio">
-                                                    <label> <input type="radio" name="profiletype"  value="test"> MASS cluster </label>
+                                                    <label> <input type="radio" name="profiletype"  value="test"> MGHPCC cluster </label>
                                                 </div>
                                                 <div id="pw-step-info-alert" class="alert alert-info">
-                                                    <strong>Note:</strong> You can easily upload your files to our MASS cluster to process your data and download your results from report section. However, you will not have direct access to our cluster.
+                                                    <strong>Note:</strong> You can easily upload your files to our MGHPCC cluster to process your data and download your results from report section. However, you will not have direct access to our cluster.
                                                 </div>
                                                 ';
                                         }
@@ -261,7 +264,7 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                             <div class="col-md-12">
                                                 <div class="form-group col-md-12">
                                                     <h3 style="margin-top:40px;">Adding SSH Keys</h3>
-                                                    <p>Following public key is securely generated for your account and required to be added into '~/.ssh/authorized_keys' in the host by user. After adding public key, please click <b>Validate SSH Keys</b> button at below. For more information, please check <a class="text-aqua" target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">adding keys section</a>. </p>
+                                                    <p>Following public key is securely generated for your account and required to be added into '~/.ssh/authorized_keys' in the host by user. After adding public key, please click <b>Validate SSH Keys</b> button at below. For more information, please check <a class="text-aqua" target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/public_ssh_key.html">adding keys section</a>. </p>
                                                     <div class="form-group col-md-12">
                                                         <label class="col-sm-3" style="padding-top:50px;">Public Key</label>
                                                         <div class="col-sm-9">
@@ -270,15 +273,15 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                                         </div>
                                                     </div>
                                                     <div class="form-group col-md-12">
-                                                        <label class="col-sm-3" style="">Username <span><a data-toggle="tooltip" data-placement="bottom" title="username@hostname (eg. us2r@ghpcc06.umassrc.org)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                                                        <label class="col-sm-3" style="">Username <span><a data-toggle="tooltip" data-placement="bottom" title="Your username to connect your host machine(eg. for us2r@ghpcc06.umassrc.org it is us2r)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                                                         <div class="col-sm-9">
                                                             <input type="text" class="form-control" id="pw-username" name="username">
                                                         </div>
                                                     </div>
                                                     <div class="form-group col-md-12">
-                                                        <label class="col-sm-3" style="">Hostname <span><a data-toggle="tooltip" data-placement="bottom" title="username@hostname (eg. us2r@ghpcc06.umassrc.org)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                                                        <label class="col-sm-3" style="">Hostname <span><a data-toggle="tooltip" data-placement="bottom" title="Your hostname to connect your host machine(eg. for us2r@ghpcc06.umassrc.org it is ghpcc06.umassrc.org"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                                                         <div class="col-sm-9">
-                                                            <input type="text" class="form-control" id="pw-hostname" name="hostname">
+                                                            <input type="text" class="form-control" id="pw-hostname" name="hostname" placeholder="Type your hostname or choose from the list">
                                                         </div>
                                                     </div>
                                                     <div class="form-group col-md-12">
@@ -399,7 +402,11 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <h3 style="margin-top:40px;">Run Settings</h3>
-                                            <p>Executor of Nextflow is used to set the method in which nextflow itself is initiated. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself. Executor of Nextflow Jobs will be used by nextflow to submit their jobs.</p>
+                                            <ul>
+                                                <li><b>Executor of Nextflow:</b> Nextflow itself is initiated with this method and it will be only used for running nextflow itself.</li>
+                                                <li><b>Executor of Nextflow Jobs:</b> This setting will be used as default setting for submitted jobs by Nextflow.</li>
+                                                <li><b>Download Directory:</b> Used to download shared pipeline files such as genome indexes. If your platform has already such path, please enter that location. Otherwise you can set any path that you have permission to write.</li>
+                                            </ul>
                                         </div>
                                     </div>
                                 </div>
@@ -408,7 +415,7 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                         <div class="form-group">
                                             <label class="col-sm-4 control-label">Executor of Nextflow</label>
                                             <div class="col-sm-8">
-                                                <select id="pw_next_exec" class="btn-default " name="next_exec">
+                                                <select style="width:250px;" id="pw_next_exec" class="btn-default " name="next_exec">
                                                     <option value="local" selected>Local</option>
                                                     <option value="lsf">LSF</option>
                                                     <option value="sge">SGE</option>
@@ -421,9 +428,9 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                 <div class="row">
                                     <div class="col-md-12" style="margin-top:20px;">
                                         <div class="form-group">
-                                            <label class="col-sm-4 control-label">Executor of Nextflow Jobs</label>
+                                            <label style="margin-top:3px;" class="col-sm-4 control-label">Executor of Nextflow Jobs</label>
                                             <div class="col-sm-8">
-                                                <select class="btn-default " id="pw_job_exec" name="job_exec">
+                                                <select style="width:250px;" class="btn-default " id="pw_job_exec" name="job_exec">
                                                     <option value="local" selected>Local</option>
                                                     <option value="lsf">LSF</option>
                                                     <option value="sge">SGE</option>
@@ -434,8 +441,18 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                                         </div>
                                     </div>
                                 </div>
+                                <div class="row">
+                                    <div class="col-md-12" style="margin-top:15px;">
+                                        <div class="form-group">
+                                            <label style="margin-top:7px;" class="col-sm-4 control-label">Download Directory </label>
+                                            <div class="col-sm-8">
+                                                <input type="text" class="form-control" id="pw-downdir" name="pw-downdir">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                <ul class="list-inline pull-right">
+                                <ul style="margin-top:20px;" class="list-inline pull-right">
                                     <li><button type="button" class="btn btn-default prev-step ">Previous</button></li>
                                     <li><button type="button" class="btn btn-warning next-step ">Next</button></li>
                                 </ul>
@@ -447,10 +464,20 @@ $SHOW_TEST_PROFILE=SHOW_TEST_PROFILE;
                             <div class="clearfix"></div>
                         </div>
                     </form>
-                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary " data-dismiss="modal">Close</button>
+                <div class="row">
+                    <div class="col-md-12" style="margin-top:15px;">
+                        <div class="form-group">
+                            <div class="col-sm-11 footer-copyright text-center small">*If you have any issues/questions please contact us on: support@dolphinnext.com
+                        </div>
+                            <div class="col-sm-1">
+                                <button type="button" class="btn btn-primary " data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

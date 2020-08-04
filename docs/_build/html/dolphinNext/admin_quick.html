@@ -1,0 +1,449 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Introduction &mdash; DolphinNext v1.1.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/>
+        <link rel="next" title="Frequently Asked Questions" href="admin_faq.html"/>
+        <link rel="prev" title="Pipeline Guide" href="pipeline.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v1.1.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Short Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cite.html">How To Cite Us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.html">Google Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="public_ssh_key.html">Adding Public SSH Key</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administrator Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#build-docker-image">Build docker image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#start-the-container">Start the container</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-of-the-sec-file">Configuration of the .sec file</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="admin_faq.html">Frequently Asked Questions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Introduction</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/admin_quick.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h1>
+<p>DolphinNext’s main server is located at <a class="reference external" href="https://dolphinnext.umassmed.edu">https://dolphinnext.umassmed.edu</a>. DolphinNext can also be run as a standalone application using a docker container.</p>
+<p>First docker image need to be build unless you want to use prebuild from dockerhub. So, any change in the Dockerfile requires to build the image. But if you want to use prebuild version just skip building it and start the container.</p>
+<div class="section" id="build-docker-image">
+<h2>Build docker image<a class="headerlink" href="#build-docker-image" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">To build docker image first clone one of the latest dolphinnext-docker:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">UMMS</span><span class="o">-</span><span class="n">Biocore</span><span class="o">/</span><span class="n">dolphinnext</span><span class="o">-</span><span class="n">studio</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Build the image:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">dolphinnext</span><span class="o">-</span><span class="n">studio</span>
+<span class="n">docker</span> <span class="n">build</span> <span class="o">-</span><span class="n">t</span> <span class="n">dolphinnext</span><span class="o">-</span><span class="n">studio</span> <span class="o">.</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="start-the-container">
+<h2>Start the container<a class="headerlink" href="#start-the-container" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">We move database outside of the container to be able to keep the changes in the database everytime you start the container. Please choose a directory in your machine to mount and replace <code class="docutils literal notranslate"><span class="pre">/path/to/mount</span></code> with your path:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">mount</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Please don’t change the target directory(<code class="docutils literal notranslate"><span class="pre">/export</span></code>) in the docker image.</p>
+</div>
+<ol class="arabic" start="2">
+<li><p class="first">Running the container:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">m</span> <span class="mi">10</span><span class="n">G</span> <span class="o">-</span><span class="n">p</span> <span class="mi">8080</span><span class="p">:</span><span class="mi">80</span> <span class="o">-</span><span class="n">v</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">mount</span><span class="p">:</span><span class="o">/</span><span class="n">export</span> <span class="o">-</span><span class="n">ti</span> <span class="n">dolphinnext</span><span class="o">-</span><span class="n">docker</span> <span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<ul>
+<li><p class="first">if you want to run a pre-build:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">run</span> <span class="o">-</span><span class="n">m</span> <span class="mi">10</span><span class="n">G</span> <span class="o">-</span><span class="n">p</span> <span class="mi">8080</span><span class="p">:</span><span class="mi">80</span> <span class="o">-</span><span class="n">v</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">mount</span><span class="p">:</span><span class="o">/</span><span class="n">export</span> <span class="o">-</span><span class="n">ti</span> <span class="n">ummsbiocore</span><span class="o">/</span><span class="n">dolphinnext</span><span class="o">-</span><span class="n">studio</span> <span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<ol class="arabic" start="3">
+<li><p class="first">After you start the container, you need to start the mysql and apache server usign the command below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">startup</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Verify that <strong>dolphinnext</strong> and <strong>mysql</strong> folders located inside of the <strong>/export</strong> folder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ls</span> <span class="o">/</span><span class="n">export</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Now, you can open your browser to access dolphinnext using the url below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">dolphinnext</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="configuration-of-the-sec-file">
+<h2>Configuration of the .sec file<a class="headerlink" href="#configuration-of-the-sec-file" title="Permalink to this headline">¶</a></h2>
+<p>This is the main DolphinNext configuration file and located in the <code class="docutils literal notranslate"><span class="pre">dolphinnext/config/.sec</span></code> file.</p>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">If you’re planing to use DolphinNext on the Amazon or Google Cloud, please check <a class="reference external" href="admin_faq.html#running-on-the-amazon-or-google-cloud">Running on the Amazon or Google Cloud</a> section.</p>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">.sec</span></code> file contains the following configuration directives, lets start with <strong>Dolphinnext</strong> section:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Dolphinnext</span><span class="p">]</span>
+<span class="n">DB</span><span class="o">=</span><span class="n">dolphinnext</span>
+<span class="n">DBUSER</span><span class="o">=</span><span class="n">docker</span>
+<span class="n">DBPASS</span><span class="o">=</span><span class="n">docker</span>
+<span class="n">DBHOST</span><span class="o">=</span><span class="n">localhost</span>
+<span class="n">DBPORT</span><span class="o">=</span><span class="mi">3306</span>
+<span class="n">SSHPATH</span><span class="o">=/</span><span class="n">export</span><span class="o">/.</span><span class="n">dolphinnext</span><span class="o">/.</span><span class="n">ssh</span>
+<span class="n">AMZPATH</span><span class="o">=/</span><span class="n">export</span><span class="o">/.</span><span class="n">dolphinnext</span><span class="o">/.</span><span class="n">amz</span>
+<span class="n">GOOGPATH</span><span class="o">=/</span><span class="n">export</span><span class="o">/.</span><span class="n">dolphinnext</span><span class="o">/.</span><span class="n">goog</span>
+<span class="n">AMAZON</span><span class="o">=</span><span class="n">z7</span><span class="o">***********</span>
+<span class="n">SALT</span><span class="o">=</span><span class="mi">23</span><span class="o">******</span>
+<span class="n">PEPPER</span><span class="o">=</span><span class="mi">3</span><span class="n">d</span><span class="o">******</span>
+<span class="n">MASTER</span><span class="o">=</span><span class="n">u7</span><span class="o">******</span>
+<span class="n">VERIFY</span><span class="o">=</span><span class="mi">2</span><span class="n">s</span><span class="o">******</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>DB:</strong> Database name.</li>
+<li><strong>DBUSER:</strong> Name for a database user.</li>
+<li><strong>DBPASS:</strong> Password for a database user.</li>
+<li><strong>DBHOST:</strong> MySQL Server Hostname.</li>
+<li><strong>DBPORT:</strong> MySQL Server Port.</li>
+<li><strong>SSHPATH:</strong> Secure path to save ssh files.</li>
+<li><strong>AMZPATH:</strong> Secure path to save amazon files.</li>
+<li><strong>GOOGPATH:</strong> Secure path to save google files.</li>
+<li><strong>AMAZON:</strong> It is random data (salt) that is used for encrypting Amazon keys.</li>
+<li><strong>SALT,PEPPER,MASTER,VERIFY:</strong> It is random data that is used for user authentication.</li>
+</ul>
+<p>Next section called <strong>CONFIG</strong>.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">CONFIG</span><span class="p">]</span>
+<span class="n">ENV_PATH</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+<span class="n">TIMEZONE</span><span class="o">=</span><span class="n">America</span><span class="o">/</span><span class="n">New_York</span>
+<span class="n">RUNPATH</span><span class="o">=../</span><span class="n">tmp</span><span class="o">/</span><span class="n">pub</span>
+<span class="n">TEMPPATH</span><span class="o">=../</span><span class="n">tmp</span>
+<span class="n">API_URL</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="o">/</span><span class="n">dolphinnext</span>
+<span class="n">BASE_PATH</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">dolphinnext</span>
+<span class="n">PUBWEB_URL</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">dolphinnext</span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">pub</span>
+<span class="n">OCPU_URL</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span>
+<span class="n">DEBROWSER_URL</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span>
+<span class="n">OCPU_PUBWEB_URL</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="o">/</span><span class="n">dolphinnext</span><span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">pub</span>
+<span class="n">NEXTFLOW_VERSION</span> <span class="o">=</span> <span class="mf">19.10</span><span class="o">.</span><span class="mi">0</span>
+<span class="n">LDAP_SERVER</span><span class="o">=</span><span class="n">test</span>
+<span class="n">DN_STRING</span><span class="o">=</span><span class="n">test</span>
+<span class="n">BIND_USER</span><span class="o">=</span> <span class="n">SVCLinuxLDAPAuth</span>
+<span class="n">BIND_PASS</span><span class="o">=</span><span class="n">test</span>
+<span class="n">EMAIL_SENDER</span><span class="o">=</span><span class="n">test</span><span class="nd">@test</span><span class="o">.</span><span class="n">edu</span>
+<span class="n">EMAIL_ADMIN</span><span class="o">=</span><span class="n">test</span><span class="nd">@test</span><span class="o">.</span><span class="n">edu</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>ENV_PATH</strong> is an optional profile path to be sourced before executing any commands. (eg. /home/.bashrc)</li>
+<li><strong>TIMEZONE:</strong> Sets the default timezone used by all date/time functions.</li>
+<li><strong>RUNPATH:</strong> Relative path to keep run logs.</li>
+<li><strong>TEMPPATH:</strong> Relative path to keep temporary created files.</li>
+<li><strong>API_URL</strong> DolphinNext URL inside of the docker container. It will be used when API calls are received.</li>
+<li><strong>BASE_PATH</strong> DolphinNext URL outside of the docker container.</li>
+<li><strong>PUBWEB_URL:</strong> URL to reach public web directory (eg. <a class="reference external" href="http://localhost:8080/dolphinnext/tmp/pub">http://localhost:8080/dolphinnext/tmp/pub</a> for localhost)</li>
+<li><strong>OCPU_URL:</strong> URL to reach local OCPU server (eg. <a class="reference external" href="http://localhost">http://localhost</a> for localhost in which <a class="reference external" href="http://localhost/ocpu">http://localhost/ocpu</a> exist in the server)</li>
+<li><strong>DEBROWSER_URL:</strong> URL to reach DEBrowser server (eg. <a class="reference external" href="http://localhost">http://localhost</a> for localhost in which <a class="reference external" href="http://localhost/debrowser">http://localhost/debrowser</a> exist in the server)</li>
+<li><strong>OCPU_PUBWEB_URL:</strong> URL to reach local pubweb directory (eg. <a class="reference external" href="http://localhost/dolphinnext/tmp/pub">http://localhost/dolphinnext/tmp/pub</a> for localhost)</li>
+<li><strong>NEXTFLOW_VERSION:</strong> NEXTFLOW version to be used.</li>
+<li><strong>LDAP_SERVER,DN_STRING,BIND_USER,BIND_PASS:</strong> Configuration parameters for LDAP Server.</li>
+<li><strong>EMAIL_SENDER:</strong> The e-mail of the sender when DolphinNext sends e-mail.</li>
+<li><strong>EMAIL_ADMIN:</strong> The e-mail(s) of the admin who will receive notification from DolphinNext server.</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">RUNPATH, OCPU_PUBWEB_URL and PUBWEB_URL should end with same directory structure (tmp/pub)</p>
+</div>
+<p>Last section called <strong>UICONFIG</strong>.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">UICONFIG</span><span class="p">]</span>
+<span class="n">COMPANY_NAME</span><span class="o">=</span><span class="n">Test</span> <span class="n">Server</span>
+<span class="n">ALLOW_SIGNUP</span><span class="o">=</span><span class="n">true</span>
+<span class="n">ALLOW_SIGNUPGOOGLE</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_WIZARD</span><span class="o">=</span><span class="n">true</span>
+<span class="p">;</span> <span class="n">User</span> <span class="n">Preferences</span> <span class="k">for</span> <span class="n">profile</span> <span class="n">page</span>
+<span class="n">SHOW_AMAZON_KEYS</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_GOOGLE_KEYS</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_SSH_KEYS</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_GROUPS</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_GITHUB</span><span class="o">=</span><span class="n">true</span>
+<span class="p">;</span> <span class="n">User</span> <span class="n">Preferences</span> <span class="k">for</span> <span class="n">run</span> <span class="n">page</span>
+<span class="n">SHOW_RUN_LOG</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_RUN_TIMELINE</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_RUN_REPORT</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_RUN_DAG</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_RUN_TRACE</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_RUN_NEXTFLOWLOG</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_RUN_NEXTFLOWNF</span><span class="o">=</span><span class="n">true</span>
+<span class="n">SHOW_RUN_NEXTFLOWCONFIG</span><span class="o">=</span><span class="n">true</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>COMPANY_NAME:</strong> Name of the company that will be used in the webpage.</li>
+<li><strong>ALLOW_SIGNUP:</strong> Toogle the sign-up button in the home page.</li>
+<li><strong>ALLOW_SIGNUPGOOGLE:</strong> Toogle the google sign-in button in the home page.</li>
+<li><strong>SHOW_WIZARD:</strong> Toogle wizard in the home page.</li>
+<li><strong>SHOW_AMAZON_KEYS:</strong> Toogle Amazon Keys tab in the profile section.</li>
+<li><strong>SHOW_GOOGLE_KEYS:</strong> Toogle Google Keys tab in the profile section.</li>
+<li><strong>SHOW_SSH_KEYS:</strong> Toogle SSH Keys tab in the profile section.</li>
+<li><strong>SHOW_GROUPS:</strong> Toogle Groups tab in the profile section.</li>
+<li><strong>SHOW_GITHUB:</strong> Toogle Github tab in the profile section.</li>
+<li><strong>SHOW_RUN_LOG:</strong> Toogle Log.txt file in the Log tab of the run page.</li>
+<li><strong>SHOW_RUN_TIMELINE:</strong> Toogle timeline file in the Log tab of the run page.</li>
+<li><strong>SHOW_RUN_REPORT:</strong> Toogle report file in the Log tab of the run page.</li>
+<li><strong>SHOW_RUN_DAG:</strong> Toogle DAG file in the Log tab of the run page.</li>
+<li><strong>SHOW_RUN_TRACE:</strong> Toogle trace file in the Log tab of the run page.</li>
+<li><strong>SHOW_RUN_NEXTFLOWLOG:</strong> Toogle .nextflow.log file in the Log tab of the run page.</li>
+<li><strong>SHOW_RUN_NEXTFLOWNF:</strong> Toogle nextflow.nf file in the Log tab of the run page.</li>
+<li><strong>SHOW_RUN_NEXTFLOWCONFIG:</strong> Toogle nextflow.config file in the Log tab of the run page.</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="admin_faq.html" class="btn btn-neutral float-right" title="Frequently Asked Questions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="pipeline.html" class="btn btn-neutral" title="Pipeline Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'v1.1.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

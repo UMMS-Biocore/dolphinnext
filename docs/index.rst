@@ -17,6 +17,7 @@ Contents:
    dolphinNext/overview
    dolphinNext/example
    dolphinNext/about
+   dolphinNext/cite
    dolphinNext/support
 
 .. _User Guide:
@@ -30,6 +31,9 @@ Contents:
    dolphinNext/run
    dolphinNext/profile
    dolphinNext/amazon
+   dolphinNext/google
+   dolphinNext/public_ssh_key
+   dolphinNext/faq
    
 
 .. _Developer Guide:
@@ -39,9 +43,18 @@ Contents:
    :caption: Developer Guide
 
    dolphinNext/dev_quick
+   dolphinNext/known_issues
    dolphinNext/process
    dolphinNext/pipeline
 
-   
+.. _Administrator Guide:
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Administrator Guide
+
+   dolphinNext/admin_quick
+   dolphinNext/admin_faq
 
 

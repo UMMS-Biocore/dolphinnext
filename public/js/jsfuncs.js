@@ -11,20 +11,15 @@ initCloudData("google");
 
 //user role
 function callusRole() {
+    var usRole = "";
     var userRole = getValues({ p: "getUserRole" });
     if (userRole && userRole != '') {
         if (userRole[0].role !== null) {
             if (userRole[0].role === "admin") {
-                var usRole = "admin";
-            } else {
-                var usRole = "";
-            }
-        } else {
-            var usRole = "";
-        }
-    } else {
-        var usRole = "";
-    }
+                usRole = "admin";
+            } 
+        } 
+    } 
     return usRole;
 }
 usRole = callusRole();
@@ -36,6 +31,37 @@ usRole = callusRole();
 $(function () {
     $('[data-toggle="tooltip"]').tooltip();
 });
+
+toastr.options = {
+    "closeButton": false,
+    "debug": false,
+    "newestOnTop": false,
+    "progressBar": false,
+    "positionClass": "toast-bottom-left",
+    "preventDuplicates": true,
+    "onclick": null,
+    "showDuration": "300",
+    "hideDuration": "1000",
+    "timeOut": "2500",
+    "extendedTimeOut": "1000",
+    "showEasing": "linear",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+}
+
+
+// alternative of serializeArray function since it doesn't work when inputs are disabled.
+function serializeDisabledArray(arr){
+    var ret = [];
+    $.each(arr, function (i) {
+        var obj = {};
+        obj["name"] = arr[i].name;
+        obj["value"] = $(arr[i]).val(); 
+        ret.push(obj);
+    });
+    return ret;
+}
 
 //jquery clean css notation and add # sign to beginning
 function jqcss(myid) {
@@ -49,6 +75,17 @@ function IsJsonString(str) {
         return false;
     }
     return true;
+}
+
+//formatSizeUnits(4000*1024)  // beacuse 4000 KB to convert MB 
+function formatSizeUnits(bytes){
+    if      (bytes>=1073741824) {bytes=(bytes/1073741824).toFixed(2)+' GB';}
+    else if (bytes>=1048576)    {bytes=(bytes/1048576).toFixed(2)+' MB';}
+    else if (bytes>=1024)       {bytes=(bytes/1024).toFixed(2)+' KB';}
+    else if (bytes>1)           {bytes=bytes+' bytes';}
+    else if (bytes==1)          {bytes=bytes+' byte';}
+    else                        {bytes='0 byte';}
+    return bytes;
 }
 
 // example:
@@ -82,6 +119,12 @@ function filterObjVal(obj, filter) {
 }
 
 
+//filter array of object by key
+//var found_names = $.grep(names, function(v) {
+//    return v.name === "Joe" && v.age < 30;
+//});
+
+
 //sort array of object by key
 function sortByKey(array, key) {
     return array.sort(function (a, b) {
@@ -103,6 +146,7 @@ function checkArraysEqual(a, b) {
 }
 
 //use array of item to fill select element
+//clean=true will empty dropdown first
 function fillDropdownArrObj(arr, val, name, dropdownId, clean, first) {
     first = first || false; //default false
     if (clean === true) {
@@ -130,9 +174,11 @@ function combineLinuxCmd(cmdAr){
     return ret;
 }
 
+
+
 function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
-    $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /></div>');
+    $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon" style=" position: absolute; top: 0; right: 0; bottom: 0; left: 0;" src="css/loader.gif" alt="Loading..." /></div>');
 }
 function showLoadingDivText(parentId, text) {
     if ($("#loading-badge-" + parentId).length){
@@ -161,6 +207,41 @@ function showInfoModal(modalId, textID, text) {
         $(modalId).on('show.bs.modal', function (event) {
             $(this).find('form').trigger('reset');
             $(textID).html(text);
+        });
+        $(modalId).modal('show'); 
+    }
+}
+
+//text: show in browser, 
+//savedData: save data to delete button
+//execFunc: execute execFunc(savedData) when clicking on delete button
+function showConfirmDeleteModal(text, savedData, execFunc, buttonText) {
+    var modalId = "#confirmDeleteModal";
+    var textID = "#confirmDeleteModalText";
+    var clickid = "#confirmDeleteModalDelBtn";
+    var btnText = buttonText || "Delete";
+    $(clickid).text(btnText)
+    //true if modal is open
+    if (($(modalId).data('bs.modal') || {}).isShown ){
+        $(textID).html(text);
+        $(clickid).removeData("data");
+        $(clickid).data("data",savedData);
+        $(modalId).on('click', clickid, function (event) {
+            var savedData = $(clickid).data("data")
+            execFunc(savedData)
+        });
+    } else {
+        $(modalId).off();
+        $(clickid).removeData("data")
+        $(modalId).on('show.bs.modal', function (event) {
+            $(this).find('form').trigger('reset');
+            $(textID).html(text);
+            $(clickid).data("data",savedData)
+        });
+        $(modalId).on('click', clickid, function (event) {
+            var savedData = $(clickid).data("data")
+            execFunc(savedData)
+            $(modalId).modal('hide'); 
         });
         $(modalId).modal('show'); 
     }
@@ -199,7 +280,6 @@ window.setInterval( function() {
 
 
 
-// check the cloud profiles activity each 40 sec.
 checkCloudProfiles("timer", "amazon");
 checkCloudProfiles("timer", "google");
 
@@ -212,31 +292,35 @@ function checkCloudProfiles(timer, cloud) {
         var icon = '#manageGoog';
         var amountIcon = '#googAmount';
     }
-    var proData = getValues({ p: "getProfileCloud", cloud:cloud });
-    if (proData) {
-        if (proData.length > 0) {
-            $(icon).css('display', 'inline');
-            var countActive = 0;
-            for (var k = 0; k < proData.length; k++) {
-                if (proData[k].status === "running" || proData[k].status === "waiting" || proData[k].status === "initiated" || proData[k].status === "retry") {
-                    countActive++;
+    getValuesAsync({p: "getProfileCloud", cloud:cloud}, function (proData) {
+        if (proData) {
+            if (proData.length > 0) {
+                $(icon).css('display', 'inline');
+                var countActive = 0;
+                for (var k = 0; k < proData.length; k++) {
+                    if (proData[k].status === "running" || proData[k].status === "waiting" || proData[k].status === "initiated" || proData[k].status === "retry") {
+                        countActive++;
+                    }
+                    if (timer === "timer") {
+                        // check the cloud profiles activity each 60 sec.
+                        checkCloudTimer(proData[k].id, 60000, cloud);
+                    }
+                    window.modalRec = {};
+                    window.modalRec[cloud+'last_status_log_' + proData[k].id] = "";
+                    window.modalRec[cloud+'last_status_' + proData[k].id] = proData[k].status;
                 }
-                if (timer === "timer") {
-                    checkCloudTimer(proData[k].id, 60000, cloud);
+                if (countActive > 0) {
+                    $(amountIcon).css('display', 'inline');
+                    $(amountIcon).text(countActive);
+                } else {
+                    $(amountIcon).text(countActive);
+                    $(amountIcon).css('display', 'none');
                 }
-                window.modalRec = {};
-                window.modalRec[cloud+'last_status_log_' + proData[k].id] = "";
-                window.modalRec[cloud+'last_status_' + proData[k].id] = proData[k].status;
-            }
-            if (countActive > 0) {
-                $(amountIcon).css('display', 'inline');
-                $(amountIcon).text(countActive);
-            } else {
-                $(amountIcon).text(countActive);
-                $(amountIcon).css('display', 'none');
             }
         }
-    }
+    });
+
+
 }
 
 //interval will decide the check period: default: 20 sec. for termination 5 sec
@@ -393,6 +477,8 @@ function checkCloudStatus(proId, cloud) {
         $('#'+cloud+'CloudListLog-'+proId).data("logData", checkCloudStatusLog.logCloudList)
     }
 
+    // update active number:
+    checkCloudProfiles("notimer", cloud);
     // set autoshutdown counter
     var proData = getValues({ p: "getProfileCloud", cloud:cloud, id:proId });
     var autoshutdown_check = proData[0].autoshutdown_check;
@@ -539,6 +625,8 @@ function loadOngoingWizard (type){
     }
 }   
 
+
+
 function addCloudRow(cloud, id, name, executor, instance_type, image_id, subnet_id, autoshutdown_check, autoshutdown_active, autoshutdown_date, status, proData) {
     if (autoshutdown_check == null){ autoshutdown_check = ""; }
     var checked = "";
@@ -654,9 +742,106 @@ function initCloudConsole(cloud){
 
 }
 
+
+var disableDoubleClickCollapse = function(id1check, id1div, id2check,id2div, baseid){
+    //not allow to click both option
+    $('#'+baseid).on('show.bs.collapse', '#'+id1div, function () {
+        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
+            $('#'+id2check).trigger("click");
+        }
+        $('#'+id1check).attr('onclick', "return false;");
+    });
+    $('#'+baseid).on('show.bs.collapse', '#'+id2div, function () {
+        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
+            $('#'+id1check).trigger("click");
+        }
+        $('#'+id2check).attr('onclick', "return false;");
+    });
+    $('#'+baseid).on('shown.bs.collapse', '#'+id1div, function () {
+        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
+            $('#'+id2check).trigger("click");
+        }
+        $('#'+id1check).removeAttr('onclick');
+    });
+    $('#'+baseid).on('shown.bs.collapse', '#'+id2div, function () {
+        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
+            $('#'+id1check).trigger("click");
+        }
+        $('#'+id2check).removeAttr('onclick');
+    });
+
+    $('#'+baseid).on('hide.bs.collapse', '#'+id2div, function () {
+        $('#'+id2check).attr('onclick', "return false;");
+    });
+    $('#'+baseid).on('hide.bs.collapse', '#'+id1div, function () {
+        $('#'+id1check).attr('onclick', "return false;");
+    });
+    $('#'+baseid).on('hidden.bs.collapse', '#'+id1div, function () {
+        $('#'+id1check).removeAttr('onclick');
+    });
+    $('#'+baseid).on('hidden.bs.collapse', '#'+id2div, function () {
+        $('#'+id2check).removeAttr('onclick');
+    });
+}
+
+
+function updateMarkdown (text, targetDiv){
+    var target = document.getElementById(targetDiv)
+    // bootstrap requires "table" class to properly visualize it. Added with classMap and bindings
+    var classMap = {
+        table: 'table table-bordered table-striped',
+    }
+    var bindings = Object.keys(classMap)
+    .map(key => ({
+        type: 'output',
+        regex: new RegExp(`<${key}(.*)>`, 'g'),
+        replace: `<${key} style="width: auto;" class="${classMap[key]}" $1>`
+    }));
+    var converter = new showdown.Converter({tables: true ,extensions: [bindings]});
+    var html = converter.makeHtml(text);
+    target.innerHTML = html;
+}
+
+function getCurrDate(){
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+    today = mm + '/' + dd + '/' + yyyy;
+    return today;
+}
+
+function toogleReleaseDiv(selPerm, own){
+    selPerm = parseInt(selPerm);
+    if (selPerm >= 43){
+        $("#releaseDiv").css("display", "block")
+        var releaseVal = $('#releaseVal').attr("date");
+        if (!releaseVal && own === "1"){
+            $('#releaseLabel').text("Release Date:");
+        }
+    } else {
+        $("#releaseDiv").css("display", "none")
+    }
+}
+
 $(document).ready(function () {
     initCloudConsole("amazon");
     initCloudConsole("google");
+
+    // example link 'UID: <a class="showHideSpan" data-toggle="tooltip" data-placement="bottom" data-original-title="Show/Hide Unique Run ID"><span  short="'+shortUID+'" long="'+run_log_uuid+'" last="short">'+shortUID+'<span></a>';
+    $(document).on('click', '.showHideSpan', function (event) {
+        var short = $(this).find("span").attr("short");
+        var long = $(this).find("span").attr("long");
+        var last = $(this).find("span").attr("last");
+        if (last == "short"){
+            $(this).find("span").text(long)
+            $(this).find("span").attr("last", "long");
+        } else if (last == "long"){
+            $(this).find("span").text(short);
+            $(this).find("span").attr("last", "short");
+        }
+    });
+
 
     $(function () {
         $(document).on('change', '.autoShutCheck', function (event) {
@@ -755,15 +940,22 @@ $(document).ready(function () {
     //--------- permission control for process/pipeline/run starts-------
     $(function () {
         var previousOpt;
-        var checkPermissionUpdt = function (id,perms,group_id,format) {
+        var checkPermissionUpdtFunc = function (obj,perms,group_id,format) {
             var warnUser = false;
             var infoText = '';
-            if (format == "pipeline" || format == "run" ){
-                var checkPermissionUpdt = getValues({ p: "checkPermUpdtPipeline", "pipeline_id": id, perms:perms,  group_id:group_id}); 
+            var pipeline_id = obj.pipeline_id;
+            var process_id = obj.process_id;
+            var project_id = obj.project_id;
+            console.log(obj)
+            var checkPermissionUpdt;
+            if (format == "pipeline"){
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtPipeline", "pipeline_id": pipeline_id, perms:perms,  group_id:group_id}); 
             } else if (format == "process"){
-                var checkPermissionUpdt = getValues({ p: "checkPermUpdtProcess", "process_id": id, perms:perms,  group_id:group_id}); 
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtProcess", "process_id": process_id, perms:perms,  group_id:group_id}); 
+            } else if (format == "run"){
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtRun",  pipeline_id: pipeline_id,  project_id: project_id,  perms:perms,   group_id:group_id}); 
             }
-            console.log(checkPermissionUpdt);
+            console.log(checkPermissionUpdt)
             var warnAr = $.map(checkPermissionUpdt, function(value, index) {
                 return [value];
             });
@@ -773,11 +965,16 @@ $(document).ready(function () {
                 if (format == "pipeline" || format == "process" ){
                     infoText += 'It is not allowed to change permission/group of current revision because of the following reason(s): </br></br>'
                 } else if (format == "run"){
-                    infoText += "Permission of the pipeline needs to be updated in order to share this run. However, it couldn't be changed because of the following reason(s): </br></br>"
+                    infoText += "Permission of the project/pipeline needs to be updated in order to change permission/group of the run. However, it couldn't be done because of the following reason(s): </br></br>"
                 } 
                 $.each(warnAr, function (element) {
                     infoText += warnAr[element]+"</br>";
                 });
+                if (numOfErr == 1 && warnAr[0]){
+                    if (warnAr[0].match(/project:/i)){
+                        infoText += "</br>*You might consider moving your run into another project to change its permission/group."
+                    }
+                }
             }
             return [warnUser, infoText];
         }
@@ -786,6 +983,8 @@ $(document).ready(function () {
             previousOpt = $(this).children("option:selected");
         }).on('change', '.permscheck', function (event) {
             var dropdownID = this.id;
+            var idObj = {};
+            console.log(dropdownID)
             if (dropdownID == "permsPipe" || dropdownID == "groupSelPipe"){
                 var selGroup = $("#groupSelPipe").val();
                 var selPerm = $("#permsPipe").val();
@@ -793,30 +992,43 @@ $(document).ready(function () {
                 if (pipeline_id) {
                     var warnUser = false;
                     var infoText = '';
+                    idObj.pipeline_id = pipeline_id;
+                    var objData = $.extend(true, {}, idObj);
                     //check if pipeline permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdt(pipeline_id,selPerm,selGroup, "pipeline");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "pipeline");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
                     } else {
+                        toogleReleaseDiv(selPerm, pipelineOwn)
                         autosaveDetails();
                     }
                 } else {
+                    toogleReleaseDiv(selPerm, pipelineOwn);
                     autosaveDetails();
                 }
             } else if (dropdownID == "permsRun" || dropdownID == "groupSelRun"){
                 var selGroup = $("#groupSelRun").val();
                 var selPerm = $("#permsRun").val();
                 var pipeline_id = $('#pipeline-title').attr('pipeline_id');
-                if (pipeline_id){
+                var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+                var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+                var project_id = pipeData[0].project_id;
+                if (pipeline_id && project_id){
                     var warnUser = false;
                     var infoText = '';
+                    idObj.pipeline_id = pipeline_id
+                    idObj.project_id = project_id
+                    var objData = $.extend(true, {}, idObj);
                     //check if pipeline permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdt(pipeline_id,selPerm,selGroup, "run");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "run");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
-                    } 
+                    } else {
+                        toogleReleaseDiv(selPerm, projectpipelineOwn);
+                    }
                 }
             } else if (dropdownID == "permsPro" || dropdownID == "groupSelPro"){
                 var selGroup = $("#groupSelPro").val();
@@ -826,8 +1038,10 @@ $(document).ready(function () {
                     var warnUser = false;
                     var infoText = '';
                     var numOfRuns = '';
+                    idObj.process_id = process_id
+                    var objData = $.extend(true, {}, idObj);
                     //check if process permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdt(process_id,selPerm,selGroup, "process");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "process");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
                         showInfoModal("#infoMod","#infoModText", infoText);
@@ -840,6 +1054,31 @@ $(document).ready(function () {
     });
     //---- permission control for process/pipeline/run ends
 
+
+    $(document).on('click', '.tooglehelp', function () {
+        $("#feedmessage").val("");
+    });
+    $("#controlSidebarHelp").on('click', '#sendfeedback', function () {
+        var message = $("#feedmessage").val();
+        var url = window.location.href;
+        if (message){
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: {message: message, url:url, "p": "savefeedback"},
+                success: function () {
+                    $("#feedmessage").val("");
+                    toastr.success("Your message has been sent");
+                    $("#tooglehelp").click();
+                },
+                error:function () {
+                    toastr.error("Error occured.");
+                }
+
+            });
+        }
+    });
+
 });
 
 //load filter sidebar menu options
@@ -849,13 +1088,18 @@ if (usRole === "admin") {
 }
 $("#filterMenu").append('<li><a href="#" data-value="3" tabIndex="-1"><input type="checkbox"/>&nbsp;Private</a></li>');
 $("#filterMenu").append('<li><a href="#" data-value="63" tabIndex="-1"><input type="checkbox"/>&nbsp;Public</a></li>');
-allUserGrp = getValues({ p: "getUserGroups" });
-if (allUserGrp && allUserGrp != '') {
-    for (var i = 0; i < allUserGrp.length; i++) {
-        var param = allUserGrp[i];
-        $("#filterMenu").append('<li><a href="#" data-value="group-' + param.id + '" tabIndex="-1"><input type="checkbox"/>&nbsp;' + param.name + '</a></li>');
+
+
+getValuesAsync({p: "getUserGroups"}, function (allUserGrp) {
+    if (allUserGrp && allUserGrp != '') {
+        for (var i = 0; i < allUserGrp.length; i++) {
+            var param = allUserGrp[i];
+            $("#filterMenu").append('<li><a href="#" data-value="group-' + param.id + '" tabIndex="-1"><input type="checkbox"/>&nbsp;' + param.name + '</a></li>');
+        }
     }
-}
+});
+
+
 
 //filter sidebar menu (multiple selection feature)
 var optionsFilter = [];
@@ -1140,39 +1384,65 @@ function tsvPercent(tsv) {
 
     return tsvPercent
 }
-//var tsv is the TSV file with headers
-//columns: [{title: "Id", data: "Id"} 1: {title: "Name", data: "Name"}]
-//data: [{Id: "123", Name: "John Doe Fresno"},{Id: "124", Name: "Alice Alicia"}]
-function tsvConvert(tsv, format, fixHeader) {
-    var tsv = $.trim(tsv);
-    var lines = tsv.split("\n");
+
+//prepare datatables input
+//columns: [{"title":"id"}, {"title":"name"}]
+//data: [["123","John Doe Fresno"],["124", "Alice Alicia"]]
+function tsvCsvDatatablePrep(tsvCsv, fixHeader, sep) {
+    var result = { columns: [], data: [] };
+    var cols = result.columns;
+    var data = result.data;
+    var tsvCsv = $.trim(tsvCsv);
+    var lines = tsvCsv.split("\n");
     if (fixHeader){
         lines[0] = lines[0].replace(/\./g, "_");
     }
-    var headers = lines[0].split("\t");
-    var data = [];
+    var headers = lines[0].split(sep);
+    for (var i = 0; i < headers.length; i++) {
+        cols.push({"title": headers[i]});
+    }
     for (var i = 1; i < lines.length; i++) {
-        var obj = {};
-        var currentline = lines[i].split("\t");
-        for (var j = 0; j < headers.length; j++) {
-            obj[headers[j]] = currentline[j];
-        }
-        data.push(obj);
+        var currentline = lines[i].split(sep);
+        data.push(currentline);
     }
-    if (format == "json") {
-        return data;
-    }
-    if (format == "json2") {
-        var result = { columns: [], data: data };
-        for (var j = 0; j < headers.length; j++) {
-            var obj = {};
-            obj.title = headers[j]
-            obj.data = headers[j]
-            result.columns.push(obj);
-        }
-        return result;
-    }
+    return result;
 }
+
+
+
+//var tsv is the TSV file with headers
+//columns: [{title: "Id", data: "Id"} 1: {title: "Name", data: "Name"}]
+//data: [{Id: "123", Name: "John Doe Fresno"},{Id: "124", Name: "Alice Alicia"}]
+//function tsvCsvConvert(tsv, format, fixHeader, sep) {
+//    var tsv = $.trim(tsv);
+//    var lines = tsv.split("\n");
+//    if (fixHeader){
+//        lines[0] = lines[0].replace(/\./g, "_");
+//    }
+//    var headers = lines[0].split(sep);
+//    var data = [];
+//    for (var i = 1; i < lines.length; i++) {
+//        var obj = {};
+//        var currentline = lines[i].split(sep);
+//        for (var j = 0; j < headers.length; j++) {
+//            obj[headers[j]] = currentline[j];
+//        }
+//        data.push(obj);
+//    }
+//    if (format == "json") {
+//        return data;
+//    }
+//    if (format == "json2") {
+//        var result = { columns: [], data: data };
+//        for (var j = 0; j < headers.length; j++) {
+//            var obj = {};
+//            obj.title = headers[j]
+//            obj.data = headers[j]
+//            result.columns.push(obj);
+//        }
+//        return result;
+//    }
+//}
 
 function reportAjaxError(jqXHR, exception, query){
     var msg = '';
@@ -1347,7 +1617,14 @@ function callMarkDownApp(text) {
     return result
 }
 
-
+var getExtension = function (filename){
+    var re = /(?:\.([^.]+))?$/;
+    var ext = re.exec(filename)[1];   // "txt"
+    if (!ext){
+        ext = "";
+    }
+    return ext.toLowerCase();
+}
 
 
 function getValuesAsync(data, callback) {
@@ -1361,6 +1638,10 @@ function getValuesAsync(data, callback) {
         success: function (data) {
             result = data;
             callback(result);
+        },
+        error: function (errorThrown) {
+            console.log("AJAX Error occured.", data)
+            toastr.error("Error occured.");
         }
     });
 }
@@ -1489,8 +1770,8 @@ function download_file(fileURL, fileName) {
         var filename = fileURL.substring(fileURL.lastIndexOf('/') + 1);
         save.download = fileName || filename;
         if (navigator.userAgent.toLowerCase().match(/(ipad|iphone|safari)/) && navigator.userAgent.search("Chrome") < 0) {
-            document.location = save.href;
             // window event not working here
+            downloadUrl(fileURL, fileName)
         } else {
             var evt = new MouseEvent('click', {
                 'view': window,
@@ -1508,6 +1789,13 @@ function download_file(fileURL, fileName) {
         _window.document.execCommand('SaveAs', true, fileName || fileURL)
         _window.close();
     }
+}
+
+function downloadUrl(url, filename) {
+    var a = document.createElement("a");
+    a.href = url;
+    a.setAttribute("download", filename);
+    a.click();
 }
 
 function downloadText(text, filename) {
@@ -1703,28 +1991,7 @@ function fixCollapseMenu(collapseDiv, checkboxId) {
     });
 }
 
-$(function () {
-    $("#feedback-tab").click(function () {
-        $("#feedback-form").toggle("slide right");
-    });
 
-    $("#feedback-form form").on('submit', function (event) {
-        var $form = $(this);
-        var data = $form.serializeArray();
-        var url = window.location.href;
-        data.push({ name: "url", value: url })
-        data.push({ name: "p", value: "savefeedback" })
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: data,
-            success: function () {
-                $("#feedback-form").toggle("slide right").find("textarea").val('');
-            }
-        });
-        event.preventDefault();
-    });
-});
 
 //$("#example").multiline('this\n has\n newlines');
 $.fn.multiline = function (text) {

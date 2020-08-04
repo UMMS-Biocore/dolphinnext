@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Run Guide &mdash; DolphinNext 0.3.64 documentation</title>
+  <title>Run Guide &mdash; DolphinNext v1.1.3 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="DolphinNext 0.3.64 documentation" href="../index.html"/>
+    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/>
         <link rel="next" title="Profile Guide" href="profile.html"/>
         <link rel="prev" title="Project Guide" href="project.html"/> 
 
@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                0.3.64
+                v1.1.3
               </div>
             
           
@@ -95,6 +95,7 @@
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Short Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cite.html">How To Cite Us</a></li>
 <li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
 </ul>
 <p class="caption"><span class="caption-text">User Guide</span></p>
@@ -114,12 +115,20 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="profile.html">Profile Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.html">Google Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="public_ssh_key.html">Adding Public SSH Key</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Developer Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administrator Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="admin_quick.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin_faq.html">Frequently Asked Questions</a></li>
 </ul>
 
             
@@ -198,7 +207,7 @@
 <blockquote>
 <div><ol class="arabic simple">
 <li><strong>Work Directory:</strong>  Full path of the directory, where nextflow runs will be executed.</li>
-<li><strong>Run Environment:</strong> Profile that is created in the <a class="reference external" href="profile.html">profile</a>  page. If <a class="reference external" href="profile.html#b-defining-amazon-profile">Amazon profile</a>  is selected, then status of the profile should to be at the stage of <strong>running</strong>.</li>
+<li><strong>Run Environment:</strong> Profile that is created in the <a class="reference external" href="profile.html">profile</a>  page. If <a class="reference external" href="profile.html#b-defining-amazon-profile">Amazon profile</a> or <a class="reference external" href="profile.html#c-defining-google-profile">Google profile</a> is selected, then status of the profile should to be at the stage of <strong>running</strong>.</li>
 <li><strong>Inputs:</strong> Value and path of the files need to be entered.</li>
 </ol>
 </div></blockquote>
@@ -253,7 +262,7 @@
 </pre></div>
 </div>
 </li>
-<li><p class="first"><strong>Run Environment:</strong> Profile that is created in the <a class="reference external" href="profile.html">profile</a>  page. If <a class="reference external" href="profile.html#b-defining-amazon-profile">Amazon profile</a>  is selected, then status of the profile should to be at the stage of <strong>running</strong>.</p>
+<li><p class="first"><strong>Run Environment:</strong> Profile that is created in the <a class="reference external" href="profile.html">profile</a>  page. If <a class="reference external" href="profile.html#b-defining-amazon-profile">Amazon profile</a> or <a class="reference external" href="profile.html#c-defining-google-profile">Google profile</a> is selected, then status of the profile should to be at the stage of <strong>running</strong>.</p>
 </li>
 <li><p class="first"><strong>Use Docker Image:</strong> Nextflow supports the Docker containers which allows you to create fully reproducible pipelines. Docker image can contain any kind of software that you might need to execute your pipeline. It works transparently and output files are created in the host system without requiring any addition step. The only requirement is the <a class="reference external" href="https://docs.docker.com/install/">installation of the Docker</a> on the execution platform.  To activate this feature in DolphinNext just click the “Use Docker Image” checkbox and enter following information:</p>
 <blockquote>
@@ -299,7 +308,7 @@
 </pre></div>
 </div>
 </li>
-<li><p class="first"><strong>Publish Directory:</strong> Work directory is default publish directory for DolphinNext. If you want to enter new publish directory, just click this item and enter the full path of publish directory. Both local paths (eg. <code class="docutils literal notranslate"><span class="pre">/home/user/test</span></code>) or amazon s3 paths (eg. <code class="docutils literal notranslate"><span class="pre">s3://yourbucket/test</span></code>) are accepted.</p>
+<li><p class="first"><strong>Publish Directory:</strong> Work directory is default publish directory for DolphinNext. If you want to enter new publish directory, just click this item and enter the full path of publish directory. Local paths (eg. <code class="docutils literal notranslate"><span class="pre">/home/user/test</span></code>), amazon s3 paths (eg. <code class="docutils literal notranslate"><span class="pre">s3://yourbucket/test</span></code>) or google storage paths (eg. <code class="docutils literal notranslate"><span class="pre">gs://yourbucket/test</span></code>) are accepted.</p>
 </li>
 <li><p class="first"><strong>Executor Settings:</strong></p>
 <blockquote>
@@ -481,7 +490,7 @@ e.g. suggested parameters: long 20GB 4CPU 1000-5000min</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'0.3.64',
+            VERSION:'v1.1.3',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

@@ -22,7 +22,8 @@ $GOOGPATH=GOOGPATH;
         /*height: 70px;*/
         /*min-height: 0px !important;*/
         border: 1px solid #ccc;
-    }   
+    }
+
 </style>
 
 
@@ -214,7 +215,7 @@ $GOOGPATH=GOOGPATH;
                     <!-- /.tab-pane ends -->
                     <!-- /.tab-pane starts -->
                     <div class="tab-pane" id="github">
-                        <div class="panel panel-default" >
+                        <div class="panel panel-default">
                             <div class="panel-heading clearfix">
                                 <div class="pull-right">
                                     <button type="button" class="btn btn-primary btn-sm" id="addGithub" data-toggle="modal" data-target="#githubModal">Add GitHub Account</button>
@@ -287,30 +288,33 @@ $GOOGPATH=GOOGPATH;
                     <?php 
                     if ($login == 1 && $role == "admin"){
                         echo '<div class="tab-pane" id="adminTab">
-                            <div class="panel panel-default">
-                                <div class="panel-heading clearfix">
-                                    <div class="pull-right">
-                                        <button type="button" class="btn btn-primary btn-sm" id="addUser" data-toggle="modal" data-target="#userModal">Add User</button>
+                                <div class="panel panel-default">
+                                    <div class="panel-heading clearfix">
+                                        <div class="pull-right">
+                                            <button type="button" class="btn btn-primary btn-sm" id="addUser" data-toggle="modal" data-target="#userModal">Add User</button>
+                                        </div>
+                                        <div class="pull-left">
+                                            <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> User Panel</h5>
+                                        </div>
                                     </div>
-                                    <div class="pull-left">
-                                        <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> User Panel</h5>
-                                    </div>
-                                </div>
-                                <div class="panel-body">
-                                    <table id="AdminUserTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
-                                        <thead>
+                                    <div class="panel-body">
+                                        <table id="AdminUserTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                                            <thead>
                                             <tr>
+                                                <th>ID</th>
                                                 <th>Name</th>
                                                 <th>Username</th>
                                                 <th>E-mail</th>
                                                 <th>Institute</th>
+                                                <th>Usage(MB)</th>
                                                 <th>Role</th>
                                                 <th>Active</th>
                                                 <th>Member Date</th>
                                                 <th>Options</th>
                                             </tr>
-                                        </thead>
-                                    </table>
+                                            </thead>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>';
                     }
@@ -361,8 +365,8 @@ $GOOGPATH=GOOGPATH;
                                 <option value="cluster">Host</option>
                                 <option value="amazon">Amazon Web Services</option>
                                 <?php if (!empty($GOOGPATH)){
-                                    echo '<option value="google">Google Cloud</option>';
-                                } ?>
+    echo '<option value="google">Google Cloud</option>';
+} ?>
                             </select>
                         </div>
                     </div>
@@ -423,13 +427,13 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <div id="mEnvInsTypeDiv" class="form-group" style="display:none">
-                        <label for="mEnvInsType" class="col-sm-3 control-label">Instance Type</label>
+                        <label for="mEnvInsType" class="col-sm-3 control-label">Instance Type <span><a data-toggle="tooltip" data-placement="bottom" title=" Amazon EC2 or Google Cloud instance type that comprise varying combinations of CPU, memory, storage, and networking capacity (eg. m3.xlarge)."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mEnvInsType" name="instance_type">
                         </div>
                     </div>
                     <div id="mEnvImageIdDiv" class="form-group" style="display:none">
-                        <label for="mEnvImageId" class="col-sm-3 control-label">Image Id</label>
+                        <label for="mEnvImageId" class="col-sm-3 control-label">Image Id <span><a data-toggle="tooltip" data-placement="bottom" title=" Virtual machine ID"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mEnvImageId" name="image_id">
                         </div>
@@ -447,7 +451,7 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <div id="mSubnetIdDiv" class="form-group" style="display:none">
-                        <label for="mSubnetId" class="col-sm-3 control-label">Subnet Id</label>
+                        <label for="mSubnetId" class="col-sm-3 control-label">Subnet Id <span><a data-toggle="tooltip" data-placement="bottom" title="Identifier of the VPC subnet to be applied e.g. subnet-05222a43."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSubnetId" name="subnet_id">
                         </div>
@@ -460,13 +464,13 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <div id="mSharedStorageIdDiv" class="form-group" style="display:none">
-                        <label for="mSharedStorageId" class="col-sm-3 control-label">Shared Storage Id</label>
+                        <label for="mSharedStorageId" class="col-sm-3 control-label">Shared Storage Id <span><a data-toggle="tooltip" data-placement="bottom" title="Identifier of the shared file system instance e.g. fs-1803efd1."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSharedStorageId" name="shared_storage_id">
                         </div>
                     </div>
                     <div id="mSharedStorageMountDiv" class="form-group" style="display:none">
-                        <label for="mSharedStorageMount" class="col-sm-3 control-label">Shared Storage Mount</label>
+                        <label for="mSharedStorageMount" class="col-sm-3 control-label">Shared Storage Mount <span><a data-toggle="tooltip" data-placement="bottom" title="Mount path of the shared file system e.g. /mnt/efs"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mSharedStorageMount" value="/mnt/efs" name="shared_storage_mnt">
                         </div>
@@ -653,25 +657,44 @@ $GOOGPATH=GOOGPATH;
 
 <!---- join Modal-->
 <div id="joinmodal" class="modal fade" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
                 <h4 class="modal-title" id="joinmodallabel">Join a group</h4>
             </div>
-            <form role="form" method="post">
-                <div class="modal-body" style="overflow:scroll">
-                    <fieldset>
-                        <label id="groupLabel">Select a group to join</label>
-                        <div id="groupListDiv" class="form-group">
-                            <select id="mGroupList" class="form-control" size="25"></select></div>
-                    </fieldset>
+            <div class="modal-body">
+
+                <form id="joinmodaladd" class="form-horizontal" style="margin-bottom:40px;">
+                    <h5 style="margin-bottom:20px;">Add New Member</h5>
+                    <div class="form-group" >
+                        <label class="col-sm-2 control-label" style="padding-left:30px;">E-Mail of the User <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter e-mail address of the user and press add button."><i class="glyphicon glyphicon-info-sign"></i></a></span> </label>
+                        <div class="col-sm-8">
+                            <input type="email" class="form-control" id="joinmodal_email" name="email" value="">
+                        </div>
+                        <div class="col-sm-2">
+                            <button id="joinmodal_adduser" type="button" class="btn btn-primary">Add User <i class="fa fa-user"></i></button>
+                        </div>
+                    </div>
+                </form>
+                <h5 style="margin-bottom:10px;">Group Members</h5>
+                <div class="panel-body">
+                    <table id="groupmembertable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>E-mail</th>
+                                <th>Options</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" id="confirmGroupButton" class="btn btn-primary" data-dismiss="">Join</button>
-                    <button type="button" class="btn btn-default" id="cancelGroupButton" data-dismiss="modal" onclick="">Cancel</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="groupmembertabledata" onclick="">OK</button>
+            </div>
+
         </div>
     </div>
 </div>
@@ -873,7 +896,7 @@ $GOOGPATH=GOOGPATH;
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveGithub" >Submit</button>
+                <button type="button" class="btn btn-primary" id="saveGithub">Submit</button>
             </div>
         </div>
     </div>
@@ -927,7 +950,7 @@ $GOOGPATH=GOOGPATH;
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveGoogle" >Submit</button>
+                <button type="button" class="btn btn-primary" id="saveGoogle">Submit</button>
             </div>
         </div>
     </div>
@@ -953,31 +976,31 @@ $GOOGPATH=GOOGPATH;
                     <div class="form-group">
                         <label for="mUserName" class="col-sm-3 control-label">Name</label>
                         <div class="col-sm-9">
-                            <input type="text" required class="form-control" id="mUserName" name="name">
+                            <input type="text" maxlength="45" required class="form-control" id="mUserName" name="name">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="mUserUsername" class="col-sm-3 control-label">Username</label>
                         <div class="col-sm-9">
-                            <input type="text" required class="form-control" id="mUserUsername" name="username">
+                            <input type="text" maxlength="45" required class="form-control" id="mUserUsername" name="username">
                         </div>
                     </div>
                     <div class="form-group has-feedback">
                         <label for="mUserEmail" class="col-sm-3 control-label">E-mail</label>
                         <div class="col-sm-9">
-                            <input type="email" required class="form-control" id="mUserEmail" name="email">
+                            <input type="email" maxlength="45" required class="form-control" id="mUserEmail" name="email">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="mUserInstitute" class="col-sm-3 control-label">Institute</label>
                         <div class="col-sm-9">
-                            <input type="text" required class="form-control" id="mUserInstitute" name="institute">
+                            <input type="text" maxlength="45" required class="form-control" id="mUserInstitute" name="institute">
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="mUserLab" class="col-sm-3 control-label">Lab</label>
                         <div class="col-sm-9">
-                            <input type="text" class="form-control" id="mUserLab" name="lab">
+                            <input type="text" maxlength="45" class="form-control" id="mUserLab" name="lab">
                         </div>
                     </div>
                     <div class="form-group">
@@ -1002,6 +1025,41 @@ $GOOGPATH=GOOGPATH;
 </div>
 <!-- user modal ends-->
 
+
+<!-- admin Add Group Modal starts-->
+<div id="adminAddGroupModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add User into New Group</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="adminAddGroupNewGroup" class="col-sm-3 control-label">User Info:</label>
+                        <div class="col-sm-9">
+                            <p id="adminAddGroupUserInfo"></p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminAddGroupNewGroup" class="col-sm-3 control-label">Choose Group</label>
+                        <div class="col-sm-9">
+                            <select id="adminAddGroupNewGroup" class="form-control" name="group_id">
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="adminAddGroupSave">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- admin add group modal ends-->
+
 <div id="warnDelete" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -1020,7 +1078,7 @@ $GOOGPATH=GOOGPATH;
 </div>
 </div>
 
-<!--Confirm Modal-->
+<!--Confirm Del Modal-->
 
 <div id="confirmDelModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -1031,13 +1089,13 @@ $GOOGPATH=GOOGPATH;
             </div>
             <div class="modal-body" id="confirmDelModalText">Text</div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal" id="mDelBtn">Delete</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="confirmDelModalDelBtn">Delete</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
             </div>
         </div>
     </div>
 </div>
-<!--Confirm Modal Ends-->
+<!--Confirm Del Modal Ends-->
 
 <!--Confirm Modal-->
 

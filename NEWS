@@ -1,3 +1,165 @@
+20.07.2020 Version 1.2.10
+Text viewer added to report section.
+
+20.07.2020 Version 1.2.9
+Asynchronous loading and warning added for report page.
+
+14.07.2020 Version 1.2.8
+CSV file support added to datatables reporting option.
+30 sec. timeout added to du command.
+
+10.07.2020 Version 1.2.7
+useSoftTabs disabled for script editor to use tab instead of four spaces.
+Fastqc added to top of the report list.
+
+22.06.2020 Version 1.2.6
+Minor bug fixed in the wizard.
+
+19.06.2020 Version 1.2.5
+Loading speed of run status page upgraded.
+
+13.06.2020 Version 1.2.4
+Sign-up form upgraded and maximum length limits added to form fields. 
+Adding samples section improved to remove spaces from file names. 
+Run status page upgraded to load inputs for admin.
+Env and Tuple qualifiers added to parameters.
+Known issues section added to documentation.
+
+10.06.2020 Version 1.2.3
+Run page loading upgraded.
+
+10.06.2020 Version 1.2.2
+Run status page upgraded and separate impersonate button added for admin.
+
+08.06.2020 Version 1.2.1
+Minor bug fixed in the updateDN script.
+Initial run image updated to fix fastq-dump.
+
+29.05.2020 Version 1.2.0
+Minor fix for safari file download in report page.
+
+21.05.2020 Version 1.1.18
+Minor upgrade to support single files in a collection.
+
+20.05.2020 Version 1.1.17
+* Major Upgrades: 
+  - Sharing pipeline/run with everyone feature is added. 
+  - Access of the public pipeline/run could be controlled by setting a release date and getting a sharable link.
+  - create a temporary link till release date (e.g., for the reviewer) feature added.
+  - Permission control added for the pipeline and run pages.
+  - Publicly searchable feature added for admin, which will control the listed pipeline and processes.
+
+* Minor Upgrades:
+  - Pipeline autosave disabled after clicking cancel on saving.
+  - New revision button added for process and pipeline.
+  - Warning added to prevent leaving web page before run submission
+  - Run termination blocked until run submission.
+  - Creating a new run page is prevented when only the description or permission of the run edited. 
+
+* Bug Fixes:
+  - Bug fixed by cleaning single quotes in the pipeline name.
+
+08.05.2020 Version 1.1.16
+* Fixes:
+Minor bug fixed regarding the loading log section.
+
+05.05.2020 Version 1.1.15
+Administrator guide added to the documentation.
+How to cite added to the documentation.
+* Minor updates:
+  - All changes are saved warning is hidden when the user opens the previous run.
+  - Readlink command added to work directory size checking function. 
+
+26.04.2020 Version 1.1.14
+Minor fix for shared runs.
+
+25.04.2020 Version 1.1.13
+* Major upgrades:
+Each run settings are saved for each run attempts.
+Run history dropdown created which allows executing to use previous run attempts.
+Run history dropdown shows the amount of space used in DolphinNext servers.
+Run history settings added to rename, delete, purge or recover of the run.
+Checking work directory space feature added to the run page.
+* Minor updates:
+Amount of active cloud instances updated without opening the cloud console.
+The new run page will be created if the user saves the changes on the last run.
+UID of the run is added into the report and log tabs.
+Calculate the user's disk usage button added for the admin console.
+* Fixes:
+Quote usage error fixed for the input parameter of the pipeline.
+Bug fixed when collection path entered with spaces. 
+Validation function added for the paired list of files. 
+Selective reloading function added to cached browser files.
+Minor bug fixed when process and pipeline gid equals to zero.
+Checkbox related scrolling animations are fixed for the run page.
+
+
+24.03.2020 Version 1.1.12
+Bug fixed while binding paths to containers.
+Default initial run container set to singularity when run container is not enabled.
+
+20.03.2020 Version 1.1.11
+The feedback button is replaced with the help sidebar. Messages will be sent to admin by e-mail.
+The description field added to run inputs that support HTML syntax.
+The warning of the "undefined download directory" is simplified. If a user doesn't enter a path, the Work Directory will be used.
+Parameters of the copied run will be refreshed, only if pipeline revision has changed.
+
+
+19.03.2020 Version 1.1.10
+A new option (greaterOrEqual) added to the permission update algorithm for the run page.
+
+16.03.2020 Version 1.1.9
+Public pipelines are listed in the pipeline page.
+Shared and user projects/runs are separated with separated tables in the pipeline/project/run page.
+Users allowed to add run into shared projects.
+Additional warnings added when the project is attempted to delete.
+shared and user projects/runs are separated in the left sidebar.
+permission update algorithm for the shared project is updated.
+Pipeline revision is prompted when the user wants to copy a run.
+Toast notifications added into the run page to show when the page is saved.
+Remove the value of publishing directory when it is not defined in the run environment.
+Change the project button added to the run page (move run).
+Keep run_description folder from the last attempt of the run when run restarted.
+
+05.03.2020 Version 1.1.8
+Run report template updated. 
+Table support added for markdown.
+
+03.03.2020 Version 1.1.7
+CENTRAL_API_URL transferred from .sec file to config.php.
+Minor bug fixed in the import function.
+
+02.03.2020 Version 1.1.6
+Add file section upgraded to support directory navigation.
+Default Readme.md file added into report page.
+Word-wrap feature added to markdown editor.
+
+02.03.2020 Version 1.1.5
+Add file section upgraded with examples.
+Click on error button shows log tab.
+Refresh button added to report page.
+"Image" option added into "publish to web directory" dropdown and report page.
+New visualization type (Run_Description) added to report page which allows to upload/attach files to run logs.
+Markdown viewer added into report page.
+Editable regions of Run_Description and Rmarkdown are disabled for shared runs.
+"source /etc/profile" added to ssh commands.
+
+20.02.2020 Version 1.1.4
+Adding public key video added to documentation.
+"Assign group to user" option added to admin menu.
+"Edit Group Name", "Add member with e-mail" and "Delete member from group" option added to group menu.
+Pre-cmd transfered into .dolphinnext.run script.
+Shared run status will be loaded into run status page.
+
+16.02.2020 Version 1.1.3
+Documentaion updated for:
+    - Quickstart
+    - Google Cloud 
+    - Wizard
+
+Public run environments added into wizard dropdown in host section.
+Download directory parameter added to wizard.
+
 10.02.2020 Version 1.1.2
 runUpdate script removed and updateDN.py script updated.
 

@@ -10,13 +10,13 @@
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Duplicate Project">
                         <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
 -->
-        <button type="button" id="delProject" class="btn" name="button" data-backdrop="false" onclick="delProject()" style=" margin:0px; padding:0px;">
+        <button type="button" class="btn deleteProject" name="button" data-backdrop="false"  style=" margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Project">
                         <i class="glyphicon glyphicon-trash"></i></a></button>
         <div id="projectActDiv" style="float:right; margin-right:5px;" class="dropdown">
             <button class="btn btn-default dropdown-toggle" type="button" id="projectAct" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;"><div class="fa fa-ellipsis-h"></div></button>
             <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu4">
-                <li><a id="deleteProject" href="javascript:delProject()">Delete Project</a></li>
+                <li><a class="deleteProject" >Delete Project</a></li>
             </ul>
         </div>
     </div>

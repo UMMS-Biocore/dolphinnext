@@ -5,6 +5,7 @@ $db=new dbfuncs();
 if (strpos(getcwd(), "travis/build") == 6){
     $_SESSION['email'] = 'travis';
 }
+
 if (isset($_GET['p']) && $_GET['p'] == "logout" ){
     if (isset($_SESSION['admin_id'])) {
         $admin_id = $_SESSION['admin_id'];

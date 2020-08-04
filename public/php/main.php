@@ -7,10 +7,34 @@ $google_image = isset($_SESSION['google_image']) ? $_SESSION['google_image'] : "
 $role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
 if ($email != ''){$login = 1;} 
 else { $login = 0;}
-session_write_close();
+
 
 require_once(__DIR__."/../../config/config.php");
 $SHOW_WIZARD=SHOW_WIZARD;
+
+require_once("php/funcs.php");
+$np = isset($_REQUEST["np"]) ? $_REQUEST["np"] : "";
+$id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "";
+$t = isset($_REQUEST["t"]) ? $_REQUEST["t"] : "";
+if (!empty($t) && empty($id) && empty($np)){
+    $db=new dbfuncs();
+    $sql = "SELECT id, np FROM token WHERE token = '$t'";
+    $lData = $db->queryTable($sql);
+    $ln = json_decode($lData,true);
+    if (isset($ln[0])){
+        $id = $ln[0]["id"];
+        $np = $ln[0]["np"];
+        if (isset($_SESSION['token'])){
+            if(!in_array($t, $_SESSION['token'], true)){
+                array_push($_SESSION['token'], $t);
+            }
+        } else {
+            $_SESSION['token'] = array($t);
+        }
+    }
+}
+
+session_write_close();
 ?>
 <!DOCTYPE html>
 <html>
@@ -37,8 +61,6 @@ folder instead of downloading all of them to reduce the load. -->
         <link rel="stylesheet" href="dist/css/skins/_all-skins.min.css">
         <!-- selectize style -->
         <link rel="stylesheet" href="css/selectize.bootstrap3.css">
-        <!-- feedback modal style -->
-        <link rel="stylesheet" href="css/feedback.css">
         <!--  w3 fonts-->
         <link rel="stylesheet" type="text/css" href="css/w3.css">
         <!-- Google Font -->
@@ -60,12 +82,29 @@ folder instead of downloading all of them to reduce the load. -->
         <!-- plupload -->
         <link rel="stylesheet" href="bower_components/plupload/js/jquery.ui.plupload/css/jquery.ui.plupload.css" type="text/css" />
         <link rel="stylesheet" href="bower_components/plupload/js/jquery.plupload.queue/css/jquery.plupload.queue.css" type="text/css" />
+        <!-- toastr -->
+        <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
+        <!-- toastr -->
+        <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
+        <link rel="stylesheet" href="bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker3.min.css" type="text/css" />
         <!-- to fix favicon.ico not found error-->
         <link rel="shortcut icon" href="#">
         <style>
+            /* strikethrough css deleted rows in Datatables */
+            tr.strikeline-row {
+                color: gray;
+                text-decoration: line-through;
+            }
+
+            .link-underline {
+                color: #1479cc;
+                cursor: pointer;
+                text-decoration: underline;
+            }
+
             /* Ace Editor scroll problem fix */
             .ace_text-input {
-                position: absolute!important
+                position: absolute !important
             }
 
             /*glyphicon-stack    */
@@ -154,16 +193,17 @@ folder instead of downloading all of them to reduce the load. -->
                 color: #428bca !important;
                 font-weight: 600;
             }
+
             .nav-item.sub {
                 color: #428bca !important;
                 font-weight: 500;
             }
 
-            .nav-pills > li.active > a, 
-            .nav-pills > li.active > a:hover, 
-            .nav-pills > li.active > a:focus{
-                background-color:transparent;
-                color:black;
+            .nav-pills>li.active>a,
+            .nav-pills>li.active>a:hover,
+            .nav-pills>li.active>a:focus {
+                background-color: transparent;
+                color: black;
             }
 
             /*        table links should appear blue*/
@@ -243,7 +283,7 @@ folder instead of downloading all of them to reduce the load. -->
                 justify-content: center;
             }
 
-            /*        Hover property for boostrap panel headers */
+            /*        Hover property for bootstrap panel headers */
 
             .collapsible:hover {
                 background-color: lightgray;
@@ -262,21 +302,23 @@ folder instead of downloading all of them to reduce the load. -->
             .borderClass {
                 border: 1px solid red;
             }
+
             /*        Datatable link hover */
             .txtlink:hover {
                 text-decoration: underline;
                 color: #397FA7;
             }
+
             .txtlink {
                 color: #397FA7;
             }
 
             /*        multi-Modal overflow fix */
             .modal {
-                overflow: auto; 
+                overflow: auto;
             }
 
-            .form-horizontal .control-label.text-left{
+            .form-horizontal .control-label.text-left {
                 text-align: left;
             }
 
@@ -315,7 +357,7 @@ folder instead of downloading all of them to reduce the load. -->
                 height: 34px;
             }
 
-            .switch input { 
+            .switch input {
                 opacity: 0;
                 width: 0;
                 height: 0;
@@ -345,15 +387,15 @@ folder instead of downloading all of them to reduce the load. -->
                 transition: .4s;
             }
 
-            input:checked + .slider {
+            input:checked+.slider {
                 background-color: #2196F3;
             }
 
-            input:focus + .slider {
+            input:focus+.slider {
                 box-shadow: 0 0 1px #2196F3;
             }
 
-            input:checked + .slider:before {
+            input:checked+.slider:before {
                 -webkit-transform: translateX(26px);
                 -ms-transform: translateX(26px);
                 transform: translateX(26px);
@@ -370,28 +412,30 @@ folder instead of downloading all of them to reduce the load. -->
 
             /*   Loader div      */
 
-            .loader-spin-parent{
-                position:relative;
+            .loader-spin-parent {
+                position: relative;
             }
 
-            .loader-spin-icon{
-                display:block; 
-                margin:auto;
-            }
-            .loader-spin-iconDiv{
-                display:block; 
-                z-index: 1000; 
-                position: absolute; 
-                top: 0; 
-                left: 0; 
-                width: 100%; 
-                height: 100%; 
-                background: rgba( 255, 255, 255, .8 );
+            .loader-spin-icon {
+                display: block;
+                margin: auto;
             }
 
-            .disp_none{
+            .loader-spin-iconDiv {
+                display: block;
+                z-index: 1000;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 255, 255, .8);
+            }
+
+            .disp_none {
                 display: none !important;
             }
+
             /*
             .tooltip-inner {
             max-width: none;
@@ -418,17 +462,11 @@ folder instead of downloading all of them to reduce the load. -->
 
                 <!-- Header Navbar: style can be found in header.less -->
                 <nav class="navbar navbar-static-top">
-
                     <div class="navbar-custom-menu pull-left">
                         <ul class="nav navbar-nav">
                             <li><a href="index.php?np=1">Pipelines </a></li>
                             <li><a href="index.php?np=2">Projects </a></li>
                             <li><a href="index.php?np=5">Run Status </a></li>
-                            <?php
-    include("php/funcs.php");
-            $np = isset($_REQUEST["np"]) ? $_REQUEST["np"] : "";
-            $id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "";
-                            ?>
                         </ul>
                     </div>
                     <div class="navbar-custom-menu pull-right">
@@ -444,8 +482,8 @@ folder instead of downloading all of them to reduce the load. -->
                                 </a>
                             </li>
                             <?php 
-                            if ($login == 1 && $SHOW_WIZARD){
-                                echo '<li id="manageProfileWizard" class="dropdown notifications-menu" >
+    if ($login == 1 && $SHOW_WIZARD){
+        echo '<li id="manageProfileWizard" class="dropdown notifications-menu" >
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" >
                                     <i data-toggle="tooltip" data-placement="bottom" title="Wizards" style="padding:3px; padding-left:0px; padding-right:5px;" class="fa fa-magic"></i>
                                     <small id="wizAmount" style="display:none" class="label pull-right label-warning"></small>
@@ -465,11 +503,11 @@ folder instead of downloading all of them to reduce the load. -->
                                     </li>
                                 </ul>
                             </li>';
-                            }
+    }
 
-                            if ($login == 1){
-                                echo '<li><a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" title="Profiles"><i class="glyphicon glyphicon-user"></i> </a></li>';
-                            }
+            if ($login == 1){
+                echo '<li><a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" title="Profiles"><i class="glyphicon glyphicon-user"></i> </a></li>';
+            }
                             ?>
 
                             <li class="dropdown">
@@ -477,13 +515,17 @@ folder instead of downloading all of them to reduce the load. -->
                                 <ul class="dropdown-menu" role="menu">
                                     <li><a href="http://dolphinnext.readthedocs.io/" target="_blank">Reference Documentation</a></li>
                                     <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html" target="_blank">Quick Start Guide</a></li>
-                                    <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/dev_quick.html" target="_blank"> Developer Tutorial</a></li>
+                                    <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/dev_quick.html" target="_blank">Developer Tutorial</a></li>
+                                    <li><a href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/faq.html" target="_blank">Frequently Asked Questions</a></li>
                                     <!--                                    <li class="divider"></li>-->
                                     <!--                                    <li><a href="#">One more separated link</a></li>-->
                                 </ul>
                             </li>
+                            <li>
+                                <a id="tooglehelp" class="tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true"><i class="glyphicon glyphicon-question-sign"></i></a>
+                            </li>
 
-                            <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><b style="color:#7c1842;" id="dn-version" ver="<?php echo DN_VERSION?>" > VERSION <?php echo DN_VERSION?> </b></a>
+                            <li><a id="dnVersionBut" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><span id="dn-version" ver="<?php echo DN_VERSION?>">v<?php echo DN_VERSION?> </span></a>
                                 <div class="dropdown-menu" style="width:650px; padding:0px;">
                                     <div class="panel panel-default" style="margin:0px;">
                                         <div class="panel-heading clearfix">
@@ -491,14 +533,15 @@ folder instead of downloading all of them to reduce the load. -->
                                                 <h5>&nbsp; Version Notes</h5>
                                             </div>
                                             <div class="pull-right" style="padding-top:6px;">
-                                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" > <span aria-hidden="true">&times;</span></a>
+                                                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true"> <span aria-hidden="true">&times;</span></a>
                                             </div>
                                         </div>
                                         <div class="panel-body" style="padding:0px;">
                                             <textarea rows="30" class="form-control" style="resize:none; " id="versionNotes"></textarea>
                                         </div>
                                     </div>
-                                </div></li>
+                                </div>
+                            </li>
                             <?php
     if ($login == 1 && $role == "admin"){
         echo '<li class="dropdown tasks-menu" id="softUpdBut" style="display:none;">
@@ -543,7 +586,7 @@ folder instead of downloading all of them to reduce the load. -->
             <!-- Left side column. contains the logo and sidebar -->
             <aside class="main-sidebar">
                 <!-- sidebar: style can be found in sidebar.less -->
-                <section class="sidebar" >
+                <section class="sidebar">
                     <!-- Sidebar user panel -->
                     <div class="user-panel" style="padding-bottom:5px;">
                         <div id="userAvatar" style="display:inline" class="pull-left image">
@@ -620,7 +663,7 @@ folder instead of downloading all of them to reduce the load. -->
                                 <!--/.box-header -->
                                 <div class="box-body table-responsive" style="min-height:90vh; overflow-y:scroll;">
 
-                                    <?php print getPage($np, $login, $id); 
+                                    <?php print getPage($np, $login, $id, $ownerID); 
 
                                     ?>
                                 </div>
@@ -645,80 +688,63 @@ immediately after the control sidebar -->
                 <p> </p>
             </footer>
 
-            <?php print include("php/wizard.php"); ?>
-            <!--        feedback modal-->
-            <div id="feedback">
-                <div id="feedback-form" style='display:none;' class="col-xs-4 col-md-4 panel panel-default">
-                    <form method="POST" action="/feedback" class="form panel-body" role="form">
+            <aside id="controlSidebarHelp" class="control-sidebar control-sidebar-light">
+                <div>
+                    <div style="padding-top:15px; padding-right:15px;">
+                        <a href="#" class="pull-right" data-toggle="control-sidebar"> <span aria-hidden="true" style="font-size:larger;">×</span></a>
+                    </div>
+                    <div style="margin-top:30px; text-align:center;"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOEfKtAAAABmJLR0QA/wD/AP+gvaeTAAAQ30lEQVR4nO2beViTx77HvzMJAYGwySpKCAoIQZCK3RdPb4+V2lprxfVUXEqPtWq11uXaHqut4rGLdnGr1rqcq63SxVbrWq3S2roDYReBECDs+06SmfsHEms9JIE3VO89+TxPnuedzPv7zW++eWd5ZyaAFStWrFixYsWKFStWrFix8p8FudMB/BEvr3AHGxviQimzpZQ5AQBjtJ4x2qbV8tqyMmXTnY7x99wxAQcMCO5HxOJhlCCKcURQQuSEEBljzNmYHaW0jnNewIE8AqQw4DLR668UFGSW/Fmx/54/UcAYkV9A+gjCaTQVkdFMzwZ35jg5OTJ//wHU18cLPv084ezsBBsbMZydHAEAdfWN0Gp1qKurR4mmHMWaUqgKilh9fSPt9EEpzWRM/wMoOVqQG3oWSND/GbXqdQFlsrAQIuLTCaHTGGPeABAUFMD/8tj9ZGikAkMUwfD19e6R76KiEqRlXEPS1TScOXueX8vJJwBAKSnR6/luERHtys9XZluwOrfRawLKBoY9CMb/G8BoACQiPISPGxdNRj7xKLy93bu0a2trQ3VNPbTtWjQ0NIJzDicnKUQiCg8PN0gkki5tS0orcOJkIr759hhXKjMJAE6AQ+BsrUqVed7ilUQvCOjnpwilYvIh5/yvEokNmxjzNI2dFoOBA/1uuU+n0yEpOQOpadnIyLiG3Dw1dDodJBIx+rq5QWJjA6nUAYQQ1Nc3QqfXobKyGm3tWojFYgwaKMPgwQMRER6KoREhEIvFt/i/fr0Au/YcQELCEd6u1RJCyXHoyQKVKjXLkvW1mIAeCoWjQwtWg5O5IrGIzJoxgb44axLc3d0M99TXN+LIsZ9w+tQ5aErLcc9QBcLDQ6AIDUJgoP9tInSFVqtFTo4Kmdm5SE5KQ7IyE57ubhj55GMYNfIxODtLDfdWVFRj+2dfYOfuBK7T6/Xg/OPWZtEKS43mFhFwQIBiuJjQfYyxQU+OfBTLl82Fn18/Q/7FSynYvfsrlJSVI3rUCIwaOQIDBvhYomgDRUUl+OHoTzh+4iy8PT0wfXoM7h0eYchXFRRhTfxG/HjqF1BKcvQgk9W5qVeElitYQJlcMReEbJA62tP41Uvo06P/y5B35ux5bNn6L/T39casmZMQGhootDizSEvLxs5dB6Au1GD+vBl45OF7DXnfH/4Rb7z5LmtqatFzzhcW5KdvElKWAAFjRDJ55gaAz4scGso3bVxDfLw9AAA5OSqsWfsJ3N3dsGhhHHx8PIXE2GOKi0uxfsN2VFTWYOWKBQgI6OiHS0rK8fLcN3lKSgYhBB+p8kIX/VnTnhvEiPzloftlcgWfP38Bb2ku5Uxfw3XaKr710838uecn8FTlBc70NXfFR5lynj/73AS+ectGrtNWcaav4c1NZfyVufO5TK7gMn/FPiBG1BMlemJE/eTkc4BMnRE7HvFrlkIsFqO2th6z57wB974ueG/dcnjfeBrvBjw93TF+XDRS07IROEgOkYhCIrFB9KgRqK6uhTI1a4iLS3n/utqKQ9313W0BZXLFOwSYN2XyWKx6ayEIIcjLU2P2nOV4efYLmDRxDCilph0ZobW1HYVFGhQXlaK1tR12dhKzR+iuoJTinsgwNDY2YdLUeRjzzBOwtZVgxIgHUFpagfSMnEhXN09SW1Nxpjt+u9UH+gWEPU04//7hh6LIrs/XQySiyM1V49XXVmLD+ysQGOjfHXe3oNVq8eWBw0hIOIyMzBzo9cyQJxaLERYWjPHjnkLM+Gijk2lzqK6uRVubFm3tbfCX9QdjDDPjluDs2fOccDZOpco8aK4vswWUy8O8QEm2bz9v6aHvdlBnZylKSsoRN3sZPlq/8raJcncoLCzBSy8vQ1ZWrsl7BwcHYMvmePjL+ve4vM4yZ7+yHPv3bYSjowNqaurwzNhZrKSkvI6CDM7NVZab48dsAWX+ir2EkskHvtxMooYNQVtbG6ZNfw3LlsxBZKSixxXR6XSIfjoW168XGL6zs5MgOHgQbG0l0GjKUFJSdssT2a+fFw4d3AE3N5celwsA1TW1UKs1GBw8CHZ2Ely8lIJJU+YCnO9R5afHmuPDrM5qgDz0ERBMmTxxDIkaNgQAEL92E8aNixYkHgCo1RqDeIQQLFzwIq5eOoqDX2/D/n0b8fOZBJxL/AZjnn7CYKPRlOGD9dsFlQsAbq4uyMjMwYcffQYAuHd4BCaMHw0OvOA3UPGQOT7MEpCAvGFrK2GLXosDACQnpyM/vxATxo/uaewG/GS+eHzEA5BIJHhn1euYP3c6+vSxveUeLy93fLjhrdsmxFqtVnD5kyeOQUbmdShvvCIvfv3vsLWVcMrpG+bYmxRQJguNJMCTUyc/SzubTPw/N2H1O4tBiPA3QbFIhB2fvYfsjNOYOuXZLu8jhGDy5DGGdGNjEzQlZnVTRiGEYNVbC7Am/hMAQN++rpg8cQzlnI2Sy8PCTdmbFJCISCwhBNNjJwAAziZeQIDc75Z33T8L975ut6Tb24Q/gQAgl/uhn48XLl9JBQBMnx4DQghh4Cb7QVMCEhA6PiIilHe+/O/ddxCzZk4SHHRPUBdqDNdikQj9fL0s5nvmzIn4/PP9AACZny+GhAVzQulEmBhojQoolyvCOWO+T458lAAdy1GVVdWC5ntCOH3qnOE6KiocDvZ9LOZ7SFgwNCVlaG1tBwCMGjWCcMZ8+wcMCTNmZ1RABhIFAPdEdvi4cDEJjzw03DIRd5Ojx8/g6PEzhvScOdMsXsawYUNw+WoKACAyomN2IWZsmDEbE02YD6WUQHFjGUqpzETEUGHTlp7w09nf8Nqit8E5BwDEvvB8r/yQDzwwDBfOJwEAFIqgjkGS8EhjNsYFJKS/VOrIHBzsAQC5uWoEDvS3TLRmwDnHpi3/QtxLSw1N69FH7sObb87vlfL8BvSDRlMGAJBKHSCVOjAO4mvMxvgbOucuzs43t2lr6+rh6upkgVBNwxjDa4vewXeHThq+e+Lxh7Dxk7chFvVo5ckk7u6uqKyqNaSdnZxQX9foaszG1Cjcp08fiWEUam5pha2tsBd5c9m89X9uEW/C+NHYsiUetra2RqyE4SR1RENjoyFt72BHQOBgzMaEgKShsaGZd6b62NmiqqpOYJimaWpqxrbtew3pUSMfw9r4pb325HVSX98IqaPjzXRdE+eA0QqbGkRq6xsaDCkPDzeUV1QKi9IMfruQhIaGm5tmy5bNEbzGaA5VVbVwc73ZZdXV14OC1xoxMS4gIchraGiilZXVAIBBg+RQFxZbIlajpCozDdceHm6Q+Rntxy1GRlYOggcPBNCxHdrc3EIZp0bX2IwKyIEUAEjPyAEAPPrwcPyceNEy0Rqhuvrmj/77feXeJiU5HRHhIQAAZdqN/XfCkozZGBVQD3YJAC5dSgYAhIeHQJmaCcaYMTPBMH7z+o8rM70F5xwXLqWgc7nuymUlAIDyDg26wqiARXmZOYSSzMNHzzCgY18hcmgYzl80+qMIZuyzIxEcFAC53A+TJo4xbWABzl9IQsSQENjY2AAADv9wmlFKlCpVlsqYncmemTP+dYGqkKaldRxyioubjI8/2WmBkLtmeFQ4jh3Zg9Mn9yHmeeFrjuaw9dO9iI0dDwBISkpHYZGGMoYDpuxMCiimZBsI0W3/7AsAgNx/APr7+uDcb5eFxnzXcOmyEo4O9ggOCgAAbNu+DyBEJ6bYY8rWpIC5uWmFYDzh8JFTPF9VCACYP3cG3nt/G1pa2oTGfsdpb2/HmvhPsHTJywA6TnUdP5nIwfnu3Ny0QlP2Zk2uOMNqxqF/a9UGDgB+fv0wdcqzWLlqvaDgu2Lvvu9wz/DRCIsYiTXxG3t10Fr37hY8//xT8PPrB845Vqz8gAPQ6in+aY69WVP7urqKChcXdye1WvPQwAAZgoMCoAgNwrFjZ9DWrjU8+pagrKwSf4tdgJaWVmi1WlxNSkNgoD+CAi1XRiffHDyO7KxcLFk8GwDw9TdH8fmuA4QQslqdl/6NOT7Mnt4325NVlFLV8jfXsc6m/M7biyH3H9CT2LsOiFLQP+y1CD2V8O84eeoXJCQcxtr4ZQA6DkStWLmeUUqzwRrNevqAbhztaK6oaHd2ck/U6vQzfv31Ch333Cji4NAHXp5dH9ftCQ4OfeDr640UZSYkEhvEzZqEv019ziIbWJ0cPX4GO3cdwGefroO9fR80NDRhyrRXWXVlbatex54oKMgx+8R/t6PyDwidwTnZMXx4BHbt+IDY29t118Udg3OOjZv3IFWZiQ3rV8DBwR5NzS2YNm0Bv5qcDg4+SZ2fYXLq8nu6vbxRW1OR7OLq1azRlI5MTkrn0aP+QmxsLN/ELE1ZWSUWLFwFZycp4tcsga2tBE1NzZjx4mJ+5WoqAMxT52fs6q7fHrcLmVzxDwBvh4QMYju2vUvv1CFKU+j1DPsTDuGLL7/HP5bPw733DgXQcbph5ouLWfa1PALwxQX5GR/0xL+gjkUmD5sFgq3ufV1owv4tVOiBH0vCGMOpn37Fps17MOKx+/HSi1PQ2d388uslLFj4NqupqdUzzmYU5GXsNeGuSwS1vYL8tB3+AYrmysqafecvJAk+MWUJGhub8P2hk9h/4DCiosKxdVO84X8pra3teO/9Ldi5+ytQSip0jMUU5mf8LKQ84Z0X43kgBCJR7y94dkVNTR3O/XYZx4+dRZGmDE9Fj8CeXRtu+bvDj6fPYeWqDay4uJSC4Nu2Fl1ccXFWldCyBQvIRERMGEBJ7wvIOUdFRTU0mlJkZuciI/0aMrJyYCuxxYMPRuGVObEYfGNBtJPEny9g46bd/NJlJSGUlhBOFqny0/ZbKibBAlI9FXPCIBJbZr+iuroWM+OWgOn14Li9k/b06AsfH08EBQ/Ec2OjsTxk3m1rhk1NzThy7Cfs3JnAM7OuE0ppEyFY394iWafRXGm2SKA3ECwg53p7EAKp1NH0zWbg5uaCg19v67ZdY2MTzv16BSdOnMWRY2dYa2sbpZRUAWQD14s2q1SpRvc2eorwPlBEfcA5XJ2N/s33FsrLq7Du3c3w8OiLwKAADA4KQGCgv9lnn3V6PYqLS5GaloX0tGu4kpSOq1dTuV6vJwRED/AjYGSnvT3/IT09vb2nVTMH4QJy+ACAq6vU1J0AOkbCuL8v5crUrFtap4hS7unlwd3dXKij1AFSqSOkjvYQiURoampBS0sL6hsaoS4sYZWVVYQxbrAnlBZzPT/BCT/G9fSkWp1WI7heZiK8CRPWX0Qo9/HxNjmn1Ol0eH3xaihTswjn5FWu135FbGgomEjBGAst0ZQNKiktd6GEuIHDiYM7AlxMCG0gBK2M8RrGuZoAaoCoQJBMOS7n56aWCa1HTxE+iBDRfXL5AG5nJzEqYHNzK16e+wZPTLxAALynVqV9fCNLA+BHoXHcKQTNPWSyEB9wFvHg/fcY9ZOcnI5nxs5kiYkXwDlZW5CfvlRIuXcTgp5AIqKxnIM+Ff34v83XaMqwcdNu7E84xMFJKwefoVald2u1426nxwL6+g7uSwhdGhToz+67b6jhCWxpacMv5y7i22+P4+Spn7lOpwc4vtSJ6ZLi6xlFlgn77qGHiwkxIv+BWYc5Y6OmTxsPbx9PqAuKkXNdheSUdK7V6gghpJ1zvp8R8nFhXtr/ny28P9AjAf39Q8ZyQr/9w9ecUlrAGD8Hwo7q2tgxS7xr3u30qAm3t9ufENu2TSMMjYSQah1FtQQSdV7uld4/+2bFihUrVqxYsWLFipX/+/wvQxEt7BslUaMAAAAASUVORK5CYII=" /> </div>
+                    <form class="form panel-body" role="form">
+                        <div style="margin-top:30px; margin-bottom:15px;"><b>Need Help?</b></div>
                         <div class="form-group">
-                            <input class="form-control" name="email" autofocus placeholder="Your e-mail" type="email" />
+                            <p>Learn from the documentation below.</p>
                         </div>
                         <div class="form-group">
-                            <textarea class="form-control" name="message" required placeholder="Please write your feedback here..." rows="5"></textarea>
+                            <ul>
+                                <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#running-pipelines" target="_blank">Running Pipelines</a></li>
+                                <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#adding-files" target="_blank">Adding Files</a></li>
+                                <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/faq.html" target="_blank">Frequently Asked Questions</a></li>
+                                <li><a class="link-underline" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/known_issues.html" target="_blank">Known Issues</a></li>
+                            </ul>
+                            Not finding what you need? Visit our <a class="link-underline" href="https://dolphinnext.readthedocs.io" target="_blank">Reference Documentation</a></li>
                         </div>
-                        <button class="btn btn-primary pull-right" type="submit">Send</button>
+                    <div style="margin-top:30px; margin-bottom:15px;"><b>Contact our support</b></div>
+                    <div class="form-group">
+                        <textarea class="form-control" id="feedmessage" name="message" required placeholder="Describe your issue or share your ideas here..." rows="10"></textarea>
+                    </div>
+                    <button style="margin-top:15px;" class="btn btn-primary pull-right" type="button" id="sendfeedback">Send</button>
+                    <button style="margin-top:15px; margin-right:5px; " class="btn btn-default pull-right" type="button" href="#" data-toggle="control-sidebar" data-slide="true">Cancel</button>
                     </form>
                 </div>
-                <div id="feedback-tab">Feedback</div>
-            </div>
-            <!--  feedback modal ends-->
+            </aside>
+        <!-- The sidebar's background -->
+        <!-- This div must placed right after the sidebar for it to work-->
+        <div class="control-sidebar-bg"></div>
+        <!--            Contact Us footer-->
+        <a style="position:fixed; right: 15px; bottom: 0px; border-bottom-left-radius:0px; border-bottom-right-radius:0px;" href="#" class="btn btn-default tooglehelp" href="#" data-toggle="control-sidebar" data-slide="true"> <i class="fa fa-envelope"></i> Support</a>
 
-            <!-- Add google Modal Starts-->
-            <div id="googleModal" class="modal fade" tabindex="-1" role="dialog">
-                <div class="modal-dialog modal-xl" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                            <h4 class="modal-title">Google Cloud Console</h4>
-                        </div>
-                        <div class="modal-body">
-                            <form class="form-horizontal">
-                                <div class="panel panel-default">
-                                    <div>
-                                        </br>
-                                    <table id="googleTable" class="table">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Profile Name</th>
-                                                <th scope="col">Details</th>
-                                                <th scope="col">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Google instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></th>
-                                                <th style="width:300px;" scope="col">Status</th>
-                                                <th scope="col">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
-                                </div>
-                                </div>
-                            </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Add Google Modal Ends-->
+        <?php print include("php/wizard.php"); ?>
 
-        <!-- Add Amazon Modal Starts-->
-        <div id="amazonModal" class="modal fade" tabindex="-1" role="dialog">
+
+        <!-- Add google Modal Starts-->
+        <div id="googleModal" class="modal fade" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">Amazon Web Services Console</h4>
+                        <h4 class="modal-title">Google Cloud Console</h4>
                     </div>
                     <div class="modal-body">
                         <form class="form-horizontal">
                             <div class="panel panel-default">
                                 <div>
                                     </br>
-                                <table id="amazonTable" class="table">
+                                <table id="googleTable" class="table">
                                     <thead>
                                         <tr>
                                             <th scope="col">Profile Name</th>
                                             <th scope="col">Details</th>
-                                            <th scope="col">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></th>
+                                            <th scope="col">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Google instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></th>
                                             <th style="width:300px;" scope="col">Status</th>
                                             <th scope="col">Actions</th>
                                         </tr>
@@ -735,148 +761,204 @@ immediately after the control sidebar -->
             </div>
         </div>
         </div>
-    <!-- Add Amazon Modal Ends-->
+    <!-- Add Google Modal Ends-->
 
-    <!-- Add Amazon Node Modal Starts-->
-    <div id="addamazonNodeModal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Configuration</h4>
-                </div>
-                <div class="modal-body">
-                    <form class="form-horizontal">
-                        <div class="form-group" style="display:none">
-                            <div class="col-sm-10">
-                                <input type="text" class="form-control" name="id">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="col-sm-3 control-label">Nodes</label>
-                            <div class="col-sm-9">
-                                <input type="text" class="form-control" id="amazonnumNodes" required name="nodes" placeholder="Enter the number of nodes">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="col-sm-3 control-label">Use Autoscale</label>
-                            <div class="col-sm-9">
-                                <input type="checkbox" id="amazonautoscale_check" name="autoscale_check" data-toggle="collapse" data-target="#amazonautoscaleDiv">
-                            </div>
-                        </div>
-                        <div id="amazonautoscaleDiv" class="collapse">
-                            <div class="form-group row">
-                                <label class="col-sm-3 control-label">Maximum instances <span><a data-toggle="tooltip" data-placement="bottom" title="Maximum number of instances on the cluster"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                                <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="autoscale_maxIns" value="4" name="autoscale_maxIns" placeholder="Enter the number of maximum instances">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="col-sm-3 control-label">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></label> 
-                            <div class="col-sm-9">
-                                <input id="amazonautoshut_check"type="checkbox"  name="autoshutdown_check" >
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="amazonActivate">Activate Cluster</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Add Amazon Node Modal Ends-->
-    <!-- Add Google Node Modal Starts-->
-    <div id="addgoogleNodeModal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Configuration</h4>
-                </div>
-                <div class="modal-body">
-                    <form class="form-horizontal">
-                        <div class="form-group" style="display:none">
-                            <div class="col-sm-10">
-                                <input type="text" class="form-control" name="id">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="col-sm-3 control-label">Nodes</label>
-                            <div class="col-sm-9">
-                                <input type="text" class="form-control" id="googlenumNodes" required name="nodes" placeholder="Enter the number of nodes">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="col-sm-3 control-label">Use Autoscale</label>
-                            <div class="col-sm-9">
-                                <input type="checkbox" id="googleautoscale_check" name="autoscale_check" data-toggle="collapse" data-target="#googleautoscaleDiv">
-                            </div>
-                        </div>
-                        <div id="googleautoscaleDiv" class="collapse">
-                            <div class="form-group row">
-                                <label for="autoscale_maxIns" class="col-sm-3 control-label">Maximum instances <span><a data-toggle="tooltip" data-placement="bottom" title="Maximum number of instances on the cluster"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                                <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="googleautoscale_maxIns" value="4" name="autoscale_maxIns" placeholder="Enter the number of maximum instances">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="col-sm-3 control-label">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></label> 
-                            <div class="col-sm-9">
-                                <input id="googleautoshut_check" type="checkbox"  name="autoshutdown_check" >
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="googleActivate">Activate Cluster</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Add Google Node Modal Ends-->
-    
-    <!--Info Modal Starts-->
-    <div id="infoMod" class="modal fade" tabindex="-1" role="dialog">
+    <!-- Add Amazon Modal Starts-->
+    <div id="amazonModal" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Information</h4>
+                    <h4 class="modal-title">Amazon Web Services Console</h4>
                 </div>
                 <div class="modal-body">
-                    <span id="infoModText">Text</span>
-                    </br>
+                    <form class="form-horizontal">
+                        <div class="panel panel-default">
+                            <div>
+                                </br>
+                            <table id="amazonTable" class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Profile Name</th>
+                                        <th scope="col">Details</th>
+                                        <th scope="col">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></th>
+                                        <th style="width:300px;" scope="col">Status</th>
+                                        <th scope="col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        </div>
+                    </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
     </div>
+<!-- Add Amazon Modal Ends-->
+
+<!-- Add Amazon Node Modal Starts-->
+<div id="addamazonNodeModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Configuration</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group" style="display:none">
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="id">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Nodes</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="amazonnumNodes" required name="nodes" placeholder="Enter the number of nodes">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Use Autoscale</label>
+                        <div class="col-sm-9">
+                            <input type="checkbox" id="amazonautoscale_check" name="autoscale_check" data-toggle="collapse" data-target="#amazonautoscaleDiv">
+                        </div>
+                    </div>
+                    <div id="amazonautoscaleDiv" class="collapse">
+                        <div class="form-group row">
+                            <label class="col-sm-3 control-label">Maximum instances <span><a data-toggle="tooltip" data-placement="bottom" title="Maximum number of instances on the cluster"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="autoscale_maxIns" value="4" name="autoscale_maxIns" placeholder="Enter the number of maximum instances">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        <div class="col-sm-9">
+                            <input id="amazonautoshut_check" type="checkbox" name="autoshutdown_check">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="amazonActivate">Activate Cluster</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Amazon Node Modal Ends-->
+<!-- Add Google Node Modal Starts-->
+<div id="addgoogleNodeModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Configuration</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group" style="display:none">
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="id">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Nodes</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="googlenumNodes" required name="nodes" placeholder="Enter the number of nodes">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Use Autoscale</label>
+                        <div class="col-sm-9">
+                            <input type="checkbox" id="googleautoscale_check" name="autoscale_check" data-toggle="collapse" data-target="#googleautoscaleDiv">
+                        </div>
+                    </div>
+                    <div id="googleautoscaleDiv" class="collapse">
+                        <div class="form-group row">
+                            <label for="autoscale_maxIns" class="col-sm-3 control-label">Maximum instances <span><a data-toggle="tooltip" data-placement="bottom" title="Maximum number of instances on the cluster"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="googleautoscale_maxIns" value="4" name="autoscale_maxIns" placeholder="Enter the number of maximum instances">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Auto Shutdown <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon instance will be automaticaly shutdown when machine is idle for 10 minutes. This feature will be activated after you initiate your first run."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        <div class="col-sm-9">
+                            <input id="googleautoshut_check" type="checkbox" name="autoshutdown_check">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="googleActivate">Activate Cluster</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Google Node Modal Ends-->
+
+<!--Info Modal Starts-->
+<div id="infoMod" style="z-index:1055;" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Information</h4>
+            </div>
+            <div class="modal-body">
+                <span id="infoModText">Text</span>
+                </br>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+        </div>
+    </div>
+</div>
+</div>
 <!--Info Modal ENDs-->
 
 <!--Confirm Delete Modal-->
-<div id="confirmDelWizardModal" class="modal fade" tabindex="-1" role="dialog">
+<div id="confirmDeleteModal" class="modal fade" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" >Confirm</h4>
+                <h4 class="modal-title" id="confirmDeleteModalTitle">Confirm</h4>
             </div>
-            <div class="modal-body" id="confirmDelWizardModalText">Text</div>
+            <div class="modal-body" id="confirmDeleteModalText">Text</div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary delete" data-dismiss="modal" >Delete</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="confirmDeleteModalDelBtn">Delete</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
             </div>
         </div>
     </div>
 </div>
-<!--Confirm Delete Modal Ends-->
+<!--Confirm Del Modal Ends-->
+
+
+<!--Confirm Delete Wizard Modal-->
+<div id="confirmDelWizardModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Confirm</h4>
+            </div>
+            <div class="modal-body" id="confirmDelWizardModalText">Text</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary delete" data-dismiss="modal">Delete</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Confirm Delete Wizard Modal Ends-->
 
 
 <!--Google Platform Library on your web pages that integrate Google Sign-In-->
@@ -898,6 +980,7 @@ immediately after the control sidebar -->
 <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
 <script>
     $.widget.bridge('uibutton', $.ui.button);
+
 </script>
 <!-- AdminLTE App -->
 <script src="dist/js/adminlte.min.js"></script>
@@ -926,6 +1009,8 @@ immediately after the control sidebar -->
 <script src="bower_components/plupload/js/jquery.ui.plupload/jquery.ui.plupload.min.js"></script>
 <script src="bower_components/plupload/js/jquery.plupload.queue/jquery.plupload.queue.js"></script>
 <script type="text/javascript" src="dist/js/dataTables.checkboxes.js"></script>
+<script type="text/javascript" src="bower_components/toastr/build/toastr.min.js"></script>
+<script type="text/javascript" src="bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
 <?php print getJS($np, $login, $id); ?>
 
 </body>

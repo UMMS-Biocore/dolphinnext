@@ -32,7 +32,23 @@ if (!empty($_FILES)) {
         if (file_exists($targetFile)) {
             unlink($targetFile);
         }
+    //runpipeline.php
+    } else if (!empty($ownerID) && !empty($_FILES["pubweb"])){
+        $run_path = RUNPATH;
+        $uuid = $_POST['uuid'];
+        $dir = $_POST['dir'];
+        $targetDir = "$run_path/$uuid/pubweb/$dir";
+        
+        if (!file_exists($targetDir)) {
+            mkdir($targetDir, 0700, true);
+        }
+        $tempFile = $_FILES['pubweb']['tmp_name']; 
+        $targetFile =  "$targetDir/". $_FILES['pubweb']['name'];  
+        if (file_exists($targetFile)) {
+            unlink($targetFile);
+        }
     }
+    
     move_uploaded_file($tempFile,$targetFile);
 }
 

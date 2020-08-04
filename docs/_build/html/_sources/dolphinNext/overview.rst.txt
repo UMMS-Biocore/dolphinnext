@@ -19,7 +19,7 @@ Benefits of the design
 
 * **Build:** Easily create new pipelines using a drag and drop interface. No need to write commands from scratch, instead reuse existing processes/modules to create new pipelines. Pipelines can be exported as NextFlow files or readily run within DolphinNext. 
 
-* **Run:** Execute pipelines in any host environment with different executors such as SGE, LSF, SLURM, Ignite etc. Seamless Amazon Cloud integration to create a cluster (EC2), execute the pipeline and transfer the results to the storage service (S3).
+* **Run:** Execute pipelines in any host environment with different executors such as SGE, LSF, SLURM, Ignite etc. Seamless Amazon/Google Cloud integration to create a cluster in the cloud, execute the pipeline and transfer the results to the cloud storage service (Amazon Storage, S3 or Google Storage, GS).
 
 * **Resume:** A continuous checkpoint mechanism keeps track of each step of the running pipeline. Partially completed pipelines can be resumed at any stage even after parameter changes.
 
