@@ -128,10 +128,10 @@ A. Defining Host Profile:
 
     **1. Executor of Nextflow (in the profile -> run environment)**:
 
-        Nextflow itself is initiated with this method. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself. So time limit should be long enough to execute all of the processes in the pipeline.
+        Nextflow itself is initiated with this method. Currently, local, sge, slurm, and lsf executors are supported by DolphinNext to initiate nextflow. For `sge`, `slurm`, and `lsf` executors, it will be only used for running nextflow itself, so the time limit should be long enough to execute all of the processes in the pipeline. For `local` execution, it will limit the total amount of memory and CPU could be used by the run, so these values should be close enough to the maximum capacity of the memory and CPU. 
     
         - e.g. suggested parameters for sge/slurm/lsf: long (queue) 8 (GB Memory) 1 (CPU) 5000-8000 (min, Time)
-        - e.g. suggested parameters for local: 8 (GB Memory) 1 (CPU) 
+        - e.g. suggested parameters for local: 100 (GB Memory) 8 (CPU)
     
     **2. Executor of Nextflow Jobs (in the profile -> run environment)**:
 

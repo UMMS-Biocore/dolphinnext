@@ -1,6 +1,7 @@
 <?php
 require_once("funcs.php");
 require_once("update.php");
+require_once("run.php");
 
 class Pipeline{
     public $params = null;
@@ -52,6 +53,21 @@ class Pipeline{
                 }
 
             }
+        }
+        if (isset($params['run'])){
+            $headers = apache_request_headers();
+            $Run = new run();
+            $user=$Run->verifyBearerToken($headers);
+            if (!empty($user)){
+                $body = json_decode(file_get_contents('php://input'), true);
+                $run=$params['run'];
+                $result=$Run->$run($body, $params, $user);
+                if (!empty($result)){
+                    return json_encode($result);
+                }
+            } 
+            http_response_code(401);
+            return json_encode("Token not found."); 
         }
     }
 }

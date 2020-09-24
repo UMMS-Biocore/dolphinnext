@@ -93,8 +93,38 @@ if (!empty($secUiconfig)){
     define('SHOW_WIZARD', $SHOW_WIZARD);
     define('SHOW_TEST_PROFILE', $SHOW_TEST_PROFILE);
     define('TEST_PROFILE_GROUP_ID', $TEST_PROFILE_GROUP_ID);
-
 }
+// SSO Config:
+$secSSOconfig = isset($secRaw['SSOCONFIG']) ? $secRaw['SSOCONFIG'] : "";
+$SSO_LOGIN=false;
+$SSO_URL=false;
+$CLIENT_ID=false;
+$CLIENT_SECRET=false;
+if (!empty($secSSOconfig)){
+    $SSO_LOGIN= isset($secSSOconfig['SSO_LOGIN']) ? $secSSOconfig['SSO_LOGIN'] : $SSO_LOGIN;
+    $SSO_URL= isset($secSSOconfig['SSO_URL']) ? $secSSOconfig['SSO_URL'] : $SSO_URL;
+    $CLIENT_ID= isset($secSSOconfig['CLIENT_ID']) ? $secSSOconfig['CLIENT_ID'] : $CLIENT_ID;
+    $CLIENT_SECRET= isset($secSSOconfig['CLIENT_SECRET']) ? $secSSOconfig['CLIENT_SECRET'] : $CLIENT_SECRET;
+}
+define('SSO_LOGIN', $SSO_LOGIN);
+define('SSO_URL', $SSO_URL);
+define('CLIENT_ID', $CLIENT_ID);
+define('CLIENT_SECRET', $CLIENT_SECRET);
+
+// DMETA Config:
+$secDMETAconfig = isset($secRaw['DMETACONFIG']) ? $secRaw['DMETACONFIG'] : "";
+$SHOW_DMETA=false;
+$DMETA_URL=false;
+$DMETA_LABEL=false;
+if (!empty($secDMETAconfig)){
+    $SHOW_DMETA= isset($secDMETAconfig['SHOW_DMETA']) ? $secDMETAconfig['SHOW_DMETA'] : $SHOW_DMETA;
+    $DMETA_URL= isset($secDMETAconfig['DMETA_URL']) ? $secDMETAconfig['DMETA_URL'] : $DMETA_URL;
+    $DMETA_LABEL= isset($secDMETAconfig['DMETA_LABEL']) ? $secDMETAconfig['DMETA_LABEL'] : $DMETA_LABEL;
+}
+define('SHOW_DMETA', $SHOW_DMETA);
+define('DMETA_URL', $DMETA_URL);
+define('DMETA_LABEL', $DMETA_LABEL);
+
 
 $line = fgets(fopen(__DIR__."/../NEWS", 'r'));
 if (!empty($line)){

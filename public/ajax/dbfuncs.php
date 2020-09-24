@@ -93,7 +93,6 @@ class dbfuncs {
     function insTable($sql)
     {
         $data = array();
-
         if ($res = $this->runSQL($sql))
         {
             $insertID = self::$link->insert_id;
@@ -433,6 +432,11 @@ class dbfuncs {
         $run_path_real = "{$this->run_path}/$uuid/run";
         return $run_path_real;
     }
+    function getServerRunTemplatePath($runId){
+        $run_template = "{$this->tmp_path}/runtmplt/$runId".".tar.gz";;
+        return $run_template;
+    }
+
 
     function getDolphinPathReal($proPipeAll){
         $project_pipeline_id = $proPipeAll[0]->{'id'};
@@ -1067,6 +1071,24 @@ class dbfuncs {
         }
         return $uuidCmd;
 
+    }
+
+    // convert cluster-2 to oy2@umass.edu 
+    function getRunEnv($run_env, $ownerID){
+        $profileAr = explode("-", $run_env);
+        $profileType = $profileAr[0];
+        $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
+        $run_env = $profileType;
+        if ($profileType == "cluster" && !empty($profileId)){
+            $proData = $this->getProfileClusterbyID($profileId, $ownerID);
+            $proDataAll = json_decode($proData,true);
+            if (!empty($proDataAll[0])) {
+                $username = $proDataAll[0]["username"];
+                $hostname = $proDataAll[0]["hostname"];
+                $run_env = $username."@".$hostname;
+            }
+        }
+        return $run_env;
     }
 
     function getRenameCmd($dolphin_path_real,$attempt){
@@ -2511,6 +2533,10 @@ class dbfuncs {
         $sql = "SELECT * FROM users WHERE id = '$id' AND deleted=0";
         return self::queryTable($sql);
     }
+    function getUserBySSOId($sso_id) {
+        $sql = "SELECT * FROM users WHERE sso_id = '$sso_id' AND deleted=0";
+        return self::queryTable($sql);
+    }
     function getUserByEmail($email) {
         $email = str_replace("'", "''", $email);
         $sql = "SELECT * FROM users WHERE email = '$email' AND deleted=0";
@@ -2630,6 +2656,7 @@ class dbfuncs {
         $sql = "UPDATE google_credentials SET name='$name', project_id='$project_id', key_name='$key_name', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    //protect run/pipeline entrance 
     function insertToken($id, $np, $ownerID ){
         $token= $this->getKey(10);
         if (empty($token)){
@@ -2645,6 +2672,15 @@ class dbfuncs {
 
     }
 
+    function insertAccessToken($accessToken, $expirationDate, $sso_user_id, $client_id, $scope, $user_id) {
+        $sql = "INSERT INTO accessTokens(accessToken, expirationDate, sso_user_id, client_id, scope, user_id) VALUES ('$accessToken', '$expirationDate',  '$sso_user_id', '$client_id', '$scope', '$user_id')";
+        return self::insTable($sql);
+    }
+    function insertRefreshToken($refreshToken, $sso_user_id, $client_id, $scope, $user_id) {
+        $sql = "INSERT INTO refreshTokens(refreshToken, sso_user_id, client_id, scope, user_id) VALUES ('$refreshToken', '$sso_user_id', '$client_id', '$scope' , '$user_id')";
+        return self::insTable($sql);
+    }
+
     function insertGithub($username, $email, $password, $ownerID) {
         $sql = "INSERT INTO github (username, email, password, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
               ('$username', '$email', '$password', now() , now(), '$ownerID', '3', '$ownerID')";
@@ -2653,6 +2689,15 @@ class dbfuncs {
     function updateGithub($id, $username, $email, $password, $ownerID) {
         $sql = "UPDATE github SET username='$username', email='$email', password='$password', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
+    }
+
+    function getSSOAccessTokenByUserID($ownerID) {
+        $sql = "SELECT accessToken FROM accessTokens WHERE user_id = '$ownerID' ORDER BY id DESC LIMIT 1";
+        return self::queryTable($sql);
+    }
+    function getSSOAccessToken($accessToken) {
+        $sql = "SELECT * FROM accessTokens WHERE accessToken = '$accessToken' ORDER BY id DESC LIMIT 1";
+        return self::queryTable($sql);
     }
     function getGithub($ownerID) {
         $sql = "SELECT id, username, email, owner_id, group_id, perms, date_created, date_modified, last_modified_user FROM github WHERE owner_id = '$ownerID' AND deleted=0";
@@ -2727,7 +2772,11 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     function getCollections($ownerID) {
-        $sql = "SELECT id, name FROM collection WHERE owner_id = '$ownerID' AND deleted = 0";
+        $sql = "SELECT c.id, c.name, count(fc.c_id) AS fileCount
+                FROM collection c
+                INNER JOIN file_collection fc ON c.id=fc.c_id
+                WHERE c.owner_id = '$ownerID' AND c.deleted = 0 AND fc.deleted=0
+                GROUP BY fc.c_id";
         return self::queryTable($sql);
     }
     function getCollectionById($id,$ownerID) {
@@ -2899,6 +2948,10 @@ class dbfuncs {
     }
     function removeProGoogle($id) {
         $sql = "DELETE FROM profile_google WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    function removeSSOAccessToken($accessToken) {
+        $sql = "DELETE FROM accessTokens WHERE accessToken = '$accessToken'";
         return self::runSQL($sql);
     }
     //    ------------- Parameters ------------
@@ -4168,6 +4221,24 @@ class dbfuncs {
         $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_type, archive_dir, s3_archive_dir, gs_archive_dir, run_env, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$s3_archive_dir', '$gs_archive_dir', '$run_env', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
+
+    function saveCollection($name, $ownerID) {
+        $colData = $this->getCollectionByName($name, $ownerID);
+        $colData = json_decode($colData,true);
+        if (isset($colData[0])){
+            $colId = $colData[0]["id"];
+        } else {
+            $colId = "";
+        }
+        if (empty($colId)){
+            $data = $this->insertCollection($name, $ownerID);
+        } else {
+            $data = json_encode(array('id' => $colId));
+        }
+        return $data;
+    }
+
+
     function insertCollection($name, $ownerID) {
         $sql = "INSERT INTO collection (name, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
                   ('$name', '$ownerID', 3, now(), now(), '$ownerID')";
@@ -4178,29 +4249,14 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     function insertFileCollection($f_id, $c_id, $ownerID) {
-        $sql = "INSERT INTO file_collection (f_id, c_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$c_id', '$ownerID', now(), now(), '$ownerID', 3)";
+        $sql = "INSERT INTO file_collection (f_id, c_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$c_id', '$ownerID', now(), now(), '$ownerID', 3) ON DUPLICATE KEY UPDATE date_modified = now() ";
         return self::insTable($sql);
     }
     function insertFileProject($f_id, $p_id, $ownerID) {
         $sql = "INSERT INTO file_project (f_id, p_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$p_id', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
-    function checkInsertUrlInput($name, $type, $ownerID) {
-        $url_id = "";
-        if (!empty($name)) {
-            $checkUrl = $this->checkInput($name,$type);
-            $checkUrlData = json_decode($checkUrl,true);
-            if (isset($checkUrlData[0])){
-                $url_id = $checkUrlData[0]["id"];
-            } else {
-                //insert into input table
-                $insertIn = $this->insertInput($name, $type, $ownerID);
-                $insertInData = json_decode($insertIn,true);
-                $url_id = $insertInData["id"];
-            }
-        }
-        return $url_id;
-    }
+
     function insertInput($name, $type, $ownerID) {
         $sql = "INSERT INTO input(name, type, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
                   ('$name', '$type', '$ownerID', 3, now(), now(), '$ownerID')";
@@ -4369,12 +4425,12 @@ class dbfuncs {
         }
         return self::queryTable($sql);
     }
-    
-                     
-    
-    
-    
-    
+
+
+
+
+
+
     function getExistProjectPipelines($pipeline_id,$type,$ownerID) {
         if ($type == "user"){
             $where = " where u.deleted=0 AND pp.deleted = 0 AND pp.pipeline_id = '$pipeline_id' AND pp.owner_id = '$ownerID'";
@@ -4400,12 +4456,216 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline_input SET collection_id='$collection_id', url='$url', urlzip='$urlzip', checkpath='$checkpath', project_pipeline_id='$project_pipeline_id', input_id='$input_id', project_id='$project_id', pipeline_id='$pipeline_id', g_num='$g_num', given_name='$given_name', qualifier='$qualifier', last_modified_user ='$ownerID'  WHERE id = $id";
         return self::runSQL($sql);
     }
+    function updateProPipeInputCollInput($id, $input_id, $collection_id, $ownerID) {
+        $sql = "UPDATE project_pipeline_input SET collection_id='$collection_id', input_id='$input_id', last_modified_user ='$ownerID', date_modified= now()  WHERE id = $id";
+        return self::runSQL($sql);
+    }
     function duplicateProjectPipelineInput($new_id,$old_id,$ownerID) {
         $sql = "INSERT INTO project_pipeline_input(url, urlzip, checkpath, input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, project_pipeline_id, owner_id, perms, date_created, date_modified, last_modified_user)
                     SELECT url, urlzip, checkpath, input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, '$new_id', '$ownerID', '3', now(), now(),'$ownerID'
                     FROM project_pipeline_input
                     WHERE deleted=0 AND project_pipeline_id='$old_id'";
         return self::insTable($sql);
+    }
+
+    function checkAndInsertProjectInput($project_id, $input_id, $ownerID){
+        $projectInputID = 0;
+        //check if project input is exist
+        $input_id = (string)$input_id;
+        $checkPro = $this->checkProjectInput($project_id, $input_id);
+        $checkProData = json_decode($checkPro,true);
+        if (isset($checkProData[0])){
+            $projectInputID = $checkProData[0]["id"];
+        } else {
+            //insert into project_input table
+            $insertPro = $this->insertProjectInput($project_id, $input_id, $ownerID);
+            $insertProData = json_decode($insertPro,true);
+            $projectInputID = $insertProData["id"];
+        }
+        return $projectInputID;
+    }
+
+    function getEmptyCollectionId($ownerID, $collection_name,$collNameArr, $suffix){
+        $collection_id = 0;
+        $suffix += 1;
+        error_log($suffix);
+        $newColName = "{$collection_name}-{$suffix}";
+        // first check if it is in $collNameArr
+        error_log(print_r($newColName, TRUE));
+        error_log(print_r($collNameArr, TRUE));
+
+        if (!in_array($newColName, $collNameArr)){
+            $collData = json_decode($this->saveCollection($newColName, $ownerID),true);
+            if (!empty($collData["id"])){
+                $collection_id = $collData["id"];
+            }
+            return $collection_id;
+        } else {
+            // if it is found in $collection_name_Array add suffix
+            $this->getEmptyCollectionId($ownerID, $collection_name,$collNameArr,$suffix);
+        }
+
+
+    }
+
+    function checkCollectionFiles($file_array,$collection_name, $ownerID) {
+        $collection_id = 0;
+        //function getCollectionFiles($collection_id,$ownerID);
+        //        if (!in_array($c_id, $collection_arr))
+        // get all collections of user
+        $allColl = json_decode($this->getCollections($ownerID),true);
+        $collNameArr = array();
+        // a. check if is there any collection that has all the files in it 
+        sort($file_array);
+        for ($i = 0; $i < count($allColl); $i++) {
+            $coll_id = $allColl[$i]["id"]; 
+            $collNameArr[] = $allColl[$i]["name"]; 
+            $collFileIds = array();
+            $files = json_decode($this->getCollectionFiles($coll_id,$ownerID),true);
+            foreach ($files as $file_item):
+            $file_id = $file_item["id"];
+            settype($file_id, 'integer');
+            $collFileIds[] = $file_id;
+            endforeach;
+            sort($collFileIds);
+            // same collection found return collection_id
+            if ($collFileIds==$file_array) {
+                error_log("return $coll_id");
+                return $coll_id;
+            }
+        }
+        error_log("error: return $coll_id");
+        // b. if collection is not found, use $collection_name to create coll_name
+        $collection_id = $this->getEmptyCollectionId($ownerID, $collection_name,$collNameArr,1);
+
+        // use $file_array and insert collections
+        settype($collection_id, 'integer');
+        for ($i = 0; $i < count($file_array); $i++) {
+            $file_id = $file_array[$i];
+            settype($file_id, 'integer');
+            $this->insertFileCollection($file_id, $collection_id, $ownerID);
+        }
+        return $collection_id;
+    }
+
+    function checkAndInsertCollection($inputVal, $ownerID){
+        $collection_id = 0;
+        // e.g. collection data:
+        // $name: experiment
+        // $file_env: cluster-2
+        // $files_used [["c_rep1.1.fq","c_rep1.2.fq"],["c_rep2.1.fq","c_rep2.2.fq"]]
+        // $files_used converted to: c_rep1.1.fq,c_rep1.2.fq | c_rep2.1.fq,c_rep2.2.fq
+        // $file_dir:["s3://Vitiligo_11_15_17/dolphin_import","9"]
+        // $file_dir converted to:s3://Vitiligo_11_15_17/dolphin_import\t9
+        // $collection_type: pair
+        // $file_type: fastq
+        // $collection_name: Vitiligo experiment-2
+
+        // use checkFileAndSave to save file and get file_id and fill $file_array
+        $file_array = array();
+        for ($i = 0; $i < count($inputVal); $i++) {
+            $name = $inputVal[$i]["name"]; 
+            $run_env = $inputVal[$i]["file_env"]; 
+            $run_env = $this->getRunEnv($run_env,$ownerID);
+            $files_used = $inputVal[$i]["files_used"]; 
+            $file_dir = $inputVal[$i]["file_dir"]; 
+            $collection_type = $inputVal[$i]["collection_type"];
+            $file_type = $inputVal[$i]["file_type"];
+            $archive_dir = "";
+            $s3_archive_dir = "";
+            $gs_archive_dir = "";
+            for ($k = 0; $k < count($file_dir); $k++) {
+                $file_dir[$k] = implode("\t", $file_dir[$k]);
+            }
+            $file_dir = implode("\t", $file_dir);
+            for ($k = 0; $k < count($files_used); $k++) {
+                $files_used[$k] = implode(",", $files_used[$k]);
+            }
+            $files_used = implode(" | ", $files_used);
+
+            $file_id = $this->checkFileAndSave($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID);
+            error_log("file id: ".$file_id);
+            if (!empty($file_id)){
+                $file_array[] = $file_id;
+            }
+        }
+        $collection_name = $inputVal[0]["collection_name"];
+        $collection_id = $this->checkCollectionFiles($file_array,$collection_name, $ownerID);
+        return $collection_id;
+    }
+
+    function checkFileAndSave ($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID){
+        $checkFile = json_decode($this->checkFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID),true);
+        if (isset($checkFile[0])){
+            $file_id = $checkFile[0]["id"];
+        } else {
+            $insert = json_decode($this->insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID),true);
+            $file_id = $insert["id"];
+        }
+        return $file_id;
+    }
+
+    function checkAndInsertInput($inputName, $inputType, $ownerID){
+        //check if input exist?
+        $input_id = 0;
+        if (!empty($inputName)) {
+            $checkIn = $this->checkInput($inputName,$inputType);
+            $checkInData = json_decode($checkIn,true);
+            if (isset($checkInData[0])){
+                $input_id = $checkInData[0]["id"];
+            } else {
+                //insert into input table
+                $insertIn = $this->insertInput($inputName, $inputType, $ownerID);
+                $insertInData = json_decode($insertIn,true);
+                $input_id = $insertInData["id"];
+            }
+        }
+        return $input_id;
+    }
+
+    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs){
+        $newProPipeId = null;
+        if ($type == "dmeta"){
+            $proPipeAll = json_decode($this->getProjectPipelines($old_run_id,"",$ownerID,""));
+            if (!empty ($proPipeAll[0])){
+                $sql = "INSERT INTO project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run)
+                    SELECT concat(name, '_dmeta'), project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run
+                    FROM project_pipeline
+                    WHERE id='$old_run_id' AND owner_id='$ownerID'";
+                $proPipe = self::insTable($sql);
+                $newProPipe = json_decode($proPipe,true);
+                $newProPipeId = $newProPipe["id"];
+                $this->duplicateProjectPipelineInput($newProPipeId, $old_run_id, $ownerID);
+
+                // use $inputs and replace entered projectPipelineInputs
+
+                foreach ($inputs as $inputName => $inputVal):
+                $input_id = 0;
+                $collection_id = 0;
+                $proPipeInData = json_decode($this->getProjectPipelineInputIdByInputName($inputName,$newProPipeId,$ownerID),true);
+                if (!empty($proPipeInData[0]) && $proPipeInData[0]["id"]){
+                    $proPipeInputId = $proPipeInData[0]["id"];
+                    $inputType = $proPipeInData[0]["input_type"];
+                    $project_id = $proPipeInData[0]["project_id"];
+                    // if $inputVal is array of array -> save as a collection
+                    //error_log($inputName);
+                    if (is_array($inputVal) && is_array($inputVal[0])){
+                        //collection
+                        $collection_id = $this->checkAndInsertCollection($inputVal, $ownerID);
+                    } else {
+                        //simple input
+                        $input_id = $this->checkAndInsertInput($inputVal, $inputType, $ownerID);
+                        $this->checkAndInsertProjectInput($project_id, $input_id, $ownerID);
+                    }
+                    if (!empty($input_id) || !empty($collection_id)){
+                        error_log("update updateValProPipeInput $input_id $collection_id");
+                        $this->updateProPipeInputCollInput($proPipeInputId, $input_id, $collection_id, $ownerID);
+                    }
+                }
+                endforeach;
+            }
+            return $newProPipeId;
+        }
     }
     function duplicateProcess($new_process_gid, $new_name, $old_id, $ownerID) {
         $sql = "INSERT INTO process(process_uuid, process_rev_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid)
@@ -4470,6 +4730,15 @@ class dbfuncs {
                     LEFT JOIN collection c ON c.id = ppi.collection_id
                     $where";
         return self::queryTable($sql);
+    }
+    function getProjectPipelineInputIdByInputName($name, $project_pipeline_id, $ownerID){
+        $where = " where ppi.deleted=0 AND ppi.given_name= '$name' AND ppi.owner_id = '$ownerID' AND ppi.project_pipeline_id = '$project_pipeline_id'" ;
+        $sql = "SELECT ppi.id, i.type as input_type, ppi.project_id
+                    FROM project_pipeline_input ppi
+                    LEFT JOIN input i ON (i.id = ppi.input_id)
+                    $where";
+        return self::queryTable($sql);
+
     }
     function insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID) {
         $sql = "INSERT INTO process_parameter(sname, process_id, parameter_id, type, closure, operator, reg_ex, optional, owner_id, date_created, date_modified, last_modified_user, perms, group_id)
@@ -4722,6 +4991,16 @@ class dbfuncs {
         $sql = "SELECT id, name FROM input WHERE name = BINARY '$name' AND type='$type'";
         return self::queryTable($sql);
     }
+    function checkFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID){
+        $name = trim($name);
+        $file_dir = trim($file_dir);
+        $archive_dir = trim($archive_dir);
+        $s3_archive_dir = trim($s3_archive_dir);
+        $gs_archive_dir = trim($gs_archive_dir);
+        $sql = "SELECT id, name FROM file WHERE name = BINARY '$name' AND file_dir = BINARY '$file_dir' AND  file_type='$file_type' AND files_used = BINARY '$files_used' AND collection_type='$collection_type' AND archive_dir = BINARY '$archive_dir' AND s3_archive_dir = BINARY '$s3_archive_dir' AND gs_archive_dir = BINARY '$gs_archive_dir' AND run_env = BINARY '$run_env' AND owner_id='$ownerID' AND deleted=0";
+        return self::queryTable($sql);
+    }
+
     function checkProjectInput($project_id, $input_id) {
         $sql = "SELECT id FROM project_input WHERE input_id = '$input_id' AND project_id = '$project_id'";
         return self::queryTable($sql);

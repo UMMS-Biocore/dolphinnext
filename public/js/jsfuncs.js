@@ -1727,6 +1727,28 @@ function cleanProcessName(proName) {
     return proName;
 }
 
+function cleanSpecChar(n) {
+    if (n){
+        n = n.replace(/-/g, "_")
+            .replace(/:/g, "_")
+            .replace(/,/g, "_")
+            .replace(/\$/g, "_")
+            .replace(/\!/g, "_")
+            .replace(/\</g, "_")
+            .replace(/\>/g, "_")
+            .replace(/\?/g, "_")
+            .replace(/\(/g, "_")
+            .replace(/\)/g, "_")
+            .replace(/\"/g, "_")
+            .replace(/\'/g, "_")
+            .replace(/\./g, "_")
+            .replace(/\//g, "_")
+            .replace(/\\/g, "_")
+            .replace(/@/g, "_"); 
+    }
+    return n;
+}
+
 function createLabel(proName) {
     proName = proName.replace(/_/g, " ");
     proName = proName.replace(/\w\S*/g, function (txt) {

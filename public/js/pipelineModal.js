@@ -486,10 +486,10 @@
 
 //template text for ace editor
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
-templateperl = '#perl example: \n\n#!/usr/bin/perl \n print \'Hi there!\' . \'\\n\';';
-templatepython = '#python example: \n\n#!/usr/bin/python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
+templateperl = '#perl example: \n\n#!/usr/bin/env perl \n print \'Hi there!\' . \'\\n\';';
+templatepython = '#python example: \n\n#!/usr/bin/env python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
 templatesh = '#shell example: \n\n#!/bin/sh \nmy_variable="Hello World" \necho \\$my_variable';
-templater = '';
+templater = '#R example: \n\n#!/usr/bin/env Rscript \nprint("Hello World!")';
 
 createAceEditors("editor", "#script_mode"); //ace process main editor
 createAceEditors("editorProHeader", "#script_mode_header") //ace process header editor
@@ -518,7 +518,7 @@ function createAceEditors(editorId, script_modeId) {
                     var newMode = $(script_modeId).val();
                     window[editorId].session.setMode("ace/mode/" + newMode);
                     var editorText = window[editorId].getValue();
-                    if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templatesh || editorText === '') {
+                    if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templater || editorText === templatesh || editorText === '') {
                         var newTempText = 'template' + newMode;
                         window[editorId].setValue(window[newTempText]);
                     }
