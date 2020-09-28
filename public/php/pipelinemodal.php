@@ -795,13 +795,37 @@
                                 <option value="html">HTML</option>
                                 <option value="table" plugin="dataTables.js">DataTables</option>
                                 <option value="table-percent" plugin="dataTables.js">DataTables Percentage</option>
-                                <option value="highcharts" plugin="highcharts.js">Highcharts</option>
+                                <!--<option value="highcharts" plugin="highcharts.js">Highcharts</option>-->
                                 <option value="rmarkdown">R Markdown</option>
                                 <option value="debrowser">DEBrowser</option>
                                 <option value="pdf">PDF Reader</option>
                                 <option value="rdata">RData</option>
                             </select>
-
+                        </div>
+                    </div>
+                    <div id="pubDmetaDiv" class="form-group">
+                        <div class="col-sm-12 control-label">
+                            <label><input type="checkbox" id="checkPubDmeta" name="pubDmeta" style="margin-right:3px;"> Publish to Dmeta <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to publish connected output files to Dmeta server."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        </div>
+                        <div class="col-sm-12 control-label">
+                            <label> Location of Filename <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the location of filename in the published file."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        </div>
+                        <div class="col-sm-7">
+                            <select id="pubDmetaFilename" name="pubDmetaFilename">
+                                <option value="row">Row Header</option>
+                                <option value="column">Column Header</option>
+                                <option value="filename">Name of the File</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-12 control-label">
+                            <label> Location of Features <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the location of features in the published file."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        </div>
+                        <div class="col-sm-7">
+                            <select id="pubDmetaFilename" name="pubDmetaFilename">
+                                <option value="row">Row Header</option>
+                                <option value="column">Column Header</option>
+                                <option value="filename">Name of the File</option>
+                            </select>
                         </div>
                     </div>
                 </form>
