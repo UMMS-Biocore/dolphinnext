@@ -4845,40 +4845,6 @@ function selectCloudKey(cloud) {
 
 }
 
-function configTextAllProcess(confText, exec_all_settings, type, proName, executor_job) {
-    if (type === "each") {
-        for (var keyParam in exec_all_settings) {
-            if (exec_all_settings[keyParam] !== '' && (keyParam === 'time' || keyParam === 'job_time') && executor_job != "ignite" && executor_job != "local") {
-                confText += 'process.$' + proName + '.time' + ' = \'' + exec_all_settings[keyParam] + 'm\'\n';
-            } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'cpu' || keyParam === 'job_cpu')) {
-                confText += 'process.$' + proName + '.cpus' + ' = ' + exec_all_settings[keyParam] + '\n';
-            } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'queue' || keyParam === 'job_queue') && executor_job != "ignite" && executor_job != "local") {
-                confText += 'process.$' + proName + '.queue' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
-            } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'memory' || keyParam === 'job_memory')) {
-                confText += 'process.$' + proName + '.memory' + ' = \'' + exec_all_settings[keyParam] + ' GB\'\n';
-            } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'opt' || keyParam === 'job_clu_opt') && executor_job != "local") {
-                confText += 'process.$' + proName + '.clusterOptions' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
-            }
-        }
-
-    } else {
-        for (var keyParam in exec_all_settings) {
-            if (exec_all_settings[keyParam] !== '' && (keyParam === 'time' || keyParam === 'job_time') && executor_job != "ignite" && executor_job != "local") {
-                confText += 'process.' + 'time' + ' = \'' + exec_all_settings[keyParam] + 'm\'\n';
-            } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'cpu' || keyParam === 'job_cpu')) {
-                confText += 'process.' + 'cpus' + ' = ' + exec_all_settings[keyParam] + '\n';
-            } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'queue' || keyParam === 'job_queue') && executor_job != "ignite" && executor_job != "local") {
-                confText += 'process.' + 'queue' + ' = \'' + exec_all_settings[keyParam] + '\'\n';
-            } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'memory' || keyParam === 'job_memory')) {
-                confText += 'process.' + 'memory' + ' = \'' + exec_all_settings[keyParam] + ' GB\'\n';
-            } else if (exec_all_settings[keyParam] !== '' && (keyParam === 'opt' || keyParam === 'job_clu_opt') && executor_job != "local") {
-                confText += 'process.' + 'clusterOptions' + ' = \'' + exec_all_settings[keyParam] + ' \'\n';
-            }
-        }
-    }
-    return confText
-}
-
 //type="" or "Opt"
 function displayStatButton(idButton, type) {
     var buttonList = ["runStatError", "runStatComplete", "runStatRunning", "runStatWaiting", "runStatConnecting", "runStatTerminated", "runStatAborted", "runStatManual", "runStatErrorOpt", "runStatCompleteOpt", "runStatRunningOpt", "runStatWaitingOpt", "runStatConnectingOpt", "runStatTerminatedOpt", "runStatAbortedOpt", "runStatManualOpt", "runStatErrorNoOpt", "runStatCompleteNoOpt", "runStatRunningNoOpt", "runStatWaitingNoOpt", "runStatConnectingNoOpt", "runStatTerminatedNoOpt", "runStatAbortedNoOpt", "runStatManualNoOpt"];
@@ -5115,6 +5081,16 @@ function autofillMountPathImage(pathArrayL1){
     var excludePaths = ["/lib", "/opt", "/bin", "/boot", "/dev", "/lib64", "/media", "/proc", "/root", "/sbin", "/srv", "/sys", "/usr", "/var"]
     // docker.runOptions = -v /export:/export
     // singularity.runOptions = -B /export:/export
+    
+    //default add /home to initial run binding list if google cloud is used. (credential file is required in the image)
+    var cloudType = $("#chooseEnv").find(":selected").val();
+    var patt = /(.*)-(.*)/;
+    var proType = cloudType.replace(patt, '$1');
+    if (proType == "google" && pathArrayL1.indexOf("/home") === -1) {
+        pathArrayL1.push("/home")
+    }
+    
+    
     var newRunOpt = "";
     var oldRunOpt = "";
     var bindParam = "";
@@ -5200,47 +5176,6 @@ function getPathArrayL1(pathArray){
     return pathArrayL1;
 }
 
-//initial run run-options to send with ajax
-function getInitRunOptions(pathArrayL1) {
-    var pathArrayL1Clone = pathArrayL1.slice();
-    //default add /home to initial run binding list if google cloud is used. (credential file is required in the image)
-    var cloudType = $("#chooseEnv").find(":selected").val();
-    var patt = /(.*)-(.*)/;
-    var proType = cloudType.replace(patt, '$1');
-    if (proType == "google" && pathArrayL1Clone.indexOf("/home") === -1) {
-        pathArrayL1Clone.push("/home")
-    }
-
-    var excludePaths = ["/lib", "/opt", "/bin", "/boot", "/dev", "/lib64", "/media", "/proc", "/root", "/sbin", "/srv", "/sys", "/usr", "/var"]
-    // docker.runOptions = -v /export:/export
-    // singularity.runOptions = -B /export:/export
-    var runOptions = "";
-    if (pathArrayL1Clone.length > 0) {
-        //default for initial run
-        var conType = "";
-        var bindParam = "";
-        if ($('#docker_check').is(":checked") === true) {
-            conType = "docker";
-            bindParam = "-v"
-        } else if ($('#singu_check').is(":checked") === true) {
-            conType = "singularity";
-            bindParam = "-B"
-        } else {
-            //singularity is default for initial run
-            conType = "singularity";
-            bindParam = "-B"; 
-        }
-        runOptions += conType+".runOptions='";
-        //combine items as /path -> /path:/path
-        for (var k = 0; k < pathArrayL1Clone.length; k++) {
-            if ($.inArray(pathArrayL1Clone[k], excludePaths) === -1){
-                runOptions += bindParam+" "+pathArrayL1Clone[k]+":"+pathArrayL1Clone[k]+" " 
-            }
-        }
-        runOptions += "'\n";
-    } 
-    return runOptions
-}
 
 //callbackfunction to first change the status of button to connecting
 function runProjectPipe(runProPipeCall, checkType) {
@@ -5252,7 +5187,6 @@ function runProjectPipe(runProPipeCall, checkType) {
     window.checkType = "";
     window.execOtherOpt = "";
     window.sshCheck = false;
-    window.initRunOptions = "";
     // check ssh key
     profileData= getJobData("job");
     if (profileData){
@@ -5298,8 +5232,6 @@ function runProjectPipe(runProPipeCall, checkType) {
                 pathArrayL1 = getPathArrayL1(pathArray)
                 //Autofill runOptions of singularity and docker image
                 window["imageRunOpt"] = autofillMountPathImage(pathArrayL1)
-                //initial run run-options to send with ajax
-                window.initRunOptions = getInitRunOptions(pathArrayL1)
                 // Call the callback
                 var runAfterSave = function (){
                     runProPipeCall(keepCheckType, uuid);
@@ -5318,7 +5250,6 @@ function runProjectPipe(runProPipeCall, checkType) {
 //click on run button (callback function)
 function runProPipeCall(checkType, uuid) {
     console.log("runProPipeCall")
-
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
     nxf_runmode = false;
@@ -5332,73 +5263,22 @@ function runProPipeCall(checkType, uuid) {
     var proId = profileTypeId.replace(patt, '$2');
     proTypeWindow = proType;
     proIdWindow = proId;
-    window.configTextRaw = '';
-
-    var amazon_cre_id = "";
-    var google_cre_id = "";
-    //check if s3 path is defined in output or file paths
-    if ($("#mRunAmzKeyDiv").css('display') === "inline") {
-        amazon_cre_id = $("#mRunAmzKey").val();
-    } 
-    google_cre_id = $("#mRunGoogKey").val();
-    //check if Deletion for intermediate files  is checked
-    //    if ($('#intermeDel').is(":checked") === true) {
-    //        window.configTextRaw  += "cleanup = true \n";
-    //        window.initRunOptions += "cleanup = true \n";
-    //    }
+    var eachExecConfig = {};
     var [allProSett, profileData] = getJobData("both");
-    var docker_check = $('#docker_check').is(":checked").toString();
     var executor_job = profileData[0].executor_job;
     var executor = profileData[0].executor;
-    //if executor is local check cpu and memory fields in profile.
-    if (executor == "local") {
-        var next_cpu = profileData[0].next_cpu;
-        var next_memory = profileData[0].next_memory;
-        if (next_cpu != null && next_cpu != "" && next_cpu != 0) {
-            window.configTextRaw += 'executor.$local.cpus' + ' = ' + next_cpu + '\n';
-            window.initRunOptions += 'executor.$local.cpus' + ' = ' + next_cpu + '\n';
-        }
-        if (next_memory != null && next_memory != "" && next_memory != 0) {
-            window.configTextRaw += 'executor.$local.memory' + ' = \'' + next_memory + ' GB\'\n';
-            window.initRunOptions += 'executor.$local.memory' + ' = \'' + next_memory + ' GB\'\n';
-        }
-
-    }
-    window.configTextRaw += 'process.executor = \'' + executor_job + '\'\n';
-    window.initRunOptions += 'process.executor = \'' + executor_job + '\'\n';
-    //all process settings eg. process.queue = 'short'
-    if ($('#exec_all').is(":checked") === true) {
-        var exec_all_settingsRaw = $('#allProcessSettTable').find('input');
-        var exec_all_settings = formToJson(exec_all_settingsRaw);
-        window.configTextRaw = configTextAllProcess(window.configTextRaw, exec_all_settings, "all", "", executor_job);
-        window.initRunOptions = configTextAllProcess(window.initRunOptions, exec_all_settings, "all", "", executor_job);
-    } else {
-        if (execOtherOpt != "" && execOtherOpt != null) {
-            var oldJobCluOpt = allProSett.job_clu_opt;
-            var newJobCluOpt = getNewExecOpt(oldJobCluOpt, execOtherOpt);
-            if (newJobCluOpt != "" && newJobCluOpt != null) {
-                allProSett.job_clu_opt = newJobCluOpt;
-            }
-        }
-        window.configTextRaw = configTextAllProcess(window.configTextRaw, allProSett, "all", "", executor_job);
-        window.initRunOptions = configTextAllProcess(window.initRunOptions, allProSett, "all", "", executor_job);
-    }
     if ($('#exec_each').is(":checked") === true) {
         var exec_each_settings = decodeURIComponent(formToJsonEachPro());
         if (IsJsonString(exec_each_settings)) {
             var exec_each_settings = JSON.parse(exec_each_settings);
             $.each(exec_each_settings, function (el) {
                 var each_settings = exec_each_settings[el];
-                var processName = $("#" + el + " :nth-child(2)").text()
-                //process.$hello.queue = 'long'
-                window.configTextRaw = configTextAllProcess(window.configTextRaw, each_settings, "each", processName, executor_job);
+                var processName = $("#" + el + " :nth-child(2)").text();
+                eachExecConfig[processName]= each_settings;
             });
         }
     }
-    console.log(window["configTextRaw"]);
-    console.log(window["initRunOptions"]);
-    var configText = encodeURIComponent(window["configTextRaw"]);
-    var initRunOptions = encodeURIComponent(window["initRunOptions"]);
+    eachExecConfig = encodeURIComponent(JSON.stringify(eachExecConfig));
     var manualRunCheck = "false";
     if (window["manualRun"]){ 
         if (window["manualRun"] == "true"){
@@ -5414,13 +5294,7 @@ function runProPipeCall(checkType, uuid) {
             p: "saveRun",
             nextText: nextText,
             proVarObj: proVarObj,
-            configText: configText,
-            profileType: proType,
-            profileId: proId,
-            initRunOptions: initRunOptions,
-            docker_check: docker_check,
-            google_cre_id: google_cre_id,
-            amazon_cre_id: amazon_cre_id,
+            eachExecConfig: eachExecConfig,
             project_pipeline_id: project_pipeline_id,
             runType: checkType,
             manualRun: manualRunCheck,

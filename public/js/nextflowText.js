@@ -377,13 +377,10 @@ function getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName)
                         window["processVarObj"][mergedProcessName] ={}
                     }
                     window["processVarObj"][mergedProcessName][varName] =newLine
-
                 } else {
                     newLine  = getNewLocalVarLine (lines[i], process_opt, gNum, varName, quoteType, pattern, varName);
-                    newScriptHeader +=  newLine + "\n";                                               
-
+                    newScriptHeader +=  "//* " + newLine + "\n";         
                 }
-
             } else {
                 newScriptHeader += lines[i] + "\n";
             }

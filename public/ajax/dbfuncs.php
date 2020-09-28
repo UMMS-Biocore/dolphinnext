@@ -282,25 +282,27 @@ class dbfuncs {
         foreach ($amazon_cre_id_Ar as $amazon_cre_id):
         if (!empty($amazon_cre_id)){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
-            foreach($amz_data as $d){
-                $access = $d->amz_acc_key;
-                $d->amz_acc_key = trim($this->amazonDecode($access));
-                $secret = $d->amz_suc_key;
-                $d->amz_suc_key = trim($this->amazonDecode($secret));
+            if (!empty($amz_data[0])){
+                foreach($amz_data as $d){
+                    $access = $d->amz_acc_key;
+                    $d->amz_acc_key = trim($this->amazonDecode($access));
+                    $secret = $d->amz_suc_key;
+                    $d->amz_suc_key = trim($this->amazonDecode($secret));
+                }
+                $access_key = $amz_data[0]->{'amz_acc_key'};
+                $secret_key = $amz_data[0]->{'amz_suc_key'};
+                $confText = "access_key=$access_key\nsecret_key=$secret_key\n";
+                $s3configDir = "{$this->amz_path}/config/run{$project_pipeline_id}/initialrun";
+                $configFileDir = $s3configDir;
+                $s3tmpFile = "$s3configDir/.conf.$amazon_cre_id";
+                if (!file_exists($s3configDir)) {
+                    mkdir($s3configDir, 0700, true);
+                }
+                $file = fopen($s3tmpFile, 'w');//creates new file
+                fwrite($file, $confText);
+                fclose($file);
+                chmod($s3tmpFile, 0700);
             }
-            $access_key = $amz_data[0]->{'amz_acc_key'};
-            $secret_key = $amz_data[0]->{'amz_suc_key'};
-            $confText = "access_key=$access_key\nsecret_key=$secret_key\n";
-            $s3configDir = "{$this->amz_path}/config/run{$project_pipeline_id}/initialrun";
-            $configFileDir = $s3configDir;
-            $s3tmpFile = "$s3configDir/.conf.$amazon_cre_id";
-            if (!file_exists($s3configDir)) {
-                mkdir($s3configDir, 0700, true);
-            }
-            $file = fopen($s3tmpFile, 'w');//creates new file
-            fwrite($file, $confText);
-            fclose($file);
-            chmod($s3tmpFile, 0700);
         }
         endforeach;
 
@@ -429,13 +431,32 @@ class dbfuncs {
     }
 
     function getServerRunPath($uuid){
-        $run_path_real = "{$this->run_path}/$uuid/run";
-        return $run_path_real;
+        return "{$this->run_path}/$uuid/run";;
     }
-    function getServerRunTemplatePath($runId){
-        $run_template = "{$this->tmp_path}/runtmplt/$runId".".tar.gz";;
-        return $run_template;
+    function getServerRunTemplateDir(){
+        return "{$this->tmp_path}/runtmplt";
     }
+    function getServerRunTemplateFile($runId){
+        return "{$this->tmp_path}/runtmplt/$runId".".tar.gz";
+    }
+
+    function getServerRunTemplateNFFile($runId, $uuid){
+        if (empty($runId) || empty($uuid)) return ""; 
+        $tmplt_run_targz = $this->getServerRunTemplateFile($runId);
+        $tmplt_run_dir = $this->getServerRunTemplateDir();
+        $extractedDir = "$tmplt_run_dir/$uuid";
+        $extractedDirNFfile = "$tmplt_run_dir/$uuid/nextflow.nf";
+        if (file_exists($extractedDir)) system('rm -rf ' . escapeshellarg("$extractedDir"));
+
+        mkdir($extractedDir, 0700, true);
+        system("tar xf $tmplt_run_targz -C $extractedDir", $retval);
+        if ($retval != 0) return ""; 
+        $nffile = $this->readFile($extractedDirNFfile);
+        if (file_exists($extractedDir)) system('rm -rf ' . escapeshellarg("$extractedDir"));
+        return $nffile;
+    }
+
+
 
 
     function getDolphinPathReal($proPipeAll){
@@ -956,6 +977,166 @@ class dbfuncs {
         return $exec_next_all;
     }
 
+    function getMainRunOpt($proPipeAll,$profileId, $profileType,$eachExecConfig, $ownerID){
+        $configText = "";
+
+        // Step 1. Add process.executor
+        // e.g. process.executor = 'lsf'
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $executor = $cluDataArr[0]['executor'];
+        $executor_job = $cluDataArr[0]['executor_job'];
+        $configText .= "process.executor = '" . $executor_job . "'\n";
+
+        // Step 2. if executor is local add cpu and memory fields in profile.
+        $configText = $this->addLocalConfigSettings($configText, $executor, $cluDataArr);
+        // Step 3. add general process settings
+        $configText = $this->addGeneralConfigSettings($configText, $proPipeAll, $cluDataArr, $executor_job);
+        // Step 4. add each process settings
+        $configText = $this->addEachConfigSettings($configText, $proPipeAll, $executor_job, $eachExecConfig);
+        return $configText;
+    }
+
+    function addLocalConfigSettings($configText, $executor, $cluDataArr){
+        if ($executor == "local") {
+            $next_cpu = $cluDataArr[0]['next_cpu'];
+            $next_memory = $cluDataArr[0]['next_memory'];
+            if (!empty($next_cpu)) {
+                $configText .= 'executor.$local.cpus' . ' = ' . $next_cpu . '\n';
+            }
+            if (!empty($next_memory)) {
+                $configText .= 'executor.$local.memory' . " = '" . $next_memory . " GB'\n";
+            }
+        }
+        return $configText;
+    }
+
+    function addEachConfigSettings($configText, $proPipeAll, $executor_job, $eachExecConfig){
+        // add each process settings
+        // e.g. process {
+        //      withName: bar { cpus = 32 } 
+        //      withName: bar { memory = '32 GB' } 
+        //      withName: bar { time = '20m' } 
+        //      withName: bar { clusterOptions = '-E "file /project/umw_garberlab"' } 
+        // }
+        $exec_each = $proPipeAll[0]->{'exec_each'};
+        if ($exec_each == "true"){
+            $eachExecConfig = json_decode($eachExecConfig, true);
+            if (!empty($eachExecConfig)){
+                $configText .= "process {\n";
+                foreach ($eachExecConfig as $processName => $configObj):
+                $time = $configObj['time'];
+                $queue = $configObj['queue'];
+                $cpu = $configObj['cpu'];
+                $memory = $configObj['memory'];
+                $clu_opt = $configObj['opt'];
+
+                if (!empty($time) && $executor_job != "ignite" &&  $executor_job != "local" ) {
+                    $configText .= "  withName: {$processName} { time  = '$time m' }\n";
+                }
+                if (!empty($cpu)) {
+                    $configText .= "  withName: {$processName} { cpus  = $cpu  }\n";
+                }
+                if (!empty($queue) && $executor_job != "ignite" &&  $executor_job != "local") {
+                    $configText .= "  withName: {$processName} { queue  = '$queue' }\n";
+
+                }
+                if (!empty($memory)) {
+                    $configText .= "  withName: {$processName} { memory  = '$memory GB' }\n";
+                }
+                if (!empty($clu_opt) &&  $executor_job != "local") {
+                    $configText .= "  withName: {$processName} { clusterOptions  = '$clu_opt' }\n";
+                }
+                endforeach;
+                $configText .= "}\n";
+            }
+        } 
+        return $configText;
+    }
+
+
+    function addGeneralConfigSettings($configText, $proPipeAll, $cluDataArr, $executor_job){
+        // add general process settings
+        // e.g. process.queue = 'short'
+        //      process.memory = '32 GB'
+        //      process.cpus = 1
+        //      process.time = '20m'
+        //      process.clusterOptions = '-E "file /project/umw_garberlab"'
+        $exec_all_settings = $proPipeAll[0]->{'exec_all_settings'};
+        $exec_all = $proPipeAll[0]->{'exec_all'};
+        if ($exec_all == "true"){
+            $exec_all_settings = htmlspecialchars_decode($exec_all_settings , ENT_QUOTES); 
+            $exec_all_settings = json_decode($exec_all_settings, true);
+            $time = $exec_all_settings['job_time'];
+            $queue = $exec_all_settings['job_queue'];
+            $cpu = $exec_all_settings['job_cpu'];
+            $memory = $exec_all_settings['job_memory'];
+            $clu_opt = $exec_all_settings['job_clu_opt'];
+        } else {
+            // use profile settings
+            $time = $cluDataArr[0]['job_time'];
+            $queue = $cluDataArr[0]['job_queue'];
+            $cpu = $cluDataArr[0]['job_cpu'];
+            $memory = $cluDataArr[0]['job_memory'];
+            $clu_opt = $cluDataArr[0]['job_clu_opt'];
+        }
+
+        if (!empty($time) && $executor_job != "ignite" &&  $executor_job != "local" ) {
+            $configText .= "process.time" . " = '" . $time . "m'\n";
+        }
+        if (!empty($cpu)) {
+            $configText .= "process.cpus" . " = " . $cpu . "\n";
+        }
+        if (!empty($queue) && $executor_job != "ignite" &&  $executor_job != "local") {
+            $configText .= "process.queue" . " = '" . $queue . "'\n";
+        }
+        if (!empty($memory)) {
+            $configText .= "process.memory" . " = '" . $memory . " GB'\n";
+        }
+        if (!empty($clu_opt) &&  $executor_job != "local") {
+            $configText .= "process.clusterOptions" . " = '" . $clu_opt . "'\n";
+        }
+        return $configText;
+    }
+
+    function getInitialRunOpt($proPipeAll,$profileId, $profileType,$ownerID){
+        $configText = "";
+        $docker_opt = $proPipeAll[0]->{'docker_opt'};
+        $singu_opt = $proPipeAll[0]->{'singu_opt'};
+        $singu_check = $proPipeAll[0]->{'singu_check'};
+        $docker_check = $proPipeAll[0]->{'docker_check'};
+
+        // Step 1. Add runOptions for singularity (default) or docker
+        // e.g. singularity.runOptions='-B /project:/project -B /home:/home -B /share:/share '
+        if ($docker_check == "true") {
+            if (!empty($docker_opt)) {
+                $configText .= "docker.runOptions = '".$docker_opt."'\n";
+            }
+        }
+        //default for initial run
+        if ($singu_check == "true" || $docker_check != "true") {
+            if (!empty($singu_opt)) {
+                $configText .= "singularity.runOptions = '".$singu_opt."'\n";
+            }
+        }
+        // Step 2. Add process.executor
+        // e.g. process.executor = 'lsf'
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $executor = $cluDataArr[0]['executor'];
+        $executor_job = $cluDataArr[0]['executor_job'];
+        $configText .= "process.executor = '" . $executor_job . "'\n";
+
+        // Step 3. if executor is local add cpu and memory fields in profile.
+        $configText = $this->addLocalConfigSettings($configText, $executor, $cluDataArr);
+        // Step 4. add general process settings
+        // e.g. process.queue = 'short'
+        //      process.memory = '32 GB'
+        //      process.cpus = 1
+        //      process.time = '20m'
+        //      process.clusterOptions = '-E "file /project/umw_garberlab"'
+        $configText = $this->addGeneralConfigSettings($configText, $proPipeAll, $cluDataArr, $executor_job);
+        return $configText;
+    }
+
     function getContainerRunOpt($proPipeAll,$profileType, $profileId, $runType, $ownerID){
         $configText = "";
         $docker_opt = $proPipeAll[0]->{'docker_opt'};
@@ -1027,7 +1208,7 @@ class dbfuncs {
         $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $proPipeAll, $profileType, $ownerID);
         $configText .= "\n// Run Parameters:\n\n".$mainRunParams;
         //get main run local variable parameters:
-        $configText = $this->getProcessParams($proVarObj, $configText);
+        $configText = $this->getProcessParams(json_decode($proVarObj), $configText);
         return $configText;
     }
 
@@ -1329,7 +1510,7 @@ class dbfuncs {
 
     function getAmazonConfig($amazon_cre_id,$ownerID){
         $configText = "";
-        if ($amazon_cre_id != "" ){
+        if (!empty($amazon_cre_id)){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
             foreach($amz_data as $d){
                 $access = $d->amz_acc_key;
@@ -1510,6 +1691,13 @@ class dbfuncs {
         if (file_exists($run_path_real."/.aws_cred")) {
             unlink($run_path_real."/.aws_cred");
         }
+        // save $targz_file into $run_template_dir
+        $run_arch_file = $this->getServerRunTemplateFile($project_pipeline_id);
+        $run_tmp_dir = $this->getServerRunTemplateDir();
+        if (!file_exists($run_tmp_dir)) {
+            mkdir($run_tmp_dir, 0700, true);
+        }
+        copy($targz_file, $run_arch_file);
         return array($targz_file, $dolphin_path_real, $runCmdAll);
     }
 
@@ -1567,6 +1755,56 @@ class dbfuncs {
         return json_encode($ret);
     }
 
+
+
+    function saveRun($project_pipeline_id, $nextText, $runType, $manualRun, $uuid, $proVarObj,$eachExecConfig, $ownerID){
+        $data = null;
+        $permCheck = 1;
+        //don't allow to update if user not own the project_pipeline.
+        $curr_ownerID= $this->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
+        $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (!empty($permCheck)){
+            $this->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
+            $this->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
+            $attemptData = json_decode($this->getRunAttempt($project_pipeline_id));
+            $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
+            if (empty($attempt) || $attempt == 0 || $attempt == "0"){
+                $attempt = "0";
+            }
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+            $docker_check = $proPipeAll[0]->{'docker_check'};
+            $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
+            $google_cre_id = $proPipeAll[0]->{'google_cre_id'};
+            $profile = $proPipeAll[0]->{'profile'};
+            $profileAr = explode("-", $profile);
+            $profileType = $profileAr[0];
+            $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
+            $initRunOptions = $this->getInitialRunOpt($proPipeAll,$profileId, $profileType,$ownerID);
+            $runConfig = $this->getMainRunOpt($proPipeAll,$profileId, $profileType,$eachExecConfig, $ownerID);
+
+            $this->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$proVarObj, $eachExecConfig, $ownerID);
+            $amzConfigText = $this->getAmazonConfig($amazon_cre_id, $ownerID);
+            list($initialConfigText,$initialRunParams) = $this->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
+            $mainConfigText = $this->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+            $getCloudConfigFileDir = $this->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
+            //create file and folders
+            list($targz_file, $dolphin_path_real, $runCmdAll) = $this->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
+            if ($manualRun == "true"){
+                $data = $this->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
+            } else {
+                //run the script in remote machine
+                $data = $this->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
+                //activate autoshutdown feature for cloud
+                if  ($profileType == "amazon" || $profileType == "google"){
+                    $autoshutdown_active = "true";
+                    $this->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
+                    $this->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
+                } 
+            }
+        }
+        return $data;
+    }
+
     function saveRunLogSize($uuid, $project_pipeline_id, $ownerID){
         if (empty($uuid)){
             $rundir = "run$project_pipeline_id";
@@ -1581,7 +1819,6 @@ class dbfuncs {
     }
 
     function saveRunLogSizeUser($userID,$ownerID){
-        error_log("saveRunLogSizeUser");
         if (!empty($userID) &&!empty($ownerID) ){
             $userLogRaw = $this->getRunLogUser($userID, "all");
             $userLog = json_decode($userLogRaw);
@@ -1606,10 +1843,12 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-    function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $ownerID){
+    function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $proVarObj,$eachExecConfig, $ownerID){
         $newObj = $proPipeAll[0];
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $newObj->{'project_pipeline_input'} = $allinputs;
+        $newObj->{'proVarObj'} = htmlspecialchars($proVarObj, ENT_QUOTES);
+        $newObj->{'eachExecConfig'} = htmlspecialchars($eachExecConfig, ENT_QUOTES);
         foreach ($allinputs as $inputitem):
         $collection_id = $inputitem->{'collection_id'};
         $collection_arr = array();
@@ -1625,7 +1864,10 @@ class dbfuncs {
         $this->updateRunLogOpt(json_encode($newObj), $uuid, $ownerID);
     }
 
-    function updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID){
+    function updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID){
+        $res= $this->getUUIDLocal("run_log");
+        $uuid = $res->rev_uuid;
+        $status = ($manualRun == "true") ? "Manual" : "init";
         //check if $project_pipeline_id already exits un run table
         $checkRun = $this->getRun($project_pipeline_id,$ownerID);
         $checkarray = json_decode($checkRun,true);
@@ -1642,6 +1884,7 @@ class dbfuncs {
             $this->insertRun($project_pipeline_id, $status, "1", $ownerID);
         }
         $this->insertRunLog($project_pipeline_id, $uuid, $status, $ownerID);
+        return $uuid;
     }
 
     function parseKeyLine($txt, $key){
@@ -4368,7 +4611,8 @@ class dbfuncs {
     }
 
     function getProPipeLastRunUUID($project_pipeline_id) {
-        return $this->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$project_pipeline_id'");
+        $uuid = $this->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$project_pipeline_id'");
+        return $uuid;
     }
     function updateProPipeLastRunUUID($project_pipeline_id, $uuid) {
         $sql = "UPDATE project_pipeline SET last_run_uuid='$uuid' WHERE id='$project_pipeline_id'";
@@ -4488,12 +4732,8 @@ class dbfuncs {
     function getEmptyCollectionId($ownerID, $collection_name,$collNameArr, $suffix){
         $collection_id = 0;
         $suffix += 1;
-        error_log($suffix);
         $newColName = "{$collection_name}-{$suffix}";
         // first check if it is in $collNameArr
-        error_log(print_r($newColName, TRUE));
-        error_log(print_r($collNameArr, TRUE));
-
         if (!in_array($newColName, $collNameArr)){
             $collData = json_decode($this->saveCollection($newColName, $ownerID),true);
             if (!empty($collData["id"])){
@@ -4502,16 +4742,12 @@ class dbfuncs {
             return $collection_id;
         } else {
             // if it is found in $collection_name_Array add suffix
-            $this->getEmptyCollectionId($ownerID, $collection_name,$collNameArr,$suffix);
+            return $this->getEmptyCollectionId($ownerID, $collection_name,$collNameArr,$suffix);
         }
-
-
     }
 
     function checkCollectionFiles($file_array,$collection_name, $ownerID) {
         $collection_id = 0;
-        //function getCollectionFiles($collection_id,$ownerID);
-        //        if (!in_array($c_id, $collection_arr))
         // get all collections of user
         $allColl = json_decode($this->getCollections($ownerID),true);
         $collNameArr = array();
@@ -4530,14 +4766,11 @@ class dbfuncs {
             sort($collFileIds);
             // same collection found return collection_id
             if ($collFileIds==$file_array) {
-                error_log("return $coll_id");
                 return $coll_id;
             }
         }
-        error_log("error: return $coll_id");
         // b. if collection is not found, use $collection_name to create coll_name
         $collection_id = $this->getEmptyCollectionId($ownerID, $collection_name,$collNameArr,1);
-
         // use $file_array and insert collections
         settype($collection_id, 'integer');
         for ($i = 0; $i < count($file_array); $i++) {
@@ -4584,7 +4817,6 @@ class dbfuncs {
             $files_used = implode(" | ", $files_used);
 
             $file_id = $this->checkFileAndSave($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID);
-            error_log("file id: ".$file_id);
             if (!empty($file_id)){
                 $file_array[] = $file_id;
             }
@@ -4648,7 +4880,6 @@ class dbfuncs {
                     $inputType = $proPipeInData[0]["input_type"];
                     $project_id = $proPipeInData[0]["project_id"];
                     // if $inputVal is array of array -> save as a collection
-                    //error_log($inputName);
                     if (is_array($inputVal) && is_array($inputVal[0])){
                         //collection
                         $collection_id = $this->checkAndInsertCollection($inputVal, $ownerID);

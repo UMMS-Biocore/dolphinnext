@@ -55,6 +55,7 @@ class Pipeline{
             }
         }
         if (isset($params['run'])){
+            $ret=array();
             $headers = apache_request_headers();
             $Run = new run();
             $user=$Run->verifyBearerToken($headers);
@@ -62,12 +63,28 @@ class Pipeline{
                 $body = json_decode(file_get_contents('php://input'), true);
                 $run=$params['run'];
                 $result=$Run->$run($body, $params, $user);
-                if (!empty($result)){
-                    return json_encode($result);
+                error_log(print_r($result, TRUE));
+                
+                if (empty($result)){
+                    http_response_code(401);
+                    $ret["status"] = "error";
+                    $ret["log"] = "Run could not be started.";
+                } else if ($result == "initiated"){
+                    $ret["status"] = "initiated";
+                    $ret["log"] = "Run submitted.";
+                } else {
+                    http_response_code(401);
+                    $ret["status"] = "error";
+                    $ret["log"] = $result;
                 }
+                error_log(print_r($ret, TRUE));
+
+                return json_encode($ret);
             } 
             http_response_code(401);
-            return json_encode("Token not found."); 
+            $ret["status"] = "error";
+            $ret["log"] = "Token not found.";
+            return json_encode($ret); 
         }
     }
 }

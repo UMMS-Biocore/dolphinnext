@@ -182,69 +182,30 @@ class Run
         $inputs= $body["in"]; // run inputs e.g. $inputs["reads"]
         $name= $body["name"]; // test_run
         $tmplt_run_id= $body["tmplt_id"]; //template run id e.g. 140
-        // get template run path: e.g. ../tmp/runtmplt/140.tar.gz
-        $tmplt_run_targz = $dbfuncs->getServerRunTemplatePath($tmplt_run_id); 
-        //tar xf $tmplt_run_targz -C $dolphin_path_real
-        // get $tmplt_run_id run id info
         // update name and insert
-        $type = "dmeta";
-        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline($type, $tmplt_run_id, $ownerID, $inputs);
-        error_log($project_pipeline_id);
+        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs);
         if (empty($project_pipeline_id)) return null;
-        
-        
-        
-//        $project_pipeline_id = $_REQUEST['project_pipeline_id'];
-//        $profileType = $_REQUEST['profileType'];
-//        $profileId = $_REQUEST['profileId'];
-//        $docker_check = $_REQUEST['docker_check'];
-//        $amazon_cre_id = $_REQUEST['amazon_cre_id'];
-//        $google_cre_id = $_REQUEST['google_cre_id'];
-//        $nextText = urldecode($_REQUEST['nextText']);
-//        $runConfig = urldecode($_REQUEST['configText']);
-//        $proVarObj = json_decode(urldecode($_REQUEST['proVarObj']));
-//        $initRunOptions = urldecode($_REQUEST['initRunOptions']);
-//        $runType = $_REQUEST['runType'];
-//        $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
-//        $uuid = $_REQUEST['uuid'];
-//        $permCheck = 1;
-//        //don't allow to update if user not own the project_pipeline.
-//        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
-//        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
-//        if (!empty($permCheck)){
-//            $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
-//            $db->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
-//            $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
-//            $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
-//            if (empty($attempt) || $attempt == 0 || $attempt == "0"){
-//                $attempt = "0";
-//            }
-//            $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-//            $db->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$ownerID);
-//            $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
-//            list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
-//            $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
-//            $getCloudConfigFileDir = $db->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
-//            //create file and folders
-//            list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
-//            if ($manualRun == "true"){
-//                $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
-//            } else {
-//                //run the script in remote machine
-//                $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
-//                //activate autoshutdown feature for cloud
-//                if  ($profileType == "amazon" || $profileType == "google"){
-//                    $autoshutdown_active = "true";
-//                    $db->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
-//                    $db->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
-//                } 
-//            }
-//        }
-
-        return json_encode("run started");
+        $temp_run_uuid = $dbfuncs->getProPipeLastRunUUID($tmplt_run_id);
+        $runOpt = json_decode($dbfuncs->getRunLogOpt($temp_run_uuid));
+        if (empty($runOpt[0])) return null;
+        $runOpt[0]->{'run_opt'} = str_replace('\\', '\\\\', $runOpt[0]->{'run_opt'});
+        $runOptData = json_decode($runOpt[0]->{'run_opt'});
+        $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
+        $proVarObj = htmlspecialchars_decode($runOptData->{'proVarObj'}, ENT_QUOTES); 
+        $manualRun = "false"; 
+        $runType = "newrun"; //"resumerun" or "newrun"
+        $uuid = $dbfuncs->updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID);
+        $nextText = $dbfuncs->getServerRunTemplateNFFile($tmplt_run_id, $uuid); 
+        if (!empty($nextText) && !empty($uuid) && !empty($project_pipeline_id)){
+            $data = $dbfuncs->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $eachExecConfig, $ownerID);
+            if (!empty($data)) return "initiated";
+        }
+        return null;
     }
-
-
+    
+    
+    
+    
 }
 
 ?>

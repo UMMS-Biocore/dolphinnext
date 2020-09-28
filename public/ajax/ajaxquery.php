@@ -25,60 +25,19 @@ if (isset($_REQUEST['id'])) {
 
 if ($p=="saveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
-    $profileType = $_REQUEST['profileType'];
-    $profileId = $_REQUEST['profileId'];
-    $docker_check = $_REQUEST['docker_check'];
-    $amazon_cre_id = $_REQUEST['amazon_cre_id'];
-    $google_cre_id = $_REQUEST['google_cre_id'];
     $nextText = urldecode($_REQUEST['nextText']);
-    $runConfig = urldecode($_REQUEST['configText']);
-    $proVarObj = json_decode(urldecode($_REQUEST['proVarObj']));
-    $initRunOptions = urldecode($_REQUEST['initRunOptions']);
-    $runType = $_REQUEST['runType'];
+    $eachExecConfig = urldecode($_REQUEST['eachExecConfig']);
+    $proVarObj = urldecode($_REQUEST['proVarObj']);
+    $runType = $_REQUEST['runType']; //"resumerun" or "newrun"
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
-    $permCheck = 1;
-    //don't allow to update if user not own the project_pipeline.
-    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
-    $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
-    if (!empty($permCheck)){
-        $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
-        $db->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
-        $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
-        $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
-        if (empty($attempt) || $attempt == 0 || $attempt == "0"){
-            $attempt = "0";
-        }
-        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $db->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$ownerID);
-        $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
-        list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
-        $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
-        $getCloudConfigFileDir = $db->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
-        //create file and folders
-        list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
-        if ($manualRun == "true"){
-            $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
-        } else {
-            //run the script in remote machine
-            $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
-            //activate autoshutdown feature for cloud
-            if  ($profileType == "amazon" || $profileType == "google"){
-                $autoshutdown_active = "true";
-                $db->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
-                $db->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
-            } 
-        }
-    }
+    $data = $db->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $eachExecConfig, $ownerID);
 }
 else if ($p=="updateRunAttemptLog") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : "";
-    $res= $db->getUUIDLocal("run_log");
-    $uuid = $res->rev_uuid;
-    $status = ($manualRun == "true") ? "Manual" : "init";
     //add run into run table and increase the run attempt. $status = "init";
-    $db->updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID);
+    $uuid = $db->updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID);
     $data = json_encode($uuid);
 }
 else if ($p=="updateProPipeStatus") {
