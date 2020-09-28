@@ -1542,7 +1542,7 @@ function apiCallUrl(url) {
 
 
 function xmlStringToJson(xmlString){
-    var expXMLraw = '<document>'+$('<div/>').html(xmlString).text().trim()+'</document>';
+    var expXMLraw = '<document>'+xmlString+'</document>';
     var parser = new DOMParser();
     var xml = parser.parseFromString(expXMLraw,"text/xml");
     var obj = xmlToJson(xml)

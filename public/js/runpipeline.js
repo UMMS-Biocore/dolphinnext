@@ -8332,7 +8332,7 @@ $(document).ready(function () {
                                                                                     console.log(srr_id)
                                                                                     if (srr_id.match(/SRR/i)){
                                                                                         k++
-                                                                                        var searchENAUrl = 'https://www.ebi.ac.uk/ena/data/warehouse/filereport?result=read_run&fields=fastq_ftp&accession='+srr_id;
+                                                                                        var searchENAUrl = 'https://www.ebi.ac.uk/ena/portal/api/filereport?result=read_run&fields=fastq_ftp&format=JSON&accession='+srr_id;
                                                                                         var collectionType =""
                                                                                         deferredsData.push({srr_id: srr_id,name: sra_clean})
                                                                                         var waitingList = $('#viewGeoBut').data("waitingList")
@@ -8358,6 +8358,7 @@ $(document).ready(function () {
                                                                                                 },
                                                                                                 type: "GET",
                                                                                                 success: function (res) {
+                                                                                                    console.log("**", res)
                                                                                                     deferredsRes.push(res)
                                                                                                 },
                                                                                                 error: function (jqXHR, exception) {
@@ -8384,30 +8385,28 @@ $(document).ready(function () {
                                                     for (var i = 0; i < deferredsRes.length; i++) {
                                                         var succCheck3 = false;
                                                         var collectionType = ""
-                                                        if (deferredsRes[i]){
-                                                            var lines = deferredsRes[i].split("\n")
-                                                            if (lines.length >1){
-                                                                if (lines[0].match(/fastq_ftp/i) && lines[1].match(/fastq/i)){
-                                                                    if (lines[1].match(/;/)){
-                                                                        collectionType = "pair";
-                                                                    } else {
-                                                                        collectionType = "single";
-                                                                    }
-                                                                    if (collectionType){
-                                                                        succCheck3 = true;
-                                                                        var waitingList = $('#viewGeoBut').data("waitingList")
-                                                                        if (waitingList){
-                                                                            waitingList[deferredsData[i].srr_id] = "done";
-                                                                        }
-                                                                        $('#viewGeoBut').data("waitingList", waitingList);
-                                                                        geoList.push({
-                                                                            srr_id: deferredsData[i].srr_id,
-                                                                            collection_type: collectionType,
-                                                                            name: deferredsData[i].name
-                                                                        }) 
-                                                                    }
-
+                                                        if (deferredsRes[i] && deferredsRes[i][0]){
+                                                            var fastq_ftp = deferredsRes[i][0].fastq_ftp
+                                                            if (fastq_ftp){
+                                                                if (fastq_ftp.match(/;/)){
+                                                                    collectionType = "pair";
+                                                                } else {
+                                                                    collectionType = "single";
                                                                 }
+                                                                if (collectionType){
+                                                                    succCheck3 = true;
+                                                                    var waitingList = $('#viewGeoBut').data("waitingList")
+                                                                    if (waitingList){
+                                                                        waitingList[deferredsData[i].srr_id] = "done";
+                                                                    }
+                                                                    $('#viewGeoBut').data("waitingList", waitingList);
+                                                                    geoList.push({
+                                                                        srr_id: deferredsData[i].srr_id,
+                                                                        collection_type: collectionType,
+                                                                        name: deferredsData[i].name
+                                                                    }) 
+                                                                }
+
                                                             }
                                                         }
                                                         if (!succCheck3){
@@ -8424,6 +8423,7 @@ $(document).ready(function () {
                                                         }
                                                     }
                                                     console.log("endcheck1:"+geo_id)
+                                                    console.log("geoList:"+geoList)
                                                     endFunc(callback,geoList,geoFailedList)
                                                 });
                                                 if (succCheck1 && !succCheck2){
@@ -8455,11 +8455,13 @@ $(document).ready(function () {
             }
 
             var gdsQuery = function(geo_id, retstart, retmax, geoList, geoFailedList, queryDB){
+                console.log("gdsQuery")
                 var searchURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gds&usehistory=y&retmode=json&term='+geo_id;
                 var res = apiCallUrl(searchURL)
                 var reachToLastLevel=false
+                console.log("Geo id: ",geo_id);
+                console.log(searchURL);
                 console.log(res);
-                console.log(geo_id);
                 if (res){
                     if (res.esearchresult){
                         if (res.esearchresult.webenv && res.esearchresult.querykey){
