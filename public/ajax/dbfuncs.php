@@ -1200,8 +1200,10 @@ class dbfuncs {
         $configText .= "\n// Pipeline Config:\n\n";
         list($hostVar,$variableRaw) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
         $variable = htmlspecialchars_decode($variableRaw , ENT_QUOTES);
-
+        $reportDir = $this->getReportDir($proPipeAll);
+        
         $configText .= "\$HOSTNAME='".$hostVar."'\n";
+        $configText .= "params.outdir='".$reportDir."'\n";
         $configText .= "$variable\n";
         $configText .= "$script_pipe_config\n";
         //get main run input parameters
@@ -2454,17 +2456,187 @@ class dbfuncs {
         return $ret;
     }
 
-    function savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID){
+
+
+    // return assoc Arr:  array("filename" => row, 
+    //                          "feature" => column, 
+    //                          "target" => rsem_tpm_gene, 
+    //                          "id" => "g-155",  
+    //                          "name" => star)
+    function getPubDmetaInfo($pipeData){
+        $nodes = $pipeData[0]->{'nodes'};
+        $data = array();
+        if (!empty($nodes)){
+            $nodes = json_decode($nodes, true);
+            foreach ($nodes as $gNum => $item):
+            $out = array();
+            $push = false;
+            if ($item[2] == "outPro"){
+                $name = $item[3];
+                $processOpt = $item[4];
+                $out["id"] = $gNum;
+                $out["name"] = $name; //directory name which has the report files
+                foreach ($processOpt as $key => $feature):
+                if ($key == "pubDmeta"){
+                    $push = true;
+                    $out = array_merge($feature, $out);
+                }
+                if ($push == true) $data[] = $out;
+                endforeach;
+            }
+            endforeach;
+        }
+        return $data;
+    }
+
+    function getProjectPipelineCollection($project_pipeline_id, $ownerID) {
+        $ret = array();
+        $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+        if (!empty($allinputs)){
+            foreach ($allinputs as $inputitem):
+            $collection_id = $inputitem->{'collection_id'};
+            if (!empty($collection_id)){
+                $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
+                foreach ($allfiles as $fileData):
+                $sample_name = $fileData->{'name'};
+                if (!empty($sample_name)) $ret[] = $sample_name;
+                endforeach;
+            }
+            endforeach;
+        }
+        return $ret;
+    }
+
+
+    function patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken){
+        error_log("patchDmetaAPI:".$sName);
+        $url = "$dmeta_server/api/v1/data/$dmeta_out_collection/$targetDmetaRowId";
+        $data = json_encode(array(
+            'doc' => $doc
+        ));
+
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_HEADER, false);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-type: application/json", "Authorization: Bearer $accessToken"));
+        // secure it:
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PATCH');
+
+        $body = curl_exec($curl);
+        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if(curl_errno($curl) && $statusCode != 200){
+            error_log("patchDmetaAPI failed");
+        }
+        curl_close($curl);
+        $msg = json_decode($body, true);
+        return $msg;
+    }
+
+    function sendDmetaReport($project_pipeline_id, $proPipeAll,$pipeData, $uuid, $ownerID, $accessToken){
+        error_log("sendDmetaReport");
+        //{"dmeta_run_id":"5f74013df57c2439facad8ca","dmeta_server":"https://localhost:4000"}
+        $pubDmetaDir = $pipeData[0]->{'publish_dmeta_dir'};
+        $dmetaServerInfo = json_decode($proPipeAll[0]->{'dmeta'}, true);
+        $dmeta_run_id= $dmetaServerInfo["dmeta_run_id"];
+        $dmeta_server= $dmetaServerInfo["dmeta_server"];
+        $dmeta_out= $dmetaServerInfo["dmeta_out"];
+
+        // get $dmetaInfoPipe from pipeline
+        $dmetaInfoPipe = $this->getPubDmetaInfo($pipeData);
+        $pubDmetaDir = json_decode(htmlspecialchars_decode($pubDmetaDir, ENT_QUOTES), true);
+        // get all existing files with their directories in array
+        // e.g. ["rsem_summary/expected_count.tsv", "star/Log.progress.out"]
+        $fileListPubweb = array_values((array)json_decode($this->getFileList($uuid, "pubweb", "onlyfile")));
+        $fileListPubDmeta = array_values((array)json_decode($this->getFileList($uuid, "pubDmeta", "onlyfile")));
+        $fileList = array_merge($fileListPubweb, $fileListPubDmeta);
+        // removes empty values
+        $fileList = array_filter($fileList);
+
+        foreach ($pubDmetaDir as $value) {
+            if (!empty($value["dir"]) && !empty($value["pattern"])){
+                $pattern = trim($value["pattern"],'"'); 
+                $pattern = trim($pattern,"'"); 
+                $regex = $value["dir"]."/".$pattern;
+                //if name contains path and separated by '/' then replace with escape character '\/'
+                $regex = str_replace("/", "\/", $regex);
+                //if name contains regular expression with curly brackets: {a,b,c} then turn into (a|b|c) format
+                // $regex = fixCurlyBrackets($regex);
+                $regex = str_replace("*", ".*", $regex);
+                $regex = str_replace("?", ".?", $regex);
+                $regex = str_replace("'", "", $regex);
+                $regex = str_replace('"', "", $regex);
+                $regex = "/^".$regex."$/i";
+                $matches  = preg_grep ($regex, $fileList);
+                $matches = array_values((array) $matches);
+                if (count($matches) == 1){
+                    // get File Content
+                    $parentDir = "";
+                    if (in_array($matches[0],$fileListPubweb)){
+                        $parentDir = "pubweb";
+                    } else {
+                        $parentDir = "pubdmeta";
+                    }
+                    // get location of the sample name 
+                    // find dmeta array that matches $value["dir"]
+                    $dmetaObj = null;
+                    foreach ($dmetaInfoPipe as $dmetaItem): 
+                    if ($dmetaItem["name"] == $value["dir"]){
+                        $dmetaObj =$dmetaItem; 
+                        break;
+                    }
+                    endforeach;
+                    if (!empty($dmetaObj)){
+                        $sNameLoc = $dmetaObj["filename"];
+                        $featureLoc = $dmetaObj["feature"];
+                        $targetDmetaColl = $dmetaObj["target"];
+                        $filepath = "$parentDir/".$matches[0];
+                        $file = json_decode($this -> getFileContent($uuid, $filepath, $ownerID));
+                        // get $out_collection, sample names ($sName) and $targetDmetaRowId
+                        //$dmeta_out -> array( "sample_summary" => array ("control" => 5f74e0a7cc3f75507d1e6f26\n            "experiment" => 5f74e0a7cc3f75507d1e6f28))
+                        // e.g. $dmeta_out_collection = "sample_summary"
+                        // e.g. $sName = "control"
+                        // e.g. $targetDmetaRowId = "5f74e0a7cc3f75507d1e6f26"
+                        foreach ($dmeta_out as $dmeta_out_collection => $out_collectionData): 
+                        if ($targetDmetaColl == $dmeta_out_collection){
+                            foreach ($out_collectionData as $sName => $targetDmetaRowId): 
+                            error_log(print_r($filepath, TRUE));
+                            $doc = $this->dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc);
+                            if (!empty($doc)){
+                                $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken);
+                            }
+                            endforeach;
+                        }
+                        endforeach;
+
+
+                    }
+
+
+                } else if (count($matches) > 1){
+                    // here parse files multiple files that sample Name located at filename
+                }
+
+            }
+        }
+    }
+
+    function savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID, $accessToken){
         $data = json_encode("pubweb is not defined");
         $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
+        // get $reportDir
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
+        $reportDir = $this->getReportDir($proPipeAll);
         //get pubWebDir
         $pipeData = json_decode($this->loadPipeline($pipeline_id,$ownerID));
         $pubWebDir = $pipeData[0]->{'publish_web_dir'};
+        $pubDmetaDir = $pipeData[0]->{'publish_dmeta_dir'};
+        $down_file_list = array();
+        $down_file_dmeta_list = array();
         if (!empty($pubWebDir)){
-            // get outputdir
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-            list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
-            $reportDir = $this->getReportDir($proPipeAll);
             $down_file_list = explode(',', $pubWebDir);
             foreach ($down_file_list as &$value) {
                 $value = $reportDir."/".$value;
@@ -2472,6 +2644,22 @@ class dbfuncs {
             unset($value);
             $data = $this->saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
         } 
+        if (!empty($pubDmetaDir)){
+            $pubDmetaDir = json_decode(htmlspecialchars_decode($pubDmetaDir, ENT_QUOTES), true);
+            foreach ($pubDmetaDir as $value) {
+                if (!empty($value["dir"])){
+                    $path = $reportDir."/".$value["dir"];
+                    // only save files that are not found in pubweb list
+                    if (!in_array($path, $down_file_list)){
+                        $down_file_dmeta_list[] = $path;
+                    } 
+                }
+            }
+            $this->saveNextflowLog($down_file_dmeta_list,  $uuid, "pubdmeta", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
+            if (!empty($accessToken)){
+                $this->sendDmetaReport($project_pipeline_id, $proPipeAll,$pipeData, $uuid, $ownerID, $accessToken);
+            }
+        }
         return $data;
     }
 
@@ -4341,7 +4529,8 @@ class dbfuncs {
         }
     }
 
-    //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
+
+    //$last_server_dir is last directory in $uuid folder: eg. run, pubweb, pubDmeta
     //$opt = "onlyfile", "filedir"
     function getFileList($uuid, $last_server_dir, $opt) {
         $path= "{$this->run_path}/$uuid/$last_server_dir";
@@ -4626,7 +4815,7 @@ class dbfuncs {
                 $where = " where pp.id = '$id' AND pip.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
             }
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, IF(pp.owner_id='$ownerID',1,0) as own
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.dmeta, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM project_pipeline pp
                       INNER JOIN users u ON pp.owner_id = u.id
                       INNER JOIN project p ON pp.project_id = p.id
@@ -4855,22 +5044,20 @@ class dbfuncs {
         return $input_id;
     }
 
-    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs){
+    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta){
         $newProPipeId = null;
         if ($type == "dmeta"){
             $proPipeAll = json_decode($this->getProjectPipelines($old_run_id,"",$ownerID,""));
             if (!empty ($proPipeAll[0])){
-                $sql = "INSERT INTO project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run)
-                    SELECT concat(name, '_dmeta'), project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run
+                $sql = "INSERT INTO project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta)
+                    SELECT concat(name, '_dmeta'), project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
                     FROM project_pipeline
                     WHERE id='$old_run_id' AND owner_id='$ownerID'";
                 $proPipe = self::insTable($sql);
                 $newProPipe = json_decode($proPipe,true);
                 $newProPipeId = $newProPipe["id"];
                 $this->duplicateProjectPipelineInput($newProPipeId, $old_run_id, $ownerID);
-
                 // use $inputs and replace entered projectPipelineInputs
-
                 foreach ($inputs as $inputName => $inputVal):
                 $input_id = 0;
                 $collection_id = 0;
@@ -5729,7 +5916,39 @@ class dbfuncs {
         return json_encode($res);
     }
 
-    function tsvConvert($tsv, $format){
+    // $file: file content
+    // $sName: sample Name @string
+    // $sNameLoc: sample Name location [@options: "row", "column", "filename"]
+    // $featureLoc: sample Name location [@options: "row", "column", "both"]
+    function dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc){
+        ini_set('memory_limit','900M');
+        // add seperator detection algorithm
+        $sep = "\t"; 
+        $file = trim($file);
+        $data = array();
+        $lines = explode("\n", $file);
+        $rowheader = explode($sep, $lines[0]);
+        if ($sNameLoc == "row" && $featureLoc == "column"){
+            $samplePos = array_search($sName, $rowheader);
+            for ($i = 1; $i < count($lines); $i++) {
+                $currentline = explode($sep, $lines[$i]);
+                $data[$currentline[0]] = $currentline[$samplePos];
+            } 
+        } else if ($sNameLoc == "column" && $featureLoc == "row"){
+            for ($i = 1; $i < count($lines); $i++) {
+                $currentline = explode($sep, $lines[$i]);
+                if ($currentline[0] == $sName){
+                    for ($k = 1; $k < count($currentline); $k++) {
+                        $data[$rowheader[$k]] = $currentline[$k];
+                    }
+                }
+            }
+        }
+        return $data;
+    }
+
+    // tsv to json converter
+    function tsvConvert($tsv){
         ini_set('memory_limit','900M');
         $tsv = trim($tsv);
         $lines = explode("\n", $tsv);
@@ -5753,7 +5972,7 @@ class dbfuncs {
         $targetFile = "{$targetDir}/{$filename}";
         $targetJson = "{$targetDir}/.{$filename}";
         $tsv= file_get_contents($targetFile);
-        $array = $this->tsvConvert($tsv, "json");
+        $array = $this->tsvConvert($tsv);
         file_put_contents($targetJson, json_encode($array));
         return json_encode("$dir/.{$filename}");
     }
@@ -5952,6 +6171,7 @@ class dbfuncs {
         $process_list = $newObj->{"process_list"};
         $pipeline_list = $newObj->{"pipeline_list"};
         $publish_web_dir = $newObj->{"publish_web_dir"};
+        $publish_dmeta_dir = addslashes(htmlspecialchars(urldecode($newObj->{"publish_dmeta_dir"}), ENT_QUOTES));
         $pipeline_gid = isset($newObj->{"pipeline_gid"}) ? $newObj->{"pipeline_gid"} : "";
         if ($pipeline_gid == "") {
             $max_gid = json_decode($this->getMaxPipeline_gid(),true)[0]["pipeline_gid"];
@@ -5974,20 +6194,19 @@ class dbfuncs {
         settype($pin_order, "integer");
         settype($id, 'integer');
 
-
         $admin_settings = "";
         $admin_items = "";
         if ($id > 0){
             if ($userRole == "admin"){
                 $admin_settings = "publicly_searchable='$publicly_searchable', pin='$pin', pin_order='$pin_order',";
             }
-            $sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', $admin_settings script_pipe_header = '$script_pipe_header', script_pipe_config = '$script_pipe_config', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', publish_web_dir='$publish_web_dir', last_modified_user = '$ownerID' where id = '$id'";
+            $sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', $admin_settings script_pipe_header = '$script_pipe_header', script_pipe_config = '$script_pipe_config', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', publish_web_dir='$publish_web_dir', publish_dmeta_dir='$publish_dmeta_dir', last_modified_user = '$ownerID' where id = '$id'";
         }else{
             if ($userRole == "admin"){
                 $admin_settings = "'$pin', '$pin_order', '$publicly_searchable',";
                 $admin_items = "pin, pin_order, publicly_searchable,";
             }
-            $sql = "INSERT INTO biocorepipe_save($admin_items owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid, publish_web_dir, script_pipe_config) VALUES ($admin_settings '$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms',  '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid', '$publish_web_dir', '$script_pipe_config')";
+            $sql = "INSERT INTO biocorepipe_save($admin_items owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid, publish_web_dir, publish_dmeta_dir, script_pipe_config) VALUES ($admin_settings '$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms',  '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid', '$publish_web_dir', '$publish_dmeta_dir','$script_pipe_config')";
         }
         return self::insTable($sql);
 

@@ -8,6 +8,7 @@ $db = new dbfuncs();
 
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
+$accessToken = isset($_SESSION['accessToken']) ? $_SESSION['accessToken'] : "";
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : "";
 $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
 $userRole = isset($_SESSION['role']) ? $_SESSION['role'] : "";
@@ -199,7 +200,7 @@ else if ($p=="savePubWeb"){
     $profileId = $_REQUEST['profileId'];
     $pipeline_id = $_REQUEST['pipeline_id'];
     if (!empty($ownerID)){
-        $data = $db->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID);
+        $data = $db->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID, $accessToken);
     } 
 }
 else if ($p=="saveNextflowLog"){

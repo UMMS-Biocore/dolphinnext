@@ -447,7 +447,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pObj) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -540,6 +540,9 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
     }
     if (inDescOpt != null) {
         $("#text" + MainGNum + "-" + pObj.gNum).data('inDescOpt', inDescOpt)
+    }
+    if (pubDmeta != null) {
+        $("#text" + MainGNum + "-" + pObj.gNum).data('pubDmeta', pubDmeta)
     }
     if (pubWeb) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr('pubWeb', pubWeb)
@@ -3546,6 +3549,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var pubWeb = null;
     var showSett = null;
     var inDescOpt = null;
+    var pubDmeta = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
             defVal = processModules.defVal;
@@ -3558,6 +3562,9 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         }
         if (processModules.inDescOpt != undefined) {
             inDescOpt = processModules.inDescOpt;
+        }
+        if (processModules.pubDmeta != undefined) {
+            pubDmeta = processModules.pubDmeta;
         }
         if (processModules.pubWeb) {
             pubWeb = processModules.pubWeb;
@@ -3596,7 +3603,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             }
         }
 
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
@@ -3631,7 +3638,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 

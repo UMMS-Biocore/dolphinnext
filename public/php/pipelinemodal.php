@@ -803,29 +803,52 @@
                             </select>
                         </div>
                     </div>
-                    <div id="pubDmetaDiv" class="form-group">
-                        <div class="col-sm-12 control-label">
-                            <label><input type="checkbox" id="checkPubDmeta" name="pubDmeta" style="margin-right:3px;"> Publish to Dmeta <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to publish connected output files to Dmeta server."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                    <div id="pubDmetaAllDiv">
+                        <div id="pubDmetaDiv" class="form-group">
+                            <div class="col-sm-5 control-label">
+                                <label><input type="checkbox" id="checkPubDmeta" name="pubDmeta" style="margin-right:3px;"> Publish to Dmeta <span><a data-toggle="tooltip" data-placement="bottom" title="Please click checkbox to publish connected output files to Dmeta server."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            </div>
+                            <div class="col-sm-7 control-label"></div>
                         </div>
-                        <div class="col-sm-12 control-label">
-                            <label> Location of Filename <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the location of filename in the published file."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                        </div>
-                        <div class="col-sm-7">
-                            <select id="pubDmetaFilename" name="pubDmetaFilename">
-                                <option value="row">Row Header</option>
-                                <option value="column">Column Header</option>
-                                <option value="filename">Name of the File</option>
-                            </select>
-                        </div>
-                        <div class="col-sm-12 control-label">
-                            <label> Location of Features <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the location of features in the published file."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                        </div>
-                        <div class="col-sm-7">
-                            <select id="pubDmetaFilename" name="pubDmetaFilename">
-                                <option value="row">Row Header</option>
-                                <option value="column">Column Header</option>
-                                <option value="filename">Name of the File</option>
-                            </select>
+                        <div id="pubDmetaSettings">
+                            <div class="form-group">
+                                <div class="col-sm-5 control-label">
+                                    Location of the Sample Name <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the location of sample name in the published file."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                                </div>
+                                <div class="col-sm-5">
+                                    <select class="form-control" id="pubDmetaFilename" name="pubDmetaFilename">
+                                        <option value="row">Row Header</option>
+                                        <option value="column">Column Header</option>
+                                        <option value="filename">Filename</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div  class="form-group">
+                                <div class="col-sm-5 control-label">
+                                    Location of the Features <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the location of features in the published file."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                                </div>
+                                <div class="col-sm-5">
+                                    <select class="form-control" id="pubDmetaFeature" name="pubDmetaFeature">
+                                        <option value="row">Row Header</option>
+                                        <option value="column">Column Header</option>
+                                        <option value="both">Both Headers</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div  class="form-group">
+                                <div class="col-sm-5 control-label">
+                                    Target Collection <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the target collection in Dmeta server."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                                </div>
+                                <div class="col-sm-5">
+                                    <select class="form-control" id="pubDmetaTarget" name="pubDmetaTarget">
+                                        <option value="sample_summary">sample_summary</option>
+                                        <option value="rsem_expected_count_gene">rsem_expected_count_gene</option>
+                                        <option value="rsem_expected_count_isoform">rsem_expected_count_isoform</option>
+                                        <option value="rsem_tpm_gene">rsem_tpm_gene</option>
+                                        <option value="rsem_tpm_isoform">rsem_tpm_isoform</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -932,22 +955,22 @@
             <div class="modal-body">
                 <span id="confirmYesNoText">Text</span>
                 </br>
-                <form class="form-horizontal">
-                    <div class="form-group">
-                        <label for="mRevComment" class="col-sm-2 control-label">Comment</label>
-                        <div class="col-sm-4">
-                            <input type="text" maxlength="20" class="form-control" id="mRevComment" name="rev_comment">
-                        </div>
+            <form class="form-horizontal">
+                <div class="form-group">
+                    <label for="mRevComment" class="col-sm-2 control-label">Comment</label>
+                    <div class="col-sm-4">
+                        <input type="text" maxlength="20" class="form-control" id="mRevComment" name="rev_comment">
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default cancelRev" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" style="display:none;" id="saveOnExist">Overwrite</button>
-                <button type="button" class="btn btn-primary" id="saveRev">Save As New Revision</button>
-            </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default cancelRev" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-warning" style="display:none;" id="saveOnExist">Overwrite</button>
+            <button type="button" class="btn btn-primary" id="saveRev">Save As New Revision</button>
         </div>
     </div>
+</div>
 </div>
 
 
@@ -961,12 +984,12 @@
             <div class="modal-body">
                 <span id="warnDelText">Text</span>
                 </br>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
-            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
         </div>
     </div>
+</div>
 </div>
 
 <div id="releaseModal" class="modal fade" tabindex="-1" role="dialog" data-keyboard="false">
@@ -1005,13 +1028,13 @@
             <div class="modal-body">
                 <p style="height:500px; overflow:scroll;" id="warnUserText">Text</p>
                 </br>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" data-dismiss="modal" id="saveOnExistImport">Overwrite</button>
-            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal" id="saveOnExistImport">Overwrite</button>
         </div>
     </div>
+</div>
 </div>
 
 <!--Run Modal-->

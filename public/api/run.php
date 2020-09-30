@@ -177,13 +177,21 @@ class Run
     }
 
     function startRun($body, $params, $user){
+        $info = $body["info"];
+        $doc = $body["doc"];
+        $dmetaServer = $info["dmetaServer"];
         $ownerID = $user["id"];
         $dbfuncs = new dbfuncs();
-        $inputs= $body["in"]; // run inputs e.g. $inputs["reads"]
-        $name= $body["name"]; // test_run
-        $tmplt_run_id= $body["tmplt_id"]; //template run id e.g. 140
+        $inputs= $doc["in"]; // run inputs e.g. $inputs["reads"]
+        $name= $doc["name"]; // test_run
+        $tmplt_run_id= $doc["tmplt_id"]; //template run id e.g. 140
+        $dmeta = array();
+        $dmeta["dmeta_run_id"] = $doc["_id"];
+        $dmeta["dmeta_server"] = $dmetaServer;
+        $dmeta["dmeta_out"] = $doc["out"];;
+        $dmeta = json_encode($dmeta);
         // update name and insert
-        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs);
+        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs, $dmeta);
         if (empty($project_pipeline_id)) return null;
         $temp_run_uuid = $dbfuncs->getProPipeLastRunUUID($tmplt_run_id);
         $runOpt = json_decode($dbfuncs->getRunLogOpt($temp_run_uuid));
@@ -202,10 +210,10 @@ class Run
         }
         return null;
     }
-    
-    
-    
-    
+
+
+
+
 }
 
 ?>

@@ -25,5 +25,11 @@ CREATE TABLE `refreshTokens` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+ALTER TABLE `biocorepipe_save`
+ADD `publish_dmeta_dir` text DEFAULT NULL after `script_pipe_header`;
+
+ALTER TABLE `project_pipeline`
+ADD `dmeta` text DEFAULT NULL after `summary`;
+
 INSERT INTO `update_db` (`name`, `owner_id`, `date_created`, `date_modified`, `last_modified_user`) VALUES 
 ("updateVersion1.2.11.sql", "1", NOW(), NOW(), "1");

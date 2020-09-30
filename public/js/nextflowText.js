@@ -437,10 +437,10 @@ function createNextflowFile(nxf_runmode, uuid) {
         }
 
         
-        var output_dir = $runscope.getPubVal("report");
-        if (output_dir) {
-            nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
-        }
+//        var output_dir = $runscope.getPubVal("report");
+//        if (output_dir) {
+//            nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
+//        }
         var proOptDiv = $('#ProcessPanel').children()[0];
         if (proOptDiv) {
             var process_opt = getProcessOpt();

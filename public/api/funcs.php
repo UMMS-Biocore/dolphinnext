@@ -145,11 +145,6 @@ class funcs
         return $id;
     }
 
-    //http://localhost:8080/dolphinnext/api/service.php?func=startRun
-    function startRun($params){
-        return $id;
-    }
-
 
     // SSO login
     function receivetoken($params){
@@ -190,8 +185,8 @@ class funcs
             $Run = new run();
             $currentUser = $Run->saveAccessRefreshToken($accessToken, $refreshToken, $expiresIn);
             error_log($accessToken);
-            error_log($currentUser);
-            
+            error_log(print_r($currentUser, TRUE));
+
             if (empty($currentUser)){
                 header("Location: {$this->BASE_PATH}");
                 exit();
