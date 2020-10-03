@@ -3716,7 +3716,6 @@ class dbfuncs {
                         $access_key = $amz_data[0]->{'amz_acc_key'};
                         $secret_key = $amz_data[0]->{'amz_suc_key'};
                         $cmd="s3cmd sync --access_key $access_key  --secret_key $secret_key $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
-                        $nextflow_log = shell_exec($cmd);
                     }
                 } else if (preg_match("/gs:/i", $files[0])){
                     $fileList="";
@@ -3730,7 +3729,6 @@ class dbfuncs {
                         $project_id = $goog_data[0]->{'project_id'};
                         $credFile = "{$this->goog_path}/{$ownerID}_{$google_cre_id}_goog.json";
                         $cmd = "gcloud auth activate-service-account --project=$project_id --key-file=$credFile && gsutil cp -rcn $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
-                        $nextflow_log = shell_exec($cmd);
                     }
                 } else {
                     $cmdFile = "{$this->run_path}/$uuid/$last_server_dir/.rsyncCmd";
@@ -3754,8 +3752,8 @@ class dbfuncs {
                     $cmd_content = "$fileList {$this->run_path}/$uuid/$last_server_dir/";
                     $cmd="rsync --info=progress2 -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $cmd_content 2>&1 &"; 
                     file_put_contents($cmdFile, $cmd_content);
-                    $nextflow_log = shell_exec($cmd);
                 }
+                $nextflow_log = shell_exec($cmd);
             }
         }
         if (!is_null($nextflow_log) && !empty($nextflow_log)){
