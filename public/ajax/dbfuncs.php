@@ -4126,6 +4126,45 @@ class dbfuncs {
         return json_encode("file not found.");
     }
 
+    // check the process and kill it if elapsed time is higher that $limit_sec
+    function checkKillPID($cmdFile, $limit_sec){
+        if (file_exists($cmdFile)){
+            $prev_cmd = $this->readFile($cmdFile);
+            $prev_cmd = trim($prev_cmd);
+            // replace multiple spaces with one space for ps command
+            $prev_cmd = preg_replace('!\s+!', ' ', $prev_cmd);
+            if (!empty($prev_cmd)){
+                $cmd = "ps -ef | grep '$prev_cmd' |grep -v grep | awk '{print $2}' 2>&1";
+                $pids = shell_exec($cmd);
+                if (!empty($pids)){
+                    $all_pids = explode("\n", $pids);
+                    if (!empty ($all_pids[0])){
+                        $pid = trim($all_pids[0]);
+                        $cmd = "ps -p $pid -o etimes= 2>&1";
+                        $log_exist = shell_exec($cmd);
+                        if (!empty($log_exist)){
+                            $elapsed = trim($log_exist);
+                            if (!empty($elapsed)){
+                                settype($elapsed, "integer");
+                                if ($elapsed > $limit_sec){
+                                    //error_log("high");
+                                    $killcmd = "ps -ef | grep '$prev_cmd' |grep -v grep | awk '{print \"kill \"$2}' | bash 2>&1";
+                                    $kill_log = shell_exec($killcmd);
+                                    return true;
+                                } else {
+                                    //error_log("low");
+                                    return false;  
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
     function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$project_pipeline_id,$dolphin_path_real,$ownerID) {
         $nextflow_log = "";
@@ -4176,11 +4215,27 @@ class dbfuncs {
                         $cmd = "gcloud auth activate-service-account --project=$project_id --key-file=$credFile && gsutil cp -rcn $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
                     }
                 } else {
+                    $cmdFile = "{$this->run_path}/$uuid/$last_server_dir/.rsyncCmd";
+                    if (file_exists($cmdFile)){
+                        // rsync command should be finished in 5 minutes
+                        // otherwise it will kill rsync command and restart it
+                        $limit_sec = 300;
+                        $continue = $this->checkKillPID($cmdFile, $limit_sec);
+                        if ($continue == true){
+                            unlink($cmdFile);
+                            // error_log("continue");
+                        } else {
+                            // error_log("stop");
+                            return json_encode("nextflow log saved");
+                        }
+                    }
                     $fileList="";
                     foreach ($files as $item):
                     $fileList.="$connect:$item ";
                     endforeach;
-                    $cmd="rsync -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &"; 
+                    $cmd_content = "$fileList {$this->run_path}/$uuid/$last_server_dir/";
+                    $cmd="rsync --info=progress2 -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $cmd_content 2>&1 &"; 
+                    file_put_contents($cmdFile, $cmd_content);
                 }
                 $nextflow_log = shell_exec($cmd);
             }
