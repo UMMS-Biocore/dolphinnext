@@ -2656,6 +2656,7 @@ class dbfuncs {
                 }
             }
             $this->saveNextflowLog($down_file_dmeta_list,  $uuid, "pubdmeta", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
+            error_log("* accessToken: ".$accessToken);
             if (!empty($accessToken)){
                 $this->sendDmetaReport($project_pipeline_id, $proPipeAll,$pipeData, $uuid, $ownerID, $accessToken);
             }
