@@ -1947,7 +1947,7 @@ $(document).ready(function () {
     $('#githubModal').on('click', '#saveGithub', function (event) {
         event.preventDefault();
         var formValues = $('#githubModal').find('input, select');
-        var requiredFields = ["username", "email", "password"];
+        var requiredFields = ["username", "email", "token"];
         var clickedRow = $('#saveGithub').data('clickedrow')
         var formObj = {};
         var stop = "";

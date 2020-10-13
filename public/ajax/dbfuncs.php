@@ -1232,7 +1232,7 @@ class dbfuncs {
 
         if ($type == "pushGithub"){
             $git_data = json_decode($this->getGithubbyID($username_id, $ownerID));
-            $password = trim($this->amazonDecode($git_data[0]->password));
+            $token = trim($this->amazonDecode($git_data[0]->token));
             $username= $git_data[0]->username;
             $email= $git_data[0]->email;
             $check_repo_cmd = "curl https://api.github.com/repos/$username/$github_repo 2>&1";
@@ -1242,9 +1242,10 @@ class dbfuncs {
                 $repo_found = "false";
             }
             $git_init_cmd = "";
+            
             if ($repo_found == "false"){
                 //repo not found, create with curl
-                $init_cmd = "curl -u '$username:$password' https://api.github.com/user/repos -d '{\"name\":\"$github_repo\"}' && cd $repoDir && git init 2>&1";
+                $init_cmd = "curl -H 'Authorization: token $token' https://api.github.com/user/repos -d '{\"name\":\"$github_repo\"}' && cd $repoDir && git init 2>&1";
                 $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
             } else {
                 //repo found, git clone 
@@ -1256,7 +1257,7 @@ class dbfuncs {
             $ret = $this->execute_cmd($branch_cmd, $ret, "branch_cmd_log", "branch_cmd");
             //Erase all the files in the repo instead of .git directory
             //$clean_cmd = "cd $repoDir && find . -maxdepth 1 -mindepth 1 -not -name '.git' -exec rm -r {} + 2>&1";
-
+            
             //save files into new repo
             $this->createMultiConfig ($repoDir, $configText);
             $this->createDirFile ($repoDir, "main.nf", 'w', $nfData);
@@ -1265,7 +1266,7 @@ class dbfuncs {
             $date = date("d-m-Y H:i:s", time());
 
             //push to github
-            $push_cmd = "cd $repoDir && git config --local user.name \"$username\" && git config --local user.email \"$email\" && git add . && git commit -m \"$date\" && git  push --porcelain https://{$username}:{$password}@github.com/$username/{$github_repo}.git $github_branch 2>&1";
+            $push_cmd = "cd $repoDir && git config --local user.name \"$username\" && git config --local user.email \"$email\" && git add . && git commit -m \"$date\" && git  push --porcelain https://{$username}:{$token}@github.com/$username/{$github_repo}.git $github_branch 2>&1";
             $ret = $this->execute_cmd($push_cmd, $ret, "push_cmd_log", "push_cmd");
             //parse commit_id
             //[master 407d677] 01-08-2019 21:08:45
@@ -1297,8 +1298,8 @@ class dbfuncs {
         }
         system('rm -rf ' . escapeshellarg("$repoDir"), $retval);
         foreach($ret as $key => $val){
-            if (!empty($password)){
-                $valClean = str_replace($password,"****",$val);  
+            if (!empty($token)){
+                $valClean = str_replace($token,"****",$val);  
                 $ret[$key] = $valClean;
             }
         }
@@ -2645,13 +2646,13 @@ class dbfuncs {
 
     }
 
-    function insertGithub($username, $email, $password, $ownerID) {
-        $sql = "INSERT INTO github (username, email, password, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
-              ('$username', '$email', '$password', now() , now(), '$ownerID', '3', '$ownerID')";
+    function insertGithub($username, $email, $token, $ownerID) {
+        $sql = "INSERT INTO github (username, email, token, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
+              ('$username', '$email', '$token', now() , now(), '$ownerID', '3', '$ownerID')";
         return self::insTable($sql);
     }
-    function updateGithub($id, $username, $email, $password, $ownerID) {
-        $sql = "UPDATE github SET username='$username', email='$email', password='$password', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+    function updateGithub($id, $username, $email, $token, $ownerID) {
+        $sql = "UPDATE github SET username='$username', email='$email', token='$token', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
     function getGithub($ownerID) {
