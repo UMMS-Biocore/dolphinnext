@@ -2646,13 +2646,13 @@ class dbfuncs {
 
     }
 
-    function insertGithub($username, $email, $password, $token, $ownerID) {
-        $sql = "INSERT INTO github (username, email, password, token, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
-              ('$username', '$email', '$password', '$token', now() , now(), '$ownerID', '3', '$ownerID')";
+    function insertGithub($username, $email, $token, $ownerID) {
+        $sql = "INSERT INTO github (username, email, token, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
+              ('$username', '$email', '$token', now() , now(), '$ownerID', '3', '$ownerID')";
         return self::insTable($sql);
     }
-    function updateGithub($id, $username, $email, $password, $token, $ownerID) {
-        $sql = "UPDATE github SET username='$username', email='$email', token='$token', password='$password', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+    function updateGithub($id, $username, $email, $token, $ownerID) {
+        $sql = "UPDATE github SET username='$username', email='$email', token='$token', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
     function getGithub($ownerID) {
