@@ -1295,14 +1295,12 @@ if ($p=="publishGithub"){
 else if ($p=="saveGithub"){
     $username = $_REQUEST['username'];
     $email = $_REQUEST['email'];
-    $passwordRaw = $_REQUEST['password'];
     $tokenRaw = $_REQUEST['token'];
-    $password = $db->amazonEncode($passwordRaw);
     $token = $db->amazonEncode($tokenRaw);
     if (!empty($id)) {
-        $data = $db->updateGithub($id, $username, $email, $password, $token, $ownerID);
+        $data = $db->updateGithub($id, $username, $email, $token, $ownerID);
     } else {
-        $data = $db->insertGithub($username, $email, $password, $token, $ownerID);
+        $data = $db->insertGithub($username, $email, $token, $ownerID);
     }
 }
 else if ($p=="checkNewRelease"){
