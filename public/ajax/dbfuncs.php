@@ -3105,7 +3105,6 @@ class dbfuncs {
 
     }
 
-<<<<<<< HEAD
     function insertAccessToken($accessToken, $expirationDate, $sso_user_id, $client_id, $scope, $user_id) {
         $sql = "INSERT INTO accessTokens(accessToken, expirationDate, sso_user_id, client_id, scope, user_id) VALUES ('$accessToken', '$expirationDate',  '$sso_user_id', '$client_id', '$scope', '$user_id')";
         return self::insTable($sql);
@@ -3114,15 +3113,9 @@ class dbfuncs {
         $sql = "INSERT INTO refreshTokens(refreshToken, sso_user_id, client_id, scope, user_id) VALUES ('$refreshToken', '$sso_user_id', '$client_id', '$scope' , '$user_id')";
         return self::insTable($sql);
     }
-
-    function insertGithub($username, $email, $password, $ownerID) {
-        $sql = "INSERT INTO github (username, email, password, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
-              ('$username', '$email', '$password', now() , now(), '$ownerID', '3', '$ownerID')";
-=======
     function insertGithub($username, $email, $password, $token, $ownerID) {
         $sql = "INSERT INTO github (username, email, password, token, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
               ('$username', '$email', '$password', '$token', now() , now(), '$ownerID', '3', '$ownerID')";
->>>>>>> e76dceefcea27d117edfb6490258c39fb7300f9f
         return self::insTable($sql);
     }
     function updateGithub($id, $username, $email, $password, $token, $ownerID) {
