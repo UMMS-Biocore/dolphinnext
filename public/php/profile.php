@@ -887,9 +887,10 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="mGitPassword" class="col-sm-3 control-label">GitHub Password</label>
+                        <label class="col-sm-3 control-label">Access Token</label>
                         <div class="col-sm-9">
-                            <input type="password" class="form-control" id="mGitPassword" name="password">
+                            <input type="password" class="form-control" name="token">
+                            <p style="font-size:13px;">GitHub access token will be used for creating and updating GitHub repositories. Please follow <a style="color:blue;" target="_blank" href="https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token"> this guide in GitHub to create a token.</a> While creating token, please enable <b>repo</b> and <b>write:packages</b> in the scope section.</p>
                         </div>
                     </div>
                 </form>
