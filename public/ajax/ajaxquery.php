@@ -1337,11 +1337,13 @@ else if ($p=="saveGithub"){
     $username = $_REQUEST['username'];
     $email = $_REQUEST['email'];
     $passwordRaw = $_REQUEST['password'];
+    $tokenRaw = $_REQUEST['token'];
     $password = $db->amazonEncode($passwordRaw);
+    $token = $db->amazonEncode($tokenRaw);
     if (!empty($id)) {
-        $data = $db->updateGithub($id, $username, $email, $password, $ownerID);
+        $data = $db->updateGithub($id, $username, $email, $password, $token, $ownerID);
     } else {
-        $data = $db->insertGithub($username, $email, $password, $ownerID);
+        $data = $db->insertGithub($username, $email, $password, $token, $ownerID);
     }
 }
 else if ($p=="checkNewRelease"){
@@ -1388,8 +1390,8 @@ else if ($p=="getGithub")
     if (!empty($id)) {
         $data = json_decode($db->getGithubbyID($id, $ownerID));
         foreach($data as $d){
-            $password = $d->password;
-            $d->password = trim($db->amazonDecode($password));
+            $token = $d->token;
+            $d->token = trim($db->amazonDecode($token));
         }
         $data=json_encode($data);
     } else {
