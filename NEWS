@@ -1,3 +1,8 @@
+23.10.2020 Version 1.2.16
+Show homepage parameter added to .sec file.
+[UICONFIG]
+SHOW_HOMEPAGE=false
+
 23.10.2020 Version 1.2.15
 Home page updated.
 
