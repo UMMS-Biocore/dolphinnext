@@ -28,7 +28,7 @@ function getTitle($np)
 
 function getPage($np, $login, $id, $ownerID){
     $db=new dbfuncs();
-    if ($np==1 && $login==1 && (!empty($id) || $id === "0")){
+    if ($np==1 && (!empty($id) || $id === "0")){
         //check if user is admin
         $userRole = $db->getUserRoleVal($ownerID);
         if ($userRole == "admin"){
@@ -60,8 +60,6 @@ function getPage($np, $login, $id, $ownerID){
     } else if ($np==1 && $login==1 && empty($id)){ 
         include("php/public.php"); 
         include("php/pipelinemodal.php");
-    } else if ($np==1 && $login!=1 && !empty($id)){
-        include("php/publicpipeline.php"); 
     } else if ($np==2 && $login==1 && empty($id)){
         include("php/projects.php");
     } else if ($np==2 && $login==1 && !empty($id)){
@@ -115,17 +113,14 @@ function getJS($np, $login, $id)
 {
     $js = '<script src="'.auto_version("js/jsfuncs.js").'"></script>
            <script src="'.auto_version("js/wizard.js").'"></script>';
-    if ($np==1 && $login==1 && !empty($id)){
+    if ($np==1 && !empty($id)){
         $js .= '<script src="bower_components/d3/d3.v3.min.js" charset="utf-8"></script> 
                 <script src="'.auto_version("js/pipelineD3core.js").'"></script>
                 <script src="'.auto_version("js/pipelineD3.js").'"></script>
                 <script src="'.auto_version("js/pipelineModal.js").'"></script>
                 <script src="'.auto_version("js/import.js").'"></script>
                 <script src="'.auto_version("js/nextflowText.js").'"></script>';
-    } else if ($np==1 && $login!=1 && !empty($id)){
-        $js .= '<script src="bower_components/d3/d3.v3.min.js" charset="utf-8"></script> 
-                <script src="'.auto_version("js/publicpipeline.js").'"></script>';
-    } else if ($np==1 && $login==1 && empty($id)){
+    }  else if ($np==1 && $login==1 && empty($id)){
         $js .= '<script src="bower_components/d3/d3.v3.min.js" charset="utf-8"></script> 
                 <script src="'.auto_version("js/pipelineD3core.js").'"></script>
                 <script src="'.auto_version("js/pipelineD3.js").'"></script>
