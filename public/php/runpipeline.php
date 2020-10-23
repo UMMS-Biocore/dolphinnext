@@ -13,6 +13,9 @@ $SHOW_RUN_TRACE= SHOW_RUN_TRACE;
 $SHOW_RUN_NEXTFLOWLOG= SHOW_RUN_NEXTFLOWLOG;
 $SHOW_RUN_NEXTFLOWNF= SHOW_RUN_NEXTFLOWNF;
 $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
+$SHOW_DMETA= SHOW_DMETA;
+$DMETA_URL= DMETA_URL;
+$DMETA_LABEL= DMETA_LABEL;
 ?>
 <style type="text/css">
     #fileContent .multiselect-item.multiselect-filter {
@@ -874,6 +877,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         <li id="importedFiles" class="active"><a class="nav-item" data-toggle="tab" href="#importedFilesTab">Files</a></li>
                         <li id="manualTabFile" class="nav-item"><a class="nav-item" data-toggle="tab" href="#manualTab">Manually</a></li>
                         <li id="publicFileTabFile"><a class="nav-item" data-toggle="tab" href="#publicFileTab">Public Files</a></li>
+                        <?php if ($SHOW_DMETA != false){ echo '<li id="dmetaFiles"><a class="nav-item" data-toggle="tab" href="#dmetaFileTab">Dmeta</a></li>'; } ?>
                     </ul>
                     <!-- Tab panes -->
                     <div id="fileContent" class="tab-content">
@@ -900,7 +904,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 </table>
                             </div>
                         </div>
-                        <div class="panel panel-default" id="detailsOfFileDiv" style="display:none;">
+                        <div class="panel panel-default" id="detailsOffileDiv" style="display:none;">
                             <div class="panel-body">
                                 <div class="pull-left">
                                     <h4>Details</h4>
@@ -973,6 +977,80 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     </div>
                 </div>
             </div>
+            <?php if ($SHOW_DMETA != false){ 
+            $dURLS = array_map('trim', explode(',', $DMETA_URL));
+            $dLabels = array_map('trim', explode(',', $DMETA_LABEL));
+            $ids = array();
+            $tabList = "";
+            $tabContent= "";
+            for ($i = 0; $i < count($dURLS); $i++) {
+                if (count($dURLS) == count($dLabels)){
+                    $pre = $dLabels[$i];
+                } else {
+                    $pre = str_replace("https:", "", $dURLS[$i]);
+                    $pre = str_replace("http:", "", $pre);
+                    $pre = str_replace("/", "", $pre);
+                    $pre = str_replace(":", "", $pre);
+                }
+                $ids[] = $pre;
+                $tabDivId = $pre."Tab";
+                $tableDivId = $pre."Table";
+                $active = "";
+                if ($i === 0){
+                    $active = "active";
+                }
+                $tabList .= '<li class="'.$active.'"><a class="nav-item" data-toggle="tab" href="#'.$tabDivId.'">'.$pre.'</a></li>';
+                $tabContent .= '
+            <div id="'.$tabDivId.'" role="tabpanel" class="tab-pane '.$active.'" searchmetatab="true">
+                <div class="row">
+                    <div class="col-sm-12" style="padding-top:6px;">
+                        <table id="'.$tableDivId.'" class="table table-striped table-bordered display" cellspacing="0" width="100%">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;">Check</th>
+                                    <th>Name</th>
+                                    <th>Collection</th>
+                                    <th>Run Environment</th>
+                                    <th>Project</th>
+                                    <th>Added on</th>
+                                    <th>View</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel panel-default" id="detailsOfmetaDiv" style="display:none; margin-top:10px;">
+                            <div class="panel-body">
+                                <div class="pull-left">
+                                    <h4>Details</h4>
+                                </div>
+                                <div class="box-body tab-pane active">
+                                    <table class="table table-hover table-striped table-condensed" id="details_of_meta_table">
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+            </div>';
+            }
+            
+    
+            $dmetaDiv = '
+            <div role="tabpanel" id="dmetaFileTab" dmetaurl="'.$DMETA_URL.'" dmetaid="'.join(",",$ids).'" class="tab-pane" searchTab="true">
+               <div role="tabpanel">
+                    <!-- Nav tabs -->
+                    <ul id="test" style="margin-top:10px;" class="nav nav-tabs" role="tablist">
+                    '.$tabList.'
+                    </ul>
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        '.$tabContent.'
+                    </div>
+                </div>
+            </div>
+            ';
+            echo $dmetaDiv; }
+            ?>
         </div>
     </div>
 </div>
@@ -1592,14 +1670,16 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <form class="form-horizontal">
                     <div class="form-group">
                         <div class="col-sm-12">
-                            <div>Selected files are not match with the existing collections. Please enter a new collection name in the field below.</div>
+                            <p id="newCollectionModalText">Selected files are not match with the existing collections. Please enter a new collection name in the field below.</p>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-sm-12">
-                            <label for="mUserLab" class="col-sm-3 control-label">Collection Name</label>
-                            <div class="col-sm-9">
-                                <input type="text" class="form-control" id="newCollectionName">
+                            <label for="mUserLab" class="col-sm-2 control-label">Collection</label>
+                            <div class="col-sm-10">
+                                <select id="newCollectionName" class="fbtn btn-default form-control" >
+                                <option value="" disabled selected>Type New Collection Name or Choose to Add into Existing Collection</option>
+                            </select>
                             </div>
                         </div>
                     </div>

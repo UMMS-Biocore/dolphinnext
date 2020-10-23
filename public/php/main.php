@@ -449,7 +449,7 @@ folder instead of downloading all of them to reduce the load. -->
 
     <body class="hold-transition skin-blue fixed">
         <div class="wrapper" style="position:static">
-            <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
+            <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"  sso_login="<?php echo SSO_LOGIN?>" sso_url="<?php echo SSO_URL?>" client_id="<?php echo CLIENT_ID?>"    ></span>
             <header class="main-header">
                 <!-- Logo -->
                 <a href="index.php" class="logo">
@@ -465,8 +465,11 @@ folder instead of downloading all of them to reduce the load. -->
                     <div class="navbar-custom-menu pull-left">
                         <ul class="nav navbar-nav">
                             <li><a href="index.php?np=1">Pipelines </a></li>
-                            <li><a href="index.php?np=2">Projects </a></li>
-                            <li><a href="index.php?np=5">Run Status </a></li>
+                            <?php 
+                            if ($login == 1){
+                                echo '<li><a href="index.php?np=2">Projects </a></li><li><a href="index.php?np=5">Run Status </a></li>';
+                            }  
+                            ?>
                         </ul>
                     </div>
                     <div class="navbar-custom-menu pull-right">
@@ -507,7 +510,7 @@ folder instead of downloading all of them to reduce the load. -->
 
             if ($login == 1){
                 echo '<li><a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" title="Profiles"><i class="glyphicon glyphicon-user"></i> </a></li>';
-            }
+            } 
                             ?>
 
                             <li class="dropdown">
@@ -575,7 +578,12 @@ folder instead of downloading all of them to reduce the load. -->
                                         </div>
                                     </li>';
     }
+    if ($login != 1){
+        echo '<li><a id="signinbtn" href="index.php?p=login">Sign In</i> </a></li>';
+    }                                                                                                                                   
+                                                                                                                                        
                             ?>
+                            
                         </ul>
                     </div>
                 </nav>
@@ -588,7 +596,11 @@ folder instead of downloading all of them to reduce the load. -->
                 <!-- sidebar: style can be found in sidebar.less -->
                 <section class="sidebar">
                     <!-- Sidebar user panel -->
-                    <div class="user-panel" style="padding-bottom:5px;">
+                    <div class="user-panel" <?php 
+                         if ($login != 1){
+                                    echo 'style="display:none;"';
+                        }
+                         ?>style="padding-bottom:5px;">
                         <div id="userAvatar" style="display:inline" class="pull-left image">
                             <img id="userAvatarImg" src="
                                                          <?php 

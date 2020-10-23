@@ -1,3 +1,11 @@
+20.10.2020 Version 1.2.14
+Single-Sign On feature added.
+Total amount of files are shown in collections list.
+Run page loading enhanced by updating sample table.
+Dmeta file tab added.
+Warning added in case file types or collection types are not the same for the selected files.
+Dmeta initiates run using template run.
+
 12.10.2020 Version 1.2.13
 Github integration upgraded, password authentication replaced with the access token.
 

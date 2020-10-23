@@ -1,12 +1,21 @@
 <?php
 require_once(__DIR__."/../../config/config.php");
+require_once(__DIR__."/../ajax/dbfuncs.php");
+require_once("run.php");
+
+if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
+
 
 class funcs
 {
-    public $dbhost = "";
-    public $db = "";
-    public $dbuser = "";
-    public $dbpass = "";
+    private $dbhost = "";
+    private $db = "";
+    private $dbuser = "";
+    private $dbpass = "";
+    private $BASE_PATH = "";
+    private $SSO_URL = "";
+    private $CLIENT_ID = "";
+    private $CLIENT_SECRET = "";
 
     function readINI()
     {
@@ -14,6 +23,10 @@ class funcs
         $this->db         = DB;
         $this->dbpass     = DBPASS;
         $this->dbuser     = DBUSER;
+        $this->BASE_PATH  = BASE_PATH;
+        $this->SSO_URL    = SSO_URL;
+        $this->CLIENT_ID  = CLIENT_ID;
+        $this->CLIENT_SECRET  = CLIENT_SECRET;
     }
     function getINI()
     {
@@ -56,7 +69,7 @@ class funcs
         return $data;
     }
 
-    
+
     //http://localhost:8080/dolphinnext/api/service.php?func=getUUID&type=process
     function getUUID($params){
         $type = $params['type'];
@@ -132,5 +145,67 @@ class funcs
         return $id;
     }
 
+
+    // SSO login
+    function receivetoken($params){
+        $dbfuncs=new dbfuncs();
+        $this->readINI();
+        error_log('**ssoReceiveToken');
+        $code = $params['code'];
+        $url = "{$this->SSO_URL}/api/v1/oauth/token";
+        $data = json_encode(array(
+            'code' => $code,
+            'redirect_uri' => "{$this->BASE_PATH}/api/service.php?func=receivetoken",
+            'client_id'   => $this->CLIENT_ID,
+            'client_secret'   => $this->CLIENT_SECRET,
+            'grant_type'   => 'authorization_code',
+        ));
+
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_HEADER, false);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-type: application/json"));
+        curl_setopt($curl, CURLOPT_POST, true);
+        // secure it:
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+        $body = curl_exec($curl);
+        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if(curl_errno($curl) && $statusCode != 200){
+            header("Location: {$this->BASE_PATH}");
+            exit();
+        }
+        curl_close($curl);
+        $msg = json_decode($body, true);
+        if (!empty($msg["access_token"])) {
+            $accessToken = $msg["access_token"];
+            $refreshToken = $msg["refresh_token"];
+            $expiresIn = $msg["expires_in"];
+            $Run = new run();
+            $currentUser = $Run->saveAccessRefreshToken($accessToken, $refreshToken, $expiresIn);
+            error_log($accessToken);
+            error_log(print_r($currentUser, TRUE));
+
+            if (empty($currentUser)){
+                header("Location: {$this->BASE_PATH}");
+                exit();
+            }
+            // create session
+            $_SESSION['ownerID'] = $currentUser["id"];
+            $_SESSION['role'] = $currentUser["role"];
+            $_SESSION['email'] = $currentUser["email"];
+            $_SESSION['username'] = $currentUser["username"];
+            $_SESSION['name'] = $currentUser["name"];
+            $_SESSION['accessToken'] = $currentUser["accessToken"];
+            $_SESSION['refreshToken'] = $currentUser["refreshToken"];
+            //    sendCookie(updatedUser, req, res);
+            header("Location: {$this->BASE_PATH}/index.php?np=7");
+            exit();
+        }
+        error_log("sso-sign-in error occured.");
+        header("Location: {$this->BASE_PATH}");
+        exit();
+    }
 }
 ?>

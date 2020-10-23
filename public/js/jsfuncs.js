@@ -824,6 +824,51 @@ function toogleReleaseDiv(selPerm, own){
     }
 }
 
+// -- SSO login STARTS --
+function popupwindow(url, title, w, h) {
+    var left = screen.width / 2 - w / 2;
+    var top = screen.height / 2 - h / 2;
+    return window.open(
+        url,
+        title,
+        'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=' +
+        w +
+        ', height=' +
+        h +
+        ', top=' +
+        top +
+        ', left=' +
+        left
+    );
+}
+
+// open child window for SSO if user clicks on sign-in button
+if ($('#signinbtn').length && $('#basepathinfo').attr('sso_login') === "1") {
+    console.log("pass")
+    $('#signinbtn').on('click', function(e) {
+        e.preventDefault();
+        var SSO_URL = $('#basepathinfo').attr('sso_url');
+        var CLIENT_ID = $('#basepathinfo').attr('client_id');
+        var BASEPATH = $('#basepathinfo').attr('basepath');
+        var SSO_REDIRECT_URL = `${BASEPATH}/api/service.php?func=receivetoken`;
+        var SSO_FINAL_URL = `${SSO_URL}/dialog/authorize?redirect_uri=${SSO_REDIRECT_URL}&response_type=code&client_id=${CLIENT_ID}&scope=offline_access`;
+        popupwindow(SSO_FINAL_URL, 'Login', 650, 800);
+    });
+}
+
+if (document.getElementById("after-sso-close")) {
+    if (window.opener) {
+        window.opener.focus();
+        if (window.opener && !window.opener.closed) {
+            window.opener.location.reload();
+        }
+    }
+    window.close();
+}
+//  -- SSO login ENDS--
+
+
+
 $(document).ready(function () {
     initCloudConsole("amazon");
     initCloudConsole("google");
@@ -1725,6 +1770,28 @@ function cleanProcessName(proName) {
         proName = proName.replace(/@/g, "_"); 
     }
     return proName;
+}
+
+function cleanSpecChar(n) {
+    if (n){
+        n = n.replace(/-/g, "_")
+            .replace(/:/g, "_")
+            .replace(/,/g, "_")
+            .replace(/\$/g, "_")
+            .replace(/\!/g, "_")
+            .replace(/\</g, "_")
+            .replace(/\>/g, "_")
+            .replace(/\?/g, "_")
+            .replace(/\(/g, "_")
+            .replace(/\)/g, "_")
+            .replace(/\"/g, "_")
+            .replace(/\'/g, "_")
+            .replace(/\./g, "_")
+            .replace(/\//g, "_")
+            .replace(/\\/g, "_")
+            .replace(/@/g, "_"); 
+    }
+    return n;
 }
 
 function createLabel(proName) {

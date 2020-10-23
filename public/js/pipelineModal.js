@@ -486,10 +486,10 @@
 
 //template text for ace editor
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
-templateperl = '#perl example: \n\n#!/usr/bin/perl \n print \'Hi there!\' . \'\\n\';';
-templatepython = '#python example: \n\n#!/usr/bin/python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
+templateperl = '#perl example: \n\n#!/usr/bin/env perl \n print \'Hi there!\' . \'\\n\';';
+templatepython = '#python example: \n\n#!/usr/bin/env python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
 templatesh = '#shell example: \n\n#!/bin/sh \nmy_variable="Hello World" \necho \\$my_variable';
-templater = '';
+templater = '#R example: \n\n#!/usr/bin/env Rscript \nprint("Hello World!")';
 
 createAceEditors("editor", "#script_mode"); //ace process main editor
 createAceEditors("editorProHeader", "#script_mode_header") //ace process header editor
@@ -518,7 +518,7 @@ function createAceEditors(editorId, script_modeId) {
                     var newMode = $(script_modeId).val();
                     window[editorId].session.setMode("ace/mode/" + newMode);
                     var editorText = window[editorId].getValue();
-                    if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templatesh || editorText === '') {
+                    if (editorText === templategroovy || editorText === templateperl || editorText === templatepython || editorText === templater || editorText === templatesh || editorText === '') {
                         var newTempText = 'template' + newMode;
                         window[editorId].setValue(window[newTempText]);
                     }
@@ -3365,6 +3365,7 @@ $(document).ready(function () {
     toggleCheckBox('#checkDropDown', '#dropDownOpt');
     toggleCheckBox('#checkShowSett', '#showSettOpt');
     toggleCheckBox('#checkInDesc', '#inDescOpt');
+    toggleCheckBox('#checkPubDmeta', '#pubDmetaSettings');
     toggleCheckBox('#checkDefVal', '#defVal');
     toggleCheckBox('#checkPubWeb', '#pubWebOpt');
 
@@ -3375,12 +3376,16 @@ $(document).ready(function () {
                 if (checkdropDownOpt === "true") {
                     if ($(inputId).data().multiselect) {
                         $(inputId).multiselect("enable")
+                    } else if (inputId == "#pubDmetaSettings"){
+                        $(inputId).css("display","inline")   
                     } else {
                         $(inputId).removeAttr('disabled')
                     }
                 } else if (checkdropDownOpt === "false") {
                     if ($(inputId).data().multiselect) {
                         $(inputId).multiselect("disable")
+                    } else if (inputId == "#pubDmetaSettings"){
+                        $(inputId).css("display","none")   
                     } else {
                         $(inputId).attr('disabled', 'disabled')
                     }
@@ -3429,7 +3434,7 @@ $(document).ready(function () {
         }
     }
 
-    // "change name" modal for input parameters
+    // Save "change name" modal settings into workflow elements: $("#" + renameTextID)
     function saveValue(checkId, valueId, attr) {
         var value = $(valueId).val();
         if (Array.isArray(value)) {
@@ -3458,6 +3463,40 @@ $(document).ready(function () {
             }
         }
     }
+    // Save "change name" modal settings into workflow elements. 
+    // Supports Dmeta settings.
+    function saveValueObj(checkId,attr){
+        var checkValue = $(checkId).is(":checked").toString();
+        if (checkId == "#checkPubDmeta"){
+            var pubDmetaFilename = $("#pubDmetaFilename").val();
+            var pubDmetaFeature = $("#pubDmetaFeature").val();
+            var pubDmetaTarget = $("#pubDmetaTarget").val();
+            var save = {filename:pubDmetaFilename, feature:pubDmetaFeature, target:pubDmetaTarget}
+            if (checkValue === "true"){
+                $("#" + renameTextID).data(attr, save)
+            } else {
+                $("#" + renameTextID).removeData(attr);
+            }
+        }
+    }
+    function loadValueObj(checkId,loadObj){
+        var check = "false"; 
+        if (checkId == "#checkPubDmeta" && loadObj){
+            if (loadObj.filename && loadObj.feature && loadObj.target){
+                $("#pubDmetaFilename").val(loadObj.filename);
+                $("#pubDmetaFeature").val(loadObj.feature);
+                $("#pubDmetaTarget").val(loadObj.target);
+                check ="true"
+            }
+        }
+        if (check== "true"){
+            $(checkId).prop('checked', true);
+        } else {
+            $(checkId).prop('checked', false);
+        }
+        $(checkId).trigger("change");
+
+    }
     $('#pubWebOpt').multiselect({
         buttonText: function (options, select) {
             if (options.length == 0) {
@@ -3483,18 +3522,21 @@ $(document).ready(function () {
             $('#showSettDiv').css("display", "none")
             $('#indescDiv').css("display", "none")
             $('#pubWebDiv').css("display", "none")
+            $('#pubDmetaAllDiv').css("display", "none")
         } else if (renameTextClassType === "input") {
             $('#defValDiv').css("display", "block")
             $('#dropdownDiv').css("display", "block")
             $('#showSettDiv').css("display", "block")
             $('#indescDiv').css("display", "block")
             $('#pubWebDiv').css("display", "none")
+            $('#pubDmetaAllDiv').css("display", "none")
         } else if (renameTextClassType === "output") {
             $('#defValDiv').css("display", "none")
             $('#dropdownDiv').css("display", "none")
             $('#showSettDiv').css("display", "none")
             $('#indescDiv').css("display", "none")
             $('#pubWebDiv').css("display", "block")
+            $('#pubDmetaAllDiv').css("display", "block")
         }
 
         fillRenameModal(renameTextDefVal, "#checkDefVal", '#defVal');
@@ -3502,6 +3544,7 @@ $(document).ready(function () {
         fillRenameModal(renameTextShowSett, '#checkShowSett', '#showSettOpt');
         fillRenameModal(renameTextInDesc, '#checkInDesc', '#inDescOpt');
         fillRenameModal(renameTextPubWeb, '#checkPubWeb', '#pubWebOpt');
+        loadValueObj('#checkPubDmeta',renameTextPubDmeta)
         $('#renameModaltitle').html('Change Name');
         $('#mRenName').val(renameText);
     });
@@ -3511,6 +3554,7 @@ $(document).ready(function () {
         saveValue('#checkPubWeb', '#pubWebOpt', "pubWeb");
         saveValue('#checkShowSett', '#showSettOpt', "showSett");
         saveValue('#checkInDesc', '#inDescOpt', "inDescOpt");
+        saveValueObj("#checkPubDmeta","pubDmeta")
         changeName();
         autosave();
         $('#renameModal').modal("hide");

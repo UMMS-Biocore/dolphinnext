@@ -8,6 +8,7 @@ $db = new dbfuncs();
 
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
+$accessToken = isset($_SESSION['accessToken']) ? $_SESSION['accessToken'] : "";
 $username = isset($_SESSION['username']) ? $_SESSION['username'] : "";
 $email = isset($_SESSION['email']) ? $_SESSION['email'] : "";
 $userRole = isset($_SESSION['role']) ? $_SESSION['role'] : "";
@@ -25,64 +26,19 @@ if (isset($_REQUEST['id'])) {
 
 if ($p=="saveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
-    $profileType = $_REQUEST['profileType'];
-    $profileId = $_REQUEST['profileId'];
-    $docker_check = $_REQUEST['docker_check'];
-    $amazon_cre_id = $_REQUEST['amazon_cre_id'];
-    $google_cre_id = $_REQUEST['google_cre_id'];
     $nextText = urldecode($_REQUEST['nextText']);
-    $runConfig = urldecode($_REQUEST['configText']);
-    $proVarObj = json_decode(urldecode($_REQUEST['proVarObj']));
-    $initRunOptions = urldecode($_REQUEST['initRunOptions']);
-    $runType = $_REQUEST['runType'];
+    $eachExecConfig = urldecode($_REQUEST['eachExecConfig']);
+    $proVarObj = urldecode($_REQUEST['proVarObj']);
+    $runType = $_REQUEST['runType']; //"resumerun" or "newrun"
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
-    $permCheck = 1;
-    //don't allow to update if user not own the project_pipeline.
-    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
-    $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
-    if (!empty($permCheck)){
-        $db->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
-        $db->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
-        $attemptData = json_decode($db->getRunAttempt($project_pipeline_id));
-        $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
-        if (empty($attempt) || $attempt == 0 || $attempt == "0"){
-            $attempt = "0";
-        }
-        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        $db->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$ownerID);
-        $amzConfigText = $db->getAmazonConfig($amazon_cre_id, $ownerID);
-        list($initialConfigText,$initialRunParams) = $db->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
-        $mainConfigText = $db->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
-        $getCloudConfigFileDir = $db->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
-        //create file and folders
-        list($targz_file, $dolphin_path_real, $runCmdAll) = $db->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
-        if ($manualRun == "true"){
-            $data = $db->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
-        } else {
-            //run the script in remote machine
-            $data = $db->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
-            //activate autoshutdown feature for cloud
-            if  ($profileType == "amazon" || $profileType == "google"){
-                $autoshutdown_active = "true";
-                $db->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
-                $db->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
-            } 
-        }
-    }
-
-
-
-
+    $data = $db->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $eachExecConfig, $ownerID);
 }
 else if ($p=="updateRunAttemptLog") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : "";
-    $res= $db->getUUIDLocal("run_log");
-    $uuid = $res->rev_uuid;
-    $status = ($manualRun == "true") ? "Manual" : "init";
     //add run into run table and increase the run attempt. $status = "init";
-    $db->updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID);
+    $uuid = $db->updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID);
     $data = json_encode($uuid);
 }
 else if ($p=="updateProPipeStatus") {
@@ -244,7 +200,7 @@ else if ($p=="savePubWeb"){
     $profileId = $_REQUEST['profileId'];
     $pipeline_id = $_REQUEST['pipeline_id'];
     if (!empty($ownerID)){
-        $data = $db->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID);
+        $data = $db->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID, $accessToken);
     } 
 }
 else if ($p=="saveNextflowLog"){
@@ -746,6 +702,9 @@ else if ($p=="getToken"){
         $ret["token"] = $curr_token;
         $data = json_encode($ret);
     }
+}
+else if ($p=="getSSOAccessTokenByUserID"){
+    $data = $db -> getSSOAccessTokenByUserID($ownerID);
 }
 else if ($p=="getRunLog"){
     $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
@@ -1529,21 +1488,7 @@ else if ($p=="saveInput"){
 }
 else if ($p=="saveCollection"){
     $name = $_REQUEST['name'];
-    $colData = $db->getCollectionByName($name, $ownerID);
-    $colData = json_decode($colData,true);
-    if (isset($colData[0])){
-        $colId = $colData[0]["id"];
-    } else {
-        $colId = "";
-    }
-    if (!empty($id)) {
-    } else {
-        if (empty($colId)){
-            $data = $db->insertCollection($name, $ownerID);
-        } else {
-            $data = json_encode(array('id' => $colId));
-        }
-    }
+    $data = $db->saveCollection($name, $ownerID);
 }
 else if ($p=="insertFileCollection"){
     $collection_id = $_REQUEST['collection_id'];
@@ -1595,23 +1540,8 @@ else if ($p=="saveFile"){
     $file_array = $_REQUEST['file_array'];
     $project_id = $_REQUEST['project_id'];
     $run_env = $_REQUEST['run_env'];
-    $profileAr = explode("-", $run_env);
-    $profileType = $profileAr[0];
-    $profileId = $profileAr[1];
-    if ($profileType == "amazon"){
-        $run_env = "amazon";
-    } else if ($profileType == "google"){
-        $run_env = "google";
-    } else if ($profileType == "cluster"){
-        if (!empty($profileId)) {
-            $proData = $db->getProfileClusterbyID($profileId, $ownerID);
-            $proDataAll = json_decode($proData,true);
-            $username = $proDataAll[0]["username"];
-            $hostname = $proDataAll[0]["hostname"];
-            $run_env = $username."@".$hostname;
-        }
-    } 
-
+    $run_env = $db->getRunEnv($run_env, $ownerID);
+    $insertArr = array();
     for ($i = 0; $i < count($file_array); $i++) {
         $item = $file_array[$i];
         $item_file_dir = isset($file_dir[$i]) ? $file_dir[$i] : ""; 
@@ -1626,6 +1556,7 @@ else if ($p=="saveFile"){
         if (empty($file_id)) {
             break;
         } else {
+            $insertArr[] = $file_id;
             $insertFileProject = $db->insertFileProject($file_id, $project_id, $ownerID);
             $insertFileCollection = $db->insertFileCollection($file_id, $collection_id, $ownerID);
             $file_col_data = json_decode($insertFileCollection,true);
@@ -1635,7 +1566,7 @@ else if ($p=="saveFile"){
             }
         }
     }
-    $data = $insert;
+    $data = json_encode($insertArr);
 }
 else if ($p=="saveProPipeInput"){
     $input_id = $_REQUEST['input_id'];
@@ -1674,25 +1605,15 @@ else if ($p=="fillInput"){
     $url = isset($_REQUEST['url']) ? $_REQUEST['url'] : "";
     $urlzip = isset($_REQUEST['urlzip']) ? $_REQUEST['urlzip'] : "";
     $checkpath= isset($_REQUEST['checkpath']) ? $_REQUEST['checkpath'] : "";
-    $url_id = $db->checkInsertUrlInput($url, "url", $ownerID);
-    $urlzip_id = $db->checkInsertUrlInput($urlzip, "url", $ownerID);
-    $checkpath_id = $db->checkInsertUrlInput($checkpath, "url", $ownerID);
+    $url_id = $db->checkAndInsertInput($url, "url", $ownerID);
+    $urlzip_id = $db->checkAndInsertInput($urlzip, "url", $ownerID);
+    $checkpath_id = $db->checkAndInsertInput($checkpath, "url", $ownerID);
     settype($url_id, 'integer');
     settype($urlzip_id, 'integer');
     settype($checkpath_id, 'integer');
     if (empty($collection_id)){
-        //check if input exist?
         if (empty($inputID)) {
-            $checkIn = $db->checkInput($inputName,$inputType);
-            $checkInData = json_decode($checkIn,true);
-            if (isset($checkInData[0])){
-                $input_id = $checkInData[0]["id"];
-            } else {
-                //insert into input table
-                $insertIn = $db->insertInput($inputName, $inputType, $ownerID);
-                $insertInData = json_decode($insertIn,true);
-                $input_id = $insertInData["id"];
-            }
+            $input_id = $db->checkAndInsertInput($inputName, $inputType, $ownerID);
         } else {
             $input_id = $inputID;
             //get inputdata from input table
@@ -1703,17 +1624,7 @@ else if ($p=="fillInput"){
             } 
         }
         $input_id = (string)$input_id;
-        //check if project input is exist
-        $checkPro = $db->checkProjectInput($project_id, $input_id);
-        $checkProData = json_decode($checkPro,true);
-        if (isset($checkProData[0])){
-            $projectInputID = $checkProData[0]["id"];
-        } else {
-            //insert into project_input table
-            $insertPro = $db->insertProjectInput($project_id, $input_id, $ownerID);
-            $insertProData = json_decode($insertPro,true);
-            $projectInputID = $insertProData["id"];
-        }
+        $projectInputID = $db->checkAndInsertProjectInput($project_id, $input_id, $ownerID);
         $projectInputID = (string)$projectInputID;
         $data = json_encode($projectInputID);
     } else {

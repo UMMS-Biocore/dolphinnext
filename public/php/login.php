@@ -54,6 +54,16 @@ function checkActive($check_active){
 }
 
 
+
+function loginFailed($warn){
+    $loginfail = '<font class="text-center"  color="crimson">'.$warn.'</font>';
+    session_destroy();
+    require_once("loginform.php");
+    $e="Login Failed.";
+    exit;
+}
+
+
 // Google Login
 if(isset($_SESSION['google_login'])){
     if ($_SESSION['google_login'] == true && isset($_SESSION['email']) && $_SESSION['email'] !=""){
@@ -61,11 +71,7 @@ if(isset($_SESSION['google_login'])){
         $check_verification = $query->queryAVal("SELECT verification FROM users WHERE deleted=0 AND email = '" . $_SESSION['email']."'");
         list($active_user,$loginfail) = checkActive($check_active);
         if ($active_user == false || !empty($check_verification)){
-            $loginfail = '<font class="text-center"  color="crimson">Sorry, account is not active.</font>';
-            session_destroy();
-            require_once("loginform.php");
-            $e="Login Failed.";
-            exit;
+            loginFailed("Sorry, account is not active.");
         } else if (empty($check_verification) && $active_user == true){
             $checkUserData = json_decode($query->getUserByEmail($_SESSION['email']));
             $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
@@ -73,11 +79,7 @@ if(isset($_SESSION['google_login'])){
                 require_once("main.php");
                 exit;
             } else{
-                session_destroy();
-                $loginfail = '<font class="text-center"  color="crimson">Login Failed.</font>';
-                require_once("loginform.php");
-                $e="Login Failed.";
-                exit;
+                loginFailed("Login Failed.");
             }
         }
     }
@@ -91,10 +93,7 @@ if(isset($_POST['login'])){
         $check_active = $query->queryAVal("SELECT active FROM users WHERE deleted =0 AND (email = '$emailusername' OR username = '$emailusername')");
         list($active_user,$loginfail) = checkActive($check_active);
         if ($active_user == false){
-            session_destroy();
-            require_once("loginform.php");
-            $e="Login Failed.";
-            exit;
+            loginFailed("Login Failed.");
         }
 
     }
@@ -141,25 +140,13 @@ if(isset($_POST['login'])){
                 require_once("main.php");
                 exit;
             } else{
-                session_destroy();
-                $loginfail = '<font class="text-center"  color="crimson">Incorrect E-mail/Password.</font>';
-                require_once("loginform.php");
-                $e="Login Failed.";
-                exit;
+                loginFailed("Incorrect E-mail/Password.");
             }
         }else{ 
-            session_destroy();
-            $loginfail = '<font class="text-center"  color="crimson">Incorrect E-mail/Password.</font>';
-            require_once("loginform.php");
-            $e="Login Failed.";
-            exit;
+            loginFailed("Incorrect E-mail/Password.");
         } 
     }else{
-        session_destroy();
-        $loginfail = '<font class="text-center"  color="crimson">Incorrect E-mail/Password.</font>';
-        require_once("loginform.php");
-        $e="Login Failed.";
-        exit;
+        loginFailed("Incorrect E-mail/Password.");
     }
 }
 ?>

@@ -93,7 +93,6 @@ class dbfuncs {
     function insTable($sql)
     {
         $data = array();
-
         if ($res = $this->runSQL($sql))
         {
             $insertID = self::$link->insert_id;
@@ -283,25 +282,27 @@ class dbfuncs {
         foreach ($amazon_cre_id_Ar as $amazon_cre_id):
         if (!empty($amazon_cre_id)){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
-            foreach($amz_data as $d){
-                $access = $d->amz_acc_key;
-                $d->amz_acc_key = trim($this->amazonDecode($access));
-                $secret = $d->amz_suc_key;
-                $d->amz_suc_key = trim($this->amazonDecode($secret));
+            if (!empty($amz_data[0])){
+                foreach($amz_data as $d){
+                    $access = $d->amz_acc_key;
+                    $d->amz_acc_key = trim($this->amazonDecode($access));
+                    $secret = $d->amz_suc_key;
+                    $d->amz_suc_key = trim($this->amazonDecode($secret));
+                }
+                $access_key = $amz_data[0]->{'amz_acc_key'};
+                $secret_key = $amz_data[0]->{'amz_suc_key'};
+                $confText = "access_key=$access_key\nsecret_key=$secret_key\n";
+                $s3configDir = "{$this->amz_path}/config/run{$project_pipeline_id}/initialrun";
+                $configFileDir = $s3configDir;
+                $s3tmpFile = "$s3configDir/.conf.$amazon_cre_id";
+                if (!file_exists($s3configDir)) {
+                    mkdir($s3configDir, 0700, true);
+                }
+                $file = fopen($s3tmpFile, 'w');//creates new file
+                fwrite($file, $confText);
+                fclose($file);
+                chmod($s3tmpFile, 0700);
             }
-            $access_key = $amz_data[0]->{'amz_acc_key'};
-            $secret_key = $amz_data[0]->{'amz_suc_key'};
-            $confText = "access_key=$access_key\nsecret_key=$secret_key\n";
-            $s3configDir = "{$this->amz_path}/config/run{$project_pipeline_id}/initialrun";
-            $configFileDir = $s3configDir;
-            $s3tmpFile = "$s3configDir/.conf.$amazon_cre_id";
-            if (!file_exists($s3configDir)) {
-                mkdir($s3configDir, 0700, true);
-            }
-            $file = fopen($s3tmpFile, 'w');//creates new file
-            fwrite($file, $confText);
-            fclose($file);
-            chmod($s3tmpFile, 0700);
         }
         endforeach;
 
@@ -430,9 +431,33 @@ class dbfuncs {
     }
 
     function getServerRunPath($uuid){
-        $run_path_real = "{$this->run_path}/$uuid/run";
-        return $run_path_real;
+        return "{$this->run_path}/$uuid/run";;
     }
+    function getServerRunTemplateDir(){
+        return "{$this->tmp_path}/runtmplt";
+    }
+    function getServerRunTemplateFile($runId){
+        return "{$this->tmp_path}/runtmplt/$runId".".tar.gz";
+    }
+
+    function getServerRunTemplateNFFile($runId, $uuid){
+        if (empty($runId) || empty($uuid)) return ""; 
+        $tmplt_run_targz = $this->getServerRunTemplateFile($runId);
+        $tmplt_run_dir = $this->getServerRunTemplateDir();
+        $extractedDir = "$tmplt_run_dir/$uuid";
+        $extractedDirNFfile = "$tmplt_run_dir/$uuid/nextflow.nf";
+        if (file_exists($extractedDir)) system('rm -rf ' . escapeshellarg("$extractedDir"));
+
+        mkdir($extractedDir, 0700, true);
+        system("tar xf $tmplt_run_targz -C $extractedDir", $retval);
+        if ($retval != 0) return ""; 
+        $nffile = $this->readFile($extractedDirNFfile);
+        if (file_exists($extractedDir)) system('rm -rf ' . escapeshellarg("$extractedDir"));
+        return $nffile;
+    }
+
+
+
 
     function getDolphinPathReal($proPipeAll){
         $project_pipeline_id = $proPipeAll[0]->{'id'};
@@ -952,6 +977,166 @@ class dbfuncs {
         return $exec_next_all;
     }
 
+    function getMainRunOpt($proPipeAll,$profileId, $profileType,$eachExecConfig, $ownerID){
+        $configText = "";
+
+        // Step 1. Add process.executor
+        // e.g. process.executor = 'lsf'
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $executor = $cluDataArr[0]['executor'];
+        $executor_job = $cluDataArr[0]['executor_job'];
+        $configText .= "process.executor = '" . $executor_job . "'\n";
+
+        // Step 2. if executor is local add cpu and memory fields in profile.
+        $configText = $this->addLocalConfigSettings($configText, $executor, $cluDataArr);
+        // Step 3. add general process settings
+        $configText = $this->addGeneralConfigSettings($configText, $proPipeAll, $cluDataArr, $executor_job);
+        // Step 4. add each process settings
+        $configText = $this->addEachConfigSettings($configText, $proPipeAll, $executor_job, $eachExecConfig);
+        return $configText;
+    }
+
+    function addLocalConfigSettings($configText, $executor, $cluDataArr){
+        if ($executor == "local") {
+            $next_cpu = $cluDataArr[0]['next_cpu'];
+            $next_memory = $cluDataArr[0]['next_memory'];
+            if (!empty($next_cpu)) {
+                $configText .= 'executor.$local.cpus' . ' = ' . $next_cpu . '\n';
+            }
+            if (!empty($next_memory)) {
+                $configText .= 'executor.$local.memory' . " = '" . $next_memory . " GB'\n";
+            }
+        }
+        return $configText;
+    }
+
+    function addEachConfigSettings($configText, $proPipeAll, $executor_job, $eachExecConfig){
+        // add each process settings
+        // e.g. process {
+        //      withName: bar { cpus = 32 } 
+        //      withName: bar { memory = '32 GB' } 
+        //      withName: bar { time = '20m' } 
+        //      withName: bar { clusterOptions = '-E "file /project/umw_garberlab"' } 
+        // }
+        $exec_each = $proPipeAll[0]->{'exec_each'};
+        if ($exec_each == "true"){
+            $eachExecConfig = json_decode($eachExecConfig, true);
+            if (!empty($eachExecConfig)){
+                $configText .= "process {\n";
+                foreach ($eachExecConfig as $processName => $configObj):
+                $time = $configObj['time'];
+                $queue = $configObj['queue'];
+                $cpu = $configObj['cpu'];
+                $memory = $configObj['memory'];
+                $clu_opt = $configObj['opt'];
+
+                if (!empty($time) && $executor_job != "ignite" &&  $executor_job != "local" ) {
+                    $configText .= "  withName: {$processName} { time  = '$time m' }\n";
+                }
+                if (!empty($cpu)) {
+                    $configText .= "  withName: {$processName} { cpus  = $cpu  }\n";
+                }
+                if (!empty($queue) && $executor_job != "ignite" &&  $executor_job != "local") {
+                    $configText .= "  withName: {$processName} { queue  = '$queue' }\n";
+
+                }
+                if (!empty($memory)) {
+                    $configText .= "  withName: {$processName} { memory  = '$memory GB' }\n";
+                }
+                if (!empty($clu_opt) &&  $executor_job != "local") {
+                    $configText .= "  withName: {$processName} { clusterOptions  = '$clu_opt' }\n";
+                }
+                endforeach;
+                $configText .= "}\n";
+            }
+        } 
+        return $configText;
+    }
+
+
+    function addGeneralConfigSettings($configText, $proPipeAll, $cluDataArr, $executor_job){
+        // add general process settings
+        // e.g. process.queue = 'short'
+        //      process.memory = '32 GB'
+        //      process.cpus = 1
+        //      process.time = '20m'
+        //      process.clusterOptions = '-E "file /project/umw_garberlab"'
+        $exec_all_settings = $proPipeAll[0]->{'exec_all_settings'};
+        $exec_all = $proPipeAll[0]->{'exec_all'};
+        if ($exec_all == "true"){
+            $exec_all_settings = htmlspecialchars_decode($exec_all_settings , ENT_QUOTES); 
+            $exec_all_settings = json_decode($exec_all_settings, true);
+            $time = $exec_all_settings['job_time'];
+            $queue = $exec_all_settings['job_queue'];
+            $cpu = $exec_all_settings['job_cpu'];
+            $memory = $exec_all_settings['job_memory'];
+            $clu_opt = $exec_all_settings['job_clu_opt'];
+        } else {
+            // use profile settings
+            $time = $cluDataArr[0]['job_time'];
+            $queue = $cluDataArr[0]['job_queue'];
+            $cpu = $cluDataArr[0]['job_cpu'];
+            $memory = $cluDataArr[0]['job_memory'];
+            $clu_opt = $cluDataArr[0]['job_clu_opt'];
+        }
+
+        if (!empty($time) && $executor_job != "ignite" &&  $executor_job != "local" ) {
+            $configText .= "process.time" . " = '" . $time . "m'\n";
+        }
+        if (!empty($cpu)) {
+            $configText .= "process.cpus" . " = " . $cpu . "\n";
+        }
+        if (!empty($queue) && $executor_job != "ignite" &&  $executor_job != "local") {
+            $configText .= "process.queue" . " = '" . $queue . "'\n";
+        }
+        if (!empty($memory)) {
+            $configText .= "process.memory" . " = '" . $memory . " GB'\n";
+        }
+        if (!empty($clu_opt) &&  $executor_job != "local") {
+            $configText .= "process.clusterOptions" . " = '" . $clu_opt . "'\n";
+        }
+        return $configText;
+    }
+
+    function getInitialRunOpt($proPipeAll,$profileId, $profileType,$ownerID){
+        $configText = "";
+        $docker_opt = $proPipeAll[0]->{'docker_opt'};
+        $singu_opt = $proPipeAll[0]->{'singu_opt'};
+        $singu_check = $proPipeAll[0]->{'singu_check'};
+        $docker_check = $proPipeAll[0]->{'docker_check'};
+
+        // Step 1. Add runOptions for singularity (default) or docker
+        // e.g. singularity.runOptions='-B /project:/project -B /home:/home -B /share:/share '
+        if ($docker_check == "true") {
+            if (!empty($docker_opt)) {
+                $configText .= "docker.runOptions = '".$docker_opt."'\n";
+            }
+        }
+        //default for initial run
+        if ($singu_check == "true" || $docker_check != "true") {
+            if (!empty($singu_opt)) {
+                $configText .= "singularity.runOptions = '".$singu_opt."'\n";
+            }
+        }
+        // Step 2. Add process.executor
+        // e.g. process.executor = 'lsf'
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $executor = $cluDataArr[0]['executor'];
+        $executor_job = $cluDataArr[0]['executor_job'];
+        $configText .= "process.executor = '" . $executor_job . "'\n";
+
+        // Step 3. if executor is local add cpu and memory fields in profile.
+        $configText = $this->addLocalConfigSettings($configText, $executor, $cluDataArr);
+        // Step 4. add general process settings
+        // e.g. process.queue = 'short'
+        //      process.memory = '32 GB'
+        //      process.cpus = 1
+        //      process.time = '20m'
+        //      process.clusterOptions = '-E "file /project/umw_garberlab"'
+        $configText = $this->addGeneralConfigSettings($configText, $proPipeAll, $cluDataArr, $executor_job);
+        return $configText;
+    }
+
     function getContainerRunOpt($proPipeAll,$profileType, $profileId, $runType, $ownerID){
         $configText = "";
         $docker_opt = $proPipeAll[0]->{'docker_opt'};
@@ -1015,15 +1200,17 @@ class dbfuncs {
         $configText .= "\n// Pipeline Config:\n\n";
         list($hostVar,$variableRaw) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
         $variable = htmlspecialchars_decode($variableRaw , ENT_QUOTES);
-
+        $reportDir = $this->getReportDir($proPipeAll);
+        
         $configText .= "\$HOSTNAME='".$hostVar."'\n";
+        $configText .= "params.outdir='".$reportDir."'\n";
         $configText .= "$variable\n";
         $configText .= "$script_pipe_config\n";
         //get main run input parameters
         $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $proPipeAll, $profileType, $ownerID);
         $configText .= "\n// Run Parameters:\n\n".$mainRunParams;
         //get main run local variable parameters:
-        $configText = $this->getProcessParams($proVarObj, $configText);
+        $configText = $this->getProcessParams(json_decode($proVarObj), $configText);
         return $configText;
     }
 
@@ -1067,6 +1254,24 @@ class dbfuncs {
         }
         return $uuidCmd;
 
+    }
+
+    // convert cluster-2 to oy2@umass.edu 
+    function getRunEnv($run_env, $ownerID){
+        $profileAr = explode("-", $run_env);
+        $profileType = $profileAr[0];
+        $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
+        $run_env = $profileType;
+        if ($profileType == "cluster" && !empty($profileId)){
+            $proData = $this->getProfileClusterbyID($profileId, $ownerID);
+            $proDataAll = json_decode($proData,true);
+            if (!empty($proDataAll[0])) {
+                $username = $proDataAll[0]["username"];
+                $hostname = $proDataAll[0]["hostname"];
+                $run_env = $username."@".$hostname;
+            }
+        }
+        return $run_env;
     }
 
     function getRenameCmd($dolphin_path_real,$attempt){
@@ -1308,7 +1513,7 @@ class dbfuncs {
 
     function getAmazonConfig($amazon_cre_id,$ownerID){
         $configText = "";
-        if ($amazon_cre_id != "" ){
+        if (!empty($amazon_cre_id)){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
             foreach($amz_data as $d){
                 $access = $d->amz_acc_key;
@@ -1489,6 +1694,13 @@ class dbfuncs {
         if (file_exists($run_path_real."/.aws_cred")) {
             unlink($run_path_real."/.aws_cred");
         }
+        // save $targz_file into $run_template_dir
+        $run_arch_file = $this->getServerRunTemplateFile($project_pipeline_id);
+        $run_tmp_dir = $this->getServerRunTemplateDir();
+        if (!file_exists($run_tmp_dir)) {
+            mkdir($run_tmp_dir, 0700, true);
+        }
+        copy($targz_file, $run_arch_file);
         return array($targz_file, $dolphin_path_real, $runCmdAll);
     }
 
@@ -1546,6 +1758,56 @@ class dbfuncs {
         return json_encode($ret);
     }
 
+
+
+    function saveRun($project_pipeline_id, $nextText, $runType, $manualRun, $uuid, $proVarObj,$eachExecConfig, $ownerID){
+        $data = null;
+        $permCheck = 1;
+        //don't allow to update if user not own the project_pipeline.
+        $curr_ownerID= $this->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
+        $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (!empty($permCheck)){
+            $this->updateProPipeLastRunUUID($project_pipeline_id,$uuid);
+            $this->updateProjectPipelineNewRun($project_pipeline_id,0,$ownerID);
+            $attemptData = json_decode($this->getRunAttempt($project_pipeline_id));
+            $attempt = isset($attemptData[0]->{'attempt'}) ? $attemptData[0]->{'attempt'} : "";
+            if (empty($attempt) || $attempt == 0 || $attempt == "0"){
+                $attempt = "0";
+            }
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+            $docker_check = $proPipeAll[0]->{'docker_check'};
+            $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
+            $google_cre_id = $proPipeAll[0]->{'google_cre_id'};
+            $profile = $proPipeAll[0]->{'profile'};
+            $profileAr = explode("-", $profile);
+            $profileType = $profileAr[0];
+            $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
+            $initRunOptions = $this->getInitialRunOpt($proPipeAll,$profileId, $profileType,$ownerID);
+            $runConfig = $this->getMainRunOpt($proPipeAll,$profileId, $profileType,$eachExecConfig, $ownerID);
+
+            $this->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$proVarObj, $eachExecConfig, $ownerID);
+            $amzConfigText = $this->getAmazonConfig($amazon_cre_id, $ownerID);
+            list($initialConfigText,$initialRunParams) = $this->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
+            $mainConfigText = $this->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+            $getCloudConfigFileDir = $this->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
+            //create file and folders
+            list($targz_file, $dolphin_path_real, $runCmdAll) = $this->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
+            if ($manualRun == "true"){
+                $data = $this->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
+            } else {
+                //run the script in remote machine
+                $data = $this->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
+                //activate autoshutdown feature for cloud
+                if  ($profileType == "amazon" || $profileType == "google"){
+                    $autoshutdown_active = "true";
+                    $this->updateCloudShutdownActive($profileId, $autoshutdown_active, $profileType, $ownerID);
+                    $this->updateCloudShutdownDate($profileId, NULL, $profileType, $ownerID);
+                } 
+            }
+        }
+        return $data;
+    }
+
     function saveRunLogSize($uuid, $project_pipeline_id, $ownerID){
         if (empty($uuid)){
             $rundir = "run$project_pipeline_id";
@@ -1560,7 +1822,6 @@ class dbfuncs {
     }
 
     function saveRunLogSizeUser($userID,$ownerID){
-        error_log("saveRunLogSizeUser");
         if (!empty($userID) &&!empty($ownerID) ){
             $userLogRaw = $this->getRunLogUser($userID, "all");
             $userLog = json_decode($userLogRaw);
@@ -1585,10 +1846,12 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-    function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $ownerID){
+    function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $proVarObj,$eachExecConfig, $ownerID){
         $newObj = $proPipeAll[0];
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $newObj->{'project_pipeline_input'} = $allinputs;
+        $newObj->{'proVarObj'} = htmlspecialchars($proVarObj, ENT_QUOTES);
+        $newObj->{'eachExecConfig'} = htmlspecialchars($eachExecConfig, ENT_QUOTES);
         foreach ($allinputs as $inputitem):
         $collection_id = $inputitem->{'collection_id'};
         $collection_arr = array();
@@ -1604,7 +1867,10 @@ class dbfuncs {
         $this->updateRunLogOpt(json_encode($newObj), $uuid, $ownerID);
     }
 
-    function updateRunAttemptLog($status, $project_pipeline_id, $uuid, $ownerID){
+    function updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID){
+        $res= $this->getUUIDLocal("run_log");
+        $uuid = $res->rev_uuid;
+        $status = ($manualRun == "true") ? "Manual" : "init";
         //check if $project_pipeline_id already exits un run table
         $checkRun = $this->getRun($project_pipeline_id,$ownerID);
         $checkarray = json_decode($checkRun,true);
@@ -1621,6 +1887,7 @@ class dbfuncs {
             $this->insertRun($project_pipeline_id, $status, "1", $ownerID);
         }
         $this->insertRunLog($project_pipeline_id, $uuid, $status, $ownerID);
+        return $uuid;
     }
 
     function parseKeyLine($txt, $key){
@@ -2190,17 +2457,187 @@ class dbfuncs {
         return $ret;
     }
 
-    function savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID){
+
+
+    // return assoc Arr:  array("filename" => row, 
+    //                          "feature" => column, 
+    //                          "target" => rsem_tpm_gene, 
+    //                          "id" => "g-155",  
+    //                          "name" => star)
+    function getPubDmetaInfo($pipeData){
+        $nodes = $pipeData[0]->{'nodes'};
+        $data = array();
+        if (!empty($nodes)){
+            $nodes = json_decode($nodes, true);
+            foreach ($nodes as $gNum => $item):
+            $out = array();
+            $push = false;
+            if ($item[2] == "outPro"){
+                $name = $item[3];
+                $processOpt = $item[4];
+                $out["id"] = $gNum;
+                $out["name"] = $name; //directory name which has the report files
+                foreach ($processOpt as $key => $feature):
+                if ($key == "pubDmeta"){
+                    $push = true;
+                    $out = array_merge($feature, $out);
+                }
+                if ($push == true) $data[] = $out;
+                endforeach;
+            }
+            endforeach;
+        }
+        return $data;
+    }
+
+    function getProjectPipelineCollection($project_pipeline_id, $ownerID) {
+        $ret = array();
+        $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+        if (!empty($allinputs)){
+            foreach ($allinputs as $inputitem):
+            $collection_id = $inputitem->{'collection_id'};
+            if (!empty($collection_id)){
+                $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
+                foreach ($allfiles as $fileData):
+                $sample_name = $fileData->{'name'};
+                if (!empty($sample_name)) $ret[] = $sample_name;
+                endforeach;
+            }
+            endforeach;
+        }
+        return $ret;
+    }
+
+
+    function patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken){
+        error_log("patchDmetaAPI:".$sName);
+        $url = "$dmeta_server/api/v1/data/$dmeta_out_collection/$targetDmetaRowId";
+        $data = json_encode(array(
+            'doc' => $doc
+        ));
+
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_HEADER, false);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, array("Content-type: application/json", "Authorization: Bearer $accessToken"));
+        // secure it:
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PATCH');
+
+        $body = curl_exec($curl);
+        $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if(curl_errno($curl) && $statusCode != 200){
+            error_log("patchDmetaAPI failed");
+        }
+        curl_close($curl);
+        $msg = json_decode($body, true);
+        return $msg;
+    }
+
+    function sendDmetaReport($project_pipeline_id, $proPipeAll,$pipeData, $uuid, $ownerID, $accessToken){
+        error_log("sendDmetaReport");
+        //{"dmeta_run_id":"5f74013df57c2439facad8ca","dmeta_server":"https://localhost:4000"}
+        $pubDmetaDir = $pipeData[0]->{'publish_dmeta_dir'};
+        $dmetaServerInfo = json_decode($proPipeAll[0]->{'dmeta'}, true);
+        $dmeta_run_id= $dmetaServerInfo["dmeta_run_id"];
+        $dmeta_server= $dmetaServerInfo["dmeta_server"];
+        $dmeta_out= $dmetaServerInfo["dmeta_out"];
+
+        // get $dmetaInfoPipe from pipeline
+        $dmetaInfoPipe = $this->getPubDmetaInfo($pipeData);
+        $pubDmetaDir = json_decode(htmlspecialchars_decode($pubDmetaDir, ENT_QUOTES), true);
+        // get all existing files with their directories in array
+        // e.g. ["rsem_summary/expected_count.tsv", "star/Log.progress.out"]
+        $fileListPubweb = array_values((array)json_decode($this->getFileList($uuid, "pubweb", "onlyfile")));
+        $fileListPubDmeta = array_values((array)json_decode($this->getFileList($uuid, "pubDmeta", "onlyfile")));
+        $fileList = array_merge($fileListPubweb, $fileListPubDmeta);
+        // removes empty values
+        $fileList = array_filter($fileList);
+
+        foreach ($pubDmetaDir as $value) {
+            if (!empty($value["dir"]) && !empty($value["pattern"])){
+                $pattern = trim($value["pattern"],'"'); 
+                $pattern = trim($pattern,"'"); 
+                $regex = $value["dir"]."/".$pattern;
+                //if name contains path and separated by '/' then replace with escape character '\/'
+                $regex = str_replace("/", "\/", $regex);
+                //if name contains regular expression with curly brackets: {a,b,c} then turn into (a|b|c) format
+                // $regex = fixCurlyBrackets($regex);
+                $regex = str_replace("*", ".*", $regex);
+                $regex = str_replace("?", ".?", $regex);
+                $regex = str_replace("'", "", $regex);
+                $regex = str_replace('"', "", $regex);
+                $regex = "/^".$regex."$/i";
+                $matches  = preg_grep ($regex, $fileList);
+                $matches = array_values((array) $matches);
+                if (count($matches) == 1){
+                    // get File Content
+                    $parentDir = "";
+                    if (in_array($matches[0],$fileListPubweb)){
+                        $parentDir = "pubweb";
+                    } else {
+                        $parentDir = "pubdmeta";
+                    }
+                    // get location of the sample name 
+                    // find dmeta array that matches $value["dir"]
+                    $dmetaObj = null;
+                    foreach ($dmetaInfoPipe as $dmetaItem): 
+                    if ($dmetaItem["name"] == $value["dir"]){
+                        $dmetaObj =$dmetaItem; 
+                        break;
+                    }
+                    endforeach;
+                    if (!empty($dmetaObj)){
+                        $sNameLoc = $dmetaObj["filename"];
+                        $featureLoc = $dmetaObj["feature"];
+                        $targetDmetaColl = $dmetaObj["target"];
+                        $filepath = "$parentDir/".$matches[0];
+                        $file = json_decode($this -> getFileContent($uuid, $filepath, $ownerID));
+                        // get $out_collection, sample names ($sName) and $targetDmetaRowId
+                        //$dmeta_out -> array( "sample_summary" => array ("control" => 5f74e0a7cc3f75507d1e6f26\n            "experiment" => 5f74e0a7cc3f75507d1e6f28))
+                        // e.g. $dmeta_out_collection = "sample_summary"
+                        // e.g. $sName = "control"
+                        // e.g. $targetDmetaRowId = "5f74e0a7cc3f75507d1e6f26"
+                        foreach ($dmeta_out as $dmeta_out_collection => $out_collectionData): 
+                        if ($targetDmetaColl == $dmeta_out_collection){
+                            foreach ($out_collectionData as $sName => $targetDmetaRowId): 
+                            error_log(print_r($filepath, TRUE));
+                            $doc = $this->dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc);
+                            if (!empty($doc)){
+                                $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken);
+                            }
+                            endforeach;
+                        }
+                        endforeach;
+
+
+                    }
+
+
+                } else if (count($matches) > 1){
+                    // here parse files multiple files that sample Name located at filename
+                }
+
+            }
+        }
+    }
+
+    function savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID, $accessToken){
         $data = json_encode("pubweb is not defined");
         $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
+        // get $reportDir
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+        list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
+        $reportDir = $this->getReportDir($proPipeAll);
         //get pubWebDir
         $pipeData = json_decode($this->loadPipeline($pipeline_id,$ownerID));
         $pubWebDir = $pipeData[0]->{'publish_web_dir'};
+        $pubDmetaDir = $pipeData[0]->{'publish_dmeta_dir'};
+        $down_file_list = array();
+        $down_file_dmeta_list = array();
         if (!empty($pubWebDir)){
-            // get outputdir
-            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-            list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
-            $reportDir = $this->getReportDir($proPipeAll);
             $down_file_list = explode(',', $pubWebDir);
             foreach ($down_file_list as &$value) {
                 $value = $reportDir."/".$value;
@@ -2208,6 +2645,23 @@ class dbfuncs {
             unset($value);
             $data = $this->saveNextflowLog($down_file_list,  $uuid, "pubweb", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
         } 
+        if (!empty($pubDmetaDir)){
+            $pubDmetaDir = json_decode(htmlspecialchars_decode($pubDmetaDir, ENT_QUOTES), true);
+            foreach ($pubDmetaDir as $value) {
+                if (!empty($value["dir"])){
+                    $path = $reportDir."/".$value["dir"];
+                    // only save files that are not found in pubweb list
+                    if (!in_array($path, $down_file_list)){
+                        $down_file_dmeta_list[] = $path;
+                    } 
+                }
+            }
+            $this->saveNextflowLog($down_file_dmeta_list,  $uuid, "pubdmeta", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
+            error_log("* accessToken: ".$accessToken);
+            if (!empty($accessToken)){
+                $this->sendDmetaReport($project_pipeline_id, $proPipeAll,$pipeData, $uuid, $ownerID, $accessToken);
+            }
+        }
         return $data;
     }
 
@@ -2512,6 +2966,10 @@ class dbfuncs {
         $sql = "SELECT * FROM users WHERE id = '$id' AND deleted=0";
         return self::queryTable($sql);
     }
+    function getUserBySSOId($sso_id) {
+        $sql = "SELECT * FROM users WHERE sso_id = '$sso_id' AND deleted=0";
+        return self::queryTable($sql);
+    }
     function getUserByEmail($email) {
         $email = str_replace("'", "''", $email);
         $sql = "SELECT * FROM users WHERE email = '$email' AND deleted=0";
@@ -2631,6 +3089,7 @@ class dbfuncs {
         $sql = "UPDATE google_credentials SET name='$name', project_id='$project_id', key_name='$key_name', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    //protect run/pipeline entrance 
     function insertToken($id, $np, $ownerID ){
         $token= $this->getKey(10);
         if (empty($token)){
@@ -2646,6 +3105,14 @@ class dbfuncs {
 
     }
 
+    function insertAccessToken($accessToken, $expirationDate, $sso_user_id, $client_id, $scope, $user_id) {
+        $sql = "INSERT INTO accessTokens(accessToken, expirationDate, sso_user_id, client_id, scope, user_id) VALUES ('$accessToken', '$expirationDate',  '$sso_user_id', '$client_id', '$scope', '$user_id')";
+        return self::insTable($sql);
+    }
+    function insertRefreshToken($refreshToken, $sso_user_id, $client_id, $scope, $user_id) {
+        $sql = "INSERT INTO refreshTokens(refreshToken, sso_user_id, client_id, scope, user_id) VALUES ('$refreshToken', '$sso_user_id', '$client_id', '$scope' , '$user_id')";
+        return self::insTable($sql);
+    }
     function insertGithub($username, $email, $token, $ownerID) {
         $sql = "INSERT INTO github (username, email, token, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
               ('$username', '$email', '$token', now() , now(), '$ownerID', '3', '$ownerID')";
@@ -2654,6 +3121,15 @@ class dbfuncs {
     function updateGithub($id, $username, $email, $token, $ownerID) {
         $sql = "UPDATE github SET username='$username', email='$email', token='$token', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
+    }
+
+    function getSSOAccessTokenByUserID($ownerID) {
+        $sql = "SELECT accessToken FROM accessTokens WHERE user_id = '$ownerID' ORDER BY id DESC LIMIT 1";
+        return self::queryTable($sql);
+    }
+    function getSSOAccessToken($accessToken) {
+        $sql = "SELECT * FROM accessTokens WHERE accessToken = '$accessToken' ORDER BY id DESC LIMIT 1";
+        return self::queryTable($sql);
     }
     function getGithub($ownerID) {
         $sql = "SELECT id, username, email, owner_id, group_id, perms, date_created, date_modified, last_modified_user FROM github WHERE owner_id = '$ownerID' AND deleted=0";
@@ -2728,7 +3204,11 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     function getCollections($ownerID) {
-        $sql = "SELECT id, name FROM collection WHERE owner_id = '$ownerID' AND deleted = 0";
+        $sql = "SELECT c.id, c.name, count(fc.c_id) AS fileCount
+                FROM collection c
+                INNER JOIN file_collection fc ON c.id=fc.c_id
+                WHERE c.owner_id = '$ownerID' AND c.deleted = 0 AND fc.deleted=0
+                GROUP BY fc.c_id";
         return self::queryTable($sql);
     }
     function getCollectionById($id,$ownerID) {
@@ -2900,6 +3380,10 @@ class dbfuncs {
     }
     function removeProGoogle($id) {
         $sql = "DELETE FROM profile_google WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    function removeSSOAccessToken($accessToken) {
+        $sql = "DELETE FROM accessTokens WHERE accessToken = '$accessToken'";
         return self::runSQL($sql);
     }
     //    ------------- Parameters ------------
@@ -4101,7 +4585,8 @@ class dbfuncs {
         }
     }
 
-    //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
+
+    //$last_server_dir is last directory in $uuid folder: eg. run, pubweb, pubDmeta
     //$opt = "onlyfile", "filedir"
     function getFileList($uuid, $last_server_dir, $opt) {
         $path= "{$this->run_path}/$uuid/$last_server_dir";
@@ -4224,6 +4709,24 @@ class dbfuncs {
         $sql = "INSERT INTO file(name, file_dir, file_type, files_used, collection_type, archive_dir, s3_archive_dir, gs_archive_dir, run_env, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$s3_archive_dir', '$gs_archive_dir', '$run_env', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
+
+    function saveCollection($name, $ownerID) {
+        $colData = $this->getCollectionByName($name, $ownerID);
+        $colData = json_decode($colData,true);
+        if (isset($colData[0])){
+            $colId = $colData[0]["id"];
+        } else {
+            $colId = "";
+        }
+        if (empty($colId)){
+            $data = $this->insertCollection($name, $ownerID);
+        } else {
+            $data = json_encode(array('id' => $colId));
+        }
+        return $data;
+    }
+
+
     function insertCollection($name, $ownerID) {
         $sql = "INSERT INTO collection (name, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
                   ('$name', '$ownerID', 3, now(), now(), '$ownerID')";
@@ -4234,29 +4737,14 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     function insertFileCollection($f_id, $c_id, $ownerID) {
-        $sql = "INSERT INTO file_collection (f_id, c_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$c_id', '$ownerID', now(), now(), '$ownerID', 3)";
+        $sql = "INSERT INTO file_collection (f_id, c_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$c_id', '$ownerID', now(), now(), '$ownerID', 3) ON DUPLICATE KEY UPDATE date_modified = now() ";
         return self::insTable($sql);
     }
     function insertFileProject($f_id, $p_id, $ownerID) {
         $sql = "INSERT INTO file_project (f_id, p_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$p_id', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
-    function checkInsertUrlInput($name, $type, $ownerID) {
-        $url_id = "";
-        if (!empty($name)) {
-            $checkUrl = $this->checkInput($name,$type);
-            $checkUrlData = json_decode($checkUrl,true);
-            if (isset($checkUrlData[0])){
-                $url_id = $checkUrlData[0]["id"];
-            } else {
-                //insert into input table
-                $insertIn = $this->insertInput($name, $type, $ownerID);
-                $insertInData = json_decode($insertIn,true);
-                $url_id = $insertInData["id"];
-            }
-        }
-        return $url_id;
-    }
+
     function insertInput($name, $type, $ownerID) {
         $sql = "INSERT INTO input(name, type, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
                   ('$name', '$type', '$ownerID', 3, now(), now(), '$ownerID')";
@@ -4368,7 +4856,8 @@ class dbfuncs {
     }
 
     function getProPipeLastRunUUID($project_pipeline_id) {
-        return $this->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$project_pipeline_id'");
+        $uuid = $this->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$project_pipeline_id'");
+        return $uuid;
     }
     function updateProPipeLastRunUUID($project_pipeline_id, $uuid) {
         $sql = "UPDATE project_pipeline SET last_run_uuid='$uuid' WHERE id='$project_pipeline_id'";
@@ -4382,7 +4871,7 @@ class dbfuncs {
                 $where = " where pp.id = '$id' AND pip.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
             }
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, IF(pp.owner_id='$ownerID',1,0) as own
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.dmeta, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM project_pipeline pp
                       INNER JOIN users u ON pp.owner_id = u.id
                       INNER JOIN project p ON pp.project_id = p.id
@@ -4456,12 +4945,201 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline_input SET collection_id='$collection_id', url='$url', urlzip='$urlzip', checkpath='$checkpath', project_pipeline_id='$project_pipeline_id', input_id='$input_id', project_id='$project_id', pipeline_id='$pipeline_id', g_num='$g_num', given_name='$given_name', qualifier='$qualifier', last_modified_user ='$ownerID'  WHERE id = $id";
         return self::runSQL($sql);
     }
+    function updateProPipeInputCollInput($id, $input_id, $collection_id, $ownerID) {
+        $sql = "UPDATE project_pipeline_input SET collection_id='$collection_id', input_id='$input_id', last_modified_user ='$ownerID', date_modified= now()  WHERE id = $id";
+        return self::runSQL($sql);
+    }
     function duplicateProjectPipelineInput($new_id,$old_id,$ownerID) {
         $sql = "INSERT INTO project_pipeline_input(url, urlzip, checkpath, input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, project_pipeline_id, owner_id, perms, date_created, date_modified, last_modified_user)
                     SELECT url, urlzip, checkpath, input_id, project_id, pipeline_id, g_num, given_name, qualifier, collection_id, '$new_id', '$ownerID', '3', now(), now(),'$ownerID'
                     FROM project_pipeline_input
                     WHERE deleted=0 AND project_pipeline_id='$old_id'";
         return self::insTable($sql);
+    }
+
+    function checkAndInsertProjectInput($project_id, $input_id, $ownerID){
+        $projectInputID = 0;
+        //check if project input is exist
+        $input_id = (string)$input_id;
+        $checkPro = $this->checkProjectInput($project_id, $input_id);
+        $checkProData = json_decode($checkPro,true);
+        if (isset($checkProData[0])){
+            $projectInputID = $checkProData[0]["id"];
+        } else {
+            //insert into project_input table
+            $insertPro = $this->insertProjectInput($project_id, $input_id, $ownerID);
+            $insertProData = json_decode($insertPro,true);
+            $projectInputID = $insertProData["id"];
+        }
+        return $projectInputID;
+    }
+
+    function getEmptyCollectionId($ownerID, $collection_name,$collNameArr, $suffix){
+        $collection_id = 0;
+        $suffix += 1;
+        $newColName = "{$collection_name}-{$suffix}";
+        // first check if it is in $collNameArr
+        if (!in_array($newColName, $collNameArr)){
+            $collData = json_decode($this->saveCollection($newColName, $ownerID),true);
+            if (!empty($collData["id"])){
+                $collection_id = $collData["id"];
+            }
+            return $collection_id;
+        } else {
+            // if it is found in $collection_name_Array add suffix
+            return $this->getEmptyCollectionId($ownerID, $collection_name,$collNameArr,$suffix);
+        }
+    }
+
+    function checkCollectionFiles($file_array,$collection_name, $ownerID) {
+        $collection_id = 0;
+        // get all collections of user
+        $allColl = json_decode($this->getCollections($ownerID),true);
+        $collNameArr = array();
+        // a. check if is there any collection that has all the files in it 
+        sort($file_array);
+        for ($i = 0; $i < count($allColl); $i++) {
+            $coll_id = $allColl[$i]["id"]; 
+            $collNameArr[] = $allColl[$i]["name"]; 
+            $collFileIds = array();
+            $files = json_decode($this->getCollectionFiles($coll_id,$ownerID),true);
+            foreach ($files as $file_item):
+            $file_id = $file_item["id"];
+            settype($file_id, 'integer');
+            $collFileIds[] = $file_id;
+            endforeach;
+            sort($collFileIds);
+            // same collection found return collection_id
+            if ($collFileIds==$file_array) {
+                return $coll_id;
+            }
+        }
+        // b. if collection is not found, use $collection_name to create coll_name
+        $collection_id = $this->getEmptyCollectionId($ownerID, $collection_name,$collNameArr,1);
+        // use $file_array and insert collections
+        settype($collection_id, 'integer');
+        for ($i = 0; $i < count($file_array); $i++) {
+            $file_id = $file_array[$i];
+            settype($file_id, 'integer');
+            $this->insertFileCollection($file_id, $collection_id, $ownerID);
+        }
+        return $collection_id;
+    }
+
+    function checkAndInsertCollection($inputVal, $ownerID){
+        $collection_id = 0;
+        // e.g. collection data:
+        // $name: experiment
+        // $file_env: cluster-2
+        // $files_used [["c_rep1.1.fq","c_rep1.2.fq"],["c_rep2.1.fq","c_rep2.2.fq"]]
+        // $files_used converted to: c_rep1.1.fq,c_rep1.2.fq | c_rep2.1.fq,c_rep2.2.fq
+        // $file_dir:["s3://Vitiligo_11_15_17/dolphin_import","9"]
+        // $file_dir converted to:s3://Vitiligo_11_15_17/dolphin_import\t9
+        // $collection_type: pair
+        // $file_type: fastq
+        // $collection_name: Vitiligo experiment-2
+
+        // use checkFileAndSave to save file and get file_id and fill $file_array
+        $file_array = array();
+        for ($i = 0; $i < count($inputVal); $i++) {
+            $name = $inputVal[$i]["name"]; 
+            $run_env = $inputVal[$i]["file_env"]; 
+            $run_env = $this->getRunEnv($run_env,$ownerID);
+            $files_used = $inputVal[$i]["files_used"]; 
+            $file_dir = $inputVal[$i]["file_dir"]; 
+            $collection_type = $inputVal[$i]["collection_type"];
+            $file_type = $inputVal[$i]["file_type"];
+            $archive_dir = "";
+            $s3_archive_dir = "";
+            $gs_archive_dir = "";
+            for ($k = 0; $k < count($file_dir); $k++) {
+                $file_dir[$k] = implode("\t", $file_dir[$k]);
+            }
+            $file_dir = implode("\t", $file_dir);
+            for ($k = 0; $k < count($files_used); $k++) {
+                $files_used[$k] = implode(",", $files_used[$k]);
+            }
+            $files_used = implode(" | ", $files_used);
+
+            $file_id = $this->checkFileAndSave($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID);
+            if (!empty($file_id)){
+                $file_array[] = $file_id;
+            }
+        }
+        $collection_name = $inputVal[0]["collection_name"];
+        $collection_id = $this->checkCollectionFiles($file_array,$collection_name, $ownerID);
+        return $collection_id;
+    }
+
+    function checkFileAndSave ($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID){
+        $checkFile = json_decode($this->checkFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID),true);
+        if (isset($checkFile[0])){
+            $file_id = $checkFile[0]["id"];
+        } else {
+            $insert = json_decode($this->insertFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID),true);
+            $file_id = $insert["id"];
+        }
+        return $file_id;
+    }
+
+    function checkAndInsertInput($inputName, $inputType, $ownerID){
+        //check if input exist?
+        $input_id = 0;
+        if (!empty($inputName)) {
+            $checkIn = $this->checkInput($inputName,$inputType);
+            $checkInData = json_decode($checkIn,true);
+            if (isset($checkInData[0])){
+                $input_id = $checkInData[0]["id"];
+            } else {
+                //insert into input table
+                $insertIn = $this->insertInput($inputName, $inputType, $ownerID);
+                $insertInData = json_decode($insertIn,true);
+                $input_id = $insertInData["id"];
+            }
+        }
+        return $input_id;
+    }
+
+    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta){
+        $newProPipeId = null;
+        if ($type == "dmeta"){
+            $proPipeAll = json_decode($this->getProjectPipelines($old_run_id,"",$ownerID,""));
+            if (!empty ($proPipeAll[0])){
+                $sql = "INSERT INTO project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta)
+                    SELECT concat(name, '_dmeta'), project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
+                    FROM project_pipeline
+                    WHERE id='$old_run_id' AND owner_id='$ownerID'";
+                $proPipe = self::insTable($sql);
+                $newProPipe = json_decode($proPipe,true);
+                $newProPipeId = $newProPipe["id"];
+                $this->duplicateProjectPipelineInput($newProPipeId, $old_run_id, $ownerID);
+                // use $inputs and replace entered projectPipelineInputs
+                foreach ($inputs as $inputName => $inputVal):
+                $input_id = 0;
+                $collection_id = 0;
+                $proPipeInData = json_decode($this->getProjectPipelineInputIdByInputName($inputName,$newProPipeId,$ownerID),true);
+                if (!empty($proPipeInData[0]) && $proPipeInData[0]["id"]){
+                    $proPipeInputId = $proPipeInData[0]["id"];
+                    $inputType = $proPipeInData[0]["input_type"];
+                    $project_id = $proPipeInData[0]["project_id"];
+                    // if $inputVal is array of array -> save as a collection
+                    if (is_array($inputVal) && is_array($inputVal[0])){
+                        //collection
+                        $collection_id = $this->checkAndInsertCollection($inputVal, $ownerID);
+                    } else {
+                        //simple input
+                        $input_id = $this->checkAndInsertInput($inputVal, $inputType, $ownerID);
+                        $this->checkAndInsertProjectInput($project_id, $input_id, $ownerID);
+                    }
+                    if (!empty($input_id) || !empty($collection_id)){
+                        error_log("update updateValProPipeInput $input_id $collection_id");
+                        $this->updateProPipeInputCollInput($proPipeInputId, $input_id, $collection_id, $ownerID);
+                    }
+                }
+                endforeach;
+            }
+            return $newProPipeId;
+        }
     }
     function duplicateProcess($new_process_gid, $new_name, $old_id, $ownerID) {
         $sql = "INSERT INTO process(process_uuid, process_rev_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid)
@@ -4526,6 +5204,15 @@ class dbfuncs {
                     LEFT JOIN collection c ON c.id = ppi.collection_id
                     $where";
         return self::queryTable($sql);
+    }
+    function getProjectPipelineInputIdByInputName($name, $project_pipeline_id, $ownerID){
+        $where = " where ppi.deleted=0 AND ppi.given_name= '$name' AND ppi.owner_id = '$ownerID' AND ppi.project_pipeline_id = '$project_pipeline_id'" ;
+        $sql = "SELECT ppi.id, i.type as input_type, ppi.project_id
+                    FROM project_pipeline_input ppi
+                    LEFT JOIN input i ON (i.id = ppi.input_id)
+                    $where";
+        return self::queryTable($sql);
+
     }
     function insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID) {
         $sql = "INSERT INTO process_parameter(sname, process_id, parameter_id, type, closure, operator, reg_ex, optional, owner_id, date_created, date_modified, last_modified_user, perms, group_id)
@@ -4778,6 +5465,16 @@ class dbfuncs {
         $sql = "SELECT id, name FROM input WHERE name = BINARY '$name' AND type='$type'";
         return self::queryTable($sql);
     }
+    function checkFile($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID){
+        $name = trim($name);
+        $file_dir = trim($file_dir);
+        $archive_dir = trim($archive_dir);
+        $s3_archive_dir = trim($s3_archive_dir);
+        $gs_archive_dir = trim($gs_archive_dir);
+        $sql = "SELECT id, name FROM file WHERE name = BINARY '$name' AND file_dir = BINARY '$file_dir' AND  file_type='$file_type' AND files_used = BINARY '$files_used' AND collection_type='$collection_type' AND archive_dir = BINARY '$archive_dir' AND s3_archive_dir = BINARY '$s3_archive_dir' AND gs_archive_dir = BINARY '$gs_archive_dir' AND run_env = BINARY '$run_env' AND owner_id='$ownerID' AND deleted=0";
+        return self::queryTable($sql);
+    }
+
     function checkProjectInput($project_id, $input_id) {
         $sql = "SELECT id FROM project_input WHERE input_id = '$input_id' AND project_id = '$project_id'";
         return self::queryTable($sql);
@@ -5275,7 +5972,39 @@ class dbfuncs {
         return json_encode($res);
     }
 
-    function tsvConvert($tsv, $format){
+    // $file: file content
+    // $sName: sample Name @string
+    // $sNameLoc: sample Name location [@options: "row", "column", "filename"]
+    // $featureLoc: sample Name location [@options: "row", "column", "both"]
+    function dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc){
+        ini_set('memory_limit','900M');
+        // add seperator detection algorithm
+        $sep = "\t"; 
+        $file = trim($file);
+        $data = array();
+        $lines = explode("\n", $file);
+        $rowheader = explode($sep, $lines[0]);
+        if ($sNameLoc == "row" && $featureLoc == "column"){
+            $samplePos = array_search($sName, $rowheader);
+            for ($i = 1; $i < count($lines); $i++) {
+                $currentline = explode($sep, $lines[$i]);
+                $data[$currentline[0]] = $currentline[$samplePos];
+            } 
+        } else if ($sNameLoc == "column" && $featureLoc == "row"){
+            for ($i = 1; $i < count($lines); $i++) {
+                $currentline = explode($sep, $lines[$i]);
+                if ($currentline[0] == $sName){
+                    for ($k = 1; $k < count($currentline); $k++) {
+                        $data[$rowheader[$k]] = $currentline[$k];
+                    }
+                }
+            }
+        }
+        return $data;
+    }
+
+    // tsv to json converter
+    function tsvConvert($tsv){
         ini_set('memory_limit','900M');
         $tsv = trim($tsv);
         $lines = explode("\n", $tsv);
@@ -5299,7 +6028,7 @@ class dbfuncs {
         $targetFile = "{$targetDir}/{$filename}";
         $targetJson = "{$targetDir}/.{$filename}";
         $tsv= file_get_contents($targetFile);
-        $array = $this->tsvConvert($tsv, "json");
+        $array = $this->tsvConvert($tsv);
         file_put_contents($targetJson, json_encode($array));
         return json_encode("$dir/.{$filename}");
     }
@@ -5498,6 +6227,7 @@ class dbfuncs {
         $process_list = $newObj->{"process_list"};
         $pipeline_list = $newObj->{"pipeline_list"};
         $publish_web_dir = $newObj->{"publish_web_dir"};
+        $publish_dmeta_dir = addslashes(htmlspecialchars(urldecode($newObj->{"publish_dmeta_dir"}), ENT_QUOTES));
         $pipeline_gid = isset($newObj->{"pipeline_gid"}) ? $newObj->{"pipeline_gid"} : "";
         if ($pipeline_gid == "") {
             $max_gid = json_decode($this->getMaxPipeline_gid(),true)[0]["pipeline_gid"];
@@ -5520,20 +6250,19 @@ class dbfuncs {
         settype($pin_order, "integer");
         settype($id, 'integer');
 
-
         $admin_settings = "";
         $admin_items = "";
         if ($id > 0){
             if ($userRole == "admin"){
                 $admin_settings = "publicly_searchable='$publicly_searchable', pin='$pin', pin_order='$pin_order',";
             }
-            $sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', $admin_settings script_pipe_header = '$script_pipe_header', script_pipe_config = '$script_pipe_config', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', publish_web_dir='$publish_web_dir', last_modified_user = '$ownerID' where id = '$id'";
+            $sql = "UPDATE biocorepipe_save set name = '$name', edges = '$edges', summary = '$summary', mainG = '$mainG', nodes ='$nodes', date_modified = now(), group_id = '$group_id', perms = '$perms', $admin_settings script_pipe_header = '$script_pipe_header', script_pipe_config = '$script_pipe_config', script_pipe_footer = '$script_pipe_footer', script_mode_header = '$script_mode_header', script_mode_footer = '$script_mode_footer', pipeline_group_id='$pipeline_group_id', process_list='$process_list', pipeline_list='$pipeline_list', publish_web_dir='$publish_web_dir', publish_dmeta_dir='$publish_dmeta_dir', last_modified_user = '$ownerID' where id = '$id'";
         }else{
             if ($userRole == "admin"){
                 $admin_settings = "'$pin', '$pin_order', '$publicly_searchable',";
                 $admin_items = "pin, pin_order, publicly_searchable,";
             }
-            $sql = "INSERT INTO biocorepipe_save($admin_items owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid, publish_web_dir, script_pipe_config) VALUES ($admin_settings '$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms',  '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid', '$publish_web_dir', '$script_pipe_config')";
+            $sql = "INSERT INTO biocorepipe_save($admin_items owner_id, summary, edges, mainG, nodes, name, pipeline_gid, rev_comment, rev_id, date_created, date_modified, last_modified_user, group_id, perms, script_pipe_header, script_pipe_footer, script_mode_header, script_mode_footer,pipeline_group_id,process_list,pipeline_list, pipeline_uuid, pipeline_rev_uuid, publish_web_dir, publish_dmeta_dir, script_pipe_config) VALUES ($admin_settings '$ownerID', '$summary', '$edges', '$mainG', '$nodes', '$name', '$pipeline_gid', '$rev_comment', '$rev_id', now(), now(), '$ownerID', '$group_id', '$perms',  '$script_pipe_header', '$script_pipe_footer', '$script_mode_header', '$script_mode_footer', '$pipeline_group_id', '$process_list', '$pipeline_list', '$pipeline_uuid', '$pipeline_rev_uuid', '$publish_web_dir', '$publish_dmeta_dir','$script_pipe_config')";
         }
         return self::insTable($sql);
 

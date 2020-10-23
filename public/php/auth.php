@@ -5,6 +5,20 @@ $db=new dbfuncs();
 if (strpos(getcwd(), "travis/build") == 6){
     $_SESSION['email'] = 'travis';
 }
+$SSO_LOGIN=SSO_LOGIN;
+$SSO_URL=SSO_URL;
+$BASE_PATH=BASE_PATH;
+$CLIENT_ID=CLIENT_ID;
+
+
+function loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID){
+    if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID)) {
+        $SSO_LOGIN_URL = "{$SSO_URL}/dialog/authorize?redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
+        header('Location: '.$SSO_LOGIN_URL);
+    } else {
+        require_once("loginform.php");
+    }
+}
 
 if (isset($_GET['p']) && $_GET['p'] == "logout" ){
     if (isset($_SESSION['admin_id'])) {
@@ -25,10 +39,17 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         exit;
     } else {
         session_destroy();
-        require_once("loginform.php");
+        // query to 
+        header('Location: ' . $_SERVER['HTTP_REFERER']);
         exit;
     }
 }
+if (isset($_GET['p']) && $_GET['p'] == "login" ){
+    loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID);
+    exit;
+}
+
+
 if(isset($_GET['p']) && $_GET['p'] == "verify" ){
     require_once("adminverify.php");
     exit;
@@ -36,7 +57,7 @@ if(isset($_GET['p']) && $_GET['p'] == "verify" ){
 if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
     if(isset($_POST['ok'])){
         session_destroy();
-        require_once("loginform.php");
+        loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID);
         exit;
     }
     if (!isset($_POST['request']) && isset($_SESSION['google_login']) && $_SESSION['google_login'] != ""){
@@ -56,7 +77,8 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
         require_once("login.php");
         exit;
     }
-    require_once("loginform.php");
+    require_once("main.php");
+    exit;
 } else if(isset($_SESSION['google_login']) && $_SESSION['google_login'] == true){
     require_once("login.php");
     exit;
