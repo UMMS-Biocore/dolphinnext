@@ -9,6 +9,7 @@ $SSO_LOGIN=SSO_LOGIN;
 $SSO_URL=SSO_URL;
 $BASE_PATH=BASE_PATH;
 $CLIENT_ID=CLIENT_ID;
+$SHOW_HOMEPAGE=SHOW_HOMEPAGE;
 
 
 function loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID){
@@ -77,7 +78,11 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
         require_once("login.php");
         exit;
     }
-    require_once("main.php");
+    if ($SHOW_HOMEPAGE == "1"){
+        require_once("main.php");
+    } else {
+        require_once("loginform.php");
+    }
     exit;
 } else if(isset($_SESSION['google_login']) && $_SESSION['google_login'] == true){
     require_once("login.php");
