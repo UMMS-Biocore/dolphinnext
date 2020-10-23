@@ -32,4 +32,4 @@ ALTER TABLE `project_pipeline`
 ADD `dmeta` text DEFAULT NULL after `summary`;
 
 INSERT INTO `update_db` (`name`, `owner_id`, `date_created`, `date_modified`, `last_modified_user`) VALUES 
-("updateVersion1.2.11.sql", "1", NOW(), NOW(), "1");
+("updateVersion1.2.14.sql", "1", NOW(), NOW(), "1");
