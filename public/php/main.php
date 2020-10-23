@@ -449,7 +449,7 @@ folder instead of downloading all of them to reduce the load. -->
 
     <body class="hold-transition skin-blue fixed">
         <div class="wrapper" style="position:static">
-            <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"></span>
+            <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"  sso_login="<?php echo SSO_LOGIN?>" sso_url="<?php echo SSO_URL?>" client_id="<?php echo CLIENT_ID?>"    ></span>
             <header class="main-header">
                 <!-- Logo -->
                 <a href="index.php" class="logo">
@@ -579,7 +579,7 @@ folder instead of downloading all of them to reduce the load. -->
                                     </li>';
     }
     if ($login != 1){
-        echo '<li><a href="index.php?p=login">Sign In</i> </a></li>';
+        echo '<li><a id="signinbtn" href="index.php?p=login">Sign In</i> </a></li>';
     }                                                                                                                                   
                                                                                                                                         
                             ?>
