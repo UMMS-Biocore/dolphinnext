@@ -13,12 +13,14 @@ $SHOW_HOMEPAGE=SHOW_HOMEPAGE;
 
 
 function loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID){
-    if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID)) {
-        $SSO_LOGIN_URL = "{$SSO_URL}/dialog/authorize?redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
-        header('Location: '.$SSO_LOGIN_URL);
-    } else {
-        require_once("loginform.php");
-    }
+    // temporary change for sso login
+    //    if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID)) {
+    //        $SSO_LOGIN_URL = "{$SSO_URL}/dialog/authorize?redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
+    //        header('Location: '.$SSO_LOGIN_URL);
+    //    } else {
+    //        require_once("loginform.php");
+    //    }
+    require_once("loginform.php");
 }
 
 if (isset($_GET['p']) && $_GET['p'] == "logout" ){
@@ -40,9 +42,14 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         exit;
     } else {
         session_destroy();
-        // query to 
-        header('Location: ' . $_SERVER['HTTP_REFERER']);
-        exit;
+        if (!empty($SSO_LOGIN) && !empty($SSO_URL)){
+            $SSO_LOGOUT_URL = "{$SSO_URL}/api/v1/users/logout?redirect_uri={$BASE_PATH}";
+            header('Location: ' . $SSO_LOGOUT_URL);
+            exit;
+        } else {
+            header('Location: ' . $_SERVER['HTTP_REFERER']);
+            exit;  
+        }
     }
 }
 if (isset($_GET['p']) && $_GET['p'] == "login" ){
@@ -78,6 +85,20 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
         require_once("login.php");
         exit;
     }
+    if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID)){
+        if (empty($_SESSION["ssoLoginCheck"])){
+            $_SESSION["ssoLoginCheck"] = true;
+            error_log("1");
+            $originalUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+            $SSO_LOGIN_CHECK = "{$SSO_URL}/dialog/check?redirect_original={$originalUrl}&redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
+            header('Location: '.$SSO_LOGIN_CHECK);
+            exit;
+        } else if (!empty($_SESSION["ssoLoginCheck"])){
+            error_log("2");
+            $_SESSION["ssoLoginCheck"] = false;
+        }
+    }
+    // user not signed in - public view:
     if ($SHOW_HOMEPAGE == "1"){
         require_once("main.php");
     } else {
