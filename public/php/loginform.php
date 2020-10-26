@@ -48,6 +48,7 @@
         <![endif]-->
 
 <body  style="background:linear-gradient(to top right, #7474BF 10%, #5c7cc2 55%, #348AC7 100%);">
+    <span id="basepathinfo" basepath="<?php echo BASE_PATH?>" pubweb="<?php echo PUBWEB_URL?>" debrowser="<?php echo DEBROWSER_URL?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL?>"  sso_login="<?php echo SSO_LOGIN?>" sso_url="<?php echo SSO_URL?>" client_id="<?php echo CLIENT_ID?>"    ></span>
     <div name="empty_space" style="height:10%; width:100%; clear:both;"></div>
     <div class="form-box" id="login-box" style="width:470px;">
         <h1 class="text-center" style="padding-bottom:20px;"><span class="logo-lg" style="color:white; font-size:30px;"><b><?php echo COMPANY_NAME?></b> DolphinNext</span></h1>
@@ -58,9 +59,22 @@
                 </div>
                 <?php 
                     if (ALLOW_SIGNUPGOOGLE != false){
-                        echo '<div style="margin:auto; width:50%;  height:100px; padding-top:20px;"><div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div></div>';
+                        echo '<div style="margin:auto; width:50%;  height:120px; padding-top:20px;">';
+                        echo '<div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div>';
+                        if (!empty(SSO_LOGIN)){
+                            $SSO_LOGIN_URL = SSO_URL."/dialog/authorize?redirect_uri=".BASE_PATH."/api/service.php?func=receivetoken&response_type=code&client_id=".CLIENT_ID."&scope=offline_access";
+                        echo '<a style="width:200px; margin-top:10px;" id="ssosigninbtn" href="'.$SSO_LOGIN_URL.'" class="btn btn-default"><i style="padding-right:25px;" class="fa fa-lock" aria-hidden="true"></i> Sign In with SSO </a>';
+                        }
+                        
+                        echo '</div>';
                         echo '<div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center"><span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span></div>';
                     }
+                ?>
+                   
+                <?php 
+                    if (!empty(SSO_LOGIN)){
+                        
+                    } 
                 ?>
                     
                 <div class="form-group" style="margin-top:20px;">
@@ -74,6 +88,8 @@
                     <button type="submit" name="login" class="btn btn-primary" style="float:right;">Login</button>
                 </div>
             </form>
+                
+                
                   <form action="<?php echo BASE_PATH?>/" method="post">      
                    <?php 
                     if (ALLOW_SIGNUP != false){

@@ -842,26 +842,41 @@ function popupwindow(url, title, w, h) {
     );
 }
 
-// open child window for SSO if user clicks on sign-in button
 if ($('#signinbtn').length && $('#basepathinfo').attr('sso_login') === "1") {
-    console.log("pass")
+    //temporary fix for sso login
     $('#signinbtn').on('click', function(e) {
         e.preventDefault();
-        var SSO_URL = $('#basepathinfo').attr('sso_url');
-        var CLIENT_ID = $('#basepathinfo').attr('client_id');
         var BASEPATH = $('#basepathinfo').attr('basepath');
-        var SSO_REDIRECT_URL = `${BASEPATH}/api/service.php?func=receivetoken`;
-        var SSO_FINAL_URL = `${SSO_URL}/dialog/authorize?redirect_uri=${SSO_REDIRECT_URL}&response_type=code&client_id=${CLIENT_ID}&scope=offline_access`;
-        popupwindow(SSO_FINAL_URL, 'Login', 650, 800);
+        var login_URL = `${BASEPATH}/index.php?p=login`;
+        popupwindow(login_URL, 'Login', 650, 900);
     });
 }
 
+
+// open child window for SSO if user clicks on sign-in button
+//if ($('#ssosigninbtn').length && $('#basepathinfo').attr('sso_login') === "1") {
+//    console.log("pass")
+//    $('#ssosigninbtn').on('click', function(e) {
+//        e.preventDefault();
+//        var SSO_URL = $('#basepathinfo').attr('sso_url');
+//        var CLIENT_ID = $('#basepathinfo').attr('client_id');
+//        var BASEPATH = $('#basepathinfo').attr('basepath');
+//        var SSO_REDIRECT_URL = `${BASEPATH}/api/service.php?func=receivetoken`;
+//        var SSO_FINAL_URL = `${SSO_URL}/dialog/authorize?redirect_uri=${SSO_REDIRECT_URL}&response_type=code&client_id=${CLIENT_ID}&scope=offline_access`;
+//        popupwindow(SSO_FINAL_URL, 'Login', 650, 800);
+//    });
+//}
+
 if (document.getElementById("after-sso-close")) {
+    // if there is a parent window (window that opens popup window) 
+    // then window.opener is exist.
     if (window.opener) {
         window.opener.focus();
         if (window.opener && !window.opener.closed) {
             window.opener.location.reload();
         }
+    } else {
+        window.location = $('#basepathinfo').attr('basepath');
     }
     window.close();
 }

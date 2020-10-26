@@ -137,7 +137,11 @@ if(isset($_POST['login'])){
                 $_SESSION['name'] = $name;
                 $_SESSION['ownerID'] = $id;
                 $_SESSION['role'] = $role;
-                require_once("main.php");
+                if (!empty(SSO_LOGIN)){
+                    header('Location: ' . BASE_PATH."/index.php?np=7");
+                } else {
+                    require_once("main.php");
+                }
                 exit;
             } else{
                 loginFailed("Incorrect E-mail/Password.");
