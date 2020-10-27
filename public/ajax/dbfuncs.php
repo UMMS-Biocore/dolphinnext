@@ -1201,7 +1201,7 @@ class dbfuncs {
         list($hostVar,$variableRaw) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
         $variable = htmlspecialchars_decode($variableRaw , ENT_QUOTES);
         $reportDir = $this->getReportDir($proPipeAll);
-        
+
         $configText .= "\$HOSTNAME='".$hostVar."'\n";
         $configText .= "params.outdir='".$reportDir."'\n";
         $configText .= "$variable\n";
@@ -1447,7 +1447,7 @@ class dbfuncs {
                 $repo_found = "false";
             }
             $git_init_cmd = "";
-            
+
             if ($repo_found == "false"){
                 //repo not found, create with curl
                 $init_cmd = "curl -H 'Authorization: token $token' https://api.github.com/user/repos -d '{\"name\":\"$github_repo\"}' && cd $repoDir && git init 2>&1";
@@ -1462,7 +1462,7 @@ class dbfuncs {
             $ret = $this->execute_cmd($branch_cmd, $ret, "branch_cmd_log", "branch_cmd");
             //Erase all the files in the repo instead of .git directory
             //$clean_cmd = "cd $repoDir && find . -maxdepth 1 -mindepth 1 -not -name '.git' -exec rm -r {} + 2>&1";
-            
+
             //save files into new repo
             $this->createMultiConfig ($repoDir, $configText);
             $this->createDirFile ($repoDir, "main.nf", 'w', $nfData);
@@ -2657,10 +2657,11 @@ class dbfuncs {
                 }
             }
             $this->saveNextflowLog($down_file_dmeta_list,  $uuid, "pubdmeta", $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID);
-            error_log("* accessToken: ".$accessToken);
+
             if (!empty($accessToken)){
+                error_log("* accessToken found");
                 $this->sendDmetaReport($project_pipeline_id, $proPipeAll,$pipeData, $uuid, $ownerID, $accessToken);
-            }
+            } 
         }
         return $data;
     }
@@ -4168,6 +4169,7 @@ class dbfuncs {
 
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
     function saveNextflowLog($files,$uuid, $last_server_dir, $profileType,$profileId,$project_pipeline_id,$dolphin_path_real,$ownerID) {
+        if (empty($files) ||  empty($files[0])) return json_encode("logNotFound");
         $nextflow_log = "";
         $ret = array();
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
@@ -5108,35 +5110,37 @@ class dbfuncs {
                 $sql = "INSERT INTO project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta)
                     SELECT concat(name, '_dmeta'), project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
                     FROM project_pipeline
-                    WHERE id='$old_run_id' AND owner_id='$ownerID'";
+                    WHERE id='$old_run_id'";
                 $proPipe = self::insTable($sql);
                 $newProPipe = json_decode($proPipe,true);
                 $newProPipeId = $newProPipe["id"];
-                $this->duplicateProjectPipelineInput($newProPipeId, $old_run_id, $ownerID);
-                // use $inputs and replace entered projectPipelineInputs
-                foreach ($inputs as $inputName => $inputVal):
-                $input_id = 0;
-                $collection_id = 0;
-                $proPipeInData = json_decode($this->getProjectPipelineInputIdByInputName($inputName,$newProPipeId,$ownerID),true);
-                if (!empty($proPipeInData[0]) && $proPipeInData[0]["id"]){
-                    $proPipeInputId = $proPipeInData[0]["id"];
-                    $inputType = $proPipeInData[0]["input_type"];
-                    $project_id = $proPipeInData[0]["project_id"];
-                    // if $inputVal is array of array -> save as a collection
-                    if (is_array($inputVal) && is_array($inputVal[0])){
-                        //collection
-                        $collection_id = $this->checkAndInsertCollection($inputVal, $ownerID);
-                    } else {
-                        //simple input
-                        $input_id = $this->checkAndInsertInput($inputVal, $inputType, $ownerID);
-                        $this->checkAndInsertProjectInput($project_id, $input_id, $ownerID);
+                if (!empty($newProPipeId)){
+                    $this->duplicateProjectPipelineInput($newProPipeId, $old_run_id, $ownerID);
+                    // use $inputs and replace entered projectPipelineInputs
+                    foreach ($inputs as $inputName => $inputVal):
+                    $input_id = 0;
+                    $collection_id = 0;
+                    $proPipeInData = json_decode($this->getProjectPipelineInputIdByInputName($inputName,$newProPipeId,$ownerID),true);
+                    if (!empty($proPipeInData[0]) && $proPipeInData[0]["id"]){
+                        $proPipeInputId = $proPipeInData[0]["id"];
+                        $inputType = $proPipeInData[0]["input_type"];
+                        $project_id = $proPipeInData[0]["project_id"];
+                        // if $inputVal is array of array -> save as a collection
+                        if (is_array($inputVal) && is_array($inputVal[0])){
+                            //collection
+                            $collection_id = $this->checkAndInsertCollection($inputVal, $ownerID);
+                        } else {
+                            //simple input
+                            $input_id = $this->checkAndInsertInput($inputVal, $inputType, $ownerID);
+                            $this->checkAndInsertProjectInput($project_id, $input_id, $ownerID);
+                        }
+                        if (!empty($input_id) || !empty($collection_id)){
+                            error_log("update updateValProPipeInput $input_id $collection_id");
+                            $this->updateProPipeInputCollInput($proPipeInputId, $input_id, $collection_id, $ownerID);
+                        }
                     }
-                    if (!empty($input_id) || !empty($collection_id)){
-                        error_log("update updateValProPipeInput $input_id $collection_id");
-                        $this->updateProPipeInputCollInput($proPipeInputId, $input_id, $collection_id, $ownerID);
-                    }
+                    endforeach;   
                 }
-                endforeach;
             }
             return $newProPipeId;
         }
