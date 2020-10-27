@@ -99,8 +99,10 @@ $items = json_decode($db->getSubMenuFromSideBarPipe($parentitem->{'name'}, $owne
 
 if (count($items) > 0){
     $showLi= getShowLi($items);
+    $perms = isset($parentitem->{'perms'}) ? $parentitem->{'perms'} : "";
+    $group_id = isset($parentitem->{'group_id'}) ? $parentitem->{'group_id'} : "";
     $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
-    $menuhtml.='<a href="javascript:void(0)" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
+    $menuhtml.='<a href="javascript:void(0)" draggable="false" ><i class="fa fa-spinner"></i> <span  class="pipelineParent" origin="'.$parentitem->{'name'}.'" p="'.$perms.'" g="'.$group_id.'" >'.$showName.'</span>';
     $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
     $menuhtml.='<ul id="pipeGr-'.$parentitem->{'id'}.'" class="treeview-menu">';
     $menuhtml.= getSideMenuItem($items, "pipeline");
@@ -124,8 +126,10 @@ if ($ownerID != ''){
 
     if (count($items) > 0){
         $showLi= getShowLi($items);
+        $perms = isset($parentitem->{'perms'}) ? $parentitem->{'perms'} : "";
+        $group_id = isset($parentitem->{'group_id'}) ? $parentitem->{'group_id'} : "";
         $menuhtml.='<li class="treeview" '.$tooltip.$showLi.'>';
-        $menuhtml.='<a href="javascript:void(0)" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$parentitem->{'perms'}.'" g="'.$parentitem->{'group_id'}.'" >'.$showName.'</span>';
+        $menuhtml.='<a href="javascript:void(0)" draggable="false" ><i  class="fa fa-circle-o"></i> <span class="processParent" origin="'.$parentitem->{'name'}.'" p="'.$perms.'" g="'.$group_id.'" >'.$showName.'</span>';
         $menuhtml.='<i class="fa fa-angle-left pull-right"></i></a>';
         $menuhtml.='<ul id="side-'.$parentitem->{'id'}.'" class="treeview-menu">';
         $menuhtml.= getSideMenuItem($items, "process");
