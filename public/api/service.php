@@ -69,8 +69,9 @@ class Pipeline{
                     http_response_code(401);
                     $ret["status"] = "error";
                     $ret["log"] = "Run could not be started.";
-                } else if ($result == "initiated"){
-                    $ret["status"] = "initiated";
+                } else if (!empty($result["status"])){
+                    $ret["run_url"] = $result["run_url"];
+                    $ret["status"] = $result["status"];
                     $ret["log"] = "Run submitted.";
                 } else {
                     http_response_code(401);

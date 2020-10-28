@@ -177,6 +177,7 @@ class Run
     }
 
     function startRun($body, $params, $user){
+        $ret = array();
         $info = $body["info"];
         $doc = $body["doc"];
         $dmetaServer = $info["dmetaServer"];
@@ -207,7 +208,12 @@ class Run
         $nextText = $dbfuncs->getServerRunTemplateNFFile($tmplt_run_id, $uuid); 
         if (!empty($nextText) && !empty($uuid) && !empty($project_pipeline_id)){
             $data = $dbfuncs->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $eachExecConfig, $ownerID);
-            if (!empty($data)) return "initiated";
+            if (!empty($data)) {
+                $run_url = "{$this->BASE_PATH}/index.php?np=3&id=".$project_pipeline_id;
+                $ret["status"] = "initiated";
+                $ret["run_url"] = $run_url;
+                return $ret;
+            }
         }
         return null;
     }
