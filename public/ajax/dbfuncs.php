@@ -2509,11 +2509,13 @@ class dbfuncs {
     }
 
 
-    function patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken){
+    function patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id){
         error_log("patchDmetaAPI:".$sName);
         $url = "$dmeta_server/api/v1/data/$dmeta_out_collection/$targetDmetaRowId";
+        $run_url = "{$this->base_path}/index.php?np=3&id=".$project_pipeline_id;
         $data = json_encode(array(
-            'doc' => $doc
+            'doc' => $doc,
+            'run_url' => $run_url
         ));
 
         $curl = curl_init($url);
@@ -2606,7 +2608,7 @@ class dbfuncs {
                             error_log(print_r($filepath, TRUE));
                             $doc = $this->dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc);
                             if (!empty($doc)){
-                                $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken);
+                                $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id);
                             }
                             endforeach;
                         }
@@ -5988,13 +5990,15 @@ class dbfuncs {
         $data = array();
         $lines = explode("\n", $file);
         $rowheader = explode($sep, $lines[0]);
-        if ($sNameLoc == "row" && $featureLoc == "column"){
+        //sample names at the first column
+        if ($sNameLoc == "column" && $featureLoc == "row"){
             $samplePos = array_search($sName, $rowheader);
             for ($i = 1; $i < count($lines); $i++) {
                 $currentline = explode($sep, $lines[$i]);
                 $data[$currentline[0]] = $currentline[$samplePos];
             } 
-        } else if ($sNameLoc == "column" && $featureLoc == "row"){
+        //sample names at the first row
+        } else if ($sNameLoc == "row" && $featureLoc == "column"){
             for ($i = 1; $i < count($lines); $i++) {
                 $currentline = explode($sep, $lines[$i]);
                 if ($currentline[0] == $sName){
