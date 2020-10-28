@@ -1001,10 +1001,10 @@ class dbfuncs {
             $next_cpu = $cluDataArr[0]['next_cpu'];
             $next_memory = $cluDataArr[0]['next_memory'];
             if (!empty($next_cpu)) {
-                $configText .= 'executor.$local.cpus' . ' = ' . $next_cpu . '\n';
+                $configText .= 'executor.$local.cpus' . ' = ' . $next_cpu . "\n";
             }
             if (!empty($next_memory)) {
-                $configText .= 'executor.$local.memory' . " = '" . $next_memory . " GB'\n";
+                $configText .= 'executor.$local.memory' . " = '" . $next_memory . " GB'"."\n";
             }
         }
         return $configText;
@@ -1256,21 +1256,23 @@ class dbfuncs {
 
     }
 
-    // convert cluster-2 to oy2@umass.edu 
+    // if comes with - then convert cluster-2 to umass.edu 
+    // or return as its
     function getRunEnv($run_env, $ownerID){
-        $profileAr = explode("-", $run_env);
-        $profileType = $profileAr[0];
-        $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
-        $run_env = $profileType;
-        if ($profileType == "cluster" && !empty($profileId)){
-            $proData = $this->getProfileClusterbyID($profileId, $ownerID);
-            $proDataAll = json_decode($proData,true);
-            if (!empty($proDataAll[0])) {
-                $username = $proDataAll[0]["username"];
-                $hostname = $proDataAll[0]["hostname"];
-                $run_env = $username."@".$hostname;
+        if (preg_match("/-/",$run_env)){
+            $profileAr = explode("-", $run_env);
+            $profileType = $profileAr[0];
+            $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
+            $run_env = $profileType;
+            if ($profileType == "cluster" && !empty($profileId)){
+                $proData = $this->getProfileClusterbyID($profileId, $ownerID);
+                $proDataAll = json_decode($proData,true);
+                if (!empty($proDataAll[0])) {
+                    $hostname = $proDataAll[0]["hostname"];
+                    $run_env = $hostname;
+                }
             }
-        }
+        } 
         return $run_env;
     }
 
@@ -5104,13 +5106,14 @@ class dbfuncs {
         return $input_id;
     }
 
-    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta){
+    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env){
         $newProPipeId = null;
         if ($type == "dmeta"){
             $proPipeAll = json_decode($this->getProjectPipelines($old_run_id,"",$ownerID,""));
             if (!empty ($proPipeAll[0])){
+                $run_env = !empty($run_env) ? "'$run_env'" : "profile";
                 $sql = "INSERT INTO project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta)
-                    SELECT concat(name, '_dmeta'), project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
+                    SELECT '$run_name', project_id, pipeline_id, summary, output_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
                     FROM project_pipeline
                     WHERE id='$old_run_id'";
                 $proPipe = self::insTable($sql);
@@ -5997,7 +6000,7 @@ class dbfuncs {
                 $currentline = explode($sep, $lines[$i]);
                 $data[$currentline[0]] = $currentline[$samplePos];
             } 
-        //sample names at the first row
+            //sample names at the first row
         } else if ($sNameLoc == "row" && $featureLoc == "column"){
             for ($i = 1; $i < count($lines); $i++) {
                 $currentline = explode($sep, $lines[$i]);
