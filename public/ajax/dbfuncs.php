@@ -2607,7 +2607,6 @@ class dbfuncs {
                         foreach ($dmeta_out as $dmeta_out_collection => $out_collectionData): 
                         if ($targetDmetaColl == $dmeta_out_collection){
                             foreach ($out_collectionData as $sName => $targetDmetaRowId): 
-                            error_log(print_r($filepath, TRUE));
                             $doc = $this->dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc);
                             if (!empty($doc)){
                                 $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id);
@@ -5063,7 +5062,6 @@ class dbfuncs {
                 $file_dir[$k] = implode("\t", $file_dir[$k]);
             }
             $file_dir = implode("\t", $file_dir);
-            error_log("before".$file_dir);
             // get new amz_cre_id for user
             if (preg_match("/s3:/i", $file_dir) || preg_match("/gs:/i", $file_dir)){
                 if (preg_match("/s3:/i", $file_dir)){
@@ -5089,7 +5087,6 @@ class dbfuncs {
                     if (empty($new_cre)){
                         $new_cre = $creds[0]["id"];
                     }
-                    error_log(print_r($new_cre, TRUE));
                     
                     if (!empty($new_cre)){
                         $new_file_dir[1] = $new_cre;
@@ -5097,7 +5094,6 @@ class dbfuncs {
                     }  
                 }
             }
-            error_log("after".$file_dir);
 
             for ($k = 0; $k < count($files_used); $k++) {
                 $files_used[$k] = implode(",", $files_used[$k]);
@@ -5143,14 +5139,15 @@ class dbfuncs {
         return $input_id;
     }
 
-    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env){
+    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir){
         $newProPipeId = null;
         if ($type == "dmeta"){
             $proPipeAll = json_decode($this->getProjectPipelines($old_run_id,"",$ownerID,""));
             if (!empty ($proPipeAll[0])){
                 $run_env = !empty($run_env) ? "'$run_env'" : "profile";
+                $work_dir = !empty($work_dir) ? "'$work_dir'" : "output_dir";
                 $sql = "INSERT INTO project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta)
-                    SELECT '$run_name', project_id, pipeline_id, summary, output_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
+                    SELECT '$run_name', project_id, pipeline_id, summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
                     FROM project_pipeline
                     WHERE id='$old_run_id'";
                 $proPipe = self::insTable($sql);

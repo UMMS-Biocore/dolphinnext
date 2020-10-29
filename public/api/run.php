@@ -187,6 +187,10 @@ class Run
         $run_name= $doc["name"]; // test_run
         $tmplt_run_id= $doc["tmplt_id"]; //template run id e.g. 140
         $run_env= !empty($doc["run_env"]) ? $doc["run_env"] : ""; //run_env e.g. cluster-5
+        $work_dir= !empty($doc["work_dir"]) ? $doc["work_dir"] : ""; 
+        error_log($work_dir);
+error_log(print_r($doc, TRUE));
+        
         // if hostname/amazon/google is entered get profile id.
         if (!empty($run_env)){
             if ($run_env == "amazon"){
@@ -218,7 +222,7 @@ class Run
         $dmeta["dmeta_out"] = $doc["out"];;
         $dmeta = json_encode($dmeta);
         // update name and insert
-        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env);
+        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir);
         if (empty($project_pipeline_id)) return null;
         $temp_run_uuid = $dbfuncs->getProPipeLastRunUUID($tmplt_run_id);
         $runOpt = json_decode($dbfuncs->getRunLogOpt($temp_run_uuid));
