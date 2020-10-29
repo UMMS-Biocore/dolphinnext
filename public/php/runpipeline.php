@@ -1253,6 +1253,7 @@ $DMETA_LABEL= DMETA_LABEL;
                                 <option value="bai">BAI</option>
                                 <option value="bed">BED</option>
                                 <option value="csv">CSV</option>
+                                <option value="tab">TAB</option>
                                 <option value="tsv">TSV</option>
                                 <option value="txt">TXT</option>
                             </select>
