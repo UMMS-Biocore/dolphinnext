@@ -187,6 +187,31 @@ class Run
         $run_name= $doc["name"]; // test_run
         $tmplt_run_id= $doc["tmplt_id"]; //template run id e.g. 140
         $run_env= !empty($doc["run_env"]) ? $doc["run_env"] : ""; //run_env e.g. cluster-5
+        // if hostname/amazon/google is entered get profile id.
+        if (!empty($run_env)){
+            if ($run_env == "amazon"){
+                $profiles = $dbfuncs->getProfileAmazon($ownerID);
+                $profiles = json_decode($profiles,true);
+                if (!empty($profiles[0]["id"])){
+                    $run_env = "amazon-".$profiles[$i]["id"];
+                }
+            } else if ($run_env == "google"){
+                $profiles = $dbfuncs->getProfileGoogle($ownerID);
+                $profiles = json_decode($profiles,true);
+                if (!empty($profiles[0]["id"])){
+                    $run_env = "google-".$profiles[$i]["id"];
+                }
+            } else {
+                $profiles = $dbfuncs->getProfileCluster($ownerID);
+                $profiles = json_decode($profiles,true);
+                for ($i = 0; $i < count($profiles); $i++) {
+                    if ($profiles[$i]["hostname"] == $run_env){
+                        $run_env = "cluster-".$profiles[$i]["id"];
+                        break;
+                    }
+                }
+            }
+        }
         $dmeta = array();
         $dmeta["dmeta_run_id"] = $doc["_id"];
         $dmeta["dmeta_server"] = $dmetaServer;

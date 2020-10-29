@@ -5032,6 +5032,7 @@ class dbfuncs {
         return $collection_id;
     }
 
+    // Dmeta specific duplicate project pipeline insertion
     function checkAndInsertCollection($inputVal, $ownerID){
         $collection_id = 0;
         // e.g. collection data:
@@ -5062,6 +5063,42 @@ class dbfuncs {
                 $file_dir[$k] = implode("\t", $file_dir[$k]);
             }
             $file_dir = implode("\t", $file_dir);
+            error_log("before".$file_dir);
+            // get new amz_cre_id for user
+            if (preg_match("/s3:/i", $file_dir) || preg_match("/gs:/i", $file_dir)){
+                if (preg_match("/s3:/i", $file_dir)){
+                    $creds = $this->getAmz($ownerID);
+                } else if (preg_match("/gs:/i", $file_dir)){
+                    $creds = $this->getGoogle($ownerID);
+                }
+                if (!empty($creds)){
+                    $creds = json_decode($creds,true);
+                    $new_file_dir = explode("\t", $file_dir);
+                    $new_cre = "";
+                    $old_cre = !empty($new_file_dir[1]) ? $new_file_dir[1] : "";
+                    // use same cre if user have $old_cre
+                    if (!empty($old_cre)){
+                        for ($i = 0; $i < count($creds); $i++) {
+                            if ($creds[$i]["id"] == $old_cre){
+                                $new_cre = $creds[$i]["id"];
+                                break;
+                            }
+                        }
+                    }
+                    // use new user's cre if user has changed.
+                    if (empty($new_cre)){
+                        $new_cre = $creds[0]["id"];
+                    }
+                    error_log(print_r($new_cre, TRUE));
+                    
+                    if (!empty($new_cre)){
+                        $new_file_dir[1] = $new_cre;
+                        $file_dir = implode("\t", $new_file_dir);
+                    }  
+                }
+            }
+            error_log("after".$file_dir);
+
             for ($k = 0; $k < count($files_used); $k++) {
                 $files_used[$k] = implode(",", $files_used[$k]);
             }
