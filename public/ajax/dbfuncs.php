@@ -4458,7 +4458,6 @@ class dbfuncs {
                     if (strpos($dir, $rundir) === false) {
                         return json_encode("Query failed! You don't have permission to access this directory.");
                     }
-                    error_log($dir);
                 }
             }
             $ssh_own_id = $cluDataArr[0]["owner_id"];

@@ -226,10 +226,6 @@ class Run
         if (empty($runOpt[0])) return null;
         $runOpt[0]->{'run_opt'} = str_replace('\\', '\\\\', $runOpt[0]->{'run_opt'});
         $runOptData = json_decode($runOpt[0]->{'run_opt'});
-        error_log(print_r($temp_run_uuid, TRUE));
-        error_log(print_r($runOptData, TRUE));
-        error_log(print_r($runOptData->{'eachExecConfig'}, TRUE));
-        
         $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
         $proVarObj = htmlspecialchars_decode($runOptData->{'proVarObj'}, ENT_QUOTES); 
         $manualRun = "false"; 
