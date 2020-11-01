@@ -8940,6 +8940,10 @@ $(document).ready(function () {
             console.log("fileAr",fileAr)
 
             if (fileAr) {
+                // keeps $ and ^ for regex
+                var cleanRegEx = function (pat) {
+                    return pat.replace(/[-\/\\*+?.()|[\]{}]/g, '\\$&');
+                }
                 var patternReg = cleanRegEx(pattern);
                 var reg = new RegExp(patternReg)
                 var filteredAr = fileAr.filter(line => line.match(reg));

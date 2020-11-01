@@ -1732,10 +1732,6 @@ function truncateName(name, type) {
 }
 
 
-function cleanRegEx(pat) {
-    return pat.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-}
-
 function createElement(type, fields, options) {
     var element = document.createElement(type);
     for (var x = 0; x < fields.length; x++) {
