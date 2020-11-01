@@ -188,9 +188,6 @@ class Run
         $tmplt_run_id= $doc["tmplt_id"]; //template run id e.g. 140
         $run_env= !empty($doc["run_env"]) ? $doc["run_env"] : ""; //run_env e.g. cluster-5
         $work_dir= !empty($doc["work_dir"]) ? $doc["work_dir"] : ""; 
-        error_log($work_dir);
-error_log(print_r($doc, TRUE));
-        
         // if hostname/amazon/google is entered get profile id.
         if (!empty($run_env)){
             if ($run_env == "amazon"){
@@ -229,6 +226,10 @@ error_log(print_r($doc, TRUE));
         if (empty($runOpt[0])) return null;
         $runOpt[0]->{'run_opt'} = str_replace('\\', '\\\\', $runOpt[0]->{'run_opt'});
         $runOptData = json_decode($runOpt[0]->{'run_opt'});
+        error_log(print_r($temp_run_uuid, TRUE));
+        error_log(print_r($runOptData, TRUE));
+        error_log(print_r($runOptData->{'eachExecConfig'}, TRUE));
+        
         $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
         $proVarObj = htmlspecialchars_decode($runOptData->{'proVarObj'}, ENT_QUOTES); 
         $manualRun = "false"; 
