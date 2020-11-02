@@ -161,7 +161,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
         for (var i = 0; i < importJSON.length; i++) {
             var dbParamId = window.importObj[fileID].dict.parameter[importJSON[i].parameter_id];
             if (dbParamId) {
-                if (dbJSON[i].parameter_id == dbParamId && dbJSON[i].sname == importJSON[i].sname){
+                if (dbJSON[i] && dbJSON[i].parameter_id == dbParamId && dbJSON[i].sname == importJSON[i].sname){
                     //pro para match found = update this item
                     if (dbJSON[i].id) {
                         window.importObj[fileID].dict.propara[importJSON[i].id] = dbJSON[i].id; //default value ("insert") now being replaced 

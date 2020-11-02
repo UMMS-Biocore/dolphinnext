@@ -22,7 +22,6 @@ function getTitle($np)
     else if ($np==3){$ret = "Run Generation";}
     else if ($np==4){$ret = "Profile";}
     else if ($np==5){$ret = "Run Status";}
-    else if ($np==7){$ret = "Login Success";}
     return $ret; 
 }
 
@@ -95,9 +94,7 @@ function getPage($np, $login, $id, $ownerID){
         include("php/runstatus.php");
     } else if ($np==6 ){
         include("php/terms.php");
-    } else if ($np==7 ){
-        include("php/after-sso.php");
-    }else {
+    } else {
         include("php/public.php");
     }
 }
