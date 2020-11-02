@@ -25,7 +25,7 @@ function Google_signIn(googleUser) {
                 var logInSuccess = true;
                 console.log($('#basepathinfo').attr('sso_login'))
                 if ($('#basepathinfo').attr('sso_login') === "1"){
-                     window.location.replace("index.php?np=7");
+                     window.location.replace("php/after-sso.php");
                 } else {
                      window.location.replace("index.php");
                 }

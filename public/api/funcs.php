@@ -200,7 +200,7 @@ class funcs
             $_SESSION['accessToken'] = $currentUser["accessToken"];
             $_SESSION['refreshToken'] = $currentUser["refreshToken"];
             //    sendCookie(updatedUser, req, res);
-            header("Location: {$this->BASE_PATH}/index.php?np=7");
+            header("Location: {$this->BASE_PATH}/php/after-sso.php");
             exit();
         }
         error_log("sso-sign-in error occured.");

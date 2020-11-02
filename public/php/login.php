@@ -138,7 +138,7 @@ if(isset($_POST['login'])){
                 $_SESSION['ownerID'] = $id;
                 $_SESSION['role'] = $role;
                 if (!empty(SSO_LOGIN)){
-                    header('Location: ' . BASE_PATH."/index.php?np=7");
+                    header('Location: ' . BASE_PATH."/php/after-sso.php");
                 } else {
                     require_once("main.php");
                 }
