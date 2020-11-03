@@ -5058,6 +5058,7 @@ class dbfuncs {
             $archive_dir = "";
             $s3_archive_dir = "";
             $gs_archive_dir = "";
+            
             for ($k = 0; $k < count($file_dir); $k++) {
                 $file_dir[$k] = implode("\t", $file_dir[$k]);
             }
@@ -5076,13 +5077,13 @@ class dbfuncs {
                     $old_cre = !empty($new_file_dir[1]) ? $new_file_dir[1] : "";
                     // use same cre if user have $old_cre
                     if (!empty($old_cre)){
-                        for ($i = 0; $i < count($creds); $i++) {
-                            if ($creds[$i]["id"] == $old_cre){
-                                $new_cre = $creds[$i]["id"];
-                                break;
+                        for ($n = 0; $n < count($creds); $n++) {
+                            if ($creds[$n]["id"] == $old_cre){
+                                $new_cre = $creds[$n]["id"];
                             }
                         }
                     }
+                    
                     // use new user's cre if user has changed.
                     if (empty($new_cre)){
                         $new_cre = $creds[0]["id"];
@@ -5095,11 +5096,11 @@ class dbfuncs {
                 }
             }
 
-            for ($k = 0; $k < count($files_used); $k++) {
-                $files_used[$k] = implode(",", $files_used[$k]);
+            for ($m = 0; $m < count($files_used); $m++) {
+                $files_used[$m] = implode(",", $files_used[$m]);
             }
             $files_used = implode(" | ", $files_used);
-
+            
             $file_id = $this->checkFileAndSave($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID);
             if (!empty($file_id)){
                 $file_array[] = $file_id;
@@ -5160,6 +5161,7 @@ class dbfuncs {
                     $input_id = 0;
                     $collection_id = 0;
                     $proPipeInData = json_decode($this->getProjectPipelineInputIdByInputName($inputName,$newProPipeId,$ownerID),true);
+                    
                     if (!empty($proPipeInData[0]) && $proPipeInData[0]["id"]){
                         $proPipeInputId = $proPipeInData[0]["id"];
                         $inputType = $proPipeInData[0]["input_type"];
