@@ -1,3 +1,6 @@
+05.11.2020 Version 1.2.21
+S3 upload command updated with "aws s3 sync" to support files bigger than 5GB. 
+
 02.11.2020 Version 1.2.20
 After-SSO login page updated.
 Minor bug fixed in import pipeline module.
