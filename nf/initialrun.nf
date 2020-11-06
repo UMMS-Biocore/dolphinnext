@@ -1156,16 +1156,15 @@ process createCollection {
           sub S3Upload{
           my ( $path, $bucketName, $s3PathRest, $confID, $upload_path) = @_;
               my $file = basename($path); 
-              my $md5sumCmd = "openssl md5 -binary $path | base64";
-              runCommand($md5sumCmd); ## to check that cmd is working.
-              my $md5checksum = `$md5sumCmd`;
-              chomp($md5checksum);
+              my $dirname  = dirname($path);
+              
               print "file to upload: $path\\n";
+              print "file dirname: $dirname\\n";
               print "bucketName: $bucketName\\n";
               print "s3PathRest: $s3PathRest\\n";
-              print "md5checksum: $md5checksum\\n";
-              runCommand("export \\$(grep access_key= $upload_path/.conf.$confID | sed 's/access_key=/AWS_ACCESS_KEY_ID=/') && export \\$(grep secret_key= $upload_path/.conf.$confID | sed 's/secret_key=/AWS_SECRET_ACCESS_KEY=/') && aws s3api put-object --bucket $bucketName --key $s3PathRest/$file --body $path --content-md5 $md5checksum");
-              ## aws s3api put-object --bucket biocorebackup --key dolphinnext_test/markers.tsv --body /mac/markers.tsv --content-md5 uG2ZAIskslzypnhn+xCiZA== --metadata md5checksum=uG2ZAIskslzypnhn+xCiZA==
+              my $s3uploadCmd = "aws s3 sync $dirname s3://$bucketName/$s3PathRest --exclude='*' --include=\\"*$file\\"";
+              runCommand("export \\$(grep access_key= $upload_path/.conf.$confID | sed 's/access_key=/AWS_ACCESS_KEY_ID=/') && export \\$(grep secret_key= $upload_path/.conf.$confID | sed 's/secret_key=/AWS_SECRET_ACCESS_KEY=/') && date && $s3uploadCmd && $s3uploadCmd && $s3uploadCmd && date");
+              ## s3 sync /var/local/path s3://bucket/path --exclude='*' --include='*/filename.xyz'
           }
 
           sub prepS3Upload{

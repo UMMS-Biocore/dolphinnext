@@ -2608,6 +2608,7 @@ class dbfuncs {
                         if ($targetDmetaColl == $dmeta_out_collection){
                             foreach ($out_collectionData as $sName => $targetDmetaRowId): 
                             $doc = $this->dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc);
+                            error_log(print_r($doc, TRUE));
                             if (!empty($doc)){
                                 $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id);
                             }
@@ -2620,7 +2621,7 @@ class dbfuncs {
 
 
                 } else if (count($matches) > 1){
-                    // here parse files multiple files that sample Name located at filename
+                    // here parse multiple files that sample Name located at filename
                 }
 
             }
