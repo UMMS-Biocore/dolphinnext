@@ -1346,6 +1346,17 @@ class dbfuncs {
         return $ret;
     }
 
+
+    function execute_ssh_cmd($cmd, $logObj, $log_name, $cmd_name, $profileId, $profileType, $ownerID){
+        list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+        $ssh_id = $cluDataArr[0]["ssh_id"];
+        $ssh_own_id = $cluDataArr[0]["owner_id"];
+        $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
+        $sshcmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect $cmd";
+        $ret = $this->execute_cmd($sshcmd, $logObj, $log_name, $cmd_name);
+        return $ret;
+    }
+
     function execute_cmd($cmd, $logObj, $log_name, $cmd_name){
         $log = shell_exec($cmd);
         $logObj[$cmd_name]=$cmd;
@@ -1885,6 +1896,8 @@ class dbfuncs {
         if (isset($checkarray[0])) {
             $this->updateRunAttempt($project_pipeline_id, $attempt, $ownerID);
             $this->updateRunStatus($project_pipeline_id, $status, $ownerID);
+            $this->updateRunPid($project_pipeline_id, "0", $ownerID);
+            $this->updateRunSessionUUID("", "", $project_pipeline_id, $ownerID);
         } else {
             $this->insertRun($project_pipeline_id, $status, "1", $ownerID);
         }
@@ -2670,6 +2683,45 @@ class dbfuncs {
         return $data;
     }
 
+
+    function parseUpdateSessionUUID($dotNextflowLog, $dotNextflowLogInitial, $project_pipeline_id, $ownerID){
+        $mainUUID = "";
+        $initialUUID = "";
+        preg_match("/Session uuid:(.*)/",$dotNextflowLog, $mainUUIDAr);
+        preg_match("/Session uuid:(.*)/",$dotNextflowLogInitial, $initialUUIDAr);
+        if (!empty($mainUUIDAr[1])) $mainUUID = trim($mainUUIDAr[1]);
+        if (!empty($initialUUIDAr[1])) $initialUUID = trim($initialUUIDAr[1]);
+        $this->updateRunSessionUUID($mainUUID, $initialUUID, $project_pipeline_id, $ownerID);
+    }
+
+    //for lsf: Job <203477> is submitted to queue <long>.\n"
+    //for sge: Your job 2259 ("run_bowtie2") has been submitted
+    //for slurm: Submitted batch job 8748700
+    function parseUpdateRunPid($serverLog, $project_pipeline_id, $ownerID) {
+        $runPid = "";
+        $regEx = "";
+
+        if (preg_match("/Job <(.*)> is submitted/",$serverLog)){
+            $regEx = "/Job <(.*)> is submitted/";
+        } else if (preg_match("/job (.*) \(.*\) .* submitted/",$serverLog)) {
+            $regEx = "/job (.*) \(.*\) .* submitted/";
+        } else if (preg_match("/Submitted batch job (.*)/",$serverLog)) {
+            $regEx = "/Submitted batch job (.*)/";
+        }
+        if (!empty($regEx)){
+            preg_match($regEx,$serverLog, $runPidAr);
+            if (!empty($runPidAr) && !empty($runPidAr[1])){
+                $runPid = trim($runPidAr[1]);
+            }
+            if (!empty($runPid)) {
+                $this->updateRunPid($project_pipeline_id, $runPid, $ownerID);
+            }
+        }
+    }
+
+
+
+
     function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
         $curr_ownerID= $this->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$project_pipeline_id'");
         $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
@@ -2711,9 +2763,11 @@ class dbfuncs {
             $profileAr = explode("-", $profile);
             $profileType = $profileAr[0];
             $profileId = $profileAr[1];
+            list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
+            $executor = $cluDataArr[0]['executor'];
             if (!empty($last_run_uuid)){
                 $dolphin_path_real = "$output_dir/run{$project_pipeline_id}";
-                $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
+                $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log", "initialrun/.nextflow.log", "initialrun/trace.txt");
                 foreach ($down_file_list as &$value) {
                     $value = $dolphin_path_real."/".$value;
                 }
@@ -2727,19 +2781,23 @@ class dbfuncs {
                 $serverLog = json_decode($this -> getFileContent($last_run_uuid, "run/serverlog.txt", $ownerID));
 
                 $errorLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/err.log", $ownerID));
-                $initialLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/initial.log", $ownerID));
+                $initialLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/initialrun/initial.log", $ownerID));
                 $nextflowLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/log.txt", $ownerID));
                 $dotNextflowLog = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/.nextflow.log", $ownerID));
+                $dotNextflowLogInitial = json_decode($this -> getFileContent($last_run_uuid, "$subRunLogDir/initialrun/.nextflow.log", $ownerID));
                 $serverLog = isset($serverLog) ? trim($serverLog) : "";
                 $errorLog = isset($errorLog) ? trim($errorLog) : "";
                 $initialLog = isset($initialLog) ? trim($initialLog) : "";
                 $nextflowLog = isset($nextflowLog) ? trim($nextflowLog) : "";
                 $dotNextflowLog = isset($dotNextflowLog) ? trim($dotNextflowLog) : "";
+                $dotNextflowLogInitial = isset($dotNextflowLogInitial) ? trim($dotNextflowLogInitial) : "";
                 if (!empty($errorLog)) { $serverLog = $serverLog . "\n" . $errorLog; }
                 if (!empty($initialLog)) { $nextflowLog = $initialLog . "\n" . $nextflowLog; }
                 $out["serverLog"] = $serverLog;
                 $out["nextflowLog"] = $nextflowLog;
-
+                $this->parseUpdateRunPid($serverLog, $project_pipeline_id, $ownerID);
+                $this->parseUpdateSessionUUID($dotNextflowLog, $dotNextflowLogInitial, $project_pipeline_id, $ownerID);
+                // run is not active
                 if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr" || $runStatus === "Manual") {
                     // when run hasn't finished yet and connection is down
                 } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
@@ -2797,6 +2855,41 @@ class dbfuncs {
                 } else{
                     //"Nextflow log is not exist yet."
                     $newRunStatus = "Waiting";
+                }
+                // check job pid:
+                $inactiveJobStatus = array("Terminated", "NextSuc", "Error", "NextErr", "Manual");
+
+                // if runStatus is active =>make sure pid is exist
+                // if checkRunPid returns EXIT, ZOMBIE or UKNOWN code than trigger error
+                if ( (!empty($runStatus) && !in_array($runStatus, $inactiveJobStatus)) && (empty($newRunStatus) || !in_array($newRunStatus, $inactiveJobStatus)) ) {
+                    if ($executor == "lsf"){
+                        $pid = json_decode($this->getRunPid($project_pipeline_id))[0]->{'pid'};
+                        if (!empty($pid)){
+                            $checkRunPid = $this -> sshExeCommand("checkRunPid", $pid, $profileType, $profileId, $project_pipeline_id, $ownerID);
+                            $checkRunPid = json_decode($checkRunPid);
+                            if ($checkRunPid == "exited"){
+                                $newRunStatus = "Error";
+                                $runSession =  json_decode($this->getRunSessionUUID($project_pipeline_id),TRUE);
+                                if (!empty($runSession[0])){
+                                    $main_session_uuid = $runSession[0]["main_session_uuid"];
+                                    $initial_session_uuid = $runSession[0]["initial_session_uuid"];
+                                    //$dolphin_path_real/initialrun/.nextflow/cache/c5899bb6-8b3a-457a-b574-247d8a7c991e/db/LOCK
+                                    //$dolphin_path_real/.nextflow/cache/7aec1b19-0e19-4b91-9134-62fe4274a4a6/db/LOCK
+                                    $rmSessionCmd = "";
+                                    if (!empty($main_session_uuid)){
+                                        $rmSessionCmd = "\"rm $dolphin_path_real/.nextflow/cache/$main_session_uuid/db/LOCK\" 2>&1";
+                                    } else if (!empty($initial_session_uuid)){
+                                        $rmSessionCmd = "\"rm $dolphin_path_real/initialrun/.nextflow/cache/$initial_session_uuid/db/LOCK\" 2>&1";
+                                    }
+                                    if(!empty($rmSessionCmd)){
+                                        $cmdlog=array();
+                                        $cmdlog = $this->execute_ssh_cmd($rmSessionCmd, $cmdlog, "rm_session_lock", "rm_session_cmd", $profileId, $profileType, $ownerID);
+                                    }
+                                }
+
+                            }
+                        }
+                    }
                 }
                 if (!empty($newRunStatus)){
                     $setStatus = $this -> updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
@@ -3989,6 +4082,10 @@ class dbfuncs {
         $sql = "UPDATE run SET attempt= '$attempt', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
+    function updateRunSessionUUID($mainUUID, $initialUUID, $project_pipeline_id, $ownerID) {
+        $sql = "UPDATE run SET initial_session_uuid='$initialUUID', main_session_uuid='$mainUUID', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
+        return self::runSQL($sql);
+    }
     function updateRunPid($project_pipeline_id, $pid, $ownerID) {
         $sql = "UPDATE run SET pid='$pid', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
@@ -3997,6 +4094,11 @@ class dbfuncs {
         $sql = "SELECT pid FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
     }
+    function getRunSessionUUID($project_pipeline_id) {
+        $sql = "SELECT main_session_uuid, initial_session_uuid FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
+        return self::queryTable($sql);
+    }
+
     function getRunAttempt($project_pipeline_id) {
         $sql = "SELECT attempt FROM run WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::queryTable($sql);
@@ -4053,26 +4155,47 @@ class dbfuncs {
             $upCacheCmd = "; $upCacheCmd";
         }
         if ($executor == "lsf" && $commandType == "checkRunPid"){
-            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH bjobs\" 2>&1 &");
-            if (preg_match("/$pid/",$check_run)){
-                return json_encode('running');
-            } else {
-                return json_encode('done');
+            // * LSF jobs states:
+            // PEND — Waiting in a queue for scheduling and dispatch
+            // RUN — Dispatched to a host and running
+            // DONE — Finished normally with zero exit value
+            // EXIT — Finished with non-zero exit value
+            // PSUSP — Suspended while pending
+            // USUSP — Suspended by user
+            // SSUSP — Suspended by the LSF system
+            // POST_DONE — Post-processing completed without errors
+            // POST_ERR — Post-processing completed with errors
+            // WAIT — Members of a chunk job that are waiting to run
+            // UNKNOWN — No other job status is available
+            // ZOMBIE — Job was killed but not acknowledged by sbd
+            $errorJobStates = array ("EXIT","UNKNOWN","ZOMBIE");
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH timeout 5 bjobs -w $pid\" 2>&1 &");
+            if (preg_match("/JOBID/",$check_run)){
+                $arr = explode("\n", $check_run);
+                for ($i = 0; $i < count($arr); $i++) {
+                    if (preg_match("/$pid/",$arr[$i])){
+                        $statusAr = preg_split('/\s+/', $arr[$i]);
+                        error_log($statusAr[2]);
+                        if (!empty($statusAr[2]) && in_array($statusAr[2], $errorJobStates)){
+                            return json_encode('exited');
+                        }
+                    }
+
+                }
             }
+            return json_encode('');
         } else if ($executor == "sge" && $commandType == "checkRunPid"){
-            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH qstat -j $pid\" 2>&1 &");
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH timeout 5 qstat -j $pid\" 2>&1 &");
             if (preg_match("/job_number:/",$check_run)){
                 return json_encode('running');
             } else {
-                $this->updateRunPid($project_pipeline_id, "0", $ownerID);
                 return json_encode('done');
             }
         } else if ($executor == "slurm" && $commandType == "checkRunPid"){
-            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH squeue --job $pid\" 2>&1 &");
+            $check_run = shell_exec("ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH timeout 5 squeue --job $pid\" 2>&1 &");
             if (preg_match("/$pid/",$check_run)){
                 return json_encode('running');
             } else {
-                $this->updateRunPid($project_pipeline_id, "0", $ownerID);
                 return json_encode('done');
             }
         } else if ($executor == "sge" && $commandType == "terminateRun"){
@@ -4230,18 +4353,26 @@ class dbfuncs {
                         $continue = $this->checkKillPID($cmdFile, $limit_sec);
                         if ($continue == true){
                             unlink($cmdFile);
-                            // error_log("continue");
                         } else {
-                            // error_log("stop");
                             return json_encode("nextflow log saved");
                         }
                     }
                     $fileList="";
+                    $fileListInitialRun="";
                     foreach ($files as $item):
-                    $fileList.="$connect:$item ";
+                    if (preg_match("/initialrun\//", $item)){
+                        $fileListInitialRun.="$connect:$item ";
+                    } else {
+                        $fileList.="$connect:$item ";
+                    }
                     endforeach;
                     $cmd_content = "$fileList {$this->run_path}/$uuid/$last_server_dir/";
-                    $cmd="rsync --info=progress2 -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $cmd_content 2>&1 &"; 
+                    if (!empty($fileListInitialRun)){
+                        $cmd_content2 = "$fileListInitialRun {$this->run_path}/$uuid/$last_server_dir/initialrun/";
+                        $cmd="rsync --info=progress2 -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $cmd_content 2>&1 || true && rsync --info=progress2 -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $cmd_content2 2>&1 &"; 
+                    } else {
+                        $cmd="rsync --info=progress2 -avzu -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $cmd_content 2>&1 &"; 
+                    }
                     file_put_contents($cmdFile, $cmd_content);
                 }
                 $nextflow_log = shell_exec($cmd);
@@ -4574,15 +4705,15 @@ class dbfuncs {
         }
         return json_encode($data);
     }
-    function readFileSubDir($path) {
+    function readFileSubDir($path,$opt) {
         $scanned_directory = array_diff(scandir($path), array('..', '.'));
         foreach ($scanned_directory as $fileItem) {
             // skip '.' and '..' and .tmp hidden directories
-            if ($fileItem[0] == '.')  continue;
+            if ($fileItem[0] == '.' && $opt != "onlyfilehidden")  continue;
             $fileItem = rtrim($path,'/') . '/' . $fileItem;
             // if dir found call again recursively
             if (is_dir($fileItem)) {
-                foreach ($this->readFileSubDir($fileItem) as $childFileItem) {
+                foreach ($this->readFileSubDir($fileItem,$opt) as $childFileItem) {
                     yield $childFileItem;
                 }
             } else {
@@ -4600,9 +4731,9 @@ class dbfuncs {
         if (file_exists($path)) {
             if ($opt == "filedir"){
                 $scanned_directory = array_diff(scandir($path), array('..', '.'));
-            } else if ($opt == "onlyfile"){
+            } else if ($opt == "onlyfile" || $opt == "onlyfilehidden"){
                 //recursive read of all subdirectories
-                foreach ($this->readFileSubDir($path) as $fileItem) {
+                foreach ($this->readFileSubDir($path,$opt) as $fileItem) {
                     //remove initial part of the path
                     $fileItemRet = preg_replace('/^' . preg_quote($path.'/', '/') . '/', '', $fileItem);
                     $scanned_directory[]=$fileItemRet;
@@ -5059,7 +5190,7 @@ class dbfuncs {
             $archive_dir = "";
             $s3_archive_dir = "";
             $gs_archive_dir = "";
-            
+
             for ($k = 0; $k < count($file_dir); $k++) {
                 $file_dir[$k] = implode("\t", $file_dir[$k]);
             }
@@ -5084,12 +5215,12 @@ class dbfuncs {
                             }
                         }
                     }
-                    
+
                     // use new user's cre if user has changed.
                     if (empty($new_cre)){
                         $new_cre = $creds[0]["id"];
                     }
-                    
+
                     if (!empty($new_cre)){
                         $new_file_dir[1] = $new_cre;
                         $file_dir = implode("\t", $new_file_dir);
@@ -5101,7 +5232,7 @@ class dbfuncs {
                 $files_used[$m] = implode(",", $files_used[$m]);
             }
             $files_used = implode(" | ", $files_used);
-            
+
             $file_id = $this->checkFileAndSave($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID);
             if (!empty($file_id)){
                 $file_array[] = $file_id;
@@ -5162,7 +5293,7 @@ class dbfuncs {
                     $input_id = 0;
                     $collection_id = 0;
                     $proPipeInData = json_decode($this->getProjectPipelineInputIdByInputName($inputName,$newProPipeId,$ownerID),true);
-                    
+
                     if (!empty($proPipeInData[0]) && $proPipeInData[0]["id"]){
                         $proPipeInputId = $proPipeInData[0]["id"];
                         $inputType = $proPipeInData[0]["input_type"];

@@ -95,6 +95,7 @@ ini_set('report_errors','on');
 $myClass = new Pipeline();
 $result=$myClass->parse_params();
 $data=$myClass->runFuncs($result['params']);
+error_log("service/");
 
 if (!headers_sent()) {
     header('Cache-Control: no-cache, must-revalidate');
