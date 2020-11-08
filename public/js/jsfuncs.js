@@ -1928,17 +1928,6 @@ function refreshCollapseIconDiv() {
 
 }
 
-// return array of (.*) in the following regex = "/Job <(.*)> is submitted/g";
-function getMultipleRegex(txt, regex) {
-    var matches = [];
-    var match = regex.exec(txt);
-    while (match != null) {
-        matches.push(match[1]);
-        match = regex.exec(txt);
-    }
-    return matches;
-}
-
 // get object values
 function getObjectValues(obj) {
     var vals = Object.keys(obj).map(function(key) {
@@ -1946,8 +1935,6 @@ function getObjectValues(obj) {
     });
     return vals;
 }
-
-
 
 //creates ajax object and change color of requiredFields
 function createFormObj(formValues, requiredFields) {

@@ -113,7 +113,8 @@ else if ($p=="deleteFile"){
 else if ($p=="getFileList"){
     $uuid  = $_REQUEST['uuid'];
     $path = $_REQUEST['path'];
-    $data = $db->getFileList($uuid, $path, "filedir");
+    $type = $_REQUEST['type'];
+    $data = $db->getFileList($uuid, $path, $type);
 }
 else if ($p=="getRsyncStatus"){
     $filename  = $_REQUEST['filename'];
@@ -213,7 +214,7 @@ else if ($p=="saveNextflowLog"){
         // get outputdir
         $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
         list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
-        $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log");
+        $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log", "initialrun/.nextflow.log", "initialrun/trace.txt");
         foreach ($down_file_list as &$value) {
             $value = $dolphin_path_real."/".$value;
         }
@@ -270,21 +271,6 @@ else if ($p=="terminateRun"){
     } else if ($executor == 'local'){
         $data = $db -> sshExeCommand($commandType, "", $profileType, $profileId, $project_pipeline_id, $ownerID);
     }
-}
-else if ($p=="checkRunPid"){
-    $commandType = "checkRunPid";
-    $pid = $_REQUEST['pid'];
-    $profileType = $_REQUEST['profileType'];
-    $profileId = $_REQUEST['profileId'];
-    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
-    if ($profileType == 'cluster') {
-        $data = $db -> sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID);
-    }
-}
-else if ($p=="updateRunPid"){
-    $pid = $_REQUEST['pid'];
-    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
-    $data = $db -> updateRunPid($project_pipeline_id, $pid, $ownerID);
 }
 else if ($p=="updateRunStatus"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];

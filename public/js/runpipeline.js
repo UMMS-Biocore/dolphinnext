@@ -4915,19 +4915,8 @@ function terminateProjectPipe() {
         var proId = proIdWindow;
         var [allProSett, profileData] = getJobData("both");
         var executor = profileData[0].executor;
-        if (runPid && executor != "local") {
-            var terminateRun = getValues({ p: "terminateRun", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, executor: executor });
-            console.log(terminateRun)
-            var pidStatus = checkRunPid(runPid, proType, proId);
-            if (pidStatus) { // if true, then it is exist in queue
-                console.log("pid exist1")
-            } else { //pid not exist
-                console.log("give error1")
-            }
-        } else if (executor == "local") {
-            var terminateRun = getValues({ p: "terminateRun", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, executor: executor });
-            console.log(terminateRun)
-        }
+        var terminateRun = getValues({ p: "terminateRun", project_pipeline_id: project_pipeline_id, profileType: proType, profileId: proId, executor: executor });
+        console.log(terminateRun)
 
         var setStatus = getValues({ p: "updateRunStatus", run_status: "Terminated", project_pipeline_id: project_pipeline_id });
         if (setStatus) {
@@ -4944,49 +4933,6 @@ function terminateProjectPipe() {
 
 }
 
-function parseRunPid(serverLog) {
-    runPid = "";
-    //for lsf: Job <203477> is submitted to queue <long>.\n"
-    //for sge: Your job 2259 ("run_bowtie2") has been submitted
-    //for slurm: Submitted batch job 8748700
-    if (serverLog.match(/Job <(.*)> is submitted/) || serverLog.match(/job (.*) \(.*\) .* submitted/) || serverLog.match(/Submitted batch job (.*)/)) {
-        if (serverLog.match(/Job <(.*)> is submitted/)) {
-            var regEx = /Job <(.*)> is submitted/g;
-        } else if (serverLog.match(/job (.*) \(.*\) .* submitted/)) {
-            var regEx = /job (.*) \(.*\) .* submitted/g;
-        } else if (serverLog.match(/Submitted batch job (.*)/)) {
-            var regEx = /Submitted batch job (.*)/g;
-        }
-        var runPidAr = getMultipleRegex(serverLog, regEx);
-        if (runPidAr.length) {
-            runPid = runPidAr[runPidAr.length - 1];
-            runPid = $.trim(runPid);
-        }
-        if (runPid && runPid != "") {
-            var updateRunPidComp = getValues({ p: "updateRunPid", pid: runPid, project_pipeline_id: project_pipeline_id });
-        } else {
-            runPid = null;
-        }
-    }else {
-        runPid = null;
-    }
-    return runPid
-}
-
-function checkRunPid(runPid, proType, proId) {
-    var checkPid = null;
-    if (runPid) {
-        checkPid = getValues({ p: "checkRunPid", pid: runPid, profileType: proType, profileId: proId, project_pipeline_id: project_pipeline_id });
-        if (checkPid == "running") {
-            checkPid = true;
-        } else if (checkPid == "done") {
-            checkPid = false;
-        } else {
-            checkPid = null;
-        }
-    }
-    return checkPid
-}
 
 function parseMountPath(path, length) {
     if (path != null && path != "") {
@@ -5088,7 +5034,7 @@ function autofillMountPathImage(pathArrayL1){
     var excludePaths = ["/lib", "/opt", "/bin", "/boot", "/dev", "/lib64", "/media", "/proc", "/root", "/sbin", "/srv", "/sys", "/usr", "/var"]
     // docker.runOptions = -v /export:/export
     // singularity.runOptions = -B /export:/export
-    
+
     //default add /home to initial run binding list if google cloud is used. (credential file is required in the image)
     var cloudType = $("#chooseEnv").find(":selected").val();
     var patt = /(.*)-(.*)/;
@@ -5096,8 +5042,8 @@ function autofillMountPathImage(pathArrayL1){
     if (proType == "google" && pathArrayL1.indexOf("/home") === -1) {
         pathArrayL1.push("/home")
     }
-    
-    
+
+
     var newRunOpt = "";
     var oldRunOpt = "";
     var bindParam = "";
@@ -5437,11 +5383,6 @@ function readNextLog(proType, proId, type) {
             window.nextflowLog = updateProPipeStatus.nextflowLog;
             window.runStatus = updateProPipeStatus.runStatus;
         } 
-        if (serverLog && serverLog !== null && serverLog !== false) {
-            var runPid = parseRunPid(serverLog);
-        }
-        var pidStatus = "";
-
         // Available Run_status States: Terminated,NextSuc,Error,NextErr,NextRun, Waiting,init, Aborted
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
         if (runStatus === "Terminated" || runStatus === "NextSuc" || runStatus === "Error" || runStatus === "NextErr" || runStatus === "Manual") {
@@ -6343,11 +6284,11 @@ function updateRunVerNavBar() {
         if (activeTab[0]) {
             activeID = $(activeTab[0]).attr("href")
         }
-        var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: "run" })
+        var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: "run", type:"onlyfilehidden" })
         var fileListAr = getObjectValues(fileList);
         fileListAr.splice($.inArray("serverlog.txt", fileListAr), 1);
-        var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
-        var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
+        var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "initialrun/.nextflow.log", "initialrun/trace.txt", "nextflow.nf", "nextflow.config" ]
+        var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
 
         if (fileListAr.length > 0) {
             for (var j = 0; j < fileListAr.length; j++) {
@@ -7314,10 +7255,11 @@ $(function () {
                 } else {
                     var path = "run"
                     }
-            var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path })
+            var fileList = getValues({ "p": "getFileList", uuid: run_log_uuid, path: path, type:"onlyfilehidden" })
             var fileListAr = getObjectValues(fileList);
-            var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "nextflow.nf", "nextflow.config"]
-            var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
+            console.log(fileListAr)
+            var order = ["log.txt", "timeline.html", "report.html", "dag.html", "trace.txt", ".nextflow.log", "initialrun/.nextflow.log", "initialrun/trace.txt", "nextflow.nf", "nextflow.config" ]
+            var logContentDivAttr = ["SHOW_RUN_LOG", "SHOW_RUN_TIMELINE", "SHOW_RUN_REPORT", "SHOW_RUN_DAG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_NEXTFLOWLOG", "SHOW_RUN_TRACE", "SHOW_RUN_NEXTFLOWNF", "SHOW_RUN_NEXTFLOWCONFIG"]
             //hide serverlog.txt
             var pubWebPath = $("#basepathinfo").attr("pubweb")
             var navTabDiv = '<ul id="logNavBar" class="nav nav-tabs">';
@@ -7336,6 +7278,7 @@ $(function () {
                     active = 'class="active"';
                 }
                 var tabID = cleanProcessName(order[j]) + 'Tab';
+                console.log(tabID)
                 tabDiv.push(tabID);
                 fileName.push(order[j]);
                 navTabDiv += '<li id="' + tabID + '_Div"' + active + '><a class="nav-item sub updateIframe" ' + exist + ' data-toggle="tab"  href="#' + tabID + '">' + order[j] + '</a></li>'
@@ -7361,6 +7304,11 @@ $(function () {
                     if (fileListAr.includes("err.log")) {
                         serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/err.log" });
                     }
+                    // new version of keeping  initial.log
+                    if (fileListAr.includes("initialrun/initial.log")) {
+                        serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initialrun/initial.log" });
+                    }
+                    // old version of keeping initial.log:
                     if (fileListAr.includes("initial.log")) {
                         serverlogText += getValues({ p: "getFileContent", uuid: run_log_uuid, filename: path + "/initial.log" });
                     }
@@ -7509,7 +7457,6 @@ $(document).ready(function () {
     var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
-    runPid = "";
     countFailRead = 0; //count failed read amount if it reaches 5, show connection lost 
     changeOnchooseEnv = false;
     // save info when run saved successfully

@@ -1,3 +1,7 @@
+06.11.2020 Version 1.2.22
+initial run .nextflow.log and trace.txt files are added to log tabs in the run page.
+Lsf pid checker added to detect killed jobs.
+
 05.11.2020 Version 1.2.21
 S3 upload command updated with "aws s3 sync" to support files bigger than 5GB. 
 
