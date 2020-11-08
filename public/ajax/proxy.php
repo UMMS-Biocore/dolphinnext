@@ -14,9 +14,9 @@ $string = ($is_allowed) ? utf8_encode(file_get_contents($url)) : 'You are not al
 $json = json_encode($string);
 $callback = (isset($_GET['callback'])) ? $_GET['callback'] : false;
 if($callback){
-	$jsonp = "$callback($json)";
-	header('Content-Type: application/javascript');
-	echo $jsonp;
-	exit;
+    $jsonp = "$callback($json)";
+    header('Content-Type: application/javascript');
+    echo $jsonp;
+    exit;
 }
 echo $json;

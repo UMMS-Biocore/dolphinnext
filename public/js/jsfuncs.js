@@ -1565,22 +1565,6 @@ function getValuesErr(data, async) {
     return result;
 }
 
-//function crossOriginCall(url) { 
-//    var result = null;
-//    $.ajax({
-//        crossOrigin: true,
-//        url: url,
-//        //dataType: "json", //no need. if you use crossOrigin, the dataType will be override with "json"
-//        //charset: 'ISO-8859-1', //use it to define the charset of the target url
-//        context: {},
-//        success: function(data) {
-//            result = data;
-//        }
-//    })
-//    console.log(result)
-//    return result;
-//}
-
 
 function apiCallUrl(url) { 
     var result = null;
