@@ -1,3 +1,6 @@
+08.11.2020 Version 1.2.23
+Single Sign on feature upgraded.
+
 06.11.2020 Version 1.2.22
 initial run .nextflow.log and trace.txt files are added to log tabs in the run page.
 Lsf pid checker added to detect killed jobs.

@@ -11,7 +11,6 @@ $BASE_PATH=BASE_PATH;
 $CLIENT_ID=CLIENT_ID;
 $SHOW_HOMEPAGE=SHOW_HOMEPAGE;
 
-
 function loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID){
     // temporary change for sso login
     //    if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID)) {
@@ -85,19 +84,24 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
         require_once("login.php");
         exit;
     }
-    if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID)){
-//        if (empty($_SESSION["ssoLoginCheck"])){
-//            $_SESSION["ssoLoginCheck"] = true;
-//            error_log("1");
-//            $originalUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-//            $SSO_LOGIN_CHECK = "{$SSO_URL}/dialog/check?redirect_original={$originalUrl}&redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
-//            error_log($SSO_LOGIN_CHECK);
-//            header('Location: '.$SSO_LOGIN_CHECK);
-//            exit;
-//        } else if (!empty($_SESSION["ssoLoginCheck"])){
-//            error_log("2");
-//            $_SESSION["ssoLoginCheck"] = false;
-//        }
+    // empty($_SERVER['HTTP_REFERER']) required since php may load page more than once.
+    // when reload happens, $_SERVER['HTTP_REFERER'] will be set.
+    // jquery.ajax-cross-origin.min.js causes to reload page more than once.
+    if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID) && empty($_SERVER['HTTP_REFERER'])){
+        error_log("ssoLoginCheck:");
+        error_log($_SESSION["ssoLoginCheck"]);
+        error_log($_SERVER["HTTP_REFERER"]);
+        if (empty($_SESSION["ssoLoginCheck"])){
+            // check if its authenticated on Auth server
+            $_SESSION["ssoLoginCheck"] = true;
+            $originalUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+            $SSO_LOGIN_CHECK = "{$SSO_URL}/api/v1/oauth/check?redirect_original={$originalUrl}&redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
+            header('Location: '.$SSO_LOGIN_CHECK);
+            exit;
+        } 
+        else if (!empty($_SESSION["ssoLoginCheck"])){
+            $_SESSION["ssoLoginCheck"] = false;
+        }
     }
     // user not signed in - public view:
     if ($SHOW_HOMEPAGE == "1"){
