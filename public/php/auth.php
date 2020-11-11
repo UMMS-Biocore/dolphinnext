@@ -95,6 +95,8 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
             // check if its authenticated on Auth server
             $_SESSION["ssoLoginCheck"] = true;
             $originalUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+            error_log($originalUrl);
+            $_SESSION["redirect_original"] = $originalUrl;
             $SSO_LOGIN_CHECK = "{$SSO_URL}/api/v1/oauth/check?redirect_original={$originalUrl}&redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
             header('Location: '.$SSO_LOGIN_CHECK);
             exit;

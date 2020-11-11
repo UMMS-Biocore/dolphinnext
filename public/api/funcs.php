@@ -184,9 +184,6 @@ class funcs
             $expiresIn = $msg["expires_in"];
             $Run = new run();
             $currentUser = $Run->saveAccessRefreshToken($accessToken, $refreshToken, $expiresIn);
-            error_log($accessToken);
-            error_log(print_r($currentUser, TRUE));
-
             if (empty($currentUser)){
                 header("Location: {$this->BASE_PATH}");
                 exit();
@@ -200,7 +197,19 @@ class funcs
             $_SESSION['accessToken'] = $currentUser["accessToken"];
             $_SESSION['refreshToken'] = $currentUser["refreshToken"];
             //    sendCookie(updatedUser, req, res);
-            header("Location: {$this->BASE_PATH}/php/after-sso.php");
+            error_log("ssoLoginCheck2:");
+            error_log($_SESSION["ssoLoginCheck"]);
+            error_log($_SESSION["redirect_original"]);
+            //$_SESSION["ssoLoginCheck"] = true when auto login check performed.
+            if (empty($_SESSION["ssoLoginCheck"])){
+                header("Location: {$this->BASE_PATH}/php/after-sso.php");
+            } else {
+                if (!empty($_SESSION["redirect_original"])){
+                    header("Location: {$_SESSION["redirect_original"]}");
+                } else {
+                    header("Location: {$this->BASE_PATH}");
+                }
+            }
             exit();
         }
         error_log("sso-sign-in error occured.");
