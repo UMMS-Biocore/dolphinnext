@@ -18,7 +18,7 @@ require_once(__DIR__."/../../config/config.php");
         <span id="basepathinfo" basepath="<?php echo BASE_PATH ?>"></span>
         <div id="wrapper">
             <section id="after-sso-close">
-                <p>Login Successful</p>
+                <p></p>
             </section>
         </div>
         <script type="text/javascript" src="./../js/after-sso.js"></script>
