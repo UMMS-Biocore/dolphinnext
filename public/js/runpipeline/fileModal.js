@@ -139,7 +139,7 @@ $('#inputFilemodal').on('click', '#dmetaFiles', function (e) {
         getValuesAsync({p:"getSSOAccessTokenByUserID"}, function (s) {
             if (s && s[0] && s[0].accessToken){
                 var accToken = s[0].accessToken;
-                var dataSumUrl = url + "/api/v1/data/sample/summary"
+                var dataSumUrl = url + "/api/v1/projects/vitiligo/data/sample/summary"
                 $.ajax({
                     url: dataSumUrl,
                     method: "GET",
