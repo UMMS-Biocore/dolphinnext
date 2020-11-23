@@ -1266,6 +1266,8 @@ $DMETA_LABEL= DMETA_LABEL;
                                 <option value="" disabled selected>Choose Collection Type</option>
                                 <option value="single">Single/List</option>
                                 <option value="pair">Paired List</option>
+                                <option value="triple">Triple List</option>
+                                <option value="quadruple">Quadruple List</option>
                             </select>
                         </div>
                     </div>
@@ -1279,36 +1281,44 @@ $DMETA_LABEL= DMETA_LABEL;
                                 <div class="col-sm-8">
                                     <input type="text" class="form-control" id="single_pattern" name="single_pattern" value="">
                                 </div>
-                            </div>
-                            <div class="col-sm-6 forwardpatternDiv" style="display:none;">
-                                <p class="col-sm-4 control-label">Forward Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for forward reads eg. _R1"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
-                                <div class="col-sm-8">
-                                    <input type="text" class="form-control" id="forward_pattern" name="forward_pattern" value="_R1">
-                                </div>
-                            </div>
-                            <div class="col-sm-6 reversepatternDiv" style="display:none;">
-                                <p class="col-sm-4 control-label">Reverse Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reverse reads eg. _R2"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
-                                <div class="col-sm-8">
-                                    <input type="text" class="form-control" id="reverse_pattern" name="reverse_pattern" value="_R2">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-12">
-                            <div class="col-sm-6 singlepatternDiv" style="display:none;">
-                                <div class="col-sm-12">
+                                <div class="col-sm-12" style="margin-top:8px;">
                                     <select id="singleList" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                             <div class="col-sm-6 forwardpatternDiv" style="display:none;">
-                                <div id="forwardListDiv" class="col-sm-12">
+                                <p class="col-sm-4 control-label">R1 Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for forward reads eg. _R1"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="forward_pattern" name="forward_pattern" value="_R1">
+                                </div>
+                                <div class="col-sm-12" style="margin-top:8px; margin-bottom:12px;">
                                     <select id="forwardList" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                             <div class="col-sm-6 reversepatternDiv" style="display:none;">
-                                <div id="reverseListDiv" class="col-sm-12">
+                                <p class="col-sm-4 control-label">R2 Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reverse reads eg. _R2"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="reverse_pattern" name="reverse_pattern" value="_R2">
+                                </div>
+                                <div class="col-sm-12" style="margin-top:8px; margin-bottom:12px;">
                                     <select id="reverseList" type="select-multiple" multiple class="form-control" size="9"></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 r3patternDiv" style="display:none;">
+                                <p class="col-sm-4 control-label">R3 Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reads eg. _R3"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="r3_pattern" name="r3_pattern" value="_R3">
+                                </div>
+                                <div class="col-sm-12" style="margin-top:8px;">
+                                    <select id="r3List" type="select-multiple" multiple class="form-control" size="9"></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 r4patternDiv" style="display:none;">
+                                <p class="col-sm-4 control-label">R4 Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reads eg. _R4"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="r4_pattern" name="r4_pattern" value="_R4">
+                                </div>
+                                <div class="col-sm-12" style="margin-top:8px;">
+                                    <select id="r4List" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                         </div>

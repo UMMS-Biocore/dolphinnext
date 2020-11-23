@@ -39,6 +39,8 @@ googCred = env('GOOGLE_APPLICATION_CREDENTIALS')
 
 
 process initialCheck {
+    errorStrategy 'retry'
+    
     input:
         val collection from collection1
         val file_name from file_name1
@@ -109,12 +111,18 @@ process initialCheck {
             my $inputFile          = "";
             my $inputFile1         = "";
             my $inputFile2         = "";
+            my $inputFile3         = "";
+            my $inputFile4         = "";
             my $cloud_inputFile    = "";
             my $cloud_inputFile1   = "";
             my $cloud_inputFile2   = "";
+            my $cloud_inputFile3   = "";
+            my $cloud_inputFile4   = "";
             my $archFile           = "";
             my $archFile1          = "";
             my $archFile2          = "";
+            my $archFile3          = "";
+            my $archFile4          = "";
             
             if ( !-d $input_dir ) {
                 runCommand("mkdir -p $input_dir");
@@ -122,8 +130,13 @@ process initialCheck {
             }
           
             ## first check input folder, archive_dir, s3_archivedir and gs_archivedir for expected files
+            $inputFile  = "$input_dir/$file_name[$i].$fileType";
+            $inputFile1 = "$input_dir/$file_name[$i].R1.$fileType";
+            $inputFile2 = "$input_dir/$file_name[$i].R2.$fileType";
+            $inputFile3 = "$input_dir/$file_name[$i].R3.$fileType";
+            $inputFile4 = "$input_dir/$file_name[$i].R4.$fileType";
+            
             if ( $collection_type[$i] eq "single" ) {
-              $inputFile = "$input_dir/$file_name[$i].$fileType";
               if ( checkFile($inputFile) && checkFile("$input_dir/.success_$file_name[$i]")) {
                 $inputDirCheck = "true";
               } else {
@@ -131,18 +144,36 @@ process initialCheck {
               }
             }
             elsif ( $collection_type[$i] eq "pair" ) {
-              $inputFile1                  = "$input_dir/$file_name[$i].R1.$fileType";
-              $inputFile2                  = "$input_dir/$file_name[$i].R2.$fileType";
               if ( checkFile($inputFile1) && checkFile($inputFile2) && checkFile("$input_dir/.success_$file_name[$i]")) {
                 $inputDirCheck = "true";
               } else {
                 runCommand("rm -f $inputFile1 $inputFile2 $input_dir/.success_$file_name[$i]");
               }
             }
+            elsif ( $collection_type[$i] eq "triple" ) {
+              if ( checkFile($inputFile1) && checkFile($inputFile2) && checkFile($inputFile3) && checkFile("$input_dir/.success_$file_name[$i]")) {
+                $inputDirCheck = "true";
+              } else {
+                runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $input_dir/.success_$file_name[$i]");
+              }
+            }
+            elsif ( $collection_type[$i] eq "quadruple" ) {
+              if ( checkFile($inputFile1) && checkFile($inputFile2) && checkFile($inputFile3) && checkFile($inputFile4) && checkFile("$input_dir/.success_$file_name[$i]")) {
+                $inputDirCheck = "true";
+              } else {
+                runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $inputFile4 $input_dir/.success_$file_name[$i]");
+              }
+            }
+            
             ## if $profile eq "google" inputs located at the cloud. overwrite $inputDirCheck
             if ($profile eq "google"){
+                $cloud_inputFile      = "$cloud_input_dir/$file_name[$i].$fileType";
+                $cloud_inputFile1     = "$cloud_input_dir/$file_name[$i].R1.$fileType";
+                $cloud_inputFile2     = "$cloud_input_dir/$file_name[$i].R2.$fileType";
+                $cloud_inputFile3     = "$cloud_input_dir/$file_name[$i].R3.$fileType";
+                $cloud_inputFile4     = "$cloud_input_dir/$file_name[$i].R4.$fileType";
+                   
                 if ( $collection_type[$i] eq "single" ) {
-                    $cloud_inputFile      = "$cloud_input_dir/$file_name[$i].$fileType";
                     if ( checkGSFile($cloud_inputFile)) {
                         $inputDirCheck = "true";
                     } else {
@@ -151,13 +182,27 @@ process initialCheck {
                     }
                 }
                 elsif ( $collection_type[$i] eq "pair" ) {
-                    $cloud_inputFile1     = "$cloud_input_dir/$file_name[$i].R1.$fileType";
-                    $cloud_inputFile2     = "$cloud_input_dir/$file_name[$i].R2.$fileType";
-                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2)) {
+                     if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2)) {
                         $inputDirCheck = "true";
                     } else {
                         $inputDirCheck = "false";
                         runCommand("rm -f $inputFile1 $inputFile2 $input_dir/.success_$file_name[$i]");
+                    }
+                }
+                elsif ( $collection_type[$i] eq "triple" ) {
+                     if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2) && checkGSFile($cloud_inputFile3)) {
+                        $inputDirCheck = "true";
+                    } else {
+                        $inputDirCheck = "false";
+                        runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $input_dir/.success_$file_name[$i]");
+                    }
+                }
+                elsif ( $collection_type[$i] eq "quadruple" ) {
+                     if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2) && checkGSFile($cloud_inputFile3) && checkGSFile($cloud_inputFile4)) {
+                        $inputDirCheck = "true";
+                    } else {
+                        $inputDirCheck = "false";
+                        runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $inputFile4 $input_dir/.success_$file_name[$i]");
                     }
                 }
             }
@@ -167,8 +212,12 @@ process initialCheck {
                 my @s3_archiveDirData = split( /	/, $s3_archiveDir);
                 my $s3Path = $s3_archiveDirData[0]; 
                 my $confID = $s3_archiveDirData[1];
+                $archFile = "$s3Path/$file_name[$i].$fileType";
+                $archFile1 = "$s3Path/$file_name[$i].R1.$fileType";
+                $archFile2 = "$s3Path/$file_name[$i].R2.$fileType";
+                $archFile3 = "$s3Path/$file_name[$i].R3.$fileType";
+                $archFile4 = "$s3Path/$file_name[$i].R4.$fileType";
                 if ( $collection_type[$i] eq "single" ) {
-                    $archFile = "$s3Path/$file_name[$i].$fileType";
                     if ( checkS3File("$archFile.gz", $confID) && checkS3File("$archFile.gz.count", $confID) && checkS3File("$archFile.gz.md5sum", $confID)) {
                         $s3_archiveDirCheck = "true";
                     } else {
@@ -176,9 +225,21 @@ process initialCheck {
                     }
                 }
                 elsif ( $collection_type[$i] eq "pair" ) {
-                    $archFile1 = "$s3Path/$file_name[$i].R1.$fileType";
-                    $archFile2 = "$s3Path/$file_name[$i].R2.$fileType";
                     if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID)) {
+                        $s3_archiveDirCheck = "true";
+                    } else {
+                        $s3_archiveDirCheck = "false";
+                    }
+                }
+                elsif ( $collection_type[$i] eq "triple" ) {
+                    if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID) && checkS3File("$archFile3.gz",$confID) && checkS3File("$archFile3.gz.count",$confID) && checkS3File("$archFile3.gz.md5sum",$confID)) {
+                        $s3_archiveDirCheck = "true";
+                    } else {
+                        $s3_archiveDirCheck = "false";
+                    }
+                }
+                elsif ( $collection_type[$i] eq "quadruple" ) {
+                    if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID) && checkS3File("$archFile3.gz",$confID) && checkS3File("$archFile3.gz.count",$confID) && checkS3File("$archFile3.gz.md5sum",$confID) && checkS3File("$archFile4.gz",$confID) && checkS3File("$archFile4.gz.count",$confID) && checkS3File("$archFile4.gz.md5sum",$confID)) {
                         $s3_archiveDirCheck = "true";
                     } else {
                         $s3_archiveDirCheck = "false";
@@ -188,8 +249,12 @@ process initialCheck {
             if ( $gs_archiveDir ne "" ) {
                 my @gs_archiveDirData = split( /	/, $gs_archiveDir);
                 my $gsPath = $gs_archiveDirData[0]; 
+                $archFile = "$gsPath/$file_name[$i].$fileType";
+                $archFile1 = "$gsPath/$file_name[$i].R1.$fileType";
+                $archFile2 = "$gsPath/$file_name[$i].R2.$fileType";
+                $archFile3 = "$gsPath/$file_name[$i].R3.$fileType";
+                $archFile4 = "$gsPath/$file_name[$i].R4.$fileType";
                 if ( $collection_type[$i] eq "single" ) {
-                    $archFile = "$gsPath/$file_name[$i].$fileType";
                     if ( checkGSFile("$archFile.gz") && checkGSFile("$archFile.gz.count") && checkGSFile("$archFile.gz.md5sum")) {
                         $gs_archiveDirCheck = "true";
                     } else {
@@ -197,9 +262,21 @@ process initialCheck {
                     }
                 }
                 elsif ( $collection_type[$i] eq "pair" ) {
-                    $archFile1 = "$gsPath/$file_name[$i].R1.$fileType";
-                    $archFile2 = "$gsPath/$file_name[$i].R2.$fileType";
                     if ( checkGSFile("$archFile1.gz") && checkGSFile("$archFile1.gz.count") && checkGSFile("$archFile1.gz.md5sum") && checkGSFile("$archFile2.gz") && checkGSFile("$archFile2.gz.count") && checkGSFile("$archFile2.gz.md5sum")) {
+                        $gs_archiveDirCheck = "true";
+                    } else {
+                        $gs_archiveDirCheck = "false";
+                    }
+                }
+                elsif ( $collection_type[$i] eq "triple" ) {
+                    if ( checkGSFile("$archFile1.gz") && checkGSFile("$archFile1.gz.count") && checkGSFile("$archFile1.gz.md5sum") && checkGSFile("$archFile2.gz") && checkGSFile("$archFile2.gz.count") && checkGSFile("$archFile2.gz.md5sum") && checkGSFile("$archFile3.gz") && checkGSFile("$archFile3.gz.count") && checkGSFile("$archFile3.gz.md5sum")) {
+                        $gs_archiveDirCheck = "true";
+                    } else {
+                        $gs_archiveDirCheck = "false";
+                    }
+                }
+                elsif ( $collection_type[$i] eq "quadruple" ) {
+                    if ( checkGSFile("$archFile1.gz") && checkGSFile("$archFile1.gz.count") && checkGSFile("$archFile1.gz.md5sum") && checkGSFile("$archFile2.gz") && checkGSFile("$archFile2.gz.count") && checkGSFile("$archFile2.gz.md5sum") && checkGSFile("$archFile3.gz") && checkGSFile("$archFile3.gz.count") && checkGSFile("$archFile3.gz.md5sum") && checkGSFile("$archFile4.gz") && checkGSFile("$archFile4.gz.count") && checkGSFile("$archFile4.gz.md5sum")) {
                         $gs_archiveDirCheck = "true";
                     } else {
                         $gs_archiveDirCheck = "false";
@@ -219,23 +296,37 @@ process initialCheck {
                 runCommand("mkdir -p $archiveDir");
                 if ( !-d $archiveDir ) { die "Failed to create archiveDir: $archiveDir"; }
               }
+              $archFile = "$archiveDir/$file_name[$i].$fileType";
+              $archFile1 = "$archiveDir/$file_name[$i].R1.$fileType";
+              $archFile2 = "$archiveDir/$file_name[$i].R2.$fileType";
+              $archFile3 = "$archiveDir/$file_name[$i].R3.$fileType";
+              $archFile4 = "$archiveDir/$file_name[$i].R4.$fileType";
               if ( $collection_type[$i] eq "single" ) {
-                $archFile = "$archiveDir/$file_name[$i].$fileType";
                 if ( checkFile("$archFile.gz") && checkFile("$archFile.gz.count")) {
                   $archiveDirCheck = "true";
-                } elsif ( checkFile("$archFile.gz") || checkFile("$archFile.gz.count") ) {
-                  ## if only one of them exist then remove files
+                } else {
                   runCommand("rm -f $archFile.gz");
                 }
               }
               elsif ( $collection_type[$i] eq "pair" ) {
-                $archFile1 = "$archiveDir/$file_name[$i].R1.$fileType";
-                $archFile2 = "$archiveDir/$file_name[$i].R2.$fileType";
                 if ( checkFile("$archFile1.gz") && checkFile("$archFile1.gz.count") && checkFile("$archFile2.gz") && checkFile("$archFile2.gz.count") ) {
                   $archiveDirCheck = "true";
-                } elsif ( checkFile("$archFile1.gz") || checkFile("$archFile2.gz") ) {
-                  ## if only one of them exist then remove files
+                } else {
                   runCommand("rm -f $archFile1.gz $archFile2.gz");
+                }
+              }
+              elsif ( $collection_type[$i] eq "triple" ) {
+                if ( checkFile("$archFile1.gz") && checkFile("$archFile1.gz.count") && checkFile("$archFile2.gz") && checkFile("$archFile2.gz.count") && checkFile("$archFile3.gz") && checkFile("$archFile3.gz.count")) {
+                  $archiveDirCheck = "true";
+                } else {
+                  runCommand("rm -f $archFile1.gz $archFile2.gz $archFile3.gz");
+                }
+              }
+              elsif ( $collection_type[$i] eq "quadruple" ) {
+                if ( checkFile("$archFile1.gz") && checkFile("$archFile1.gz.count") && checkFile("$archFile2.gz") && checkFile("$archFile2.gz.count") && checkFile("$archFile3.gz") && checkFile("$archFile3.gz.count") && checkFile("$archFile4.gz") && checkFile("$archFile4.gz.count")) {
+                  $archiveDirCheck = "true";
+                } else {
+                  runCommand("rm -f $archFile1.gz $archFile2.gz $archFile3.gz $archFile4.gz");
                 }
               }
             }
@@ -246,8 +337,13 @@ process initialCheck {
                 runCommand("rm -f $inputFile");
               }
               elsif ( $collection_type[$i] eq "pair" ) {
-                runCommand("rm -f $inputFile1");
-                runCommand("rm -f $inputFile2");
+                runCommand("rm -f $inputFile1 $inputFile2");
+              }
+              elsif ( $collection_type[$i] eq "triple" ) {
+                runCommand("rm -f $inputFile1 $inputFile2 $inputFile3");
+              }
+              elsif ( $collection_type[$i] eq "quadruple" ) {
+                runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $inputFile4");
               }
               $inputDirCheck = "false";
             }
@@ -658,6 +754,8 @@ process createCollection {
             my @fullfileAr      = ();
             my @fullfileArR1    = ();
             my @fullfileArR2    = ();
+            my @fullfileArR3    = ();
+            my @fullfileArR4    = ();
             my $inputDirCheck   = "false";
             my $archiveDirCheck = "false";
             my $s3_archiveDirCheck = "";
@@ -665,12 +763,23 @@ process createCollection {
             my $inputFile          = "";
             my $inputFile1         = "";
             my $inputFile2         = "";
+            my $inputFile3         = "";
+            my $inputFile4         = "";
             my $cloud_inputFile    = "";
             my $cloud_inputFile1   = "";
             my $cloud_inputFile2   = "";
+            my $cloud_inputFile3   = "";
+            my $cloud_inputFile4   = "";
             my $archFile           = "";
             my $archFile1          = "";
             my $archFile2          = "";
+            my $archFile3          = "";
+            my $archFile4          = "";
+            my $tmp_dir_sufx       = "";
+            my $tmp_dir_sufx1      = "";
+            my $tmp_dir_sufx2      = "";
+            my $tmp_dir_sufx3      = "";
+            my $tmp_dir_sufx4      = "";
             
             if ( !-d $input_dir ) {
                 runCommand("mkdir -p $input_dir");
@@ -678,8 +787,13 @@ process createCollection {
             }
             
             ## first check input folder, archive_dir and s3_archivedir for expected files
+              $inputFile  = "$input_dir/$file_name[$i].$fileType";
+              $inputFile1 = "$input_dir/$file_name[$i].R1.$fileType";
+              $inputFile2 = "$input_dir/$file_name[$i].R2.$fileType";
+              $inputFile3 = "$input_dir/$file_name[$i].R3.$fileType";
+              $inputFile4 = "$input_dir/$file_name[$i].R4.$fileType";
+            
             if ( $collection_type[$i] eq "single" ) {
-              $inputFile = "$input_dir/$file_name[$i].$fileType";
               if ( checkFile($inputFile) && checkFile("$input_dir/.success_$file_name[$i]")) {
                 $inputDirCheck = "true";
               } else {
@@ -687,18 +801,34 @@ process createCollection {
               }
             }
             elsif ( $collection_type[$i] eq "pair" ) {
-              $inputFile1                  = "$input_dir/$file_name[$i].R1.$fileType";
-              $inputFile2                  = "$input_dir/$file_name[$i].R2.$fileType";
               if ( checkFile($inputFile1) && checkFile($inputFile2) && checkFile("$input_dir/.success_$file_name[$i]")) {
                 $inputDirCheck = "true";
               } else {
                 runCommand("rm -f $inputFile1 $inputFile2 $input_dir/.success_$file_name[$i]");
               }
             }
+            elsif ( $collection_type[$i] eq "triple" ) {
+              if ( checkFile($inputFile1) && checkFile($inputFile2) && checkFile($inputFile3) && checkFile("$input_dir/.success_$file_name[$i]")) {
+                $inputDirCheck = "true";
+              } else {
+                runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $input_dir/.success_$file_name[$i]");
+              }
+            }
+            elsif ( $collection_type[$i] eq "quadruple" ) {
+              if ( checkFile($inputFile1) && checkFile($inputFile2) && checkFile($inputFile3) && checkFile($inputFile4) && checkFile("$input_dir/.success_$file_name[$i]")) {
+                $inputDirCheck = "true";
+              } else {
+                runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $inputFile4 $input_dir/.success_$file_name[$i]");
+              }
+            }
             ## if $profile eq "google" inputs located at the cloud. overwrite $inputDirCheck
             if ($profile eq "google"){
+                $cloud_inputFile      = "$cloud_input_dir/$file_name[$i].$fileType";
+                $cloud_inputFile1     = "$cloud_input_dir/$file_name[$i].R1.$fileType";
+                $cloud_inputFile2     = "$cloud_input_dir/$file_name[$i].R2.$fileType";
+                $cloud_inputFile3     = "$cloud_input_dir/$file_name[$i].R3.$fileType";
+                $cloud_inputFile4     = "$cloud_input_dir/$file_name[$i].R4.$fileType";
                 if ( $collection_type[$i] eq "single" ) {
-                    $cloud_inputFile      = "$cloud_input_dir/$file_name[$i].$fileType";
                     if ( checkGSFile($cloud_inputFile)) {
                         $inputDirCheck = "true";
                     } else {
@@ -707,13 +837,27 @@ process createCollection {
                     }
                 }
                 elsif ( $collection_type[$i] eq "pair" ) {
-                    $cloud_inputFile1     = "$cloud_input_dir/$file_name[$i].R1.$fileType";
-                    $cloud_inputFile2     = "$cloud_input_dir/$file_name[$i].R2.$fileType";
                     if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2)) {
                         $inputDirCheck = "true";
                     } else {
                         $inputDirCheck = "false";
                         runCommand("rm -f $inputFile1 $inputFile2 $input_dir/.success_$file_name[$i]");
+                    }
+                }
+                elsif ( $collection_type[$i] eq "triple" ) {
+                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2) && checkGSFile($cloud_inputFile3)) {
+                        $inputDirCheck = "true";
+                    } else {
+                        $inputDirCheck = "false";
+                        runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $input_dir/.success_$file_name[$i]");
+                    }
+                }
+                elsif ( $collection_type[$i] eq "quadruple" ) {
+                    if ( checkGSFile($cloud_inputFile1) && checkGSFile($cloud_inputFile2) && checkGSFile($cloud_inputFile3) && checkGSFile($cloud_inputFile4)) {
+                        $inputDirCheck = "true";
+                    } else {
+                        $inputDirCheck = "false";
+                        runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $inputFile4 $input_dir/.success_$file_name[$i]");
                     }
                 }
             }
@@ -722,18 +866,35 @@ process createCollection {
                 my @s3_archiveDirData = split( /	/, $s3_archiveDir);
                 my $s3Path = $s3_archiveDirData[0]; 
                 my $confID = $s3_archiveDirData[1];
-                if ( $collection_type[$i] eq "single" ) {
                 $archFile = "$s3Path/$file_name[$i].$fileType";
-                if ( checkS3File("$archFile.gz", $confID) && checkS3File("$archFile.gz.count", $confID) && checkS3File("$archFile.gz.md5sum", $confID)) {
+                $archFile1 = "$s3Path/$file_name[$i].R1.$fileType";
+                $archFile2 = "$s3Path/$file_name[$i].R2.$fileType";
+                $archFile3 = "$s3Path/$file_name[$i].R3.$fileType";
+                $archFile4 = "$s3Path/$file_name[$i].R4.$fileType";
+                
+                if ( $collection_type[$i] eq "single" ) {
+                    if ( checkS3File("$archFile.gz", $confID) && checkS3File("$archFile.gz.count", $confID) && checkS3File("$archFile.gz.md5sum", $confID)) {
+                    $s3_archiveDirCheck = "true";
+                    } else {
+                        $s3_archiveDirCheck = "false";
+                    }
+                }
+              elsif ( $collection_type[$i] eq "pair" ) {
+                if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID)) {
                     $s3_archiveDirCheck = "true";
                 } else {
                     $s3_archiveDirCheck = "false";
                 }
               }
-              elsif ( $collection_type[$i] eq "pair" ) {
-                $archFile1 = "$s3Path/$file_name[$i].R1.$fileType";
-                $archFile2 = "$s3Path/$file_name[$i].R2.$fileType";
-                if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID)) {
+              elsif ( $collection_type[$i] eq "triple" ) {
+                if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID) && checkS3File("$archFile3.gz",$confID) && checkS3File("$archFile3.gz.count",$confID) && checkS3File("$archFile3.gz.md5sum",$confID)) {
+                    $s3_archiveDirCheck = "true";
+                } else {
+                    $s3_archiveDirCheck = "false";
+                }
+              }
+              elsif ( $collection_type[$i] eq "quadruple" ) {
+                if ( checkS3File("$archFile1.gz", $confID) && checkS3File("$archFile1.gz.count", $confID) && checkS3File("$archFile1.gz.md5sum", $confID) && checkS3File("$archFile2.gz",$confID) && checkS3File("$archFile2.gz.count",$confID) && checkS3File("$archFile2.gz.md5sum",$confID) && checkS3File("$archFile3.gz",$confID) && checkS3File("$archFile3.gz.count",$confID) && checkS3File("$archFile3.gz.md5sum",$confID) && checkS3File("$archFile4.gz",$confID) && checkS3File("$archFile4.gz.count",$confID) && checkS3File("$archFile4.gz.md5sum",$confID)) {
                     $s3_archiveDirCheck = "true";
                 } else {
                     $s3_archiveDirCheck = "false";
@@ -743,8 +904,12 @@ process createCollection {
             if ( $gs_archiveDir ne "" ) {
                 my @gs_archiveDirData = split( /	/, $gs_archiveDir);
                 my $gsPath = $gs_archiveDirData[0]; 
+                $archFile = "$gsPath/$file_name[$i].$fileType";
+                $archFile1 = "$gsPath/$file_name[$i].R1.$fileType";
+                $archFile2 = "$gsPath/$file_name[$i].R2.$fileType";
+                $archFile3 = "$gsPath/$file_name[$i].R3.$fileType";
+                $archFile4 = "$gsPath/$file_name[$i].R4.$fileType";
                 if ( $collection_type[$i] eq "single" ) {
-                    $archFile = "$gsPath/$file_name[$i].$fileType";
                     if ( checkGSFile("$archFile.gz") && checkGSFile("$archFile.gz.count") && checkGSFile("$archFile.gz.md5sum")) {
                         $gs_archiveDirCheck = "true";
                     } else {
@@ -752,9 +917,21 @@ process createCollection {
                     }
                 }
                 elsif ( $collection_type[$i] eq "pair" ) {
-                    $archFile1 = "$gsPath/$file_name[$i].R1.$fileType";
-                    $archFile2 = "$gsPath/$file_name[$i].R2.$fileType";
                     if ( checkGSFile("$archFile1.gz") && checkGSFile("$archFile1.gz.count") && checkGSFile("$archFile1.gz.md5sum") && checkGSFile("$archFile2.gz") && checkGSFile("$archFile2.gz.count") && checkGSFile("$archFile2.gz.md5sum")) {
+                        $gs_archiveDirCheck = "true";
+                    } else {
+                        $gs_archiveDirCheck = "false";
+                    }
+                }
+                elsif ( $collection_type[$i] eq "triple" ) {
+                    if ( checkGSFile("$archFile1.gz") && checkGSFile("$archFile1.gz.count") && checkGSFile("$archFile1.gz.md5sum") && checkGSFile("$archFile2.gz") && checkGSFile("$archFile2.gz.count") && checkGSFile("$archFile2.gz.md5sum") && checkGSFile("$archFile3.gz") && checkGSFile("$archFile3.gz.count") && checkGSFile("$archFile3.gz.md5sum")) {
+                        $gs_archiveDirCheck = "true";
+                    } else {
+                        $gs_archiveDirCheck = "false";
+                    }
+                }
+                elsif ( $collection_type[$i] eq "quadruple" ) {
+                    if ( checkGSFile("$archFile1.gz") && checkGSFile("$archFile1.gz.count") && checkGSFile("$archFile1.gz.md5sum") && checkGSFile("$archFile2.gz") && checkGSFile("$archFile2.gz.count") && checkGSFile("$archFile2.gz.md5sum") && checkGSFile("$archFile3.gz") && checkGSFile("$archFile3.gz.count") && checkGSFile("$archFile3.gz.md5sum") && checkGSFile("$archFile4.gz") && checkGSFile("$archFile4.gz.count") && checkGSFile("$archFile4.gz.md5sum")) {
                         $gs_archiveDirCheck = "true";
                     } else {
                         $gs_archiveDirCheck = "false";
@@ -775,8 +952,12 @@ process createCollection {
                 runCommand("mkdir -p $archiveDir");
                 if ( !-d $archiveDir ) {die "Failed to create archiveDir: $archiveDir";}
               }
+              $archFile  = "$archiveDir/$file_name[$i].$fileType";
+              $archFile1 = "$archiveDir/$file_name[$i].R1.$fileType";
+              $archFile2 = "$archiveDir/$file_name[$i].R2.$fileType";
+              $archFile3 = "$archiveDir/$file_name[$i].R3.$fileType";
+              $archFile4 = "$archiveDir/$file_name[$i].R4.$fileType";
               if ( $collection_type[$i] eq "single" ) {
-                $archFile = "$archiveDir/$file_name[$i].$fileType";
                 if ( checkFile("$archFile.gz") && checkFile("$archFile.gz.count")) {
                   $archiveDirCheck = "true";
                 } elsif ( checkFile("$archFile.gz") || checkFile("$archFile.gz.count") ) {
@@ -785,13 +966,25 @@ process createCollection {
                 }
               }
               elsif ( $collection_type[$i] eq "pair" ) {
-                $archFile1 = "$archiveDir/$file_name[$i].R1.$fileType";
-                $archFile2 = "$archiveDir/$file_name[$i].R2.$fileType";
                 if ( checkFile("$archFile1.gz") && checkFile("$archFile1.gz.count") && checkFile("$archFile2.gz") && checkFile("$archFile2.gz.count") ) {
                   $archiveDirCheck = "true";
-                } elsif ( checkFile("$archFile1.gz") || checkFile("$archFile2.gz") ) {
+                } else {
                   ## if only one of them exist then remove files
                   runCommand("rm -f $archFile1.gz $archFile2.gz");
+                }
+              }
+              elsif ( $collection_type[$i] eq "triple" ) {
+                if ( checkFile("$archFile1.gz") && checkFile("$archFile1.gz.count") && checkFile("$archFile2.gz") && checkFile("$archFile2.gz.count") && checkFile("$archFile3.gz") && checkFile("$archFile3.gz.count")) {
+                  $archiveDirCheck = "true";
+                } else {
+                  runCommand("rm -f $archFile1.gz $archFile2.gz $archFile3.gz");
+                }
+              }
+              elsif ( $collection_type[$i] eq "quadruple" ) {
+                if ( checkFile("$archFile1.gz") && checkFile("$archFile1.gz.count") && checkFile("$archFile2.gz") && checkFile("$archFile2.gz.count") && checkFile("$archFile3.gz") && checkFile("$archFile3.gz.count") && checkFile("$archFile4.gz") && checkFile("$archFile4.gz.count")) {
+                  $archiveDirCheck = "true";
+                } else {
+                  runCommand("rm -f $archFile1.gz $archFile2.gz $archFile3.gz $archFile4.gz");
                 }
               }
             }
@@ -808,8 +1001,13 @@ process createCollection {
                 runCommand("rm -f $inputFile");
               }
               elsif ( $collection_type[$i] eq "pair" ) {
-                runCommand("rm -f $inputFile1");
-                runCommand("rm -f $inputFile2");
+                runCommand("rm -f $inputFile1 $inputFile2");
+              }
+              elsif ( $collection_type[$i] eq "triple" ) {
+                runCommand("rm -f $inputFile1 $inputFile2 $inputFile3");
+              }
+              elsif ( $collection_type[$i] eq "quadruple" ) {
+                runCommand("rm -f $inputFile1 $inputFile2 $inputFile3 $inputFile4");
               }
               $inputDirCheck = "false";
             }
@@ -820,6 +1018,15 @@ process createCollection {
                 } elsif ( $collection_type[$i] eq "pair" ) {
                     arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                     arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                } elsif ( $collection_type[$i] eq "triple" ) {
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile3.gz", "$inputFile3.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                } elsif ( $collection_type[$i] eq "quadruple" ) {
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile3.gz", "$inputFile3.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile4.gz", "$inputFile4.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
                 runCommand("touch $input_dir/.success_$file_name[$i]");
                 uploadCloudWorkdir($profile);
@@ -847,6 +1054,29 @@ process createCollection {
                     my $archFile2 = $tmp_dir_sufx2 . "/" . "$file_name[$i].R2.$fileType";
                     arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                     arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                } elsif ( $collection_type[$i] eq "triple" ) {
+                    my $tmp_dir_sufx1 = cloudDownCheck($arcDir, "$file_name[$i].R1.$fileType.gz", $cloud);
+                    my $tmp_dir_sufx2 = cloudDownCheck($arcDir, "$file_name[$i].R2.$fileType.gz", $cloud);
+                    my $tmp_dir_sufx3 = cloudDownCheck($arcDir, "$file_name[$i].R3.$fileType.gz", $cloud);
+                    my $archFile1 = $tmp_dir_sufx1 . "/" . "$file_name[$i].R1.$fileType";
+                    my $archFile2 = $tmp_dir_sufx2 . "/" . "$file_name[$i].R2.$fileType";
+                    my $archFile3 = $tmp_dir_sufx3 . "/" . "$file_name[$i].R3.$fileType";
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile3.gz", "$inputFile3.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                } elsif ( $collection_type[$i] eq "quadruple" ) {
+                    my $tmp_dir_sufx1 = cloudDownCheck($arcDir, "$file_name[$i].R1.$fileType.gz", $cloud);
+                    my $tmp_dir_sufx2 = cloudDownCheck($arcDir, "$file_name[$i].R2.$fileType.gz", $cloud);
+                    my $tmp_dir_sufx3 = cloudDownCheck($arcDir, "$file_name[$i].R3.$fileType.gz", $cloud);
+                    my $tmp_dir_sufx4 = cloudDownCheck($arcDir, "$file_name[$i].R4.$fileType.gz", $cloud);
+                    my $archFile1 = $tmp_dir_sufx1 . "/" . "$file_name[$i].R1.$fileType";
+                    my $archFile2 = $tmp_dir_sufx2 . "/" . "$file_name[$i].R2.$fileType";
+                    my $archFile3 = $tmp_dir_sufx3 . "/" . "$file_name[$i].R3.$fileType";
+                    my $archFile4 = $tmp_dir_sufx4 . "/" . "$file_name[$i].R4.$fileType";
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile3.gz", "$inputFile3.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile4.gz", "$inputFile4.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
                 runCommand("touch $input_dir/.success_$file_name[$i]");
                 uploadCloudWorkdir($profile);
@@ -856,6 +1086,10 @@ process createCollection {
             elsif ( $inputDirCheck eq "false" && $archiveDirCheck eq "false" ) {
               ##Keep full path of files that needs to merge in @fullfileAr
               for ( my $k = 0 ; $k <= $#fileAr ; $k++ ) {
+                $tmp_dir_sufx1 = "";
+                $tmp_dir_sufx2 = "";
+                $tmp_dir_sufx3 = "";
+                $tmp_dir_sufx4 = "";
                 if ( $collection_type[$i] eq "single" ) {
                   ## for GEO files: file_dir will be empty so @fullfileAr will be empty.
                   if ($file_dir[$i] =~ m/s3:/i ){
@@ -875,34 +1109,81 @@ process createCollection {
                   }
                 }
                 elsif ( $collection_type[$i] eq "pair" ) {
+                  my @fileArSplit = split( /,/, $fileAr[$k], -1 );
                   if ($file_dir[$i] =~ m/s3:/i ){
-                    my @pair = split( /,/, $fileAr[$k], -1 );
-                    my $s3tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $pair[0], "s3");
-                    my $s3tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $pair[1], "s3");
-                    print "$s3tmp_dir_sufx1\\n";
-                    push @fullfileArR1, $s3tmp_dir_sufx1 . "/" . $pair[0];
-                    push @fullfileArR2, $s3tmp_dir_sufx2 . "/" . $pair[1];
-                  
+                    $tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $fileArSplit[0], "s3");
+                    $tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $fileArSplit[1], "s3");
                   } elsif ($file_dir[$i] =~ m/gs:/i ){
-                    my @pair = split( /,/, $fileAr[$k], -1 );
-                    my $tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $pair[0], "gs");
-                    my $tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $pair[1], "gs");
-                    print "$tmp_dir_sufx1\\n";
-                    push @fullfileArR1, $tmp_dir_sufx1 . "/" . $pair[0];
-                    push @fullfileArR2, $tmp_dir_sufx2 . "/" . $pair[1];
-                    
+                    $tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $fileArSplit[0], "gs");
+                    $tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $fileArSplit[1], "gs");
                   } elsif (($file_dir[$i] =~ m/http:/i ) || ($file_dir[$i] =~ m/https:/i ) || ($file_dir[$i] =~ m/ftp:/i )){
-                    my @pair = split( /,/, $fileAr[$k], -1 );
-                    my $urltmp_dir_sufx1 = urldown("$file_dir[$i]/$pair[0]", $pair[0]);
-                    my $urltmp_dir_sufx2 = urldown("$file_dir[$i]/$pair[1]", $pair[1]);
-                    print "$urltmp_dir_sufx1\\n";
-                    push @fullfileArR1, $urltmp_dir_sufx1 . "/" . $pair[0];
-                    push @fullfileArR2, $urltmp_dir_sufx2 . "/" . $pair[1];
-                  
+                    $tmp_dir_sufx1 = urldown("$file_dir[$i]/$fileArSplit[0]", $fileArSplit[0]);
+                    $tmp_dir_sufx2 = urldown("$file_dir[$i]/$fileArSplit[1]", $fileArSplit[1]);
                   } elsif (trim( $file_dir[$i] ne "")){
-                    my @pair = split( /,/, $fileAr[$k], -1 );
-                    push @fullfileArR1, $file_dir[$i] . "/" . $pair[0];
-                    push @fullfileArR2, $file_dir[$i] . "/" . $pair[1];
+                    $tmp_dir_sufx1 = $file_dir[$i];
+                    $tmp_dir_sufx2 = $file_dir[$i];
+                  }
+                  print "$tmp_dir_sufx1\\n";
+                  if ($tmp_dir_sufx1 ne "" && $tmp_dir_sufx2 ne ""){
+                    push @fullfileArR1, $tmp_dir_sufx1 . "/" . $fileArSplit[0];
+                    push @fullfileArR2, $tmp_dir_sufx2 . "/" . $fileArSplit[1];
+                  }
+                }
+                elsif ( $collection_type[$i] eq "triple" ) {
+                  my @fileArSplit = split( /,/, $fileAr[$k], -1 );
+                  if ($file_dir[$i] =~ m/s3:/i ){
+                    $tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $fileArSplit[0], "s3");
+                    $tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $fileArSplit[1], "s3");
+                    $tmp_dir_sufx3 = cloudDownCheck($file_dir[$i], $fileArSplit[2], "s3");
+                  } elsif ($file_dir[$i] =~ m/gs:/i ){
+                    $tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $fileArSplit[0], "gs");
+                    $tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $fileArSplit[1], "gs");
+                    $tmp_dir_sufx3 = cloudDownCheck($file_dir[$i], $fileArSplit[2], "gs");
+                  } elsif (($file_dir[$i] =~ m/http:/i ) || ($file_dir[$i] =~ m/https:/i ) || ($file_dir[$i] =~ m/ftp:/i )){
+                    $tmp_dir_sufx1 = urldown("$file_dir[$i]/$fileArSplit[0]", $fileArSplit[0]);
+                    $tmp_dir_sufx2 = urldown("$file_dir[$i]/$fileArSplit[1]", $fileArSplit[1]);
+                    $tmp_dir_sufx3 = urldown("$file_dir[$i]/$fileArSplit[2]", $fileArSplit[2]);
+                  } elsif (trim( $file_dir[$i] ne "")){
+                    $tmp_dir_sufx1 = $file_dir[$i];
+                    $tmp_dir_sufx2 = $file_dir[$i];
+                    $tmp_dir_sufx3 = $file_dir[$i];
+                  }
+                  print "$tmp_dir_sufx1\\n";
+                  if ($tmp_dir_sufx1 ne "" && $tmp_dir_sufx2 ne "" && $tmp_dir_sufx3 ne ""){
+                    push @fullfileArR1, $tmp_dir_sufx1 . "/" . $fileArSplit[0];
+                    push @fullfileArR2, $tmp_dir_sufx2 . "/" . $fileArSplit[1];
+                    push @fullfileArR3, $tmp_dir_sufx3 . "/" . $fileArSplit[2];
+                  }
+                } 
+                elsif ( $collection_type[$i] eq "quadruple" ) {
+                  my @fileArSplit = split( /,/, $fileAr[$k], -1 );
+                  if ($file_dir[$i] =~ m/s3:/i ){
+                    $tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $fileArSplit[0], "s3");
+                    $tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $fileArSplit[1], "s3");
+                    $tmp_dir_sufx3 = cloudDownCheck($file_dir[$i], $fileArSplit[2], "s3");
+                    $tmp_dir_sufx4 = cloudDownCheck($file_dir[$i], $fileArSplit[3], "s3");
+                  } elsif ($file_dir[$i] =~ m/gs:/i ){
+                    $tmp_dir_sufx1 = cloudDownCheck($file_dir[$i], $fileArSplit[0], "gs");
+                    $tmp_dir_sufx2 = cloudDownCheck($file_dir[$i], $fileArSplit[1], "gs");
+                    $tmp_dir_sufx3 = cloudDownCheck($file_dir[$i], $fileArSplit[2], "gs");
+                    $tmp_dir_sufx4 = cloudDownCheck($file_dir[$i], $fileArSplit[3], "gs");
+                  } elsif (($file_dir[$i] =~ m/http:/i ) || ($file_dir[$i] =~ m/https:/i ) || ($file_dir[$i] =~ m/ftp:/i )){
+                    $tmp_dir_sufx1 = urldown("$file_dir[$i]/$fileArSplit[0]", $fileArSplit[0]);
+                    $tmp_dir_sufx2 = urldown("$file_dir[$i]/$fileArSplit[1]", $fileArSplit[1]);
+                    $tmp_dir_sufx3 = urldown("$file_dir[$i]/$fileArSplit[2]", $fileArSplit[2]);
+                    $tmp_dir_sufx4 = urldown("$file_dir[$i]/$fileArSplit[3]", $fileArSplit[3]);
+                  } elsif (trim( $file_dir[$i] ne "")){
+                    $tmp_dir_sufx1 = $file_dir[$i];
+                    $tmp_dir_sufx2 = $file_dir[$i];
+                    $tmp_dir_sufx3 = $file_dir[$i];
+                    $tmp_dir_sufx4 = $file_dir[$i];
+                  }
+                  print "$tmp_dir_sufx1\\n";
+                  if ($tmp_dir_sufx1 ne "" && $tmp_dir_sufx2 ne "" && $tmp_dir_sufx3 ne "" && $tmp_dir_sufx4 ne ""){
+                    push @fullfileArR1, $tmp_dir_sufx1 . "/" . $fileArSplit[0];
+                    push @fullfileArR2, $tmp_dir_sufx2 . "/" . $fileArSplit[1];
+                    push @fullfileArR3, $tmp_dir_sufx3 . "/" . $fileArSplit[2];
+                    push @fullfileArR4, $tmp_dir_sufx4 . "/" . $fileArSplit[3];
                   }
                 }
               }
@@ -920,6 +1201,24 @@ process createCollection {
                   $cat = "zcat -f" if ( $filestrR1 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR1, $archFile1 );
                   mergeGzipCountMd5sum( $cat, $filestrR2, $archFile2 );
+                } elsif ( scalar @fullfileArR1 != 0 && $collection_type[$i] eq "triple" ) {
+                  my $filestrR1 = join( ' ', @fullfileArR1 );
+                  my $filestrR2 = join( ' ', @fullfileArR2 );
+                  my $filestrR3 = join( ' ', @fullfileArR3 );
+                  $cat = "zcat -f" if ( $filestrR1 =~ /\\.gz/ );
+                  mergeGzipCountMd5sum( $cat, $filestrR1, $archFile1 );
+                  mergeGzipCountMd5sum( $cat, $filestrR2, $archFile2 );
+                  mergeGzipCountMd5sum( $cat, $filestrR3, $archFile3 );
+                } elsif ( scalar @fullfileArR1 != 0 && $collection_type[$i] eq "quadruple" ) {
+                  my $filestrR1 = join( ' ', @fullfileArR1 );
+                  my $filestrR2 = join( ' ', @fullfileArR2 );
+                  my $filestrR3 = join( ' ', @fullfileArR3 );
+                  my $filestrR4 = join( ' ', @fullfileArR4 );
+                  $cat = "zcat -f" if ( $filestrR1 =~ /\\.gz/ );
+                  mergeGzipCountMd5sum( $cat, $filestrR1, $archFile1 );
+                  mergeGzipCountMd5sum( $cat, $filestrR2, $archFile2 );
+                  mergeGzipCountMd5sum( $cat, $filestrR3, $archFile3 );
+                  mergeGzipCountMd5sum( $cat, $filestrR4, $archFile4 );
                 } else {
                   ##Run fastqdump and CountMd5sum for GEO files
                   my $gzip = "--gzip";
@@ -940,6 +1239,17 @@ process createCollection {
                     arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                     arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
                 }
+                elsif ( $collection_type[$i] eq "triple" ) {
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile3.gz", "$inputFile3.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                }
+                elsif ( $collection_type[$i] eq "quadruple" ) {
+                    arch2Input ("$archFile1.gz", "$inputFile1.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile2.gz", "$inputFile2.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile3.gz", "$inputFile3.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                    arch2Input ("$archFile4.gz", "$inputFile4.gz", $s3_archiveDirCheck, $s3_archiveDir, $gs_archiveDirCheck, $gs_archiveDir);
+                }
               }
               else {
                 ##archive_dir is not defined then merge files in input_dir
@@ -955,6 +1265,24 @@ process createCollection {
                   $cat = "zcat -f " if ( $filestrR1 =~ /\\.gz/ );
                   runCommand("$cat $filestrR1 > $inputFile1");
                   runCommand("$cat $filestrR2 > $inputFile2");
+                } elsif ( scalar @fullfileArR1 != 0 && $collection_type[$i] eq "triple" ) {
+                  my $filestrR1 = join( ' ', @fullfileArR1 );
+                  my $filestrR2 = join( ' ', @fullfileArR2 );
+                  my $filestrR3 = join( ' ', @fullfileArR3 );
+                  $cat = "zcat -f " if ( $filestrR1 =~ /\\.gz/ );
+                  runCommand("$cat $filestrR1 > $inputFile1");
+                  runCommand("$cat $filestrR2 > $inputFile2");
+                  runCommand("$cat $filestrR3 > $inputFile3");
+                } elsif ( scalar @fullfileArR1 != 0 && $collection_type[$i] eq "quadruple" ) {
+                  my $filestrR1 = join( ' ', @fullfileArR1 );
+                  my $filestrR2 = join( ' ', @fullfileArR2 );
+                  my $filestrR3 = join( ' ', @fullfileArR3 );
+                  my $filestrR4 = join( ' ', @fullfileArR4 );
+                  $cat = "zcat -f " if ( $filestrR1 =~ /\\.gz/ );
+                  runCommand("$cat $filestrR1 > $inputFile1");
+                  runCommand("$cat $filestrR2 > $inputFile2");
+                  runCommand("$cat $filestrR3 > $inputFile3");
+                  runCommand("$cat $filestrR4 > $inputFile4");
                 } else {
                   ##Run fastqdump without --gzip for GEO files
                   fasterqDump("", $input_dir, $fileAr[0], $file_name[$i], $collection_type[$i]);
@@ -982,6 +1310,30 @@ process createCollection {
                     } elsif ($gs_archiveDirCheck eq "false"){
                         prepGSUpload ("$archFile1.gz", "$archFile1.gz.count", "$archFile1.gz.md5sum", $gs_archiveDir);
                         prepGSUpload ("$archFile2.gz", "$archFile2.gz.count", "$archFile2.gz.md5sum", $gs_archiveDir);
+                    }
+                }
+                elsif ( $collection_type[$i] eq "triple" ) {
+                    if ($s3_archiveDirCheck eq "false"){
+                        prepS3Upload ("$archFile1.gz", "$archFile1.gz.count", "$archFile1.gz.md5sum", $s3_archiveDir);
+                        prepS3Upload ("$archFile2.gz", "$archFile2.gz.count", "$archFile2.gz.md5sum", $s3_archiveDir);
+                        prepS3Upload ("$archFile3.gz", "$archFile3.gz.count", "$archFile3.gz.md5sum", $s3_archiveDir);
+                    } elsif ($gs_archiveDirCheck eq "false"){
+                        prepGSUpload ("$archFile1.gz", "$archFile1.gz.count", "$archFile1.gz.md5sum", $gs_archiveDir);
+                        prepGSUpload ("$archFile2.gz", "$archFile2.gz.count", "$archFile2.gz.md5sum", $gs_archiveDir);
+                        prepGSUpload ("$archFile3.gz", "$archFile3.gz.count", "$archFile3.gz.md5sum", $gs_archiveDir);
+                    }
+                }
+                elsif ( $collection_type[$i] eq "quadruple" ) {
+                    if ($s3_archiveDirCheck eq "false"){
+                        prepS3Upload ("$archFile1.gz", "$archFile1.gz.count", "$archFile1.gz.md5sum", $s3_archiveDir);
+                        prepS3Upload ("$archFile2.gz", "$archFile2.gz.count", "$archFile2.gz.md5sum", $s3_archiveDir);
+                        prepS3Upload ("$archFile3.gz", "$archFile3.gz.count", "$archFile3.gz.md5sum", $s3_archiveDir);
+                        prepS3Upload ("$archFile4.gz", "$archFile4.gz.count", "$archFile4.gz.md5sum", $s3_archiveDir);
+                    } elsif ($gs_archiveDirCheck eq "false"){
+                        prepGSUpload ("$archFile1.gz", "$archFile1.gz.count", "$archFile1.gz.md5sum", $gs_archiveDir);
+                        prepGSUpload ("$archFile2.gz", "$archFile2.gz.count", "$archFile2.gz.md5sum", $gs_archiveDir);
+                        prepGSUpload ("$archFile3.gz", "$archFile3.gz.count", "$archFile3.gz.md5sum", $gs_archiveDir);
+                        prepGSUpload ("$archFile4.gz", "$archFile4.gz.count", "$archFile4.gz.md5sum", $gs_archiveDir);
                     }
                 }
               $passHash{ $file_name[$i] } = "passed";
@@ -1237,6 +1589,15 @@ process createCollection {
                 } elsif ( $collection_type[$i] eq "pair" ) {
                     GSUpload($inputFile1, $cloud_input_dir);
                     GSUpload($inputFile2, $cloud_input_dir);
+                } elsif ( $collection_type[$i] eq "triple" ) {
+                    GSUpload($inputFile1, $cloud_input_dir);
+                    GSUpload($inputFile2, $cloud_input_dir);
+                    GSUpload($inputFile3, $cloud_input_dir);
+                } elsif ( $collection_type[$i] eq "quadruple" ) {
+                    GSUpload($inputFile1, $cloud_input_dir);
+                    GSUpload($inputFile2, $cloud_input_dir);
+                    GSUpload($inputFile3, $cloud_input_dir);
+                    GSUpload($inputFile4, $cloud_input_dir);
                 }
              }
           }
@@ -1408,6 +1769,7 @@ process createCollection {
 }
 
 process cleanUp {
+    errorStrategy 'retry'
 
     input:
         val file_name_all from file_name3
@@ -1447,16 +1809,30 @@ process cleanUp {
             push(@validCollection, "$run_dir/inputs/$collection") unless grep{$_ eq "$run_dir/inputs/$collection"} @validCollection;
             my $input_dir   = "$run_dir/inputs/$collection";
             my $fileType    = $file_type_all[$i];
+            my $inputFile = "$input_dir/$file_name_all[$i].$fileType";
+            my $inputFile1                  = "$input_dir/$file_name_all[$i].R1.$fileType";
+            my $inputFile2                  = "$input_dir/$file_name_all[$i].R2.$fileType";
+            my $inputFile3                  = "$input_dir/$file_name_all[$i].R3.$fileType";
+            my $inputFile4                  = "$input_dir/$file_name_all[$i].R4.$fileType";
             if ( $collection_type_all[$i] eq "single" ) {
-              my $inputFile = "$input_dir/$file_name_all[$i].$fileType";
               $validInputHash{$inputFile} = 1;
             }
             elsif ( $collection_type_all[$i] eq "pair" ) {
-              my $inputFile1                  = "$input_dir/$file_name_all[$i].R1.$fileType";
-              my $inputFile2                  = "$input_dir/$file_name_all[$i].R2.$fileType";
               $validInputHash{$inputFile1} = 1;
               $validInputHash{$inputFile2} = 1;
             }
+            elsif ( $collection_type_all[$i] eq "triple" ) {
+              $validInputHash{$inputFile1} = 1;
+              $validInputHash{$inputFile2} = 1;
+              $validInputHash{$inputFile3} = 1;
+            }
+            elsif ( $collection_type_all[$i] eq "quadruple" ) {
+              $validInputHash{$inputFile1} = 1;
+              $validInputHash{$inputFile2} = 1;
+              $validInputHash{$inputFile3} = 1;
+              $validInputHash{$inputFile4} = 1;
+            }
+            
           }
           
           if ($profile eq "google"){
@@ -1465,15 +1841,28 @@ process cleanUp {
                 my $cloud_input_dir     = "$cloud_run_dir/inputs/$collection";
                 push(@validCloudCollection, "$cloud_input_dir") unless grep{$_ eq "$cloud_input_dir"} @validCloudCollection;
                 my $fileType    = $file_type_all[$i];
+                my $cloud_inputFile      = "$cloud_input_dir/$file_name_all[$i].$fileType";
+                my $cloud_inputFile1      = "$cloud_input_dir/$file_name_all[$i].R1.$fileType";
+                my $cloud_inputFile2      = "$cloud_input_dir/$file_name_all[$i].R2.$fileType";
+                my $cloud_inputFile3      = "$cloud_input_dir/$file_name_all[$i].R3.$fileType";
+                my $cloud_inputFile4      = "$cloud_input_dir/$file_name_all[$i].R4.$fileType";
                 if ( $collection_type_all[$i] eq "single" ) {
-                    my $cloud_inputFile      = "$cloud_input_dir/$file_name_all[$i].$fileType";
                     $validCloudInputHash{$cloud_inputFile} = 1;
                 }
                 elsif ( $collection_type_all[$i] eq "pair" ) {
-                    my $cloud_inputFile1      = "$cloud_input_dir/$file_name_all[$i].R1.$fileType";
-                    my $cloud_inputFile2      = "$cloud_input_dir/$file_name_all[$i].R2.$fileType";
                     $validCloudInputHash{$cloud_inputFile1} = 1;
                     $validCloudInputHash{$cloud_inputFile2} = 1;
+                }
+                elsif ( $collection_type_all[$i] eq "triple" ) {
+                    $validCloudInputHash{$cloud_inputFile1} = 1;
+                    $validCloudInputHash{$cloud_inputFile2} = 1;
+                    $validCloudInputHash{$cloud_inputFile3} = 1;
+                }
+                elsif ( $collection_type_all[$i] eq "quadruple" ) {
+                    $validCloudInputHash{$cloud_inputFile1} = 1;
+                    $validCloudInputHash{$cloud_inputFile2} = 1;
+                    $validCloudInputHash{$cloud_inputFile3} = 1;
+                    $validCloudInputHash{$cloud_inputFile4} = 1;
                 }
             }
             

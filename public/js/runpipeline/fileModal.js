@@ -228,6 +228,10 @@ $(document).on('click', '.showDetailSample', function (e) {
             collection_type = "Single/List"
         } else if (data.collection_type == "pair"){
             collection_type = "Paired List"
+        } else if (data.collection_type == "triple"){
+            collection_type = "Triple List"
+        } else if (data.collection_type == "quadruple"){
+            collection_type = "Quadruple List"
         }
 
         tableRows += getHeaderRow("Collection Type:")

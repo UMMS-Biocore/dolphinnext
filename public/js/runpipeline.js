@@ -5393,7 +5393,6 @@ function readNextLog(proType, proId, type) {
             }
             if (runStatus === "NextSuc") {
                 displayButton('completeProPipe');
-                //            showOutputPath();
             } else if (runStatus === "Error" || runStatus === "NextErr") {
                 displayButton('errorProPipe');
             } else if (runStatus === "Terminated") {
@@ -6325,6 +6324,8 @@ function resetPatternList() {
     fillArray2Select([], "#singleList", true)
     fillArray2Select([], "#reverseList", true)
     fillArray2Select([], "#forwardList", true)
+    fillArray2Select([], "#r3List", true)
+    fillArray2Select([], "#r4List", true)
 }
 
 
@@ -7932,6 +7933,8 @@ $(document).ready(function () {
             $('.forwardpatternDiv').css("display", "none")
             $('.reversepatternDiv').css("display", "none")
             $('.singlepatternDiv').css("display", "none")
+            $('.r3patternDiv').css("display", "none")
+            $('.r4patternDiv').css("display", "none")
             $('.patternButs').css("display", "none")
             $('.patternTable').css("display", "none")
             $("#viewDir").css("display", "none");
@@ -8147,6 +8150,10 @@ $(document).ready(function () {
                                         collection_type = "Single";
                                     } else if (collection_type == "pair") {
                                         collection_type = "Paired";
+                                    } else if (collection_type == "triple") {
+                                        collection_type = "Triple";
+                                    } else if (collection_type == "quadruple") {
+                                        collection_type = "Quadruple";
                                     }
                                     var select_button = '<button class="btn btn-primary pull-right" type= "button" id="' + srr_id + '_select" onclick="selectSRA(\'' + name + '\',\'' + srr_id + '\', \'' + collection_type + '\', this)">Select</button>';
                                     //check table data before adding.
@@ -8823,6 +8830,8 @@ $(document).ready(function () {
         $(document).on('change', '#collection_type', function () {
             var collection_type = $(this).val();
             if (collection_type == "pair") {
+                $('.r3patternDiv').css("display", "none")
+                $('.r4patternDiv').css("display", "none")
                 $('.forwardpatternDiv').css("display", "inline")
                 $('.reversepatternDiv').css("display", "inline")
                 $('.singlepatternDiv').css("display", "none")
@@ -8831,44 +8840,144 @@ $(document).ready(function () {
                 $('#forward_pattern').trigger("keyup");
                 $('#reverse_pattern').trigger("keyup");
             } else if (collection_type == "single") {
+                $('.r3patternDiv').css("display", "none")
+                $('.r4patternDiv').css("display", "none")
                 $('.patternButs').css("display", "inline")
                 $('.patternTable').css("display", "inline")
                 $('.singlepatternDiv').css("display", "inline")
                 $('.forwardpatternDiv').css("display", "none")
                 $('.reversepatternDiv').css("display", "none")
                 $('#single_pattern').trigger("keyup");
+            } else if (collection_type == "triple") {
+                $('.r3patternDiv').css("display", "inline")
+                $('.r4patternDiv').css("display", "none")
+                $('.forwardpatternDiv').css("display", "inline")
+                $('.reversepatternDiv').css("display", "inline")
+                $('.singlepatternDiv').css("display", "none")
+                $('.patternButs').css("display", "inline")
+                $('.patternTable').css("display", "inline")
+                $('#forward_pattern').trigger("keyup");
+                $('#reverse_pattern').trigger("keyup");
+                $('#r3_pattern').trigger("keyup");
+            } else if (collection_type == "quadruple") {
+                $('.r3patternDiv').css("display", "inline")
+                $('.r4patternDiv').css("display", "inline")
+                $('.forwardpatternDiv').css("display", "inline")
+                $('.reversepatternDiv').css("display", "inline")
+                $('.singlepatternDiv').css("display", "none")
+                $('.patternButs').css("display", "inline")
+                $('.patternTable').css("display", "inline")
+                $('#forward_pattern').trigger("keyup");
+                $('#reverse_pattern').trigger("keyup");
+                $('#r3_pattern').trigger("keyup");
+                $('#r4_pattern').trigger("keyup");
             }
         });
+
+        var syncSelectedOpts = function(allItems, selItems, targetID){
+            var otherOpt = $(targetID+" > option");
+            otherOpt.prop('selected', false);
+            for (var i = 0; i < selItems.length; i++) {
+                var order = allItems.indexOf(selItems[i]);
+                if (otherOpt[order]) {
+                    $(otherOpt[order]).prop('selected', true);
+                }
+            }
+        }
         $(document).on('click', '#forwardList', function () {
             var allItems = [];
             $("#forwardList > option").each(function () { allItems.push(this.value); });
             var selItems = $('#forwardList').val();
-            var reverseOpt = $("#reverseList > option");
-            reverseOpt.prop('selected', false);
-            for (var i = 0; i < selItems.length; i++) {
-                var order = allItems.indexOf(selItems[i]);
-                if (reverseOpt[order]) {
-                    $(reverseOpt[order]).prop('selected', true);
-                }
-
-            }
+            syncSelectedOpts(allItems, selItems, "#reverseList");
+            syncSelectedOpts(allItems, selItems, "#r3List");
+            syncSelectedOpts(allItems, selItems, "#r4List");
         });
         $(document).on('click', '#reverseList', function () {
             var allItems = [];
             $("#reverseList > option").each(function () { allItems.push(this.value); });
             var selItems = $('#reverseList').val();
-            var forwardOpt = $("#forwardList > option");
-            forwardOpt.prop('selected', false);
-            for (var i = 0; i < selItems.length; i++) {
-                var order = allItems.indexOf(selItems[i]);
-                if (forwardOpt[order]) {
-                    $(forwardOpt[order]).prop('selected', true);
-                }
-
-            }
+            syncSelectedOpts(allItems, selItems, "#forwardList");
+            syncSelectedOpts(allItems, selItems, "#r3List");
+            syncSelectedOpts(allItems, selItems, "#r4List");
+        });
+        $(document).on('click', '#r3List', function () {
+            var allItems = [];
+            $("#r3List > option").each(function () { allItems.push(this.value); });
+            var selItems = $('#r3List').val();
+            syncSelectedOpts(allItems, selItems, "#forwardList");
+            syncSelectedOpts(allItems, selItems, "#reverseList");
+            syncSelectedOpts(allItems, selItems, "#r4List");
+        });
+        $(document).on('click', '#r4List', function () {
+            var allItems = [];
+            $("#r4List > option").each(function () { allItems.push(this.value); });
+            var selItems = $('#r4List').val();
+            syncSelectedOpts(allItems, selItems, "#forwardList");
+            syncSelectedOpts(allItems, selItems, "#reverseList");
+            syncSelectedOpts(allItems, selItems, "#r3List");
         });
     });
 
+    var syncRegexOptions = function(collection_type, optsObjs){
+        var data = []
+        $.each(optsObjs, function (el) {
+            if (optsObjs[el]){
+                optsObjs[el] = optsObjs[el].sort()
+            }
+        });
+        var regexObj = $.extend(true, {}, optsObjs);
+        // clean regex pattern from array options
+        $.each(regexObj, function (el) {
+            if (regexObj[el]){
+                var pattern = ""
+                if (el == "#forwardList"){
+                    pattern = $("#forward_pattern").val()
+                } else if (el == "#reverseList"){
+                    pattern = $("#reverse_pattern").val()
+                } else if (el == "#r3List"){
+                    pattern = $("#r3_pattern").val()
+                } else if (el == "#r4List"){
+                    pattern = $("#r4_pattern").val()
+                }
+                for (var i = 0; i < regexObj[el].length; i++) {
+                    regexObj[el][i] = regexObj[el][i].split(pattern).join("");
+                }
+            }
+        });
+        if (collection_type == "pair"){
+            data = [regexObj["#forwardList"], regexObj["#reverseList"]];
+        } else if (collection_type == "triple"){
+            data = [regexObj["#forwardList"], regexObj["#reverseList"], regexObj["#r3List"]];
+        } else if (collection_type == "quadruple"){
+            data = [regexObj["#forwardList"], regexObj["#reverseList"], regexObj["#r3List"], regexObj["#r4List"]];
+        }
+
+        var intersection = data.reduce((a, b) => a.filter(c => b.includes(c)));
+        var reorderObj = {}
+        var reorderCheck = false; // if one item is reordered than enable this
+        $.each(regexObj, function (el) {
+            if (!reorderObj[el]) reorderObj[el] = []
+            var pushLast = []
+            for (var i = 0; i < regexObj[el].length; i++) {
+                var index = intersection.indexOf(regexObj[el][i]);
+                var item = optsObjs[el][i];
+                if (index < 0) {
+                    pushLast.push(item)
+                    reorderCheck = true
+                } else {
+                    reorderObj[el].push(item); 
+                }
+            }
+            if (pushLast.length) reorderObj[el] = reorderObj[el].concat(pushLast)
+        });
+        console.log(reorderObj)
+        if (reorderCheck){
+            $.each(reorderObj, function (el) {
+                fillArray2Select(reorderObj[el], el, true);
+            });
+        }
+        return reorderCheck;
+    }
 
     function updateFileArea(selectId, pattern) {
         var fileOrj = $("#viewDir").data("fileArr");
@@ -8885,7 +8994,6 @@ $(document).ready(function () {
                 }
             }
             console.log("fileAr",fileAr)
-
             if (fileAr) {
                 // keeps $ and ^ for regex
                 var cleanRegEx = function (pat) {
@@ -8895,54 +9003,57 @@ $(document).ready(function () {
                 var reg = new RegExp(patternReg)
                 var filteredAr = fileAr.filter(line => line.match(reg));
                 if (filteredAr.length > 0) {
-                    if (pattern && (selectId == "#forwardList" || selectId == "#reverseList" ) && ($("#forward_pattern").val().length == $("#reverse_pattern").val().length)){ 
-                        //replace pattern with "__" to match with complementary list
-                        var filteredArReg = []; 
-                        for (var i = 0; i < filteredAr.length; i++) {
-                            var compVal = filteredAr[i].split(pattern).join("__");
-                            filteredArReg.push(compVal)
-                        }
-                        console.log("filteredArReg",filteredArReg)
-                        $(selectId).data("filteredArReg", filteredArReg);
-                        if (selectId == "#forwardList"){
-                            var filteredArComp = $("#reverseList").data("filteredArReg");
-                        } else if (selectId == "#reverseList"){
-                            var filteredArComp = $("#forwardList").data("filteredArReg");
-                        }
-                        if (filteredArComp && filteredArComp.length > 0) {
-                            console.log("filteredArComp",filteredArComp)
-                            var trashIdx = [];
-                            for (var k = 0; k < filteredAr.length; k++) {
-                                var compVal = filteredAr[k].split(pattern).join("__");
-                                var index = filteredArComp.indexOf(compVal);
-                                //if complementary not found in the filteredArComp, then remove
-                                if (index < 0) {
-                                    trashIdx.push(k);
-                                }
+                    //xxxxxxxxxxxx
+                    var reorderCheck = false;
+                    var collection_type = $('#collection_type').val();
+                    if (collection_type != "single") {
+                        var syncOtherFieldOptions = function(collection_type, selectId, filteredAr){
+                            var fieldsArray = []
+                            var optsObjs = {};
+                            optsObjs[selectId] = filteredAr;
+                            if (collection_type == "pair"){
+                                fieldsArray = ["#forwardList", "#reverseList"]
+                            } else if (collection_type == "triple"){
+                                fieldsArray = ["#forwardList", "#reverseList", "#r3List"]
+                            } else if (collection_type == "quadruple"){
+                                fieldsArray = ["#forwardList", "#reverseList", "#r3List", "#r4List"]
                             }
-                            for (var i = trashIdx.length - 1; i >= 0; i--){
-                                filteredAr.splice(trashIdx[i], 1);
+                            var index = fieldsArray.indexOf(selectId);
+                            fieldsArray.splice(index, 1);
+                            for (var i = 0; i < fieldsArray.length; i++) {
+                                var allopts = []
+                                $(fieldsArray[i] + " > option").each(function () { 
+                                    if (!this.value.match(/no file/i)) allopts.push(this.value); 
+                                });
+                                optsObjs[fieldsArray[i]] = allopts
+                            }
+                            // return the latest options after update (includes latest filteredAr)
+                            // {#forwardList: ["test.R1.fastq"], #r3List:["test.R3.fastq"]}
+                            console.log(optsObjs)
+                            var forwardList = optsObjs["#forwardList"]
+                            var reverseList = optsObjs["#reverseList"]
+                            var r3List = optsObjs["#r3List"]
+                            var r4List = optsObjs["#r4List"]
+                            if ((collection_type == "pair" && forwardList.length && reverseList.length) || (collection_type == "triple" && forwardList.length && reverseList.length && r3List.length) || (collection_type == "quadruple" && forwardList.length && reverseList.length && r3List.length && r4List.length)  ){
+                                reorderCheck =syncRegexOptions(collection_type, optsObjs)
                             }
                         }
-                    } else {
-                        $(selectId).removeData("filteredArReg");
+                        syncOtherFieldOptions(collection_type, selectId, filteredAr)
                     }
-                    fillArray2Select(filteredAr, selectId, true);
-
-
+                    if (!reorderCheck) fillArray2Select(filteredAr, selectId, true);
                 } else {
                     fillArray2Select(["No files matching the pattern."], selectId, true)
-                    $(selectId).removeData("filteredArReg");
                 }
             } else {
                 fillArray2Select(["No files matching the pattern."], selectId, true)
-                $(selectId).removeData("filteredArReg");
             }
         }
     }
     window.timeoutID = {};
     window.timeoutID['#forward_pattern'] = 0;
     window.timeoutID['#reverse_pattern'] = 0;
+    window.timeoutID['#r3_pattern'] = 0;
+    window.timeoutID['#r4_pattern'] = 0;
     window.timeoutID['#single_pattern'] = 0;
 
     function updateFileList(selectId, pattern) {
@@ -8952,11 +9063,15 @@ $(document).ready(function () {
     $(function () {
         $(document).on('keyup', '#forward_pattern', function () {
             updateFileList("#forwardList", $("#forward_pattern").val());
-            updateFileList("#reverseList", $("#reverse_pattern").val());
         });
         $(document).on('keyup', '#reverse_pattern', function () {
             updateFileList("#reverseList", $("#reverse_pattern").val());
-            updateFileList("#forwardList", $("#forward_pattern").val());
+        });
+        $(document).on('keyup', '#r3_pattern', function () {
+            updateFileList("#r3List", $("#r3_pattern").val());
+        });
+        $(document).on('keyup', '#r4_pattern', function () {
+            updateFileList("#r4List", $("#r4_pattern").val());
         });
         $(document).on('keyup', '#single_pattern', function () {
             var pattern = $(this).val();
@@ -8970,9 +9085,13 @@ $(document).ready(function () {
         selectedSamplesTable.fnClearTable();
         $('#forwardList').html("")
         $('#reverseList').html("")
+        $('#r3List').html("")
+        $('#r4List').html("")
         $('#singleList').html("")
         recordDelList("#forwardList", null, "reset")
         recordDelList("#reverseList", null, "reset")
+        recordDelList("#r3List", null, "reset")
+        recordDelList("#r4List", null, "reset")
         recordDelList("#singleList", null, "reset")
         $('#collection_type').trigger("change");
 
@@ -8984,16 +9103,28 @@ $(document).ready(function () {
         var files_used = row.children()[1].innerHTML.split(' | ');
         for (var x = 0; x < files_used.length; x++) {
             if (files_used[x].match(/,/)) {
-                var forwardFile = files_used[x].split(",")[0]
-                var reverseFile = files_used[x].split(",")[1]
+                var splitedFiles = files_used[x].split(",")
+                var forwardFile = splitedFiles[0]
+                var reverseFile = splitedFiles[1]
+                var r3File = splitedFiles[2]
+                var r4File = splitedFiles[3]
                 $("#forwardList > option").each(function () { if (this.value.match(/no file/i)) { $(this).remove() } });
                 $("#reverseList > option").each(function () { if (this.value.match(/no file/i)) { $(this).remove() } });
+                $("#r3List > option").each(function () { if (this.value.match(/no file/i)) { $(this).remove() } });
+                $("#r4List > option").each(function () { if (this.value.match(/no file/i)) { $(this).remove() } });
 
                 document.getElementById('forwardList').innerHTML += '<option value="' + forwardFile + '">' + forwardFile + '</option>'
                 document.getElementById('reverseList').innerHTML += '<option value="' + reverseFile + '">' + reverseFile + '</option>'
                 recordDelList("#forwardList", forwardFile, "add")
                 recordDelList("#reverseList", reverseFile, "add")
-
+                if (r3File){
+                    document.getElementById('r3List').innerHTML += '<option value="' + r3File + '">' + r3File + '</option>'
+                    recordDelList("#r3List", r3File, "add")
+                }
+                if (r4File){
+                    document.getElementById('r4List').innerHTML += '<option value="' + r4File + '">' + r4File + '</option>'
+                    recordDelList("#r4List", r4File, "add")
+                }
             } else {
                 $("#singleList > option").each(function () { if (this.value.match(/no file/i)) { $(this).remove() } });
                 document.getElementById('singleList').innerHTML += '<option value="' + files_used[x] + '">' + files_used[x] + '</option>'
@@ -9042,53 +9173,109 @@ $(document).ready(function () {
     smartSelection = function () {
         var collection_type = $('#collection_type').val();
         if (collection_type == "single") {
-            var files_select = document.getElementById('singleList').options;
-            var regex = $('#single_pattern').val();
+            var files_select1 = document.getElementById('singleList').options;
+            var regex1 = $('#single_pattern').val();
         } else {
-            var files_select = document.getElementById('forwardList').options;
-            var files_selectRev = document.getElementById('reverseList').options;
+            var files_select1 = document.getElementById('forwardList').options;
+            var files_select2 = document.getElementById('reverseList').options;
+            var files_select3 = document.getElementById('r3List').options;
+            var files_select4 = document.getElementById('r4List').options;
             var regex1 = $('#forward_pattern').val();
             var regex2 = $('#reverse_pattern').val();
+            var regex3 = $('#r3_pattern').val();
+            var regex4 = $('#r4_pattern').val();
         }
-        while (files_select.length != 0) {
+        while ((collection_type == "single" && files_select1.length != 0)  || (collection_type == "pair" && files_select1.length != 0 && files_select2.length != 0) || (collection_type == "triple" && files_select1.length != 0 && files_select2.length != 0 && files_select3.length != 0) || (collection_type == "quadruple" && files_select1.length != 0 && files_select2.length != 0 && files_select3.length != 0 && files_select4.length != 0)) {
+
             var file_string = '';
             //  var file_regex = new RegExp(regex_string);
             if (collection_type == "single") {
                 //	use regex to find the values before the pivot
-                if (regex === "") {
-                    regex = '.';
+                if (regex1 === "") {
+                    regex1 = '.';
                 }
-                var regex_string = files_select[0].value.split(regex)[0];
-                for (var x = 0; x < files_select.length; x++) {
-                    var prefix = files_select[x].value.split(regex)[0];
+                var regex_string = files_select1[0].value.split(regex1)[0];
+                for (var x = 0; x < files_select1.length; x++) {
+                    var prefix = files_select1[x].value.split(regex1)[0];
                     if (regex_string === prefix) {
-                        file_string += files_select[x].value + ' | '
-                        recordDelList("#singleList", files_select[x].value, "del")
-                        $('#singleList option[value="' + files_select[x].value + '"]')[0].remove();
+                        file_string += files_select1[x].value + ' | '
+                        recordDelList("#singleList", files_select1[x].value, "del")
+                        $('#singleList option[value="' + files_select1[x].value + '"]')[0].remove();
                         x--;
                     }
                 }
-            } else {
-                var regex_string = files_select[0].value.split(regex1)[0];
-                var regex_string2 = files_selectRev[0].value.split(regex2)[0];
-                for (var x = 0; x < files_select.length; x++) {
-                    var prefix1 = files_select[x].value.split(regex1)[0];
-                    var prefix2 = files_selectRev[x].value.split(regex2)[0];
-                    if (regex_string === prefix1 && regex_string2 === prefix2) {
-                        file_string += files_select[x].value + ',' + files_selectRev[x].value + ' | '
-                        recordDelList("#forwardList", files_select[x].value, "del")
-                        recordDelList("#reverseList", files_selectRev[x].value, "del")
-                        $('#forwardList option[value="' + files_select[x].value + '"]')[0].remove();
-                        $('#reverseList option[value="' + files_selectRev[x].value + '"]')[0].remove();
+            } else if (collection_type == "pair") {
+                var regex_string1 = files_select1[0].value.split(regex1)[0];
+                var regex_string2 = files_select2[0].value.split(regex2)[0];
+                for (var x = 0; x < files_select1.length; x++) {
+                    var prefix1 = ""
+                    var prefix2 = ""
+                    if (files_select1[x]) prefix1 = files_select1[x].value.split(regex1)[0];
+                    if (files_select2[x]) prefix2 = files_select2[x].value.split(regex2)[0];
+                    if (regex_string1 === prefix1 && regex_string2 === prefix2) {
+                        file_string += files_select1[x].value + ',' + files_select2[x].value + ' | '
+                        recordDelList("#forwardList", files_select1[x].value, "del")
+                        recordDelList("#reverseList", files_select2[x].value, "del")
+                        $('#forwardList option[value="' + files_select1[x].value + '"]')[0].remove();
+                        $('#reverseList option[value="' + files_select2[x].value + '"]')[0].remove();
+                        x--;
+                    }
+                }
+            } else if (collection_type == "triple") {
+                var regex_string1 = files_select1[0].value.split(regex1)[0];
+                var regex_string2 = files_select2[0].value.split(regex2)[0];
+                var regex_string3 = files_select3[0].value.split(regex3)[0];
+                for (var x = 0; x < files_select1.length; x++) {
+                    var prefix1 = ""
+                    var prefix2 = ""
+                    var prefix3 = ""
+                    if (files_select1[x]) prefix1 = files_select1[x].value.split(regex1)[0];
+                    if (files_select2[x]) prefix2 = files_select2[x].value.split(regex2)[0];
+                    if (files_select3[x]) prefix3 = files_select3[x].value.split(regex3)[0];
+                    if (regex_string1 === prefix1 && regex_string2 === prefix2 && regex_string3 === prefix3) {
+                        file_string += files_select1[x].value + ',' + files_select2[x].value + ',' + files_select3[x].value + ' | '
+                        recordDelList("#forwardList", files_select1[x].value, "del")
+                        recordDelList("#reverseList", files_select2[x].value, "del")
+                        recordDelList("#r3List", files_select3[x].value, "del")
+                        $('#forwardList option[value="' + files_select1[x].value + '"]')[0].remove();
+                        $('#reverseList option[value="' + files_select2[x].value + '"]')[0].remove();
+                        $('#r3List option[value="' + files_select3[x].value + '"]')[0].remove();
+                        x--;
+                    }
+                }
+            } else if (collection_type == "quadruple") {
+                var regex_string1 = files_select1[0].value.split(regex1)[0];
+                var regex_string2 = files_select2[0].value.split(regex2)[0];
+                var regex_string3 = files_select3[0].value.split(regex3)[0];
+                var regex_string4 = files_select4[0].value.split(regex4)[0];
+                for (var x = 0; x < files_select1.length; x++) {
+                    var prefix1 = ""
+                    var prefix2 = ""
+                    var prefix3 = ""
+                    var prefix4 = ""
+                    if (files_select1[x]) prefix1 = files_select1[x].value.split(regex1)[0];
+                    if (files_select2[x]) prefix2 = files_select2[x].value.split(regex2)[0];
+                    if (files_select3[x]) prefix3 = files_select3[x].value.split(regex3)[0];
+                    if (files_select4[x]) prefix4 = files_select4[x].value.split(regex4)[0];
+                    if (regex_string1 === prefix1 && regex_string2 === prefix2 && regex_string3 === prefix3 && regex_string4 === prefix4) {
+                        file_string += files_select1[x].value + ',' + files_select2[x].value + ',' + files_select3[x].value + ',' + files_select4[x].value + ' | '
+                        recordDelList("#forwardList", files_select1[x].value, "del")
+                        recordDelList("#reverseList", files_select2[x].value, "del")
+                        recordDelList("#r3List", files_select3[x].value, "del")
+                        recordDelList("#r4List", files_select4[x].value, "del")
+                        $('#forwardList option[value="' + files_select1[x].value + '"]')[0].remove();
+                        $('#reverseList option[value="' + files_select2[x].value + '"]')[0].remove();
+                        $('#r3List option[value="' + files_select3[x].value + '"]')[0].remove();
+                        $('#r4List option[value="' + files_select4[x].value + '"]')[0].remove();
                         x--;
                     }
                 }
             }
             file_string = file_string.substring(0, file_string.length - 3);
-            if (regex === "") {
+            if (regex1 === "") {
                 var name = file_string;
             } else {
-                var name = file_string.split(regex)[0];
+                var name = file_string.split(regex1)[0];
             }
             var name = name.split(' | ')[0].split('.')[0];
             var input = createElement('input', ['id', 'type', 'class', 'value', 'onChange'], [name, 'text', '', name, 'updateNameTable(this)'])
@@ -9133,7 +9320,7 @@ $(document).ready(function () {
                     x--
                 }
             }
-        } else {
+        } else if (collection_type == "pair") {
             var current_selectionF = document.getElementById('forwardList').options;
             var current_selectionR = document.getElementById('reverseList').options;
             var regex = $('#forward_pattern').val();
@@ -9145,6 +9332,45 @@ $(document).ready(function () {
                     recordDelList("#reverseList", current_selectionR[x].value, "del")
                     $('#forwardList option[value="' + current_selectionF[x].value + '"]')[0].remove();
                     $('#reverseList option[value="' + current_selectionR[x].value + '"]')[0].remove();
+                    x--
+                }
+            }
+        } else if (collection_type == "triple") {
+            var current_selectionF = document.getElementById('forwardList').options;
+            var current_selectionR = document.getElementById('reverseList').options;
+            var current_selectionR3 = document.getElementById('r3List').options;
+            var regex = $('#forward_pattern').val();
+            var file_string = '';
+            for (var x = 0; x < current_selectionF.length; x++) {
+                if (current_selectionF[x].selected && current_selectionR[x].selected && current_selectionR3[x].selected) {
+                    file_string += current_selectionF[x].value + ',' + current_selectionR[x].value + ',' + current_selectionR3[x].value + ' | '
+                    recordDelList("#forwardList", current_selectionF[x].value, "del")
+                    recordDelList("#reverseList", current_selectionR[x].value, "del")
+                    recordDelList("#r3List", current_selectionR3[x].value, "del")
+                    $('#forwardList option[value="' + current_selectionF[x].value + '"]')[0].remove();
+                    $('#reverseList option[value="' + current_selectionR[x].value + '"]')[0].remove();
+                    $('#r3List option[value="' + current_selectionR3[x].value + '"]')[0].remove();
+                    x--
+                }
+            }
+        } else if (collection_type == "quadruple") {
+            var current_selectionF = document.getElementById('forwardList').options;
+            var current_selectionR = document.getElementById('reverseList').options;
+            var current_selectionR3 = document.getElementById('r3List').options;
+            var current_selectionR4 = document.getElementById('r4List').options;
+            var regex = $('#forward_pattern').val();
+            var file_string = '';
+            for (var x = 0; x < current_selectionF.length; x++) {
+                if (current_selectionF[x].selected && current_selectionR[x].selected && current_selectionR3[x].selected && current_selectionR4[x].selected) {
+                    file_string += current_selectionF[x].value + ',' + current_selectionR[x].value + ',' + current_selectionR3[x].value + ',' + current_selectionR4[x].value + ' | '
+                    recordDelList("#forwardList", current_selectionF[x].value, "del")
+                    recordDelList("#reverseList", current_selectionR[x].value, "del")
+                    recordDelList("#r3List", current_selectionR3[x].value, "del")
+                    recordDelList("#r4List", current_selectionR4[x].value, "del")
+                    $('#forwardList option[value="' + current_selectionF[x].value + '"]')[0].remove();
+                    $('#reverseList option[value="' + current_selectionR[x].value + '"]')[0].remove();
+                    $('#r3List option[value="' + current_selectionR3[x].value + '"]')[0].remove();
+                    $('#r4List option[value="' + current_selectionR4[x].value + '"]')[0].remove();
                     x--
                 }
             }
