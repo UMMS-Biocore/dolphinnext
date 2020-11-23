@@ -574,6 +574,10 @@ class dbfuncs {
                     $inputName = "$inputsPath/$reg.$file_type";
                 } else if ($collection_type == "pair"){
                     $inputName = "$inputsPath/$reg.{R1,R2}.$file_type";
+                } else if ($collection_type == "triple"){
+                    $inputName = "$inputsPath/$reg.{R1,R2,R3}.$file_type";
+                } else if ($collection_type == "quadruple"){
+                    $inputName = "$inputsPath/$reg.{R1,R2,R3,R4}.$file_type";
                 }
             }
             //if profile variable not defined in the profile then use run_work directory (eg. ${params.DOWNDIR}) 
@@ -2868,7 +2872,13 @@ class dbfuncs {
                             $checkRunPid = $this -> sshExeCommand("checkRunPid", $pid, $profileType, $profileId, $project_pipeline_id, $ownerID);
                             $checkRunPid = json_decode($checkRunPid);
                             if ($checkRunPid == "exited"){
-                                $newRunStatus = "Error";
+                                // $newRunStatus = "Error";
+                                $run_path_real = $this->getServerRunPath($uuid);
+                                $serverlogFile = "$run_path_real/serverlog.txt";
+                                $file = fopen($serverlogFile, "a");
+                                fwrite($file, "ERROR: Job exited.");
+                                fclose($file);
+
                                 $runSession =  json_decode($this->getRunSessionUUID($project_pipeline_id),TRUE);
                                 if (!empty($runSession[0])){
                                     $main_session_uuid = $runSession[0]["main_session_uuid"];
@@ -4175,7 +4185,6 @@ class dbfuncs {
                 for ($i = 0; $i < count($arr); $i++) {
                     if (preg_match("/$pid/",$arr[$i])){
                         $statusAr = preg_split('/\s+/', $arr[$i]);
-                        error_log($statusAr[2]);
                         if (!empty($statusAr[2]) && in_array($statusAr[2], $errorJobStates)){
                             return json_encode('exited');
                         }

@@ -597,7 +597,7 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
         if (inputParMate){
             channelFormat = "f3";
             chnObj = addFormat2chnObj(chnObj, channelFormat, chnName);
-            secPartTemp = "Channel\n\t.fromFilePairs( params." + inputParamName + " , size: (params.mate != \"pair\") ? 1 : 2 )\n\t.ifEmpty { error \"Cannot find any " + secParName + " matching: ${params." + inputParamName + "}\" }\n\t" + getChannelSetInto(chnObj[channelFormat]) + "\n\n";
+            secPartTemp = "Channel\n\t.fromFilePairs( params." + inputParamName + " , size: params.mate == \"single\" ? 1 : params.mate == \"pair\" ? 2 : params.mate == \"triple\" ? 3 : params.mate == \"quadruple\" ? 4 : -1 )\n\t.ifEmpty { error \"Cannot find any " + secParName + " matching: ${params." + inputParamName + "}\" }\n\t" + getChannelSetInto(chnObj[channelFormat]) + "\n\n";
             //if mate not defined in process use fromPath
         } else {
             //if val(name), file(read) format -> turn into set input
