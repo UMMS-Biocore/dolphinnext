@@ -216,14 +216,21 @@ class Run
         $dmeta = array();
         $dmeta["dmeta_run_id"] = $doc["_id"];
         $dmeta["dmeta_server"] = $dmetaServer;
-        $dmeta["dmeta_out"] = $doc["out"];;
+        $dmeta["dmeta_out"]= !empty($doc["out"]) ? $doc["out"] : ""; 
+        $dmeta["dmeta_project"]= !empty($info["project"]) ? $info["project"] : ""; 
         $dmeta = json_encode($dmeta);
         // update name and insert
         $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir);
-        if (empty($project_pipeline_id)) return null;
+        if (empty($project_pipeline_id)) {
+            error_log("duplicateProjectPipeline failed."); 
+            return null;
+        }
         $temp_run_uuid = $dbfuncs->getProPipeLastRunUUID($tmplt_run_id);
         $runOpt = json_decode($dbfuncs->getRunLogOpt($temp_run_uuid));
-        if (empty($runOpt[0])) return null;
+        if (empty($runOpt[0])) {
+            error_log("getRunLogOpt failed."); 
+            return null;
+        }
         $runOpt[0]->{'run_opt'} = str_replace('\\', '\\\\', $runOpt[0]->{'run_opt'});
         $runOptData = json_decode($runOpt[0]->{'run_opt'});
         $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
@@ -232,7 +239,15 @@ class Run
         $runType = "newrun"; //"resumerun" or "newrun"
         $uuid = $dbfuncs->updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID);
         $nextText = $dbfuncs->getServerRunTemplateNFFile($tmplt_run_id, $uuid); 
-        if (!empty($nextText) && !empty($uuid) && !empty($project_pipeline_id)){
+        if (empty($nextText)){
+            error_log("getServerRunTemplateNFFile failed."); 
+            return null;
+        }
+        if (empty($uuid)){
+            error_log("updateRunAttemptLog failed."); 
+            return null;
+        }
+        if (!empty($nextText) && !empty($uuid)){
             $data = $dbfuncs->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $eachExecConfig, $ownerID);
             if (!empty($data)) {
                 $run_url = "{$this->BASE_PATH}/index.php?np=3&id=".$project_pipeline_id;

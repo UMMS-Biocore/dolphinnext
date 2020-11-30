@@ -198,8 +198,6 @@ class funcs
             $_SESSION['refreshToken'] = $currentUser["refreshToken"];
             //    sendCookie(updatedUser, req, res);
             error_log("ssoLoginCheck2:");
-            error_log($_SESSION["ssoLoginCheck"]);
-            error_log($_SESSION["redirect_original"]);
             //$_SESSION["ssoLoginCheck"] = true when auto login check performed.
             if (empty($_SESSION["ssoLoginCheck"])){
                 header("Location: {$this->BASE_PATH}/php/after-sso.php");

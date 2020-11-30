@@ -15,6 +15,7 @@ class dbfuncs {
     private $tmp_path = TEMPPATH;
     private $ssh_path = SSHPATH;
     private $base_path = BASE_PATH;
+    private $pubweb_url = PUBWEB_URL;
     private $ssh_settings = "-oStrictHostKeyChecking=no -q -oChallengeResponseAuthentication=no -oBatchMode=yes -oPasswordAuthentication=no -oConnectTimeout=3";
     private $amz_path = AMZPATH;
     private $goog_path = GOOGPATH;
@@ -2528,9 +2529,10 @@ class dbfuncs {
     }
 
 
-    function patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id){
+    function patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id, $dmeta_project){
         error_log("patchDmetaAPI:".$sName);
-        $url = "$dmeta_server/api/v1/projects/vitiligo/data/$dmeta_out_collection/$targetDmetaRowId";
+        $projectPath = !empty($dmeta_project) ? "projects/$dmeta_project/" : "";
+        $url = "$dmeta_server/api/v1/{$projectPath}data/$dmeta_out_collection/$targetDmetaRowId";
         $run_url = "{$this->base_path}/index.php?np=3&id=".$project_pipeline_id;
         $data = json_encode(array(
             'doc' => $doc,
@@ -2557,18 +2559,25 @@ class dbfuncs {
         return $msg;
     }
 
-    function sendDmetaReport($project_pipeline_id, $proPipeAll,$pipeData, $uuid, $ownerID, $accessToken){
-        error_log("sendDmetaReport");
-        //{"dmeta_run_id":"5f74013df57c2439facad8ca","dmeta_server":"https://localhost:4000"}
-        $pubDmetaDir = $pipeData[0]->{'publish_dmeta_dir'};
-        $dmetaServerInfo = json_decode($proPipeAll[0]->{'dmeta'}, true);
-        $dmeta_run_id= $dmetaServerInfo["dmeta_run_id"];
-        $dmeta_server= $dmetaServerInfo["dmeta_server"];
-        $dmeta_out= $dmetaServerInfo["dmeta_out"];
 
-        // get $dmetaInfoPipe from pipeline
-        $dmetaInfoPipe = $this->getPubDmetaInfo($pipeData);
-        $pubDmetaDir = json_decode(htmlspecialchars_decode($pubDmetaDir, ENT_QUOTES), true);
+    //if name contains regular expression with curly brackets: {a,b,c} then turn into (a|b|c) format
+    function fixCurlyBrackets($outputName) {
+        $patt = "/(.*){(.*?),(.*?)}(.*)/";
+        if (preg_match($patt,$outputName)) {
+            $insideBrackets = preg_replace($patt, '$2'.",".'$3', $outputName);
+            $insideBrackets = str_replace(",", "|", $insideBrackets);
+            $outputNameFix = preg_replace($patt, '$1'."(".$insideBrackets.")".'$4', $outputName);
+            if (preg_match($patt,$outputName)) {
+                return $this->fixCurlyBrackets($outputNameFix);
+            } else {
+                return $outputNameFix;
+            }
+        } else {
+            return $outputName;
+        }
+    }
+
+    function getDmetaPublishFiles($pipeData, $uuid, $dmetaInfoPipe){
         // get all existing files with their directories in array
         // e.g. ["rsem_summary/expected_count.tsv", "star/Log.progress.out"]
         $fileListPubweb = array_values((array)json_decode($this->getFileList($uuid, "pubweb", "onlyfile")));
@@ -2576,8 +2585,13 @@ class dbfuncs {
         $fileList = array_merge($fileListPubweb, $fileListPubDmeta);
         // removes empty values
         $fileList = array_filter($fileList);
-
+        $sendObj = array();
+        $dmetaObj = null;
+        // $pubDmetaDir : [{"dir":"summary","pattern":"\"overall_summary.tsv\""}]
+        $pubDmetaDir = $pipeData[0]->{'publish_dmeta_dir'};
+        $pubDmetaDir = json_decode(htmlspecialchars_decode($pubDmetaDir, ENT_QUOTES), true);
         foreach ($pubDmetaDir as $value) {
+            $filepaths = array();
             if (!empty($value["dir"]) && !empty($value["pattern"])){
                 $pattern = trim($value["pattern"],'"'); 
                 $pattern = trim($pattern,"'"); 
@@ -2585,7 +2599,7 @@ class dbfuncs {
                 //if name contains path and separated by '/' then replace with escape character '\/'
                 $regex = str_replace("/", "\/", $regex);
                 //if name contains regular expression with curly brackets: {a,b,c} then turn into (a|b|c) format
-                // $regex = fixCurlyBrackets($regex);
+                $regex = $this->fixCurlyBrackets($regex);
                 $regex = str_replace("*", ".*", $regex);
                 $regex = str_replace("?", ".?", $regex);
                 $regex = str_replace("'", "", $regex);
@@ -2593,56 +2607,82 @@ class dbfuncs {
                 $regex = "/^".$regex."$/i";
                 $matches  = preg_grep ($regex, $fileList);
                 $matches = array_values((array) $matches);
-                if (count($matches) == 1){
+                for ($i = 0; $i < count($matches); $i++) {
                     // get File Content
                     $parentDir = "";
-                    if (in_array($matches[0],$fileListPubweb)){
+                    if (in_array($matches[$i],$fileListPubweb)){
                         $parentDir = "pubweb";
                     } else {
                         $parentDir = "pubdmeta";
                     }
-                    // get location of the sample name 
-                    // find dmeta array that matches $value["dir"]
-                    $dmetaObj = null;
-                    foreach ($dmetaInfoPipe as $dmetaItem): 
-                    if ($dmetaItem["name"] == $value["dir"]){
-                        $dmetaObj =$dmetaItem; 
-                        break;
-                    }
-                    endforeach;
-                    if (!empty($dmetaObj)){
-                        $sNameLoc = $dmetaObj["filename"];
-                        $featureLoc = $dmetaObj["feature"];
-                        $targetDmetaColl = $dmetaObj["target"];
-                        $filepath = "$parentDir/".$matches[0];
-                        $file = json_decode($this -> getFileContent($uuid, $filepath, $ownerID));
-                        // get $out_collection, sample names ($sName) and $targetDmetaRowId
-                        //$dmeta_out -> array( "sample_summary" => array ("control" => 5f74e0a7cc3f75507d1e6f26\n            "experiment" => 5f74e0a7cc3f75507d1e6f28))
-                        // e.g. $dmeta_out_collection = "sample_summary"
-                        // e.g. $sName = "control"
-                        // e.g. $targetDmetaRowId = "5f74e0a7cc3f75507d1e6f26"
-                        foreach ($dmeta_out as $dmeta_out_collection => $out_collectionData): 
-                        if ($targetDmetaColl == $dmeta_out_collection){
-                            foreach ($out_collectionData as $sName => $targetDmetaRowId): 
-                            $doc = $this->dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc);
-                            error_log(print_r($doc, TRUE));
-                            if (!empty($doc)){
-                                $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id);
-                            }
-                            endforeach;
-                        }
-                        endforeach;
-
-
-                    }
-
-
-                } else if (count($matches) > 1){
-                    // here parse multiple files that sample Name located at filename
+                    $filepaths[] = "$parentDir/".$matches[$i];
                 }
-
+                // get location of the sample name 
+                // find dmeta array that matches $value["dir"]
+                foreach ($dmetaInfoPipe as $dmetaItem): 
+                if ($dmetaItem["name"] == $value["dir"]){
+                    $dmetaObj =$dmetaItem; 
+                }
+                endforeach;
+                //$value["dir"] = "summary" or "analysis
+                $sendObj[$value["dir"]] = array();
+                $sendObj[$value["dir"]]["filepaths"] = $filepaths;
+                $sendObj[$value["dir"]]["dmetaObj"] = $dmetaObj;
             }
         }
+        return $sendObj;
+    }
+
+    function sendDmetaReport($project_pipeline_id, $proPipeAll,$pipeData, $uuid, $ownerID, $accessToken){
+        error_log("sendDmetaReport");
+        // $dmetaServerInfo: 
+        // {"dmeta_run_id":"5fbeaacfe71265b775a76e35","dmeta_server":"https://localhost:4000",
+        //  "dmeta_out":{"sample_summary":{"sample1":"5fbeaa..","sample2":"5fbeaacfe7126.."},
+        //  "analysis":{"sample1":"5fbeaacfe7...","sample2":"5fbeaacf.."}}
+        //  "dmeta_project":"vitiligo"}
+        // * details of dmeta_out part:{ targetCollection: {$sampleName1: targetDocument}}
+        $dmetaServerInfo = json_decode($proPipeAll[0]->{'dmeta'}, true);
+        $dmeta_run_id= $dmetaServerInfo["dmeta_run_id"];
+        $dmeta_server= $dmetaServerInfo["dmeta_server"];
+        $dmeta_out= $dmetaServerInfo["dmeta_out"];
+        $dmeta_project= !empty($dmetaServerInfo["dmeta_project"]) ? $dmetaServerInfo["dmeta_project"] : "";
+
+        // get $dmetaInfoPipe from pipeline
+        // return assoc Arr:  array("filename" => row, 
+        //                          "feature" => column, 
+        //                          "target" => rsem_tpm_gene, 
+        //                          "id" => "g-155",  
+        //                          "name" => star)
+        $dmetaInfoPipe = $this->getPubDmetaInfo($pipeData);
+
+        $sendObj  = $this->getDmetaPublishFiles($pipeData, $uuid, $dmetaInfoPipe);
+        foreach ($sendObj as $sendItem) {
+            $filepaths = $sendItem["filepaths"];
+            $dmetaObj = $sendItem["dmetaObj"];
+            if (!empty($dmetaObj) && !empty($filepaths)){
+                $sNameLoc = $dmetaObj["filename"];
+                $featureLoc = $dmetaObj["feature"];
+                $targetDmetaColl = $dmetaObj["target"];
+                // get $out_collection, sample names ($sName) and $targetDmetaRowId
+                //$dmeta_out -> array( "sample_summary" => array ("control" => 5f74e0a7cc3f75507d1e6f26\n            "experiment" => 5f74e0a7cc3f75507d1e6f28))
+                // e.g. $dmeta_out_collection = "sample_summary"
+                // e.g. $sName = "control"
+                // e.g. $targetDmetaRowId = "5f74e0a7cc3f75507d1e6f26"
+                foreach ($dmeta_out as $dmeta_out_collection => $out_collectionData): 
+                if ($targetDmetaColl == $dmeta_out_collection){
+                    foreach ($out_collectionData as $sName => $targetDmetaRowId): 
+                    $doc = $this->dmetaFileConvert($uuid, $filepaths, $sName, $sNameLoc, $featureLoc, $ownerID);
+                    error_log(print_r($doc, TRUE));
+                    if (!empty($doc)){
+                        $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id, $dmeta_project);
+                    }
+                    endforeach;
+                }
+                endforeach;
+            }
+        }
+
+
     }
 
     function savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID, $accessToken){
@@ -5172,6 +5212,41 @@ class dbfuncs {
         return $collection_id;
     }
 
+    function mergeUserSpecificCloudConfig($file_dir, $ownerID){
+        if (preg_match("/s3:/i", $file_dir) || preg_match("/gs:/i", $file_dir)){
+            if (preg_match("/s3:/i", $file_dir)){
+                $creds = $this->getAmz($ownerID);
+            } else if (preg_match("/gs:/i", $file_dir)){
+                $creds = $this->getGoogle($ownerID);
+            }
+            if (!empty($creds)){
+                $creds = json_decode($creds,true);
+                $new_file_dir = explode("\t", $file_dir);
+                $new_cre = "";
+                $old_cre = !empty($new_file_dir[1]) ? $new_file_dir[1] : "";
+                // use same cre if user have $old_cre
+                if (!empty($old_cre)){
+                    for ($n = 0; $n < count($creds); $n++) {
+                        if ($creds[$n]["id"] == $old_cre){
+                            $new_cre = $creds[$n]["id"];
+                        }
+                    }
+                }
+
+                // use new user's cre if user has changed.
+                if (empty($new_cre)){
+                    $new_cre = $creds[0]["id"];
+                }
+
+                if (!empty($new_cre)){
+                    $new_file_dir[1] = $new_cre;
+                    $file_dir = implode("\t", $new_file_dir);
+                }  
+            }
+        }
+        return $file_dir;
+    }
+
     // Dmeta specific duplicate project pipeline insertion
     function checkAndInsertCollection($inputVal, $ownerID){
         $collection_id = 0;
@@ -5180,14 +5255,19 @@ class dbfuncs {
         // $file_env: cluster-2
         // $files_used [["c_rep1.1.fq","c_rep1.2.fq"],["c_rep2.1.fq","c_rep2.2.fq"]]
         // $files_used converted to: c_rep1.1.fq,c_rep1.2.fq | c_rep2.1.fq,c_rep2.2.fq
-        // $file_dir:["s3://Vitiligo_11_15_17/dolphin_import","9"]
+        // $file_dir:[["s3://Vitiligo_11_15_17/dolphin_import","9"]]
         // $file_dir converted to:s3://Vitiligo_11_15_17/dolphin_import\t9
+        // $archive_dir:"/local_archive_dir"
+        // $s3_archive_dir:["s3://Vitiligo_11_15_17/dolphin_import","9"] or ["s3://Vitiligo_11_15_17/dolphin_import"]
+        // $gs_archive_dir:["gs://Vitiligo_11_15_17/dolphin_import","9"] or ["gs://Vitiligo_11_15_17/dolphin_import"]
         // $collection_type: pair
         // $file_type: fastq
         // $collection_name: Vitiligo experiment-2
 
         // use checkFileAndSave to save file and get file_id and fill $file_array
         $file_array = array();
+        error_log(print_r($inputVal, TRUE));
+
         for ($i = 0; $i < count($inputVal); $i++) {
             $name = $inputVal[$i]["name"]; 
             $run_env = $inputVal[$i]["file_env"]; 
@@ -5196,46 +5276,20 @@ class dbfuncs {
             $file_dir = $inputVal[$i]["file_dir"]; 
             $collection_type = $inputVal[$i]["collection_type"];
             $file_type = $inputVal[$i]["file_type"];
-            $archive_dir = "";
-            $s3_archive_dir = "";
-            $gs_archive_dir = "";
+            $archive_dir = $inputVal[$i]["archive_dir"]; 
+            $s3_archive_dir = $inputVal[$i]["s3_archive_dir"]; 
+            $gs_archive_dir = $inputVal[$i]["gs_archive_dir"]; 
 
             for ($k = 0; $k < count($file_dir); $k++) {
                 $file_dir[$k] = implode("\t", $file_dir[$k]);
             }
             $file_dir = implode("\t", $file_dir);
+            $s3_archive_dir = implode("\t", $s3_archive_dir);
+            $gs_archive_dir = implode("\t", $gs_archive_dir);
             // get new amz_cre_id for user
-            if (preg_match("/s3:/i", $file_dir) || preg_match("/gs:/i", $file_dir)){
-                if (preg_match("/s3:/i", $file_dir)){
-                    $creds = $this->getAmz($ownerID);
-                } else if (preg_match("/gs:/i", $file_dir)){
-                    $creds = $this->getGoogle($ownerID);
-                }
-                if (!empty($creds)){
-                    $creds = json_decode($creds,true);
-                    $new_file_dir = explode("\t", $file_dir);
-                    $new_cre = "";
-                    $old_cre = !empty($new_file_dir[1]) ? $new_file_dir[1] : "";
-                    // use same cre if user have $old_cre
-                    if (!empty($old_cre)){
-                        for ($n = 0; $n < count($creds); $n++) {
-                            if ($creds[$n]["id"] == $old_cre){
-                                $new_cre = $creds[$n]["id"];
-                            }
-                        }
-                    }
-
-                    // use new user's cre if user has changed.
-                    if (empty($new_cre)){
-                        $new_cre = $creds[0]["id"];
-                    }
-
-                    if (!empty($new_cre)){
-                        $new_file_dir[1] = $new_cre;
-                        $file_dir = implode("\t", $new_file_dir);
-                    }  
-                }
-            }
+            $file_dir = $this->mergeUserSpecificCloudConfig($file_dir, $ownerID);
+            $s3_archive_dir = $this->mergeUserSpecificCloudConfig($s3_archive_dir, $ownerID);
+            $gs_archive_dir = $this->mergeUserSpecificCloudConfig($gs_archive_dir, $ownerID);
 
             for ($m = 0; $m < count($files_used); $m++) {
                 $files_used[$m] = implode(",", $files_used[$m]);
@@ -5285,6 +5339,7 @@ class dbfuncs {
         $newProPipeId = null;
         if ($type == "dmeta"){
             $proPipeAll = json_decode($this->getProjectPipelines($old_run_id,"",$ownerID,""));
+            if (empty($proPipeAll[0])) error_log("ProjectPipelines not found.");
             if (!empty ($proPipeAll[0])){
                 $run_env = !empty($run_env) ? "'$run_env'" : "profile";
                 $work_dir = !empty($work_dir) ? "'$work_dir'" : "output_dir";
@@ -5295,6 +5350,7 @@ class dbfuncs {
                 $proPipe = self::insTable($sql);
                 $newProPipe = json_decode($proPipe,true);
                 $newProPipeId = $newProPipe["id"];
+                if (empty($newProPipeId)) error_log("newProPipeId not found.");
                 if (!empty($newProPipeId)){
                     $this->duplicateProjectPipelineInput($newProPipeId, $old_run_id, $ownerID);
                     // use $inputs and replace entered projectPipelineInputs
@@ -6162,28 +6218,40 @@ class dbfuncs {
     // $sName: sample Name @string
     // $sNameLoc: sample Name location [@options: "row", "column", "filename"]
     // $featureLoc: sample Name location [@options: "row", "column", "both"]
-    function dmetaFileConvert($file, $sName, $sNameLoc, $featureLoc){
+    function dmetaFileConvert($uuid, $filepaths, $sName, $sNameLoc, $featureLoc, $ownerID){
         ini_set('memory_limit','900M');
-        // add seperator detection algorithm
-        $sep = "\t"; 
-        $file = trim($file);
         $data = array();
-        $lines = explode("\n", $file);
-        $rowheader = explode($sep, $lines[0]);
-        //sample names at the first column
-        if ($sNameLoc == "column" && $featureLoc == "row"){
-            $samplePos = array_search($sName, $rowheader);
-            for ($i = 1; $i < count($lines); $i++) {
-                $currentline = explode($sep, $lines[$i]);
-                $data[$currentline[0]] = $currentline[$samplePos];
-            } 
-            //sample names at the first row
-        } else if ($sNameLoc == "row" && $featureLoc == "column"){
-            for ($i = 1; $i < count($lines); $i++) {
-                $currentline = explode($sep, $lines[$i]);
-                if ($currentline[0] == $sName){
-                    for ($k = 1; $k < count($currentline); $k++) {
-                        $data[$rowheader[$k]] = $currentline[$k];
+        if ($sNameLoc == "filename"){
+            for ($i = 1; $i < count($filepaths); $i++) {
+                // check $filepath if it has the sample name:
+                if (preg_match("/$sName/i", $filepaths[$i])){
+                    $fileURL = $this->pubweb_url."/$uuid/".$filepaths[$i];
+                    $data[] = $fileURL;
+                }
+            }
+        } else {
+            // use only one file, if $sNameLoc != "filename"
+            $file = json_decode($this -> getFileContent($uuid, $filepaths[0], $ownerID));
+            // add seperator detection algorithm
+            $sep = "\t"; 
+            $file = trim($file);
+            $lines = explode("\n", $file);
+            $rowheader = explode($sep, $lines[0]);
+            //sample names at the first column
+            if ($sNameLoc == "column" && $featureLoc == "row"){
+                $samplePos = array_search($sName, $rowheader);
+                for ($i = 1; $i < count($lines); $i++) {
+                    $currentline = explode($sep, $lines[$i]);
+                    $data[$currentline[0]] = $currentline[$samplePos];
+                } 
+                //sample names at the first row
+            } else if ($sNameLoc == "row" && $featureLoc == "column"){
+                for ($i = 1; $i < count($lines); $i++) {
+                    $currentline = explode($sep, $lines[$i]);
+                    if ($currentline[0] == $sName){
+                        for ($k = 1; $k < count($currentline); $k++) {
+                            $data[$rowheader[$k]] = $currentline[$k];
+                        }
                     }
                 }
             }
