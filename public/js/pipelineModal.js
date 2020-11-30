@@ -3486,6 +3486,7 @@ $(document).ready(function () {
                 $("#pubDmetaFilename").val(loadObj.filename);
                 $("#pubDmetaFeature").val(loadObj.feature);
                 $("#pubDmetaTarget").val(loadObj.target);
+                $("#pubDmetaFilename").trigger("change");
                 check ="true"
             }
         }
@@ -3495,8 +3496,20 @@ $(document).ready(function () {
             $(checkId).prop('checked', false);
         }
         $(checkId).trigger("change");
-
     }
+    $(document).on('change', '#pubDmetaFilename', function () {
+        var locationOfSample = $(this).val();
+        console.log(locationOfSample)
+        if (locationOfSample == "filename"){
+            $("#pubDmetaFeatureDiv").css("display","none")
+        } else {
+            $("#pubDmetaFeatureDiv").css("display","block")
+
+        }
+    })
+
+
+
     $('#pubWebOpt').multiselect({
         buttonText: function (options, select) {
             if (options.length == 0) {
@@ -3537,6 +3550,7 @@ $(document).ready(function () {
             $('#indescDiv').css("display", "none")
             $('#pubWebDiv').css("display", "block")
             $('#pubDmetaAllDiv').css("display", "block")
+            $("#pubDmetaFeatureDiv").css("display","block")
         }
 
         fillRenameModal(renameTextDefVal, "#checkDefVal", '#defVal');

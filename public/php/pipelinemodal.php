@@ -823,7 +823,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div  class="form-group">
+                            <div  id="pubDmetaFeatureDiv"  class="form-group">
                                 <div class="col-sm-5 control-label">
                                     Location of the Features <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the location of features in the published file."><i class='glyphicon glyphicon-info-sign'></i></a></span>
                                 </div>
@@ -842,6 +842,7 @@
                                 <div class="col-sm-5">
                                     <select class="form-control" id="pubDmetaTarget" name="pubDmetaTarget">
                                         <option value="sample_summary">sample_summary</option>
+                                        <option value="analysis">analysis</option>
                                         <option value="rsem_expected_count_gene">rsem_expected_count_gene</option>
                                         <option value="rsem_expected_count_isoform">rsem_expected_count_isoform</option>
                                         <option value="rsem_tpm_gene">rsem_tpm_gene</option>
