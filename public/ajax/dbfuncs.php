@@ -1867,6 +1867,8 @@ class dbfuncs {
     function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $proVarObj,$eachExecConfig, $ownerID){
         $newObj = $proPipeAll[0];
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+        $newObj->{"summary"} = ""; // removed to protect json format
+        $newObj->{"dmeta"} = ""; // removed to protect json format
         $newObj->{'project_pipeline_input'} = $allinputs;
         $newObj->{'proVarObj'} = htmlspecialchars($proVarObj, ENT_QUOTES);
         $newObj->{'eachExecConfig'} = htmlspecialchars($eachExecConfig, ENT_QUOTES);
