@@ -2602,6 +2602,7 @@ class dbfuncs {
                 $regex = str_replace("/", "\/", $regex);
                 //if name contains regular expression with curly brackets: {a,b,c} then turn into (a|b|c) format
                 $regex = $this->fixCurlyBrackets($regex);
+                error_log($regex);
                 $regex = str_replace("*", ".*", $regex);
                 $regex = str_replace("?", ".?", $regex);
                 $regex = str_replace("'", "", $regex);
@@ -2674,7 +2675,6 @@ class dbfuncs {
                 if ($targetDmetaColl == $dmeta_out_collection){
                     foreach ($out_collectionData as $sName => $targetDmetaRowId): 
                     $doc = $this->dmetaFileConvert($uuid, $filepaths, $sName, $sNameLoc, $featureLoc, $ownerID);
-                    error_log(print_r($doc, TRUE));
                     if (!empty($doc)){
                         $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id, $dmeta_project);
                     }
@@ -6224,7 +6224,7 @@ class dbfuncs {
         ini_set('memory_limit','900M');
         $data = array();
         if ($sNameLoc == "filename"){
-            for ($i = 1; $i < count($filepaths); $i++) {
+            for ($i = 0; $i < count($filepaths); $i++) {
                 // check $filepath if it has the sample name:
                 if (preg_match("/$sName/i", $filepaths[$i])){
                     $fileURL = $this->pubweb_url."/$uuid/".$filepaths[$i];
