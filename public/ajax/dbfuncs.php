@@ -4961,6 +4961,10 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline SET onload='$onload', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function updateProjectPipelineDmeta($id, $dmeta,$ownerID){
+        $sql = "UPDATE project_pipeline SET dmeta='$dmeta', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
     function updateProjectPipelineNewRun($project_pipeline_id,$new_run,$ownerID){
         $sql = "UPDATE project_pipeline SET new_run='$new_run', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$project_pipeline_id'";
         return self::runSQL($sql);
@@ -6227,7 +6231,8 @@ class dbfuncs {
             for ($i = 0; $i < count($filepaths); $i++) {
                 // check $filepath if it has the sample name:
                 if (preg_match("/$sName/i", $filepaths[$i])){
-                    $fileURL = $this->pubweb_url."/$uuid/".$filepaths[$i];
+                    $partPubwebUrl = str_replace($this->base_path, "",$this->pubweb_url);
+                    $fileURL = $partPubwebUrl."/$uuid/".$filepaths[$i];
                     $data[] = $fileURL;
                 }
             }
