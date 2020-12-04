@@ -176,6 +176,49 @@ class Run
         return null;
     }
 
+    function existingRun($body, $params, $user){
+        $dbfuncs = new dbfuncs();
+        $ret = array();
+        $ownerID = $user["id"];
+        $doc = $body["doc"];
+        $info = $body["info"];
+        $dmetaServer = $info["dmetaServer"];
+        $run_url= !empty($doc["run_url"]) ? $doc["run_url"] : "";
+        $dmeta = $this->getDmetaObj($doc, $dmetaServer, $info);
+
+        //http://localhost:8080/dolphinnext/index.php?np=3&id=586
+        error_log($run_url);
+        $proPipeId = substr($run_url, strpos($run_url, "id=") + 3);
+        error_log($proPipeId);
+        if (!empty($proPipeId)) {
+            //don't allow to update if user doesn't own the project_pipeline.
+            $curr_ownerID= $dbfuncs->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$proPipeId'");
+            $permCheck = $dbfuncs->checkUserOwnPerm($curr_ownerID, $ownerID);
+            if (!empty($permCheck)){
+                $dbfuncs->updateProjectPipelineDmeta($proPipeId, $dmeta, $ownerID);
+                $ret["status"] = "success";
+                $ret["log"] = "Existing run found.";
+                $ret["run_url"] = $run_url;
+                return $ret;
+            }
+            $ret["status"] = "error";
+            $ret["log"] = "You don't have permission to update run.";
+            return $ret;
+        }
+        $ret["status"] = "error";
+        $ret["log"] = "Run couldn't found.";
+        return $ret;
+    }
+
+    function getDmetaObj($doc, $dmetaServer, $info){
+        $dmeta = array();
+        $dmeta["dmeta_run_id"] = $doc["_id"];
+        $dmeta["dmeta_server"] = $dmetaServer;
+        $dmeta["dmeta_out"]= !empty($doc["out"]) ? $doc["out"] : ""; 
+        $dmeta["dmeta_project"]= !empty($info["project"]) ? $info["project"] : ""; 
+        return json_encode($dmeta);
+    }
+
     function startRun($body, $params, $user){
         $ret = array();
         $info = $body["info"];
@@ -213,12 +256,7 @@ class Run
                 }
             }
         }
-        $dmeta = array();
-        $dmeta["dmeta_run_id"] = $doc["_id"];
-        $dmeta["dmeta_server"] = $dmetaServer;
-        $dmeta["dmeta_out"]= !empty($doc["out"]) ? $doc["out"] : ""; 
-        $dmeta["dmeta_project"]= !empty($info["project"]) ? $info["project"] : ""; 
-        $dmeta = json_encode($dmeta);
+        $dmeta = $this->getDmetaObj($doc, $dmetaServer, $info);
         // update name and insert
         $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir);
         if (empty($project_pipeline_id)) {
@@ -252,6 +290,7 @@ class Run
             if (!empty($data)) {
                 $run_url = "{$this->BASE_PATH}/index.php?np=3&id=".$project_pipeline_id;
                 $ret["status"] = "initiated";
+                $ret["log"] = "Run submitted.";
                 $ret["run_url"] = $run_url;
                 return $ret;
             }
