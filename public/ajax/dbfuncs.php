@@ -2537,8 +2537,7 @@ class dbfuncs {
         $url = "$dmeta_server/api/v1/{$projectPath}data/$dmeta_out_collection/$targetDmetaRowId";
         $run_url = "{$this->base_path}/index.php?np=3&id=".$project_pipeline_id;
         $data = json_encode(array(
-            'doc' => $doc,
-            'run_url' => $run_url
+            'doc' => $doc
         ));
 
         $curl = curl_init($url);
