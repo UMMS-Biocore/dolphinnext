@@ -523,6 +523,11 @@ else if ($p=="saveGoogleUser"){
     if (!empty($id)) {
         $_SESSION['ownerID'] = $id;
         $_SESSION['role'] = $role;
+        // send cookie 
+        $token = $db->signJWTToken($id);
+        if (!empty($token)){
+            setcookie('jwt-dolphinnext', $token, time()+60*60*24*365, "/");
+        }
     }
     $data = json_encode("done");
     session_write_close();

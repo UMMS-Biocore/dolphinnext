@@ -1,6 +1,7 @@
 <?php
 require_once(__DIR__."/../api/funcs.php");
 require_once(__DIR__."/../../config/config.php");
+require_once(__DIR__."/../php/jwt.php");
 
 
 
@@ -23,6 +24,8 @@ class dbfuncs {
     private $next_ver = NEXTFLOW_VERSION;
     private $test_profile_group_id = TEST_PROFILE_GROUP_ID;
     private static $link;
+    private $JWT_SECRET = JWT_SECRET;
+    private $JWT_COOKIE_EXPIRES_IN = JWT_COOKIE_EXPIRES_IN;
 
     function __construct() {
         if (!isset(self::$link)) {
@@ -3238,6 +3241,27 @@ class dbfuncs {
         $sql = "UPDATE google_credentials SET name='$name', project_id='$project_id', key_name='$key_name', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function signJWTToken($id){
+        $token = "";
+        $JWT_COOKIE_EXPIRES_IN = $this->JWT_COOKIE_EXPIRES_IN;
+        if (!empty($this->JWT_SECRET) && !empty($JWT_COOKIE_EXPIRES_IN)){
+            /* creating access token */
+            $issuedAt = time();
+            // jwt valid for 365 days
+            settype($JWT_COOKIE_EXPIRES_IN, 'integer');
+            $expirationTime = $issuedAt + 60 * 60 * 24 * $JWT_COOKIE_EXPIRES_IN;
+            $payload = array(
+                'id' => $id,
+                'iat' => $issuedAt,
+                'exp' => $expirationTime,
+            );
+
+            $JWT=new JWT();
+            $token = $JWT->encode($payload, $this->JWT_SECRET); 
+        }
+        return $token;
+    }
+
     //protect run/pipeline entrance 
     function insertToken($id, $np, $ownerID ){
         $token= $this->getKey(10);

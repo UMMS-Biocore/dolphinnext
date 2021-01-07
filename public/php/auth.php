@@ -1,7 +1,9 @@
 <?php
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 require_once(__DIR__."/../ajax/dbfuncs.php");
+require_once(__DIR__."/jwt.php");
 $db=new dbfuncs();
+
 if (strpos(getcwd(), "travis/build") == 6){
     $_SESSION['email'] = 'travis';
 }
@@ -14,7 +16,7 @@ $SHOW_HOMEPAGE=SHOW_HOMEPAGE;
 function loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID){
     // temporary change for sso login
     //    if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID)) {
-    //        $SSO_LOGIN_URL = "{$SSO_URL}/dialog/authorize?redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
+    //        $SSO_LOGIN_URL = "{$SSO_URL}/dialog/authorize?redirect_uri={$BASE_PATH}/php/receivetoken.php?response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
     //        header('Location: '.$SSO_LOGIN_URL);
     //    } else {
     //        require_once("loginform.php");
@@ -41,6 +43,7 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         exit;
     } else {
         session_destroy();
+        setcookie('jwt-dolphinnext', "loggedout", time()-60*60, "/");
         if (!empty($SSO_LOGIN) && !empty($SSO_URL)){
             $SSO_LOGOUT_URL = "{$SSO_URL}/api/v1/users/logout?redirect_uri={$BASE_PATH}";
             header('Location: ' . $SSO_LOGOUT_URL);
@@ -87,17 +90,62 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
     // empty($_SERVER['HTTP_REFERER']) required since php may load page more than once.
     // when reload happens, $_SERVER['HTTP_REFERER'] will be set.
     // jquery.ajax-cross-origin.min.js causes to reload page more than once.
+    $token = $_COOKIE['jwt-dolphinnext'];
+    if (!empty($token) && $token != 'loggedout'){
+        $JWT=new JWT();
+        $decoded = "";
+        try {
+            $decoded = $JWT->decode($token, JWT_SECRET);
+        } catch (Exception $e) {
+            error_log ("token not valid: $token");
+        }
+        if (!empty($decoded) && !empty($decoded->{"id"})){
+            $currentUser = json_decode($db->getUserById($decoded->{"id"}),true);
+            if (!empty($currentUser[0]) && !empty($currentUser[0]['id'])){
+                $id = $currentUser[0]['id'];
+                $role = isset($currentUser[0]) ? $currentUser[0]['role'] : "";
+                $name = isset($currentUser[0]) ? $currentUser[0]['name'] : "";
+                $email = isset($currentUser[0]) ? $currentUser[0]['email'] : "";
+                $username = isset($currentUser[0]) ? $currentUser[0]['username'] : "";
+                $_SESSION['email'] = $email;
+                $_SESSION['username'] = $username;
+                $_SESSION['name'] = $name;
+                $_SESSION['ownerID'] = $id;
+                $_SESSION['role'] = $role;
+            }
+        }
+    }
     if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID) && empty($_SERVER['HTTP_REFERER'])){
         error_log("ssoLoginCheck:");
         error_log($_SESSION["ssoLoginCheck"]);
         error_log($_SERVER["HTTP_REFERER"]);
-        if (empty($_SESSION["ssoLoginCheck"])){
+        if (!empty($token) && $token != 'loggedout') {
+            $tokenInfo = json_decode($db->getSSOAccessToken($token),true);
+            if (!empty($tokenInfo[0]) &&  $tokenInfo[0]["expirationDate"] && date("Y-m-d H:i:s") < date($tokenInfo[0]["expirationDate"])){
+                if (!empty($tokenInfo[0]["sso_user_id"])){
+                    $currentUser = json_decode($db->getUserBySSOId($tokenInfo[0]["sso_user_id"]),true);
+                    if (!empty($currentUser[0]) && !empty($currentUser[0]['id'])){
+                        $id = $currentUser[0]['id'];
+                        $role = isset($currentUser[0]) ? $currentUser[0]['role'] : "";
+                        $name = isset($currentUser[0]) ? $currentUser[0]['name'] : "";
+                        $email = isset($currentUser[0]) ? $currentUser[0]['email'] : "";
+                        $username = isset($currentUser[0]) ? $currentUser[0]['username'] : "";
+                        $_SESSION['email'] = $email;
+                        $_SESSION['username'] = $username;
+                        $_SESSION['name'] = $name;
+                        $_SESSION['ownerID'] = $id;
+                        $_SESSION['role'] = $role;
+                    }
+                }
+            }
+        } else if (empty($_SESSION["ssoLoginCheck"])){
             // check if its authenticated on Auth server
             $_SESSION["ssoLoginCheck"] = true;
             $originalUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
             error_log($originalUrl);
             $_SESSION["redirect_original"] = $originalUrl;
-            $SSO_LOGIN_CHECK = "{$SSO_URL}/api/v1/oauth/check?redirect_original={$originalUrl}&redirect_uri={$BASE_PATH}/api/service.php?func=receivetoken&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
+            $SSO_LOGIN_CHECK = "{$SSO_URL}/api/v1/oauth/check?redirect_original={$originalUrl}&redirect_uri={$BASE_PATH}/php/receivetoken.php&response_type=code&client_id={$CLIENT_ID}&scope=offline_access";
+            error_log($SSO_LOGIN_CHECK);
             header('Location: '.$SSO_LOGIN_CHECK);
             exit;
         } 
