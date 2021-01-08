@@ -4,7 +4,7 @@ JWT_SECRET and JWT_COOKIE_EXPIRES_IN parameters added to Dolphinnext section of 
 [Dolphinnext]
 JWT_SECRET=very-strong-jwt-secret-password
 JWT_COOKIE_EXPIRES_IN=365
-
+Proxy.php and jquery.ajax-cross-origin removed.
 
 30.11.2020 Version 1.2.26
 Project support for dmeta added

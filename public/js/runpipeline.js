@@ -8232,10 +8232,10 @@ $(document).ready(function () {
                 var searchURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&usehistory=y&retmode=json&term='+geo_id;
                 var succCheck1 = false;
                 $.ajax({
-                    crossOrigin: true,
-                    proxy: "ajax/proxy.php",
-                    url: searchURL,
-                    context: {},
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: { p: "getRemoteData", url : searchURL} ,
+                    async: true,
                     error: function (jqXHR, exception) {
                         reportAjaxError(jqXHR, exception, searchURL)
                     },
@@ -8257,10 +8257,10 @@ $(document).ready(function () {
                                         succCheck1 = true;
                                         var succCheck2 = false;
                                         $.ajax({
-                                            crossOrigin: true,
-                                            proxy: "ajax/proxy.php",
-                                            url: resultsURL,
-                                            context: {},
+                                            type: "POST",
+                                            url: "ajax/ajaxquery.php",
+                                            data: { p: "getRemoteData", url : resultsURL} ,
+                                            async: true,
                                             error: function (jqXHR, exception) {
                                                 reportAjaxError(jqXHR, exception, resultsURL)
                                             },

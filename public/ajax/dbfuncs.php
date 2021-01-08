@@ -4696,6 +4696,12 @@ class dbfuncs {
             return json_encode("Query failed! Please check your query, connection profile or internet connection");
         }
     }
+    
+    function getRemoteData($url){
+        $check_cmd = "curl -s '$url' 2>&1";
+        $log = shell_exec($check_cmd);
+        return $log;
+    }
 
     function getSRRDataENA($srr_id) {
         $obj = new stdClass();

@@ -129,7 +129,14 @@ else if ($p=="retryRsync"){
     $target_dir = $_REQUEST['dir'];
     $run_env = $_REQUEST['run_env'];
     $data = $db->retryRsync($fileName, $target_dir, $run_env, $email, $ownerID);
-
+}
+else if ($p=="getRemoteData"){
+    $url  = $_REQUEST['url'];
+    $data= array();
+    if (!empty($ownerID)){
+        $data = $db->getRemoteData($url);
+    }
+    $data = json_encode($data);
 }
 else if ($p=="getReportData"){
     $uuid  = $_REQUEST['uuid'];

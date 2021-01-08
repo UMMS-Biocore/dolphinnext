@@ -978,8 +978,6 @@ immediately after the control sidebar -->
 <script src="https://apis.google.com/js/platform.js" async defer></script>
 <!-- jQuery 3 -->
 <script src="bower_components/jquery/dist/jquery.min.js"></script>
-<!-- jquery.ajax-cross-origin-->
-<script src="bower_components/jquery.ajax-cross-origin/jquery.ajax-cross-origin.min.js"></script>
 <!-- jquery-ui-1.9.2.custom.min-->
 <script src="bower_components/jquery-ui-bootstrap/assets/js/jquery-ui-1.10.0.custom.min.js"></script>
 <!-- Bootstrap 3.3.7 -->
