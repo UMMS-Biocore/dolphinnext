@@ -6,6 +6,7 @@ JWT_SECRET=very-strong-jwt-secret-password
 JWT_COOKIE_EXPIRES_IN=365
 Proxy.php and jquery.ajax-cross-origin removed.
 Process nodes updated on change in development mode.
+User confirmation added when updating existing system inputs in the run page.
 
 30.11.2020 Version 1.2.26
 Project support for dmeta added

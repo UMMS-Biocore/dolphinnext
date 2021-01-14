@@ -1475,7 +1475,7 @@ function fillExecSettings(id, defName, type, inputName) {
     }
 }
 
-//run after page loads to fill if missing inputs
+//execute after page loads to fill missing inputs
 //reason-1: new input added into pipeline without changing rev
 //reason-2: run copied into new revision 
 function autofillEmptyInputs(autoFillJSON) {
@@ -1646,124 +1646,169 @@ function getJobData(getType) {
 
 // to execute autofill function, binds event handlers to chooseEnv
 function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
-    if (jsonType == "pipeline"){
-        $("#chooseEnv").bindFirst("change", function(){
-            var [allProSett, profileData] = getJobData("both");
-            // autofill def_publishdir and def_workdir
-            var def_publishdir = "";
-            var def_workdir = "";
-            var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
-            if (profileData) {
-                if (profileData[0]) {
-                    if (profileData[0].def_publishdir){
-                        def_publishdir = profileData[0].def_publishdir + "/work"+project_pipeline_id ; 
-                        $("#publish_dir").val(def_publishdir);
-                        updateCheckBox('#publish_dir_check', "true");
-                    } else {
-                        $("#publish_dir").val(def_publishdir);
-                        updateCheckBox('#publish_dir_check', "false");
+    $("#chooseEnv").bindFirst("change", function(){
+        var onchangechooseEnvFunc1 = function(){
+            if (jsonType == "pipeline"){
+                var [allProSett, profileData] = getJobData("both");
+                // autofill def_publishdir and def_workdir
+                var def_publishdir = "";
+                var def_workdir = "";
+                var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                if (profileData) {
+                    if (profileData[0]) {
+                        if (profileData[0].def_publishdir){
+                            def_publishdir = profileData[0].def_publishdir + "/work"+project_pipeline_id ; 
+                            $("#publish_dir").val(def_publishdir);
+                            updateCheckBox('#publish_dir_check', "true");
+                        } else {
+                            $("#publish_dir").val(def_publishdir);
+                            updateCheckBox('#publish_dir_check', "false");
+                        }
+                        if (profileData[0].def_workdir){
+                            def_workdir = profileData[0].def_workdir + "/work"+project_pipeline_id;
+                            $("#rOut_dir").val(def_workdir)
+                        }
                     }
-                    if (profileData[0].def_workdir){
-                        def_workdir = profileData[0].def_workdir + "/work"+project_pipeline_id;
-                        $("#rOut_dir").val(def_workdir)
+                }
+
+
+                // fillForm('#allProcessSettTable', 'input', allProSett);
+                $("input.execcheckbox").each(function(){
+                    $(this).prop('checked', false);
+                })
+                if (allProSett.job_cpu != null){
+                    $(".form-control.execcpu").each(function(){
+                        $(this).val(allProSett.job_cpu);
+                    })
+                }
+                if (allProSett.job_memory != null){
+                    $(".form-control.execmemory").each(function(){
+                        $(this).val(allProSett.job_memory);
+                    })
+                }
+                if (allProSett.job_queue != null){
+                    $(".form-control.execqueue").each(function(){
+                        $(this).val(allProSett.job_queue);
+                    })
+                }
+                if (allProSett.job_time != null){
+                    $(".form-control.exectime").each(function(){
+                        $(this).val(allProSett.job_time);
+                    })
+                }
+                if (allProSett.job_clu_opt != null){
+                    $(".form-control.execopt").each(function(){
+                        $(this).val(allProSett.job_clu_opt);
+                    })
+                }
+            }
+        }
+
+        var onchangechooseEnvFunc2 = function (){
+            console.log(autoFillJSON)
+            var fillHostFunc = function(autoFillJSON, type, filledVars) {
+                console.log(jsonType)
+                $.each(autoFillJSON, function (el) {
+                    var conds = autoFillJSON[el].condition;
+                    var states = autoFillJSON[el].statement;
+                    var url = autoFillJSON[el].url;
+                    var urlzip = autoFillJSON[el].urlzip;
+                    var checkPath = autoFillJSON[el].checkPath;
+                    if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
+                        //bind eventhandler to #chooseEnv
+                        if (conds.$HOSTNAME) {   
+                            var statusCond = checkConds(conds, type);
+                            if (statusCond === true) {
+                                if (type == "default"){
+                                    var not_filled_states = $.extend(true, {}, states);
+                                    var not_filled_url = $.extend(true, {}, url);
+                                    var not_filled_urlzip = $.extend(true, {}, urlzip);
+                                    var not_filled_checkPath = $.extend(true, {}, checkPath);
+                                    $.each(filledVars, function (filled_el) {
+                                        if (filled_el in not_filled_states){
+                                            delete not_filled_states[filled_el]; 
+                                        }
+                                        if (filled_el in not_filled_url){
+                                            delete not_filled_url[filled_el]; 
+                                        }
+                                        if (filled_el in not_filled_urlzip){
+                                            delete not_filled_urlzip[filled_el]; 
+                                        }
+                                        if (filled_el in not_filled_checkPath){
+                                            delete not_filled_checkPath[filled_el]; 
+                                        }
+                                        // if one of the following parameter is filled than don't use container info coming from default condition 
+                                        if (filled_el == "$SINGULARITY_IMAGE" || filled_el == "$DOCKER_IMAGE" || filled_el == "$SINGULARITY_OPTIONS" || filled_el == "$DOCKER_OPTIONS"){
+                                            delete not_filled_states["$SINGULARITY_IMAGE"]; 
+                                            delete not_filled_states["$SINGULARITY_OPTIONS"]; 
+                                            delete not_filled_states["$DOCKER_IMAGE"]; 
+                                            delete not_filled_states["$DOCKER_OPTIONS"]; 
+                                        }
+                                    });
+                                    console.log(states)
+                                    console.log(not_filled_states)
+                                    fillStates(not_filled_states, not_filled_url, not_filled_urlzip, not_filled_checkPath)
+                                } else {
+                                    fillStates(states, url, urlzip, checkPath)
+                                    $.extend(filledVars, states); // Merge states into filledVars
+                                }
+                                autoCheck("fillstates")
+                            }
+                        }
+                    };
+                }); 
+                return filledVars
+            }
+            //## position where fillwithDefaults() finalized
+            var filledVars = fillHostFunc(autoFillJSON, "", {})
+            // fill $HOSTNAME ="default" states if not filled before(based on filledVars obj)
+            fillHostFunc(autoFillJSON, "default", filledVars)
+        }
+
+
+        var sequentialUpdate = function(callback){
+            onchangechooseEnvFunc1()
+            callback()
+        }
+
+        var askAutoFill = function(){
+            // check if system inputs are filled.
+            // if no systemInputs found then don't ask 
+            if (systemInputs.length < 1) return false;
+            // if filled systemInputs found then ask 
+            var systemInputFilled = false;
+            for (var t = 0; t < systemInputs.length; t++) {
+                var checkVarName = $("#inputsTab").find("td[given_name='" + systemInputs[t] + "']")[0];
+                if (checkVarName) {
+                    var varNameBut = $(checkVarName).find(".firstsec >");
+                    var checkFileValExist = varNameBut.css("display") == "none";
+                    if (checkFileValExist){
+                        systemInputFilled = true
                     }
                 }
             }
-
-            $("input.execcheckbox").each(function(){
-                $(this).prop('checked', false);
-            })
-            if (allProSett.job_cpu != null){
-                $(".form-control.execcpu").each(function(){
-                    $(this).val(allProSett.job_cpu);
-                })
-            }
-            if (allProSett.job_memory != null){
-                $(".form-control.execmemory").each(function(){
-                    $(this).val(allProSett.job_memory);
-                })
-            }
-            if (allProSett.job_queue != null){
-                $(".form-control.execqueue").each(function(){
-                    $(this).val(allProSett.job_queue);
-                })
-            }
-            if (allProSett.job_time != null){
-                $(".form-control.exectime").each(function(){
-                    $(this).val(allProSett.job_time);
-                })
-            }
-            if (allProSett.job_clu_opt != null){
-                $(".form-control.execopt").each(function(){
-                    $(this).val(allProSett.job_clu_opt);
-                })
-            }
-
-
-
-        });
-    }
-    $("#chooseEnv").change(autoFillJSON, function () {
-        console.log(autoFillJSON)
-        var fillHostFunc = function(autoFillJSON, type, filledVars) {
-            console.log(jsonType)
-            $.each(autoFillJSON, function (el) {
-                var conds = autoFillJSON[el].condition;
-                var states = autoFillJSON[el].statement;
-                var url = autoFillJSON[el].url;
-                var urlzip = autoFillJSON[el].urlzip;
-                var checkPath = autoFillJSON[el].checkPath;
-                if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
-                    //bind eventhandler to #chooseEnv
-                    if (conds.$HOSTNAME) {   
-                        var statusCond = checkConds(conds, type);
-                        if (statusCond === true) {
-                            if (type == "default"){
-                                var not_filled_states = $.extend(true, {}, states);
-                                var not_filled_url = $.extend(true, {}, url);
-                                var not_filled_urlzip = $.extend(true, {}, urlzip);
-                                var not_filled_checkPath = $.extend(true, {}, checkPath);
-                                $.each(filledVars, function (filled_el) {
-                                    if (filled_el in not_filled_states){
-                                        delete not_filled_states[filled_el]; 
-                                    }
-                                    if (filled_el in not_filled_url){
-                                        delete not_filled_url[filled_el]; 
-                                    }
-                                    if (filled_el in not_filled_urlzip){
-                                        delete not_filled_urlzip[filled_el]; 
-                                    }
-                                    if (filled_el in not_filled_checkPath){
-                                        delete not_filled_checkPath[filled_el]; 
-                                    }
-                                    // if one of the following parameter is filled than don't use container info coming from default condition 
-                                    if (filled_el == "$SINGULARITY_IMAGE" || filled_el == "$DOCKER_IMAGE" || filled_el == "$SINGULARITY_OPTIONS" || filled_el == "$DOCKER_OPTIONS"){
-                                        delete not_filled_states["$SINGULARITY_IMAGE"]; 
-                                        delete not_filled_states["$SINGULARITY_OPTIONS"]; 
-                                        delete not_filled_states["$DOCKER_IMAGE"]; 
-                                        delete not_filled_states["$DOCKER_OPTIONS"]; 
-                                    }
-                                });
-                                console.log(states)
-                                console.log(not_filled_states)
-                                fillStates(not_filled_states, not_filled_url, not_filled_urlzip, not_filled_checkPath)
-                            } else {
-                                fillStates(states, url, urlzip, checkPath)
-                                $.extend(filledVars, states); // Merge states into filledVars
-                            }
-                            autoCheck("fillstates")
-                        }
-                    }
-                };
-            }); 
-            return filledVars
+            if (systemInputFilled) return true
+            return false
         }
-        //## position where fillwithDefaults() finalized
-        var filledVars = fillHostFunc(autoFillJSON, "", {})
-        // fill $HOSTNAME ="default" states if not filled before(based on filledVars obj)
-        fillHostFunc(autoFillJSON, "default", filledVars)
-    });
+        if (jsonType == "pipeline"){
+            var ask = askAutoFill();
+            if (ask){
+                onchangechooseEnvFunc1()
+                var text = 'Would you like to update System Inputs according to selected run environment?';
+                var savedData = "";
+                var execFunc = function(savedData){
+                    onchangechooseEnvFunc2()
+                }
+                var btnText = "Yes";
+                showConfirmDeleteModal(text, savedData, execFunc, btnText)
+            } else {
+                sequentialUpdate(onchangechooseEnvFunc2)
+            } 
+        } else {
+            sequentialUpdate(onchangechooseEnvFunc2)
+        }
 
+    })
 }
 
 // to execute autofill function, binds event handlers to buttons other than chooseEnv
