@@ -27,12 +27,11 @@ if (isset($_REQUEST['id'])) {
 if ($p=="saveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $nextText = urldecode($_REQUEST['nextText']);
-    $eachExecConfig = urldecode($_REQUEST['eachExecConfig']);
     $proVarObj = urldecode($_REQUEST['proVarObj']);
     $runType = $_REQUEST['runType']; //"resumerun" or "newrun"
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
-    $data = $db->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $eachExecConfig, $ownerID);
+    $data = $db->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $ownerID);
 }
 else if ($p=="updateRunAttemptLog") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];

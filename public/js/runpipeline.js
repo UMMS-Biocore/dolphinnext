@@ -2536,7 +2536,18 @@ function insertProRowTable(process_id, gNum, procName, procQueDef, procMemDef, p
 //--Pipeline details table --
 function addProPipeTab(process_id, gNum, procName, pObj) {
     if (pObj && pObj !== window) {
-        procName = pObj.lastPipeName + "_" + procName;
+        var lastProcName = procName
+        var piGnum = pObj.MainGNum + "";
+        var piGnums = piGnum.split("_")
+        var procName = "";
+        for (var k = 0; k < piGnums.length; k++) {
+            var selectedGnums = piGnums.slice(0, k+1);
+            var mergedGnum = selectedGnums.join("_")
+            if (procName) procName += "_"
+            procName += window["pObj" + mergedGnum].lastPipeName;
+        }
+        if (procName) procName += "_"
+        procName += lastProcName;
     }    
     var procQueDef = 'short';
     var procMemDef = '10'
@@ -2546,6 +2557,28 @@ function addProPipeTab(process_id, gNum, procName, pObj) {
     var proRow = insertProRowTable(process_id, gNum, procName, procQueDef, procMemDef, procCpuDef, procTimeDef, procOptDef);
     $('#processTable > tbody:last-child').append(proRow);
 }
+
+//function getMergedProcessList() {
+//    var proList = $.extend(true, {}, window.processList);
+//    for (var p = 0; p < piGnumList.length; p++) {
+//var piGnum = piGnumList[p];
+//var piGnums = piGnum.split("_")
+//var lastpipeName = "";
+//for (var k = 0; k < piGnums.length; k++) {
+//    var selectedGnums = piGnums.slice(0, k+1);
+//    var mergedGnum = selectedGnums.join("_")
+//    if (lastpipeName) lastpipeName += "_"
+//    lastpipeName += window["pObj" + mergedGnum].lastPipeName;
+//}
+//        var proListPipe = $.extend(true, {}, window["pObj" + piGnum].processList);
+//        for (var key in proListPipe) {
+//            proListPipe[key] = lastpipeName + "_" + proListPipe[key]
+//        }
+//        proList = $.extend({}, proList, proListPipe);
+//    }
+//    return proList
+//}
+
 
 function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
     var id = piID
@@ -5261,22 +5294,9 @@ function runProPipeCall(checkType, uuid) {
     var proId = profileTypeId.replace(patt, '$2');
     proTypeWindow = proType;
     proIdWindow = proId;
-    var eachExecConfig = {};
     var [allProSett, profileData] = getJobData("both");
     var executor_job = profileData[0].executor_job;
     var executor = profileData[0].executor;
-    if ($('#exec_each').is(":checked") === true) {
-        var exec_each_settings = decodeURIComponent(formToJsonEachPro());
-        if (IsJsonString(exec_each_settings)) {
-            var exec_each_settings = JSON.parse(exec_each_settings);
-            $.each(exec_each_settings, function (el) {
-                var each_settings = exec_each_settings[el];
-                var processName = $("#" + el + " :nth-child(2)").text();
-                eachExecConfig[processName]= each_settings;
-            });
-        }
-    }
-    eachExecConfig = encodeURIComponent(JSON.stringify(eachExecConfig));
     var manualRunCheck = "false";
     if (window["manualRun"]){ 
         if (window["manualRun"] == "true"){
@@ -5292,7 +5312,6 @@ function runProPipeCall(checkType, uuid) {
             p: "saveRun",
             nextText: nextText,
             proVarObj: proVarObj,
-            eachExecConfig: eachExecConfig,
             project_pipeline_id: project_pipeline_id,
             runType: checkType,
             manualRun: manualRunCheck,

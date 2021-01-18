@@ -136,8 +136,16 @@ function getMainEdges(pObj) {
 function getMergedProcessList() {
     var proList = $.extend(true, {}, window.processList);
     for (var p = 0; p < piGnumList.length; p++) {
-        var lastpipeName = window["pObj" + piGnumList[p]].lastPipeName;
-        var proListPipe = $.extend(true, {}, window["pObj" + piGnumList[p]].processList);
+        var piGnum = piGnumList[p];
+        var piGnums = piGnum.split("_")
+        var lastpipeName = "";
+        for (var k = 0; k < piGnums.length; k++) {
+            var selectedGnums = piGnums.slice(0, k+1);
+            var mergedGnum = selectedGnums.join("_")
+            if (lastpipeName) lastpipeName += "_"
+            lastpipeName += window["pObj" + mergedGnum].lastPipeName;
+        }
+        var proListPipe = $.extend(true, {}, window["pObj" + piGnum].processList);
         for (var key in proListPipe) {
             proListPipe[key] = lastpipeName + "_" + proListPipe[key]
         }
@@ -436,11 +444,11 @@ function createNextflowFile(nxf_runmode, uuid) {
             }
         }
 
-        
-//        var output_dir = $runscope.getPubVal("report");
-//        if (output_dir) {
-//            nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
-//        }
+
+        //        var output_dir = $runscope.getPubVal("report");
+        //        if (output_dir) {
+        //            nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
+        //        }
         var proOptDiv = $('#ProcessPanel').children()[0];
         if (proOptDiv) {
             var process_opt = getProcessOpt();
