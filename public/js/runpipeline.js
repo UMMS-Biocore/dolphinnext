@@ -1417,7 +1417,10 @@ function hideProcessOptionsAsIcons (){
 //fill file/Val buttons
 function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
     var button = $(buttonText);
-    var checkDropDown = button.attr("id") == "dropDown";
+    var checkDropDown = false;
+    if (button.attr("indropdown")){
+        checkDropDown = true;
+    }
     var checkFileExist = button.css("display") == "none";
     //if  checkDropDown == false and checkFileExist == true then edit
     //if  checkDropDown == false and checkFileExist == false then insert
@@ -1444,7 +1447,7 @@ function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
             }
             checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
-        }
+        }  
     } else { // if value is empty:"" then remove from project pipeline input table
         if (keepExist == false) {
             var fillingType = "default";
@@ -2231,6 +2234,7 @@ function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier){
             prepareInsertInput(getProPipeInputs, rowID, firGnum, paraQualifier, fillingType);
         }
         if (getProPipeInputs.length > 1) {
+            console.log("remove in1")
             for (var k = 1; k < getProPipeInputs.length; k++) {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
             }
@@ -4524,7 +4528,17 @@ function checkReadytoRun(type) {
         p: "getProjectPipelineInputs",
         project_pipeline_id: project_pipeline_id,
     });
-    var numInputRows = $('#inputsTable > tbody').find('tr[id*=input]').length; //find input rows
+    var filledInputsCheck = false;
+    var allInputNames = [];
+    $('#inputsTable > tbody').find('td[given_name]').filter(function () {
+        allInputNames.push($(this).attr('given_name'))
+    });
+    var existingInputNames = $.map(getProPipeInputs, function(n,i){
+        return n.given_name;
+    });
+    allInputNames.sort();
+    existingInputNames.sort();
+    var filledInputsCheck = checkArraysEqual(allInputNames, existingInputNames);
     var profileNext = $('#chooseEnv').find(":selected").val();
     var cloudStatus = $('#chooseEnv').find(":selected").attr("status")
     var output_dir = $runscope.getPubVal("work");
@@ -4547,7 +4561,7 @@ function checkReadytoRun(type) {
     //    var gsStatus = checkCloudPatt("gs:", "#mRunGoogKeyDiv", '#mRunGoogKey', publish_dir, getProPipeInputs);
 
     //if ready and not running/waits/error
-    if (publishReady && s3Status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
+    if (publishReady && s3Status && filledInputsCheck && profileNext !== '' && output_dir !== '') {
         console.log("initial runStatus", runStatus)
         if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun") {
             if (cloudStatus) {

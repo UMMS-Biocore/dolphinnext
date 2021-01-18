@@ -1628,6 +1628,7 @@ else if ($p=="fillInput"){
         settype($inputID, 'integer');
         $input_id = $inputID;
     }
+//    $db->removeProjectPipelineInputByPipeAndName($project_pipeline_id, $given_name);
     //insert into project_pipeline_input table
     if (!empty($proPipeInputID)){
         $data = $db->updateProPipeInput($proPipeInputID, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $url_id, $urlzip_id, $checkpath_id, $ownerID);

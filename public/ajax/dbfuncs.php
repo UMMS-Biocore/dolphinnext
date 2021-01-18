@@ -3973,6 +3973,10 @@ class dbfuncs {
         $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function removeProjectPipelineInputByPipeAndName($id, $given_name) {
+        $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id' AND given_name= '$given_name'";
+        return self::runSQL($sql);
+    }
     function removeProjectPipelineInputByPipe($id) {
         $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id'";
         return self::runSQL($sql);
