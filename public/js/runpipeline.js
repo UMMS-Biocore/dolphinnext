@@ -2234,7 +2234,6 @@ function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier){
             prepareInsertInput(getProPipeInputs, rowID, firGnum, paraQualifier, fillingType);
         }
         if (getProPipeInputs.length > 1) {
-            console.log("remove in1")
             for (var k = 1; k < getProPipeInputs.length; k++) {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: getProPipeInputs[k].id });
             }
