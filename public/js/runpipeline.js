@@ -1417,7 +1417,10 @@ function hideProcessOptionsAsIcons (){
 //fill file/Val buttons
 function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
     var button = $(buttonText);
-    var checkDropDown = button.attr("id") == "dropDown";
+    var checkDropDown = false;
+    if (button.attr("indropdown")){
+        checkDropDown = true;
+    }
     var checkFileExist = button.css("display") == "none";
     //if  checkDropDown == false and checkFileExist == true then edit
     //if  checkDropDown == false and checkFileExist == false then insert
@@ -1444,7 +1447,7 @@ function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
                 var removeInput = getValues({ "p": "removeProjectPipelineInput", id: proPipeInputID });
             }
             checkInputInsert(data, gNumParam, given_name, qualifier, rowID, sType, inputID, null, url, urlzip, checkPath);
-        }
+        }  
     } else { // if value is empty:"" then remove from project pipeline input table
         if (keepExist == false) {
             var fillingType = "default";
@@ -1475,7 +1478,7 @@ function fillExecSettings(id, defName, type, inputName) {
     }
 }
 
-//run after page loads to fill if missing inputs
+//execute after page loads to fill missing inputs
 //reason-1: new input added into pipeline without changing rev
 //reason-2: run copied into new revision 
 function autofillEmptyInputs(autoFillJSON) {
@@ -1646,124 +1649,169 @@ function getJobData(getType) {
 
 // to execute autofill function, binds event handlers to chooseEnv
 function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
-    if (jsonType == "pipeline"){
-        $("#chooseEnv").bindFirst("change", function(){
-            var [allProSett, profileData] = getJobData("both");
-            // autofill def_publishdir and def_workdir
-            var def_publishdir = "";
-            var def_workdir = "";
-            var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
-            if (profileData) {
-                if (profileData[0]) {
-                    if (profileData[0].def_publishdir){
-                        def_publishdir = profileData[0].def_publishdir + "/work"+project_pipeline_id ; 
-                        $("#publish_dir").val(def_publishdir);
-                        updateCheckBox('#publish_dir_check', "true");
-                    } else {
-                        $("#publish_dir").val(def_publishdir);
-                        updateCheckBox('#publish_dir_check', "false");
+    $("#chooseEnv").bindFirst("change", function(){
+        var onchangechooseEnvFunc1 = function(){
+            if (jsonType == "pipeline"){
+                var [allProSett, profileData] = getJobData("both");
+                // autofill def_publishdir and def_workdir
+                var def_publishdir = "";
+                var def_workdir = "";
+                var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
+                if (profileData) {
+                    if (profileData[0]) {
+                        if (profileData[0].def_publishdir){
+                            def_publishdir = profileData[0].def_publishdir + "/work"+project_pipeline_id ; 
+                            $("#publish_dir").val(def_publishdir);
+                            updateCheckBox('#publish_dir_check', "true");
+                        } else {
+                            $("#publish_dir").val(def_publishdir);
+                            updateCheckBox('#publish_dir_check', "false");
+                        }
+                        if (profileData[0].def_workdir){
+                            def_workdir = profileData[0].def_workdir + "/work"+project_pipeline_id;
+                            $("#rOut_dir").val(def_workdir)
+                        }
                     }
-                    if (profileData[0].def_workdir){
-                        def_workdir = profileData[0].def_workdir + "/work"+project_pipeline_id;
-                        $("#rOut_dir").val(def_workdir)
+                }
+
+
+                // fillForm('#allProcessSettTable', 'input', allProSett);
+                $("input.execcheckbox").each(function(){
+                    $(this).prop('checked', false);
+                })
+                if (allProSett.job_cpu != null){
+                    $(".form-control.execcpu").each(function(){
+                        $(this).val(allProSett.job_cpu);
+                    })
+                }
+                if (allProSett.job_memory != null){
+                    $(".form-control.execmemory").each(function(){
+                        $(this).val(allProSett.job_memory);
+                    })
+                }
+                if (allProSett.job_queue != null){
+                    $(".form-control.execqueue").each(function(){
+                        $(this).val(allProSett.job_queue);
+                    })
+                }
+                if (allProSett.job_time != null){
+                    $(".form-control.exectime").each(function(){
+                        $(this).val(allProSett.job_time);
+                    })
+                }
+                if (allProSett.job_clu_opt != null){
+                    $(".form-control.execopt").each(function(){
+                        $(this).val(allProSett.job_clu_opt);
+                    })
+                }
+            }
+        }
+
+        var onchangechooseEnvFunc2 = function (){
+            console.log(autoFillJSON)
+            var fillHostFunc = function(autoFillJSON, type, filledVars) {
+                console.log(jsonType)
+                $.each(autoFillJSON, function (el) {
+                    var conds = autoFillJSON[el].condition;
+                    var states = autoFillJSON[el].statement;
+                    var url = autoFillJSON[el].url;
+                    var urlzip = autoFillJSON[el].urlzip;
+                    var checkPath = autoFillJSON[el].checkPath;
+                    if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
+                        //bind eventhandler to #chooseEnv
+                        if (conds.$HOSTNAME) {   
+                            var statusCond = checkConds(conds, type);
+                            if (statusCond === true) {
+                                if (type == "default"){
+                                    var not_filled_states = $.extend(true, {}, states);
+                                    var not_filled_url = $.extend(true, {}, url);
+                                    var not_filled_urlzip = $.extend(true, {}, urlzip);
+                                    var not_filled_checkPath = $.extend(true, {}, checkPath);
+                                    $.each(filledVars, function (filled_el) {
+                                        if (filled_el in not_filled_states){
+                                            delete not_filled_states[filled_el]; 
+                                        }
+                                        if (filled_el in not_filled_url){
+                                            delete not_filled_url[filled_el]; 
+                                        }
+                                        if (filled_el in not_filled_urlzip){
+                                            delete not_filled_urlzip[filled_el]; 
+                                        }
+                                        if (filled_el in not_filled_checkPath){
+                                            delete not_filled_checkPath[filled_el]; 
+                                        }
+                                        // if one of the following parameter is filled than don't use container info coming from default condition 
+                                        if (filled_el == "$SINGULARITY_IMAGE" || filled_el == "$DOCKER_IMAGE" || filled_el == "$SINGULARITY_OPTIONS" || filled_el == "$DOCKER_OPTIONS"){
+                                            delete not_filled_states["$SINGULARITY_IMAGE"]; 
+                                            delete not_filled_states["$SINGULARITY_OPTIONS"]; 
+                                            delete not_filled_states["$DOCKER_IMAGE"]; 
+                                            delete not_filled_states["$DOCKER_OPTIONS"]; 
+                                        }
+                                    });
+                                    console.log(states)
+                                    console.log(not_filled_states)
+                                    fillStates(not_filled_states, not_filled_url, not_filled_urlzip, not_filled_checkPath)
+                                } else {
+                                    fillStates(states, url, urlzip, checkPath)
+                                    $.extend(filledVars, states); // Merge states into filledVars
+                                }
+                                autoCheck("fillstates")
+                            }
+                        }
+                    };
+                }); 
+                return filledVars
+            }
+            //## position where fillwithDefaults() finalized
+            var filledVars = fillHostFunc(autoFillJSON, "", {})
+            // fill $HOSTNAME ="default" states if not filled before(based on filledVars obj)
+            fillHostFunc(autoFillJSON, "default", filledVars)
+        }
+
+
+        var sequentialUpdate = function(callback){
+            onchangechooseEnvFunc1()
+            callback()
+        }
+
+        var askAutoFill = function(){
+            // check if system inputs are filled.
+            // if no systemInputs found then don't ask 
+            if (systemInputs.length < 1) return false;
+            // if filled systemInputs found then ask 
+            var systemInputFilled = false;
+            for (var t = 0; t < systemInputs.length; t++) {
+                var checkVarName = $("#inputsTab").find("td[given_name='" + systemInputs[t] + "']")[0];
+                if (checkVarName) {
+                    var varNameBut = $(checkVarName).find(".firstsec >");
+                    var checkFileValExist = varNameBut.css("display") == "none";
+                    if (checkFileValExist){
+                        systemInputFilled = true
                     }
                 }
             }
-
-            $("input.execcheckbox").each(function(){
-                $(this).prop('checked', false);
-            })
-            if (allProSett.job_cpu != null){
-                $(".form-control.execcpu").each(function(){
-                    $(this).val(allProSett.job_cpu);
-                })
-            }
-            if (allProSett.job_memory != null){
-                $(".form-control.execmemory").each(function(){
-                    $(this).val(allProSett.job_memory);
-                })
-            }
-            if (allProSett.job_queue != null){
-                $(".form-control.execqueue").each(function(){
-                    $(this).val(allProSett.job_queue);
-                })
-            }
-            if (allProSett.job_time != null){
-                $(".form-control.exectime").each(function(){
-                    $(this).val(allProSett.job_time);
-                })
-            }
-            if (allProSett.job_clu_opt != null){
-                $(".form-control.execopt").each(function(){
-                    $(this).val(allProSett.job_clu_opt);
-                })
-            }
-
-
-
-        });
-    }
-    $("#chooseEnv").change(autoFillJSON, function () {
-        console.log(autoFillJSON)
-        var fillHostFunc = function(autoFillJSON, type, filledVars) {
-            console.log(jsonType)
-            $.each(autoFillJSON, function (el) {
-                var conds = autoFillJSON[el].condition;
-                var states = autoFillJSON[el].statement;
-                var url = autoFillJSON[el].url;
-                var urlzip = autoFillJSON[el].urlzip;
-                var checkPath = autoFillJSON[el].checkPath;
-                if (conds && states && !$.isEmptyObject(conds) && !$.isEmptyObject(states)) {
-                    //bind eventhandler to #chooseEnv
-                    if (conds.$HOSTNAME) {   
-                        var statusCond = checkConds(conds, type);
-                        if (statusCond === true) {
-                            if (type == "default"){
-                                var not_filled_states = $.extend(true, {}, states);
-                                var not_filled_url = $.extend(true, {}, url);
-                                var not_filled_urlzip = $.extend(true, {}, urlzip);
-                                var not_filled_checkPath = $.extend(true, {}, checkPath);
-                                $.each(filledVars, function (filled_el) {
-                                    if (filled_el in not_filled_states){
-                                        delete not_filled_states[filled_el]; 
-                                    }
-                                    if (filled_el in not_filled_url){
-                                        delete not_filled_url[filled_el]; 
-                                    }
-                                    if (filled_el in not_filled_urlzip){
-                                        delete not_filled_urlzip[filled_el]; 
-                                    }
-                                    if (filled_el in not_filled_checkPath){
-                                        delete not_filled_checkPath[filled_el]; 
-                                    }
-                                    // if one of the following parameter is filled than don't use container info coming from default condition 
-                                    if (filled_el == "$SINGULARITY_IMAGE" || filled_el == "$DOCKER_IMAGE" || filled_el == "$SINGULARITY_OPTIONS" || filled_el == "$DOCKER_OPTIONS"){
-                                        delete not_filled_states["$SINGULARITY_IMAGE"]; 
-                                        delete not_filled_states["$SINGULARITY_OPTIONS"]; 
-                                        delete not_filled_states["$DOCKER_IMAGE"]; 
-                                        delete not_filled_states["$DOCKER_OPTIONS"]; 
-                                    }
-                                });
-                                console.log(states)
-                                console.log(not_filled_states)
-                                fillStates(not_filled_states, not_filled_url, not_filled_urlzip, not_filled_checkPath)
-                            } else {
-                                fillStates(states, url, urlzip, checkPath)
-                                $.extend(filledVars, states); // Merge states into filledVars
-                            }
-                            autoCheck("fillstates")
-                        }
-                    }
-                };
-            }); 
-            return filledVars
+            if (systemInputFilled) return true
+            return false
         }
-        //## position where fillwithDefaults() finalized
-        var filledVars = fillHostFunc(autoFillJSON, "", {})
-        // fill $HOSTNAME ="default" states if not filled before(based on filledVars obj)
-        fillHostFunc(autoFillJSON, "default", filledVars)
-    });
+        if (jsonType == "pipeline"){
+            var ask = askAutoFill();
+            if (ask){
+                onchangechooseEnvFunc1()
+                var text = 'Would you like to update System Inputs according to selected run environment?';
+                var savedData = "";
+                var execFunc = function(savedData){
+                    onchangechooseEnvFunc2()
+                }
+                var btnText = "Yes";
+                showConfirmDeleteModal(text, savedData, execFunc, btnText)
+            } else {
+                sequentialUpdate(onchangechooseEnvFunc2)
+            } 
+        } else {
+            sequentialUpdate(onchangechooseEnvFunc2)
+        }
 
+    })
 }
 
 // to execute autofill function, binds event handlers to buttons other than chooseEnv
@@ -2491,7 +2539,18 @@ function insertProRowTable(process_id, gNum, procName, procQueDef, procMemDef, p
 //--Pipeline details table --
 function addProPipeTab(process_id, gNum, procName, pObj) {
     if (pObj && pObj !== window) {
-        procName = pObj.lastPipeName + "_" + procName;
+        var lastProcName = procName
+        var piGnum = pObj.MainGNum + "";
+        var piGnums = piGnum.split("_")
+        var procName = "";
+        for (var k = 0; k < piGnums.length; k++) {
+            var selectedGnums = piGnums.slice(0, k+1);
+            var mergedGnum = selectedGnums.join("_")
+            if (procName) procName += "_"
+            procName += window["pObj" + mergedGnum].lastPipeName;
+        }
+        if (procName) procName += "_"
+        procName += lastProcName;
     }    
     var procQueDef = 'short';
     var procMemDef = '10'
@@ -2501,6 +2560,28 @@ function addProPipeTab(process_id, gNum, procName, pObj) {
     var proRow = insertProRowTable(process_id, gNum, procName, procQueDef, procMemDef, procCpuDef, procTimeDef, procOptDef);
     $('#processTable > tbody:last-child').append(proRow);
 }
+
+//function getMergedProcessList() {
+//    var proList = $.extend(true, {}, window.processList);
+//    for (var p = 0; p < piGnumList.length; p++) {
+//var piGnum = piGnumList[p];
+//var piGnums = piGnum.split("_")
+//var lastpipeName = "";
+//for (var k = 0; k < piGnums.length; k++) {
+//    var selectedGnums = piGnums.slice(0, k+1);
+//    var mergedGnum = selectedGnums.join("_")
+//    if (lastpipeName) lastpipeName += "_"
+//    lastpipeName += window["pObj" + mergedGnum].lastPipeName;
+//}
+//        var proListPipe = $.extend(true, {}, window["pObj" + piGnum].processList);
+//        for (var key in proListPipe) {
+//            proListPipe[key] = lastpipeName + "_" + proListPipe[key]
+//        }
+//        proList = $.extend({}, proList, proListPipe);
+//    }
+//    return proList
+//}
+
 
 function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
     var id = piID
@@ -4446,7 +4527,17 @@ function checkReadytoRun(type) {
         p: "getProjectPipelineInputs",
         project_pipeline_id: project_pipeline_id,
     });
-    var numInputRows = $('#inputsTable > tbody').find('tr[id*=input]').length; //find input rows
+    var filledInputsCheck = false;
+    var allInputNames = [];
+    $('#inputsTable > tbody').find('td[given_name]').filter(function () {
+        allInputNames.push($(this).attr('given_name'))
+    });
+    var existingInputNames = $.map(getProPipeInputs, function(n,i){
+        return n.given_name;
+    });
+    allInputNames.sort();
+    existingInputNames.sort();
+    var filledInputsCheck = checkArraysEqual(allInputNames, existingInputNames);
     var profileNext = $('#chooseEnv').find(":selected").val();
     var cloudStatus = $('#chooseEnv').find(":selected").attr("status")
     var output_dir = $runscope.getPubVal("work");
@@ -4469,7 +4560,7 @@ function checkReadytoRun(type) {
     //    var gsStatus = checkCloudPatt("gs:", "#mRunGoogKeyDiv", '#mRunGoogKey', publish_dir, getProPipeInputs);
 
     //if ready and not running/waits/error
-    if (publishReady && s3Status && getProPipeInputs.length >= numInputRows && profileNext !== '' && output_dir !== '') {
+    if (publishReady && s3Status && filledInputsCheck && profileNext !== '' && output_dir !== '') {
         console.log("initial runStatus", runStatus)
         if (runStatus == "" || checkType === "rerun" || checkType === "newrun" || checkType === "resumerun") {
             if (cloudStatus) {
@@ -5216,22 +5307,9 @@ function runProPipeCall(checkType, uuid) {
     var proId = profileTypeId.replace(patt, '$2');
     proTypeWindow = proType;
     proIdWindow = proId;
-    var eachExecConfig = {};
     var [allProSett, profileData] = getJobData("both");
     var executor_job = profileData[0].executor_job;
     var executor = profileData[0].executor;
-    if ($('#exec_each').is(":checked") === true) {
-        var exec_each_settings = decodeURIComponent(formToJsonEachPro());
-        if (IsJsonString(exec_each_settings)) {
-            var exec_each_settings = JSON.parse(exec_each_settings);
-            $.each(exec_each_settings, function (el) {
-                var each_settings = exec_each_settings[el];
-                var processName = $("#" + el + " :nth-child(2)").text();
-                eachExecConfig[processName]= each_settings;
-            });
-        }
-    }
-    eachExecConfig = encodeURIComponent(JSON.stringify(eachExecConfig));
     var manualRunCheck = "false";
     if (window["manualRun"]){ 
         if (window["manualRun"] == "true"){
@@ -5247,7 +5325,6 @@ function runProPipeCall(checkType, uuid) {
             p: "saveRun",
             nextText: nextText,
             proVarObj: proVarObj,
-            eachExecConfig: eachExecConfig,
             project_pipeline_id: project_pipeline_id,
             runType: checkType,
             manualRun: manualRunCheck,
@@ -8232,10 +8309,10 @@ $(document).ready(function () {
                 var searchURL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=sra&usehistory=y&retmode=json&term='+geo_id;
                 var succCheck1 = false;
                 $.ajax({
-                    crossOrigin: true,
-                    proxy: "ajax/proxy.php",
-                    url: searchURL,
-                    context: {},
+                    type: "POST",
+                    url: "ajax/ajaxquery.php",
+                    data: { p: "getRemoteData", url : searchURL} ,
+                    async: true,
                     error: function (jqXHR, exception) {
                         reportAjaxError(jqXHR, exception, searchURL)
                     },
@@ -8257,10 +8334,10 @@ $(document).ready(function () {
                                         succCheck1 = true;
                                         var succCheck2 = false;
                                         $.ajax({
-                                            crossOrigin: true,
-                                            proxy: "ajax/proxy.php",
-                                            url: resultsURL,
-                                            context: {},
+                                            type: "POST",
+                                            url: "ajax/ajaxquery.php",
+                                            data: { p: "getRemoteData", url : resultsURL} ,
+                                            async: true,
                                             error: function (jqXHR, exception) {
                                                 reportAjaxError(jqXHR, exception, resultsURL)
                                             },

@@ -3,7 +3,9 @@ error_reporting(E_ERROR);
 error_reporting(E_ALL);
 ini_set('report_errors','on');
 require_once(__DIR__."/../ajax/dbfuncs.php");
+
 $query=new dbfuncs();
+
 function checkLDAP($emailusername, $password){
     $ldapserver = LDAP_SERVER;
     $dn_string = DN_STRING;
@@ -137,6 +139,12 @@ if(isset($_POST['login'])){
                 $_SESSION['name'] = $name;
                 $_SESSION['ownerID'] = $id;
                 $_SESSION['role'] = $role;
+                // send cookie
+                $token = $query->signJWTToken($id);
+                if (!empty($token)){
+                    setcookie('jwt-dolphinnext', $token, time()+60*60*24*365, "/");
+                }
+
                 if (!empty(SSO_LOGIN)){
                     header('Location: ' . BASE_PATH."/php/after-sso.php");
                 } else {

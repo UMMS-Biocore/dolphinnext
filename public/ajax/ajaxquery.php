@@ -27,12 +27,11 @@ if (isset($_REQUEST['id'])) {
 if ($p=="saveRun"){
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $nextText = urldecode($_REQUEST['nextText']);
-    $eachExecConfig = urldecode($_REQUEST['eachExecConfig']);
     $proVarObj = urldecode($_REQUEST['proVarObj']);
     $runType = $_REQUEST['runType']; //"resumerun" or "newrun"
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
-    $data = $db->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $eachExecConfig, $ownerID);
+    $data = $db->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $ownerID);
 }
 else if ($p=="updateRunAttemptLog") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
@@ -129,7 +128,14 @@ else if ($p=="retryRsync"){
     $target_dir = $_REQUEST['dir'];
     $run_env = $_REQUEST['run_env'];
     $data = $db->retryRsync($fileName, $target_dir, $run_env, $email, $ownerID);
-
+}
+else if ($p=="getRemoteData"){
+    $url  = $_REQUEST['url'];
+    $data= array();
+    if (!empty($ownerID)){
+        $data = $db->getRemoteData($url);
+    }
+    $data = json_encode($data);
 }
 else if ($p=="getReportData"){
     $uuid  = $_REQUEST['uuid'];
@@ -523,6 +529,11 @@ else if ($p=="saveGoogleUser"){
     if (!empty($id)) {
         $_SESSION['ownerID'] = $id;
         $_SESSION['role'] = $role;
+        // send cookie 
+        $token = $db->signJWTToken($id);
+        if (!empty($token)){
+            setcookie('jwt-dolphinnext', $token, time()+60*60*24*365, "/");
+        }
     }
     $data = json_encode("done");
     session_write_close();
@@ -1617,6 +1628,7 @@ else if ($p=="fillInput"){
         settype($inputID, 'integer');
         $input_id = $inputID;
     }
+//    $db->removeProjectPipelineInputByPipeAndName($project_pipeline_id, $given_name);
     //insert into project_pipeline_input table
     if (!empty($proPipeInputID)){
         $data = $db->updateProPipeInput($proPipeInputID, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $url_id, $urlzip_id, $checkpath_id, $ownerID);

@@ -16,6 +16,10 @@ if (!empty($sec)){
     define('PEPPER', $sec['PEPPER']);  
     define('MASTER', $sec['MASTER']);  
     define('VERIFY', $sec['VERIFY']);  
+    $JWT_SECRET= isset($sec['JWT_SECRET']) ? $sec['JWT_SECRET'] : "";
+    $JWT_COOKIE_EXPIRES_IN= isset($sec['JWT_COOKIE_EXPIRES_IN']) ? $sec['JWT_COOKIE_EXPIRES_IN'] : 365;
+    define('JWT_SECRET', $JWT_SECRET);  
+    define('JWT_COOKIE_EXPIRES_IN', $JWT_COOKIE_EXPIRES_IN);  
 }
 $secConf = $secRaw['CONFIG'];
 if (!empty($secConf)){

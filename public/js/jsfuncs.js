@@ -861,7 +861,7 @@ if ($('#signinbtn').length && $('#basepathinfo').attr('sso_login') === "1") {
 //        var SSO_URL = $('#basepathinfo').attr('sso_url');
 //        var CLIENT_ID = $('#basepathinfo').attr('client_id');
 //        var BASEPATH = $('#basepathinfo').attr('basepath');
-//        var SSO_REDIRECT_URL = `${BASEPATH}/api/service.php?func=receivetoken`;
+//        var SSO_REDIRECT_URL = `${BASEPATH}/php/receivetoken.php`;
 //        var SSO_FINAL_URL = `${SSO_URL}/dialog/authorize?redirect_uri=${SSO_REDIRECT_URL}&response_type=code&client_id=${CLIENT_ID}&scope=offline_access`;
 //        popupwindow(SSO_FINAL_URL, 'Login', 650, 800);
 //    });

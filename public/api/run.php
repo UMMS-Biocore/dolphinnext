@@ -271,7 +271,7 @@ class Run
         }
         $runOpt[0]->{'run_opt'} = str_replace('\\', '\\\\', $runOpt[0]->{'run_opt'});
         $runOptData = json_decode($runOpt[0]->{'run_opt'});
-        $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
+//        $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
         $proVarObj = htmlspecialchars_decode($runOptData->{'proVarObj'}, ENT_QUOTES); 
         $manualRun = "false"; 
         $runType = "newrun"; //"resumerun" or "newrun"
@@ -286,7 +286,7 @@ class Run
             return null;
         }
         if (!empty($nextText) && !empty($uuid)){
-            $data = $dbfuncs->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $eachExecConfig, $ownerID);
+            $data = $dbfuncs->saveRun($project_pipeline_id, $nextText, $runType,$manualRun, $uuid, $proVarObj, $ownerID);
             if (!empty($data)) {
                 $run_url = "{$this->BASE_PATH}/index.php?np=3&id=".$project_pipeline_id;
                 $ret["status"] = "initiated";

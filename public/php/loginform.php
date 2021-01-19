@@ -62,7 +62,7 @@
                         echo '<div style="margin:auto; width:50%;  height:120px; padding-top:20px;">';
                         echo '<div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div>';
                         if (!empty(SSO_LOGIN)){
-                            $SSO_LOGIN_URL = SSO_URL."/dialog/authorize?redirect_uri=".BASE_PATH."/api/service.php?func=receivetoken&response_type=code&client_id=".CLIENT_ID."&scope=offline_access";
+                            $SSO_LOGIN_URL = SSO_URL."/dialog/authorize?redirect_uri=".BASE_PATH."/php/receivetoken.php&response_type=code&client_id=".CLIENT_ID."&scope=offline_access";
                         echo '<a style="width:200px; margin-top:10px;" id="ssosigninbtn" href="'.$SSO_LOGIN_URL.'" class="btn btn-default"><i style="padding-right:25px;" class="fa fa-lock" aria-hidden="true"></i> Sign In with SSO </a>';
                         }
                         

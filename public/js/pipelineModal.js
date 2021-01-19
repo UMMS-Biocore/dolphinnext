@@ -1151,8 +1151,68 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
     }
 };
 
-function updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList, proID) {
+function refreshAllD3Processes(proID, pName){
+    var processDat = pName + '@' + proID;
+    var eachGNum = 3;
+    var allprocesses = $('#mainG').find(".bc-" + proID);
+    for (var k = 0; k < allprocesses.length; k++) {
+        var allGnum = $(allprocesses[k]).attr("id");
+        var eachGNum = allGnum.replace("bc-","")
+        var proText = $("#text-"+eachGNum).attr("name")
+        console.log(proText)
+        if (eachGNum.match(/-/)) { //for pipeline module windows
+            var coorProRaw = d3.select("#g" + eachGNum)[0][0].attributes.transform.value;
+        } else {
+            var coorProRaw = d3.select("#g-" + eachGNum)[0][0].attributes.transform.value;
+        }
+        var PattCoor = /translate\((.*),(.*)\)/; //417.6,299.6
+        var xProCoor = coorProRaw.replace(PattCoor, '$1');
+        var yProCoor = coorProRaw.replace(PattCoor, '$2');
+        var d3main = d3.transform(d3.select('#' + "mainG").attr("transform"));
+        var scale = d3main.scale[0];
+        var translateX = d3main.translate[0];
+        var translateY = d3main.translate[1];
+        var lastGnum = gNum;
+        var xCor = xProCoor * scale + 30 - r - ior + translateX;
+        var yCor = yProCoor * scale + 10 - r - ior + translateY;
+        remove('del-' + eachGNum);
+        addProcess(processDat, xCor, yCor);
+        recoverEdges(eachGNum, proID, lastGnum);
+        // rename process after insert
+        renameTextID = "text-"+lastGnum //text-22
+        renameText = proText
+        $("#mRenName").val(proText)
+        changeName()
+    }
+}
 
+function refreshD3Process(gNumInfo, proID, pName ){
+    var processDat = pName + '@' + proID;
+    remove('del-' + gNumInfo);
+    var d3main = d3.transform(d3.select('#' + "mainG").attr("transform"));
+    var scale = d3main.scale[0];
+    var translateX = d3main.translate[0];
+    var translateY = d3main.translate[1];
+    var lastGnum = gNum;
+    var xCor = $('#selectProcess').attr("xCoor") * scale + 30 - r - ior + translateX;
+    var yCor = $('#selectProcess').attr("yCoor") * scale + 10 - r - ior + translateY;
+    addProcess(processDat, xCor, yCor);
+    recoverEdges(gNumInfo, proID, lastGnum);
+}
+
+function checkProParaUpdate(inputsBefore, outputsBefore, proID, pName) {
+    // update all D3 process circles in the workflow
+    if (proID && pName){
+        var inputsAfter = getValues({ p: "getInputsPP", "process_id": proID });
+        var outputsAfter = getValues({ p: "getOutputsPP", "process_id": proID });
+        //check if new id is added or propara is removed
+        if (JSON.stringify(inputsBefore) !== JSON.stringify(inputsAfter) || JSON.stringify(outputsBefore) !== JSON.stringify(outputsAfter)){
+            refreshAllD3Processes(proID, pName)
+        }
+    }
+}
+
+function updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList) {
     //Find deleted input/outputs
     for (var i = 0; i < inputsBefore.length; i++) {
         if (ppIDinputList.indexOf(inputsBefore[i].id) < 0) {
@@ -1190,6 +1250,7 @@ function updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputLis
             });
         }
     }
+
 };
 
 function checkDeletion(proID) {
@@ -2143,6 +2204,8 @@ $(document).ready(function () {
     }());
 
 
+
+
     $("#addProcessModal").on('click', '#selectProcess', function (event) {
         event.preventDefault();
         var gNumInfo = $('#selectProcess').attr("gNum");
@@ -2150,17 +2213,7 @@ $(document).ready(function () {
         var lastProID = $('#selectProcess').attr("lastProID");
         var pName = $('#selectProcess').attr("pName");
         if (lastProID && lastProID !== firstProID) {
-            var processDat = pName + '@' + lastProID;
-            remove('del-' + gNumInfo);
-            var d3main = d3.transform(d3.select('#' + "mainG").attr("transform"));
-            var scale = d3main.scale[0];
-            var translateX = d3main.translate[0];
-            var translateY = d3main.translate[1];
-            var xCor = $('#selectProcess').attr("xCoor") * scale + 30 - r - ior + translateX;
-            var yCor = $('#selectProcess').attr("yCoor") * scale + 10 - r - ior + translateY;
-            var lastGNum = gNum;
-            addProcess(processDat, xCor, yCor);
-            recoverEdges(gNumInfo, lastProID, lastGNum);
+            refreshD3Process(gNumInfo, lastProID, pName);
         }
         autosave();
         $('#addProcessModal').modal('hide');
@@ -2738,7 +2791,8 @@ $(document).ready(function () {
                             var inputsBefore = getValues({ p: "getInputsPP", "process_id": proID });
                             var outputsBefore = getValues({ p: "getOutputsPP", "process_id": proID });
                             [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID, perms, group);
-                            updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList, proID);
+                            updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList);
+                            checkProParaUpdate(inputsBefore, outputsBefore, proID, proName);
                             refreshDataset();
                             $('#addProcessModal').modal('hide');
                         },
@@ -2815,7 +2869,8 @@ $(document).ready(function () {
                                 var inputsBefore = getValues({ p: "getInputsPP", "process_id": proID });
                                 var outputsBefore = getValues({ p: "getOutputsPP", "process_id": proID });
                                 [ppIDinputList, ppIDoutputList] = addProParatoDB(data, startPoint, proID, perms, group);
-                                updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList, proID);
+                                updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList);
+                                checkProParaUpdate(inputsBefore, outputsBefore, proID, proName);
                                 refreshDataset();
                                 $('#confirmRevision').modal('hide');
                                 $('#addProcessModal').modal('hide');

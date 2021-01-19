@@ -1,6 +1,7 @@
 <?php
 require_once(__DIR__."/../api/funcs.php");
 require_once(__DIR__."/../../config/config.php");
+require_once(__DIR__."/../php/jwt.php");
 
 
 
@@ -23,6 +24,8 @@ class dbfuncs {
     private $next_ver = NEXTFLOW_VERSION;
     private $test_profile_group_id = TEST_PROFILE_GROUP_ID;
     private static $link;
+    private $JWT_SECRET = JWT_SECRET;
+    private $JWT_COOKIE_EXPIRES_IN = JWT_COOKIE_EXPIRES_IN;
 
     function __construct() {
         if (!isset(self::$link)) {
@@ -982,9 +985,8 @@ class dbfuncs {
         return $exec_next_all;
     }
 
-    function getMainRunOpt($proPipeAll,$profileId, $profileType,$eachExecConfig, $ownerID){
+    function getMainRunOpt($proPipeAll,$profileId, $profileType, $ownerID){
         $configText = "";
-
         // Step 1. Add process.executor
         // e.g. process.executor = 'lsf'
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
@@ -997,7 +999,7 @@ class dbfuncs {
         // Step 3. add general process settings
         $configText = $this->addGeneralConfigSettings($configText, $proPipeAll, $cluDataArr, $executor_job);
         // Step 4. add each process settings
-        $configText = $this->addEachConfigSettings($configText, $proPipeAll, $executor_job, $eachExecConfig);
+        $configText = $this->addEachConfigSettings($configText, $proPipeAll, $executor_job, $ownerID);
         return $configText;
     }
 
@@ -1015,7 +1017,99 @@ class dbfuncs {
         return $configText;
     }
 
-    function addEachConfigSettings($configText, $proPipeAll, $executor_job, $eachExecConfig){
+    function getPipelineNodeData($pipeData, $type, $id){
+        $ret = "";
+        if ($type == "main") $pipeObj = $pipeData["main_pipeline_$id"];
+        if ($type == "module") $pipeObj = $pipeData["pipeline_module_$id"];
+        if (!empty($pipeObj)) {
+            $pipeNodes = $pipeObj["nodes"];
+            $pipeNodes = preg_replace("/'/", '\"', $pipeNodes);
+            $pipeNodes = json_decode($pipeNodes, true);
+            if (!empty($pipeNodes)) {
+                $ret = $pipeNodes;
+            }
+        }
+        return $ret;
+    }
+
+    function getMergedProcessNameWithGnum($type, $pipeline_id, $pipeData, $processGnum, $pipelineGnum, $mergedProcessName){
+        // e.g. $processGnum: 177 -> process gnum 177 in main pipeline
+        // e.g. $pipelineGnum: 216 -> mainParentPipelineGnum=216
+        // e.g. $pipelineGnum: 216_16 -> mainParentPipelineGnum=216 childPipelineGnum=16
+        if (!empty($pipelineGnum)){
+            $pipelineGnumAr = explode("_", $pipelineGnum);
+            $pipelineGnum = $pipelineGnumAr[0];
+            $pipelineGnumRestAr = array_shift($pipelineGnumAr);
+            if (count($pipelineGnumAr) > 1){
+                $pipelineGnumRest = implode("_", $pipelineGnumRestAr);
+            } else if (count($pipelineGnumAr) == 1){
+                $pipelineGnumRest = $pipelineGnumAr[0];
+            } else {
+                $pipelineGnumRest = "";
+            }
+            
+            $pipeNodes = $this->getPipelineNodeData($pipeData, $type, $pipeline_id);
+            if (!empty($pipeNodes)) {
+                foreach ($pipeNodes as $proGnum => $settObj):
+                if ("g-$pipelineGnum" == $proGnum){
+                    $pipeModuleName = $settObj[3]; // module name
+                    if (!empty($mergedProcessName)) {
+                        $mergedProcessName = $mergedProcessName."_".$pipeModuleName;
+                    } else {
+                        $mergedProcessName = $pipeModuleName;
+                    }
+                    $pipeModuleID = $settObj[2]; // $pipeModuleID e.g. p22
+                    $pipeModuleID = preg_replace('/^p/', '', $pipeModuleID);
+                }
+                endforeach;
+            }
+            if (!empty($pipeModuleID)){
+                $mergedProcessName = $this->getMergedProcessNameWithGnum("module", $pipeModuleID, $pipeData, $processGnum, $pipelineGnumRest, $mergedProcessName);
+            }
+        } else {
+            $pipeNodes = $this->getPipelineNodeData($pipeData, $type, $pipeline_id);
+            if (!empty($pipeNodes)) {
+                foreach ($pipeNodes as $proGnum => $settObj):
+                if ("g-$processGnum" == $proGnum){
+                    $processName = $settObj[3]; // process name
+                    if (!empty($mergedProcessName)) {
+                        $mergedProcessName = $mergedProcessName."_".$processName;
+                    } else {
+                        $mergedProcessName = $processName;
+                    }
+                }
+                endforeach;
+            }
+        }
+        return $mergedProcessName;
+    }
+
+    function replaceProcGnumWithProcName($exec_each_settings, $pipeline_id, $ownerID){
+        $ret = array();
+        $pipeData = $this->exportPipeline($pipeline_id,$ownerID, "main", 0);
+        if (!empty($pipeData)) $pipeData = json_decode($pipeData, true);
+        foreach ($exec_each_settings as $processGnum => $configObj):
+        // procGnum format: procGnum-(proGnum)(p)(mainParentPipelineGnum)(_)(childPipelineGnum) 
+        // e.g. procGnum-177 -> process gnum 177 in main pipeline
+        // e.g. procGnum-11p216 -> process gnum 11 in mainParentPipelineGnum=216
+        // e.g. procGnum-21p216_16 -> process gnum 21 in mainParentPipelineGnum=216 childPipelineGnum=16
+        // note-1: propanelDiv 216(main pipeline gnum)
+        // note-2: propanelDiv 216_16(pipeline gnum=16 in pipeline gnum 216)
+        $processGnum = preg_replace('/^procGnum-/', '', $processGnum);
+        $pipelineGnum = "";
+        if (preg_match("/p/",$processGnum)){
+            $processGnumAr = explode("p", $processGnum);
+            $processGnum = $processGnumAr[0];
+            $pipelineGnum = $processGnumAr[1];
+        }
+        $processName = $this->getMergedProcessNameWithGnum("main", $pipeline_id, $pipeData, $processGnum, $pipelineGnum, "");
+        if (!empty($processName)) $ret[$processName] = $configObj;
+        endforeach;
+        return $ret;
+
+    }
+
+    function addEachConfigSettings($configText, $proPipeAll, $executor_job, $ownerID){
         // add each process settings
         // e.g. process {
         //      withName: bar { cpus = 32 } 
@@ -1024,11 +1118,14 @@ class dbfuncs {
         //      withName: bar { clusterOptions = '-E "file /project/umw_garberlab"' } 
         // }
         $exec_each = $proPipeAll[0]->{'exec_each'};
-        if ($exec_each == "true"){
-            $eachExecConfig = json_decode($eachExecConfig, true);
-            if (!empty($eachExecConfig)){
+        $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
+        $exec_each_settings = htmlspecialchars_decode($proPipeAll[0]->{'exec_each_settings'} , ENT_QUOTES); 
+        $exec_each_settings = json_decode($exec_each_settings, true);
+        if ($exec_each == "true" && !empty($exec_each_settings) && !empty($pipeline_id)){
+            $exec_each_settings = $this->replaceProcGnumWithProcName($exec_each_settings, $pipeline_id, $ownerID);
+            if (!empty($exec_each_settings)){
                 $configText .= "process {\n";
-                foreach ($eachExecConfig as $processName => $configObj):
+                foreach ($exec_each_settings as $processName => $configObj):
                 $time = $configObj['time'];
                 $queue = $configObj['queue'];
                 $cpu = $configObj['cpu'];
@@ -1778,7 +1875,7 @@ class dbfuncs {
 
 
 
-    function saveRun($project_pipeline_id, $nextText, $runType, $manualRun, $uuid, $proVarObj,$eachExecConfig, $ownerID){
+    function saveRun($project_pipeline_id, $nextText, $runType, $manualRun, $uuid, $proVarObj, $ownerID){
         $data = null;
         $permCheck = 1;
         //don't allow to update if user not own the project_pipeline.
@@ -1801,9 +1898,8 @@ class dbfuncs {
             $profileType = $profileAr[0];
             $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
             $initRunOptions = $this->getInitialRunOpt($proPipeAll,$profileId, $profileType,$ownerID);
-            $runConfig = $this->getMainRunOpt($proPipeAll,$profileId, $profileType,$eachExecConfig, $ownerID);
-
-            $this->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$proVarObj, $eachExecConfig, $ownerID);
+            $runConfig = $this->getMainRunOpt($proPipeAll,$profileId, $profileType, $ownerID);
+            $this->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$proVarObj, $ownerID);
             $amzConfigText = $this->getAmazonConfig($amazon_cre_id, $ownerID);
             list($initialConfigText,$initialRunParams) = $this->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
             $mainConfigText = $this->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
@@ -1864,14 +1960,13 @@ class dbfuncs {
         return self::runSQL($sql);
     }
 
-    function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $proVarObj,$eachExecConfig, $ownerID){
+    function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $proVarObj, $ownerID){
         $newObj = $proPipeAll[0];
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $newObj->{"summary"} = ""; // removed to protect json format
         $newObj->{"dmeta"} = ""; // removed to protect json format
         $newObj->{'project_pipeline_input'} = $allinputs;
         $newObj->{'proVarObj'} = htmlspecialchars($proVarObj, ENT_QUOTES);
-        $newObj->{'eachExecConfig'} = htmlspecialchars($eachExecConfig, ENT_QUOTES);
         foreach ($allinputs as $inputitem):
         $collection_id = $inputitem->{'collection_id'};
         $collection_arr = array();
@@ -3238,6 +3333,27 @@ class dbfuncs {
         $sql = "UPDATE google_credentials SET name='$name', project_id='$project_id', key_name='$key_name', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function signJWTToken($id){
+        $token = "";
+        $JWT_COOKIE_EXPIRES_IN = $this->JWT_COOKIE_EXPIRES_IN;
+        if (!empty($this->JWT_SECRET) && !empty($JWT_COOKIE_EXPIRES_IN)){
+            /* creating access token */
+            $issuedAt = time();
+            // jwt valid for 365 days
+            settype($JWT_COOKIE_EXPIRES_IN, 'integer');
+            $expirationTime = $issuedAt + 60 * 60 * 24 * $JWT_COOKIE_EXPIRES_IN;
+            $payload = array(
+                'id' => $id,
+                'iat' => $issuedAt,
+                'exp' => $expirationTime,
+            );
+
+            $JWT=new JWT();
+            $token = $JWT->encode($payload, $this->JWT_SECRET); 
+        }
+        return $token;
+    }
+
     //protect run/pipeline entrance 
     function insertToken($id, $np, $ownerID ){
         $token= $this->getKey(10);
@@ -3855,6 +3971,10 @@ class dbfuncs {
     }
     function removeProjectPipelineInput($id) {
         $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+    function removeProjectPipelineInputByPipeAndName($id, $given_name) {
+        $sql = "UPDATE project_pipeline_input SET deleted = 1, date_modified = now() WHERE project_pipeline_id = '$id' AND given_name= '$given_name'";
         return self::runSQL($sql);
     }
     function removeProjectPipelineInputByPipe($id) {
@@ -4671,6 +4791,12 @@ class dbfuncs {
         } else {
             return json_encode("Query failed! Please check your query, connection profile or internet connection");
         }
+    }
+
+    function getRemoteData($url){
+        $check_cmd = "curl -s '$url' 2>&1";
+        $log = shell_exec($check_cmd);
+        return $log;
     }
 
     function getSRRDataENA($srr_id) {
