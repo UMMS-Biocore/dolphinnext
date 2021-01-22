@@ -114,7 +114,7 @@ class dbfuncs {
     //$singu_save=true to overwrite on image
     function imageCmd($singu_cache, $img, $singu_save, $type, $profileType,$profileId, $runType, $dolphin_publish_real, $ownerID){
         $cmd = "";
-        $imgPath = "";
+        $imgPath = $img;
         $downPath = '$NXF_SINGULARITY_CACHEDIR';
         //full path
         if (substr($img,0,1) == "/") {
@@ -630,8 +630,10 @@ class dbfuncs {
             $containerType = 'docker';
         }
         $initialrun_img= $this->getInitialRunImg($docker_check);
+        error_log($initialrun_img);
         list($initImageCmd,$initImagePath) = $this->imageCmd($singu_cache, $initialrun_img, "", $containerType, $profileType,$profileId, $runType, $dolphin_publish_real, $ownerID);
-
+        error_log($initImageCmd);
+        error_log($initImagePath);
         return array($initImageCmd, $initImagePath);
     }
 
