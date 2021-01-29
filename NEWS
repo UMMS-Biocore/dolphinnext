@@ -1,3 +1,6 @@
+29.01.2021 Version 1.2.28
+GEO search upgraded. 
+
 07.01.2021 Version 1.2.27
 JWT cookie support added on login.
 JWT_SECRET and JWT_COOKIE_EXPIRES_IN parameters added to Dolphinnext section of .sec file.

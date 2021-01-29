@@ -630,10 +630,7 @@ class dbfuncs {
             $containerType = 'docker';
         }
         $initialrun_img= $this->getInitialRunImg($docker_check);
-        error_log($initialrun_img);
         list($initImageCmd,$initImagePath) = $this->imageCmd($singu_cache, $initialrun_img, "", $containerType, $profileType,$profileId, $runType, $dolphin_publish_real, $ownerID);
-        error_log($initImageCmd);
-        error_log($initImagePath);
         return array($initImageCmd, $initImagePath);
     }
 

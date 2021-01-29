@@ -8361,6 +8361,15 @@ $(document).ready(function () {
                                                                             runsJSON.Run = [runsJSON.Run];
                                                                         }
                                                                         for(var i = 0; i < runsJSON.Run.length; i++){
+                                                                            var collectionType = ""
+                                                                            if (expJSON.Library_descriptor && expJSON.Library_descriptor.LIBRARY_LAYOUT){
+                                                                                console.log(expJSON.Library_descriptor.LIBRARY_LAYOUT)
+                                                                                if (expJSON.Library_descriptor.LIBRARY_LAYOUT.PAIRED){
+                                                                                    collectionType = "pair";
+                                                                                } else {
+                                                                                    collectionType = "single";
+                                                                                }
+                                                                            }
                                                                             console.log(expJSON.Summary.Title)
                                                                             console.log(runsJSON.Run[i].attributes)
                                                                             if (expJSON.Summary.Title && runsJSON.Run[i].attributes){
@@ -8371,8 +8380,7 @@ $(document).ready(function () {
                                                                                     if (srr_id.match(/SRR/i)){
                                                                                         k++
                                                                                         var searchENAUrl = 'https://www.ebi.ac.uk/ena/portal/api/filereport?result=read_run&fields=fastq_ftp&format=JSON&accession='+srr_id;
-                                                                                        var collectionType =""
-                                                                                        deferredsData.push({srr_id: srr_id,name: sra_clean})
+                                                                                        deferredsData.push({srr_id: srr_id,name: sra_clean, collectionType: collectionType})
                                                                                         var waitingList = $('#viewGeoBut').data("waitingList")
                                                                                         if (!waitingList){
                                                                                             waitingList={};
@@ -8448,6 +8456,19 @@ $(document).ready(function () {
                                                             }
                                                         }
                                                         if (!succCheck3){
+                                                            if (deferredsData[i].collectionType){
+                                                                console.log("ncbi layout will be used.", deferredsData[i].collectionType)
+                                                                var waitingList = $('#viewGeoBut').data("waitingList")
+                                                                if (waitingList){
+                                                                    waitingList[deferredsData[i].srr_id] = "done";
+                                                                }
+                                                                $('#viewGeoBut').data("waitingList", waitingList);
+                                                                geoList.push({
+                                                                    srr_id: deferredsData[i].srr_id,
+                                                                    collection_type: deferredsData[i].collectionType,
+                                                                    name: deferredsData[i].name
+                                                                }) 
+                                                            }
                                                             if (typeof callback !== "function") {
                                                                 geoFailedList.push(deferredsData[i].srr_id)
                                                             }

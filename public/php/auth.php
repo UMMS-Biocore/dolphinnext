@@ -87,7 +87,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
         require_once("login.php");
         exit;
     }
-    
+
     $token = $_COOKIE['jwt-dolphinnext'];
     if (!empty($token) && $token != 'loggedout'){
         $JWT=new JWT();
@@ -110,6 +110,8 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
                 $_SESSION['name'] = $name;
                 $_SESSION['ownerID'] = $id;
                 $_SESSION['role'] = $role;
+                require_once("main.php");
+                exit;
             }
         }
     }
