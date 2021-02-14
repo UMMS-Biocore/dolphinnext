@@ -275,7 +275,7 @@ $DMETA_LABEL= DMETA_LABEL;
 <div id="runTabSection">
     <div id="runHistoryDiv" style="display:none; float:right;">
         <div style="float:right;  margin-left:5px; padding-top:8px;">
-            <a id="runHistoryConsole" data-toggle="tooltip" data-placement="bottom" data-original-title="Run History Management"><i class="fa fa-gear" style="font-size: 18px;"></i></a>
+            <a id="runHistoryConsole" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Management"><i class="fa fa-gear" style="font-size: 18px;"></i></a>
         </div>
         <div style="width:140px; float:right;">
             <select id="runVerLog" class="fbtn btn-default form-control"></select>
@@ -796,11 +796,12 @@ $DMETA_LABEL= DMETA_LABEL;
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Run History Management</h4>
+                <h4 class="modal-title">Run Management</h4>
             </div>
             <div class="modal-body">
                 <form class="form-horizontal" style="padding-left:15px;">
                     <div class="text-left" style="padding-top:10px;  padding-bottom:20px;">
+                        <a id="removeNewRunIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Remove New Run"><i class="glyphicon glyphicon-remove" style="font-size: 15px; margin-right:5px;"></i></a>
                         <a id="runHistoryRecIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Choose Run to Recover"><i class="glyphicon glyphicon-repeat" style="font-size: 15px; margin-right:5px;"></i></a>
                         <a id="runHistoryDelIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Choose Run to Delete"><i class="fa fa-trash-o" style="font-size: 18px; margin-right:5px;"></i></a>
                         <a id="runHistoryPurgeIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Choose Run to Purge (Permanently Delete)"><i class="fa fa-trash" style="font-size: 18px; margin-right:5px;"></i></a>

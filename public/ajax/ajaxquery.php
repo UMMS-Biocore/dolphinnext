@@ -613,28 +613,37 @@ else if ($p=="checkNewRunParam"){
                 }
             }
             //don't check these keys
-            $run_exclude = array("date_modified", "new_run", "summary", "project_name", "group_id", "perms","onload", "release_date", "pp_name");
-            $input_exclude = array("id");
-            foreach( $run_opt as $key => $value ) {
-                if (!in_array($key, $run_exclude)) {
-                    if( $value != $pipeData[ $key ] ) {
-                        error_log($key);
-                        $data = json_encode(1);
-                        break;
+//            $run_include = array("process_opt");
+//            foreach( $run_opt as $key => $value ) {
+//                if (in_array($key, $run_exclude)) {
+//                    if( $value != $pipeData[ $key ] ) {
+//                        $data = json_encode(1);
+//                        break;
+//                    }
+//                }
+//            }
+            // check run inputs
+            $run_input_given_name_arr = array();
+            $run_input_id_arr = array();
+            for ($i = 0; $i < count($run_input); $i++) {
+                foreach($run_input[$i] as $k => $v) {
+                    if ($k == "given_name"){
+                        $run_input_given_name_arr[] = $v;
+                    }
+                    if ($k == "id"){
+                        $run_input_id_arr[] = $v;
                     }
                 }
             }
-            for ($i = 0; $i < count($run_input); $i++) {
-                $inItem = $inputData[$i];
-                foreach($run_input[$i] as $k => $v) {
-                    if (!in_array($k, $input_exclude)) {
-                        if( $v != $inItem[$k] ) {
-                            error_log("$k $v");
-                            $data = json_encode(1);
-                            break;
-                        }
-                    }
-                } 
+            $run_input_dict = array_combine($run_input_given_name_arr, $run_input_id_arr);
+
+            for ($i = 0; $i < count($inputData); $i++) {
+                $inItemId = $inputData[$i]["id"];
+                $inItemName = $inputData[$i]["given_name"];
+                if ($run_input_dict[$inItemName] != $inItemId){
+                    $data = json_encode(1);
+                    break;
+                }
             }
         }
     }
@@ -1628,7 +1637,7 @@ else if ($p=="fillInput"){
         settype($inputID, 'integer');
         $input_id = $inputID;
     }
-//    $db->removeProjectPipelineInputByPipeAndName($project_pipeline_id, $given_name);
+    //    $db->removeProjectPipelineInputByPipeAndName($project_pipeline_id, $given_name);
     //insert into project_pipeline_input table
     if (!empty($proPipeInputID)){
         $data = $db->updateProPipeInput($proPipeInputID, $project_pipeline_id, $input_id, $project_id, $pipeline_id, $g_num, $given_name, $qualifier, $collection_id, $url_id, $urlzip_id, $checkpath_id, $ownerID);

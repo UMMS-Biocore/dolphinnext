@@ -5825,8 +5825,7 @@ function createNewRunFunc(newRunExist){
             data: {
                 p:"updateProjectPipelineNewRun",  
                 newrun:1, 
-                project_pipeline_id: project_pipeline_id,
-                run_log_uuid: run_log_uuid
+                project_pipeline_id: project_pipeline_id
             },
             cache: false,
             type: "POST",
@@ -7175,32 +7174,7 @@ $(function () {
         }
     }
 
-    function updateRunLogStat(run_log_uuid, projectpipelineOwn){
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: {p:"getRunLogStatus", uuid:run_log_uuid},
-            async: true,
-            success: function (s) {
-                if (s){
-                    if (s[0]){
-                        var run_status = s[0].run_status;
-                        var run_opt_check = s[0].run_opt_check;
-                        if (run_opt_check == "1" && projectpipelineOwn == "1"){
-                            toogleStatusMode("oneOption");
-                            runLogStatUpdate(run_status, "Opt");
-                        } else {
-                            toogleStatusMode("noOption");
-                            runLogStatUpdate(run_status, "NoOpt");
-                        }
-                    }
-                }
-            },
-            error: function (errorThrown) {
-                toastr.error("Error occured.");
-            }
-        }); 
-    }
+    
 
     function updateRunConfigTab(prevUID){
         var loadRunLogOpt = function (){
@@ -7529,6 +7503,35 @@ $(function () {
     });
 });
 
+function updateRunLogStat(run_log_uuid, projectpipelineOwn){
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {p:"getRunLogStatus", uuid:run_log_uuid},
+            async: true,
+            success: function (s) {
+                if (s){
+                    if (s[0]){
+                        var run_status = s[0].run_status;
+                        var run_opt_check = s[0].run_opt_check;
+                        console.log(run_status)
+                        console.log(run_opt_check)
+                        if (run_opt_check == "1" && projectpipelineOwn == "1"){
+                            toogleStatusMode("oneOption");
+                            runLogStatUpdate(run_status, "Opt");
+                        } else {
+                            toogleStatusMode("noOption");
+                            runLogStatUpdate(run_status, "NoOpt");
+                        }
+                    }
+                }
+            },
+            error: function (errorThrown) {
+                toastr.error("Error occured.");
+            }
+        }); 
+    }
+
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
     pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
@@ -7825,6 +7828,12 @@ $(document).ready(function () {
         }
         $(document).on('click', '#runHistoryConsole', function () {
             $('#runHistoryModal').modal("show");
+            var newRunExist =checkNewRunStatus();
+            if (newRunExist){
+                $('#removeNewRunIcon').css("display","inline");
+            } else {
+                $('#removeNewRunIcon').css("display","none");
+            }
         });
         $('#runHistoryModal').on('show.bs.modal', function () {
             $("#runHistoryModalBut").css("display","none");
@@ -7858,6 +7867,34 @@ $(document).ready(function () {
             $("#runHistoryModalBut").css("display","block");
             $("#runHistoryModalApply").data("info","recover");
             $("#runHistoryModalApply").text("Recover");
+        });
+        $('#runHistoryModal').on('click', '#removeNewRunIcon', function () {
+            $.ajax({
+                url: "ajax/ajaxquery.php",
+                data: {
+                    p:"updateProjectPipelineNewRun",  
+                    newrun:0, 
+                    project_pipeline_id: project_pipeline_id,
+                },
+                cache: false,
+                type: "POST",
+                success: function (data) {
+                    if(data){
+                        updateNewRunStatus("0");
+                        fillRunVerOpt('#runVerLog');
+                        $("#runVerLog").trigger("change");
+                        $("#removeNewRunIcon").css("display","none");
+                        showInfoModal("#infoMod","#infoModText", "New run removed from dropdown.");
+                    } else {
+                        toastr.error("Error occured.")
+                    }
+                },
+                error: function (jqXHR, exception) {
+                    toastr.error("Error occured.")
+                }
+            }); 
+
+
         });
         $('#editRunModal').on('click', '#editRunDetails', function () {
             var runName = $("#editRunName").val();
@@ -11106,7 +11143,7 @@ $(document).ready(function () {
                         backgroundcolorleave: "#ECF0F4",
                         height: "565px"
                     });
-                } else if (visType == "html" || visType == "pdf" || visType == "image" ) {
+                } else if (visType == "html" || visType == "pdf" || visType == "image" || visType == "rdata" ) {
                     var ext = getExtension(filePath);
                     var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
                     var checkIfValidIframeExt = function(ext){
