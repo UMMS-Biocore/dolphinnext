@@ -8721,6 +8721,7 @@ $(document).ready(function () {
                 if (stop === false && !ret.warnUser && ret.file_array.length && !warnUser) {
                     //new items come with prefix: _newItm_
                     var collection_name = $("#collection_id")[0].selectize.getItem(formObj.collection_id)[0].innerHTML;
+                    collection_name =cleanSpecChar(collection_name)
                     if (formObj.collection_id.match(/^_newItm_(.*)/)) {
                         var collection_data = getValues({ p: "saveCollection", name: collection_name })
                         if (collection_data.id) {
