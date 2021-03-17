@@ -814,6 +814,8 @@ class dbfuncs {
         $name = str_replace("<","_",$name);
         $name = str_replace(">","_",$name);
         $name = str_replace("-","_",$name);
+        $name = str_replace("'","_",$name);
+        $name = str_replace('"',"_",$name);
         $name = substr($name, 0, $limit);
         return $name;
     }
