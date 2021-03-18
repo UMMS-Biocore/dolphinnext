@@ -11067,7 +11067,6 @@ $(document).ready(function () {
                         tableStyle = "white-space: nowrap; table-layout:fixed;";
                     }
                     var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; overflow-x:auto; width:calc(100% - 35px);" class="table-responsive"><table style="'+headerStyle+' border:none;  width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '"><thead style="'+tableStyle+'" "></thead></table></div>';
-                    $(href).append(contentDiv)
                     $.ajax({
                         url: "ajax/ajaxquery.php",
                         data: {p:"getFileContent", uuid: uuid, filename: "pubweb/" + filePath},
@@ -11078,6 +11077,7 @@ $(document).ready(function () {
                         cache: false,
                         type: "POST",
                         success: function (data) {
+                            $(href).append(contentDiv)
                             var ext = getExtension(filePath);
                             var fixHeader = true;
                             var dataTableObj;
@@ -11105,8 +11105,11 @@ $(document).ready(function () {
                         },
                         error: function (errorThrown) {
                             hideLoadingDiv(href.substr(1))
-                            console.log("AJAX Error occured.", data)
-                            toastr.error("Error occured.");
+                            console.log("AJAX Error occured.")
+                            var content = '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' + fileid + '" id="downUrl-' + fileid + '" href="#">download</a> the file.</div>'; 
+                            var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + content + '</div>';
+                            $(href).append(contentDiv)
+                            bindEveHandlerIcon(fileid)
                         }
                     });
 
