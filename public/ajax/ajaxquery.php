@@ -1099,25 +1099,7 @@ else if ($p=="appendProfileVariables"){
 else if ($p=="getProfiles")
 {
     $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
-    if (empty($type)){
-        $proClu = $db->getProfileCluster($ownerID);
-        $proAmz = $db->getProfileAmazon($ownerID);
-        $proGoog = $db->getProfileGoogle($ownerID);
-    } else if ($type == "public"){
-        $proClu = $db->getPublicProfileCluster($ownerID);
-        $proAmz = $db->getPublicProfileAmazon($ownerID);
-        $proGoog = $db->getPublicProfileGoogle($ownerID);
-    } else if ($type == "run"){
-        $proClu = $db->getRunProfileCluster($ownerID);
-        $proAmz = $db->getRunProfileAmazon($ownerID);
-        $proGoog = $db->getRunProfileGoogle($ownerID);
-    }
-    $clu_obj = json_decode($proClu,true);
-    $amz_obj = json_decode($proAmz,true);
-    $goog_obj = json_decode($proGoog,true);
-    $merged = array_merge($clu_obj, $amz_obj);
-    $result = array_merge($goog_obj, $merged);
-    $data = json_encode($result);
+    $data = $db->getProfiles($type, $ownerID);
 }
 else if ($p=="getProfileCluster")
 {
