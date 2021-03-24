@@ -1048,7 +1048,7 @@ class dbfuncs {
             } else {
                 $pipelineGnumRest = "";
             }
-            
+
             $pipeNodes = $this->getPipelineNodeData($pipeData, $type, $pipeline_id);
             if (!empty($pipeNodes)) {
                 foreach ($pipeNodes as $proGnum => $settObj):
@@ -2600,8 +2600,8 @@ class dbfuncs {
                     $push = true;
                     $out = array_merge($feature, $out);
                 }
-                if ($push == true) $data[] = $out;
                 endforeach;
+                if ($push == true) $data[] = $out;
             }
             endforeach;
         }
@@ -3496,6 +3496,28 @@ class dbfuncs {
               GROUP BY f.id, f.name, f.files_used, f.file_dir, f.collection_type, f.archive_dir, f.s3_archive_dir, f.gs_archive_dir, f.date_created, f.date_modified, f.last_modified_user, f.file_type, f.run_env";
         return self::queryTable($sql);
     }
+    function getProfiles($type, $ownerID){
+        if (empty($type)){
+            $proClu = $this->getProfileCluster($ownerID);
+            $proAmz = $this->getProfileAmazon($ownerID);
+            $proGoog = $this->getProfileGoogle($ownerID);
+        } else if ($type == "public"){
+            $proClu = $this->getPublicProfileCluster($ownerID);
+            $proAmz = $this->getPublicProfileAmazon($ownerID);
+            $proGoog = $this->getPublicProfileGoogle($ownerID);
+        } else if ($type == "run"){
+            $proClu = $this->getRunProfileCluster($ownerID);
+            $proAmz = $this->getRunProfileAmazon($ownerID);
+            $proGoog = $this->getRunProfileGoogle($ownerID);
+        }
+        $clu_obj = json_decode($proClu,true);
+        $amz_obj = json_decode($proAmz,true);
+        $goog_obj = json_decode($proGoog,true);
+        $merged = array_merge($clu_obj, $amz_obj);
+        $result = array_merge($goog_obj, $merged);
+        return json_encode($result);
+    }
+
     function getPublicProfileCluster($ownerID) {
         $sql = "SELECT * FROM profile_cluster WHERE public = '1'";
         return self::queryTable($sql);
