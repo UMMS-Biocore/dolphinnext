@@ -1964,7 +1964,8 @@ class dbfuncs {
     function saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid, $proVarObj, $ownerID){
         $newObj = $proPipeAll[0];
         $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
-        $newObj->{"summary"} = ""; // removed to protect json format
+        // escape new lines
+        $newObj->{'summary'}= str_replace("\n", "</br>", $newObj->{"summary"});
         $newObj->{"dmeta"} = ""; // removed to protect json format
         $newObj->{'project_pipeline_input'} = $allinputs;
         $newObj->{'proVarObj'} = htmlspecialchars($proVarObj, ENT_QUOTES);
@@ -5112,6 +5113,27 @@ class dbfuncs {
     function updateProjectPipelineDmeta($id, $dmeta,$ownerID){
         $sql = "UPDATE project_pipeline SET dmeta='$dmeta', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
         return self::runSQL($sql);
+    }
+    function updateRunLogSummary($summary, $uuid, $ownerID){
+        $raw_data = json_decode($this->getRunLogOpt($uuid));
+        if (!empty($raw_data[0])){
+            $raw_data[0]->{'run_opt'} = str_replace('\\', '\\\\', $raw_data[0]->{'run_opt'});
+            $data = json_decode($raw_data[0]->{'run_opt'});
+            $data->{'summary'}= str_replace("\n", "</br>", $summary);
+            return $this->updateRunLogOpt(json_encode($data), $uuid, $ownerID);
+        }
+        return json_encode("");
+    }    
+
+    function updateProjectPipelineSummary($id, $uuid, $summary, $ownerID){
+        $last_uuid = $this->getProPipeLastRunUUID($id);
+        if ($uuid == "newrun" || $last_uuid == $uuid){
+            $sql = "UPDATE project_pipeline SET summary='$summary', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$id'";
+            return self::runSQL($sql);
+        } else {
+            return $this->updateRunLogSummary($summary, $uuid,$ownerID);
+        }
+
     }
     function updateProjectPipelineNewRun($project_pipeline_id,$new_run,$ownerID){
         $sql = "UPDATE project_pipeline SET new_run='$new_run', last_modified_user ='$ownerID', date_modified= now() WHERE id = '$project_pipeline_id'";

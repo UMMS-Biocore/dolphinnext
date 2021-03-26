@@ -305,6 +305,8 @@ $DMETA_LABEL= DMETA_LABEL;
                 <div class="row">
                     <div class="col-md-12">
                         <label>Run Description</label>
+                        <a><i id="editRunSum" class="fa fa-pencil" style="display: inline-block;"></i></a>
+                        <a><i id="saveRunSum" class="fa fa-check" style="display: none;"></i> </a>
                     </div>
                 </div>
             </div>

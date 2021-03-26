@@ -4049,6 +4049,8 @@ function loadRunSettings(pipeData){
     $('#publish_dir').val(pipeData[0].publish_dir);
     $('#chooseEnv').val(pipeData[0].profile);
     $('#runCmd').val(pipeData[0].cmd);
+    $('#runSum').val(decodeHtml(pipeData[0].summary).replaceAll("</br>","\r\n"));
+    disableRunSum()
     $('#docker_img').val(pipeData[0].docker_img);
     $('#docker_opt').val(pipeData[0].docker_opt);
     $('#singu_img').val(pipeData[0].singu_img);
@@ -4081,7 +4083,8 @@ function loadProjectPipeline(pipeData) {
     $('#creatorInfoPip').css('display', "block");
     $('#project-title').text(decodeHtml(pipeData[0].project_name));
     $('#run-title').changeVal(decodeHtml(pipeData[0].pp_name));
-    $('#runSum').val(decodeHtml(pipeData[0].summary));
+    $('#runSum').val(decodeHtml(pipeData[0].summary).replaceAll("</br>","\r\n"));
+    disableRunSum()
     $('#permsRun').val(pipeData[0].perms);
     $('#ownUserNamePip').text(pipeData[0].username);
     $('#datecreatedPip').text(pipeData[0].date_created);
@@ -4984,6 +4987,21 @@ $(document).on('click', '#runProPipeBut', function (e) {
 
 $(document).on('click', '#runProPipeBut2', function (e) {
     updateRunProPipeOptions()
+});
+
+function disableRunSum(){
+    $("#editRunSum").css("display", "inline-block")
+    $("#saveRunSum").css("display","none")
+    $("#runSum").prop('disabled', true);
+}
+
+$(document).on('click', '#editRunSum', function (e) {
+    $("#editRunSum").css("display", "none")
+    $("#saveRunSum").css("display","inline-block")
+    $("#runSum").prop('disabled', false);
+});
+$(document).on('click', '#saveRunSum', function (e) {
+    saveRunSum()
 });
 
 function displayButton(idButton) {
@@ -5900,6 +5918,20 @@ function saveRunIcon() {
             checkReadytoRun();
         }
     }
+}
+
+function saveRunSum(){
+    var runSummary = encodeURIComponent($('#runSum').val());
+    var uuid = $('#runVerLog').val();
+    $.ajax({
+        type: "POST",
+        url: "ajax/ajaxquery.php",
+        data: { id:project_pipeline_id, p:"saveRunSummary", uuid:uuid, summary:runSummary },
+        async: true,
+        success: function (s) {
+            disableRunSum()
+        }
+    })
 }
 
 function saveRun(sucFunc, showToastr) {
@@ -7174,7 +7206,7 @@ $(function () {
         }
     }
 
-    
+
 
     function updateRunConfigTab(prevUID){
         var loadRunLogOpt = function (){
@@ -7255,6 +7287,8 @@ $(function () {
                                     }
                                 }
                             }
+                        } else {
+                            console.log(pipe);
                         }
                     },
                     error: function (errorThrown) {
@@ -7504,33 +7538,33 @@ $(function () {
 });
 
 function updateRunLogStat(run_log_uuid, projectpipelineOwn){
-        $.ajax({
-            type: "POST",
-            url: "ajax/ajaxquery.php",
-            data: {p:"getRunLogStatus", uuid:run_log_uuid},
-            async: true,
-            success: function (s) {
-                if (s){
-                    if (s[0]){
-                        var run_status = s[0].run_status;
-                        var run_opt_check = s[0].run_opt_check;
-                        console.log(run_status)
-                        console.log(run_opt_check)
-                        if (run_opt_check == "1" && projectpipelineOwn == "1"){
-                            toogleStatusMode("oneOption");
-                            runLogStatUpdate(run_status, "Opt");
-                        } else {
-                            toogleStatusMode("noOption");
-                            runLogStatUpdate(run_status, "NoOpt");
-                        }
+    $.ajax({
+        type: "POST",
+        url: "ajax/ajaxquery.php",
+        data: {p:"getRunLogStatus", uuid:run_log_uuid},
+        async: true,
+        success: function (s) {
+            if (s){
+                if (s[0]){
+                    var run_status = s[0].run_status;
+                    var run_opt_check = s[0].run_opt_check;
+                    console.log(run_status)
+                    console.log(run_opt_check)
+                    if (run_opt_check == "1" && projectpipelineOwn == "1"){
+                        toogleStatusMode("oneOption");
+                        runLogStatUpdate(run_status, "Opt");
+                    } else {
+                        toogleStatusMode("noOption");
+                        runLogStatUpdate(run_status, "NoOpt");
                     }
                 }
-            },
-            error: function (errorThrown) {
-                toastr.error("Error occured.");
             }
-        }); 
-    }
+        },
+        error: function (errorThrown) {
+            toastr.error("Error occured.");
+        }
+    }); 
+}
 
 $(document).ready(function () {
     project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
@@ -7544,6 +7578,8 @@ $(document).ready(function () {
     // if user not own it, cannot change or delete run
     if (projectpipelineOwn !== "1") {
         $('#deleteRun').remove();
+        $('#editRunSum').remove();
+        $('#saveRunSum').remove();
         $('#moveRun').remove();
         $('#delRun').remove();
         $('#saveRunIcon').remove();

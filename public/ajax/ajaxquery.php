@@ -613,15 +613,15 @@ else if ($p=="checkNewRunParam"){
                 }
             }
             //don't check these keys
-//            $run_include = array("process_opt");
-//            foreach( $run_opt as $key => $value ) {
-//                if (in_array($key, $run_exclude)) {
-//                    if( $value != $pipeData[ $key ] ) {
-//                        $data = json_encode(1);
-//                        break;
-//                    }
-//                }
-//            }
+            //            $run_include = array("process_opt");
+            //            foreach( $run_opt as $key => $value ) {
+            //                if (in_array($key, $run_exclude)) {
+            //                    if( $value != $pipeData[ $key ] ) {
+            //                        $data = json_encode(1);
+            //                        break;
+            //                    }
+            //                }
+            //            }
             // check run inputs
             $run_input_given_name_arr = array();
             $run_input_id_arr = array();
@@ -1863,6 +1863,18 @@ else if ($p=="duplicateProcess"){
     $db->duplicateProcessParameter($new_pro_id, $old_id, $ownerID);
     $db->getUUIDAPI($data, "process", $new_pro_id);
 
+}
+else if ($p=="saveRunSummary"){
+    $data = json_encode("");
+    $uuid = $_REQUEST['uuid'];
+    $summary = isset($_REQUEST['summary']) ?  addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES)) : "";
+    if (!empty($id)) {
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (!empty($permCheck)){
+            $data = $db->updateProjectPipelineSummary($id, $uuid, $summary, $ownerID);
+        }
+    }
 }
 else if ($p=="saveProjectPipeline"){
     $pipeline_id = $_REQUEST['pipeline_id'];
