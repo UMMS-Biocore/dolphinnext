@@ -46,6 +46,7 @@ Contents:
    dolphinNext/known_issues
    dolphinNext/process
    dolphinNext/pipeline
+   dolphinNext/api
 
 .. _Administrator Guide:
 
@@ -55,6 +56,7 @@ Contents:
    :caption: Administrator Guide
 
    dolphinNext/admin_quick
+   dolphinNext/admin_rds
    dolphinNext/admin_faq
 
 
