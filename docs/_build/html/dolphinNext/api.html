@@ -1,0 +1,457 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>API v1 &mdash; DolphinNext v1.1.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/>
+        <link rel="next" title="Introduction" href="admin_quick.html"/>
+        <link rel="prev" title="Pipeline Guide" href="pipeline.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v1.1.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Short Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cite.html">How To Cite Us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.html">Google Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="public_ssh_key.html">Adding Public SSH Key</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="known_issues.html">Known Issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API v1</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#runs">Runs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#get-all-runs">Get All Runs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#get-a-run">Get a Run</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-a-run">Create a Run</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">Administrator Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="admin_quick.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin_faq.html">Frequently Asked Questions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>API v1</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/api.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="api-v1">
+<h1>API v1<a class="headerlink" href="#api-v1" title="Permalink to this headline">¶</a></h1>
+<p>DolphinNext API responses are in JSON format includes errors
+and HTTP response status codes to designate success and failure.</p>
+<div class="contents local topic" id="table-of-contents">
+<p class="topic-title first">Table of contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#runs" id="id1">Runs</a><ul>
+<li><a class="reference internal" href="#get-all-runs" id="id2">Get All Runs</a></li>
+<li><a class="reference internal" href="#get-a-run" id="id3">Get a Run</a></li>
+<li><a class="reference internal" href="#create-a-run" id="id4">Create a Run</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="runs">
+<h2>Runs<a class="headerlink" href="#runs" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="get-all-runs">
+<h3>Get All Runs<a class="headerlink" href="#get-all-runs" title="Permalink to this headline">¶</a></h3>
+<dl class="get">
+<dt id="get-URL-api-service.php?data=getRuns">
+<code class="descname">GET </code><code class="descname">{{URL}}/api/service.php?data=getRuns</code><a class="headerlink" href="#get-URL-api-service.php?data=getRuns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a list of all existing runs for the current logged in user.</p>
+<p><strong>Example request</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ curl -X GET <span class="s1">&#39;https://dolphinnext.umassmed.edu/api/service.php?data=getRuns&#39;</span> <span class="se">\</span>
+-H <span class="s1">&#39;Authorization: Bearer &lt;your-access-token&gt;&#39;</span>
+</pre></div>
+</div>
+<p><strong>Example response</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Build index (amazon)&quot;</span><span class="p">,</span>
+                <span class="nt">&quot;_id&quot;</span><span class="p">:</span> <span class="s2">&quot;234&quot;</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;UMIextract&quot;</span><span class="p">,</span>
+                <span class="nt">&quot;_id&quot;</span><span class="p">:</span> <span class="s2">&quot;249&quot;</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span>
+                <span class="nt">&quot;_id&quot;</span><span class="p">:</span> <span class="s2">&quot;250&quot;</span>
+            <span class="p">}</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="get-a-run">
+<h3>Get a Run<a class="headerlink" href="#get-a-run" title="Permalink to this headline">¶</a></h3>
+<dl class="get">
+<dt id="get--api-service.php?data=getRun&amp;id=(string-run_id)">
+<code class="descname">GET </code><code class="descname">/api/service.php?data=getRun&amp;id=</code><span class="sig-paren">(</span><em class="property">string: </em><em>run_id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-service.php?data=getRun&id=(string-run_id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve details of a single run.</p>
+<p><strong>Example request</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ curl -X GET <span class="se">\</span>
+<span class="s1">&#39;https://dolphinnext.umassmed.edu/api/service.php?data=getRun&amp;id=4311&#39;</span> <span class="se">\</span>
+-H <span class="s1">&#39;Authorization: Bearer &lt;your-access-token&gt;&#39;</span>
+</pre></div>
+</div>
+<p><strong>Example response</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;inputs&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;gtfFilePath&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;val&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;val&quot;</span><span class="p">:</span> <span class="s2">&quot;/share/data/umw_biocore/genome_data/human/hg38_gencode_v34/ucsc.gtf&quot;</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;mate&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;val&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;val&quot;</span><span class="p">:</span> <span class="s2">&quot;triple&quot;</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;genome_build&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;val&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;val&quot;</span><span class="p">:</span> <span class="s2">&quot;human_hg38_gencode_v34&quot;</span>
+                <span class="p">}</span>
+            <span class="p">],</span>
+            <span class="nt">&quot;dmetaOutput&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="nt">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;filename&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;feature&quot;</span><span class="p">:</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;analysis&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;g-109&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;UMI_count_final_after_star&quot;</span>
+                <span class="p">},</span>
+                <span class="p">{</span>
+                    <span class="nt">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;row&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;feature&quot;</span><span class="p">:</span> <span class="s2">&quot;column&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;sample_summary&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;g-124&quot;</span><span class="p">,</span>
+                    <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;summary&quot;</span>
+                <span class="p">}</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="create-a-run">
+<h3>Create a Run<a class="headerlink" href="#create-a-run" title="Permalink to this headline">¶</a></h3>
+<dl class="post">
+<dt id="post--api-service.php?run=startRun">
+<code class="descname">POST </code><code class="descname">/api/service.php?run=startRun</code><a class="headerlink" href="#post--api-service.php?run=startRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new run.</p>
+<p><strong>Example request</strong>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ curl -X POST <span class="se">\</span>
+<span class="s1">&#39;https://dolphinnext.umassmed.edu/api/service.php?run=startRun&#39;</span> <span class="se">\</span>
+-H <span class="s1">&#39;Authorization: Bearer &lt;your-access-token&gt;&#39;</span> <span class="se">\</span>
+-H <span class="s1">&#39;Content-Type: application/json&#39;</span> <span class="se">\</span>
+-d <span class="s1">&#39;</span>
+<span class="s1">    {</span>
+<span class="s1">        &quot;doc&quot;: {</span>
+<span class="s1">                  &quot;name&quot;: &quot;CB017_H2_V1_Bst_sc_iD_S1&quot;,</span>
+<span class="s1">                  &quot;tmplt_id&quot;: 3535,</span>
+<span class="s1">                  &quot;in&quot;: {</span>
+<span class="s1">                      &quot;reads&quot;: {</span>
+<span class="s1">                         &quot;name&quot;: &quot;indroptest&quot;,</span>
+<span class="s1">                         &quot;file_env&quot;: &quot;ghpcc06.umassrc.org&quot;,</span>
+<span class="s1">                         &quot;files_used&quot;: [</span>
+<span class="s1">                             [</span>
+<span class="s1">                                 &quot;VB74_NL2_S1_L001_R1_001.fastq.gz&quot;,</span>
+<span class="s1">                                 &quot;VB74_NL2_S1_L001_R2_001.fastq.gz&quot;,</span>
+<span class="s1">                                 &quot;VB74_NL2_S1_L001_R3_001.fastq.gz&quot;</span>
+<span class="s1">                             ],</span>
+<span class="s1">                             [</span>
+<span class="s1">                                 &quot;VB74_NL2_S1_L002_R1_001.fastq.gz&quot;,</span>
+<span class="s1">                                 &quot;VB74_NL2_S1_L002_R2_001.fastq.gz&quot;,</span>
+<span class="s1">                                 &quot;VB74_NL2_S1_L002_R3_001.fastq.gz&quot;</span>
+<span class="s1">                             ]</span>
+<span class="s1">                         ],</span>
+<span class="s1">                         &quot;file_dir&quot;: [</span>
+<span class="s1">                             [</span>
+<span class="s1">                                 &quot;/project/indroptest&quot;</span>
+<span class="s1">                             ]</span>
+<span class="s1">                         ],</span>
+<span class="s1">                         &quot;archive_dir&quot;: &quot;&quot;,</span>
+<span class="s1">                         &quot;s3_archive_dir&quot;: [],</span>
+<span class="s1">                         &quot;gs_archive_dir&quot;: [],</span>
+<span class="s1">                         &quot;collection_type&quot;: &quot;triple&quot;,</span>
+<span class="s1">                         &quot;file_type&quot;: &quot;fastq&quot;,</span>
+<span class="s1">                         &quot;collection_name&quot;: &quot;Vitiligo experiment&quot;,</span>
+<span class="s1">                      },</span>
+<span class="s1">                      &quot;mate&quot;: &quot;triple&quot;</span>
+<span class="s1">                  },</span>
+<span class="s1">                  &quot;out&quot;: {</span>
+<span class="s1">                      &quot;sample_summary&quot;: {}</span>
+<span class="s1">                  },</span>
+<span class="s1">                  &quot;run_env&quot;: &quot;ghpcc06.umassrc.org&quot;,</span>
+<span class="s1">                  &quot;work_dir&quot;: &quot;/run_work_dir&quot;</span>
+<span class="s1">               },</span>
+<span class="s1">         &quot;info&quot;: {</span>
+<span class="s1">                   &quot;dmetaServer&quot;: &quot;https://dmeta-skin.dolphinnext.com&quot;</span>
+<span class="s1">                   &quot;project&quot;: &quot;vitiligo&quot;</span>
+<span class="s1">               }</span>
+<span class="s1">    }&#39;</span>
+</pre></div>
+</div>
+<p><strong>Example response</strong>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;submitted&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="mi">354</span><span class="p">,</span>
+            <span class="nt">&quot;creationDate&quot;</span><span class="p">:</span> <span class="s2">&quot;2021-04-13T05:32:16.505Z&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Run successfully submitted.&quot;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="admin_quick.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="pipeline.html" class="btn btn-neutral" title="Pipeline Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'v1.1.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
