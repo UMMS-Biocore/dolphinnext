@@ -1,3 +1,6 @@
+25.04.2021 Version 1.2.35
+Minor update to support single quotes in autofill feature of run forms.
+
 15.04.2021 Version 1.2.34
 Amazon RDS MySQL connection and API documentation added.
 
