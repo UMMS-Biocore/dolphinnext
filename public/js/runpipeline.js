@@ -601,7 +601,7 @@ function parseBrackets(arr, trim) {
                 }
             }
             arr[k] = arr[k].replace(/\"/g, '');
-            arr[k] = arr[k].replace(/\'/g, '');
+            arr[k] = arr[k].replaceAll("^\'|\'$", "");
             arr[k] = arr[k].replace(/\}/g, '');
             arr[k] = fixParentheses(arr[k]); //turn (a,b,c) into (a|b|c) format for multiple options
             var allcolumn = arr[k].split(",").map(function (item) {

@@ -3010,7 +3010,7 @@ $(document).ready(function () {
                     $("#" + col1init + "-" + idRows).selectize({
                         valueField: 'id',
                         searchField: 'name',
-                        placeholder: "Add input...",
+                        placeholder: "Add "+type+"put...",
                         options: newOpt,
                         render: renderParam
                     });
