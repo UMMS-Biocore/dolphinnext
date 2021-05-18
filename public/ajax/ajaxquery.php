@@ -1373,11 +1373,15 @@ else if ($p=="saveProfileCluster"){
     $auto_workdir = isset($_REQUEST['auto_workdir']) ? $_REQUEST['auto_workdir'] : "";
     $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
     settype($perms, 'integer');
+    $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
+    settype($amazon_cre_id, 'integer');
+    $def_publishdir = isset($_REQUEST['def_publishdir']) ? $_REQUEST['def_publishdir'] : "";
+    $def_workdir = isset($_REQUEST['def_workdir']) ? $_REQUEST['def_workdir'] : "";
 
     if (!empty($id)) {
-        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID);
+        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID);
     } else {
-        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $ownerID);
+        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID);
     }
 }
 else if ($p=="saveProfileAmazon"){
