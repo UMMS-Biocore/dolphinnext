@@ -1556,6 +1556,8 @@ function fillStates(states, url, urlzip, checkPath) {
             //if variable starts with "$" then run parameters for pipeline are defined. Fill run parameters. $SINGULARITY_IMAGE, $SINGULARITY_OPTIONS, $DOCKER_IMAGE, $DOCKER_OPTIONS, $MEMORY, $TIME, $QUEUE, $CPU, $EXEC_OPTIONS $DEFAULT_IMAGE
         } else if (st.match(/\$(.*)/)) {
             var cloudType = $("#chooseEnv").find(":selected").val();
+            var executor_job = $("#chooseEnv").find(":selected").attr('executor_job')
+
             var patt = /(.*)-(.*)/;
             var proType = cloudType.replace(patt, '$1');
             var varName = st.match(/\$(.*)/)[1]; //variable Name
@@ -1563,12 +1565,12 @@ function fillStates(states, url, urlzip, checkPath) {
             // if google cloud is selected then it must be DOCKER_IMAGE -> $DEFAULT_IMAGE will be overwritten
             if (varName === "SINGULARITY_IMAGE") {
                 $('#singu_img').val(defName);
-                if (proType != "google" && (!$DEFAULT_IMAGE || $DEFAULT_IMAGE == "singularity")){
+                if (executor_job != "awsbatch" && proType != "google" && (!$DEFAULT_IMAGE || $DEFAULT_IMAGE == "singularity")){
                     updateCheckBox('#singu_check', "true");
                 }
             } else if (varName === "DOCKER_IMAGE") {
                 $('#docker_img').val(defName);
-                if (proType == "google" || !$DEFAULT_IMAGE || $DEFAULT_IMAGE == "docker"){
+                if (executor_job == "awsbatch" || proType == "google" || !$DEFAULT_IMAGE || $DEFAULT_IMAGE == "docker"){
                     updateCheckBox('#docker_check', "true");
                 }
             } else if (varName === "SINGULARITY_OPTIONS") {
@@ -3315,6 +3317,9 @@ function showhideOnEnv(profileData){
         if (executor_job === 'ignite') {
             showHideColumnRunSett([1, 4, 5], "show")
             showHideColumnRunSett([1, 4], "hide")
+        } else if (executor_job === "awsbatch") {
+            showHideColumnRunSett([1, 5], 'show');
+            showHideColumnRunSett([4], 'hide');
         } else if (executor_job === 'local') {
             showHideColumnRunSett([1, 4, 5], "hide")
         } else {
@@ -4174,6 +4179,7 @@ function loadRunOptions(type) {
     if (proData) {
         for (var c = 0; c < proData.length; c++) {
             var data = proData[c]
+            console.log(data)
             if (data.hostname != undefined){
                 var option = "";
                 if (data.perms == "15"){
@@ -4182,10 +4188,14 @@ function loadRunOptions(type) {
                     option = new Option(data.name + ' (Remote machine: ' + data.username + '@' + data.hostname + ')', 'cluster-' + data.id)
                 }
                 option.setAttribute("host", data.hostname);
+                option.setAttribute("executor_job", data.executor_job);
                 option.setAttribute("perms", data.perms);
+                if (data.amazon_cre_id){
+                    option.setAttribute("amz_key", data.amazon_cre_id);
+                }
                 option.setAttribute("auto_workdir", data.auto_workdir);
                 $("#chooseEnv").append(option);
-            } else if (data.amazon_cre_id != undefined){
+            } else if (data.shared_storage_mnt != undefined){
                 var option = "";
                 if (data.perms == "15"){
                     option = new Option(data.name, 'amazon-' + data.id)
@@ -4194,6 +4204,7 @@ function loadRunOptions(type) {
                 }
                 // check ajaxquery.php getProfileVariables-> for host definitions
                 option.setAttribute("host", data.shared_storage_id);
+                option.setAttribute("executor_job", data.executor_job);
                 option.setAttribute("perms", data.perms);
                 option.setAttribute("status", data.status);
                 option.setAttribute("amz_key", data.amazon_cre_id);
@@ -4208,6 +4219,7 @@ function loadRunOptions(type) {
                 }
                 // check ajaxquery.php getprofilevariables-> for host definitions
                 option.setAttribute("host", data.image_id);
+                option.setAttribute("executor_job", data.executor_job);
                 option.setAttribute("perms", data.perms);
                 option.setAttribute("status", data.status);
                 option.setAttribute("goog_key", data.google_cre_id);
@@ -4906,44 +4918,40 @@ function loadCloudKeys(pipeData) {
     if (pipeData[0].amazon_cre_id !== "0") {
         $('#mRunAmzKey').val(pipeData[0].amazon_cre_id);
     } else {
-        selectCloudKey("amazon");
+        selectCloudKey();
     }
     if (pipeData[0].google_cre_id !== "0") {
         $('#mRunGoogKey').val(pipeData[0].google_cre_id);
     } else {
-        selectCloudKey("google");
+        selectCloudKey();
     }
 }
 
 
 //autoselect selectCloudKey based on selected profile
-function selectCloudKey(cloud) {
-    if (cloud == "amazon"){
-        var amzKeyId = $("#chooseEnv").find(":selected").attr('amz_key')
-        if (amzKeyId) {
-            $("#mRunAmzKey").val(parseInt(amzKeyId));
-            $("#mRunAmzKeyS3").val(parseInt(amzKeyId));
-            $("#mArchAmzKeyS3").val(parseInt(amzKeyId));
-            $("#mArchAmzKeyS3_GEO").val(parseInt(amzKeyId));
-            $("#mRunAmzKey").trigger("change");
-            $("#mRunAmzKeyS3").trigger("change");
-            $("#mArchAmzKeyS3").trigger("change");
-            $("#mArchAmzKeyS3_GEO").trigger("change");
-        }  
-    } else if (cloud == "google"){
-        var googKeyId = $("#chooseEnv").find(":selected").attr('goog_key')
-        if (googKeyId) {
-            $("#mRunGoogKey").val(parseInt(googKeyId));
-            $("#mRunGoogKeyGS").val(parseInt(googKeyId));
-            $("#mArchGoogKeyGS").val(parseInt(googKeyId));
-            $("#mArchGoogKeyGS_GEO").val(parseInt(googKeyId));
-            $("#mRunGoogKey").trigger("change");
-            $("#mRunGoogKeyGS").trigger("change");
-            $("#mArchGoogKeyGS").trigger("change");
-            $("#mArchGoogKeyGS_GEO").trigger("change");
-        }  
-    } 
-
+function selectCloudKey() {
+    var amzKeyId = $("#chooseEnv").find(":selected").attr('amz_key')
+    if (amzKeyId) {
+        $("#mRunAmzKey").val(parseInt(amzKeyId));
+        $("#mRunAmzKeyS3").val(parseInt(amzKeyId));
+        $("#mArchAmzKeyS3").val(parseInt(amzKeyId));
+        $("#mArchAmzKeyS3_GEO").val(parseInt(amzKeyId));
+        $("#mRunAmzKey").trigger("change");
+        $("#mRunAmzKeyS3").trigger("change");
+        $("#mArchAmzKeyS3").trigger("change");
+        $("#mArchAmzKeyS3_GEO").trigger("change");
+    }  
+    var googKeyId = $("#chooseEnv").find(":selected").attr('goog_key')
+    if (googKeyId) {
+        $("#mRunGoogKey").val(parseInt(googKeyId));
+        $("#mRunGoogKeyGS").val(parseInt(googKeyId));
+        $("#mArchGoogKeyGS").val(parseInt(googKeyId));
+        $("#mArchGoogKeyGS_GEO").val(parseInt(googKeyId));
+        $("#mRunGoogKey").trigger("change");
+        $("#mRunGoogKeyGS").trigger("change");
+        $("#mArchGoogKeyGS").trigger("change");
+        $("#mArchGoogKeyGS_GEO").trigger("change");
+    }  
 }
 
 //type="" or "Opt"
@@ -8078,8 +8086,7 @@ $(document).ready(function () {
             clearSelection()
             selectedGeoSamplesTable.fnClearTable();
             searchedGeoSamplesTable.fnClearTable();
-            selectCloudKey("amazon")
-            selectCloudKey("google")
+            selectCloudKey()
             $('.forwardpatternDiv').css("display", "none")
             $('.reversepatternDiv').css("display", "none")
             $('.singlepatternDiv').css("display", "none")
@@ -9683,8 +9690,7 @@ $(document).ready(function () {
             proTypeWindow = proType;
             proIdWindow = proId;
             fillForm('#allProcessSettTable', 'input', allProSett);
-            selectCloudKey("amazon");
-            selectCloudKey("google");
+            selectCloudKey();
             checkShub()
             checkCloudType(profileTypeId)
             checkReadytoRun();

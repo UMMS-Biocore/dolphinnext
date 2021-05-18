@@ -560,11 +560,11 @@ $GOOGPATH=GOOGPATH;
                                 <option value="lsf">LSF</option>
                                 <option value="slurm">SLURM</option>
                                 <option value="ignite">IGNITE</option>
-                                <!--                                  <option value="pbs">PBS/Torque</option>-->
-                                <!--                                  <option value="nqsii">NQSII</option>-->
-                                <!--                                  <option value="condor">HTCondor</option>-->
-                                <!--                                  <option value="k8s">Kubernetes</option>-->
-                                <!--                                  <option value="awsbatch">AWS Batch</option>-->
+                                <option value="awsbatch">AWS Batch</option>
+                                <!-- <option value="pbs">PBS/Torque</option>-->
+                                <!-- <option value="nqsii">NQSII</option>-->
+                                <!-- <option value="condor">HTCondor</option>-->
+                                <!-- <option value="k8s">Kubernetes</option>-->
                             </select>
                         </div>
                     </div>
@@ -593,6 +593,26 @@ $GOOGPATH=GOOGPATH;
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                    <div id="mEnvAmzKeyDiv2" class="form-group" style="display:none">
+                        <label for="mEnvAmzKey2" class="col-sm-3 control-label">Amazon Keys<span><a data-toggle="tooltip" data-placement="bottom" title="Keys that are saved in Amazon keys tab and to be used while creating instance in Amazon Cloud"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        <div class="col-sm-9">
+                            <select id="mEnvAmzKey2" class="fbtn btn-default form-control" name="amazon_cre_id2">
+                                <option value="" disabled selected>Select Amazon Keys </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="mDefWorkDirDiv2" class="form-group" style="display:none">
+                        <label for="mDefWorkDir2" class="col-sm-3 control-label">Default Working Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Default directory where dolphinnext runs will be executed. e.g. /data/dnext."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" id="mDefWorkDir2" name="def_workdir2">
+                        </div>
+                    </div>
+                    <div id="mDefPublishDirDiv2" class="form-group" style="display:none">
+                        <label for="mDefPublishDir2" class="col-sm-3 control-label">Default Bucket Location for Publishing <span><a data-toggle="tooltip" data-placement="bottom" title="Default bucket location where dolphinnext reports will be published. You can always edit this path in the run page. e.g. s3://bucket/dnext or gs://bucket/dnext"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        <div class="col-sm-9">
+                            <input style="margin-top:10px;" type="text" class="form-control" id="mDefPublishDir2" name="def_publishdir2">
                         </div>
                     </div>
                     <?php
