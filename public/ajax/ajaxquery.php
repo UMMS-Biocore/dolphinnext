@@ -1260,7 +1260,7 @@ if ($p=="publishGithub"){
     $pipeData = $db->loadPipeline($pipeline_id,$ownerID);
     $pipe_obj = json_decode($pipeData,true);
     if (!empty($pipe_obj[0])){
-        if ($pipe_obj[0]["own"] == "1"){
+        if ($pipe_obj[0]["own"] == "1" || $type == "downPack"){
             $pipeline_name = $db->cleanName($pipe_obj[0]["name"], 30);
             $script_pipe_config = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
             $description = htmlspecialchars_decode($pipe_obj[0]["summary"], ENT_QUOTES); 
