@@ -831,11 +831,14 @@ function getWhenCond(script) {
 
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum')) // depricated
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty([])
-function getOptionalInText(optionalInAr, optionalInNameAr) {
+function getOptionalInText(optionalInAr, optionalInQualAr) {
     var optText = "";
     for (var i = 0; i < optionalInAr.length; i++) {
-
-        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
+        if (optionalInQualAr[i] == "val"){
+            optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(\"\") \n";
+        } else {
+            optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
+        }
     }
     return optText;
 }
@@ -900,7 +903,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
     var whenText = '';
     //check optional inputs
     var optionalInAr = [];
-    var optionalInNameAr = [];
+    var optionalInQualAr = [];
 
     if (processData[0].script_header !== null) {
         var script_header = decodeHtml(processData[0].script_header);
@@ -997,7 +1000,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                 whenInLib = addChannelName(whenCond, whenInLib, file_type, channelName, param_name, qual)
                 if (inputOptional == "true") {
                     optionalInAr.push(channelName)
-                    optionalInNameAr.push(inputName)
+                    optionalInQualAr.push(qual)
                 }
                 bodyInput = bodyInput + " " + qual + " " + inputName + " from " + channelName + inputOperatorText + "\n";
             }
@@ -1074,7 +1077,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
 
     }
     if (optionalInAr.length > 0) {
-        var optionalInText = getOptionalInText(optionalInAr, optionalInNameAr)
+        var optionalInText = getOptionalInText(optionalInAr, optionalInQualAr)
         script_header = optionalInText + "\n" + script_header
     }
 
