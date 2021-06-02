@@ -1664,7 +1664,6 @@ function hideProcessOptionsAsIcons() {
   var showSettingInputsAr = $("#inputsTable > tbody > tr[show_setting]");
   if (showSettingInputsAr.length > 0) {
     for (var i = 0; i < showSettingInputsAr.length; i++) {
-      console.log($(showSettingInputsAr[i]));
       var rowId = $(showSettingInputsAr[i]).attr("id");
       var givenName = $(showSettingInputsAr[i])
         .find("td[given_name]")
@@ -5506,7 +5505,6 @@ function loadRunOptions(type) {
   if (proData) {
     for (var c = 0; c < proData.length; c++) {
       var data = proData[c];
-      console.log(data);
       if (data.hostname != undefined) {
         var option = "";
         if (data.perms == "15") {
