@@ -862,7 +862,11 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
             outChn = outChn.join(";")
             outChn = outChn.replace(/,/g, ';')
             for (var k = 0; k < inChn.length; k++) {
-                whenText += inChn[k] + ".into{" + outChn + "}\n"
+                if (outChn.match(/;/)) {
+                    whenText += inChn[k] + ".into{" + outChn + "}\n"
+                } else {
+                    whenText += inChn[k] + ".set{" + outChn + "}\n"
+                }
             }
         }
         for (var n = 0; n < dummyOutList.length; n++) {
