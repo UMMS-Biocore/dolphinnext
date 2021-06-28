@@ -2979,13 +2979,13 @@ class dbfuncs {
                             //|| preg_match("/failed/i",$nextflowLog) removed 
                         } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i",$nextflowLog) || preg_match("/\n -- Check script /",$nextflowLog)){
                             $confirmErr=true;
-                            if (preg_match("/-- Execution is retried/i",$nextflowLog) || preg_match("/WARN: One or more errors/i", $nextflowLog)){
+                            if (preg_match("/-- Execution is retried/i",$nextflowLog) || preg_match("/WARN: One or more errors/i", $nextflowLog) || preg_match("/-- Error is ignored/i",$nextflowLog)){
                                 //if only process retried, status shouldn't set as error.
                                 $confirmErr = false;
                                 $txt = trim($nextflowLog);
                                 $lines = explode("\n", $txt);
                                 for ($i = 0; $i < count($lines); $i++) {
-                                    if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i]) && !preg_match("/WARN: One or more errors/i", $lines[$i])){
+                                    if (preg_match("/error/i",$lines[$i]) && !preg_match("/-- Execution is retried/i",$lines[$i]) && !preg_match("/WARN: One or more errors/i", $lines[$i]) && !preg_match("/-- Error is ignored/i", $lines[$i])){
                                         error_log("WARN: One or more errors");
                                         error_log($lines[$i]);
                                         $confirmErr = true;
