@@ -1,3 +1,7 @@
+16.07.2021 Version 1.2.42
+Initial run update for gzip handling.
+getLsDir API call added.
+
 28.06.2021 Version 1.2.41
 Error handling fixed for "ignore".
 
