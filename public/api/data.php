@@ -83,6 +83,47 @@ class Data
         return $ret;
     }
 
+
+    function getLsDir($body, $params, $user){
+        $ret = "";
+        if (!empty($body['profileType']) && !empty($body['profileId']) && !empty($body['dir']) ){
+            $ownerID = $user["id"];
+            $project_pipeline_id = "";
+            $dir = $body['dir'];
+            $profileType = $body['profileType'];
+            $profileId = $body['profileId'];
+            $amazon_cre_id = $body['amazon_cre_id'];
+            $google_cre_id = $body['google_cre_id'];
+            $dbfuncs = new dbfuncs();
+            $data = $dbfuncs -> getLsDir($dir, $profileType, $profileId, $amazon_cre_id, $google_cre_id, $project_pipeline_id, $ownerID);
+            $ret = json_decode($data);
+        }
+        return $ret;
+    }
+
+    function getCloudKeys($body, $params, $user){
+        $ret = array();
+        $ret["amazon"] = array();
+        $ret["google"] = array();
+        $ownerID = $user["id"];
+        $dbfuncs = new dbfuncs();
+        $amzData = json_decode($dbfuncs->getAmz($ownerID),true);
+        $googleData = json_decode($dbfuncs->getGoogle($ownerID),true);
+        for ($i = 0; $i < count($amzData); $i++) {
+            $obj = array();
+            $obj["name"] =  $amzData[$i]["name"];
+            $obj["_id"] = $amzData[$i]["id"];
+            $ret["amazon"][] = $obj;
+        }
+        for ($i = 0; $i < count($googleData); $i++) {
+            $obj = array();
+            $obj["name"] =  $googleData[$i]["name"];
+            $obj["_id"] = $googleData[$i]["id"];
+            $ret["google"][] = $obj;
+        }
+        return $ret;
+    }
+
     function getRuns($body, $params, $user){
         $ret = array();
         $ownerID = $user["id"];

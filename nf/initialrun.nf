@@ -1224,6 +1224,8 @@ process createCollection {
                   my $filestrR2 = join( ' ', @fullfileArR2 );
                   $cat = "zcat -f" if ( $filestrR1 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR1, $archFile1 );
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR2 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR2, $archFile2 );
                 } elsif ( scalar @fullfileArR1 != 0 && $collection_type[$i] eq "triple" ) {
                   my $filestrR1 = join( ' ', @fullfileArR1 );
@@ -1231,7 +1233,11 @@ process createCollection {
                   my $filestrR3 = join( ' ', @fullfileArR3 );
                   $cat = "zcat -f" if ( $filestrR1 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR1, $archFile1 );
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR2 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR2, $archFile2 );
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR3 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR3, $archFile3 );
                 } elsif ( scalar @fullfileArR1 != 0 && $collection_type[$i] eq "quadruple" ) {
                   my $filestrR1 = join( ' ', @fullfileArR1 );
@@ -1240,8 +1246,14 @@ process createCollection {
                   my $filestrR4 = join( ' ', @fullfileArR4 );
                   $cat = "zcat -f" if ( $filestrR1 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR1, $archFile1 );
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR2 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR2, $archFile2 );
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR3 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR3, $archFile3 );
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR4 =~ /\\.gz/ );
                   mergeGzipCountMd5sum( $cat, $filestrR4, $archFile4 );
                 } else {
                   ##Run fastqdump and CountMd5sum for GEO files
@@ -1288,6 +1300,8 @@ process createCollection {
                   my $filestrR2 = join( ' ', @fullfileArR2 );
                   $cat = "zcat -f " if ( $filestrR1 =~ /\\.gz/ );
                   runCommand("$cat $filestrR1 > $inputFile1");
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR2 =~ /\\.gz/ );
                   runCommand("$cat $filestrR2 > $inputFile2");
                 } elsif ( scalar @fullfileArR1 != 0 && $collection_type[$i] eq "triple" ) {
                   my $filestrR1 = join( ' ', @fullfileArR1 );
@@ -1295,7 +1309,11 @@ process createCollection {
                   my $filestrR3 = join( ' ', @fullfileArR3 );
                   $cat = "zcat -f " if ( $filestrR1 =~ /\\.gz/ );
                   runCommand("$cat $filestrR1 > $inputFile1");
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR2 =~ /\\.gz/ );
                   runCommand("$cat $filestrR2 > $inputFile2");
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR3 =~ /\\.gz/ );
                   runCommand("$cat $filestrR3 > $inputFile3");
                 } elsif ( scalar @fullfileArR1 != 0 && $collection_type[$i] eq "quadruple" ) {
                   my $filestrR1 = join( ' ', @fullfileArR1 );
@@ -1304,8 +1322,14 @@ process createCollection {
                   my $filestrR4 = join( ' ', @fullfileArR4 );
                   $cat = "zcat -f " if ( $filestrR1 =~ /\\.gz/ );
                   runCommand("$cat $filestrR1 > $inputFile1");
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR2 =~ /\\.gz/ );
                   runCommand("$cat $filestrR2 > $inputFile2");
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR3 =~ /\\.gz/ );
                   runCommand("$cat $filestrR3 > $inputFile3");
+                  $cat = "cat";
+                  $cat = "zcat -f" if ( $filestrR4 =~ /\\.gz/ );
                   runCommand("$cat $filestrR4 > $inputFile4");
                 } else {
                   ##Run fastqdump without --gzip for GEO files
