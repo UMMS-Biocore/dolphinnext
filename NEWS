@@ -1,3 +1,9 @@
+24.07.2021 Version 1.2.44
+Minor upgrade for Dmeta run submission.
+
+19.07.2021 Version 1.2.43
+Dmeta Target Collection dropdown updated for custom collection names.
+
 16.07.2021 Version 1.2.42
 Initial run update for gzip handling.
 getLsDir API call added.
