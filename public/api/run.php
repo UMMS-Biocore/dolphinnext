@@ -185,12 +185,24 @@ class Run
         $dmetaServer = $info["dmetaServer"];
         $run_url= !empty($doc["run_url"]) ? $doc["run_url"] : "";
         $dmeta = $this->getDmetaObj($doc, $dmetaServer, $info);
+        if (!empty($doc["out"])){
+            
+        }
+        error_log(print_r($doc, TRUE));
+        error_log(print_r("dmeta", TRUE));
+        error_log(print_r($dmeta, TRUE));
 
         //http://localhost:8080/dolphinnext/index.php?np=3&id=586
         error_log($run_url);
         $proPipeId = substr($run_url, strpos($run_url, "id=") + 3);
-        error_log($proPipeId);
         if (!empty($proPipeId)) {
+            // if $doc["out"] empty there is no need to updateProjectPipelineDmeta 
+            if (empty($doc["out"])){
+                $ret["status"] = "success";
+                $ret["log"] = "Existing run found.";
+                $ret["run_url"] = $run_url;
+                return $ret;
+            }
             //don't allow to update if user doesn't own the project_pipeline.
             $curr_ownerID= $dbfuncs->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$proPipeId'");
             $permCheck = $dbfuncs->checkUserOwnPerm($curr_ownerID, $ownerID);
@@ -202,7 +214,7 @@ class Run
                 return $ret;
             }
             $ret["status"] = "error";
-            $ret["log"] = "You don't have permission to update run.";
+            $ret["log"] = "This run doesn't belong to you. It is not allowed to enter as an existing run.";
             return $ret;
         }
         $ret["status"] = "error";

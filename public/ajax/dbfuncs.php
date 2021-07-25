@@ -5558,7 +5558,9 @@ class dbfuncs {
                         } else {
                             //simple input
                             $input_id = $this->checkAndInsertInput($inputVal, $inputType, $ownerID);
-                            $this->checkAndInsertProjectInput($project_id, $input_id, $ownerID);
+                            if (!empty($input_id)){
+                                $this->checkAndInsertProjectInput($project_id, $input_id, $ownerID);
+                            }
                         }
                         if (!empty($input_id) || !empty($collection_id)){
                             error_log("update updateValProPipeInput $input_id $collection_id");

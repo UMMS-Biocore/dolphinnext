@@ -841,6 +841,7 @@
                                 </div>
                                 <div class="col-sm-5">
                                     <select class="form-control" id="pubDmetaTarget" name="pubDmetaTarget">
+                                        <option value=""></option>
                                         <option value="sample_summary">sample_summary</option>
                                         <option value="analysis">analysis</option>
                                         <option value="rsem_expected_count_gene">rsem_expected_count_gene</option>

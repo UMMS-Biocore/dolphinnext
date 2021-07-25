@@ -2113,6 +2113,8 @@ $(document).ready(function () {
     //Make modal draggable    
     $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amazonTable, #googleTable' });
 
+    // Selectize pubDmetaTarget Dropdown
+    $("#pubDmetaTarget").selectize({ create:true, placeholder: "Choose or Type for New", createOnBlur: true })
 
     // release date section:
     $('#relDateDiv').datepicker({
@@ -3525,7 +3527,8 @@ $(document).ready(function () {
         if (checkId == "#checkPubDmeta"){
             var pubDmetaFilename = $("#pubDmetaFilename").val();
             var pubDmetaFeature = $("#pubDmetaFeature").val();
-            var pubDmetaTarget = $("#pubDmetaTarget").val();
+            var pubDmetaTarget = $('#pubDmetaTarget')[0].selectize.getValue();
+
             var save = {filename:pubDmetaFilename, feature:pubDmetaFeature, target:pubDmetaTarget}
             if (checkValue === "true"){
                 $("#" + renameTextID).data(attr, save)
@@ -3540,7 +3543,9 @@ $(document).ready(function () {
             if (loadObj.filename && loadObj.feature && loadObj.target){
                 $("#pubDmetaFilename").val(loadObj.filename);
                 $("#pubDmetaFeature").val(loadObj.feature);
-                $("#pubDmetaTarget").val(loadObj.target);
+                var opt = { value: loadObj.target, text: loadObj.target };
+                $('#pubDmetaTarget')[0].selectize.addOption([opt]);
+                $('#pubDmetaTarget')[0].selectize.setValue(loadObj.target, false);
                 $("#pubDmetaFilename").trigger("change");
                 check ="true"
             }
