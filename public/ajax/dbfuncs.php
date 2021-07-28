@@ -333,10 +333,12 @@ class dbfuncs {
 
 
     //default singularity
-    function getInitialRunImg($docker_check){
-        $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-09.06.2020.simg"; 
+    function getInitialRunImg($docker_check, $singu_check){
+        $initialrun_img = ""; 
         if ($docker_check == "true"){
             $initialrun_img = "ummsbiocore/initialrun-docker:1.0";
+        } else if ($singu_check == "true"){
+            $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-09.06.2020.simg";
         }
         return $initialrun_img;
     }
@@ -631,11 +633,13 @@ class dbfuncs {
         $singu_cache = $cluDataArr[0]["singu_cache"];
 
         $runType = "initial";
-        $containerType = 'singularity'; //default
+        $containerType = ''; //default
         if ($docker_check == "true"){
             $containerType = 'docker';
+        } else if ($singu_check == "true"){
+            $containerType = 'singularity';
         }
-        $initialrun_img= $this->getInitialRunImg($docker_check);
+        $initialrun_img= $this->getInitialRunImg($docker_check, $singu_check);
         list($initImageCmd,$initImagePath) = $this->imageCmd($singu_cache, $initialrun_img, "", $containerType, $profileType,$profileId, $runType, $dolphin_publish_real, $ownerID);
         return array($initImageCmd, $initImagePath);
     }
@@ -1228,7 +1232,7 @@ class dbfuncs {
             }
         }
         //default for initial run
-        if ($singu_check == "true" || $docker_check != "true") {
+        if ($singu_check == "true") {
             if (!empty($singu_opt)) {
                 $configText .= "singularity.runOptions = '".$singu_opt."'\n";
             }
@@ -1293,11 +1297,7 @@ class dbfuncs {
         } else if ($singu_check == "true") {
             $configText .= "process.container = '".$imagePath."'\n";
             $configText .= "singularity.enabled = true\n";
-        } else if ($singu_check != "true" && $docker_check != "true" && $runType == "initial"){
-            //singularity is default for initial run
-            $configText .= "process.container = '".$imagePath."'\n";
-            $configText .= "singularity.enabled = true\n";
-        }
+        } 
         return $configText;
     }
 
