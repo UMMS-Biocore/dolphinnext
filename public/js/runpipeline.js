@@ -1154,7 +1154,7 @@ gNum,
             columnPercent +
             '%;" >';
         var label =
-            '<label style="font-weight:600;">' + varName + toolText + " </label>";
+            '<label style="font-weight:600; word-break:break-all;">' + varName + toolText + " </label>";
         if (type === "input") {
             var inputDiv =
                 '<input type="text" class="form-control" style="padding:15px;" id="var_' +
