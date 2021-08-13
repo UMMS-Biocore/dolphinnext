@@ -543,7 +543,7 @@ class dbfuncs {
 
             for ($i=0; $i<count($paramNameAr); $i++) {
                 if (!empty($paramAr[$i])){
-                    $params.= "  ".$paramNameAr[$i]." = '\"".implode('","', $paramAr[$i])."\"'\n"; 
+                    $params.= "  ".$paramNameAr[$i]." = '\'".implode("\',\'", $paramAr[$i])."\''\n"; 
                 }
 
             }
