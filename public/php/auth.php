@@ -88,7 +88,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
         exit;
     }
 
-    $token = $_COOKIE['jwt-dolphinnext'];
+    $token = !empty($_COOKIE['jwt-dolphinnext']) ? $_COOKIE['jwt-dolphinnext'] : "";
     if (!empty($token) && $token != 'loggedout'){
         $JWT=new JWT();
         $decoded = "";
@@ -118,8 +118,8 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
     // empty($_SERVER['HTTP_REFERER']) required since php may load page more than once.
     // when reload happens, $_SERVER['HTTP_REFERER'] will be set.
     if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID) && empty($_SERVER['HTTP_REFERER'])){
-        error_log("ssoLoginCheck: ".$_SESSION["ssoLoginCheck"]);
-        error_log("HTTP_REFERER: ".$_SERVER["HTTP_REFERER"]);
+//        error_log("ssoLoginCheck: ".$_SESSION["ssoLoginCheck"]);
+//        error_log("HTTP_REFERER: ".$_SERVER["HTTP_REFERER"]);
         if (!empty($token) && $token != 'loggedout') {
             $tokenInfo = json_decode($db->getSSOAccessToken($token),true);
             if (!empty($tokenInfo[0]) &&  $tokenInfo[0]["expirationDate"] && date("Y-m-d H:i:s") < date($tokenInfo[0]["expirationDate"])){
