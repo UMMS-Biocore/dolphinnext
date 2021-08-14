@@ -5526,7 +5526,8 @@ class dbfuncs {
     function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir){
         $newProPipeId = null;
         if ($type == "dmeta"){
-            $proPipeAll = json_decode($this->getProjectPipelines($old_run_id,"",$ownerID,""));
+            $userRole = $this->getUserRoleVal($ownerID);
+            $proPipeAll = json_decode($this->getProjectPipelines($old_run_id,"",$ownerID,$userRole));
             if (empty($proPipeAll[0])) error_log("ProjectPipelines not found.");
             if (!empty ($proPipeAll[0])){
                 $run_env = !empty($run_env) ? "'$run_env'" : "profile";
