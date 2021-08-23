@@ -102,20 +102,33 @@ if (!empty($secUiconfig)){
 }
 // SSO Config:
 $secSSOconfig = isset($secRaw['SSOCONFIG']) ? $secRaw['SSOCONFIG'] : "";
+$secOKTAconfig = isset($secRaw['OKTACONFIG']) ? $secRaw['OKTACONFIG'] : "";
 $SSO_LOGIN=false;
 $SSO_URL=false;
+$ISSUER=false;
 $CLIENT_ID=false;
 $CLIENT_SECRET=false;
-if (!empty($secSSOconfig)){
+$OKTA_API_TOKEN=false;
+if (!empty($secSSOconfig) && $secSSOconfig['SSO_LOGIN'] == true){
     $SSO_LOGIN= isset($secSSOconfig['SSO_LOGIN']) ? $secSSOconfig['SSO_LOGIN'] : $SSO_LOGIN;
     $SSO_URL= isset($secSSOconfig['SSO_URL']) ? $secSSOconfig['SSO_URL'] : $SSO_URL;
     $CLIENT_ID= isset($secSSOconfig['CLIENT_ID']) ? $secSSOconfig['CLIENT_ID'] : $CLIENT_ID;
     $CLIENT_SECRET= isset($secSSOconfig['CLIENT_SECRET']) ? $secSSOconfig['CLIENT_SECRET'] : $CLIENT_SECRET;
+} else if (!empty($secOKTAconfig) && $secOKTAconfig['SSO_LOGIN'] == true){
+    $SSO_LOGIN= isset($secOKTAconfig['SSO_LOGIN']) ? $secOKTAconfig['SSO_LOGIN'] : $SSO_LOGIN;
+    $ISSUER= isset($secOKTAconfig['ISSUER']) ? $secOKTAconfig['ISSUER'] : $ISSUER;
+    $CLIENT_ID= isset($secOKTAconfig['CLIENT_ID']) ? $secOKTAconfig['CLIENT_ID'] : $CLIENT_ID;
+    $CLIENT_SECRET= isset($secOKTAconfig['CLIENT_SECRET']) ? $secOKTAconfig['CLIENT_SECRET'] : $CLIENT_SECRET;
+    $OKTA_API_TOKEN= isset($secOKTAconfig['OKTA_API_TOKEN']) ? $secOKTAconfig['OKTA_API_TOKEN'] : $OKTA_API_TOKEN;
 }
+
 define('SSO_LOGIN', $SSO_LOGIN);
 define('SSO_URL', $SSO_URL);
+define('ISSUER', $ISSUER);
 define('CLIENT_ID', $CLIENT_ID);
 define('CLIENT_SECRET', $CLIENT_SECRET);
+define('OKTA_API_TOKEN', $OKTA_API_TOKEN);
+
 
 // DMETA Config:
 $secDMETAconfig = isset($secRaw['DMETACONFIG']) ? $secRaw['DMETACONFIG'] : "";
