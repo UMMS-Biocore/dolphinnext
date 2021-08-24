@@ -6220,7 +6220,7 @@ class dbfuncs {
             list($permCheck,$warnName) = $this->checkUserPermission($table, $id, $ownerID, "w");
             list($checkUsed,$warn) = $this->checkUsed($table, $warnName, $id, $ownerID);
             //            error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
-            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms || ($perms == $curr_perms && empty($curr_group_id) && !empty($group_id))) && !empty($ownCheck) && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms>=$curr_perms)) ){
+            if (!empty($permCheck) && (empty($checkUsed) || $perms>$curr_perms || ($perms == $curr_perms && $curr_perms > 15 ) || ($perms == $curr_perms && empty($curr_group_id) && !empty($group_id))) && !empty($ownCheck) && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms>=$curr_perms)) ){
                 if (!preg_match("/dry-run/i", $type)){
                     if ($table == "biocorepipe_save"){
                         $this->updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID);
