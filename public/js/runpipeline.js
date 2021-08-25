@@ -4614,35 +4614,37 @@ rowType,
             var outName = document
             .getElementById(prefix + second)
             .getAttribute("name");
-            if (outName.match(/file\((.*)\)/)) {
-                outName = outName.match(/file\((.*)\)/i)[1];
-                // if path is divided by slash replace first ${(.*)} with original variable
-                var patt = /\$\{(.*)\}/;
-                if (outName.match(/\//) && outName.match(patt)) {
-                    //find input name equavalant and replace
-                    var inputName = outName.match(patt)[1];
-                    outName = replaceNextVar(outName, inputName);
+            if (outName){
+                if (outName.match(/file\((.*)\)/)) {
+                    outName = outName.match(/file\((.*)\)/i)[1];
+                    // if path is divided by slash replace first ${(.*)} with original variable
+                    var patt = /\$\{(.*)\}/;
+                    if (outName.match(/\//) && outName.match(patt)) {
+                        //find input name equavalant and replace
+                        var inputName = outName.match(patt)[1];
+                        outName = replaceNextVar(outName, inputName);
+                    }
                 }
+                outName = outName.replace(/\"/g, "");
+                outName = outName.replace(/\'/g, "");
+                outName = outName.replace(/\?/g, "");
+                outName = outName.replace(/\${(.*)}/g, "*");
+                outName = paramGivenName + "/" + outName;
+                var outNameEl = '<span fName="' + outName + '">NA' + "</span>";
+                var inRow = getRowTable(
+                    rowType,
+                    firGnum,
+                    secGnum,
+                    paramGivenName,
+                    paraIdentifier,
+                    paraFileType,
+                    paraQualifier,
+                    processName,
+                    outNameEl,
+                    show_setting
+                );
+                $("#" + rowType + "sTable > tbody:last-child").append(inRow);
             }
-            outName = outName.replace(/\"/g, "");
-            outName = outName.replace(/\'/g, "");
-            outName = outName.replace(/\?/g, "");
-            outName = outName.replace(/\${(.*)}/g, "*");
-            outName = paramGivenName + "/" + outName;
-            var outNameEl = '<span fName="' + outName + '">NA' + "</span>";
-            var inRow = getRowTable(
-                rowType,
-                firGnum,
-                secGnum,
-                paramGivenName,
-                paraIdentifier,
-                paraFileType,
-                paraQualifier,
-                processName,
-                outNameEl,
-                show_setting
-            );
-            $("#" + rowType + "sTable > tbody:last-child").append(inRow);
         }
     }
 }
