@@ -2,6 +2,8 @@
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 require_once(__DIR__."/../ajax/dbfuncs.php");
 require_once(__DIR__."/jwt.php");
+require_once(__DIR__."/../okta/authcode.php");
+
 $db=new dbfuncs();
 
 if (strpos(getcwd(), "travis/build") == 6){
@@ -11,7 +13,12 @@ $SSO_LOGIN=SSO_LOGIN;
 $SSO_URL=SSO_URL;
 $BASE_PATH=BASE_PATH;
 $CLIENT_ID=CLIENT_ID;
+$CLIENT_SECRET=CLIENT_SECRET;
+$ISSUER=ISSUER;
 $SHOW_HOMEPAGE=SHOW_HOMEPAGE;
+$OKTA_API_TOKEN=OKTA_API_TOKEN;
+
+
 
 function loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID){
     // temporary change for sso login
@@ -47,6 +54,29 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         if (!empty($SSO_LOGIN) && !empty($SSO_URL)){
             $SSO_LOGOUT_URL = "{$SSO_URL}/api/v1/users/logout?redirect_uri={$BASE_PATH}";
             header('Location: ' . $SSO_LOGOUT_URL);
+            exit;
+        } else if (!empty($OKTA_API_TOKEN) && !empty($SSO_LOGIN) && !empty($ISSUER) && !empty($_SESSION['ownerID'])){
+            $ownerID = $_SESSION['ownerID'];
+            $userData = json_decode($db->getUserById($ownerID))[0];
+            $sso_id = $userData->{'sso_id'};
+            $parse = parse_url($ISSUER);
+            $oktaDomain = $parse['host'];
+            $url = "https://".$oktaDomain."/api/v1/users/$sso_id/sessions";
+            $headers = [
+                'Authorization: SSWS ' . $OKTA_API_TOKEN,
+                'Accept: application/json',
+                'Content-Type: application/json'
+            ];
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $result = curl_exec($ch);
+            $result = json_decode($result);
+            curl_close($ch);
+            header('Location: ' . $_SERVER['HTTP_REFERER']);
             exit;
         } else {
             header('Location: ' . $_SERVER['HTTP_REFERER']);
@@ -90,36 +120,50 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
 
     $token = !empty($_COOKIE['jwt-dolphinnext']) ? $_COOKIE['jwt-dolphinnext'] : "";
     if (!empty($token) && $token != 'loggedout'){
-        $JWT=new JWT();
         $decoded = "";
-        try {
-            $decoded = $JWT->decode($token, JWT_SECRET);
-        } catch (Exception $e) {
-            error_log ("token not valid: $token");
-        }
-        if (!empty($decoded) && !empty($decoded->{"id"})){
-            $currentUser = json_decode($db->getUserById($decoded->{"id"}),true);
-            if (!empty($currentUser[0]) && !empty($currentUser[0]['id'])){
-                $id = $currentUser[0]['id'];
-                $role = isset($currentUser[0]) ? $currentUser[0]['role'] : "";
-                $name = isset($currentUser[0]) ? $currentUser[0]['name'] : "";
-                $email = isset($currentUser[0]) ? $currentUser[0]['email'] : "";
-                $username = isset($currentUser[0]) ? $currentUser[0]['username'] : "";
-                $_SESSION['email'] = $email;
-                $_SESSION['username'] = $username;
-                $_SESSION['name'] = $name;
-                $_SESSION['ownerID'] = $id;
-                $_SESSION['role'] = $role;
-                require_once("main.php");
-                exit;
+        $currentUser = array();
+        if (empty($ISSUER)){
+            $JWT=new JWT();
+            try {
+                $decoded = $JWT->decode($token, JWT_SECRET);
+            } catch (Exception $e) {
+                error_log ("token not valid: $token");
+            } 
+            if (!empty($decoded) && !empty($decoded->{"id"})){
+                $currentUser = json_decode($db->getUserById($decoded->{"id"}),true);
             }
+        } else if (!empty($SSO_LOGIN) && !empty($ISSUER)) {
+            // for okta login
+            $OKTAAUTH=new AuthCode();
+            try {
+                $decoded = $OKTAAUTH->getProfile($token);
+            } catch (Exception $e) {
+                error_log ("token not valid: $token");
+            } 
+            if (!empty($decoded) && !empty($decoded["uid"])){
+                $currentUser = json_decode($db->getUserById($decoded["uid"]),true);
+            }
+        }
+        if (!empty($currentUser[0]) && !empty($currentUser[0]['id'])){
+            $id = $currentUser[0]['id'];
+            $role = isset($currentUser[0]) ? $currentUser[0]['role'] : "";
+            $name = isset($currentUser[0]) ? $currentUser[0]['name'] : "";
+            $email = isset($currentUser[0]) ? $currentUser[0]['email'] : "";
+            $username = isset($currentUser[0]) ? $currentUser[0]['username'] : "";
+            $_SESSION['email'] = $email;
+            $_SESSION['username'] = $username;
+            $_SESSION['name'] = $name;
+            $_SESSION['ownerID'] = $id;
+            $_SESSION['role'] = $role;
+            require_once("main.php");
+            exit;
         }
     }
     // empty($_SERVER['HTTP_REFERER']) required since php may load page more than once.
     // when reload happens, $_SERVER['HTTP_REFERER'] will be set.
     if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID) && empty($_SERVER['HTTP_REFERER'])){
-//        error_log("ssoLoginCheck: ".$_SESSION["ssoLoginCheck"]);
-//        error_log("HTTP_REFERER: ".$_SERVER["HTTP_REFERER"]);
+        //        error_log("ssoLoginCheck: ".$_SESSION["ssoLoginCheck"]);
+        //        error_log("HTTP_REFERER: ".$_SERVER["HTTP_REFERER"]);
         if (!empty($token) && $token != 'loggedout') {
             $tokenInfo = json_decode($db->getSSOAccessToken($token),true);
             if (!empty($tokenInfo[0]) &&  $tokenInfo[0]["expirationDate"] && date("Y-m-d H:i:s") < date($tokenInfo[0]["expirationDate"])){
@@ -154,6 +198,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
             $_SESSION["ssoLoginCheck"] = false;
         }
     }
+
     // user not signed in - public view:
     if ($SHOW_HOMEPAGE == "1"){
         require_once("main.php");

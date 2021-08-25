@@ -1,3 +1,12 @@
+23.08.2021 Version 1.2.47
+SSO login support for OKTA added. sec file configuration:
+[OKTACONFIG]
+SSO_LOGIN=true  
+CLIENT_ID=id
+CLIENT_SECRET=secret
+ISSUER=https://youroktadomain.com/oauth2/default
+OKTA_API_TOKEN=token
+
 13.08.2021 Version 1.2.46
 Initial run improved for special characters.
 
