@@ -1,3 +1,6 @@
+27.08.2021 Version 1.2.48
+Composer php version requirement removed.
+
 23.08.2021 Version 1.2.47
 SSO login support for OKTA added. sec file configuration:
 [OKTACONFIG]

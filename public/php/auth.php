@@ -2,7 +2,6 @@
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 require_once(__DIR__."/../ajax/dbfuncs.php");
 require_once(__DIR__."/jwt.php");
-require_once(__DIR__."/../okta/authcode.php");
 
 $db=new dbfuncs();
 
@@ -18,6 +17,10 @@ $ISSUER=ISSUER;
 $SHOW_HOMEPAGE=SHOW_HOMEPAGE;
 $OKTA_API_TOKEN=OKTA_API_TOKEN;
 
+// for okta login
+if (!empty($SSO_LOGIN) && !empty($ISSUER)) {
+    require_once(__DIR__."/../okta/authcode.php");
+}
 
 
 function loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID){
