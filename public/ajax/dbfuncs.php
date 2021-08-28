@@ -3385,11 +3385,11 @@ class dbfuncs {
     }
 
     function insertAccessToken($accessToken, $expirationDate, $sso_user_id, $client_id, $scope, $user_id) {
-        $sql = "INSERT INTO accessTokens(accessToken, expirationDate, sso_user_id, client_id, scope, user_id) VALUES ('$accessToken', '$expirationDate',  '$sso_user_id', '$client_id', '$scope', '$user_id')";
+        $sql = "INSERT INTO access_tokens(accessToken, expirationDate, sso_user_id, client_id, scope, user_id) VALUES ('$accessToken', '$expirationDate',  '$sso_user_id', '$client_id', '$scope', '$user_id')";
         return self::insTable($sql);
     }
     function insertRefreshToken($refreshToken, $sso_user_id, $client_id, $scope, $user_id) {
-        $sql = "INSERT INTO refreshTokens(refreshToken, sso_user_id, client_id, scope, user_id) VALUES ('$refreshToken', '$sso_user_id', '$client_id', '$scope' , '$user_id')";
+        $sql = "INSERT INTO refresh_tokens(refreshToken, sso_user_id, client_id, scope, user_id) VALUES ('$refreshToken', '$sso_user_id', '$client_id', '$scope' , '$user_id')";
         return self::insTable($sql);
     }
     function insertGithub($username, $email, $token, $ownerID) {
@@ -3403,11 +3403,11 @@ class dbfuncs {
     }
 
     function getSSOAccessTokenByUserID($ownerID) {
-        $sql = "SELECT accessToken FROM accessTokens WHERE user_id = '$ownerID' ORDER BY id DESC LIMIT 1";
+        $sql = "SELECT accessToken FROM access_tokens WHERE user_id = '$ownerID' ORDER BY id DESC LIMIT 1";
         return self::queryTable($sql);
     }
     function getSSOAccessToken($accessToken) {
-        $sql = "SELECT * FROM accessTokens WHERE accessToken = '$accessToken' ORDER BY id DESC LIMIT 1";
+        $sql = "SELECT * FROM access_tokens WHERE accessToken = '$accessToken' ORDER BY id DESC LIMIT 1";
         return self::queryTable($sql);
     }
     function getGithub($ownerID) {
@@ -3684,7 +3684,7 @@ class dbfuncs {
         return self::runSQL($sql);
     }
     function removeSSOAccessToken($accessToken) {
-        $sql = "DELETE FROM accessTokens WHERE accessToken = '$accessToken'";
+        $sql = "DELETE FROM access_tokens WHERE accessToken = '$accessToken'";
         return self::runSQL($sql);
     }
     //    ------------- Parameters ------------
