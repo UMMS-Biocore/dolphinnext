@@ -13991,6 +13991,14 @@ $(document).ready(function () {
     $(function () {
         $(document).on("shown.bs.tab click", "a.reportFile", function (event) {
             var href = $(this).attr("href");
+            // change height of the div to reload its content for pdf/iframe
+            var currHeight = $(href).closest("div.fullsize").css("height")
+            if (currHeight == "600px"){
+                $(href).closest("div.fullsize").css("height","601px")
+            } else {
+                $(href).closest("div.fullsize").css("height","600px")
+            }
+            
             $(href).removeClass("fade").addClass("active in");
             $(href).siblings().removeClass("active in").addClass("fade");
             $($.fn.dataTable.tables(true)).DataTable().columns.adjust();

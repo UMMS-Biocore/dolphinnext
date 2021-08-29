@@ -58,9 +58,11 @@ folder instead of downloading all of them to reduce the load. -->
                         <h2 class="text-center">Log In</h2>
                     </div>
                     <?php 
-    if (ALLOW_SIGNUPGOOGLE != false){
+    if (ALLOW_SIGNUPGOOGLE != false || !empty(SSO_LOGIN)){
         echo '<div style="margin:auto; width:50%;  height:120px; padding-top:20px;">';
-        echo '<div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div>';
+        if (ALLOW_SIGNUPGOOGLE != false){
+            echo '<div id="googleSignIn" class="g-signin2" data-longtitle="true" data-onsuccess="Google_signIn" data-theme="white" data-width="200"></div>';
+        }
         if (!empty(SSO_LOGIN)){
             $SSO_LOGIN_URL="";
             if (!empty(SSO_LOGIN) && !empty(ISSUER) && !empty(CLIENT_ID) && !empty(CLIENT_SECRET) ){
@@ -73,36 +75,35 @@ folder instead of downloading all of them to reduce the load. -->
                     'redirect_uri' => 'http://localhost:8080/dolphinnext/okta/authorization-code-callback.php',
                     'state' => $state
                 ]);
-                $SSO_LOGIN_URL=$ISSUER.'/v1/authorize?'.$query;
+                $SSO_LOGIN_URL=ISSUER.'/v1/authorize?'.$query;
 
             } else if (!empty(SSO_LOGIN) && !empty(SSO_URL) && !empty(CLIENT_ID) && !empty(CLIENT_SECRET)){
                 $SSO_LOGIN_URL = SSO_URL."/dialog/authorize?redirect_uri=".BASE_PATH."/php/receivetoken.php&response_type=code&client_id=".CLIENT_ID."&scope=offline_access";
-                
+
             }
             echo '<a style="width:200px; margin-top:10px;" id="ssosigninbtn" href="'.$SSO_LOGIN_URL.'" class="btn btn-default"><i style="padding-right:25px;" class="fa fa-lock" aria-hidden="true"></i> Sign In with SSO </a>';
         }
-
         echo '</div>';
-        echo '<div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center"><span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span></div>';
     }
-                    ?>
-
-                    <?php 
-                    if (!empty(SSO_LOGIN)){
-
-                    } 
-                    ?>
-
-                    <div class="form-group" style="margin-top:20px;">
+            if ((ALLOW_SIGNUPGOOGLE != false || !empty(SSO_LOGIN)) && !empty(PASSWORD_LOGIN)){
+                echo '<div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center"><span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span></div>';
+            }
+            if (PASSWORD_LOGIN != false){
+                echo '<div class="form-group" style="margin-top:20px;">
                         <input name="emailusername" class="form-control" placeholder="E-mail/Username" />
                     </div>
                     <div class="form-group">
                         <input type="password" name="password" class="form-control" placeholder="Password" />
-                    </div>
-                    <?php if (isset($loginfail)) echo  $loginfail ?>
-                    <div class="footer">
+                    </div>';
+            }
+            if (isset($loginfail)) echo  $loginfail;
+            if (PASSWORD_LOGIN != false){
+                echo '<div class="footer">
                         <button type="submit" name="login" class="btn btn-primary" style="float:right;">Login</button>
-                    </div>
+                    </div>';  
+            }
+            ?>
+
                 </form>
 
 
