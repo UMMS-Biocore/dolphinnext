@@ -5460,7 +5460,7 @@ class dbfuncs {
             $name = $inputVal[$i]["name"]; 
             $run_env = $inputVal[$i]["file_env"]; 
             $run_env = $this->getRunEnv($run_env,$ownerID);
-            $files_used = $inputVal[$i]["files_used"]; 
+            $files_used = $inputVal[$i]["file_used"]; 
             $file_dir = $inputVal[$i]["file_dir"]; 
             $collection_type = $inputVal[$i]["collection_type"];
             $file_type = $inputVal[$i]["file_type"];

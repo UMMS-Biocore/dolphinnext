@@ -1,3 +1,6 @@
+30.08.2021 Version 1.2.50
+Minor fix for Dmeta run submission.
+
 28.08.2021 Version 1.2.49
 Database table names converted to lowercase.
 PDF loading bug fixed in report page.
