@@ -56,7 +56,7 @@ To view the details of your MySQL instance, click the database instance name. Ch
     :align: center
     :width: 99%
     
-9. Connecting DolphinNext to an Amazon RDS MySQL database: Lets open main DolphinNext configuration file (located here: ``dolphinnext/config/.sec``) and enter following information to finalize our connection::
+9. Connecting DolphinNext to an Amazon RDS MySQL database: Lets open main DolphinNext configuration file (located here: ``dolphinnext/config/.sec``) and enter following information to establish our connection::
 
     [Dolphinnext]
     DB=mysql

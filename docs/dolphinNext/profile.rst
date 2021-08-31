@@ -93,11 +93,12 @@ Run Environments
 .. image:: dolphinnext_images/profile_runenv.png
 	:align: center
 
-This section is used for defining connection profiles by clicking on "Add Environment" button. As a type, please choose one of these options: 
+This section is used for defining connection profiles by clicking on "Add Environment" button. As a type, please choose one of these options: Host, Amazon or Google. 
 
 * **A. Host:** If you have an access to High Performance Computing (HPC) environments, or personal workstations. 
-* **B. Amazon:** If you have an Amazon Web Services (AWS) account or planning to create one in order to run your jobs in the cloud. 
-* **C. Google:** If you have an Google Cloud account or planning to create one in order to run your jobs in the cloud.
+* **B. Host for AWS Batch:** If you have an Amazon Web Services (AWS) account and planning to submit jobs to AWS Batch. 
+* **C. Amazon:** If you have an Amazon Web Services (AWS) account or planning to create an EC2 instance in order to run your jobs in the cloud. 
+* **D. Google:** If you want to use Google Cloud account to run your jobs in the cloud.
 
 A. Defining Host Profile:
 -------------------------
@@ -156,7 +157,43 @@ A. Defining Host Profile:
 
     .. note::  In case of non-standart resources or settings is required for executor, then you can specify these parameters by using **Other options** box. For instance, to submit SGE job with 3 CPU by using paralel environments, you may enter ``-pe orte 3`` (to use MPI for distributed-memory machines) or ``-pe smp 3`` (to use OpenMP for shared-memory machines) in the **Other options** box and just leave the CPU box empty.
 
-B. Defining Amazon Profile:
+B. Defining AWS Batch Profile:
+------------------------------
+Please choose type of the run environment as "Host" and enter following information.
+
+* **Username/Hostname:** You should enter your username and hostname of the host which you would like to connect (yourusername@yourhostname). For instance, for us2r@ghpcc06.umassrc.org, or amazon instance you have created::
+    
+        -  Username: yourusername (eg. us2r)
+        -  Hostname: yourhostname (eg. ghpcc06.umassrc.org)
+
+* **SSH Port (optional):** By default TCP port 22 is used for SSH connection. You can change this default by entering port number.
+
+* **SSH Keys:** are saved in SSH keys tab and will be used while connecting to host.
+
+* **Run Command (optional):** You may run the command or commands (by seperating each command with ``&&`` sign) before the nextflow job starts. eg. ``source /etc/profile``
+
+* **Nextflow Path (optional):** If nextflow path is not added to ``$PATH`` environment, you can define the path in this block. eg. ``/project/umw_biocore/bin``
+
+* **Singularity Cache Folder:** Directory where remote Singularity images are stored. By default home directory is used. Note: When using a computing cluster it must be a shared folder accessible from all computing nodes.
+
+* **Profile Variables:** You can set commonly used pipeline variables here. For instance,``params.DOWNDIR`` is used in most of our public pipelines to save all genome related files (fasta, index etc.). So you can set this variable like this: ``params.DOWNDIR = "/share/dnext_data"`` Also, you can enter multiple variables by separating them with newline.
+
+* **Executor of Nextflow:** Please select ``local`` for executor of Nextflow.
+
+* **Executor Settings for Nextflow:** Please set 10GB memory and 1 CPU for nextflow.
+
+* **Executor of Nextflow Jobs:** Please select ``AWS Batch`` for nextflow jobs.
+
+* **Queue, Memory, CPU, and other options:** Please enter the queue name in the AWS Batch and set default memory and CPU for each job (e.g. 10GB memory and 1CPU). These settings could be adjusted in the run page.
+
+* **Amazon Keys:** AWS credentials that are saved in Amazon keys tab and will allow to submit jobs to AWS Batch.
+
+* **Default Working Directory:** Default directory in the host machine where runs will be executed. (eg. ``/data/dnext``)
+
+* **Default Bucket Location for Publishing:** Default bucket location where dolphinnext reports will be published. (e.g. ``s3://bucket/dnext``)
+
+
+C. Defining Amazon Profile:
 ---------------------------
 * **SSH Keys:** are saved in SSH keys tab and will be used while connecting to host.
 * **Amazon Keys:** AWS credentials that are saved in Amazon keys tab and will allow to start/stop Amazon EC2 instances.
@@ -202,7 +239,7 @@ B. Defining Amazon Profile:
 
 * **Executor of Nextflow/Executor of Nextflow Jobs:** Amazon instances are automatically configured to use the Ignite executors. Therefore, while defining amazon profile, you should select ``local`` for **Executor of Nextflow** and ``ignite`` for **Executor of Nextflow Jobs.** 
 
-C. Defining Google Profile:
+D. Defining Google Profile:
 ---------------------------
 * **SSH Keys:** are saved in SSH keys tab and will be used while connecting to host.
 * **Google Keys:** Google credentials that are saved in Google keys tab and will allow to start/stop Google Cloud instances.

@@ -72,6 +72,7 @@ class AuthCode {
             $checkUserData = json_decode($dbfuncs->getUserByEmailorUsername($email));
             $db_id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
             $db_role = isset($checkUserData[0]) ? $checkUserData[0]->{'role'} : "";
+
             if (!empty($db_id)){
                 // User exist in table 
                 // Update db with recent information
@@ -81,7 +82,13 @@ class AuthCode {
                 // insert user
                 // Update db with latest information
                 $email_clean = str_replace("'", "''", $email);
+                $any_user_check = $dbfuncs->queryAVal("SELECT id FROM users");
+                $any_user_checkAr = json_decode($any_user_check,true); 
                 $role = "user";
+                if (empty($any_user_checkAr)){
+                    $role = "admin";
+                    $db_role = "admin";
+                } 
                 $active = 1;
                 $sql = "INSERT INTO users(name, email, username, role, active, memberdate, date_created, date_modified, perms, sso_id, scope) VALUES ('$name', '$email_clean', '$username', '$role', $active, now(),now(), now(), '3', '$sso_user_id', '$scope')";
                 $inUser = $dbfuncs->insTable($sql);
