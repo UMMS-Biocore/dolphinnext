@@ -716,13 +716,16 @@ class dbfuncs {
         return array($connect, $next_path, $profileCmd, $executor,$next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job,$ssh_id, $ssh_port);
     }
 
-    function getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType){
+    function getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job){
         $interdel = $proPipeAll[0]->{'interdel'};
         $interdelCmd = "";
         if ($interdel == "true"){
             if ($profileType == "google" && !empty($dolphin_publish_real) && preg_match("/gs:/i", $dolphin_publish_real)) {
                 $nxf_work = "$dolphin_publish_real/work"; 
                 $interdelCmd = "gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS && gsutil -m rm -rf $nxf_work 2> /dev/null || true";
+            } else if ($executor_job == "awsbatch" && !empty($dolphin_publish_real) && preg_match("/s3:/i", $dolphin_publish_real)){
+                $nxf_work = "$dolphin_publish_real/work";
+                $interdelCmd = "aws s3 rm $nxf_work --recursive 2> /dev/null || true";
             } else if (!empty($dolphin_path_real)) {
                 $nxf_work = "$dolphin_path_real/work";
                 $interdelCmd = "rm -rf $nxf_work";
@@ -1790,7 +1793,7 @@ class dbfuncs {
         $downCacheCmd = $this->getDownCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType); 
         $preCmd = $this->getPreCmd($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd); 
         $next_path_real = $this->getNextPathReal($next_path); //eg. /project/umw_biocore/bin
-        $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType); 
+        $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job); 
 
 
         //get command for renaming previous log file
@@ -5351,7 +5354,12 @@ class dbfuncs {
     function getEmptyCollectionId($ownerID, $collection_name,$collNameArr, $suffix){
         $collection_id = 0;
         $suffix += 1;
-        $newColName = "{$collection_name}-{$suffix}";
+        $newColName = "";
+        if (!empty($collection_name)){
+            $newColName = "{$collection_name}-{$suffix}";
+        } else {
+            $newColName = "collection-{$suffix}";
+        }
         // first check if it is in $collNameArr
         if (!in_array($newColName, $collNameArr)){
             $collData = json_decode($this->saveCollection($newColName, $ownerID),true);
