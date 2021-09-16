@@ -72,8 +72,8 @@ class updates
             $cloud = $clouds[$i];
             //autoshutdown_active profiles 
             $sql = "SELECT DISTINCT a.id, a.owner_id, a.status
-            FROM profile_{$cloud} a
-            INNER JOIN project_pipeline pp
+            FROM $this->db.profile_{$cloud} a
+            INNER JOIN $this->db.project_pipeline pp
             WHERE a.autoshutdown_active = 'true'
             AND (a.status = 'initiated' OR a.status = 'running')
             AND pp.profile = CONCAT('{$cloud}-',a.id) 
@@ -81,9 +81,9 @@ class updates
             $shutActiveProfiles=$this->queryTable($sql);
             //autoshutdown_active profiles that has active runs
             $sql = "SELECT DISTINCT a.id, a.owner_id, a.status
-            FROM profile_{$cloud} a
-            INNER JOIN project_pipeline pp
-            INNER JOIN run r
+            FROM $this->db.profile_{$cloud} a
+            INNER JOIN $this->db.project_pipeline pp
+            INNER JOIN $this->db.run r
             WHERE pp.id = r.project_pipeline_id
             AND a.autoshutdown_active = 'true'
             AND (a.status = 'initiated' OR a.status = 'running')
@@ -127,8 +127,8 @@ class updates
         // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
         $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.publish_dir_check, pp.publish_dir, pp.date_modified, pp.owner_id, pp.pipeline_id, r.run_status
-            FROM project_pipeline pp
-            INNER JOIN run_log r
+            FROM $this->db.project_pipeline pp
+            INNER JOIN $this->db.run_log r
             WHERE pp.last_run_uuid = r.run_log_uuid AND pp.deleted=0 AND (r.run_status = 'init' OR r.run_status = 'Waiting' OR r.run_status = 'NextRun')";
         $data=$this->queryTable($sql);
         $time = date("M-d-Y H:i:s");

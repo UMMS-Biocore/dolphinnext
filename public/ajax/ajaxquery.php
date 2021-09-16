@@ -59,7 +59,7 @@ else if ($p=="saveRunLogSizeAllUsers"){
     $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     $data = json_encode("");
     if ($userRole == "admin"){
-        $sql = "SELECT id, IF(disk_usage IS NULL,0,1) as disk_usage_check FROM users WHERE deleted=0";
+        $sql = "SELECT id, IF(disk_usage IS NULL,0,1) as disk_usage_check FROM $db->db.users WHERE deleted=0";
         $usersRaw=$db->queryTable($sql);
         $users = json_decode($usersRaw);
         foreach ($users as $user):
@@ -464,7 +464,7 @@ else if ($p=="changePassword"){
     } else {
         $error['password1'] ="New password is not match";
     }
-    $pass_hash0DB = $db->queryAVal("SELECT pass_hash FROM users WHERE id = '$ownerID'");
+    $pass_hash0DB = $db->queryAVal("SELECT pass_hash FROM $db->db.users WHERE id = '$ownerID'");
     if ($pass_hash0DB !=  $pass_hash0 && !empty($pass_hash0DB)){
         $error['password0'] ="Old password is not correct.";
     } else if  (!empty($pass_hash1)){
@@ -488,7 +488,7 @@ else if ($p=="saveUserManual"){
         if (!empty($id)) {
             $data = $db->updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID);  
         } else {
-            $any_user_check = $db->queryAVal("SELECT id FROM users");
+            $any_user_check = $db->queryAVal("SELECT id FROM $db->db.users");
             $any_user_checkAr = json_decode($any_user_check,true); 
             if (empty($any_user_checkAr)){
                 $role = "admin";
@@ -593,7 +593,7 @@ else if ($p=="getProjectPipelines"){
 }
 
 else if ($p=="checkNewRunParam"){
-    $uuid= $db->queryAVal("SELECT last_run_uuid FROM project_pipeline WHERE id='$id'");
+    $uuid= $db->queryAVal("SELECT last_run_uuid FROM $db->db.project_pipeline WHERE id='$id'");
     //return 1 if parameters have changed.
     $data = json_encode(0);
     $pipeData = json_decode($db->getProjectPipelines($id,"",$ownerID,$userRole), true)[0];
@@ -668,7 +668,7 @@ else if ($p=="updateReleaseDate"){
     $permCheck = 0;
     //don't allow to update if user not own the pipeline.
     if ($type == "pipeline" && !empty($id)){
-        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE id='$id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
     }
     if (!empty($permCheck)){
@@ -679,12 +679,12 @@ else if ($p=="saveToken"){
     $type = $_REQUEST['type'];
     if ($type == "pipeline"){
         $np = 1;
-        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id'");
-        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $curr_token= $db->queryAVal("SELECT token FROM $db->db.token WHERE np='$np' AND id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE id='$id'");
     } else if ($type == "project_pipeline"){
         $np = 3;
-        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id'");
-        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
+        $curr_token= $db->queryAVal("SELECT token FROM $db->db.token WHERE np='$np' AND id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.project_pipeline WHERE id='$id'");
     }
     $ownCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
     if (empty($curr_token)){
@@ -702,7 +702,7 @@ else if ($p=="getToken"){
     $ret= array();
     if ($type == "pipeline"){
         $np = 1;
-        $curr_token= $db->queryAVal("SELECT token FROM token WHERE np='$np' AND id='$id' AND owner_id='$ownerID'");
+        $curr_token= $db->queryAVal("SELECT token FROM $db->db.token WHERE np='$np' AND id='$id' AND owner_id='$ownerID'");
     }
     if (empty($curr_token)){
         $data = json_encode($ret);
@@ -1875,7 +1875,7 @@ else if ($p=="saveRunSummary"){
     $uuid = $_REQUEST['uuid'];
     $summary = isset($_REQUEST['summary']) ?  addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES)) : "";
     if (!empty($id)) {
-        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.project_pipeline WHERE id='$id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
         if (!empty($permCheck)){
             $data = $db->updateProjectPipelineSummary($id, $uuid, $summary, $ownerID);
@@ -1925,7 +1925,7 @@ else if ($p=="saveProjectPipeline"){
     settype($google_cre_id, 'integer');
     if (!empty($id)) {
         //don't allow to update if user doesn't own the project_pipeline.
-        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.project_pipeline WHERE id='$id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
         if (!empty($permCheck)){
             $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $ownerID);
@@ -2155,7 +2155,7 @@ else if ($p=="getMaxRev_id")
 else if ($p=="getMaxPipRev_id"){
     $data = json_encode("");
     $pipeline_gid = $_REQUEST['pipeline_gid'];
-    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE pipeline_gid='$pipeline_gid'");
+    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE pipeline_gid='$pipeline_gid'");
     $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
     if (!empty($permCheck)){
         $data = $db->getMaxPipRev_id($pipeline_gid);
@@ -2192,7 +2192,7 @@ else if ($p=="saveAllPipeline")
     $userRole = $db->getUserRoleVal($ownerID);
     //don't allow to update if user not own the pipeline.
     if ($userRole != "admin" && !empty($id)){
-        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE id='$id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
     }
     if (!empty($permCheck)){
@@ -2243,7 +2243,7 @@ else if ($p=="savePipelineDetails")
     $userRole = $db->getUserRoleVal($ownerID);
     //don't allow to update if user not own the pipeline.
     if ($userRole != "admin" && !empty($id)){
-        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM biocorepipe_save WHERE id='$id'");
+        $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE id='$id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
     }
     if (!empty($permCheck)){

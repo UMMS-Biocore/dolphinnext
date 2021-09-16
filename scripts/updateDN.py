@@ -61,7 +61,8 @@ def updateDB(db, user, p, host, port):
         host=host,
         user=user,
         passwd=p,
-        port=port
+        port=port,
+	auth_plugin='mysql_native_password'
     )
     cursor=cnx.cursor()
     #check if update_db table exists
