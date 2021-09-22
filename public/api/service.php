@@ -1,6 +1,8 @@
 <?php
 require_once("funcs.php");
 require_once("update.php");
+require_once("run.php");
+require_once("data.php");
 
 class Pipeline{
     public $params = null;
@@ -52,6 +54,59 @@ class Pipeline{
                 }
 
             }
+        }
+        if (isset($params['data'])){
+            $ret=array();
+            $headers = apache_request_headers();
+            $Run = new run();
+            $Data = new data();
+            $user=$Run->verifyBearerToken($headers);
+            if (!empty($user)){
+                $body = json_decode(file_get_contents('php://input'), true);
+                $data=$params['data'];
+                $ret["status"] = "success";
+                $result=$Data->$data($body, $params, $user);
+                $newData = array();
+                $newData["data"] = $result;
+                $ret["data"] = $newData;
+                return json_encode($ret);
+            }
+            http_response_code(401);
+            $ret["status"] = "error";
+            $ret["log"] = "Token not found.";
+            return json_encode($ret); 
+        }
+        if (isset($params['run'])){
+            $ret=array();
+            $headers = apache_request_headers();
+            $Run = new run();
+            $user=$Run->verifyBearerToken($headers);
+            if (!empty($user)){
+                $body = json_decode(file_get_contents('php://input'), true);
+                $run=$params['run'];
+                $result=$Run->$run($body, $params, $user);
+                error_log(print_r($result, TRUE));
+                
+                if (empty($result)){
+                    http_response_code(401);
+                    $ret["status"] = "error";
+                    $ret["log"] = "Run could not be started.";
+                } else if (!empty($result["status"])){
+                    $ret["run_url"] = !empty($result["run_url"]) ? $result["run_url"] : "";
+                    $ret["status"] = $result["status"];
+                    $ret["log"] = $result["log"];
+                } else {
+                    http_response_code(401);
+                    $ret["status"] = "error";
+                    $ret["log"] = $result;
+                }
+                error_log(print_r($ret, TRUE));
+                return json_encode($ret);
+            } 
+            http_response_code(401);
+            $ret["status"] = "error";
+            $ret["log"] = "Token not found.";
+            return json_encode($ret); 
         }
     }
 }

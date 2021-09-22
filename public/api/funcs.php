@@ -1,12 +1,21 @@
 <?php
 require_once(__DIR__."/../../config/config.php");
+require_once(__DIR__."/../ajax/dbfuncs.php");
+require_once("run.php");
+
+if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
+
 
 class funcs
 {
-    public $dbhost = "";
-    public $db = "";
-    public $dbuser = "";
-    public $dbpass = "";
+    private $dbhost = "";
+    private $db = "";
+    private $dbuser = "";
+    private $dbpass = "";
+    private $BASE_PATH = "";
+    private $SSO_URL = "";
+    private $CLIENT_ID = "";
+    private $CLIENT_SECRET = "";
 
     function readINI()
     {
@@ -14,6 +23,10 @@ class funcs
         $this->db         = DB;
         $this->dbpass     = DBPASS;
         $this->dbuser     = DBUSER;
+        $this->BASE_PATH  = BASE_PATH;
+        $this->SSO_URL    = SSO_URL;
+        $this->CLIENT_ID  = CLIENT_ID;
+        $this->CLIENT_SECRET  = CLIENT_SECRET;
     }
     function getINI()
     {
@@ -56,7 +69,7 @@ class funcs
         return $data;
     }
 
-    
+
     //http://localhost:8080/dolphinnext/api/service.php?func=getUUID&type=process
     function getUUID($params){
         $type = $params['type'];

@@ -13,6 +13,9 @@ $SHOW_RUN_TRACE= SHOW_RUN_TRACE;
 $SHOW_RUN_NEXTFLOWLOG= SHOW_RUN_NEXTFLOWLOG;
 $SHOW_RUN_NEXTFLOWNF= SHOW_RUN_NEXTFLOWNF;
 $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
+$SHOW_DMETA= SHOW_DMETA;
+$DMETA_URL= DMETA_URL;
+$DMETA_LABEL= DMETA_LABEL;
 ?>
 <style type="text/css">
     #fileContent .multiselect-item.multiselect-filter {
@@ -272,7 +275,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
 <div id="runTabSection">
     <div id="runHistoryDiv" style="display:none; float:right;">
         <div style="float:right;  margin-left:5px; padding-top:8px;">
-            <a id="runHistoryConsole" data-toggle="tooltip" data-placement="bottom" data-original-title="Run History Management"><i class="fa fa-gear" style="font-size: 18px;"></i></a>
+            <a id="runHistoryConsole" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Management"><i class="fa fa-gear" style="font-size: 18px;"></i></a>
         </div>
         <div style="width:140px; float:right;">
             <select id="runVerLog" class="fbtn btn-default form-control"></select>
@@ -302,6 +305,8 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <div class="row">
                     <div class="col-md-12">
                         <label>Run Description</label>
+                        <a><i id="editRunSum" class="fa fa-pencil" style="display: inline-block;"></i></a>
+                        <a><i id="saveRunSum" class="fa fa-check" style="display: none;"></i> </a>
                     </div>
                 </div>
             </div>
@@ -793,11 +798,12 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Run History Management</h4>
+                <h4 class="modal-title">Run Management</h4>
             </div>
             <div class="modal-body">
                 <form class="form-horizontal" style="padding-left:15px;">
                     <div class="text-left" style="padding-top:10px;  padding-bottom:20px;">
+                        <a id="removeNewRunIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Remove New Run"><i class="glyphicon glyphicon-remove" style="font-size: 15px; margin-right:5px;"></i></a>
                         <a id="runHistoryRecIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Choose Run to Recover"><i class="glyphicon glyphicon-repeat" style="font-size: 15px; margin-right:5px;"></i></a>
                         <a id="runHistoryDelIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Choose Run to Delete"><i class="fa fa-trash-o" style="font-size: 18px; margin-right:5px;"></i></a>
                         <a id="runHistoryPurgeIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Choose Run to Purge (Permanently Delete)"><i class="fa fa-trash" style="font-size: 18px; margin-right:5px;"></i></a>
@@ -874,6 +880,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                         <li id="importedFiles" class="active"><a class="nav-item" data-toggle="tab" href="#importedFilesTab">Files</a></li>
                         <li id="manualTabFile" class="nav-item"><a class="nav-item" data-toggle="tab" href="#manualTab">Manually</a></li>
                         <li id="publicFileTabFile"><a class="nav-item" data-toggle="tab" href="#publicFileTab">Public Files</a></li>
+                        <?php if ($SHOW_DMETA != false){ echo '<li id="dmetaFiles"><a class="nav-item" data-toggle="tab" href="#dmetaFileTab">Dmeta</a></li>'; } ?>
                     </ul>
                     <!-- Tab panes -->
                     <div id="fileContent" class="tab-content">
@@ -900,7 +907,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 </table>
                             </div>
                         </div>
-                        <div class="panel panel-default" id="detailsOfFileDiv" style="display:none;">
+                        <div class="panel panel-default" id="detailsOffileDiv" style="display:none;">
                             <div class="panel-body">
                                 <div class="pull-left">
                                     <h4>Details</h4>
@@ -973,6 +980,80 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                     </div>
                 </div>
             </div>
+            <?php if ($SHOW_DMETA != false){ 
+            $dURLS = array_map('trim', explode(',', $DMETA_URL));
+            $dLabels = array_map('trim', explode(',', $DMETA_LABEL));
+            $ids = array();
+            $tabList = "";
+            $tabContent= "";
+            for ($i = 0; $i < count($dURLS); $i++) {
+                if (count($dURLS) == count($dLabels)){
+                    $pre = $dLabels[$i];
+                } else {
+                    $pre = str_replace("https:", "", $dURLS[$i]);
+                    $pre = str_replace("http:", "", $pre);
+                    $pre = str_replace("/", "", $pre);
+                    $pre = str_replace(":", "", $pre);
+                }
+                $ids[] = $pre;
+                $tabDivId = $pre."Tab";
+                $tableDivId = $pre."Table";
+                $active = "";
+                if ($i === 0){
+                    $active = "active";
+                }
+                $tabList .= '<li class="'.$active.'"><a class="nav-item" data-toggle="tab" href="#'.$tabDivId.'">'.$pre.'</a></li>';
+                $tabContent .= '
+            <div id="'.$tabDivId.'" role="tabpanel" class="tab-pane '.$active.'" searchmetatab="true">
+                <div class="row">
+                    <div class="col-sm-12" style="padding-top:6px;">
+                        <table id="'.$tableDivId.'" class="table table-striped table-bordered display" cellspacing="0" width="100%">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;">Check</th>
+                                    <th>Name</th>
+                                    <th>Collection</th>
+                                    <th>Run Environment</th>
+                                    <th>Project</th>
+                                    <th>Added on</th>
+                                    <th>View</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="panel panel-default" id="detailsOfmetaDiv" style="display:none; margin-top:10px;">
+                            <div class="panel-body">
+                                <div class="pull-left">
+                                    <h4>Details</h4>
+                                </div>
+                                <div class="box-body tab-pane active">
+                                    <table class="table table-hover table-striped table-condensed" id="details_of_meta_table">
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+            </div>';
+            }
+            
+    
+            $dmetaDiv = '
+            <div role="tabpanel" id="dmetaFileTab" dmetaurl="'.$DMETA_URL.'" dmetaid="'.join(",",$ids).'" class="tab-pane" searchTab="true">
+               <div role="tabpanel">
+                    <!-- Nav tabs -->
+                    <ul id="test" style="margin-top:10px;" class="nav nav-tabs" role="tablist">
+                    '.$tabList.'
+                    </ul>
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        '.$tabContent.'
+                    </div>
+                </div>
+            </div>
+            ';
+            echo $dmetaDiv; }
+            ?>
         </div>
     </div>
 </div>
@@ -1175,6 +1256,7 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 <option value="bai">BAI</option>
                                 <option value="bed">BED</option>
                                 <option value="csv">CSV</option>
+                                <option value="tab">TAB</option>
                                 <option value="tsv">TSV</option>
                                 <option value="txt">TXT</option>
                             </select>
@@ -1187,6 +1269,8 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 <option value="" disabled selected>Choose Collection Type</option>
                                 <option value="single">Single/List</option>
                                 <option value="pair">Paired List</option>
+                                <option value="triple">Triple List</option>
+                                <option value="quadruple">Quadruple List</option>
                             </select>
                         </div>
                     </div>
@@ -1200,36 +1284,44 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                                 <div class="col-sm-8">
                                     <input type="text" class="form-control" id="single_pattern" name="single_pattern" value="">
                                 </div>
-                            </div>
-                            <div class="col-sm-6 forwardpatternDiv" style="display:none;">
-                                <p class="col-sm-4 control-label">Forward Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for forward reads eg. _R1"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
-                                <div class="col-sm-8">
-                                    <input type="text" class="form-control" id="forward_pattern" name="forward_pattern" value="_R1">
-                                </div>
-                            </div>
-                            <div class="col-sm-6 reversepatternDiv" style="display:none;">
-                                <p class="col-sm-4 control-label">Reverse Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reverse reads eg. _R2"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
-                                <div class="col-sm-8">
-                                    <input type="text" class="form-control" id="reverse_pattern" name="reverse_pattern" value="_R2">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-12">
-                            <div class="col-sm-6 singlepatternDiv" style="display:none;">
-                                <div class="col-sm-12">
+                                <div class="col-sm-12" style="margin-top:8px;">
                                     <select id="singleList" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                             <div class="col-sm-6 forwardpatternDiv" style="display:none;">
-                                <div id="forwardListDiv" class="col-sm-12">
+                                <p class="col-sm-4 control-label">R1 Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for forward reads eg. _R1"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="forward_pattern" name="forward_pattern" value="_R1">
+                                </div>
+                                <div class="col-sm-12" style="margin-top:8px; margin-bottom:12px;">
                                     <select id="forwardList" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                             <div class="col-sm-6 reversepatternDiv" style="display:none;">
-                                <div id="reverseListDiv" class="col-sm-12">
+                                <p class="col-sm-4 control-label">R2 Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reverse reads eg. _R2"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="reverse_pattern" name="reverse_pattern" value="_R2">
+                                </div>
+                                <div class="col-sm-12" style="margin-top:8px; margin-bottom:12px;">
                                     <select id="reverseList" type="select-multiple" multiple class="form-control" size="9"></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 r3patternDiv" style="display:none;">
+                                <p class="col-sm-4 control-label">R3 Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reads eg. _R3"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="r3_pattern" name="r3_pattern" value="_R3">
+                                </div>
+                                <div class="col-sm-12" style="margin-top:8px;">
+                                    <select id="r3List" type="select-multiple" multiple class="form-control" size="9"></select>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 r4patternDiv" style="display:none;">
+                                <p class="col-sm-4 control-label">R4 Pattern <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter pattern for reads eg. _R4"><i class='glyphicon glyphicon-info-sign'></i></a></span> </p>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control" id="r4_pattern" name="r4_pattern" value="_R4">
+                                </div>
+                                <div class="col-sm-12" style="margin-top:8px;">
+                                    <select id="r4List" type="select-multiple" multiple class="form-control" size="9"></select>
                                 </div>
                             </div>
                         </div>
@@ -1592,14 +1684,16 @@ $SHOW_RUN_NEXTFLOWCONFIG= SHOW_RUN_NEXTFLOWCONFIG;
                 <form class="form-horizontal">
                     <div class="form-group">
                         <div class="col-sm-12">
-                            <div>Selected files are not match with the existing collections. Please enter a new collection name in the field below.</div>
+                            <p id="newCollectionModalText">Selected files are not match with the existing collections. Please enter a new collection name in the field below.</p>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-sm-12">
-                            <label for="mUserLab" class="col-sm-3 control-label">Collection Name</label>
-                            <div class="col-sm-9">
-                                <input type="text" class="form-control" id="newCollectionName">
+                            <label for="mUserLab" class="col-sm-2 control-label">Collection</label>
+                            <div class="col-sm-10">
+                                <select id="newCollectionName" class="fbtn btn-default form-control" >
+                                <option value="" disabled selected>Type New Collection Name or Choose to Add into Existing Collection</option>
+                            </select>
                             </div>
                         </div>
                     </div>

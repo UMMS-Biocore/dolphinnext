@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Amazon RDS MySQL Database &mdash; DolphinNext v1.1.3 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="DolphinNext v1.1.3 documentation" href="../index.html"/>
+        <link rel="next" title="Frequently Asked Questions" href="admin_faq.html"/>
+        <link rel="prev" title="Introduction" href="admin_quick.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> DolphinNext
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                v1.1.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Short Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Pipeline Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="about.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cite.html">How To Cite Us</a></li>
+<li class="toctree-l1"><a class="reference internal" href="support.html">Support</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quick Start Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="project.html">Project Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="run.html">Run Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profile.html">Profile Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="amazon.html">Amazon Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="google.html">Google Cloud Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="public_ssh_key.html">Adding Public SSH Key</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="known_issues.html">Known Issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API v1</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Administrator Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="admin_quick.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Amazon RDS MySQL Database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin_faq.html">Frequently Asked Questions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DolphinNext</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Amazon RDS MySQL Database</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dolphinNext/admin_rds.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="amazon-rds-mysql-database">
+<h1>Amazon RDS MySQL Database<a class="headerlink" href="#amazon-rds-mysql-database" title="Permalink to this headline">¶</a></h1>
+<p>In this article, we are going to show how to connect to the Amazon RDS MySQL instance with dolphinNext for MySQL.</p>
+<ol class="arabic simple">
+<li>Open Amazon RDS console: First of all, sign in to the AWS Management Console and find RDS in the Database section of All Services and click to open the Amazon RDS Console.</li>
+</ol>
+<a class="reference internal image-reference" href="../_images/rds1.png"><img alt="../_images/rds1.png" class="align-center" src="../_images/rds1.png" style="width: 99%;" /></a>
+<ol class="arabic simple" start="2">
+<li>Create an Amazon MySQL instance: Go to Databases on the side menu and click Create database. In this step, you will need to pick a database creation method, configure engine options, and select a database version. Afterwards, choose the MySQL engine and select the version.</li>
+</ol>
+<a class="reference internal image-reference" href="../_images/rds2.png"><img alt="../_images/rds2.png" class="align-center" src="../_images/rds2.png" style="width: 99%;" /></a>
+<ol class="arabic simple" start="3">
+<li>Select a template: Next, you will need to select a sample template for your MySQL instance on Amazon RDS.</li>
+</ol>
+<a class="reference internal image-reference" href="../_images/rds3.png"><img alt="../_images/rds3.png" class="align-center" src="../_images/rds3.png" style="width: 99%;" /></a>
+<ol class="arabic simple" start="4">
+<li>Provide settings for your MySQL database on AWS: Pleade provide a unique name for your instance and master username and password which will be used in DolphinNext configuration.</li>
+</ol>
+<a class="reference internal image-reference" href="../_images/rds4.png"><img alt="../_images/rds4.png" class="align-center" src="../_images/rds4.png" style="width: 99%;" /></a>
+<ol class="arabic simple" start="5">
+<li>Continue configuring your MySQL instance: Next, define instance size and storage options.</li>
+</ol>
+<a class="reference internal image-reference" href="../_images/rds5.png"><img alt="../_images/rds5.png" class="align-center" src="../_images/rds5.png" style="width: 99%;" /></a>
+<ol class="arabic simple" start="6">
+<li>Define connectivity options:  Please provide the necessary connectivity configurations for your MySQL instance.</li>
+</ol>
+<a class="reference internal image-reference" href="../_images/rds6.png"><img alt="../_images/rds6.png" class="align-center" src="../_images/rds6.png" style="width: 99%;" /></a>
+<ol class="arabic simple" start="7">
+<li>Define advanced settings: Here you can enable database backup, enhanced monitoring, and maintenance.</li>
+</ol>
+<a class="reference internal image-reference" href="../_images/rds7.png"><img alt="../_images/rds7.png" class="align-center" src="../_images/rds7.png" style="width: 99%;" /></a>
+<ol class="arabic simple" start="8">
+<li>Launch MySQL instance on AWS: After you have defined all the settings, you can finally click Launch DB Instance.</li>
+</ol>
+<p>As soon as the instance process is finished (it might take some time), you will be able to check the status, together with some other configuration information in the corresponding window as shown on the screenshot.</p>
+<p>To view the details of your MySQL instance, click the database instance name. Check the details and click Create database to finalize the process.</p>
+<a class="reference internal image-reference" href="../_images/rds8.png"><img alt="../_images/rds8.png" class="align-center" src="../_images/rds8.png" style="width: 99%;" /></a>
+<ol class="arabic" start="9">
+<li><p class="first">Connecting DolphinNext to an Amazon RDS MySQL database: Lets open main DolphinNext configuration file (located here: <code class="docutils literal notranslate"><span class="pre">dolphinnext/config/.sec</span></code>) and enter following information to establish our connection:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Dolphinnext</span><span class="p">]</span>
+<span class="n">DB</span><span class="o">=</span><span class="n">mysql</span>
+<span class="n">DBUSER</span><span class="o">=</span><span class="n">Jordan</span>
+<span class="n">DBPASS</span><span class="o">=</span><span class="n">rdspassword</span>
+<span class="n">DBHOST</span><span class="o">=***.</span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">us</span><span class="o">-</span><span class="n">east</span><span class="o">-</span><span class="mf">2.</span><span class="n">rds</span><span class="o">.</span><span class="n">amazonaws</span><span class="o">.</span><span class="n">com</span>
+<span class="n">DBPORT</span><span class="o">=</span><span class="mi">3306</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<ul class="simple">
+<li><strong>DB:</strong> Database name.</li>
+<li><strong>DBUSER:</strong> Name for a database user.</li>
+<li><strong>DBPASS:</strong> Password for a database user.</li>
+<li><strong>DBHOST:</strong> RDS MySQL Server Hostname.</li>
+<li><strong>DBPORT:</strong> RDS MySQL Server Port.</li>
+</ul>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="admin_faq.html" class="btn btn-neutral float-right" title="Frequently Asked Questions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="admin_quick.html" class="btn btn-neutral" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Alper Kucukural, Onur Yukselen.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'v1.1.3',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -16,6 +16,10 @@ if (!empty($sec)){
     define('PEPPER', $sec['PEPPER']);  
     define('MASTER', $sec['MASTER']);  
     define('VERIFY', $sec['VERIFY']);  
+    $JWT_SECRET= isset($sec['JWT_SECRET']) ? $sec['JWT_SECRET'] : "";
+    $JWT_COOKIE_EXPIRES_IN= isset($sec['JWT_COOKIE_EXPIRES_IN']) ? $sec['JWT_COOKIE_EXPIRES_IN'] : 365;
+    define('JWT_SECRET', $JWT_SECRET);  
+    define('JWT_COOKIE_EXPIRES_IN', $JWT_COOKIE_EXPIRES_IN);  
 }
 $secConf = $secRaw['CONFIG'];
 if (!empty($secConf)){
@@ -62,6 +66,7 @@ if (!empty($secUiconfig)){
     $COMPANY_NAME= isset($secUiconfig['COMPANY_NAME']) ? $secUiconfig['COMPANY_NAME'] : "";
     $ALLOW_SIGNUP= isset($secUiconfig['ALLOW_SIGNUP']) ? $secUiconfig['ALLOW_SIGNUP'] : "true";
     $ALLOW_SIGNUPGOOGLE= isset($secUiconfig['ALLOW_SIGNUPGOOGLE']) ? $secUiconfig['ALLOW_SIGNUPGOOGLE'] : "true";
+    $PASSWORD_LOGIN= isset($secUiconfig['PASSWORD_LOGIN']) ? $secUiconfig['PASSWORD_LOGIN'] : "true";
     define('SHOW_AMAZON_KEYS', $SHOW_AMAZON_KEYS);
     define('SHOW_GOOGLE_KEYS', $SHOW_GOOGLE_KEYS);
     define('SHOW_SSH_KEYS', $SHOW_SSH_KEYS);
@@ -70,6 +75,7 @@ if (!empty($secUiconfig)){
     define('COMPANY_NAME', $COMPANY_NAME);
     define('ALLOW_SIGNUP', $ALLOW_SIGNUP);
     define('ALLOW_SIGNUPGOOGLE', $ALLOW_SIGNUPGOOGLE);
+    define('PASSWORD_LOGIN', $PASSWORD_LOGIN);
     $SHOW_RUN_LOG= isset($secUiconfig['SHOW_RUN_LOG']) ? $secUiconfig['SHOW_RUN_LOG'] : "true";
     $SHOW_RUN_TIMELINE= isset($secUiconfig['SHOW_RUN_TIMELINE']) ? $secUiconfig['SHOW_RUN_TIMELINE'] : "true";
     $SHOW_RUN_REPORT= isset($secUiconfig['SHOW_RUN_REPORT']) ? $secUiconfig['SHOW_RUN_REPORT'] : "true";
@@ -78,6 +84,7 @@ if (!empty($secUiconfig)){
     $SHOW_RUN_NEXTFLOWLOG= isset($secUiconfig['SHOW_RUN_NEXTFLOWLOG']) ? $secUiconfig['SHOW_RUN_NEXTFLOWLOG'] : "true";
     $SHOW_RUN_NEXTFLOWNF= isset($secUiconfig['SHOW_RUN_NEXTFLOWNF']) ? $secUiconfig['SHOW_RUN_NEXTFLOWNF'] : "true";
     $SHOW_RUN_NEXTFLOWCONFIG= isset($secUiconfig['SHOW_RUN_NEXTFLOWCONFIG']) ? $secUiconfig['SHOW_RUN_NEXTFLOWCONFIG'] : "true";
+    $SHOW_HOMEPAGE= isset($secUiconfig['SHOW_HOMEPAGE']) ? $secUiconfig['SHOW_HOMEPAGE'] : "1";
     define('SHOW_RUN_LOG', $SHOW_RUN_LOG);
     define('SHOW_RUN_TIMELINE', $SHOW_RUN_TIMELINE);
     define('SHOW_RUN_REPORT', $SHOW_RUN_REPORT);
@@ -86,6 +93,7 @@ if (!empty($secUiconfig)){
     define('SHOW_RUN_NEXTFLOWLOG', $SHOW_RUN_NEXTFLOWLOG);
     define('SHOW_RUN_NEXTFLOWNF', $SHOW_RUN_NEXTFLOWNF);
     define('SHOW_RUN_NEXTFLOWCONFIG', $SHOW_RUN_NEXTFLOWCONFIG);
+    define('SHOW_HOMEPAGE', $SHOW_HOMEPAGE);
     //  WIZARD CONFIG
     $SHOW_WIZARD= isset($secUiconfig['SHOW_WIZARD']) ? $secUiconfig['SHOW_WIZARD'] : false;
     $SHOW_TEST_PROFILE= isset($secUiconfig['SHOW_TEST_PROFILE']) ? $secUiconfig['SHOW_TEST_PROFILE'] : false;
@@ -93,8 +101,51 @@ if (!empty($secUiconfig)){
     define('SHOW_WIZARD', $SHOW_WIZARD);
     define('SHOW_TEST_PROFILE', $SHOW_TEST_PROFILE);
     define('TEST_PROFILE_GROUP_ID', $TEST_PROFILE_GROUP_ID);
-
 }
+// SSO Config:
+$secSSOconfig = isset($secRaw['SSOCONFIG']) ? $secRaw['SSOCONFIG'] : "";
+$secOKTAconfig = isset($secRaw['OKTACONFIG']) ? $secRaw['OKTACONFIG'] : "";
+$SSO_LOGIN=false;
+$SSO_URL=false;
+$ISSUER=false;
+$CLIENT_ID=false;
+$CLIENT_SECRET=false;
+$OKTA_API_TOKEN=false;
+if (!empty($secSSOconfig) && $secSSOconfig['SSO_LOGIN'] == true){
+    $SSO_LOGIN= isset($secSSOconfig['SSO_LOGIN']) ? $secSSOconfig['SSO_LOGIN'] : $SSO_LOGIN;
+    $SSO_URL= isset($secSSOconfig['SSO_URL']) ? $secSSOconfig['SSO_URL'] : $SSO_URL;
+    $CLIENT_ID= isset($secSSOconfig['CLIENT_ID']) ? $secSSOconfig['CLIENT_ID'] : $CLIENT_ID;
+    $CLIENT_SECRET= isset($secSSOconfig['CLIENT_SECRET']) ? $secSSOconfig['CLIENT_SECRET'] : $CLIENT_SECRET;
+} else if (!empty($secOKTAconfig) && $secOKTAconfig['SSO_LOGIN'] == true){
+    $SSO_LOGIN= isset($secOKTAconfig['SSO_LOGIN']) ? $secOKTAconfig['SSO_LOGIN'] : $SSO_LOGIN;
+    $ISSUER= isset($secOKTAconfig['ISSUER']) ? $secOKTAconfig['ISSUER'] : $ISSUER;
+    $CLIENT_ID= isset($secOKTAconfig['CLIENT_ID']) ? $secOKTAconfig['CLIENT_ID'] : $CLIENT_ID;
+    $CLIENT_SECRET= isset($secOKTAconfig['CLIENT_SECRET']) ? $secOKTAconfig['CLIENT_SECRET'] : $CLIENT_SECRET;
+    $OKTA_API_TOKEN= isset($secOKTAconfig['OKTA_API_TOKEN']) ? $secOKTAconfig['OKTA_API_TOKEN'] : $OKTA_API_TOKEN;
+}
+
+define('SSO_LOGIN', $SSO_LOGIN);
+define('SSO_URL', $SSO_URL);
+define('ISSUER', $ISSUER);
+define('CLIENT_ID', $CLIENT_ID);
+define('CLIENT_SECRET', $CLIENT_SECRET);
+define('OKTA_API_TOKEN', $OKTA_API_TOKEN);
+
+
+// DMETA Config:
+$secDMETAconfig = isset($secRaw['DMETACONFIG']) ? $secRaw['DMETACONFIG'] : "";
+$SHOW_DMETA=false;
+$DMETA_URL=false;
+$DMETA_LABEL=false;
+if (!empty($secDMETAconfig)){
+    $SHOW_DMETA= isset($secDMETAconfig['SHOW_DMETA']) ? $secDMETAconfig['SHOW_DMETA'] : $SHOW_DMETA;
+    $DMETA_URL= isset($secDMETAconfig['DMETA_URL']) ? $secDMETAconfig['DMETA_URL'] : $DMETA_URL;
+    $DMETA_LABEL= isset($secDMETAconfig['DMETA_LABEL']) ? $secDMETAconfig['DMETA_LABEL'] : $DMETA_LABEL;
+}
+define('SHOW_DMETA', $SHOW_DMETA);
+define('DMETA_URL', $DMETA_URL);
+define('DMETA_LABEL', $DMETA_LABEL);
+
 
 $line = fgets(fopen(__DIR__."/../NEWS", 'r'));
 if (!empty($line)){

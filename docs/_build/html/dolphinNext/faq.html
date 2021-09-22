@@ -135,8 +135,10 @@
 <p class="caption"><span class="caption-text">Developer Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="known_issues.html">Known Issues</a></li>
 <li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API v1</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Administrator Guide</span></p>
 <ul>
@@ -373,10 +375,10 @@ Installing  <a class="reference external" href="https://www.nextflow.io/">Nextfl
 <p>In DolphinNext, there are 4 different section to control your executor settings. First two fields are defined in <strong>profile -&gt; run environment</strong>, and rest of the fields are adjusted in the <strong>advanced tab</strong> of run page. If any option other than local and ignite, is selected, additional settings will be prompt for <code class="docutils literal notranslate"><span class="pre">Queue/Partition</span></code>, <code class="docutils literal notranslate"><span class="pre">Memory(GB)</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code> and <code class="docutils literal notranslate"><span class="pre">Time(min.)</span></code>.</p>
 <p><strong>1. Executor of Nextflow (in the profile -&gt; run environment)</strong>:</p>
 <blockquote>
-<div><p>Nextflow itself is initiated with this method. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself. So time limit should be long enough to execute all of the processes in the pipeline.</p>
+<div><p>Nextflow itself is initiated with this method. Currently, local, sge, slurm, and lsf executors are supported by DolphinNext to initiate nextflow. For <cite>sge</cite>, <cite>slurm</cite>, and <cite>lsf</cite> executors, it will be only used for running nextflow itself, so the time limit should be long enough to execute all of the processes in the pipeline. For <cite>local</cite> execution, it will limit the total amount of memory and CPU could be used by the run, so these values should be close enough to the maximum capacity of the memory and CPU.</p>
 <ul class="simple">
 <li>e.g. suggested parameters for sge/slurm/lsf: long (queue) 8 (GB Memory) 1 (CPU) 5000-8000 (min, Time)</li>
-<li>e.g. suggested parameters for local: 8 (GB Memory) 1 (CPU)</li>
+<li>e.g. suggested parameters for local: 100 (GB Memory) 8 (CPU)</li>
 </ul>
 </div></blockquote>
 <p><strong>2. Executor of Nextflow Jobs (in the profile -&gt; run environment)</strong>:</p>

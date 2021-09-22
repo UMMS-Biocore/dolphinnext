@@ -136,8 +136,16 @@ function getMainEdges(pObj) {
 function getMergedProcessList() {
     var proList = $.extend(true, {}, window.processList);
     for (var p = 0; p < piGnumList.length; p++) {
-        var lastpipeName = window["pObj" + piGnumList[p]].lastPipeName;
-        var proListPipe = $.extend(true, {}, window["pObj" + piGnumList[p]].processList);
+        var piGnum = piGnumList[p];
+        var piGnums = piGnum.split("_")
+        var lastpipeName = "";
+        for (var k = 0; k < piGnums.length; k++) {
+            var selectedGnums = piGnums.slice(0, k+1);
+            var mergedGnum = selectedGnums.join("_")
+            if (lastpipeName) lastpipeName += "_"
+            lastpipeName += window["pObj" + mergedGnum].lastPipeName;
+        }
+        var proListPipe = $.extend(true, {}, window["pObj" + piGnum].processList);
         for (var key in proListPipe) {
             proListPipe[key] = lastpipeName + "_" + proListPipe[key]
         }
@@ -377,13 +385,10 @@ function getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName)
                         window["processVarObj"][mergedProcessName] ={}
                     }
                     window["processVarObj"][mergedProcessName][varName] =newLine
-
                 } else {
                     newLine  = getNewLocalVarLine (lines[i], process_opt, gNum, varName, quoteType, pattern, varName);
-                    newScriptHeader +=  newLine + "\n";                                               
-
+                    newScriptHeader +=  "//* " + newLine + "\n";         
                 }
-
             } else {
                 newScriptHeader += lines[i] + "\n";
             }
@@ -439,11 +444,11 @@ function createNextflowFile(nxf_runmode, uuid) {
             }
         }
 
-        
-        var output_dir = $runscope.getPubVal("report");
-        if (output_dir) {
-            nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
-        }
+
+        //        var output_dir = $runscope.getPubVal("report");
+        //        if (output_dir) {
+        //            nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
+        //        }
         var proOptDiv = $('#ProcessPanel').children()[0];
         if (proOptDiv) {
             var process_opt = getProcessOpt();
@@ -600,7 +605,7 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
         if (inputParMate){
             channelFormat = "f3";
             chnObj = addFormat2chnObj(chnObj, channelFormat, chnName);
-            secPartTemp = "Channel\n\t.fromFilePairs( params." + inputParamName + " , size: (params.mate != \"pair\") ? 1 : 2 )\n\t.ifEmpty { error \"Cannot find any " + secParName + " matching: ${params." + inputParamName + "}\" }\n\t" + getChannelSetInto(chnObj[channelFormat]) + "\n\n";
+            secPartTemp = "Channel\n\t.fromFilePairs( params." + inputParamName + " , size: params.mate == \"single\" ? 1 : params.mate == \"pair\" ? 2 : params.mate == \"triple\" ? 3 : params.mate == \"quadruple\" ? 4 : -1 )\n\t.ifEmpty { error \"Cannot find any " + secParName + " matching: ${params." + inputParamName + "}\" }\n\t" + getChannelSetInto(chnObj[channelFormat]) + "\n\n";
             //if mate not defined in process use fromPath
         } else {
             //if val(name), file(read) format -> turn into set input
@@ -826,11 +831,14 @@ function getWhenCond(script) {
 
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum')) // depricated
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty([])
-function getOptionalInText(optionalInAr, optionalInNameAr) {
+function getOptionalInText(optionalInAr, optionalInQualAr) {
     var optText = "";
     for (var i = 0; i < optionalInAr.length; i++) {
-
-        optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
+        if (optionalInQualAr[i] == "val"){
+            optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(\"\") \n";
+        } else {
+            optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
+        }
     }
     return optText;
 }
@@ -854,7 +862,11 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
             outChn = outChn.join(";")
             outChn = outChn.replace(/,/g, ';')
             for (var k = 0; k < inChn.length; k++) {
-                whenText += inChn[k] + ".into{" + outChn + "}\n"
+                if (outChn.match(/;/)) {
+                    whenText += inChn[k] + ".into{" + outChn + "}\n"
+                } else {
+                    whenText += inChn[k] + ".set{" + outChn + "}\n"
+                }
             }
         }
         for (var n = 0; n < dummyOutList.length; n++) {
@@ -895,7 +907,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
     var whenText = '';
     //check optional inputs
     var optionalInAr = [];
-    var optionalInNameAr = [];
+    var optionalInQualAr = [];
 
     if (processData[0].script_header !== null) {
         var script_header = decodeHtml(processData[0].script_header);
@@ -992,7 +1004,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                 whenInLib = addChannelName(whenCond, whenInLib, file_type, channelName, param_name, qual)
                 if (inputOptional == "true") {
                     optionalInAr.push(channelName)
-                    optionalInNameAr.push(inputName)
+                    optionalInQualAr.push(qual)
                 }
                 bodyInput = bodyInput + " " + qual + " " + inputName + " from " + channelName + inputOperatorText + "\n";
             }
@@ -1069,7 +1081,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
 
     }
     if (optionalInAr.length > 0) {
-        var optionalInText = getOptionalInText(optionalInAr, optionalInNameAr)
+        var optionalInText = getOptionalInText(optionalInAr, optionalInQualAr)
         script_header = optionalInText + "\n" + script_header
     }
 

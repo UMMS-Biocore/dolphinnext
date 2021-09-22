@@ -146,13 +146,18 @@ class updates
             $profileId = $profileAr[1];
             $pipeline_id = $runData["pipeline_id"];
             $loadtype = "slow";
+            $accTk = json_decode($dbfun -> getSSOAccessTokenByUserID($ownerID),true);
+            $accessToken = "";
+            if (!empty($accTk) && !empty($accTk[0]) && !empty($accTk[0]["accessToken"])){
+                $accessToken = $accTk[0]["accessToken"];
+            }
             $outJS = $dbfun -> updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID);
             $out = json_decode($outJS,true);
             $finalRunStatus = $out["runStatus"];
             $ret .= "$time runId:$project_pipeline_id status:$finalRunStatus\n";
 
             if (!empty($profile) && !empty($project_pipeline_id)){
-                $data = $dbfun->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID);
+                $data = $dbfun->savePubWeb($project_pipeline_id,$profileType,$profileId,$pipeline_id, $ownerID, $accessToken);
             }
             endforeach;
         }

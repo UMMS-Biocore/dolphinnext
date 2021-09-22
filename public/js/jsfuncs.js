@@ -824,6 +824,66 @@ function toogleReleaseDiv(selPerm, own){
     }
 }
 
+// -- SSO login STARTS --
+function popupwindow(url, title, w, h) {
+    var left = screen.width / 2 - w / 2;
+    var top = screen.height / 2 - h / 2;
+    return window.open(
+        url,
+        title,
+        'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=' +
+        w +
+        ', height=' +
+        h +
+        ', top=' +
+        top +
+        ', left=' +
+        left
+    );
+}
+
+if ($('#signinbtn').length && $('#basepathinfo').attr('sso_login') === "1") {
+    //temporary fix for sso login
+    $('#signinbtn').on('click', function(e) {
+        e.preventDefault();
+        var BASEPATH = $('#basepathinfo').attr('basepath');
+        var login_URL = `${BASEPATH}/index.php?p=login`;
+        popupwindow(login_URL, 'Login', 650, 900);
+    });
+}
+
+
+// open child window for SSO if user clicks on sign-in button
+//if ($('#ssosigninbtn').length && $('#basepathinfo').attr('sso_login') === "1") {
+//    console.log("pass")
+//    $('#ssosigninbtn').on('click', function(e) {
+//        e.preventDefault();
+//        var SSO_URL = $('#basepathinfo').attr('sso_url');
+//        var CLIENT_ID = $('#basepathinfo').attr('client_id');
+//        var BASEPATH = $('#basepathinfo').attr('basepath');
+//        var SSO_REDIRECT_URL = `${BASEPATH}/php/receivetoken.php`;
+//        var SSO_FINAL_URL = `${SSO_URL}/dialog/authorize?redirect_uri=${SSO_REDIRECT_URL}&response_type=code&client_id=${CLIENT_ID}&scope=offline_access`;
+//        popupwindow(SSO_FINAL_URL, 'Login', 650, 800);
+//    });
+//}
+
+if (document.getElementById("after-sso-close")) {
+    // if there is a parent window (window that opens popup window) 
+    // then window.opener is exist.
+    if (window.opener) {
+        window.opener.focus();
+        if (window.opener && !window.opener.closed) {
+            window.opener.location.reload();
+        }
+    } else {
+        window.location = $('#basepathinfo').attr('basepath');
+    }
+    window.close();
+}
+//  -- SSO login ENDS--
+
+
+
 $(document).ready(function () {
     initCloudConsole("amazon");
     initCloudConsole("google");
@@ -1505,22 +1565,6 @@ function getValuesErr(data, async) {
     return result;
 }
 
-//function crossOriginCall(url) { 
-//    var result = null;
-//    $.ajax({
-//        crossOrigin: true,
-//        url: url,
-//        //dataType: "json", //no need. if you use crossOrigin, the dataType will be override with "json"
-//        //charset: 'ISO-8859-1', //use it to define the charset of the target url
-//        context: {},
-//        success: function(data) {
-//            result = data;
-//        }
-//    })
-//    console.log(result)
-//    return result;
-//}
-
 
 function apiCallUrl(url) { 
     var result = null;
@@ -1542,7 +1586,7 @@ function apiCallUrl(url) {
 
 
 function xmlStringToJson(xmlString){
-    var expXMLraw = '<document>'+$('<div/>').html(xmlString).text().trim()+'</document>';
+    var expXMLraw = '<document>'+xmlString+'</document>';
     var parser = new DOMParser();
     var xml = parser.parseFromString(expXMLraw,"text/xml");
     var obj = xmlToJson(xml)
@@ -1672,10 +1716,6 @@ function truncateName(name, type) {
 }
 
 
-function cleanRegEx(pat) {
-    return pat.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-}
-
 function createElement(type, fields, options) {
     var element = document.createElement(type);
     for (var x = 0; x < fields.length; x++) {
@@ -1725,6 +1765,28 @@ function cleanProcessName(proName) {
         proName = proName.replace(/@/g, "_"); 
     }
     return proName;
+}
+
+function cleanSpecChar(n) {
+    if (n){
+        n = n.replace(/-/g, "_")
+            .replace(/:/g, "_")
+            .replace(/,/g, "_")
+            .replace(/\$/g, "_")
+            .replace(/\!/g, "_")
+            .replace(/\</g, "_")
+            .replace(/\>/g, "_")
+            .replace(/\?/g, "_")
+            .replace(/\(/g, "_")
+            .replace(/\)/g, "_")
+            .replace(/\"/g, "_")
+            .replace(/\'/g, "_")
+            .replace(/\./g, "_")
+            .replace(/\//g, "_")
+            .replace(/\\/g, "_")
+            .replace(/@/g, "_"); 
+    }
+    return n;
 }
 
 function createLabel(proName) {
@@ -1850,17 +1912,6 @@ function refreshCollapseIconDiv() {
 
 }
 
-// return array of (.*) in the following regex = "/Job <(.*)> is submitted/g";
-function getMultipleRegex(txt, regex) {
-    var matches = [];
-    var match = regex.exec(txt);
-    while (match != null) {
-        matches.push(match[1]);
-        match = regex.exec(txt);
-    }
-    return matches;
-}
-
 // get object values
 function getObjectValues(obj) {
     var vals = Object.keys(obj).map(function(key) {
@@ -1868,8 +1919,6 @@ function getObjectValues(obj) {
     });
     return vals;
 }
-
-
 
 //creates ajax object and change color of requiredFields
 function createFormObj(formValues, requiredFields) {

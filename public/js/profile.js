@@ -96,7 +96,7 @@ $(document).ready(function () {
             "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                 if (oData.hostname != undefined) {
                     $(nTd).html("Host");
-                } else if (oData.amazon_cre_id != undefined){
+                } else if (oData.shared_storage_mnt != undefined){
                     $(nTd).html("Amazon");
                 } else if (oData.google_cre_id != undefined){
                     $(nTd).html("Google");
@@ -121,7 +121,7 @@ $(document).ready(function () {
             fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                 if (oData.hostname != undefined) {
                     $(nTd).html(getProfileButton('cluster'));
-                } else if (oData.amazon_cre_id != undefined){
+                } else if (oData.shared_storage_mnt != undefined){
                     $(nTd).html(getProfileButton('amazon'));
                 } else if (oData.google_cre_id != undefined){
                     $(nTd).html(getProfileButton('google'));
@@ -185,8 +185,10 @@ $(document).ready(function () {
             var data = getValues({ p: "getAmz" });
             for (var i = 0; i < data.length; i++) {
                 var param = data[i];
-                var optionGroup = new Option(param.name, param.id);
-                $("#mEnvAmzKey").append(optionGroup);
+                var optionGroup1 = new Option(param.name, param.id);
+                var optionGroup2 = new Option(param.name, param.id);
+                $("#mEnvAmzKey").append(optionGroup1);
+                $("#mEnvAmzKey2").append(optionGroup2);
             }
         } else if (type === "goog") {
             var data = getValues({ p: "getGoogle" });
@@ -213,7 +215,7 @@ $(document).ready(function () {
                 "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                     if (oData.hostname != undefined) {
                         $(nTd).html("Host");
-                    } else if (oData.amazon_cre_id != undefined){
+                    } else if (oData.shared_storage_mnt != undefined){
                         $(nTd).html("Amazon");
                     } else if (oData.google_cre_id != undefined){
                         $(nTd).html("Google");
@@ -290,7 +292,7 @@ $(document).ready(function () {
                     delete cpOptions[valueID]["id"]; //to prevent profile update
                     if (cpOptions[valueID].hostname != undefined) {
                         $('#chooseEnv').val('cluster').trigger('change');
-                    } else if (cpOptions[valueID].amazon_cre_id != undefined){
+                    } else if (cpOptions[valueID].shared_storage_mnt != undefined){
                         $('#chooseEnv').val('amazon').trigger('change');
                     } else if (cpOptions[valueID].google_cre_id != undefined){
                         $('#chooseEnv').val('google').trigger('change');
@@ -337,7 +339,7 @@ $(document).ready(function () {
             var proType = "";
             if (rowData.hostname != undefined) {
                 proType = "cluster";
-            } else if (rowData.amazon_cre_id != undefined){
+            } else if (rowData.shared_storage_mnt != undefined){
                 proType = "amazon";
             } else if (rowData.google_cre_id != undefined){
                 proType = "google";
@@ -348,6 +350,9 @@ $(document).ready(function () {
                 var data = getValues({ p: "getProfileCluster", id: proId });
                 data[0].variable=decodeHtml(data[0].variable)
                 $('#chooseEnv').val('cluster').trigger('change');
+                data[0].amazon_cre_id2 = data[0].amazon_cre_id
+                data[0].def_workdir2 = data[0].def_workdir
+                data[0].def_publishdir2 = data[0].def_publishdir
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             } else if (proType === "amazon") {
@@ -406,22 +411,22 @@ $(document).ready(function () {
             var blockList = [];
 
             if (selEnvType === "cluster" && !title.match(/Public/)) {
-                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv","mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2","mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv", "shareRunEnvDiv"];
             } else if (selEnvType === "amazon" && !title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mEnvAmzKeyDiv2", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "shareRunEnvDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "cluster" && title.match(/Public/)) {
-                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvUsernameDiv", "mEnvSSHKeyDiv","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvUsernameDiv", "mEnvSSHKeyDiv","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv"];
             } else if (selEnvType === "amazon" && title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv2","mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "google" && !title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv",  "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "google" && title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","shareRunEnvDiv", "mSharedStorageMountDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSubnetIdDiv","mEnvGoogKeyDiv"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2", "shareRunEnvDiv", "mSharedStorageMountDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSubnetIdDiv","mEnvGoogKeyDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             }
 
@@ -464,9 +469,21 @@ $(document).ready(function () {
     $(function () {
         $(document).on('change', '#mExecJob', function () {
             var mExecJobType = $('#mExecJob option:selected').val();
+            $('#mEnvAmzKeyDiv2').css('display', 'none');
+            $('#mDefWorkDirDiv2').css('display', 'none');
+            $('#mDefPublishDirDiv2').css('display', 'none');
             if (mExecJobType === "ignite") {
                 showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
                 showHideColumnProfile('#execJobSetTable', [1, 4], 'hide');
+            } else if (mExecJobType === "awsbatch") {
+                showHideColumnProfile('#execJobSetTable', [1, 5], 'show');
+                showHideColumnProfile('#execJobSetTable', [4], 'hide');
+                var selEnvType = $('#chooseEnv option:selected').val();
+                if (selEnvType == "cluster"){
+                    $('#mEnvAmzKeyDiv2').css('display', 'block');
+                    $('#mDefWorkDirDiv2').css('display', 'block');
+                    $('#mDefPublishDirDiv2').css('display', 'block');
+                }
             } else if (mExecJobType === "local") {
                 showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'hide');
             } else {
@@ -482,13 +499,14 @@ $(document).ready(function () {
     });
 
     $('#profilemodal').on('hide.bs.modal', function (event) {
-        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv","mDefWorkDirDiv2", "mDefPublishDirDiv"];
         $.each(noneList, function (element) {
             $('#' + noneList[element]).css('display', 'none');
         });
         $('#chooseEnv').removeAttr('disabled');
         $('#mExecJob').removeAttr('disabled');
         $('#mEnvAmzKey').find('option').not(':eq(0)').remove()
+        $('#mEnvAmzKey2').find('option').not(':eq(0)').remove()
         $('#mEnvGoogKey').find('option').not(':eq(0)').remove()
         $('#mEnvSSHKey').find('option').not(':eq(0)').remove()
         $('#mEnvName')[0].selectize.destroy();
@@ -527,6 +545,9 @@ $(document).ready(function () {
             formObj.job_queue = "";
             formObj.job_time = "";
         }
+        if (formObj.executor_job == "awsbatch") {
+            formObj.job_time = "";
+        }
         if (formObj.executor_job == "local") {
             formObj.job_queue = "";
             formObj.job_time = "";
@@ -536,6 +557,11 @@ $(document).ready(function () {
             formObj.next_queue = "";
             formObj.next_time = "";
             formObj.next_clu_opt = "";
+        }
+        if (formObj.executor_job == "awsbatch" && selEnvType == "cluster"){
+            formObj.amazon_cre_id = formObj.amazon_cre_id2;
+            formObj.def_workdir = formObj.def_workdir2;
+            formObj.def_publishdir = formObj.def_publishdir2;
         }
 
         if (selEnvType.length && stop == false) {
@@ -618,7 +644,7 @@ $(document).ready(function () {
         var proType = "";
         if (rowData.hostname != undefined) {
             proType = "cluster";
-        } else if (rowData.amazon_cre_id != undefined){
+        } else if (rowData.shared_storage_mnt != undefined){
             proType = "amazon";
         } else if (rowData.google_cre_id != undefined){
             proType = "google";
@@ -1760,7 +1786,7 @@ $(document).ready(function () {
             var clickedRow = $(this).closest('tr');
             var rowData = AdmUserTable.row(clickedRow).data();
             var userId = rowData.id;
-            
+
             if (userId !== '') {
                 showLoadingDiv("AdminUserTable")
                 $.ajax({
@@ -1773,7 +1799,7 @@ $(document).ready(function () {
                         AdmUserTable.ajax.reload(null, false);
                     },
                     error: function (errorThrown) {
-                       toastr.info("Error Occured.")
+                        toastr.info("Error Occured.")
                     }
                 });
             }
@@ -1947,7 +1973,7 @@ $(document).ready(function () {
     $('#githubModal').on('click', '#saveGithub', function (event) {
         event.preventDefault();
         var formValues = $('#githubModal').find('input, select');
-        var requiredFields = ["username", "email", "password"];
+        var requiredFields = ["username", "email", "token"];
         var clickedRow = $('#saveGithub').data('clickedrow')
         var formObj = {};
         var stop = "";

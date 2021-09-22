@@ -111,8 +111,9 @@
 <li class="toctree-l2"><a class="reference internal" href="#groups">Groups</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#run-environments">Run Environments</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#a-defining-host-profile">A. Defining Host Profile:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#b-defining-amazon-profile">B. Defining Amazon Profile:</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#c-defining-google-profile">C. Defining Google Profile:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#b-defining-aws-batch-profile">B. Defining AWS Batch Profile:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c-defining-amazon-profile">C. Defining Amazon Profile:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#d-defining-google-profile">D. Defining Google Profile:</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#github-connection">GitHub Connection</a></li>
@@ -127,12 +128,15 @@
 <p class="caption"><span class="caption-text">Developer Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="dev_quick.html">Developer Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="known_issues.html">Known Issues</a></li>
 <li class="toctree-l1"><a class="reference internal" href="process.html">Process Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipeline.html">Pipeline Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API v1</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Administrator Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="admin_quick.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin_rds.html">Amazon RDS MySQL Database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="admin_faq.html">Frequently Asked Questions</a></li>
 </ul>
 
@@ -280,11 +284,12 @@
 <div class="section" id="run-environments">
 <h2>Run Environments<a class="headerlink" href="#run-environments" title="Permalink to this headline">¶</a></h2>
 <img alt="../_images/profile_runenv.png" class="align-center" src="../_images/profile_runenv.png" />
-<p>This section is used for defining connection profiles by clicking on “Add Environment” button. As a type, please choose one of these options:</p>
+<p>This section is used for defining connection profiles by clicking on “Add Environment” button. As a type, please choose one of these options: Host, Amazon or Google.</p>
 <ul class="simple">
 <li><strong>A. Host:</strong> If you have an access to High Performance Computing (HPC) environments, or personal workstations.</li>
-<li><strong>B. Amazon:</strong> If you have an Amazon Web Services (AWS) account or planning to create one in order to run your jobs in the cloud.</li>
-<li><strong>C. Google:</strong> If you have an Google Cloud account or planning to create one in order to run your jobs in the cloud.</li>
+<li><strong>B. Host for AWS BATCH:</strong> If you have an Amazon Web Services (AWS) account and planning to submit jobs to AWS Batch.</li>
+<li><strong>C. Amazon:</strong> If you have an Amazon Web Services (AWS) account or planning to create an EC2 instance in order to run your jobs in the cloud.</li>
+<li><strong>D. Google:</strong> If you want to use Google Cloud account to run your jobs in the cloud.</li>
 </ul>
 <div class="section" id="a-defining-host-profile">
 <h3>A. Defining Host Profile:<a class="headerlink" href="#a-defining-host-profile" title="Permalink to this headline">¶</a></h3>
@@ -320,10 +325,10 @@
 <blockquote>
 <div><p><strong>1. Executor of Nextflow (in the profile -&gt; run environment)</strong>:</p>
 <blockquote>
-<div><p>Nextflow itself is initiated with this method. Currently local, sge, slurm and lsf executors are supported by DolphinNext to initiate nextflow and it will be only used for running nextflow itself. So time limit should be long enough to execute all of the processes in the pipeline.</p>
+<div><p>Nextflow itself is initiated with this method. Currently, local, sge, slurm, and lsf executors are supported by DolphinNext to initiate nextflow. For <cite>sge</cite>, <cite>slurm</cite>, and <cite>lsf</cite> executors, it will be only used for running nextflow itself, so the time limit should be long enough to execute all of the processes in the pipeline. For <cite>local</cite> execution, it will limit the total amount of memory and CPU could be used by the run, so these values should be close enough to the maximum capacity of the memory and CPU.</p>
 <ul class="simple">
 <li>e.g. suggested parameters for sge/slurm/lsf: long (queue) 8 (GB Memory) 1 (CPU) 5000-8000 (min, Time)</li>
-<li>e.g. suggested parameters for local: 8 (GB Memory) 1 (CPU)</li>
+<li>e.g. suggested parameters for local: 100 (GB Memory) 8 (CPU)</li>
 </ul>
 </div></blockquote>
 <p><strong>2. Executor of Nextflow Jobs (in the profile -&gt; run environment)</strong>:</p>
@@ -358,8 +363,46 @@
 </li>
 </ul>
 </div>
-<div class="section" id="b-defining-amazon-profile">
-<h3>B. Defining Amazon Profile:<a class="headerlink" href="#b-defining-amazon-profile" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="b-defining-aws-batch-profile">
+<h3>B. Defining AWS Batch Profile:<a class="headerlink" href="#b-defining-aws-batch-profile" title="Permalink to this headline">¶</a></h3>
+<p>Please choose type of the run environment as “Host” and enter following information.</p>
+<ul>
+<li><p class="first"><strong>Username/Hostname:</strong> You should enter your username and hostname of the host which you would like to connect (<a class="reference external" href="mailto:yourusername&#37;&#52;&#48;yourhostname">yourusername<span>&#64;</span>yourhostname</a>). For instance, for <a class="reference external" href="mailto:us2r&#37;&#52;&#48;ghpcc06&#46;umassrc&#46;org">us2r<span>&#64;</span>ghpcc06<span>&#46;</span>umassrc<span>&#46;</span>org</a>, or amazon instance you have created:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span>  <span class="n">Username</span><span class="p">:</span> <span class="n">yourusername</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">us2r</span><span class="p">)</span>
+<span class="o">-</span>  <span class="n">Hostname</span><span class="p">:</span> <span class="n">yourhostname</span> <span class="p">(</span><span class="n">eg</span><span class="o">.</span> <span class="n">ghpcc06</span><span class="o">.</span><span class="n">umassrc</span><span class="o">.</span><span class="n">org</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><strong>SSH Port (optional):</strong> By default TCP port 22 is used for SSH connection. You can change this default by entering port number.</p>
+</li>
+<li><p class="first"><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</p>
+</li>
+<li><p class="first"><strong>Run Command (optional):</strong> You may run the command or commands (by seperating each command with <code class="docutils literal notranslate"><span class="pre">&amp;&amp;</span></code> sign) before the nextflow job starts. eg. <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">/etc/profile</span></code></p>
+</li>
+<li><p class="first"><strong>Nextflow Path (optional):</strong> If nextflow path is not added to <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> environment, you can define the path in this block. eg. <code class="docutils literal notranslate"><span class="pre">/project/umw_biocore/bin</span></code></p>
+</li>
+<li><p class="first"><strong>Singularity Cache Folder:</strong> Directory where remote Singularity images are stored. By default home directory is used. Note: When using a computing cluster it must be a shared folder accessible from all computing nodes.</p>
+</li>
+<li><p class="first"><strong>Profile Variables:</strong> You can set commonly used pipeline variables here. For instance,``params.DOWNDIR`` is used in most of our public pipelines to save all genome related files (fasta, index etc.). So you can set this variable like this: <code class="docutils literal notranslate"><span class="pre">params.DOWNDIR</span> <span class="pre">=</span> <span class="pre">&quot;/share/dnext_data&quot;</span></code> Also, you can enter multiple variables by separating them with newline.</p>
+</li>
+<li><p class="first"><strong>Executor of Nextflow:</strong> Please select <code class="docutils literal notranslate"><span class="pre">local</span></code> for executor of Nextflow.</p>
+</li>
+<li><p class="first"><strong>Executor Settings for Nextflow:</strong> Please set 10GB memory and 1 CPU for nextflow.</p>
+</li>
+<li><p class="first"><strong>Executor of Nextflow Jobs:</strong> Please select <code class="docutils literal notranslate"><span class="pre">AWS</span> <span class="pre">Batch</span></code> for nextflow jobs.</p>
+</li>
+<li><p class="first"><strong>Queue, Memory, CPU, and other options:</strong> Please enter the queue name in the AWS Batch and set default memory and CPU for each job (e.g. 10GB memory and 1CPU). These settings could be adjusted in the run page.</p>
+</li>
+<li><p class="first"><strong>Amazon Keys:</strong> AWS credentials that are saved in Amazon keys tab and will allow to submit jobs to AWS Batch.</p>
+</li>
+<li><p class="first"><strong>Default Working Directory:</strong> Default directory in the host machine where runs will be executed. (eg. <code class="docutils literal notranslate"><span class="pre">/data/dnext</span></code>)</p>
+</li>
+<li><p class="first"><strong>Default Bucket Location for Publishing:</strong> Default bucket location where dolphinnext reports will be published. (e.g. <code class="docutils literal notranslate"><span class="pre">s3://bucket/dnext</span></code>)</p>
+</li>
+</ul>
+</div>
+<div class="section" id="c-defining-amazon-profile">
+<h3>C. Defining Amazon Profile:<a class="headerlink" href="#c-defining-amazon-profile" title="Permalink to this headline">¶</a></h3>
 <ul>
 <li><p class="first"><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</p>
 </li>
@@ -424,8 +467,8 @@
 </li>
 </ul>
 </div>
-<div class="section" id="c-defining-google-profile">
-<h3>C. Defining Google Profile:<a class="headerlink" href="#c-defining-google-profile" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="d-defining-google-profile">
+<h3>D. Defining Google Profile:<a class="headerlink" href="#d-defining-google-profile" title="Permalink to this headline">¶</a></h3>
 <ul>
 <li><p class="first"><strong>SSH Keys:</strong> are saved in SSH keys tab and will be used while connecting to host.</p>
 </li>

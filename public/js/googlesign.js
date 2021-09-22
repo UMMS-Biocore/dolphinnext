@@ -23,7 +23,13 @@ function Google_signIn(googleUser) {
                 alert('Something Went Wrong!');
             } else {
                 var logInSuccess = true;
-                window.location.replace("index.php");
+                console.log($('#basepathinfo').attr('sso_login'))
+                if ($('#basepathinfo').attr('sso_login') === "1"){
+                     window.location.replace("php/after-sso.php");
+                } else {
+                     window.location.replace("index.php");
+                }
+               
             }
         }
     });

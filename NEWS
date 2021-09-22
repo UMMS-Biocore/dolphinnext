@@ -1,3 +1,160 @@
+07.09.2021 Version 1.2.52
+Delete intermediate files for awsbatch feature added.
+
+31.08.2021 Version 1.2.51
+Okta fix for entry of the first user.
+Documentation updated for AWS Batch.
+
+30.08.2021 Version 1.2.50
+Minor fix for Dmeta run submission.
+
+28.08.2021 Version 1.2.49
+Database table names converted to lowercase.
+PDF loading bug fixed in report page.
+
+27.08.2021 Version 1.2.48
+Composer php version requirement removed.
+
+23.08.2021 Version 1.2.47
+SSO login support for OKTA added. sec file configuration:
+[OKTACONFIG]
+SSO_LOGIN=true  
+CLIENT_ID=id
+CLIENT_SECRET=secret
+ISSUER=https://youroktadomain.com/oauth2/default
+OKTA_API_TOKEN=token
+
+13.08.2021 Version 1.2.46
+Initial run improved for special characters.
+
+27.07.2021 Version 1.2.45
+Local execution of initial run allowed.
+GHPCC path mount upgraded.
+
+24.07.2021 Version 1.2.44
+Minor upgrade for Dmeta run submission.
+
+19.07.2021 Version 1.2.43
+Dmeta Target Collection dropdown updated for custom collection names.
+
+16.07.2021 Version 1.2.42
+Initial run update for gzip handling.
+getLsDir API call added.
+
+28.06.2021 Version 1.2.41
+Error handling fixed for "ignore".
+
+02.06.2021 Version 1.2.40
+Into/set warning fixed.
+
+26.05.2021 Version 1.2.39
+Optional val qualifier support added.
+
+24.05.2021 Version 1.2.38
+Process settings button upgraded in run page.
+
+19.05.2021 Version 1.2.37
+Download pipeline button error fixed.
+
+18.05.2021 Version 1.2.36
+AWS Batch support added.
+
+25.04.2021 Version 1.2.35
+Minor update to support single quotes in autofill feature of run forms.
+
+15.04.2021 Version 1.2.34
+Amazon RDS MySQL connection and API documentation added.
+
+26.03.2021 Version 1.2.33
+Run description edit feature added.
+
+24.03.2021 Version 1.2.32
+Dmeta API routes improved by getRunEnv, getRuns and getRun.
+
+17.03.2021 Version 1.2.31
+Big file error of tables fixed for reports.
+
+16.03.2021 Version 1.2.30
+Special characters removed from collection name.
+
+12.02.2021 Version 1.2.29
+Remove new run button added into run management console.
+New run detection algorithm upgraded.
+
+29.01.2021 Version 1.2.28
+GEO search upgraded. 
+
+07.01.2021 Version 1.2.27
+JWT cookie support added on login.
+JWT_SECRET and JWT_COOKIE_EXPIRES_IN parameters added to Dolphinnext section of .sec file.
+[Dolphinnext]
+JWT_SECRET=very-strong-jwt-secret-password
+JWT_COOKIE_EXPIRES_IN=365
+Proxy.php and jquery.ajax-cross-origin removed.
+Process nodes updated on change in development mode.
+User confirmation added when updating existing system inputs in the run page.
+Each executor config preparation moved to server side.
+Filled input check bug fixed.
+
+30.11.2020 Version 1.2.26
+Project support for dmeta added
+
+19.11.2020 Version 1.2.25
+Triple and quadruple file support added to initial run. 
+
+11.11.2020 Version 1.2.24
+After-sso redirection fixed for Single Sign-on feature.
+
+08.11.2020 Version 1.2.23
+Single Sign on feature upgraded.
+
+06.11.2020 Version 1.2.22
+initial run .nextflow.log and trace.txt files are added to log tabs in the run page.
+Lsf pid checker added to detect killed jobs.
+
+05.11.2020 Version 1.2.21
+S3 upload command updated with "aws s3 sync" to support files bigger than 5GB. 
+
+02.11.2020 Version 1.2.20
+After-SSO login page updated.
+Minor bug fixed in import pipeline module.
+
+01.11.2020 Version 1.2.19
+$ and ^ characters added into file pattern searches. 
+
+29.10.2020 Version 1.2.18
+Dmeta api calls simplified.
+
+26.10.2020 Version 1.2.17
+Sign in with SSO option added to login page.
+Login check feature added to sso login.
+Favicon added to page. 
+
+23.10.2020 Version 1.2.16
+Show homepage parameter added to .sec file.
+[UICONFIG]
+SHOW_HOMEPAGE=false
+
+23.10.2020 Version 1.2.15
+Home page updated.
+
+20.10.2020 Version 1.2.14
+Single-Sign On feature added.
+Total amount of files are shown in collections list.
+Run page loading enhanced by updating sample table.
+Dmeta file tab added.
+Warning added in case file types or collection types are not the same for the selected files.
+Dmeta initiates run using template run.
+
+12.10.2020 Version 1.2.13
+Github integration upgraded, password authentication replaced with the access token.
+
+02.10.2020 Version 1.2.12
+Rsync command upgraded to minimize rsync command submission.
+
+28.09.2020 Version 1.2.11
+GEO download feature fixed.
+
 20.07.2020 Version 1.2.10
 Text viewer added to report section.
 

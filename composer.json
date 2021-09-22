@@ -1,0 +1,21 @@
+{
+    "name": "umms/dolphinnext",
+    "type": "project",
+    "require": {
+        "okta/jwt-verifier": "^1.1",
+        "firebase/php-jwt": "^5.4",
+        "guzzlehttp/psr7": "^2.0"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Umms\\Dolphinnext\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "onuryukselen",
+            "email": "onuryukselen@gmail.com"
+        }
+    ]
+}
