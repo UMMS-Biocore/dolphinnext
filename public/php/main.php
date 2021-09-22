@@ -18,7 +18,7 @@ $id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "";
 $t = isset($_REQUEST["t"]) ? $_REQUEST["t"] : "";
 if (!empty($t) && empty($id) && empty($np)){
     $db=new dbfuncs();
-    $sql = "SELECT id, np FROM token WHERE token = '$t'";
+    $sql = "SELECT id, np FROM `token` WHERE token = '$t'";
     $lData = $db->queryTable($sql);
     $ln = json_decode($lData,true);
     if (isset($ln[0])){

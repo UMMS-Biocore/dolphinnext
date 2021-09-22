@@ -69,8 +69,8 @@ function loginFailed($warn){
 // Google Login
 if(isset($_SESSION['google_login'])){
     if ($_SESSION['google_login'] == true && isset($_SESSION['email']) && $_SESSION['email'] !=""){
-        $check_active = $query->queryAVal("SELECT active FROM users WHERE deleted=0 AND email = '" . $_SESSION['email']."'");
-        $check_verification = $query->queryAVal("SELECT verification FROM users WHERE deleted=0 AND email = '" . $_SESSION['email']."'");
+        $check_active = $query->queryAVal("SELECT active FROM `users` WHERE deleted=0 AND email = '" . $_SESSION['email']."'");
+        $check_verification = $query->queryAVal("SELECT verification FROM `users` WHERE deleted=0 AND email = '" . $_SESSION['email']."'");
         list($active_user,$loginfail) = checkActive($check_active);
         if ($active_user == false || !empty($check_verification)){
             loginFailed("Sorry, account is not active.");
@@ -92,7 +92,7 @@ if(isset($_POST['login'])){
     // check if user is active?
     if(!empty($_POST) && isset($_POST['emailusername']) && $_POST['emailusername'] !=""){
         $emailusername = strtolower(str_replace("'","''",$_POST['emailusername']));
-        $check_active = $query->queryAVal("SELECT active FROM users WHERE deleted =0 AND (email = '$emailusername' OR username = '$emailusername')");
+        $check_active = $query->queryAVal("SELECT active FROM `users` WHERE deleted =0 AND (email = '$emailusername' OR username = '$emailusername')");
         list($active_user,$loginfail) = checkActive($check_active);
         if ($active_user == false){
             loginFailed("Login Failed.");
@@ -113,7 +113,7 @@ if(isset($_POST['login'])){
         if ($res == 0){
             //	Database password
             $emailusername = strtolower(str_replace("'","''",$_POST['emailusername']));
-            $pass_hash = $query->queryAVal("SELECT pass_hash FROM users WHERE deleted = 0 AND (email = '$emailusername' OR username = '$emailusername')");
+            $pass_hash = $query->queryAVal("SELECT pass_hash FROM `users` WHERE deleted = 0 AND (email = '$emailusername' OR username = '$emailusername')");
             if($pass_hash == $post_pass && $active_user == true){
                 $res=1;
             } else{

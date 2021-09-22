@@ -66,7 +66,8 @@ class updates
 
     //http://localhost:8080/dolphinnext/api/service.php?upd=updateCloudInst
     function updateCloudInst(){
-        $ret = "";
+        $this->readINI();
+	$ret = "";
         $clouds = ["amazon", "google"];
         for ($i = 0; $i < count($clouds); $i++) {
             $cloud = $clouds[$i];
@@ -124,6 +125,7 @@ class updates
 
     //http://localhost:8080/dolphinnext/api/service.php?upd=updateRunStat
     function updateRunStat (){
+	$this->readINI();
         // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted
         // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
         $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.publish_dir_check, pp.publish_dir, pp.date_modified, pp.owner_id, pp.pipeline_id, r.run_status

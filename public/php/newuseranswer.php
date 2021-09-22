@@ -46,7 +46,7 @@ if (isset($_POST['request'])){
         $err_username = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
     }else{
         $username_val = str_replace("'", "", $_POST['username']);
-        $username_check = $query->queryAVal("SELECT id FROM users WHERE deleted = 0 AND username = LCASE('" . $_POST['username'] . "')");
+        $username_check = $query->queryAVal("SELECT id FROM `users` WHERE deleted = 0 AND username = LCASE('" . $_POST['username'] . "')");
         if($username_check != "0"){
             $err_username = '<font class="text-center" color="crimson">This Username already exists.</font>';
         }
@@ -63,7 +63,7 @@ if (isset($_POST['request'])){
             $err_email = '<font class="text-center" color="crimson">Cannot submit with this field empty.</font>';
         } else{
             $email_val = str_replace("'", "", $_POST['email']);
-            $email_check = $query->queryAVal("SELECT id FROM users WHERE deleted = 0 AND email = LCASE('" . $_POST['email'] . "')");
+            $email_check = $query->queryAVal("SELECT id FROM `users` WHERE deleted = 0 AND email = LCASE('" . $_POST['email'] . "')");
             if($email_check != "0"){
                 $err_email = '<font class="text-center" color="crimson">This Email already exists.</font>';
             }
@@ -98,7 +98,7 @@ if (isset($_POST['request'])){
         $role = "user";
         $active = 0;
         $logintype = NULL;
-        $admin_check = $query->queryTable("SELECT id FROM users");
+        $admin_check = $query->queryTable("SELECT id FROM `users`");
         $admin_checkAr = json_decode($admin_check,true); 
         if (empty($admin_checkAr)){
             $role = "admin";
@@ -131,7 +131,7 @@ if (isset($_POST['request'])){
     } else if (isset($_SESSION['google_login']) && $_SESSION['google_login'] == true && isset($_SESSION['email']) && $_SESSION['email'] != ""  && !isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_lab) && !isset($err_institute)){
         $email = $_SESSION['email'];
         $google_id = $_SESSION['google_id'];
-        $admin_check = $query->queryTable("SELECT id FROM users");
+        $admin_check = $query->queryTable("SELECT id FROM `users`");
         $admin_checkAr = json_decode($admin_check,true); 
         //check if user table is empty: then insert as admin  
         if (empty($admin_checkAr)){

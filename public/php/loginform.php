@@ -72,7 +72,7 @@ folder instead of downloading all of them to reduce the load. -->
                     'response_type' => 'code',
                     'response_mode' => 'query',
                     'scope' => 'openid profile',
-                    'redirect_uri' => 'http://localhost:8080/dolphinnext/okta/authorization-code-callback.php',
+                    'redirect_uri' => BASE_PATH.'/okta/authorization-code-callback.php',
                     'state' => $state
                 ]);
                 $SSO_LOGIN_URL=ISSUER.'/v1/authorize?'.$query;
