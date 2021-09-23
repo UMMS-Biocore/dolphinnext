@@ -10,12 +10,12 @@ if(isset($_GET['p']) && $_GET['p'] == "verify"){
   if (isset($_GET['code'])){$code = $_GET['code'];}
   $newuser = json_decode($query->queryTable("
   SELECT *
-  FROM users
+  FROM `users`
   WHERE verification = '$code'
   "));
   if($newuser[0]->verification == $code){
     $insert_user = $query->runSQL("
-    UPDATE users
+    UPDATE `users`
 	SET verification = NULL, active = 1
 	WHERE verification = '$code'
 	");

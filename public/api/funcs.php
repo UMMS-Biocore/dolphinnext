@@ -124,17 +124,18 @@ class funcs
         return $ret;
     }
     function checkUUID($wkey,$type)
-    {
+    {   
+	$this->readINI();
         if ($type == "process"){
-            $sql    = "select id from uuid where process_uuid='$wkey'";
+            $sql    = "SELECT id FROM $this->db.uuid WHERE process_uuid='$wkey'";
         } else if ($type == "pipeline"){
-            $sql    = "select id from uuid where pipeline_uuid='$wkey'";
+            $sql    = "SELECT id FROM $this->db.uuid WHERE pipeline_uuid='$wkey'";
         } else if ($type == "pipeline_rev"){
-            $sql    = "select id from uuid where pipeline_rev_uuid='$wkey'";
+            $sql    = "SELECT id FROM $this->db.uuid WHERE pipeline_rev_uuid='$wkey'";
         } else if ($type == "process_rev"){
-            $sql    = "select id from uuid where process_rev_uuid='$wkey'";
+            $sql    = "SELECT id FROM $this->db.uuid WHERE process_rev_uuid='$wkey'";
         } else if ($type == "run_log"){
-            $sql    = "select id from uuid where run_log_uuid='$wkey'";
+            $sql    = "SELECT id FROM $this->db.uuid WHERE run_log_uuid='$wkey'";
         }
         $result = $this->runSQL($sql);
         if (is_object($result) && $row = $result->fetch_row()) {

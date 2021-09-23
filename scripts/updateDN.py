@@ -61,7 +61,8 @@ def updateDB(db, user, p, host, port):
         host=host,
         user=user,
         passwd=p,
-        port=port
+        port=port,
+	auth_plugin='mysql_native_password'
     )
     cursor=cnx.cursor()
     #check if update_db table exists
@@ -74,7 +75,7 @@ def updateDB(db, user, p, host, port):
     if exist_table == 1:
         ret += "\nINFO: update_db table found."
         #get update_db table rows
-        query=("SELECT DISTINCT name FROM update_db;")
+        query=("SELECT DISTINCT name FROM `update_db`;")
         cursor.execute(query)
         update_db_rows = cursor.fetchall()
         exist_db = []

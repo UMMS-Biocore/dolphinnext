@@ -204,7 +204,7 @@ class Run
                 return $ret;
             }
             //don't allow to update if user doesn't own the project_pipeline.
-            $curr_ownerID= $dbfuncs->queryAVal("SELECT owner_id FROM project_pipeline WHERE id='$proPipeId'");
+            $curr_ownerID= $dbfuncs->queryAVal("SELECT owner_id FROM $dbfuncs->db.project_pipeline WHERE id='$proPipeId'");
             $permCheck = $dbfuncs->checkUserOwnPerm($curr_ownerID, $ownerID);
             if (!empty($permCheck)){
                 $dbfuncs->updateProjectPipelineDmeta($proPipeId, $dmeta, $ownerID);
