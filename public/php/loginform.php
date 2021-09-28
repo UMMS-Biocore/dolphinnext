@@ -65,7 +65,7 @@ folder instead of downloading all of them to reduce the load. -->
         }
         if (!empty(SSO_LOGIN)){
             $SSO_LOGIN_URL="";
-            if (!empty(SSO_LOGIN) && !empty(ISSUER) && !empty(CLIENT_ID) && !empty(CLIENT_SECRET) ){
+            if (!empty(SSO_LOGIN) && !empty(ISSUER) && !empty(CLIENT_ID) && !empty(CLIENT_SECRET) && !empty(OKTA_METHOD) && OKTA_METHOD == "OIDC" ){
                 $state = 'applicationState';
                 $query = http_build_query([
                     'client_id' => $CLIENT_ID,
@@ -76,7 +76,8 @@ folder instead of downloading all of them to reduce the load. -->
                     'state' => $state
                 ]);
                 $SSO_LOGIN_URL=ISSUER.'/v1/authorize?'.$query;
-
+            } else if (!empty(SSO_LOGIN) && !empty(OKTA_METHOD) && OKTA_METHOD == "SAML" ){
+                $SSO_LOGIN_URL=BASE_PATH.'?saml_sso=okta-app';
             } else if (!empty(SSO_LOGIN) && !empty(SSO_URL) && !empty(CLIENT_ID) && !empty(CLIENT_SECRET)){
                 $SSO_LOGIN_URL = SSO_URL."/dialog/authorize?redirect_uri=".BASE_PATH."/php/receivetoken.php&response_type=code&client_id=".CLIENT_ID."&scope=offline_access";
 

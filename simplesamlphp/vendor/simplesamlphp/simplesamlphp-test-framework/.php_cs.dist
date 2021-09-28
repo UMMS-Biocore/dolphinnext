@@ -1,0 +1,18 @@
+<?php
+
+$finder = PhpCsFixer\Finder::create()
+    ->in([
+        __DIR__ . '/lib',
+        __DIR__ . '/metadata/simplesamlphp',
+        __DIR__ . '/stubs',
+        __DIR__ . '/tests',
+    ])
+;
+
+return PhpCsFixer\Config::create()
+    ->setRules([
+        '@PSR2' => true,
+    ])
+    ->setFinder($finder)
+;
+
