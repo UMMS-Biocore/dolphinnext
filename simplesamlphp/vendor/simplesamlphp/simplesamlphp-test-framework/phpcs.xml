@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<ruleset name="SimpleSAMLphp ruleset">
+    <config name="ignore_warnings_on_exit" value="1"/>
+
+    <!-- This is the rule we inherit from. If you want to exlude some specific rules, see the docs on how to do that -->
+    <rule ref="PSR12"/>
+
+    <file>lib</file>
+    <file>metadata/simplesamlphp</file>
+    <file>stubs</file>
+    <file>tests</file>
+</ruleset>
+
+

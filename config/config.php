@@ -36,8 +36,10 @@ if (!empty($secConf)){
     $EMAIL_SENDER= isset($secConf['EMAIL_SENDER']) ? $secConf['EMAIL_SENDER'] : "";
     $EMAIL_ADMIN= isset($secConf['EMAIL_ADMIN']) ? $secConf['EMAIL_ADMIN'] : "";
     $ENV_PATH = isset($secConf['ENV_PATH']) ? $secConf['ENV_PATH'] : "";
-    date_default_timezone_set($secConf['TIMEZONE']);
+    $TIMEZONE = isset($secConf['TIMEZONE']) ? $secConf['TIMEZONE'] : "";
+    date_default_timezone_set($TIMEZONE);
 
+    define('TIMEZONE', $TIMEZONE);
     define('RUNPATH', $secConf['RUNPATH']);
     define('TEMPPATH', $secConf['TEMPPATH']);
     define('API_URL', $secConf['API_URL']);
@@ -111,6 +113,8 @@ $ISSUER=false;
 $CLIENT_ID=false;
 $CLIENT_SECRET=false;
 $OKTA_API_TOKEN=false;
+$OKTA_METADATA=false;
+$OKTA_METHOD=false;
 if (!empty($secSSOconfig) && $secSSOconfig['SSO_LOGIN'] == true){
     $SSO_LOGIN= isset($secSSOconfig['SSO_LOGIN']) ? $secSSOconfig['SSO_LOGIN'] : $SSO_LOGIN;
     $SSO_URL= isset($secSSOconfig['SSO_URL']) ? $secSSOconfig['SSO_URL'] : $SSO_URL;
@@ -122,6 +126,9 @@ if (!empty($secSSOconfig) && $secSSOconfig['SSO_LOGIN'] == true){
     $CLIENT_ID= isset($secOKTAconfig['CLIENT_ID']) ? $secOKTAconfig['CLIENT_ID'] : $CLIENT_ID;
     $CLIENT_SECRET= isset($secOKTAconfig['CLIENT_SECRET']) ? $secOKTAconfig['CLIENT_SECRET'] : $CLIENT_SECRET;
     $OKTA_API_TOKEN= isset($secOKTAconfig['OKTA_API_TOKEN']) ? $secOKTAconfig['OKTA_API_TOKEN'] : $OKTA_API_TOKEN;
+    $OKTA_METADATA= isset($secOKTAconfig['OKTA_METADATA']) ? $secOKTAconfig['OKTA_METADATA'] : $OKTA_METADATA;
+    $OKTA_METHOD= isset($secOKTAconfig['OKTA_METHOD']) ? $secOKTAconfig['OKTA_METHOD'] : $OKTA_METHOD;
+    
 }
 
 define('SSO_LOGIN', $SSO_LOGIN);
@@ -130,6 +137,8 @@ define('ISSUER', $ISSUER);
 define('CLIENT_ID', $CLIENT_ID);
 define('CLIENT_SECRET', $CLIENT_SECRET);
 define('OKTA_API_TOKEN', $OKTA_API_TOKEN);
+define('OKTA_METADATA', $OKTA_METADATA);
+define('OKTA_METHOD', $OKTA_METHOD);
 
 
 // DMETA Config:

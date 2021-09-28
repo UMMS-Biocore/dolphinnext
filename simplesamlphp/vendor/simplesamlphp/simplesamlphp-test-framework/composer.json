@@ -1,0 +1,41 @@
+{
+    "name": "simplesamlphp/simplesamlphp-test-framework",
+    "description": "Test framework for SimpleSAMLphp and related repositories ",
+    "type": "project",
+    "keywords": ["test-framework"],
+    "license": "LGPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Tim van Dijen",
+            "email": "tvdijen@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SimpleSAML\\TestUtils\\": "lib/"
+        }
+    },
+    "bin": [
+        "bin/check-syntax-json.sh",
+        "bin/check-syntax-php.sh",
+        "bin/check-syntax-xml.sh",
+        "bin/check-syntax-yaml.sh"
+    ],
+    "require": {
+        "php": ">=7.0",
+
+        "phpunit/phpunit": "^6.5|^7.0|^8.0",
+        "vimeo/psalm": "^3.2|^4.0",
+        "sensiolabs/security-checker": "^5.0|^6.0",
+        "squizlabs/php_codesniffer": "^3.5"
+    },
+    "require-dev": {
+        "ext-curl": "*",
+
+        "simplesamlphp/simplesamlphp": "dev-master"
+    },
+    "support": {
+        "issues": "https://github.com/simplesamlphp/simplesamlphp-test-framework/issues",
+        "source": "https://github.com/simplesamlphp/simplesamlphp-test-framework"
+    }
+}

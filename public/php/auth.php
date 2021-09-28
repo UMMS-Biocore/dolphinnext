@@ -16,10 +16,14 @@ $CLIENT_SECRET=CLIENT_SECRET;
 $ISSUER=ISSUER;
 $SHOW_HOMEPAGE=SHOW_HOMEPAGE;
 $OKTA_API_TOKEN=OKTA_API_TOKEN;
+$OKTA_METHOD=OKTA_METHOD;
+$OKTA_METADATA=OKTA_METADATA;
 
 // for okta login
-if (!empty($SSO_LOGIN) && !empty($ISSUER)) {
+if (!empty($SSO_LOGIN) && !empty($ISSUER) && $OKTA_METHOD == "OIDC") {
     require_once(__DIR__."/../okta/authcode.php");
+} else if (!empty($SSO_LOGIN) && !empty($OKTA_METADATA) && $OKTA_METHOD == "SAML") {
+    require_once(__DIR__."/../../simplesamlphp/lib/_autoload.php");
 }
 
 
@@ -33,6 +37,7 @@ function loadLoginForm($SSO_LOGIN, $SSO_URL, $BASE_PATH, $CLIENT_ID){
     //    }
     require_once("loginform.php");
 }
+
 
 if (isset($_GET['p']) && $_GET['p'] == "logout" ){
     if (isset($_SESSION['admin_id'])) {
@@ -52,13 +57,14 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
         header('Location: ' . $_SERVER['HTTP_REFERER']);
         exit;
     } else {
+        // If the user is logged in and requesting a logout.
         session_destroy();
         setcookie('jwt-dolphinnext', "loggedout", time()-60*60, "/");
         if (!empty($SSO_LOGIN) && !empty($SSO_URL)){
             $SSO_LOGOUT_URL = "{$SSO_URL}/api/v1/users/logout?redirect_uri={$BASE_PATH}";
             header('Location: ' . $SSO_LOGOUT_URL);
             exit;
-        } else if (!empty($OKTA_API_TOKEN) && !empty($SSO_LOGIN) && !empty($ISSUER) && !empty($_SESSION['ownerID'])){
+        } else if (!empty($OKTA_API_TOKEN) && !empty($SSO_LOGIN) && !empty($ISSUER) && !empty($_SESSION['ownerID']) && $OKTA_METHOD == "OIDC"){
             $ownerID = $_SESSION['ownerID'];
             $userData = json_decode($db->getUserById($ownerID))[0];
             $sso_id = $userData->{'sso_id'};
@@ -81,6 +87,11 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
             curl_close($ch);
             header('Location: ' . $_SERVER['HTTP_REFERER']);
             exit;
+        } else if (!empty($SSO_LOGIN) && $OKTA_METHOD == "SAML" && !empty($OKTA_METADATA)){
+            $sp = "okta-app";
+            //unset($_SESSION['saml_session']);
+            $as = new SimpleSAML_Auth_Simple($sp);
+            $as->logout(["ReturnTo" => $_SERVER['HTTP_REFERER']]);
         } else {
             header('Location: ' . $_SERVER['HTTP_REFERER']);
             exit;  
@@ -120,12 +131,81 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
         require_once("login.php");
         exit;
     }
-
     $token = !empty($_COOKIE['jwt-dolphinnext']) ? $_COOKIE['jwt-dolphinnext'] : "";
+    if (isset($_REQUEST["saml_sso"]) && (empty($token) || $token === 'loggedout')) {
+        $sp = $_REQUEST["saml_sso"]; //okta-app
+        $as = new SimpleSAML_Auth_Simple($sp);
+        $as->requireAuth();
+        $user = array(
+            'sp'         => $sp,
+            'authed'     => $as->isAuthenticated(),
+            'idp'        => $as->getAuthData('saml:sp:IdP'),
+            'nameId'     => $as->getAuthData('saml:sp:NameID')->getValue(),
+            'attributes' => $as->getAttributes(),
+        );
+
+        $_SESSION['saml_session'] = $user;
+        $email = $user['nameId'];
+
+        // if user isAuthenticated then checkuser and insert if necessary
+        if ($user['authed'] === true && $email){
+            $checkUserData = json_decode($db->getUserByEmailorUsername($email));
+            $id = isset($checkUserData[0]) ? $checkUserData[0]->{'id'} : "";
+
+            $parts = explode("@", $email);
+            $username = $parts[0];
+            $name = $parts[0];
+            $role = isset($checkUserData[0]) ? $checkUserData[0]->{'role'} : "";
+
+            if (empty($id)){
+                // insert user
+                // Update db with latest information
+                $email_clean = str_replace("'", "''", $email);
+                $any_user_check = $db->queryAVal("SELECT id FROM users");
+                $any_user_checkAr = json_decode($any_user_check,true); 
+                $role = "user";
+                if (empty($any_user_checkAr)){
+                    $role = "admin";
+                } 
+                $active = 1;
+                $sql = "INSERT INTO users(name, email, username, role, active, memberdate, date_created, date_modified, perms, sso_id, scope) VALUES ('$name', '$email_clean', '$username', '$role', $active, now(),now(), now(), '3', '$sso_user_id', '$scope')";
+                $inUser = $db->insTable($sql);
+                $idArray = json_decode($inUser,true);
+                $id = $idArray["id"];
+            }
+
+            if (!empty($id)){
+                $currentUser = json_decode($db->getUserById($id),true);
+                $role = isset($currentUser[0]) ? $currentUser[0]['role'] : "";
+                $name = isset($currentUser[0]) ? $currentUser[0]['name'] : "";
+                $email = isset($currentUser[0]) ? $currentUser[0]['email'] : "";
+                $username = isset($currentUser[0]) ? $currentUser[0]['username'] : "";
+                $_SESSION['email'] = $email;
+                $_SESSION['username'] = $username;
+                $_SESSION['name'] = $name;
+                $_SESSION['ownerID'] = $id;
+                $_SESSION['role'] = $role;
+                // create cookie
+                $token = $db->signJWTToken($id);
+                if (!empty($token)){
+                    setcookie('jwt-dolphinnext', $token, time()+60*60*24*365, "/");
+                    if (!empty($SSO_LOGIN)){
+                        header('Location: ' . $BASE_PATH."/php/after-sso.php");
+                    } else {
+                        header('Location: '.$BASE_PATH);
+                    }
+                    exit;
+                }
+
+
+            }
+        } 
+    }
+
     if (!empty($token) && $token != 'loggedout'){
         $decoded = "";
         $currentUser = array();
-        if (empty($ISSUER)){
+        if (empty($ISSUER) || (!empty($SSO_LOGIN) && $OKTA_METHOD == "SAML")){
             $JWT=new JWT();
             try {
                 $decoded = $JWT->decode($token, JWT_SECRET);
@@ -135,7 +215,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
             if (!empty($decoded) && !empty($decoded->{"id"})){
                 $currentUser = json_decode($db->getUserById($decoded->{"id"}),true);
             }
-        } else if (!empty($SSO_LOGIN) && !empty($ISSUER)) {
+        } else if (!empty($SSO_LOGIN) && !empty($ISSUER) && $OKTA_METHOD == "OIDC") {
             // for okta login
             $OKTAAUTH=new AuthCode();
             try {
@@ -162,6 +242,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
             exit;
         }
     }
+    // For DSSO Authorization Server:
     // empty($_SERVER['HTTP_REFERER']) required since php may load page more than once.
     // when reload happens, $_SERVER['HTTP_REFERER'] will be set.
     if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID) && empty($_SERVER['HTTP_REFERER'])){
