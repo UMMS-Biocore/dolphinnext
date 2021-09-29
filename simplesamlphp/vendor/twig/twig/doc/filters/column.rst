@@ -2,6 +2,7 @@
 ==========
 
 .. versionadded:: 2.8
+
     The ``column`` filter was added in Twig 2.8.
 
 The ``column`` filter returns the values from a single column in the input
@@ -24,4 +25,4 @@ Arguments
 
 * ``name``: The column name to extract
 
-.. _`array_column`: https://secure.php.net/array_column
+.. _`array_column`: https://www.php.net/array_column

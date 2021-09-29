@@ -25,11 +25,12 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  *
  * @internal
  */
-final class CurlResponse implements ResponseInterface
+final class CurlResponse implements ResponseInterface, StreamableInterface
 {
-    use ResponseTrait {
+    use CommonResponseTrait {
         getContent as private doGetContent;
     }
+    use TransportResponseTrait;
 
     private static $performing = false;
     private $multi;
@@ -100,6 +101,27 @@ final class CurlResponse implements ResponseInterface
             return;
         }
 
+        $execCounter = $multi->execCounter;
+        $this->info['pause_handler'] = static function (float $duration) use ($ch, $multi, $execCounter) {
+            if (0 < $duration) {
+                if ($execCounter === $multi->execCounter) {
+                    $multi->execCounter = !\is_float($execCounter) ? 1 + $execCounter : \PHP_INT_MIN;
+                    curl_multi_remove_handle($multi->handle, $ch);
+                }
+
+                $lastExpiry = end($multi->pauseExpiries);
+                $multi->pauseExpiries[(int) $ch] = $duration += microtime(true);
+                if (false !== $lastExpiry && $lastExpiry > $duration) {
+                    asort($multi->pauseExpiries);
+                }
+                curl_pause($ch, \CURLPAUSE_ALL);
+            } else {
+                unset($multi->pauseExpiries[(int) $ch]);
+                curl_pause($ch, \CURLPAUSE_CONT);
+                curl_multi_add_handle($multi->handle, $ch);
+            }
+        };
+
         $this->inflate = !isset($options['normalized_headers']['accept-encoding']);
         curl_pause($ch, \CURLPAUSE_CONT);
 
@@ -152,7 +174,7 @@ final class CurlResponse implements ResponseInterface
         curl_multi_add_handle($multi->handle, $ch);
 
         $this->canary = new Canary(static function () use ($ch, $multi, $id) {
-            unset($multi->openHandles[$id], $multi->handlesActivity[$id]);
+            unset($multi->pauseExpiries[$id], $multi->openHandles[$id], $multi->handlesActivity[$id]);
             curl_setopt($ch, \CURLOPT_PRIVATE, '_0');
 
             if (self::$performing) {
@@ -271,6 +293,7 @@ final class CurlResponse implements ResponseInterface
 
         try {
             self::$performing = true;
+            ++$multi->execCounter;
             $active = 0;
             while (\CURLM_CALL_MULTI_PERFORM === curl_multi_exec($multi->handle, $active));
 
@@ -305,18 +328,41 @@ final class CurlResponse implements ResponseInterface
      */
     private static function select(ClientState $multi, float $timeout): int
     {
-        if (\PHP_VERSION_ID < 70123 || (70200 <= \PHP_VERSION_ID && \PHP_VERSION_ID < 70211)) {
+        if (\PHP_VERSION_ID < 70211) {
             // workaround https://bugs.php.net/76480
             $timeout = min($timeout, 0.01);
         }
 
-        return curl_multi_select($multi->handle, $timeout);
+        if ($multi->pauseExpiries) {
+            $now = microtime(true);
+
+            foreach ($multi->pauseExpiries as $id => $pauseExpiry) {
+                if ($now < $pauseExpiry) {
+                    $timeout = min($timeout, $pauseExpiry - $now);
+                    break;
+                }
+
+                unset($multi->pauseExpiries[$id]);
+                curl_pause($multi->openHandles[$id][0], \CURLPAUSE_CONT);
+                curl_multi_add_handle($multi->handle, $multi->openHandles[$id][0]);
+            }
+        }
+
+        if (0 !== $selected = curl_multi_select($multi->handle, $timeout)) {
+            return $selected;
+        }
+
+        if ($multi->pauseExpiries && 0 < $timeout -= microtime(true) - $now) {
+            usleep((int) (1E6 * $timeout));
+        }
+
+        return 0;
     }
 
     /**
      * Parses header lines as curl yields them to us.
      */
-    private static function parseHeaderLine($ch, string $data, array &$info, array &$headers, ?array $options, CurlClientState $multi, int $id, ?string &$location, ?callable $resolveRedirect, ?LoggerInterface $logger, &$content = null): int
+    private static function parseHeaderLine($ch, string $data, array &$info, array &$headers, ?array $options, CurlClientState $multi, int $id, ?string &$location, ?callable $resolveRedirect, ?LoggerInterface $logger): int
     {
         $waitFor = @curl_getinfo($ch, \CURLINFO_PRIVATE) ?: '_0';
 
@@ -335,7 +381,7 @@ final class CurlResponse implements ResponseInterface
                 return \strlen($data);
             }
 
-            if (0 !== strpos($data, 'HTTP/')) {
+            if (!str_starts_with($data, 'HTTP/')) {
                 if (0 === stripos($data, 'Location:')) {
                     $location = trim(substr($data, 9));
                 }

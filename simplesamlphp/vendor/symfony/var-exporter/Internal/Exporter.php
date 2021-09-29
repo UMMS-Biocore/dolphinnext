@@ -31,11 +31,9 @@ class Exporter
      * @param int               &$objectsCount
      * @param bool              &$valuesAreStatic
      *
-     * @return array
-     *
      * @throws NotInstantiableTypeException When a value cannot be serialized
      */
-    public static function prepare($values, $objectsPool, &$refsPool, &$objectsCount, &$valuesAreStatic)
+    public static function prepare($values, $objectsPool, &$refsPool, &$objectsCount, &$valuesAreStatic): array
     {
         $refs = $values;
         foreach ($values as $k => $value) {
@@ -62,7 +60,7 @@ class Exporter
                     $value = self::prepare($value, $objectsPool, $refsPool, $objectsCount, $valueIsStatic);
                 }
                 goto handle_value;
-            } elseif (!\is_object($value) && !$value instanceof \__PHP_Incomplete_Class) {
+            } elseif (!\is_object($value) || $value instanceof \UnitEnum) {
                 goto handle_value;
             }
 
@@ -82,7 +80,7 @@ class Exporter
                 }
 
                 if (!\is_array($properties = $value->__serialize())) {
-                    throw new \Typerror($class.'::__serialize() must return an array');
+                    throw new \TypeError($class.'::__serialize() must return an array');
                 }
 
                 goto prepare_value;
@@ -187,10 +185,10 @@ class Exporter
         return $values;
     }
 
-    public static function export($value, $indent = '')
+    public static function export($value, string $indent = '')
     {
         switch (true) {
-            case \is_int($value) || \is_float($value): return var_export($value, true);
+            case \is_int($value) || \is_float($value) || $value instanceof \UnitEnum: return var_export($value, true);
             case [] === $value: return '[]';
             case false === $value: return 'false';
             case true === $value: return 'true';
@@ -232,7 +230,7 @@ class Exporter
                 return $m[1].$m[2];
             }, $code, -1, $count);
 
-            if ($count && 0 === strpos($code, "''.")) {
+            if ($count && str_starts_with($code, "''.")) {
                 $code = substr($code, 3);
             }
 
@@ -273,7 +271,7 @@ class Exporter
             return self::exportHydrator($value, $indent, $subIndent);
         }
 
-        throw new \UnexpectedValueException(sprintf('Cannot export value of type "%s".', \is_object($value) ? \get_class($value) : \gettype($value)));
+        throw new \UnexpectedValueException(sprintf('Cannot export value of type "%s".', get_debug_type($value)));
     }
 
     private static function exportRegistry(Registry $value, string $indent, string $subIndent): string

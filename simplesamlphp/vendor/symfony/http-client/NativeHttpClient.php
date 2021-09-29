@@ -71,10 +71,10 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
             if (file_exists($options['bindto'])) {
                 throw new TransportException(__CLASS__.' cannot bind to local Unix sockets, use e.g. CurlHttpClient instead.');
             }
-            if (0 === strpos($options['bindto'], 'if!')) {
+            if (str_starts_with($options['bindto'], 'if!')) {
                 throw new TransportException(__CLASS__.' cannot bind to network interfaces, use e.g. CurlHttpClient instead.');
             }
-            if (0 === strpos($options['bindto'], 'host!')) {
+            if (str_starts_with($options['bindto'], 'host!')) {
                 $options['bindto'] = substr($options['bindto'], 5);
             }
         }
@@ -179,18 +179,17 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
 
         $this->logger && $this->logger->info(sprintf('Request: "%s %s"', $method, implode('', $url)));
 
-        [$host, $port] = self::parseHostPort($url, $info);
-
-        if (!isset($options['normalized_headers']['host'])) {
-            $options['headers'][] = 'Host: '.$host.$port;
-        }
-
         if (!isset($options['normalized_headers']['user-agent'])) {
             $options['headers'][] = 'User-Agent: Symfony HttpClient/Native';
         }
 
         if (0 < $options['max_duration']) {
             $options['timeout'] = min($options['max_duration'], $options['timeout']);
+        }
+
+        $bindto = $options['bindto'];
+        if (!$bindto && (70322 === \PHP_VERSION_ID || 70410 === \PHP_VERSION_ID)) {
+            $bindto = '0:0';
         }
 
         $context = [
@@ -221,24 +220,31 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
                 'disable_compression' => true,
             ], static function ($v) { return null !== $v; }),
             'socket' => [
-                'bindto' => $options['bindto'] ?: '0:0',
+                'bindto' => $bindto,
                 'tcp_nodelay' => true,
             ],
         ];
 
-        $proxy = self::getProxy($options['proxy'], $url);
-        $noProxy = $options['no_proxy'] ?? $_SERVER['no_proxy'] ?? $_SERVER['NO_PROXY'] ?? '';
-        $noProxy = $noProxy ? preg_split('/[\s,]+/', $noProxy) : [];
-
-        $resolveRedirect = self::createRedirectResolver($options, $host, $proxy, $noProxy, $info, $onProgress);
         $context = stream_context_create($context, ['notification' => $notification]);
 
-        if (!self::configureHeadersAndProxy($context, $host, $options['headers'], $proxy, $noProxy, 'https:' === $url['scheme'])) {
-            $ip = self::dnsResolve($host, $this->multi, $info, $onProgress);
-            $url['authority'] = substr_replace($url['authority'], $ip, -\strlen($host) - \strlen($port), \strlen($host));
-        }
+        $resolver = static function ($multi) use ($context, $options, $url, &$info, $onProgress) {
+            [$host, $port] = self::parseHostPort($url, $info);
 
-        return new NativeResponse($this->multi, $context, implode('', $url), $options, $info, $resolveRedirect, $onProgress, $this->logger);
+            if (!isset($options['normalized_headers']['host'])) {
+                $options['headers'][] = 'Host: '.$host.$port;
+            }
+
+            $proxy = self::getProxy($options['proxy'], $url, $options['no_proxy']);
+
+            if (!self::configureHeadersAndProxy($context, $host, $options['headers'], $proxy, 'https:' === $url['scheme'])) {
+                $ip = self::dnsResolve($host, $multi, $info, $onProgress);
+                $url['authority'] = substr_replace($url['authority'], $ip, -\strlen($host) - \strlen($port), \strlen($host));
+            }
+
+            return [self::createRedirectResolver($options, $host, $proxy, $info, $onProgress), implode('', $url)];
+        };
+
+        return new NativeResponse($this->multi, $context, implode('', $url), $options, $info, $resolver, $onProgress, $this->logger);
     }
 
     /**
@@ -249,7 +255,7 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
         if ($responses instanceof NativeResponse) {
             $responses = [$responses];
         } elseif (!is_iterable($responses)) {
-            throw new \TypeError(sprintf('"%s()" expects parameter 1 to be an iterable of NativeResponse objects, "%s" given.', __METHOD__, \is_object($responses) ? \get_class($responses) : \gettype($responses)));
+            throw new \TypeError(sprintf('"%s()" expects parameter 1 to be an iterable of NativeResponse objects, "%s" given.', __METHOD__, get_debug_type($responses)));
         }
 
         return new ResponseStream(NativeResponse::stream($responses, $timeout));
@@ -269,51 +275,13 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
 
         while ('' !== $data = $body(self::$CHUNK_SIZE)) {
             if (!\is_string($data)) {
-                throw new TransportException(sprintf('Return value of the "body" option callback must be string, "%s" returned.', \gettype($data)));
+                throw new TransportException(sprintf('Return value of the "body" option callback must be string, "%s" returned.', get_debug_type($data)));
             }
 
             $result .= $data;
         }
 
         return $result;
-    }
-
-    /**
-     * Loads proxy configuration from the same environment variables as curl when no proxy is explicitly set.
-     */
-    private static function getProxy(?string $proxy, array $url): ?array
-    {
-        if (null === $proxy) {
-            // Ignore HTTP_PROXY except on the CLI to work around httpoxy set of vulnerabilities
-            $proxy = $_SERVER['http_proxy'] ?? (\in_array(\PHP_SAPI, ['cli', 'phpdbg'], true) ? $_SERVER['HTTP_PROXY'] ?? null : null) ?? $_SERVER['all_proxy'] ?? $_SERVER['ALL_PROXY'] ?? null;
-
-            if ('https:' === $url['scheme']) {
-                $proxy = $_SERVER['https_proxy'] ?? $_SERVER['HTTPS_PROXY'] ?? $proxy;
-            }
-        }
-
-        if (null === $proxy) {
-            return null;
-        }
-
-        $proxy = (parse_url($proxy) ?: []) + ['scheme' => 'http'];
-
-        if (!isset($proxy['host'])) {
-            throw new TransportException('Invalid HTTP proxy: host is missing.');
-        }
-
-        if ('http' === $proxy['scheme']) {
-            $proxyUrl = 'tcp://'.$proxy['host'].':'.($proxy['port'] ?? '80');
-        } elseif ('https' === $proxy['scheme']) {
-            $proxyUrl = 'ssl://'.$proxy['host'].':'.($proxy['port'] ?? '443');
-        } else {
-            throw new TransportException(sprintf('Unsupported proxy scheme "%s": "http" or "https" expected.', $proxy['scheme']));
-        }
-
-        return [
-            'url' => $proxyUrl,
-            'auth' => isset($proxy['user']) ? 'Basic '.base64_encode(rawurldecode($proxy['user']).':'.rawurldecode($proxy['pass'] ?? '')) : null,
-        ];
     }
 
     /**
@@ -364,7 +332,7 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
     /**
      * Handles redirects - the native logic is too buggy to be used.
      */
-    private static function createRedirectResolver(array $options, string $host, ?array $proxy, array $noProxy, array &$info, ?\Closure $onProgress): \Closure
+    private static function createRedirectResolver(array $options, string $host, ?array $proxy, array &$info, ?\Closure $onProgress): \Closure
     {
         $redirectHeaders = [];
         if (0 < $maxRedirects = $options['max_redirects']) {
@@ -380,7 +348,7 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
             }
         }
 
-        return static function (NativeClientState $multi, ?string $location, $context) use ($redirectHeaders, $proxy, $noProxy, &$info, $maxRedirects, $onProgress): ?string {
+        return static function (NativeClientState $multi, ?string $location, $context) use ($redirectHeaders, $proxy, &$info, $maxRedirects, $onProgress): ?string {
             if (null === $location || $info['http_code'] < 300 || 400 <= $info['http_code']) {
                 $info['redirect_url'] = null;
 
@@ -427,7 +395,7 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
                 // Authorization and Cookie headers MUST NOT follow except for the initial host name
                 $requestHeaders = $redirectHeaders['host'] === $host ? $redirectHeaders['with_auth'] : $redirectHeaders['no_auth'];
                 $requestHeaders[] = 'Host: '.$host.$port;
-                $dnsResolve = !self::configureHeadersAndProxy($context, $host, $requestHeaders, $proxy, $noProxy, 'https:' === $url['scheme']);
+                $dnsResolve = !self::configureHeadersAndProxy($context, $host, $requestHeaders, $proxy, 'https:' === $url['scheme']);
             } else {
                 $dnsResolve = isset(stream_context_get_options($context)['ssl']['peer_name']);
             }
@@ -441,7 +409,7 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
         };
     }
 
-    private static function configureHeadersAndProxy($context, string $host, array $requestHeaders, ?array $proxy, array $noProxy, bool $isSsl): bool
+    private static function configureHeadersAndProxy($context, string $host, array $requestHeaders, ?array $proxy, bool $isSsl): bool
     {
         if (null === $proxy) {
             stream_context_set_option($context, 'http', 'header', $requestHeaders);
@@ -452,10 +420,10 @@ final class NativeHttpClient implements HttpClientInterface, LoggerAwareInterfac
 
         // Matching "no_proxy" should follow the behavior of curl
 
-        foreach ($noProxy as $rule) {
+        foreach ($proxy['no_proxy'] as $rule) {
             $dotRule = '.'.ltrim($rule, '.');
 
-            if ('*' === $rule || $host === $rule || substr($host, -\strlen($dotRule)) === $dotRule) {
+            if ('*' === $rule || $host === $rule || str_ends_with($host, $dotRule)) {
                 stream_context_set_option($context, 'http', 'proxy', null);
                 stream_context_set_option($context, 'http', 'request_fulluri', false);
                 stream_context_set_option($context, 'http', 'header', $requestHeaders);

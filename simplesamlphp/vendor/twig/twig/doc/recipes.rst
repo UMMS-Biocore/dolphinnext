@@ -299,7 +299,7 @@ Validating the Template Syntax
 
 When template code is provided by a third-party (through a web interface for
 instance), it might be interesting to validate the template syntax before
-saving it. If the template code is stored in a `$template` variable, here is
+saving it. If the template code is stored in a ``$template`` variable, here is
 how you can do it::
 
     try {
@@ -516,12 +516,10 @@ include in your templates:
             $interpolateProvider.startSymbol('{[').endSymbol(']}');
         });
 
-  * For Twig, change the delimiters via the ``tag_variable`` Lexer option:
-
-    ..  code-block:: php
+  * For Twig, change the delimiters via the ``tag_variable`` Lexer option::
 
         $env->setLexer(new \Twig\Lexer($env, [
             'tag_variable' => ['{[', ']}'],
         ]));
 
-.. _callback: https://secure.php.net/manual/en/function.is-callable.php
+.. _callback: https://www.php.net/manual/en/function.is-callable.php

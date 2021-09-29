@@ -28,10 +28,11 @@ class MockHttpClient implements HttpClientInterface
     use HttpClientTrait;
 
     private $responseFactory;
-    private $baseUri;
+    private $requestsCount = 0;
+    private $defaultOptions = [];
 
     /**
-     * @param callable|ResponseInterface|ResponseInterface[]|iterable|null $responseFactory
+     * @param callable|callable[]|ResponseInterface|ResponseInterface[]|iterable|null $responseFactory
      */
     public function __construct($responseFactory = null, string $baseUri = null)
     {
@@ -46,7 +47,7 @@ class MockHttpClient implements HttpClientInterface
         }
 
         $this->responseFactory = $responseFactory;
-        $this->baseUri = $baseUri;
+        $this->defaultOptions['base_uri'] = $baseUri;
     }
 
     /**
@@ -54,7 +55,7 @@ class MockHttpClient implements HttpClientInterface
      */
     public function request(string $method, string $url, array $options = []): ResponseInterface
     {
-        [$url, $options] = $this->prepareRequest($method, $url, $options, ['base_uri' => $this->baseUri], true);
+        [$url, $options] = $this->prepareRequest($method, $url, $options, $this->defaultOptions, true);
         $url = implode('', $url);
 
         if (null === $this->responseFactory) {
@@ -64,9 +65,11 @@ class MockHttpClient implements HttpClientInterface
         } elseif (!$this->responseFactory->valid()) {
             throw new TransportException('The response factory iterator passed to MockHttpClient is empty.');
         } else {
-            $response = $this->responseFactory->current();
+            $responseFactory = $this->responseFactory->current();
+            $response = \is_callable($responseFactory) ? $responseFactory($method, $url, $options) : $responseFactory;
             $this->responseFactory->next();
         }
+        ++$this->requestsCount;
 
         if (!$response instanceof ResponseInterface) {
             throw new TransportException(sprintf('The response factory passed to MockHttpClient must return/yield an instance of ResponseInterface, "%s" given.', \is_object($response) ? \get_class($response) : \gettype($response)));
@@ -83,9 +86,25 @@ class MockHttpClient implements HttpClientInterface
         if ($responses instanceof ResponseInterface) {
             $responses = [$responses];
         } elseif (!is_iterable($responses)) {
-            throw new \TypeError(sprintf('"%s()" expects parameter 1 to be an iterable of MockResponse objects, "%s" given.', __METHOD__, \is_object($responses) ? \get_class($responses) : \gettype($responses)));
+            throw new \TypeError(sprintf('"%s()" expects parameter 1 to be an iterable of MockResponse objects, "%s" given.', __METHOD__, get_debug_type($responses)));
         }
 
         return new ResponseStream(MockResponse::stream($responses, $timeout));
+    }
+
+    public function getRequestsCount(): int
+    {
+        return $this->requestsCount;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function withOptions(array $options): self
+    {
+        $clone = clone $this;
+        $clone->defaultOptions = self::mergeDefaultOptions($options, $this->defaultOptions, true);
+
+        return $clone;
     }
 }

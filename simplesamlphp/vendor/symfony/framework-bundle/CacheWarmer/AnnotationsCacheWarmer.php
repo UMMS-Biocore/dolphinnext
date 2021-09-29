@@ -13,9 +13,10 @@ namespace Symfony\Bundle\FrameworkBundle\CacheWarmer;
 
 use Doctrine\Common\Annotations\AnnotationException;
 use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Annotations\PsrCachedReader;
 use Doctrine\Common\Annotations\Reader;
-use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
 use Symfony\Component\Cache\DoctrineProvider;
 
 /**
@@ -31,17 +32,10 @@ class AnnotationsCacheWarmer extends AbstractPhpFileCacheWarmer
     private $debug;
 
     /**
-     * @param string $phpArrayFile  The PHP file where annotations are cached
-     * @param string $excludeRegexp
-     * @param bool   $debug
+     * @param string $phpArrayFile The PHP file where annotations are cached
      */
-    public function __construct(Reader $annotationReader, string $phpArrayFile, $excludeRegexp = null, $debug = false)
+    public function __construct(Reader $annotationReader, string $phpArrayFile, string $excludeRegexp = null, bool $debug = false)
     {
-        if ($excludeRegexp instanceof CacheItemPoolInterface) {
-            @trigger_error(sprintf('The CacheItemPoolInterface $fallbackPool argument of "%s()" is deprecated since Symfony 4.2, you should not pass it anymore.', __METHOD__), \E_USER_DEPRECATED);
-            $excludeRegexp = $debug;
-            $debug = 4 < \func_num_args() && func_get_arg(4);
-        }
         parent::__construct($phpArrayFile);
         $this->annotationReader = $annotationReader;
         $this->excludeRegexp = $excludeRegexp;
@@ -51,7 +45,7 @@ class AnnotationsCacheWarmer extends AbstractPhpFileCacheWarmer
     /**
      * {@inheritdoc}
      */
-    protected function doWarmUp($cacheDir, ArrayAdapter $arrayAdapter)
+    protected function doWarmUp(string $cacheDir, ArrayAdapter $arrayAdapter)
     {
         $annotatedClassPatterns = $cacheDir.'/annotations.map';
 
@@ -60,7 +54,10 @@ class AnnotationsCacheWarmer extends AbstractPhpFileCacheWarmer
         }
 
         $annotatedClasses = include $annotatedClassPatterns;
-        $reader = new CachedReader($this->annotationReader, new DoctrineProvider($arrayAdapter), $this->debug);
+        $reader = class_exists(PsrCachedReader::class)
+            ? new PsrCachedReader($this->annotationReader, $arrayAdapter, $this->debug)
+            : new CachedReader($this->annotationReader, new DoctrineProvider($arrayAdapter), $this->debug)
+        ;
 
         foreach ($annotatedClasses as $class) {
             if (null !== $this->excludeRegexp && preg_match($this->excludeRegexp, $class)) {
@@ -74,6 +71,17 @@ class AnnotationsCacheWarmer extends AbstractPhpFileCacheWarmer
         }
 
         return true;
+    }
+
+    /**
+     * @return string[] A list of classes to preload on PHP 7.4+
+     */
+    protected function warmUpPhpArrayAdapter(PhpArrayAdapter $phpArrayAdapter, array $values)
+    {
+        // make sure we don't cache null values
+        $values = array_filter($values, function ($val) { return null !== $val; });
+
+        return parent::warmUpPhpArrayAdapter($phpArrayAdapter, $values);
     }
 
     private function readAllComponents(Reader $reader, string $class)
