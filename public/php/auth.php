@@ -189,7 +189,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
                 $token = $db->signJWTToken($id);
                 if (!empty($token)){
                     setcookie('jwt-dolphinnext', $token, time()+60*60*24*365, "/");
-                    if (!empty($SSO_LOGIN)){
+                    if (!empty($SSO_LOGIN) && $SHOW_HOMEPAGE == "1"){
                         header('Location: ' . $BASE_PATH."/php/after-sso.php");
                     } else {
                         header('Location: '.$BASE_PATH);
