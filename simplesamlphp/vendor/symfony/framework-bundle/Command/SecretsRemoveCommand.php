@@ -29,6 +29,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class SecretsRemoveCommand extends Command
 {
     protected static $defaultName = 'secrets:remove';
+    protected static $defaultDescription = 'Remove a secret from the vault';
 
     private $vault;
     private $localVault;
@@ -44,9 +45,9 @@ final class SecretsRemoveCommand extends Command
     protected function configure()
     {
         $this
-            ->setDescription('Removes a secret from the vault.')
+            ->setDescription(self::$defaultDescription)
             ->addArgument('name', InputArgument::REQUIRED, 'The name of the secret')
-            ->addOption('local', 'l', InputOption::VALUE_NONE, 'Updates the local vault.')
+            ->addOption('local', 'l', InputOption::VALUE_NONE, 'Update the local vault.')
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> command removes a secret from the vault.
 

@@ -38,7 +38,7 @@ class DotenvVault extends AbstractVault
         $this->validateName($name);
         $v = str_replace("'", "'\\''", $value);
 
-        $content = file_exists($this->dotenvFile) ? file_get_contents($this->dotenvFile) : '';
+        $content = is_file($this->dotenvFile) ? file_get_contents($this->dotenvFile) : '';
         $content = preg_replace("/^$name=((\\\\'|'[^']++')++|.*)/m", "$name='$v'", $content, -1, $count);
 
         if (!$count) {
@@ -54,7 +54,7 @@ class DotenvVault extends AbstractVault
     {
         $this->lastMessage = null;
         $this->validateName($name);
-        $v = \is_string($_SERVER[$name] ?? null) && 0 !== strpos($name, 'HTTP_') ? $_SERVER[$name] : ($_ENV[$name] ?? null);
+        $v = \is_string($_SERVER[$name] ?? null) && !str_starts_with($name, 'HTTP_') ? $_SERVER[$name] : ($_ENV[$name] ?? null);
 
         if (null === $v) {
             $this->lastMessage = sprintf('Secret "%s" not found in "%s".', $name, $this->getPrettyPath($this->dotenvFile));
@@ -70,7 +70,7 @@ class DotenvVault extends AbstractVault
         $this->lastMessage = null;
         $this->validateName($name);
 
-        $content = file_exists($this->dotenvFile) ? file_get_contents($this->dotenvFile) : '';
+        $content = is_file($this->dotenvFile) ? file_get_contents($this->dotenvFile) : '';
         $content = preg_replace("/^$name=((\\\\'|'[^']++')++|.*)\n?/m", '', $content, -1, $count);
 
         if ($count) {

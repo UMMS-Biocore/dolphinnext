@@ -49,11 +49,19 @@ class StreamWrapper
      */
     public static function createResource(ResponseInterface $response, HttpClientInterface $client = null)
     {
+        if ($response instanceof StreamableInterface) {
+            $stack = debug_backtrace(\DEBUG_BACKTRACE_PROVIDE_OBJECT | \DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+
+            if ($response !== ($stack[1]['object'] ?? null)) {
+                return $response->toStream(false);
+            }
+        }
+
         if (null === $client && !method_exists($response, 'stream')) {
             throw new \InvalidArgumentException(sprintf('Providing a client to "%s()" is required when the response doesn\'t have any "stream()" method.', __CLASS__));
         }
 
-        if (false === stream_wrapper_register('symfony', __CLASS__, \STREAM_IS_URL)) {
+        if (false === stream_wrapper_register('symfony', __CLASS__)) {
             throw new \RuntimeException(error_get_last()['message'] ?? 'Registering the "symfony" stream wrapper failed.');
         }
 
@@ -75,9 +83,9 @@ class StreamWrapper
     }
 
     /**
-     * @param resource|null $handle  The resource handle that should be monitored when
-     *                               stream_select() is used on the created stream
-     * @param resource|null $content The seekable resource where the response body is buffered
+     * @param resource|callable|null $handle  The resource handle that should be monitored when
+     *                                        stream_select() is used on the created stream
+     * @param resource|null          $content The seekable resource where the response body is buffered
      */
     public function bindHandles(&$handle, &$content): void
     {
@@ -258,7 +266,7 @@ class StreamWrapper
         if (\STREAM_CAST_FOR_SELECT === $castAs) {
             $this->response->getHeaders(false);
 
-            return $this->handle ?? false;
+            return (\is_callable($this->handle) ? ($this->handle)() : $this->handle) ?? false;
         }
 
         return false;
@@ -281,7 +289,7 @@ class StreamWrapper
             'uid' => 0,
             'gid' => 0,
             'rdev' => 0,
-            'size' => (int) ($headers['content-length'][0] ?? 0),
+            'size' => (int) ($headers['content-length'][0] ?? -1),
             'atime' => 0,
             'mtime' => strtotime($headers['last-modified'][0] ?? '') ?: 0,
             'ctime' => 0,

@@ -184,7 +184,7 @@ final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestF
         } elseif (\is_resource($body)) {
             $stream = $this->streamFactory->createStreamFromResource($body);
         } else {
-            throw new \InvalidArgumentException(sprintf('"%s()" expects string, resource or StreamInterface, "%s" given.', __METHOD__, \gettype($body)));
+            throw new \InvalidArgumentException(sprintf('"%s()" expects string, resource or StreamInterface, "%s" given.', __METHOD__, get_debug_type($body)));
         }
 
         if ($stream->isSeekable()) {
@@ -218,6 +218,9 @@ final class HttplugClient implements HttplugInterface, HttpAsyncClient, RequestF
         throw new \LogicException(sprintf('You cannot use "%s()" as the "nyholm/psr7" package is not installed. Try running "composer require nyholm/psr7".', __METHOD__));
     }
 
+    /**
+     * @return array
+     */
     public function __sleep()
     {
         throw new \BadMethodCallException('Cannot serialize '.__CLASS__);

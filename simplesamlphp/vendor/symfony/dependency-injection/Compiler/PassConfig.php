@@ -42,6 +42,8 @@ class PassConfig
         $this->beforeOptimizationPasses = [
             100 => [
                 new ResolveClassPass(),
+                new RegisterAutoconfigureAttributesPass(),
+                new AttributeAutoconfigurationPass(),
                 new ResolveInstanceofConditionalsPass(),
                 new RegisterEnvVarProcessorsPass(),
             ],
@@ -49,18 +51,21 @@ class PassConfig
         ];
 
         $this->optimizationPasses = [[
+            new AutoAliasServicePass(),
             new ValidateEnvPlaceholdersPass(),
+            new ResolveDecoratorStackPass(),
             new ResolveChildDefinitionsPass(),
             new RegisterServiceSubscribersPass(),
             new ResolveParameterPlaceHoldersPass(false, false),
             new ResolveFactoryClassPass(),
             new ResolveNamedArgumentsPass(),
             new AutowireRequiredMethodsPass(),
+            new AutowireRequiredPropertiesPass(),
             new ResolveBindingsPass(),
-            new ServiceLocatorTagPass(),
-            new DecoratorServicePass(),
             new CheckDefinitionValidityPass(),
             new AutowirePass(false),
+            new ServiceLocatorTagPass(),
+            new DecoratorServicePass(),
             new ResolveTaggedIteratorArgumentPass(),
             new ResolveServiceSubscribersPass(),
             new ResolveReferencesToAliasesPass(),
@@ -70,12 +75,6 @@ class PassConfig
             new CheckReferenceValidityPass(),
             new CheckArgumentsValidityPass(false),
         ]];
-
-        $this->beforeRemovingPasses = [
-            -100 => [
-                new ResolvePrivatesPass(),
-            ],
-        ];
 
         $this->removingPasses = [[
             new RemovePrivateAliasesPass(),
@@ -91,6 +90,8 @@ class PassConfig
 
         $this->afterRemovingPasses = [[
             new ResolveHotPathPass(),
+            new ResolveNoPreloadPass(),
+            new AliasDeprecatedPublicServicesPass(),
         ]];
     }
 
@@ -114,12 +115,9 @@ class PassConfig
     /**
      * Adds a pass.
      *
-     * @param string $type     The pass type
-     * @param int    $priority Used to sort the passes
-     *
      * @throws InvalidArgumentException when a pass type doesn't exist
      */
-    public function addPass(CompilerPassInterface $pass, $type = self::TYPE_BEFORE_OPTIMIZATION, int $priority = 0)
+    public function addPass(CompilerPassInterface $pass, string $type = self::TYPE_BEFORE_OPTIMIZATION, int $priority = 0)
     {
         $property = $type.'Passes';
         if (!isset($this->$property)) {

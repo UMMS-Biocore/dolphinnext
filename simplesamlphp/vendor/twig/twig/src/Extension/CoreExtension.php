@@ -89,7 +89,7 @@ final class CoreExtension extends AbstractExtension
      */
     public function setEscaper($strategy, callable $callable)
     {
-        @trigger_error(sprintf('The "%s" method is deprecated since Twig 2.11; use "%s::setEscaper" instead.', __METHOD__, EscaperExtension::class), E_USER_DEPRECATED);
+        @trigger_error(sprintf('The "%s" method is deprecated since Twig 2.11; use "%s::setEscaper" instead.', __METHOD__, EscaperExtension::class), \E_USER_DEPRECATED);
 
         $this->escapers[$strategy] = $callable;
     }
@@ -103,8 +103,8 @@ final class CoreExtension extends AbstractExtension
      */
     public function getEscapers(/* $triggerDeprecation = true */)
     {
-        if (0 === \func_num_args() || func_get_arg(0)) {
-            @trigger_error(sprintf('The "%s" method is deprecated since Twig 2.11; use "%s::getEscapers" instead.', __METHOD__, EscaperExtension::class), E_USER_DEPRECATED);
+        if (0 === \func_num_args() || \func_get_arg(0)) {
+            @trigger_error(sprintf('The "%s" method is deprecated since Twig 2.11; use "%s::getEscapers" instead.', __METHOD__, EscaperExtension::class), \E_USER_DEPRECATED);
         }
 
         return $this->escapers;
@@ -279,10 +279,10 @@ final class CoreExtension extends AbstractExtension
             new TwigTest('even', null, ['node_class' => EvenTest::class]),
             new TwigTest('odd', null, ['node_class' => OddTest::class]),
             new TwigTest('defined', null, ['node_class' => DefinedTest::class]),
-            new TwigTest('same as', null, ['node_class' => SameasTest::class]),
+            new TwigTest('same as', null, ['node_class' => SameasTest::class, 'one_mandatory_argument' => true]),
             new TwigTest('none', null, ['node_class' => NullTest::class]),
             new TwigTest('null', null, ['node_class' => NullTest::class]),
-            new TwigTest('divisible by', null, ['node_class' => DivisiblebyTest::class]),
+            new TwigTest('divisible by', null, ['node_class' => DivisiblebyTest::class, 'one_mandatory_argument' => true]),
             new TwigTest('constant', null, ['node_class' => ConstantTest::class]),
             new TwigTest('empty', 'twig_test_empty'),
             new TwigTest('iterable', 'twig_test_iterable'),
@@ -349,8 +349,9 @@ namespace {
     use Twig\Markup;
     use Twig\Source;
     use Twig\Template;
+    use Twig\TemplateWrapper;
 
-    /**
+/**
  * Cycles over a value.
  *
  * @param \ArrayAccess|array $values
@@ -383,7 +384,7 @@ function twig_cycle($values, $position)
 function twig_random(Environment $env, $values = null, $max = null)
 {
     if (null === $values) {
-        return null === $max ? mt_rand() : mt_rand(0, $max);
+        return null === $max ? mt_rand() : mt_rand(0, (int) $max);
     }
 
     if (\is_int($values) || \is_float($values)) {
@@ -400,7 +401,7 @@ function twig_random(Environment $env, $values = null, $max = null)
             $max = $max;
         }
 
-        return mt_rand($min, $max);
+        return mt_rand((int) $min, (int) $max);
     }
 
     if (\is_string($values)) {
@@ -518,6 +519,10 @@ function twig_date_converter(Environment $env, $date = null, $timezone = null)
     }
 
     if (null === $date || 'now' === $date) {
+        if (null === $date) {
+            $date = 'now';
+        }
+
         return new \DateTime($date, false !== $timezone ? $timezone : $env->getExtension(CoreExtension::class)->getTimezone());
     }
 
@@ -571,7 +576,7 @@ function twig_round($value, $precision = 0, $method = 'common')
         throw new RuntimeError('The round filter only supports the "common", "ceil", and "floor" methods.');
     }
 
-    return $method($value * pow(10, $precision)) / pow(10, $precision);
+    return $method($value * 10 ** $precision) / 10 ** $precision;
 }
 
 /**
@@ -616,7 +621,7 @@ function twig_number_format_filter(Environment $env, $number, $decimal = null, $
 function twig_urlencode_filter($url)
 {
     if (\is_array($url)) {
-        return http_build_query($url, '', '&', PHP_QUERY_RFC3986);
+        return http_build_query($url, '', '&', \PHP_QUERY_RFC3986);
     }
 
     return rawurlencode($url);
@@ -1070,7 +1075,7 @@ function twig_lower_filter(Environment $env, $string)
 function twig_title_string_filter(Environment $env, $string)
 {
     if (null !== $charset = $env->getCharset()) {
-        return mb_convert_case($string, MB_CASE_TITLE, $charset);
+        return mb_convert_case($string, \MB_CASE_TITLE, $charset);
     }
 
     return ucwords(strtolower($string));
@@ -1207,6 +1212,13 @@ function twig_include(Environment $env, $context, $template, $variables = [], $w
         $sandbox = $env->getExtension(SandboxExtension::class);
         if (!$alreadySandboxed = $sandbox->isSandboxed()) {
             $sandbox->enableSandbox();
+        }
+
+        foreach ((\is_array($template) ? $template : [$template]) as $name) {
+            // if a Template instance is passed, it might have been instantiated outside of a sandbox, check security
+            if ($name instanceof TemplateWrapper || $name instanceof Template) {
+                $name->unwrap()->checkSecurity();
+            }
         }
     }
 
@@ -1574,6 +1586,10 @@ function twig_array_reduce(Environment $env, $array, $arrow, $initial = null)
     }
 
     if (!\is_array($array)) {
+        if (!$array instanceof \Traversable) {
+            throw new RuntimeError(sprintf('The "reduce" filter only works with arrays or "Traversable", got "%s" as first argument.', \gettype($array)));
+        }
+
         $array = iterator_to_array($array);
     }
 

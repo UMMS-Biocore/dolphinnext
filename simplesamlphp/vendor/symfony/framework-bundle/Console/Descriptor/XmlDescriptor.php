@@ -12,7 +12,9 @@
 namespace Symfony\Bundle\FrameworkBundle\Console\Descriptor;
 
 use Symfony\Component\Console\Exception\LogicException;
+use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\DependencyInjection\Alias;
+use Symfony\Component\DependencyInjection\Argument\AbstractArgument;
 use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
@@ -51,7 +53,7 @@ class XmlDescriptor extends Descriptor
         $this->writeDocument($this->getContainerTagsDocument($builder, isset($options['show_hidden']) && $options['show_hidden']));
     }
 
-    protected function describeContainerService($service, array $options = [], ContainerBuilder $builder = null)
+    protected function describeContainerService(object $service, array $options = [], ContainerBuilder $builder = null)
     {
         if (!isset($options['id'])) {
             throw new \InvalidArgumentException('An "id" option must be provided.');
@@ -88,7 +90,7 @@ class XmlDescriptor extends Descriptor
 
     protected function describeEventDispatcherListeners(EventDispatcherInterface $eventDispatcher, array $options = [])
     {
-        $this->writeDocument($this->getEventDispatcherListenersDocument($eventDispatcher, \array_key_exists('event', $options) ? $options['event'] : null));
+        $this->writeDocument($this->getEventDispatcherListenersDocument($eventDispatcher, $options));
     }
 
     protected function describeCallable($callable, array $options = [])
@@ -104,6 +106,34 @@ class XmlDescriptor extends Descriptor
     protected function describeContainerEnvVars(array $envs, array $options = [])
     {
         throw new LogicException('Using the XML format to debug environment variables is not supported.');
+    }
+
+    protected function describeContainerDeprecations(ContainerBuilder $builder, array $options = []): void
+    {
+        $containerDeprecationFilePath = sprintf('%s/%sDeprecations.log', $builder->getParameter('kernel.build_dir'), $builder->getParameter('kernel.container_class'));
+        if (!file_exists($containerDeprecationFilePath)) {
+            throw new RuntimeException('The deprecation file does not exist, please try warming the cache first.');
+        }
+
+        $logs = unserialize(file_get_contents($containerDeprecationFilePath));
+
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->appendChild($deprecationsXML = $dom->createElement('deprecations'));
+
+        $formattedLogs = [];
+        $remainingCount = 0;
+        foreach ($logs as $log) {
+            $deprecationsXML->appendChild($deprecationXML = $dom->createElement('deprecation'));
+            $deprecationXML->setAttribute('count', $log['count']);
+            $deprecationXML->appendChild($dom->createElement('message', $log['message']));
+            $deprecationXML->appendChild($dom->createElement('file', $log['file']));
+            $deprecationXML->appendChild($dom->createElement('line', $log['line']));
+            $remainingCount += $log['count'];
+        }
+
+        $deprecationsXML->setAttribute('remainingCount', $remainingCount);
+
+        $this->writeDocument($dom);
     }
 
     private function writeDocument(\DOMDocument $dom)
@@ -225,7 +255,7 @@ class XmlDescriptor extends Descriptor
         return $dom;
     }
 
-    private function getContainerServiceDocument($service, string $id, ContainerBuilder $builder = null, bool $showArguments = false): \DOMDocument
+    private function getContainerServiceDocument(object $service, string $id, ContainerBuilder $builder = null, bool $showArguments = false): \DOMDocument
     {
         $dom = new \DOMDocument('1.0', 'UTF-8');
 
@@ -285,7 +315,7 @@ class XmlDescriptor extends Descriptor
             $descriptionXML->appendChild($dom->createCDATASection($classDescription));
         }
 
-        $serviceXML->setAttribute('class', $definition->getClass());
+        $serviceXML->setAttribute('class', $definition->getClass() ?? '');
 
         if ($factory = $definition->getFactory()) {
             $serviceXML->appendChild($factoryXML = $dom->createElement('factory'));
@@ -311,7 +341,7 @@ class XmlDescriptor extends Descriptor
         $serviceXML->setAttribute('abstract', $definition->isAbstract() ? 'true' : 'false');
         $serviceXML->setAttribute('autowired', $definition->isAutowired() ? 'true' : 'false');
         $serviceXML->setAttribute('autoconfigured', $definition->isAutoconfigured() ? 'true' : 'false');
-        $serviceXML->setAttribute('file', $definition->getFile());
+        $serviceXML->setAttribute('file', $definition->getFile() ?? '');
 
         $calls = $definition->getMethodCalls();
         if (\count($calls) > 0) {
@@ -380,6 +410,9 @@ class XmlDescriptor extends Descriptor
                 }
             } elseif ($argument instanceof Definition) {
                 $argumentXML->appendChild($dom->importNode($this->getContainerDefinitionDocument($argument, null, false, true)->childNodes->item(0), true));
+            } elseif ($argument instanceof AbstractArgument) {
+                $argumentXML->setAttribute('type', 'abstract');
+                $argumentXML->appendChild(new \DOMText($argument->getText()));
             } elseif (\is_array($argument)) {
                 $argumentXML->setAttribute('type', 'collection');
 
@@ -425,15 +458,18 @@ class XmlDescriptor extends Descriptor
         return $dom;
     }
 
-    private function getEventDispatcherListenersDocument(EventDispatcherInterface $eventDispatcher, string $event = null): \DOMDocument
+    private function getEventDispatcherListenersDocument(EventDispatcherInterface $eventDispatcher, array $options): \DOMDocument
     {
+        $event = \array_key_exists('event', $options) ? $options['event'] : null;
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->appendChild($eventDispatcherXML = $dom->createElement('event-dispatcher'));
 
-        $registeredListeners = $eventDispatcher->getListeners($event);
         if (null !== $event) {
+            $registeredListeners = $eventDispatcher->getListeners($event);
             $this->appendEventListenerDocument($eventDispatcher, $event, $eventDispatcherXML, $registeredListeners);
         } else {
+            // Try to see if "events" exists
+            $registeredListeners = \array_key_exists('events', $options) ? array_combine($options['events'], array_map(function ($event) use ($eventDispatcher) { return $eventDispatcher->getListeners($event); }, $options['events'])) : $eventDispatcher->getListeners();
             ksort($registeredListeners);
 
             foreach ($registeredListeners as $eventListened => $eventListeners) {
@@ -469,7 +505,7 @@ class XmlDescriptor extends Descriptor
                 $callableXML->setAttribute('name', $callable[1]);
                 $callableXML->setAttribute('class', \get_class($callable[0]));
             } else {
-                if (0 !== strpos($callable[1], 'parent::')) {
+                if (!str_starts_with($callable[1], 'parent::')) {
                     $callableXML->setAttribute('name', $callable[1]);
                     $callableXML->setAttribute('class', $callable[0]);
                     $callableXML->setAttribute('static', 'true');
@@ -487,7 +523,7 @@ class XmlDescriptor extends Descriptor
         if (\is_string($callable)) {
             $callableXML->setAttribute('type', 'function');
 
-            if (false === strpos($callable, '::')) {
+            if (!str_contains($callable, '::')) {
                 $callableXML->setAttribute('name', $callable);
             } else {
                 $callableParts = explode('::', $callable);
@@ -504,7 +540,7 @@ class XmlDescriptor extends Descriptor
             $callableXML->setAttribute('type', 'closure');
 
             $r = new \ReflectionFunction($callable);
-            if (false !== strpos($r->name, '{closure}')) {
+            if (str_contains($r->name, '{closure}')) {
                 return $dom;
             }
             $callableXML->setAttribute('name', $r->name);

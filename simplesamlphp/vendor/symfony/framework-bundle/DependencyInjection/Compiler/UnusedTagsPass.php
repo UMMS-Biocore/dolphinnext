@@ -23,21 +23,28 @@ class UnusedTagsPass implements CompilerPassInterface
 {
     private $knownTags = [
         'annotations.cached_reader',
+        'assets.package',
         'auto_alias',
         'cache.pool',
         'cache.pool.clearer',
+        'chatter.transport_factory',
         'config_cache.resource_checker',
         'console.command',
         'container.env_var_loader',
         'container.env_var_processor',
         'container.hot_path',
+        'container.no_preload',
+        'container.preload',
+        'container.private',
         'container.reversible',
         'container.service_locator',
         'container.service_locator_context',
         'container.service_subscriber',
+        'container.stack',
         'controller.argument_value_resolver',
         'controller.service_arguments',
         'data_collector',
+        'event_dispatcher.dispatcher',
         'form.type',
         'form.type_extension',
         'form.type_guesser',
@@ -49,6 +56,7 @@ class UnusedTagsPass implements CompilerPassInterface
         'kernel.fragment_renderer',
         'kernel.locale_aware',
         'kernel.reset',
+        'ldap',
         'mailer.transport_factory',
         'messenger.bus',
         'messenger.message_handler',
@@ -56,30 +64,34 @@ class UnusedTagsPass implements CompilerPassInterface
         'messenger.transport_factory',
         'mime.mime_type_guesser',
         'monolog.logger',
+        'notifier.channel',
         'property_info.access_extractor',
         'property_info.initializable_extractor',
         'property_info.list_extractor',
         'property_info.type_extractor',
         'proxy',
+        'routing.expression_language_function',
         'routing.expression_language_provider',
         'routing.loader',
         'routing.route_loader',
         'security.expression_language_provider',
         'security.remember_me_aware',
+        'security.remember_me_handler',
+        'security.authenticator.login_linker',
         'security.voter',
         'serializer.encoder',
         'serializer.normalizer',
-        'templating.helper',
+        'texter.transport_factory',
         'translation.dumper',
         'translation.extractor',
         'translation.loader',
+        'translation.provider_factory',
         'twig.extension',
         'twig.loader',
         'twig.runtime',
         'validator.auto_mapper',
         'validator.constraint_validator',
         'validator.initializer',
-        'workflow.definition',
     ];
 
     public function process(ContainerBuilder $container)
@@ -99,7 +111,7 @@ class UnusedTagsPass implements CompilerPassInterface
                     continue;
                 }
 
-                if (false !== strpos($definedTag, $tag) || levenshtein($tag, $definedTag) <= \strlen($tag) / 3) {
+                if (str_contains($definedTag, $tag) || levenshtein($tag, $definedTag) <= \strlen($tag) / 3) {
                     $candidates[] = $definedTag;
                 }
             }

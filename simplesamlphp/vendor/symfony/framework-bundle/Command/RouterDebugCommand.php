@@ -33,7 +33,10 @@ use Symfony\Component\Routing\RouterInterface;
  */
 class RouterDebugCommand extends Command
 {
+    use BuildDebugContainerTrait;
+
     protected static $defaultName = 'debug:router';
+    protected static $defaultDescription = 'Display current routes for an application';
     private $router;
     private $fileLinkFormatter;
 
@@ -57,7 +60,7 @@ class RouterDebugCommand extends Command
                 new InputOption('format', null, InputOption::VALUE_REQUIRED, 'The output format (txt, xml, json, or md)', 'txt'),
                 new InputOption('raw', null, InputOption::VALUE_NONE, 'To output raw route(s)'),
             ])
-            ->setDescription('Displays current routes for an application')
+            ->setDescription(self::$defaultDescription)
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> displays the configured routes:
 
@@ -79,6 +82,12 @@ EOF
         $name = $input->getArgument('name');
         $helper = new DescriptorHelper($this->fileLinkFormatter);
         $routes = $this->router->getRouteCollection();
+        $container = null;
+        if ($this->fileLinkFormatter) {
+            $container = function () {
+                return $this->getContainerBuilder($this->getApplication()->getKernel());
+            };
+        }
 
         if ($name) {
             if (!($route = $routes->get($name)) && $matchingRoutes = $this->findRouteNameContaining($name, $routes)) {
@@ -96,6 +105,7 @@ EOF
                 'raw_text' => $input->getOption('raw'),
                 'name' => $name,
                 'output' => $io,
+                'container' => $container,
             ]);
         } else {
             $helper->describe($io, $routes, [
@@ -103,6 +113,7 @@ EOF
                 'raw_text' => $input->getOption('raw'),
                 'show_controllers' => $input->getOption('show-controllers'),
                 'output' => $io,
+                'container' => $container,
             ]);
         }
 
