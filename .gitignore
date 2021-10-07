@@ -2,5 +2,6 @@ scripts/log.txt
 public/tmp/*
 !public/tmp/index.html
 config/.sec
+config/metadata
 .DS_Store
 
