@@ -186,14 +186,9 @@ class Run
         $run_url= !empty($doc["run_url"]) ? $doc["run_url"] : "";
         $dmeta = $this->getDmetaObj($doc, $dmetaServer, $info);
         if (!empty($doc["out"])){
-            
-        }
-        error_log(print_r($doc, TRUE));
-        error_log(print_r("dmeta", TRUE));
-        error_log(print_r($dmeta, TRUE));
 
+        }
         //http://localhost:8080/dolphinnext/index.php?np=3&id=586
-        error_log($run_url);
         $proPipeId = substr($run_url, strpos($run_url, "id=") + 3);
         if (!empty($proPipeId)) {
             // if $doc["out"] empty there is no need to updateProjectPipelineDmeta 
@@ -235,10 +230,22 @@ class Run
         $ret = array();
         $info = $body["info"];
         $doc = $body["doc"];
+        $inputs= $doc["in"]; // run inputs e.g. $inputs["reads"]
+        $proVarObj=array();
+        foreach ($inputs as $module => $varObj):
+        if (is_array($varObj) && !isset($varObj[0])){
+            foreach ($varObj as $varName => $val):
+            $val = json_encode($val);
+            $proVarObj[$module][$varName] = "params.$module.$varName = $val";
+            endforeach;
+        } 
+        endforeach;
+
+        $proVarObj = json_encode($proVarObj);
         $dmetaServer = $info["dmetaServer"];
         $ownerID = $user["id"];
         $dbfuncs = new dbfuncs();
-        $inputs= $doc["in"]; // run inputs e.g. $inputs["reads"]
+        $process_opt=isset($info["process_opt"]) ? addslashes(htmlspecialchars(urldecode($info["process_opt"]), ENT_QUOTES)) : "";
         $run_name= $doc["name"]; // test_run
         $tmplt_run_id= $doc["tmplt_id"]; //template run id e.g. 140
         $run_env= !empty($doc["run_env"]) ? $doc["run_env"] : ""; //run_env e.g. cluster-5
@@ -270,21 +277,21 @@ class Run
         }
         $dmeta = $this->getDmetaObj($doc, $dmetaServer, $info);
         // update name and insert
-        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir);
+        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt);
         if (empty($project_pipeline_id)) {
             error_log("duplicateProjectPipeline failed."); 
             return null;
         }
-        $temp_run_uuid = $dbfuncs->getProPipeLastRunUUID($tmplt_run_id);
-        $runOpt = json_decode($dbfuncs->getRunLogOpt($temp_run_uuid));
-        if (empty($runOpt[0])) {
-            error_log("getRunLogOpt failed."); 
-            return null;
-        }
-        $runOpt[0]->{'run_opt'} = str_replace('\\', '\\\\', $runOpt[0]->{'run_opt'});
-        $runOptData = json_decode($runOpt[0]->{'run_opt'});
-//        $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
-        $proVarObj = htmlspecialchars_decode($runOptData->{'proVarObj'}, ENT_QUOTES); 
+        //        $temp_run_uuid = $dbfuncs->getProPipeLastRunUUID($tmplt_run_id);
+        //        $runOpt = json_decode($dbfuncs->getRunLogOpt($temp_run_uuid));
+        //        if (empty($runOpt[0])) {
+        //            error_log("getRunLogOpt failed."); 
+        //            return null;
+        //        }
+        //        $runOpt[0]->{'run_opt'} = str_replace('\\', '\\\\', $runOpt[0]->{'run_opt'});
+        //        $runOptData = json_decode($runOpt[0]->{'run_opt'});
+        //        $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
+        //        $proVarObj = htmlspecialchars_decode($runOptData->{'proVarObj'}, ENT_QUOTES); 
         $manualRun = "false"; 
         $runType = "newrun"; //"resumerun" or "newrun"
         $uuid = $dbfuncs->updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID);
