@@ -2713,7 +2713,6 @@ class dbfuncs {
                 $regex = str_replace("/", "\/", $regex);
                 //if name contains regular expression with curly brackets: {a,b,c} then turn into (a|b|c) format
                 $regex = $this->fixCurlyBrackets($regex);
-                error_log($regex);
                 $regex = str_replace("*", ".*", $regex);
                 $regex = str_replace("?", ".?", $regex);
                 $regex = str_replace("'", "", $regex);
@@ -5462,7 +5461,6 @@ class dbfuncs {
 
         // use checkFileAndSave to save file and get file_id and fill $file_array
         $file_array = array();
-        error_log(print_r($inputVal, TRUE));
 
         for ($i = 0; $i < count($inputVal); $i++) {
             $name = $inputVal[$i]["name"]; 
@@ -5531,7 +5529,7 @@ class dbfuncs {
         return $input_id;
     }
 
-    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir){
+    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt){
         $newProPipeId = null;
         if ($type == "dmeta"){
             $userRole = $this->getUserRoleVal($ownerID);
@@ -5541,7 +5539,7 @@ class dbfuncs {
                 $run_env = !empty($run_env) ? "'$run_env'" : "profile";
                 $work_dir = !empty($work_dir) ? "'$work_dir'" : "output_dir";
                 $sql = "INSERT INTO $this->db.project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta)
-                    SELECT '$run_name', project_id, pipeline_id, summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
+                    SELECT '$run_name', project_id, pipeline_id, summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, '$process_opt', onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
                     FROM $this->db.project_pipeline
                     WHERE id='$old_run_id'";
                 $proPipe = self::insTable($sql);
@@ -6354,6 +6352,394 @@ class dbfuncs {
         $listPermsDeniedUniq = array_unique($listPermsDenied);
         sort($listPermsDeniedUniq);
         return $listPermsDeniedUniq;
+    }
+
+    function getProjectPipelineProcessOpts($project_pipeline_id, $ownerID){
+        $ret = "";
+        $userRole = $this->getUserRoleVal($ownerID);
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,$userRole));
+        $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
+        // first get default pipeline process options 
+        $ret = $this->getPipelineProcessOpts(array(), $pipeline_id, $ownerID, "", "");
+        return $ret;
+    }
+
+    //inputText = "example" //* @textbox @description:"One inputbox is invented"
+    //selectText = "sel1" //* @dropdown @options:"none","sel1","sel2" @description:"One text is invented"
+    //checkBox = "true" //* @checkbox @description:"One checkbox is created"
+    //arr = ["name1","name2"] //* @input
+    function parseVarPart($varPart, $splitType) {
+        $varName = null;
+        $defaultVal = null;
+        $varSplit=null;
+        $varFormat="";
+        if (preg_match("/=/i", $varPart)){
+            if ($splitType === "condition") {
+                $varSplit = explode("==", $varPart);
+            } else {
+                $varSplit = explode("=", $varPart);
+            }
+            if (count($varSplit) == 2) {
+                $varName = trim($varSplit[0]);
+                $defaultVal = trim($varSplit[1]);
+                // if defaultVal starts and ends with single or double quote, remove these. (keep other quotes)
+                if (substr($defaultVal, 0, 1) === "'" && substr($defaultVal, -1) === "'") {
+                    $defaultVal = substr($defaultVal, 1, strlen($defaultVal) - 2);
+                    $varFormat = "single";
+                } else if (substr($defaultVal, 0, 1) === '"' && substr($defaultVal, -1) === '"'){
+                    $defaultVal = substr($defaultVal, 1, strlen($defaultVal) - 2);
+                    $varFormat = 'double';
+                } else if (
+                    substr($defaultVal, 0, 1) === "[" ||
+                    substr($defaultVal, -1) === "]"
+                ) {
+                    $varFormat = 'square';
+                    $content = substr($defaultVal, 1, strlen($defaultVal) - 2);
+                    $content = preg_replace('/\"/', '', $content);
+                    $content = preg_replace("/\'/", '', $content);
+                    $defaultVal = explode(",", $content);
+                }
+            }
+        } // if /=/ not exist then genericCond is defined
+        else {
+            if ($splitType === "condition") {
+                $varName = trim($varPart);
+                $defaultVal = null;
+            }
+        }
+        return array($varName, $defaultVal, $varFormat);
+    }
+    //turn (a,b,c)  into (a|b|c) format
+    function fixParentheses($outputName) {
+        if (preg_match('/(.*)\((.*?),(.*?)\)(.*)/', $outputName, $match)){
+            $insideBrackets = $match[2].",".$match[3];
+            $insideBrackets = preg_replace('/\,/', '|', $insideBrackets);
+            $outputNameFix = $match[1]."(".$insideBrackets.")".$match[4];
+            if (preg_match('/(.*)\((.*?),(.*?)\)(.*)/', $outputNameFix)){
+                return $this->fixParentheses($outputNameFix);
+            } else {
+                return $outputNameFix;
+            }
+        } else {
+            return $outputName;
+        }
+    }
+
+    //parse {var1, var2, var3}, {var5, var6} into array of [var1, var2, var3], [var5, var6]
+    function parseBrackets($arr, $trim) {
+        $finalArr = array();
+        $arr = explode("{", $arr);
+
+        if (count($arr) > 0) {
+            for ($k = 0; $k < count($arr); $k++) {
+                if (!empty($trim)) {
+                    $arr[$k] = trim($arr[$k]);
+                } else {
+                    if (trim($arr[$k]) !== "") {
+                        $arr[$k] = trim($arr[$k]);
+                    }
+                }
+                $arr[$k] = preg_replace('/\"/', '', $arr[$k]);
+                $arr[$k] = preg_replace("/^'|'$/", '', $arr[$k]);
+                $arr[$k] = preg_replace('/\}/', '', $arr[$k]);
+
+                $arr[$k] = $this->fixParentheses($arr[$k]); //turn (a,b,c) into (a|b|c) format for multiple options
+                $allcolumn = explode(",", $arr[$k]);
+                $allcolumnFinal = array();
+                for ($j = 0; $j < count($allcolumn); $j++) {
+                    $item= $allcolumn[$j];
+                    if (!empty($trim)){
+                        $item = trim($item);
+                    } else if (trim($item) !== ""){
+                        $item = trim($item);
+                    }
+                    if (!empty($item)) {
+                        $allcolumnFinal[] = $item;
+                    }
+                }
+                if (!empty($allcolumnFinal[0])) {
+                    $finalArr[] =$allcolumnFinal;
+                }
+            }
+        }
+        return $finalArr;
+    }
+
+    //parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings
+    //parse style categories: @multicolumn, @array, @condition
+    function parseRegPart($regPart) {
+        $type = null;
+        $desc = null;
+        $title = null;
+        $tool = null;
+        $showsett = null;
+        $opt = null;
+        $allOptCurly = null;
+        $multiCol = null;
+        $autoform = null;
+        $arr = null;
+        $cond = null;
+        if (preg_match("/@/", $regPart)){
+            $regSplit = explode("@", $regPart);
+            for ($i = 0; $i < count($regSplit); $i++) {
+
+                // find type among following list:checkbox|textbox|input|dropdown
+                preg_match('/^checkbox|^textbox|^input|^dropdown/i', $regSplit[$i], $typeCheck);
+                // check if @autofill tag is defined //* @autofill:{var1="yes", "filling_text"}
+                // for multiple options @autofill:{var1=("yes","no"), "filling_text"}
+                // for dynamic filling @autofill:{var1=("yes","no"), _build+"filling_text"}
+                preg_match("/^autofill:(.*)/i", $regSplit[$i], $autofillCheck);
+                if (!empty($autofillCheck) && !empty($autofillCheck[1])) {
+                    $autoContent = $autofillCheck[1];
+                    if (!empty($autoform)) {
+                        $autoform = array();
+                    }
+                    $autoform[] = $this->parseBrackets($autoContent, false);
+                }
+                // check if @multicolumn tag is defined //* @style @multicolumn:{var1, var2, var3}, {var5, var6}
+                preg_match("/^multicolumn:(.*)/i", $regSplit[$i], $multiColCheck);
+                if (!empty($multiColCheck) && !empty($multiColCheck[1])) {
+                    $multiContent = $multiColCheck[1];
+                    $multiCol = $this->parseBrackets($multiContent, true);
+                }
+                // check if @array tag is defined //* @style @array:{var1, var2}, {var4}
+                preg_match("/^array:(.*)/i", $regSplit[$i], $arrayCheck);
+                if (!empty($arrayCheck) && !empty($arrayCheck[1])) {
+                    $arrContent = $arrayCheck[1];
+                    $arr = $this->parseBrackets($arrContent, true);
+                }
+                // check if @condition tag is defined //* @style @condition:{var1="yes", var2}, {var1="no", var3, var4}
+                preg_match("/^condition:(.*)/i", $regSplit[$i], $condCheck);
+                if (!empty($condCheck) && !empty($condCheck[1])) {
+                    $condContent = $condCheck[1];
+                    if (!empty($cond)) {
+                        $cond = array();
+                    }
+                    $cond[] = $this->parseBrackets($condContent, true);
+                }
+                if (!empty($typeCheck)) {
+                    $type = strtolower($typeCheck[0]);
+                }
+                // find description
+                preg_match('/^description:"(.*)"|^description:\'(.*)\'/i', $regSplit[$i], $descCheck);
+                if (!empty($descCheck)) {
+                    if (!empty($descCheck[1])) {
+                        $desc = $descCheck[1];
+                    } else if (!empty($descCheck[2])) {
+                        $desc = $descCheck[2];
+                    }
+                }
+                // find title
+                preg_match('/^title:"(.*)"|^title:\'(.*)\'/i', $regSplit[$i], $titleCheck);
+                if (!empty($titleCheck)) {
+                    if (!empty($titleCheck[1])) {
+                        $title = $titleCheck[1];
+                    } else if (!empty($titleCheck[2])) {
+                        $title = $titleCheck[2];
+                    }
+                }
+                // find tooltip
+                preg_match('/^tooltip:"(.*)"|^tooltip:\'(.*)\'/i', $regSplit[$i], $toolCheck);
+                if (!empty($toolCheck)) {
+                    if (!empty($toolCheck[1])) {
+                        $tool = $toolCheck[1];
+                    } else if (!empty($toolCheck[2])) {
+                        $tool = $toolCheck[2];
+                    }
+                }
+                // find show_settings
+                preg_match('/^show_settings:"(.*)"|^show_settings:\'(.*)\'/i', $regSplit[$i], $show_settCheck);
+                if (!empty($show_settCheck)) {
+                    if (!empty($show_settCheck[1])) {
+                        $showsett = $show_settCheck[1];
+                    } else if (!empty($show_settCheck[2])) {
+                        $showsett = $show_settCheck[2];
+                    }
+                    //seperate process names by comma
+                    if (!empty($showsett)) {
+                        $showsett = explode(",", $showsett);
+                        if (count($showsett) >0) {
+                            for ($k = 0; $k < count($showsett); $k++) {
+                                $showsett[$k] = trim($showsett[$k]);
+                                $showsett[$k] = preg_replace('/\"/', '', $showsett[$k]);
+                                $showsett[$k] = preg_replace("/\'/", '', $showsett[$k]);
+                            }
+                        }
+                    }
+                }
+                // find options
+                preg_match('/^options:\s*"(.*)"|^options:\s*\'(.*)\'|^options:\s*\{(.*)\}/i', $regSplit[$i], $optCheck);
+
+                if (!empty($optCheck)) {
+                    if (!empty($optCheck[1])) {
+                        $allOpt = $optCheck[1];
+                    } else if (!empty($optCheck[2])) {
+                        $allOpt = $optCheck[2];
+                    } else if (!empty($optCheck[3])) {
+                        $allOpt = null;
+                        preg_match('/^options:\s*(.*)/i', $regSplit[$i], $curlyOpt);
+                        if (!empty($curlyOpt[1])) {
+                            $opt = $this->parseBrackets($curlyOpt[1], true);
+                        }
+                    }
+                    //seperate options by comma
+                    if (!empty($allOpt)) {
+                        $allOpt = explode(",", $allOpt);
+                        if (count($allOpt) >0) {
+                            for ($k = 0; $k < count($allOpt); $k++) {
+                                $allOpt[$k] = trim($allOpt[$k]);
+                                $allOpt[$k] = preg_replace('/\"/', '', $allOpt[$k]);
+                                $allOpt[$k] = preg_replace("/\'/", '', $allOpt[$k]);
+                            }
+                        }
+                        $opt = $allOpt;
+                    }
+                }
+            }
+        }
+        return array(
+            $type,
+            $desc,
+            $tool,
+            $opt,
+            $multiCol,
+            $arr,
+            $cond,
+            $title,
+            $autoform,
+            $showsett,
+        );
+    }
+
+    //parse ProPipePanelScript and create panelObj
+    //eg. {schema:[{ varName:"varName",
+    //              defaultVal:"defaultVal",
+    //              type:"type",
+    //              desc:"desc",
+    //              tool:"tool",
+    //              opt:"opt"}],
+    //      style:[{ multicol:[[var1, var2, var3], [var5, var6],
+    //              array:[[var1, var2], [var4]]
+    //              condi:[{var1:"yes", var2}, {var1:"no", var3, var4}]
+    //              }]
+    //     }
+    function parseProPipePanelScript($script) {
+        $panelObj = array();
+        $panelObj["schema"] = array();
+        $panelObj["style"] = array();
+        $lines = explode("\n", $script);
+        for ($i = 0; $i < count($lines); $i++) {
+            $varName = null;
+            $defaultVal = null;
+            $type = null;
+            $desc = null;
+            $tool = null;
+            $opt = null;
+            $multiCol = null;
+            $autoform = null;
+            $showsett = null;
+            $arr = null;
+            $cond = null;
+            $title = null; 
+            $varPart = "";
+            $regPart = "";
+            $parts = explode('//*', $lines[$i]);
+            $varFormat="";
+            if (count($parts) > 1) {
+                $varPart = $parts[0];
+                $regPart = $parts[1];
+            } else {
+                $regPart = $parts[0];
+            }
+            if (!empty($varPart)) {
+                list($varName,$defaultVal,$varFormat) = $this->parseVarPart($varPart, "");
+            }
+            if (!empty($regPart)) {
+                list($type, $desc, $tool, $opt, $multiCol, $arr, $cond, $title, $autoform, $showsett) = $this->parseRegPart($regPart);
+            }
+            if (!empty($type) && !empty($varName)) {
+                $panelObj["schema"][] = array(
+                    "varName" => $varName,
+                    "defaultVal" => $defaultVal,
+                    "type" => $type,
+                    "desc" => $desc,
+                    "tool" => $tool,
+                    "opt" => $opt,
+                    "title" => $title,
+                    "autoform" => $autoform,
+                    "showsett" => $showsett,
+                    "varFormat" => $varFormat
+                );
+            }
+            if ($multiCol || $arr || $cond) {
+                $panelObj["style"][] = array(
+                    "multicol" => $multiCol,
+                    "array" => $arr,
+                    "condi" => $cond
+                );
+            }
+        }
+        return $panelObj;
+    }
+
+    //$ret parameter schema and style
+    function getPipelineProcessOpts($ret, $pipeline_id, $ownerID, $prev_gnum, $prev_proName) {
+        settype($pipeline_id, "integer");
+        $pipe = $this->loadPipeline($pipeline_id,$ownerID);
+        $pipeData = json_decode($pipe,true);
+        if (!empty($pipeData[0])){
+            $allPipeScript = "";
+            if (empty($prev_gnum)){
+                $pipeData[0]["script_pipe_config"] = htmlspecialchars_decode($pipeData[0]["script_pipe_config"] , ENT_QUOTES); 
+                $pipeData[0]["script_pipe_header"] = htmlspecialchars_decode($pipeData[0]["script_pipe_header"] , ENT_QUOTES); 
+                $allPipeScript = $pipeData[0]["script_pipe_config"]."\n".$pipeData[0]["script_pipe_header"];
+                $ret['pipe'] = $this->parseProPipePanelScript($allPipeScript);
+                $ret['pipe']["details"] = array();
+            }
+
+
+            $nodes = json_decode($pipeData[0]["nodes"]);
+            if (!empty($nodes)){
+                foreach ($nodes as $gnum => $item):
+                $gnum = preg_replace('/^g-/', '', $gnum);
+                $proName = $item[3];
+
+                if ($item[2] !== "inPro" && $item[2] !== "outPro" ){
+                    //pipeline modules
+                    if (preg_match("/p(.*)/", $item[2], $matches)){
+                        $pipeModId = $matches[1];
+                        if (!empty($pipeModId)){
+                            list($ret) = $this->getPipelineProcessOpts($ret, $pipeModId, $ownerID, $gnum, $proName);
+                        }
+                        //processes
+                    } else {
+                        $proId = $item[2];
+                        $set_gnum = $gnum;
+                        $set_proName = $proName;
+                        if (!empty($prev_gnum)){
+                            $set_gnum = $prev_gnum."_".$gnum;
+                            $set_proName = $prev_proName."_".$proName;
+                        }
+                        $process_data = json_decode($this->getProcessDataById($proId, $ownerID),true);
+                        if (!empty($process_data[0])){
+                            $process_data[0]["script"] = htmlspecialchars_decode($process_data[0]["script"] , ENT_QUOTES); 
+                            $process_data[0]["script_header"] = htmlspecialchars_decode($process_data[0]["script_header"] , ENT_QUOTES); 
+                            $allProScript = $process_data[0]["script"]."\n".$process_data[0]["script_header"];
+                            $ret[$set_gnum] = $this->parseProPipePanelScript($allProScript);
+                            $ret[$set_gnum]["details"] = array();
+                            $ret[$set_gnum]["details"]["longVarName"] = $set_proName;
+                            $ret[$set_gnum]["details"]["processOrgName"] = $process_data[0]["name"];
+                            $ret[$set_gnum]["details"]["processName"] = $proName;
+                            $ret[$set_gnum]["details"]["onlyModuleName"] = $prev_proName;
+                            $ret[$set_gnum]["details"]["gnum"] = $gnum;
+                            $ret[$set_gnum]["details"]["prefix"] = $prev_gnum;
+                        }
+                    }
+                }
+                endforeach;
+            }
+        }
+        return array($ret);
     }
 
     function updateUUID ($id, $type, $res){

@@ -152,6 +152,7 @@ class Data
         if (!empty($proPipeAll[0])){
             $pipeline_id = $proPipeAll[0]["pipeline_id"];
             $project_pipeline_id = $proPipeAll[0]["id"];
+            $processOptsRaw = $proPipeAll[0]["process_opt"];
             if (!empty($project_pipeline_id)){
                 $allinputs = json_decode($dbfuncs->getProjectPipelineInputs($project_pipeline_id, $ownerID));
                 if (!empty($allinputs)){
@@ -174,6 +175,9 @@ class Data
                     endforeach;
                     $ret["inputs"] = $inputs;
                 }
+                $allprocessOpts = $dbfuncs->getProjectPipelineProcessOpts($project_pipeline_id, $ownerID);
+                $ret["processOpts"] = $allprocessOpts;
+                $ret["processOptsRaw"] = $processOptsRaw;
             }
 
             if (!empty($pipeline_id)){
