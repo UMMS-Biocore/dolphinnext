@@ -4527,6 +4527,7 @@ class dbfuncs {
                     endforeach;
                     $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
                     $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
+                    $keys="";
                     if (!empty($amazon_cre_id)){
                         $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
                         foreach($amz_data as $d){
@@ -4537,8 +4538,12 @@ class dbfuncs {
                         }
                         $access_key = $amz_data[0]->{'amz_acc_key'};
                         $secret_key = $amz_data[0]->{'amz_suc_key'};
-                        $cmd="s3cmd sync --access_key $access_key  --secret_key $secret_key $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                        if (!empty($access_key) && !empty($secret_key)){
+                            $keys = "--access_key $access_key  --secret_key $secret_key";
+                        }
                     }
+                    $cmd="s3cmd sync $keys $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+
                 } else if (preg_match("/gs:/i", $files[0])){
                     $fileList="";
                     foreach ($files as $item):

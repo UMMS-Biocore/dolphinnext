@@ -182,7 +182,7 @@ $DMETA_LABEL= DMETA_LABEL;
             <li><a href="#" onclick="showManualRunModal();return false;">(Optional) Manual Run</a></li>
         </ul>
     </div>
-    <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; vertical-align:middle;" data-original-title="Waiting for input parameters, output directory and selection of active environment (if s3 path is defined then waiting for the amazon keys)" data-placement="bottom" data-toggle="tooltip">Waiting</button>
+    <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; vertical-align:middle;" data-original-title="Waiting for input parameters, output directory and selection of active environment" data-placement="bottom" data-toggle="tooltip">Waiting</button>
 </div>
 
 <div id="runStatDiv" style="display:none; float:right; margin-right:5px;">
