@@ -6095,23 +6095,17 @@ function checkReadytoRun(type) {
         publishReady = true;
     }
     //check if s3: is defined in publish_dir and getProPipeInputs
-    var s3Status = checkCloudPatt(
-        "s3:",
-        "#mRunAmzKeyDiv",
-        "#mRunAmzKey",
-        publish_dir,
-        getProPipeInputs
-    );
+//    var s3Status = checkCloudPatt(
+//        "s3:",
+//        "#mRunAmzKeyDiv",
+//        "#mRunAmzKey",
+//        publish_dir,
+//        getProPipeInputs
+//    );
     //    var gsStatus = checkCloudPatt("gs:", "#mRunGoogKeyDiv", '#mRunGoogKey', publish_dir, getProPipeInputs);
 
     //if ready and not running/waits/error
-    if (
-        publishReady &&
-        s3Status &&
-        filledInputsCheck &&
-        profileNext !== "" &&
-        output_dir !== ""
-    ) {
+    if ( publishReady && filledInputsCheck && profileNext !== "" && output_dir !== "" ) {
         console.log("initial runStatus", runStatus);
         if (
             runStatus == "" ||
@@ -13998,7 +13992,7 @@ $(document).ready(function () {
             } else {
                 $(href).closest("div.fullsize").css("height","600px")
             }
-            
+
             $(href).removeClass("fade").addClass("active in");
             $(href).siblings().removeClass("active in").addClass("fade");
             $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
