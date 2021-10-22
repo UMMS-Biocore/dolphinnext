@@ -2694,7 +2694,7 @@ class dbfuncs {
         // get all existing files with their directories in array
         // e.g. ["rsem_summary/expected_count.tsv", "star/Log.progress.out"]
         $fileListPubweb = array_values((array)json_decode($this->getFileList($uuid, "pubweb", "onlyfile")));
-        $fileListPubDmeta = array_values((array)json_decode($this->getFileList($uuid, "pubDmeta", "onlyfile")));
+        $fileListPubDmeta = array_values((array)json_decode($this->getFileList($uuid, "pubdmeta", "onlyfile")));
         $fileList = array_merge($fileListPubweb, $fileListPubDmeta);
         // removes empty values
         $fileList = array_filter($fileList);
@@ -2703,8 +2703,6 @@ class dbfuncs {
         // $pubDmetaDir : [{"dir":"summary","pattern":"\"overall_summary.tsv\""}]
         $pubDmetaDir = $pipeData[0]->{'publish_dmeta_dir'};
         $pubDmetaDir = json_decode(htmlspecialchars_decode($pubDmetaDir, ENT_QUOTES), true);
-        error_log(print_r("pubDmetaDir", TRUE));
-        error_log(print_r($pubDmetaDir, TRUE));
 
         foreach ($pubDmetaDir as $value) {
             $filepaths = array();
@@ -2754,9 +2752,6 @@ class dbfuncs {
                 }
             }
         }
-        error_log(print_r("sendObj", TRUE));
-        error_log(print_r($sendObj, TRUE));
-
         return $sendObj;
     }
 
