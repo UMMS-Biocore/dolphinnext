@@ -2703,6 +2703,9 @@ class dbfuncs {
         // $pubDmetaDir : [{"dir":"summary","pattern":"\"overall_summary.tsv\""}]
         $pubDmetaDir = $pipeData[0]->{'publish_dmeta_dir'};
         $pubDmetaDir = json_decode(htmlspecialchars_decode($pubDmetaDir, ENT_QUOTES), true);
+        error_log(print_r("pubDmetaDir", TRUE));
+        error_log(print_r($pubDmetaDir, TRUE));
+
         foreach ($pubDmetaDir as $value) {
             $filepaths = array();
             if (!empty($value["dir"]) && !empty($value["pattern"])){
@@ -2737,12 +2740,23 @@ class dbfuncs {
                     $dmetaObj =$dmetaItem; 
                 }
                 endforeach;
-                //$value["dir"] = "summary" or "analysis
-                $sendObj[$value["dir"]] = array();
-                $sendObj[$value["dir"]]["filepaths"] = $filepaths;
-                $sendObj[$value["dir"]]["dmetaObj"] = $dmetaObj;
+                //$value["dir"] = "summary_folder" or "analysis_folder"
+                //$dmetaObj["target"] = "summary" or "analysis"
+                if(!empty($dmetaObj["target"])) {
+                    $target = $dmetaObj["target"];
+                    if(!isset($sendObj[$target])) {
+                        $sendObj[$target] = array();
+                    }
+                    $sendItem = array();
+                    $sendItem["filepaths"] = $filepaths;
+                    $sendItem["dmetaObj"] = $dmetaObj;
+                    $sendObj[$target][] = $sendItem;
+                }
             }
         }
+        error_log(print_r("sendObj", TRUE));
+        error_log(print_r($sendObj, TRUE));
+
         return $sendObj;
     }
 
@@ -2769,10 +2783,13 @@ class dbfuncs {
         $dmetaInfoPipe = $this->getPubDmetaInfo($pipeData);
 
         $sendObj  = $this->getDmetaPublishFiles($pipeData, $uuid, $dmetaInfoPipe);
-        foreach ($sendObj as $sendItem) {
+        foreach ($sendObj as $sendItems) {
+            $allDoc = array();
+            foreach ($sendItems as $sendItem):
             $filepaths = $sendItem["filepaths"];
             $dmetaObj = $sendItem["dmetaObj"];
             if (!empty($dmetaObj) && !empty($filepaths)){
+                $pipelineFolder = $dmetaObj["name"];
                 $sNameLoc = $dmetaObj["filename"];
                 $featureLoc = $dmetaObj["feature"];
                 $targetDmetaColl = $dmetaObj["target"];
@@ -2784,14 +2801,25 @@ class dbfuncs {
                 foreach ($dmeta_out as $dmeta_out_collection => $out_collectionData): 
                 if ($targetDmetaColl == $dmeta_out_collection){
                     foreach ($out_collectionData as $sName => $targetDmetaRowId): 
-                    $doc = $this->dmetaFileConvert($uuid, $filepaths, $sName, $sNameLoc, $featureLoc, $ownerID);
-                    if (!empty($doc)){
-                        $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $doc, $accessToken, $project_pipeline_id, $dmeta_project);
-                    }
+                    if (!isset($allDoc[$sName])) $allDoc[$sName] = array();
+                    $allDoc[$sName][$pipelineFolder] = $this->dmetaFileConvert($uuid, $filepaths, $sName, $sNameLoc, $featureLoc, $ownerID);
+
                     endforeach;
                 }
                 endforeach;
+
+
             }
+            endforeach;
+            foreach ($dmeta_out as $dmeta_out_collection => $out_collectionData): 
+            if ($targetDmetaColl == $dmeta_out_collection){
+                foreach ($out_collectionData as $sName => $targetDmetaRowId): 
+                if (!empty($allDoc[$sName])){
+                    $this->patchDmetaAPI($dmeta_server, $dmeta_out_collection, $sName, $targetDmetaRowId, $allDoc[$sName], $accessToken, $project_pipeline_id, $dmeta_project);
+                }
+                endforeach;
+            }
+            endforeach;
         }
 
 
