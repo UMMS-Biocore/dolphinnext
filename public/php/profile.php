@@ -507,6 +507,14 @@ $GOOGPATH=GOOGPATH;
                             <textarea type="text" rows="1" class="form-control" id="mEnvVar" name="variable"></textarea>
                         </div>
                     </div>
+                    <div id="mBashVarDiv" class="form-group" style="display:none">
+                        <label for="mBashVar" class="col-sm-3 control-label">Environment Variables
+                            <span><a data-toggle="tooltip" data-placement="bottom" title="You can set BASH environmental variables here, such as APIKEY. (eg. APIKEY='secretkey'). Please don't use spaces, you can enter multiple variables by separating them with newline."><i class='glyphicon glyphicon-info-sign'></i></a></span>
+                        </label>
+                        <div class="col-sm-9">
+                            <textarea type="text" rows="1" class="form-control" id="mBashVar" name="bash_variable"></textarea>
+                        </div>
+                    </div>
                     <div id="mExecDiv" class="form-group" style="display:none">
                         <label for="mExec" class="col-sm-3 control-label">Executor of Nextflow</label>
                         <div class="col-sm-9">

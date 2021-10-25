@@ -269,6 +269,7 @@ $(document).ready(function () {
         var allMenuGroup = getValues({ p: "getProfiles", type: "public" });
         for (var i = 0; i < allMenuGroup.length; i++) {
             allMenuGroup[i].variable = decodeHtml(allMenuGroup[i].variable);
+            allMenuGroup[i].bash_variable = decodeHtml(allMenuGroup[i].bash_variable);
         }
         $('#mEnvName').selectize({
             valueField: 'id',
@@ -349,6 +350,7 @@ $(document).ready(function () {
             if (proType === "cluster") {
                 var data = getValues({ p: "getProfileCluster", id: proId });
                 data[0].variable=decodeHtml(data[0].variable)
+                data[0].bash_variable=decodeHtml(data[0].bash_variable)
                 $('#chooseEnv').val('cluster').trigger('change');
                 data[0].amazon_cre_id2 = data[0].amazon_cre_id
                 data[0].def_workdir2 = data[0].def_workdir
@@ -358,12 +360,14 @@ $(document).ready(function () {
             } else if (proType === "amazon") {
                 var data = getValues({ p: "getProfileCloud", cloud: "amazon", id: proId });
                 data[0].variable =decodeHtml(data[0].variable)
+                data[0].bash_variable =decodeHtml(data[0].bash_variable)
                 $('#chooseEnv').val('amazon').trigger('change');
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             } else if (proType === "google") {
                 var data = getValues({ p: "getProfileCloud", cloud: "google", id: proId });
                 data[0].variable =decodeHtml(data[0].variable)
+                data[0].bash_variable =decodeHtml(data[0].bash_variable)
                 $('#chooseEnv').val('google').trigger('change');
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
@@ -412,22 +416,22 @@ $(document).ready(function () {
 
             if (selEnvType === "cluster" && !title.match(/Public/)) {
                 var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2","mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv", "mDefPublishDirDiv2"];
-                var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv", "shareRunEnvDiv"];
+                var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv", "mBashVarDiv", "shareRunEnvDiv"];
             } else if (selEnvType === "amazon" && !title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mEnvAmzKeyDiv2", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
-                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "shareRunEnvDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "mBashVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "shareRunEnvDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "cluster" && title.match(/Public/)) {
                 var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvUsernameDiv", "mEnvSSHKeyDiv","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
-                var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv"];
+                var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv","mBashVarDiv"];
             } else if (selEnvType === "amazon" && title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv2","mDefPublishDirDiv2"];
-                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "google" && !title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
-                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv",  "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv",  "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "mBashVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "google" && title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2", "shareRunEnvDiv", "mSharedStorageMountDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSubnetIdDiv","mEnvGoogKeyDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
-                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+                var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             }
 
             $.each(noneList, function (element) {
@@ -499,7 +503,7 @@ $(document).ready(function () {
     });
 
     $('#profilemodal').on('hide.bs.modal', function (event) {
-        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv","mDefWorkDirDiv2", "mDefPublishDirDiv"];
+        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv","mDefWorkDirDiv2", "mDefPublishDirDiv"];
         $.each(noneList, function (element) {
             $('#' + noneList[element]).css('display', 'none');
         });
@@ -541,6 +545,7 @@ $(document).ready(function () {
             formObj.perms = "3";
         }
         formObj.variable = encodeURIComponent(formObj.variable);
+        formObj.bash_variable = encodeURIComponent(formObj.bash_variable);
         if (formObj.executor_job == "ignite") {
             formObj.job_queue = "";
             formObj.job_time = "";

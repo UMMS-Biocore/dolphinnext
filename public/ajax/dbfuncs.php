@@ -345,8 +345,8 @@ class dbfuncs {
 
 
     function getConfigHostnameVariable($profileId, $profileType, $ownerID) {
-        $hostname ="";
-        $variable ="";
+        $hostname = "";
+        $variable = "";
         if ($profileType == 'cluster'){
             $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
             $cluDataArr=json_decode($cluData,true);
@@ -358,6 +358,7 @@ class dbfuncs {
             $hostname = $cluDataArr[0]["shared_storage_id"];
             $variable = $cluDataArr[0]["variable"];
         }
+        $variable = htmlspecialchars_decode($variable , ENT_QUOTES);
         return array($hostname,$variable);
     }
 
@@ -377,6 +378,7 @@ class dbfuncs {
                 $connect = $cluDataArr[0]["ssh"];
             }
         }
+        $cluDataArr[0]["bash_variable"]= trim($this->amazonDecode($cluDataArr[0]["bash_variable"]));
         $ssh_port = !empty($cluDataArr[0]["port"]) ? " -p ".$cluDataArr[0]["port"] : "";
         $scp_port = !empty($cluDataArr[0]["port"]) ? " -P ".$cluDataArr[0]["port"] : "";
         return array($connect, $ssh_port, $scp_port, $cluDataArr);
@@ -1316,8 +1318,7 @@ class dbfuncs {
         $script_pipe_configRaw = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
         $script_pipe_config = htmlspecialchars_decode($script_pipe_configRaw , ENT_QUOTES);
         $configText .= "\n// Pipeline Config:\n\n";
-        list($hostVar,$variableRaw) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
-        $variable = htmlspecialchars_decode($variableRaw , ENT_QUOTES);
+        list($hostVar,$variable) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
         $reportDir = $this->getReportDir($proPipeAll);
 
         $configText .= "\$HOSTNAME='".$hostVar."'\n";
@@ -1642,7 +1643,7 @@ class dbfuncs {
         return json_encode($ret);
     }
 
-    function getAmazonConfig($amazon_cre_id,$ownerID){
+    function getAmazonVariables($amazon_cre_id,$ownerID){
         $configText = "";
         if (!empty($amazon_cre_id)){
             $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
@@ -1657,6 +1658,28 @@ class dbfuncs {
             $default_region = $amz_data[0]->{'amz_def_reg'};
             $configText = "export AWS_ACCESS_KEY_ID=$access_key\nexport AWS_SECRET_ACCESS_KEY=$secret_key\nexport AWS_DEFAULT_REGION=$default_region";
         }
+        return $configText;
+    }
+
+    function getBashVariables($profileId, $profileType, $ownerID){
+        $configText = "";
+        $bash_variable = "";
+        if ($profileType == 'cluster'){
+            $cluData=$this->getProfileClusterbyID($profileId, $ownerID);
+            $cluDataArr=json_decode($cluData,true);
+            $bash_variable = $cluDataArr[0]["bash_variable"];
+            $bash_variable= trim($this->amazonDecode($bash_variable));
+        } else if ($profileType == 'amazon' || $profileType == 'google'){
+            $cluData=$this->getProfileCloudbyID($profileId, $profileType, $ownerID);
+            $cluDataArr=json_decode($cluData,true);
+            $bash_variable = $cluDataArr[0]["bash_variable"];
+            $bash_variable= trim($this->amazonDecode($bash_variable));
+        }
+        $bash_variable = htmlspecialchars_decode($bash_variable , ENT_QUOTES);
+        $bash_variables = explode("\n", $bash_variable);
+        $exported_variables = preg_filter('/^/', 'export ', $bash_variables);
+        $configText = join("\n",$exported_variables);
+        error_log($configText);
         return $configText;
     }
 
@@ -1763,7 +1786,7 @@ class dbfuncs {
         }
     }
 
-    function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID){
+    function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzBashConfigText, $attempt, $runType, $ownerID){
         //create files and folders
         $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
         //create Run Description
@@ -1806,8 +1829,8 @@ class dbfuncs {
             $this->recurse_copy($getCloudConfigFileDir, $run_path_real."/initialrun");
         }
         //.aws_cred file to export credentials to remote machine
-        if (!empty($amzConfigText)){
-            $this->createDirFile ($run_path_real, ".aws_cred", 'w', $amzConfigText );
+        if (!empty($amzBashConfigText)){
+            $this->createDirFile ($run_path_real, ".aws_cred", 'w', $amzBashConfigText );
             $amzCmd = "source $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
         }
         //create run cmd file (.dolphinnext.init)
@@ -1916,12 +1939,16 @@ class dbfuncs {
             $initRunOptions = $this->getInitialRunOpt($proPipeAll,$profileId, $profileType,$ownerID);
             $runConfig = $this->getMainRunOpt($proPipeAll,$profileId, $profileType, $ownerID);
             $this->saveRunLogOpt($project_pipeline_id, $proPipeAll,$uuid,$proVarObj, $ownerID);
-            $amzConfigText = $this->getAmazonConfig($amazon_cre_id, $ownerID);
+            $amzBashConfigText = $this->getAmazonVariables($amazon_cre_id, $ownerID);
+            $bashConfigText = $this->getBashVariables($profileId, $profileType, $ownerID);
+            if (!empty($bashConfigText)){
+                $amzBashConfigText = "$amzBashConfigText\n$bashConfigText";
+            }
             list($initialConfigText,$initialRunParams) = $this->getInitialRunConfig($proPipeAll, $project_pipeline_id, $attempt, $profileType,$profileId, $docker_check, $initRunOptions, $ownerID);
             $mainConfigText = $this->getMainRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
             $getCloudConfigFileDir = $this->getCloudConfig($project_pipeline_id, $attempt, $ownerID);
             //create file and folders
-            list($targz_file, $dolphin_path_real, $runCmdAll) = $this->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzConfigText, $attempt, $runType, $ownerID);
+            list($targz_file, $dolphin_path_real, $runCmdAll) = $this->initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzBashConfigText, $attempt, $runType, $ownerID);
             if ($manualRun == "true"){
                 $data = $this->getManualRunCmd($targz_file, $uuid, $dolphin_path_real);
             } else {
@@ -3624,28 +3651,28 @@ class dbfuncs {
     }
 
 
-    function insertProfileCluster($name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID) {
-        $sql = "INSERT INTO $this->db.profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, variable, group_id, auto_workdir, owner_id, perms, date_created, date_modified, amazon_cre_id, def_publishdir, def_workdir, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$username', '$hostname', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$next_clu_opt','$job_clu_opt', '$public', '$variable', '$group_id', '$auto_workdir', '$ownerID', '$perms', now(), now(), '$amazon_cre_id','$def_publishdir', '$def_workdir','$ownerID')";
+    function insertProfileCluster($name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $bash_variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID) {
+        $sql = "INSERT INTO $this->db.profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, variable, bash_variable, group_id, auto_workdir, owner_id, perms, date_created, date_modified, amazon_cre_id, def_publishdir, def_workdir, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$username', '$hostname', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$next_clu_opt','$job_clu_opt', '$public', '$variable', '$bash_variable', '$group_id', '$auto_workdir', '$ownerID', '$perms', now(), now(), '$amazon_cre_id','$def_publishdir', '$def_workdir','$ownerID')";
         return self::insTable($sql);
     }
-    function updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID) {
-        $sql = "UPDATE $this->db.profile_cluster SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', username='$username', hostname='$hostname', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', job_clu_opt='$job_clu_opt', next_clu_opt='$next_clu_opt', ssh_id='$ssh_id', public='$public', variable='$variable', group_id='$group_id', auto_workdir='$auto_workdir', last_modified_user ='$ownerID', perms='$perms', amazon_cre_id='$amazon_cre_id',  def_publishdir='$def_publishdir', def_workdir='$def_workdir'  WHERE id = '$id'";
+    function updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $bash_variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID) {
+        $sql = "UPDATE $this->db.profile_cluster SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', username='$username', hostname='$hostname', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', job_clu_opt='$job_clu_opt', next_clu_opt='$next_clu_opt', ssh_id='$ssh_id', public='$public', variable='$variable', bash_variable='$bash_variable', group_id='$group_id', auto_workdir='$auto_workdir', last_modified_user ='$ownerID', perms='$perms', amazon_cre_id='$amazon_cre_id',  def_publishdir='$def_publishdir', def_workdir='$def_workdir'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    function insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID) {
-        $sql = "INSERT INTO $this->db.profile_amazon(name, executor, next_path, port, singu_cache, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, subnet_id, shared_storage_id, shared_storage_mnt, ssh_id, amazon_cre_id, next_clu_opt, job_clu_opt, public, security_group, variable, group_id, auto_workdir, def_publishdir, def_workdir,  owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$subnet_id','$shared_storage_id','$shared_storage_mnt','$ssh_id','$amazon_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$security_group', '$variable', '$group_id', '$auto_workdir', '$def_publishdir', '$def_workdir', '$ownerID', '$perms', now(), now(), '$ownerID')";
+    function insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID) {
+        $sql = "INSERT INTO $this->db.profile_amazon(name, executor, next_path, port, singu_cache, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, subnet_id, shared_storage_id, shared_storage_mnt, ssh_id, amazon_cre_id, next_clu_opt, job_clu_opt, public, security_group, variable, bash_variable, group_id, auto_workdir, def_publishdir, def_workdir,  owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$subnet_id','$shared_storage_id','$shared_storage_mnt','$ssh_id','$amazon_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$security_group', '$variable', '$bash_variable', '$group_id', '$auto_workdir', '$def_publishdir', '$def_workdir', '$ownerID', '$perms', now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    function updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id, $shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID) {
-        $sql = "UPDATE $this->db.profile_amazon SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', security_group='$security_group', variable='$variable', group_id='$group_id', auto_workdir='$auto_workdir', def_publishdir='$def_publishdir', def_workdir='$def_workdir', last_modified_user ='$ownerID', perms='$perms' WHERE id = '$id'";
+    function updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id, $shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID) {
+        $sql = "UPDATE $this->db.profile_amazon SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu', subnet_id='$subnet_id', shared_storage_id='$shared_storage_id', shared_storage_mnt='$shared_storage_mnt', ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', amazon_cre_id='$amazon_cre_id', public='$public', security_group='$security_group', variable='$variable', bash_variable='$bash_variable', group_id='$group_id', auto_workdir='$auto_workdir', def_publishdir='$def_publishdir', def_workdir='$def_workdir', last_modified_user ='$ownerID', perms='$perms' WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    function insertProfileGoogle($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID) {
-        $sql = "INSERT INTO $this->db.profile_google(name, executor, next_path, port, singu_cache, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, google_cre_id, next_clu_opt, job_clu_opt, public, zone, variable, group_id, auto_workdir, def_publishdir, def_workdir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$google_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$zone', '$variable', '$group_id', '$auto_workdir', '$def_publishdir', '$def_workdir', '$ownerID', '$perms', now(), now(), '$ownerID')";
+    function insertProfileGoogle($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID) {
+        $sql = "INSERT INTO $this->db.profile_google(name, executor, next_path, port, singu_cache, instance_type, image_id, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, google_cre_id, next_clu_opt, job_clu_opt, public, zone, variable, bash_variable, group_id, auto_workdir, def_publishdir, def_workdir, owner_id, perms, date_created, date_modified, last_modified_user) VALUES('$name', '$executor', '$next_path', '$port', '$singu_cache', '$ins_type', '$image_id', '$cmd', '$next_memory', '$next_queue', '$next_time', '$next_cpu', '$executor_job', '$job_memory', '$job_queue', '$job_time', '$job_cpu', '$ssh_id', '$google_cre_id', '$next_clu_opt', '$job_clu_opt', '$public', '$zone', '$variable', '$bash_variable','$group_id', '$auto_workdir', '$def_publishdir', '$def_workdir', '$ownerID', '$perms', now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
-    function updateProfileGoogle($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID) {
-        $sql = "UPDATE $this->db.profile_google SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu',  ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', google_cre_id='$google_cre_id', public='$public', zone='$zone', variable='$variable', group_id='$group_id', auto_workdir='$auto_workdir', def_publishdir='$def_publishdir', def_workdir='$def_workdir', last_modified_user ='$ownerID', perms='$perms' WHERE id = '$id'";
+    function updateProfileGoogle($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID) {
+        $sql = "UPDATE $this->db.profile_google SET name='$name', executor='$executor', next_path='$next_path', port='$port', singu_cache='$singu_cache', instance_type='$ins_type', image_id='$image_id', cmd='$cmd', next_memory='$next_memory', next_queue='$next_queue', next_time='$next_time', next_cpu='$next_cpu', executor_job='$executor_job', job_memory='$job_memory', job_queue='$job_queue', job_time='$job_time', job_cpu='$job_cpu',  ssh_id='$ssh_id', next_clu_opt='$next_clu_opt', job_clu_opt='$job_clu_opt', google_cre_id='$google_cre_id', public='$public', zone='$zone', variable='$variable',  bash_variable='$bash_variable', group_id='$group_id', auto_workdir='$auto_workdir', def_publishdir='$def_publishdir', def_workdir='$def_workdir', last_modified_user ='$ownerID', perms='$perms' WHERE id = '$id'";
         return self::runSQL($sql);
     }
     function updateProfileCloudOnStart($id, $nodes, $autoscale_check, $autoscale_maxIns, $autoscale_minIns, $autoshutdown_date, $autoshutdown_active, $autoshutdown_check, $cloud, $ownerID) {
