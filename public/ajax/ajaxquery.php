@@ -1107,7 +1107,12 @@ else if ($p=="getProfileCluster")
 {
     $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     if (!empty($id)) {
-        $data = $db->getProfileClusterbyID($id, $ownerID);
+        $data = json_decode($db->getProfileClusterbyID($id, $ownerID));
+        foreach($data as $d){
+            $bash_variable = $d->bash_variable;
+            $d->bash_variable = trim($db->amazonDecode($bash_variable));
+        }
+        $data=json_encode($data);
     } else {
         if (empty($type)){
             $data = $db->getProfileCluster($ownerID);
@@ -1123,7 +1128,12 @@ else if ($p=="getProfileCloud"){
     $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
     if ($cloud == "amazon"){
         if (!empty($id)) {
-            $data = $db->getProfileCloudbyID($id, $cloud, $ownerID);
+            $data = json_decode($db->getProfileCloudbyID($id, $cloud, $ownerID));
+            foreach($data as $d){
+                $bash_variable = $d->bash_variable;
+                $d->bash_variable = trim($db->amazonDecode($bash_variable));
+            }
+            $data=json_encode($data);
         } else {
             if (empty($type)){
                 $data = $db->getProfileAmazon($ownerID); 
@@ -1135,7 +1145,12 @@ else if ($p=="getProfileCloud"){
         }  
     } else if ($cloud == "google"){
         if (!empty($id)) {
-            $data = $db->getProfileCloudbyID($id, $cloud, $ownerID);
+            $data = json_decode($db->getProfileCloudbyID($id, $cloud, $ownerID));
+            foreach($data as $d){
+                $bash_variable = $d->bash_variable;
+                $d->bash_variable = trim($db->amazonDecode($bash_variable));
+            }
+            $data=json_encode($data);
         } else {
             if (empty($type)){
                 $data = $db->getProfileGoogle($ownerID); 
@@ -1368,6 +1383,8 @@ else if ($p=="saveProfileCluster"){
     $port = $_REQUEST['port'];
     $singu_cache = $_REQUEST['singu_cache'];
     $variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
+    $bash_variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['bash_variable']), ENT_QUOTES));
+    $bash_variable = $db->amazonEncode($bash_variable);
     $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
     settype($ssh_id, 'integer');
     $group_id = isset($_REQUEST['group_id']) ? $_REQUEST['group_id'] : "";
@@ -1381,9 +1398,9 @@ else if ($p=="saveProfileCluster"){
     $def_workdir = isset($_REQUEST['def_workdir']) ? $_REQUEST['def_workdir'] : "";
 
     if (!empty($id)) {
-        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID);
+        $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $bash_variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID);
     } else {
-        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID);
+        $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $bash_variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID);
     }
 }
 else if ($p=="saveProfileAmazon"){
@@ -1412,6 +1429,8 @@ else if ($p=="saveProfileAmazon"){
     $port = $_REQUEST['port'];
     $singu_cache = $_REQUEST['singu_cache'];
     $variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
+    $bash_variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['bash_variable']), ENT_QUOTES));
+    $bash_variable = $db->amazonEncode($bash_variable);
     $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
     settype($ssh_id, 'integer');
     $amazon_cre_id = isset($_REQUEST['amazon_cre_id']) ? $_REQUEST['amazon_cre_id'] : "";
@@ -1425,9 +1444,9 @@ else if ($p=="saveProfileAmazon"){
     $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
     settype($perms, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
+        $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
     } else {
-        $data = $db->insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
+        $data = $db->insertProfileAmazon($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
     }
 }
 else if ($p=="saveProfileGoogle"){
@@ -1453,6 +1472,8 @@ else if ($p=="saveProfileGoogle"){
     $port = $_REQUEST['port'];
     $singu_cache = $_REQUEST['singu_cache'];
     $variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['variable']), ENT_QUOTES));
+    $bash_variable =  addslashes(htmlspecialchars(urldecode($_REQUEST['bash_variable']), ENT_QUOTES));
+    $bash_variable = $db->amazonEncode($bash_variable);
     $ssh_id = isset($_REQUEST['ssh_id']) ? $_REQUEST['ssh_id'] : "";
     settype($ssh_id, 'integer');
     $google_cre_id = isset($_REQUEST['google_cre_id']) ? $_REQUEST['google_cre_id'] : "";
@@ -1466,9 +1487,9 @@ else if ($p=="saveProfileGoogle"){
     $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
     settype($perms, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProfileGoogle($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
+        $data = $db->updateProfileGoogle($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
     } else {
-        $data = $db->insertProfileGoogle($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
+        $data = $db->insertProfileGoogle($name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
     }
 }
 else if ($p=="saveInput"){
