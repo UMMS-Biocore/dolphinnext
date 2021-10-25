@@ -627,6 +627,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['ssh_id'] = "1";
 		$_REQUEST['port'] = "22";
 		$_REQUEST['variable'] = "test";
+		$_REQUEST['bash_variable'] = "test";
 		$_REQUEST['singu_cache'] = "";
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)->id,'2');
@@ -723,6 +724,7 @@ class ajaxQueryTest extends TestCase
 		$_REQUEST['ssh_id'] = "1";
         $_REQUEST['port'] = "22";
 		$_REQUEST['variable'] = "testAmz";
+		$_REQUEST['bash_variable'] = "testAmz";
 		$_REQUEST['singu_cache'] = "";
 		$_REQUEST['amazon_cre_id'] = "1";
 		include('ajaxquery.php');
