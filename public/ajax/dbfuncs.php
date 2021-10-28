@@ -4487,8 +4487,18 @@ class dbfuncs {
     function getFileContent($uuid, $filename, $ownerID) {
         $file = "{$this->run_path}/$uuid/$filename";
         $content = "";
+        $secretline = "@DNEXT_SECRET_LINE";
         if (file_exists($file)) {
             $content = $this->file_get_contents_utf8($file);
+            if (preg_match("/(run\/log\.txt|run\/\.nextflow\.log)/", $filename) && preg_match("/($secretline)/", $content)){
+                $rows = explode("\n", $content);
+                foreach($rows as $key => $row) {
+                    if(preg_match("/($secretline)/", $row)) {
+                        unset($rows[$key]);
+                    }
+                }
+                $content = implode("\n", $rows);    
+            } 
         }
         return json_encode($content);
     }
