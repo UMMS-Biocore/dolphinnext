@@ -85,15 +85,15 @@ if (isset($_GET['p']) && $_GET['p'] == "logout" ){
             $result = curl_exec($ch);
             $result = json_decode($result);
             curl_close($ch);
-            header('Location: ' . $_SERVER['HTTP_REFERER']);
+            header('Location: ' . $BASE_PATH);
             exit;
         } else if (!empty($SSO_LOGIN) && $OKTA_METHOD == "SAML" && !empty($OKTA_METADATA)){
             $sp = "okta-app";
             //unset($_SESSION['saml_session']);
             $as = new SimpleSAML_Auth_Simple($sp);
-            $as->logout(["ReturnTo" => $_SERVER['HTTP_REFERER']]);
+            $as->logout(["ReturnTo" => $BASE_PATH]);
         } else {
-            header('Location: ' . $_SERVER['HTTP_REFERER']);
+            header('Location: ' . $BASE_PATH);
             exit;  
         }
     }
