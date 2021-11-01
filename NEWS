@@ -1,3 +1,10 @@
+31.10.2021 Version 1.2.60
+Publishdir pattern ({{publishdir:outputPattern}}) added to use output folder in a script. 
+
+30.10.2021 Version 1.2.59
+Logout location set as basepath.
+User table for admin fixed.
+
 28.10.2021 Version 1.2.58
 Secret line (@DNEXT_SECRET_LINE) feature added. 
 

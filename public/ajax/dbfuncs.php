@@ -4165,7 +4165,7 @@ class dbfuncs {
         if (isset(json_decode($userRoleCheck)[0])){
             $userRole = json_decode($userRoleCheck)[0]->{'role'};
             if ($userRole == "admin"){
-                $sql = "SELECT * FROM $this->db.users WHERE id <> '$ownerID' AND deleted=0";
+                $sql = "SELECT * FROM $this->db.users WHERE deleted=0";
                 return self::queryTable($sql);
             }
         }

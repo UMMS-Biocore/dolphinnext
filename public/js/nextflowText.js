@@ -354,9 +354,9 @@ function getNewLocalVarLine (line, process_opt, gNum, varName, quoteType, patter
 }
 
 // gnum numbers used for process header.  gNum="pipe" is used for pipeline header
-function getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName) {
+function getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName, currgid, mainPipeEdges) {
+    var newScriptHeader = "";
     if (script_header.match(/\/\/\*/) ) {
-        var newScriptHeader = "";
         var lines = script_header.split('\n');
         for (var i = 0; i < lines.length; i++) {
             var varName = null;
@@ -393,9 +393,29 @@ function getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName)
                 newScriptHeader += lines[i] + "\n";
             }
         }
-        return newScriptHeader
+    } else {
+        newScriptHeader = script_header
     }
-    return script_header
+    
+    if (currgid && mainPipeEdges && newScriptHeader.match(/\{\{publishdir:(.*)\}\}/g)){
+        var checkParam = newScriptHeader.match(/\{\{publishdir:(.*)\}\}/g);
+        if (checkParam.length > 0){
+            for (var i = 0; i < checkParam.length; i++) {
+                var split = checkParam[i].split("publishdir:")
+                if (split && split[1]){
+                    var outputPattern = $.trim(split[1].replace(/\}\}/,""))
+                    var publishDirectory = getPublishDirWithOutputPattern(outputPattern, currgid, mainPipeEdges);
+                    if (publishDirectory){
+                        newScriptHeader= newScriptHeader.replace(checkParam[i], publishDirectory);
+                    } else{
+                        newScriptHeader = newScriptHeader.replace(checkParam[i], "{{Output Pattern Not Found!}}");
+                    }
+                }
+            }
+
+        }
+    }
+    return newScriptHeader
 }
 
 // in case error occured, use recursiveCounter to stop recursive loop
@@ -466,7 +486,7 @@ function createNextflowFile(nxf_runmode, uuid) {
     var header_pipe_script = "";
     var footer_pipe_script = "";
     [header_pipe_script, footer_pipe_script] = getPipelineScript(pipeline_id);
-    header_pipe_script = getNewScriptHeader(header_pipe_script, process_opt, "pipe", "pipeline");
+    header_pipe_script = getNewScriptHeader(header_pipe_script, process_opt, "pipe", "pipeline", "", "");
     nextText += header_pipe_script + "\n";
 
 
@@ -524,13 +544,14 @@ function createNextflowFile(nxf_runmode, uuid) {
             [body, script_header, script_footer] = IOandScriptForNf(mainProcessId, sortedProcessList[k], allEdges, nxf_runmode, run_uuid, mainPipeEdges);
             var mergedProcessList = getMergedProcessList();
             var mergedProcessName = mergedProcessList[sortedProcessList[k]].replace(/ /g, '_');
+            var publishDirText = publishDir(mainProcessId, sortedProcessList[k], mainPipeEdges);
             // add process options after the process script_header to overwite them
             //check if parameter comment  //* and process_opt[gNum] are exist:
-            script_header = getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName);
-            body = getNewScriptHeader(body, process_opt, gNum, mergedProcessName);
+            script_header = getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName, sortedProcessList[k], mainPipeEdges);
+            body = getNewScriptHeader(body, process_opt, gNum, mergedProcessName, sortedProcessList[k], mainPipeEdges);
 
 
-            proText = script_header + "\nprocess " + mergedProcessName + " {\n\n" + publishDir(mainProcessId, sortedProcessList[k], mainPipeEdges) + body + "\n}\n" + script_footer + "\n"
+            proText = script_header + "\nprocess " + mergedProcessName + " {\n\n" + publishDirText + body + "\n}\n" + script_footer + "\n"
             nextText += proText;
         }
     };
@@ -717,7 +738,37 @@ function getPublishDirRegex(outputName) {
     return outputName;
 }
 
-
+function getPublishDirWithOutputPattern(outputPattern, currgid, mainPipeEdges){
+    oText = ""
+    var closePar = false
+    var oList = d3.select("#" + currgid).selectAll("circle[kind ='output']")[0]
+    for (var i = 0; i < oList.length; i++) {
+        oId = oList[i].id
+        for (var e = 0; e < mainPipeEdges.length; e++) {
+            if (mainPipeEdges[e].indexOf(oId) > -1) {
+                var fNode = "";
+                var sNode = "";
+                [fNode, sNode] = splitEdges(mainPipeEdges[e]);
+                var sNode_Split = sNode.split("-")
+                var sNode_paramData = parametersData.filter(function (el) { return el.id == sNode_Split[3] })[0]
+                var sNode_qual = sNode_paramData.qualifier
+                //publishDir Section
+                if (fNode.split("-")[1] === "outPro" ) {
+                    closePar = true
+                    //outPro node : get userEntryId and userEntryText
+                    var parId = fNode.split("-")[4]
+                    var userEntryId = "text-" + fNode.split("-")[4]
+                    var outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
+                    var outputName = document.getElementById(oId).getAttribute("name")
+                    if (outputName === outputPattern){
+                        return outParUserEntry
+                    }
+                }
+            }
+        }
+    }
+    return "";
+}
 
 //publishDir params.outdir, overwrite: true, mode: 'copy',
 //	saveAs: {filename ->
