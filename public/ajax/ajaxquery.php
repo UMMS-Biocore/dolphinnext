@@ -2176,7 +2176,7 @@ else if ($p=="getMaxRev_id")
 else if ($p=="getMaxPipRev_id"){
     $data = json_encode("");
     $pipeline_gid = $_REQUEST['pipeline_gid'];
-    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE pipeline_gid='$pipeline_gid'");
+    $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE pipeline_gid='$pipeline_gid' AND deleted=0");
     $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
     if (!empty($permCheck)){
         $data = $db->getMaxPipRev_id($pipeline_gid);
