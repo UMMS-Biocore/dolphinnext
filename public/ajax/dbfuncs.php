@@ -1682,7 +1682,6 @@ class dbfuncs {
         $bash_variables = explode("\n", $bash_variable);
         $exported_variables = preg_filter('/^/', 'export ', $bash_variables);
         $configText = join("\n",$exported_variables);
-        error_log($configText);
         return $configText;
     }
 

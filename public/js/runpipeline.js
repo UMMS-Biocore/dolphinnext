@@ -8293,14 +8293,14 @@ function viewDirButSearch(dir) {
         console.log(dir);
         if (dir.match(/s3:/i)) {
             amazon_cre_id = $("#mRunAmzKeyS3").val();
-            if (!amazon_cre_id) {
-                showInfoModal(
-                    "#infoModal",
-                    "#infoModalText",
-                    "Please select Amazon Keys to search files in your S3 storage."
-                );
-                warnUser = true;
-            }
+//            if (!amazon_cre_id) {
+//                showInfoModal(
+//                    "#infoModal",
+//                    "#infoModalText",
+//                    "Please select Amazon Keys to search files in your S3 storage."
+//                );
+//                warnUser = true;
+//            }
         } else if (dir.match(/gs:/i)) {
             google_cre_id = $("#mRunGoogKeyGS").val();
             if (!google_cre_id) {
@@ -11312,13 +11312,13 @@ $(document).ready(function () {
                 }
                 var s3_archive_dir_geo = $.trim($("#s3_archive_dir_geo").val());
                 var amzArchKey = $("#mArchAmzKeyS3_GEO").val();
-                if (s3_archive_dir_geo.match(/s3:/i)) {
-                    if (!amzArchKey) {
-                        infoModalText +=
-                            " * Please select Amazon Keys to save files into your S3 storage.\n";
-                        warnUser = true;
-                    }
-                }
+//                if (s3_archive_dir_geo.match(/s3:/i)) {
+//                    if (!amzArchKey) {
+//                        infoModalText +=
+//                            " * Please select Amazon Keys to save files into your S3 storage.\n";
+//                        warnUser = true;
+//                    }
+//                }
                 var gs_archive_dir_geo = $.trim($("#gs_archive_dir_geo").val());
                 var googArchKey = $("#mArchGoogKeyGS_GEO").val();
                 if (gs_archive_dir_geo.match(/gs:/i)) {
