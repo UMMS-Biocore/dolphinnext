@@ -2153,8 +2153,7 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                 if (profileData) {
                     if (profileData[0]) {
                         if (profileData[0].def_publishdir) {
-                            def_publishdir =
-                                profileData[0].def_publishdir + "/work" + project_pipeline_id;
+                            def_publishdir = profileData[0].def_publishdir;
                             $("#publish_dir").val(def_publishdir);
                             updateCheckBox("#publish_dir_check", "true");
                         } else {
@@ -2162,8 +2161,7 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                             updateCheckBox("#publish_dir_check", "false");
                         }
                         if (profileData[0].def_workdir) {
-                            def_workdir =
-                                profileData[0].def_workdir + "/work" + project_pipeline_id;
+                            def_workdir = profileData[0].def_workdir;
                             $("#rOut_dir").val(def_workdir);
                         }
                     }
