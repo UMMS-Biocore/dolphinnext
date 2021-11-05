@@ -540,14 +540,17 @@ class dbfuncs {
             //if $profile eq "amazon" then allow s3 backupdir download.
             $params .= "  profile = '".$profileType."'\n";
             $params .= "  executor_job = '".$executor_job."'\n";
-            $paramNameAr = array("given_name", "input_name", "url", "urlzip", "checkpath", "collection", "file_name", "file_dir", "file_type", "files_used", "archive_dir", "s3_archive_dir", "gs_archive_dir", "collection_type");
-            $paramAr = array($given_name, $input_name, $url, $urlzip, $checkpath, $collection, $file_name, $file_dir, $file_type, $files_used, $archive_dir, $s3_archive_dir, $gs_archive_dir, $collection_type);
-
+            $paramNameAr = array("given_name", "input_name", "url", "urlzip", "checkpath");
+            $paramAr = array($given_name, $input_name, $url, $urlzip, $checkpath);
+            $paramFileAr = array($collection, $file_name, $file_dir, $file_type, $files_used, $archive_dir, $s3_archive_dir, $gs_archive_dir, $collection_type);
+            $paramNameFileAr = array("collection", "file_name", "file_dir", "file_type", "files_used", "archive_dir", "s3_archive_dir", "gs_archive_dir", "collection_type");
             for ($i=0; $i<count($paramNameAr); $i++) {
                 if (!empty($paramAr[$i])){
                     $params.= "  ".$paramNameAr[$i]." = '\'".implode("\',\'", $paramAr[$i])."\''\n"; 
                 }
-
+            }
+            for ($i=0; $i<count($paramNameFileAr); $i++) {
+                $params.= "  ".$paramNameFileAr[$i].' = new File(".'.$paramNameFileAr[$i]."\").text\n"; 
             }
             $params .= "}\n";
         }
@@ -1786,6 +1789,42 @@ class dbfuncs {
         }
     }
 
+    function createInitialRunConfigFiles($project_pipeline_id, $uuid, $ownerID){
+        $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+        $collection = array();
+        $file_name = array();
+        $file_dir = array();
+        $file_type = array();
+        $files_used = array();
+        $archive_dir = array();
+        $s3_archive_dir = array();
+        $gs_archive_dir = array();
+        $collection_type = array();
+        foreach ($allinputs as $inputitem):
+        $collection_id = $inputitem->{'collection_id'};
+        if (!empty($collection_id)){
+            $allfiles= json_decode($this->getCollectionFiles($collection_id, $ownerID));
+            foreach ($allfiles as $fileData):
+            $collection[] = $collection_id;
+            $file_name[] = $fileData->{'name'};
+            $file_dir[] = $fileData->{'file_dir'};
+            $file_type[] = $fileData->{'file_type'};
+            $files_used[] = $fileData->{'files_used'};
+            $archive_dir[] = $fileData->{'archive_dir'};
+            $s3_archive_dir[] = $fileData->{'s3_archive_dir'};
+            $gs_archive_dir[] = $fileData->{'gs_archive_dir'};
+            $collection_type[] = $fileData->{'collection_type'};
+            endforeach;
+        }
+        endforeach;
+
+        $paramFileAr = array($collection, $file_name, $file_dir, $file_type, $files_used, $archive_dir, $s3_archive_dir, $gs_archive_dir, $collection_type);
+        $paramNameFileAr = array("collection", "file_name", "file_dir", "file_type", "files_used", "archive_dir", "s3_archive_dir", "gs_archive_dir", "collection_type");
+        for ($i=0; $i<count($paramNameFileAr); $i++) {
+            $this->createDirFile ("{$this->run_path}/$uuid/run/initialrun", ".".$paramNameFileAr[$i], 'w', "'".implode("','", $paramFileAr[$i])."'" );
+        }
+    }
+
     function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzBashConfigText, $attempt, $runType, $ownerID){
         //create files and folders
         $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
@@ -1799,6 +1838,7 @@ class dbfuncs {
         if (!empty($initialRunParams)){
             $this->createDirFile ("{$this->run_path}/$uuid/run/initialrun", "nextflow.config", 'w', $initialConfigText );
             copy("{$this->nf_path}/initialrun.nf", "{$this->run_path}/$uuid/run/initialrun/nextflow.nf");
+            $this->createInitialRunConfigFiles($project_pipeline_id, $uuid, $ownerID);
         }
         if (!file_exists($run_path_real."/nextflow.nf")) {
             $this->triggerRunErr('ERROR: Nextflow file is not found in server!', $uuid,$project_pipeline_id,$ownerID);
