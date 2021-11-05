@@ -249,6 +249,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
     // For DSSO Authorization Server:
     // empty($_SERVER['HTTP_REFERER']) required since php may load page more than once.
     // when reload happens, $_SERVER['HTTP_REFERER'] will be set.
+    
     if (!empty($SSO_LOGIN) && !empty($SSO_URL) && !empty($CLIENT_ID) && empty($_SERVER['HTTP_REFERER'])){
         //        error_log("ssoLoginCheck: ".$_SESSION["ssoLoginCheck"]);
         //        error_log("HTTP_REFERER: ".$_SERVER["HTTP_REFERER"]);
