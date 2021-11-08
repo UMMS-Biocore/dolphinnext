@@ -1,3 +1,6 @@
+04.11.2021 Version 1.2.62
+DolphinNext Debrowser_URL parameter updated. Full link needs to be provided in .sec file.
+
 04.11.2021 Version 1.2.61
 Initial run config updated to support high number of inputs.
 Please select Amazon Keys warning removed from run page.

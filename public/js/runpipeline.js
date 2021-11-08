@@ -14418,7 +14418,8 @@ $(document).ready(function () {
                                 pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson
                             );
                             var debrowserlink =
-                                debrowserUrl + "/debrowser/R/?jsonobject=" + link;
+                                debrowserUrl + link;
+                                console.log(debrowserlink)
                             var iframe =
                                 '<iframe id="deb-' +
                                 fileid +
