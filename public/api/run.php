@@ -235,7 +235,7 @@ class Run
         foreach ($inputs as $module => $varObj):
         if (is_array($varObj) && !isset($varObj[0])){
             foreach ($varObj as $varName => $val):
-            $val = json_encode($val);
+            $val = json_encode($val,JSON_UNESCAPED_SLASHES);
             $proVarObj[$module][$varName] = "params.$module.$varName = $val";
             endforeach;
         } 
@@ -246,6 +246,9 @@ class Run
         $ownerID = $user["id"];
         $dbfuncs = new dbfuncs();
         $process_opt=isset($info["process_opt"]) ? addslashes(htmlspecialchars(urldecode($info["process_opt"]), ENT_QUOTES)) : "";
+        
+error_log(print_r($process_opt, TRUE));
+            
         $run_name= $doc["name"]; // test_run
         $tmplt_run_id= $doc["tmplt_id"]; //template run id e.g. 140
         $run_env= !empty($doc["run_env"]) ? $doc["run_env"] : ""; //run_env e.g. cluster-5
