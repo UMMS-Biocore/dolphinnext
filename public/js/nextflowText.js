@@ -728,7 +728,7 @@ function fixCurlyBrackets(outputName) {
 
 function getPublishDirRegex(outputName) {
     // multiple file group
-    if (outputName.match(/file\((.*?)\)/ig).length >1){
+    if (outputName.match(/file\((.*?)\)/ig) && outputName.match(/file\((.*?)\)/ig).length >1){
         var groupsArr = []
         var groups = outputName.match(/file\((.*?)\)/ig)
         for (var i = 0; i < groups.length; i++) {
