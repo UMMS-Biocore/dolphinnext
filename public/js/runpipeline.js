@@ -781,7 +781,7 @@ function parseRegPartAutofill(regPart) {
     var urlzip = null;
     var checkPath = null;
     if (regPart.match(/@/)) {
-        var regSplit = regPart.split("@");
+        var regSplit = regPart.split(" @");
         for (var i = 0; i < regSplit.length; i++) {
             // find url
             var urlCheck = regSplit[i].match(/^url:"(.*)"|^url:'(.*)'/i);
@@ -832,7 +832,7 @@ function parseRegPart(regPart) {
     var arr = null;
     var cond = null;
     if (regPart.match(/@/)) {
-        var regSplit = regPart.split("@");
+        var regSplit = regPart.split(" @");
         for (var i = 0; i < regSplit.length; i++) {
             // find type among following list:checkbox|textbox|input|dropdown
             var typeCheck = regSplit[i].match(/^checkbox|^textbox|^input|^dropdown/i);
