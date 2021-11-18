@@ -396,7 +396,7 @@ function getNewScriptHeader(script_header, process_opt, gNum, mergedProcessName,
     } else {
         newScriptHeader = script_header
     }
-    
+
     if (currgid && mainPipeEdges && newScriptHeader.match(/\{\{publishdir:(.*)\}\}/g)){
         var checkParam = newScriptHeader.match(/\{\{publishdir:(.*)\}\}/g);
         if (checkParam.length > 0){
@@ -722,8 +722,21 @@ function fixCurlyBrackets(outputName) {
 }
 
 //eg. set val(name), file("${params.wdir}/validfastq/*.fastq") then take inside of the file(x)
+
+//eg. set library, name, file("*/*.fastq"), file("*/*.fa")
+//->/(.*\/.*.fastq|.*\/.*.fa)$/
+
 function getPublishDirRegex(outputName) {
-    if (outputName.match(/file\((.*)\)/)) {
+    // multiple file group
+    if (outputName.match(/file\((.*?)\)/ig).length >1){
+        var groupsArr = []
+        var groups = outputName.match(/file\((.*?)\)/ig)
+        for (var i = 0; i < groups.length; i++) {
+            groupsArr.push(groups[i].match(/file\((.*)\)/i)[1])
+        }
+        var outputName = "(" + groupsArr.join("|") + ")";
+
+    } else if (outputName.match(/file\((.*)\)/)) {
         var outputName = outputName.match(/file\((.*)\)/i)[1];
     }
     //if name contains path and separated by '/' then replace with escape character '\/'

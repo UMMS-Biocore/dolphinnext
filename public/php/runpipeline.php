@@ -1184,7 +1184,7 @@ $DMETA_LABEL= DMETA_LABEL;
                     </br>
                 <form class="form-horizontal">
                     <div class="form-group" id="mRunAmzKeyS3Div" style="display:none; ">
-                        <label class="col-sm-3 control-label text-left" style="padding-left:45px; color:#a7a218;">Select Amazon Keys (for S3) <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon Keys to access your S3 storage"><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
+                        <label class="col-sm-3 control-label text-left" style="padding-left:45px; color:#a7a218;">Select Amazon Keys (for S3) <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon Keys to access your S3 storage. If you need Amazon Keys to access S3 storage, you can enter your keys in profile->Amazon Keys section."><i class='glyphicon glyphicon-info-sign' style="color:#ffbb33;"></i></a></span></label>
                         <div class="col-sm-7">
                             <select id="mRunAmzKeyS3" class="fbtn btn-default form-control" name="amazon_cre_id">
                                 <option value="" disabled selected>Select Amazon Keys </option>

@@ -1,3 +1,7 @@
+18.11.2021 Version 1.2.64
+PublishDir Regex improved for multiple file types.
+Fix will allow the use of @ symbol in description of inputs.
+
 10.11.2021 Version 1.2.63
 Bug fixed for Dmeta run parameter submission.
 
