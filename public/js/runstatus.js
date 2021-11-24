@@ -214,7 +214,8 @@ $(document).ready(function () {
                 $(row).css("background-color", "#f4f4f4");
             }
         },
-        sScrollX: "100%"
+        sScrollX: "100%",
+       deferRender: true
     });
 
 
