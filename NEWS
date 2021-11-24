@@ -1,3 +1,7 @@
+22.11.2021 Version 1.2.65
+Overwrite:true option removed from PublishDir to prevent copy operations on resumed runs.
+Run Status page loading improved.
+
 18.11.2021 Version 1.2.64
 PublishDir Regex improved for multiple file types.
 Fix will allow the use of @ symbol in description of inputs.

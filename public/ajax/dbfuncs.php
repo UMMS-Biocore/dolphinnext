@@ -2081,6 +2081,7 @@ class dbfuncs {
         if (isset($checkarray[0])) {
             $this->updateRunAttempt($project_pipeline_id, $attempt, $ownerID);
             $this->updateRunStatus($project_pipeline_id, $status, $ownerID);
+            $this->updateLastRunDate($project_pipeline_id, $ownerID);
             $this->updateRunPid($project_pipeline_id, "0", $ownerID);
             $this->updateRunSessionUUID("", "", $project_pipeline_id, $ownerID);
         } else {
@@ -4299,8 +4300,8 @@ class dbfuncs {
     }
     //    ----------- Runs     ---------
     function insertRun($project_pipeline_id, $status, $attempt, $ownerID) {
-        $sql = "INSERT INTO $this->db.run (project_pipeline_id, run_status, attempt, owner_id, perms, date_created, date_modified, last_modified_user) VALUES
-                  ('$project_pipeline_id', '$status', '$attempt', '$ownerID', 3, now(), now(), '$ownerID')";
+        $sql = "INSERT INTO $this->db.run (project_pipeline_id, run_status, attempt, owner_id, perms, date_created, date_modified, last_modified_user, date_created_last_run) VALUES
+                  ('$project_pipeline_id', '$status', '$attempt', '$ownerID', 3, now(), now(), '$ownerID', now())";
         return self::insTable($sql);
     }
     function insertRunLog($project_pipeline_id, $uuid, $status, $ownerID) {
@@ -4366,6 +4367,16 @@ class dbfuncs {
     function getRunLogStatus($uuid) {
         $sql = "SELECT run_status, IF(run_opt IS NULL,0,1) as run_opt_check FROM $this->db.run_log WHERE run_log_uuid = '$uuid'";
         return self::queryTable($sql);
+    }
+    
+    function updateLastRunDate($project_pipeline_id,$ownerID){
+        $curr_ownerID= $this->queryAVal("SELECT owner_id FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
+        $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (empty($permCheck)){
+            exit();
+        }
+        $sql = "UPDATE $this->db.run SET date_created_last_run= now(), date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
+        return self::runSQL($sql);
     }
     function updateRunStatus($project_pipeline_id, $status, $ownerID) {
         $curr_ownerID= $this->queryAVal("SELECT owner_id FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
@@ -5372,33 +5383,20 @@ class dbfuncs {
                 if ($userRole == "admin"){
                     $where = " WHERE pp.deleted = 0";
                 } else {
-                    $where = " WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and pp.perms = 15))";
+                    $where = " LEFT JOIN $this->db.user_group ug ON pp.group_id=ug.g_id 
+                    WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and pp.perms = 15))";
                 }
-                $sql = "SELECT DISTINCT rr.date_created as run_date_created, rr.run_status,  b.project_pipeline_id, b.name, b.summary, b.output_dir, b.run_log_id, b.pp_date_created, pip.name as pipeline_name, pip.rev_id as pipeline_rev, pip.id as pipeline_id, u.email, u.username, b.owner_id, b.own
-                    FROM $this->db.run_log rr
-                    RIGHT JOIN (
-                        SELECT DISTINCT pp.id as project_pipeline_id, pp.name,  pp.summary, r.run_log_id,  pp.date_created as pp_date_created, pp.output_dir, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own, pp.pipeline_id, pp.group_id
-                        FROM $this->db.project_pipeline pp
-                        LEFT JOIN (SELECT deleted, project_pipeline_id, MAX(id) AS run_log_id
-                                   FROM $this->db.run_log
-                                   WHERE $this->db.run_log.deleted = 0
-                                   GROUP BY project_pipeline_id) AS r
-                                   ON r.project_pipeline_id=pp.id
-                        LEFT JOIN $this->db.user_group ug ON pp.group_id=ug.g_id
-                        $where
-                        GROUP BY pp.id 
-                    ) b ON rr.id = b.run_log_id
-                        INNER JOIN $this->db.biocorepipe_save pip ON pip.id = b.pipeline_id
-                        INNER JOIN $this->db.users u ON b.owner_id = u.id";
+                
+                $sql = "SELECT r.date_created_last_run as run_date_created, r.run_status, pp.id as project_pipeline_id, pp.name, pp.summary, pp.output_dir,  pp.date_created as pp_date_created, pip.name as pipeline_name, pip.rev_id as pipeline_rev, pip.id as pipeline_id, u.email, u.username, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
+                FROM $this->db.project_pipeline pp
+                LEFT JOIN $this->db.run r  ON r.project_pipeline_id = pp.id
+                INNER JOIN $this->db.biocorepipe_save pip ON pip.id = pp.pipeline_id
+                INNER JOIN $this->db.users u ON pp.owner_id = u.id
+                $where";
             }
         }
         return self::queryTable($sql);
     }
-
-
-
-
-
 
     function getExistProjectPipelines($pipeline_id,$type,$ownerID) {
         if ($type == "user"){
