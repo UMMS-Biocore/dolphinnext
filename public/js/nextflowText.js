@@ -465,7 +465,7 @@ function createNextflowFile(nxf_runmode, uuid) {
         }
 
 
-        //        var output_dir = $runscope.getPubVal("report");
+        //        var output_dir = await $runscope.getPubVal("report");
         //        if (output_dir) {
         //            nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
         //        }

@@ -22,8 +22,8 @@ function callusRole() {
     } 
     return usRole;
 }
-usRole = callusRole();
 
+usRole = callusRole();
 
 
 //initialize all tooltips on a page (eg.$('#mFileTypeTool').tooltip("show"))
@@ -226,9 +226,9 @@ function showConfirmDeleteModal(text, savedData, execFunc, buttonText) {
         $(textID).html(text);
         $(clickid).removeData("data");
         $(clickid).data("data",savedData);
-        $(modalId).on('click', clickid, function (event) {
+        $(modalId).on('click', clickid, async function (event) {
             var savedData = $(clickid).data("data")
-            execFunc(savedData)
+            await execFunc(savedData)
         });
     } else {
         $(modalId).off();
@@ -238,9 +238,9 @@ function showConfirmDeleteModal(text, savedData, execFunc, buttonText) {
             $(textID).html(text);
             $(clickid).data("data",savedData)
         });
-        $(modalId).on('click', clickid, function (event) {
+        $(modalId).on('click', clickid, async function (event) {
             var savedData = $(clickid).data("data")
-            execFunc(savedData)
+            await execFunc(savedData)
             $(modalId).modal('hide'); 
         });
         $(modalId).modal('show'); 
@@ -1041,7 +1041,7 @@ $(document).ready(function () {
 
         $(document).on('focus', '.permscheck', function () {
             previousOpt = $(this).children("option:selected");
-        }).on('change', '.permscheck', function (event) {
+        }).on('change', '.permscheck', async function (event) {
             var dropdownID = this.id;
             var idObj = {};
             console.log(dropdownID)
@@ -1072,8 +1072,8 @@ $(document).ready(function () {
                 var selPerm = $("#permsRun").val();
                 var pipeline_id = $('#pipeline-title').attr('pipeline_id');
                 var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
-                var pipeData = $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
-                var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+                var pipeData = await $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+                var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
                 var project_id = pipeData[0].project_id;
                 if (pipeline_id && project_id){
                     var warnUser = false;
@@ -1528,6 +1528,22 @@ function reportAjaxError(jqXHR, exception, query){
     console.log("#Ajax Error: "+msg);
 }
 
+async function doAjax(data) {
+    let result = null;
+    try {
+        result = await $.ajax({
+            url: "ajax/ajaxquery.php",
+            data: data,
+            async: true,
+            cache: false,
+            type: "POST",
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    return result;
+}
+
 function getValues(data, async) {
     async = async ||false; //default false
     var result = null;
@@ -1679,9 +1695,9 @@ function getValuesAsync(data, callback) {
         async: true,
         cache: false,
         type: "POST",
-        success: function (data) {
+        success: async function (data) {
             result = data;
-            callback(result);
+            await callback(result);
         },
         error: function (errorThrown) {
             console.log("AJAX Error occured.", data)

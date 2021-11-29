@@ -977,7 +977,7 @@ immediately after the control sidebar -->
 <!--Google Platform Library on your web pages that integrate Google Sign-In-->
 <script src="https://apis.google.com/js/platform.js" async defer></script>
 <!-- jQuery 3 -->
-<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min-3.6.0.js"></script>
 <!-- jquery-ui-1.9.2.custom.min-->
 <script src="bower_components/jquery-ui-bootstrap/assets/js/jquery-ui-1.10.0.custom.min.js"></script>
 <!-- Bootstrap 3.3.7 -->
