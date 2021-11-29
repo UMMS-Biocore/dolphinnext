@@ -5462,7 +5462,7 @@ async function loadProjectPipeline(pipeData) {
     await loadRunSettings(pipeData);
     checkShub();
     // bind event handlers for autofill
-    setTimeout(function () {
+    setTimeout(async function () {
         if (autoFillJSON !== null && autoFillJSON !== undefined) {
             bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
             bindEveHandler(autoFillJSON);
@@ -5470,16 +5470,16 @@ async function loadProjectPipeline(pipeData) {
             if (pipeData[0].onload) {
                 if (pipeData[0].onload == "refreshEnv") {
                     console.log("onload refreshEnv");
-                    refreshEnv();
+                    await refreshEnv();
                 }
             }
         }
     }, 1000);
     checkCloudType(pipeData[0].profile);
     //load cloud keys for possible s3/gs connection
-    loadCloudKeys(pipeData);
+    await loadCloudKeys(pipeData);
     // load group info
-    loadUserGroups(pipeData);
+    await loadUserGroups(pipeData);
     // activate collapse icon for process options
     refreshCollapseIconDiv();
 
@@ -5493,7 +5493,7 @@ async function loadProjectPipeline(pipeData) {
         autofillEmptyInputs(autoFillJSON);
     }
     // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
-    cleanDepProPipeInputs();
+    await cleanDepProPipeInputs();
     //after loading pipeline disable all the inputs
     if (projectpipelineOwn !== "1") {
         toogleRunInputs("disable");
@@ -5510,8 +5510,8 @@ $("#inputsTable").on("click", "#systemInputs", function (e) {
     $("#inputsTable> tbody > tr:gt(" + indx + ")").toggle();
 });
 
-function refreshEnv() {
-    loadRunOptions("change");
+async function refreshEnv() {
+    await loadRunOptions("change");
 }
 
 //type="change","silent"
@@ -5968,7 +5968,7 @@ async function saveFileSetValModal(data, sType, inputID, collection) {
         urlzip,
         checkPath
     );
-    checkReadytoRun();
+    await checkReadytoRun();
 }
 
 async function editFileSetValModal(data, sType, inputID, collection) {
@@ -6000,7 +6000,7 @@ async function editFileSetValModal(data, sType, inputID, collection) {
         urlzip,
         checkPath
     );
-    checkReadytoRun();
+    await checkReadytoRun();
 }
 
 //keep record of missing variables
@@ -6071,7 +6071,7 @@ async function checkReadytoRun(type) {
     if (checkType === "") {
         checkType = type || "";
     }
-    checkMissingVar();
+    await checkMissingVar();
     runStatus = await getRunStatus(project_pipeline_id);
     project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
     var getProPipeInputs = await doAjax({
@@ -7791,7 +7791,7 @@ async function saveRun(sucFunc, showToastr) {
                     toastr.info("All changes are saved.");
                 }
                 if (typeof sucFunc === "function") {
-                    sucFunc();
+                    await sucFunc();
                 }
                 if (dupliProPipe === false) {
                     if (s) {
@@ -12318,7 +12318,7 @@ $(document).ready(async function () {
     //##################
 
     //click on "use default" button
-    $("#inputsTab").on("click", "#defValUse", function (e) {
+    $("#inputsTab").on("click", "#defValUse", async function (e) {
         var button = $(this);
         var rowID = "";
         var gNumParam = "";
@@ -12336,7 +12336,7 @@ $(document).ready(async function () {
             urlzip = null,
             checkPath = null;
         //check database if file is exist, if not exist then insert
-        checkInputInsert(
+        await checkInputInsert(
             data,
             gNumParam,
             given_name,
@@ -12397,7 +12397,7 @@ $(document).ready(async function () {
                 var url = null,
                     urlzip = null,
                     checkPath = null;
-                checkInputInsert(
+                await checkInputInsert(
                     data,
                     gNumParam,
                     given_name,
@@ -12738,7 +12738,7 @@ $(document).ready(async function () {
                                         collection_id: collection_id,
                                         collection_name: newCollName,
                                     };
-                                    fillCollection(savetype, collection);
+                                    await fillCollection(savetype, collection);
                                     $("#sampleTable").DataTable().ajax.reload(null, false);
                                     $("#newCollectionModal").modal("hide");
                                     $("#inputFilemodal").modal("hide");
@@ -12759,7 +12759,7 @@ $(document).ready(async function () {
                                 collection_id: collection_id,
                                 collection_name: getcollection[0].name,
                             };
-                            fillCollection(savetype, collection);
+                            await fillCollection(savetype, collection);
                             $("#inputFilemodal").modal("hide");
                         }
                     }
@@ -12832,7 +12832,7 @@ $(document).ready(async function () {
                                 collection_id: collection_id,
                                 collection_name: collection_name,
                             };
-                            fillCollection(savetype, collection);
+                            await fillCollection(savetype, collection);
                             $("#sampleTable").DataTable().ajax.reload(null, false);
                             $("#newCollectionModal").modal("hide");
                             $("#inputFilemodal").modal("hide");
