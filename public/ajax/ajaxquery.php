@@ -1101,7 +1101,12 @@ else if ($p=="appendProfileVariables"){
 else if ($p=="getProfiles")
 {
     $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "";
-    $data = $db->getProfiles($type, $ownerID);
+    $data = json_decode($db->getProfiles($type, $ownerID));
+    foreach($data as $d){
+        $bash_variable = $d->bash_variable;
+        $d->bash_variable = trim($db->amazonDecode($bash_variable));
+    }
+    $data=json_encode($data);
 }
 else if ($p=="getProfileCluster")
 {

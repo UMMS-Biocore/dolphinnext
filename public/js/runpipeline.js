@@ -5431,7 +5431,7 @@ async function loadRunSettings(pipeData) {
 async function loadProjectPipeline(pipeData) {
     await loadRunOptions("change");
     $("#creatorInfoPip").css("display", "block");
-    
+
     disableRunSum();
     $("#permsRun").val(pipeData[0].perms);
     $("#ownUserNamePip").text(pipeData[0].username);
@@ -8423,6 +8423,64 @@ function fillFileSearchBox(item, targetDiv) {
     }
 }
 
+var selectizeCollection = function (idArr, selVal, multipleItems) {
+    var maxItems = 1
+
+
+    if (multipleItems) maxItems = 1000;
+    var renderMenu = {
+        option: function (data, escape) {
+            var files = "file";
+            if (data.fileCount > 1) {
+                files = "files";
+            }
+            return (
+                '<div class="option">' +
+                '<span class="title"><i>' +
+                escape(data.name) +
+                "<i><small> (" +
+                escape(data.fileCount) +
+                " " +
+                files +
+                ")</small></i>" +
+                "</i></span>" +
+                "</div>"
+            );
+        },
+        item: function (data, escape) {
+            return (
+                '<div class="item" data-value="' +
+                escape(data.id) +
+                '">' +
+                escape(data.name) +
+                "</div>"
+            );
+        },
+    };
+
+    getValuesAsync({ p: "getCollection" }, function (colData) {
+        for (var i = 0; i < idArr.length; i++) {
+            if ($(idArr[i])[0].selectize){
+                $(idArr[i])[0].selectize.destroy();
+            }
+            $(idArr[i]).selectize({
+                maxItems: maxItems,
+                valueField: "id",
+                searchField: ["name"],
+                createOnBlur: true,
+                render: renderMenu,
+                options: colData,
+                create: function (input, callback) {
+                    callback({ id: "_newItm_" + input, name: input });
+                },
+            });
+            $(idArr[i])[0].selectize.clear();
+            if (selVal) $(idArr[i])[0].selectize.setValue(selVal)
+
+        }
+    });
+};
+
 async function validateMoveCopyRun(new_project_id) {
     var infoText = "";
     var target_group_id = $("#groupSelRun").val();
@@ -9537,7 +9595,7 @@ $(function () {
                     navTabDiv +=
                         "<textarea " +
                         lastrun +
-                        ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' +
+                        ' readonly id="runLogArea" rows="20" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' +
                         serverlogText +
                         logText +
                         "</textarea>";
@@ -10262,53 +10320,7 @@ $(document).ready(async function () {
         });
     });
 
-    var selectizeCollection = function (idArr) {
-        var renderMenu = {
-            option: function (data, escape) {
-                var files = "file";
-                if (data.fileCount > 1) {
-                    files = "files";
-                }
-                return (
-                    '<div class="option">' +
-                    '<span class="title"><i>' +
-                    escape(data.name) +
-                    "<i><small> (" +
-                    escape(data.fileCount) +
-                    " " +
-                    files +
-                    ")</small></i>" +
-                    "</i></span>" +
-                    "</div>"
-                );
-            },
-            item: function (data, escape) {
-                return (
-                    '<div class="item" data-value="' +
-                    escape(data.id) +
-                    '">' +
-                    escape(data.name) +
-                    "</div>"
-                );
-            },
-        };
 
-        getValuesAsync({ p: "getCollection" }, function (colData) {
-            for (var i = 0; i < idArr.length; i++) {
-                $(idArr[i]).selectize({
-                    valueField: "id",
-                    searchField: ["name"],
-                    createOnBlur: true,
-                    render: renderMenu,
-                    options: colData,
-                    create: function (input, callback) {
-                        callback({ id: "_newItm_" + input, name: input });
-                    },
-                });
-                $(idArr[i])[0].selectize.clear();
-            }
-        });
-    };
 
     $(function () {
         // Re-Execute initCompleteFunction when table draw is completed
@@ -10372,7 +10384,7 @@ $(document).ready(async function () {
             $("#mArchAmzKeyS3Div").css("display", "none");
             $("#file_dir_div").css("display", "block");
             $("#viewDirInfo").css("display", "block");
-            selectizeCollection(["#collection_id", "#collection_id_geo"]);
+            selectizeCollection(["#collection_id", "#collection_id_geo"], "", false);
             //#uploadFiles tab:
             $("#target_dir").val($runscope.getUploadDir("new"));
         });
@@ -11519,8 +11531,10 @@ $(document).ready(async function () {
             .data();
             if (selectedRows.length > 0) {
                 $("#deleteSample").css("display", "inline-block");
+                $("#editSample").css("display", "inline-block");
             } else {
                 $("#deleteSample").css("display", "none");
+                $("#editSample").css("display", "none");
             }
         }
     );
@@ -12713,7 +12727,7 @@ $(document).ready(async function () {
                         $("#newCollectionModalText").html(
                             "Selected files are not match with the one collection. Please enter <b> a new collection name </b> or <b>choose collection from dropdown</b> to add your files into existing collection."
                         );
-                        selectizeCollection(["#newCollectionName"]);
+                        selectizeCollection(["#newCollectionName"], "", false);
                     });
                     $("#newCollectionModal").on("click", "#saveNewCollect", async function (e) {
                         e.preventDefault();
@@ -12847,7 +12861,7 @@ $(document).ready(async function () {
                         $("#newCollectionModalText").html(
                             "Please enter <b> a new collection name </b> or <b>choose collections from dropdown</b> to add  your files into existing collections."
                         );
-                        selectizeCollection(["#newCollectionName"]);
+                        selectizeCollection(["#newCollectionName"], "",false);
                     });
                     $("#newCollectionModal").on("click", "#saveNewCollect", async function (e) {
                         e.preventDefault();

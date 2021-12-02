@@ -170,6 +170,129 @@ $('#inputFilemodal').on('click', '#dmetaFiles', function (e) {
 });
 
 
+
+
+
+
+$(document).on('show.bs.modal', '#editSampleModal', function (e) {
+    $('#editSampleModal').find("form").trigger("reset");
+
+    var fillEditSampleModal = function (data){
+        var newObj = {} 
+        console.log(data)
+        newObj.name = data.name
+        newObj.collection_type = data.collection_type
+        newObj.s3_archive_dir = data.s3_archive_dir
+        newObj.archive_dir = data.archive_dir
+        newObj.gs_archive_dir = data.gs_archive_dir
+        newObj.run_env = data.run_env
+        newObj.project_name = data.project_name
+        newObj.collection_id = data.collection_id
+        newObj.file_type = data.file_type
+
+        var cpData = $.extend(true, {}, data);
+
+        var file_dir = cpData.file_dir
+        var files_used = cpData.files_used
+        if (file_dir.constructor === Array){
+            file_dir = file_dir.join("\t");
+        }
+        newObj.file_dir = file_dir
+
+        if (files_used.constructor === Array){
+            for (var i = 0; i < files_used.length; i++) {
+                files_used[i] = files_used[i].join(",");;
+            }
+            files_used = files_used.join(" | ");
+        }
+        //geo files:
+        if (!data.file_dir){
+            newObj.geo_used = files_used.replace(/ \| /g, "\n")
+            $("#editSampleModal").find("[name=geo_used]").closest(".form-group").css("display","block");
+            $("#editSampleModal").find("[name=files_used]").closest(".form-group").css("display","none");
+        } else {
+            $("#editSampleModal").find("[name=geo_used]").closest(".form-group").css("display","none");
+            $("#editSampleModal").find("[name=files_used]").closest(".form-group").css("display","block");
+            newObj.files_used = files_used.replace(/ \| /g, "\n")
+        }
+        selectizeCollection(["#collection_id_edit"], newObj.collection_id.split(","), true);
+        fillFormByName('#editSampleModal', 'input, select, textarea', newObj);
+    }
+
+    var selRowsData = $("#sampleTable")
+    .DataTable()
+    .rows({ selected: true })
+    .data();
+    var selRowsIds = []
+    for (var i = 0; i < selRowsData.length; i++) {
+        selRowsIds.push(selRowsData[i].id);
+    }
+    $('#saveEditSampleModal').data('clickedrows', selRowsIds);
+    if (selRowsData.length > 1){
+        console.log("show multi update")
+    } else {
+        fillEditSampleModal(selRowsData[0])
+    }
+})
+
+$(document).on('click', '#saveEditSampleModal', async function (e) {
+    e.preventDefault();
+    var clickedRows = $('#saveEditSampleModal').data('clickedrows');
+    var formValues = $('#editSampleModal').find('input, select, textarea');
+    var requiredFields = ["name"]
+    console.log(clickedRows)
+
+    var formObj = {};
+    var stop = "";
+    [formObj, stop] = createFormObj(formValues, requiredFields);
+    console.log(formObj);
+
+    if ( stop === false) {
+        //new items come with prefix: _newItm_
+        for (var i = 0; i < formObj.collection_id.length; i++) {
+            var eachCollID = formObj.collection_id[i]
+            var collection_name = $("#collection_id_edit")[0].selectize.getItem(
+                eachCollID
+            )[0].innerHTML;
+            collection_name = cleanSpecChar(collection_name);
+            console.log(eachCollID)
+            console.log(collection_name)
+            if (eachCollID.match(/^_newItm_(.*)/)) {
+                var collection_data = await doAjax({
+                    p: "saveCollection",
+                    name: collection_name,
+                });
+                console.log(collection_data)
+                if (collection_data.id) {
+                    formObj.collection_id[i] = collection_data.id;
+                }
+            }
+        }
+        console.log(formObj)
+
+        //        formObj.file_dir = fileDirArr;
+        //        formObj.file_array = ret.file_array;
+        formObj.p = "saveFile";
+        console.log(formObj);
+        //        $.ajax({
+        //            type: "POST",
+        //            url: "ajax/ajaxquery.php",
+        //            data: formObj,
+        //            async: true,
+        //            success: function (s) {
+        //                if (s.length) {
+        //                    $("#sampleTable").data("select", [collection_name]);
+        //                    $("#sampleTable").DataTable().ajax.reload(null, false);
+        //                    $("#addFileModal").modal("hide");
+        //                }
+        //            },
+        //            error: function (errorThrown) {
+        //                alert("Error: " + errorThrown);
+        //            },
+        //        });
+    }
+})
+
 $(document).on('click', '.showDetailSample', function (e) {
     var getHeaderRow = function (text){
         if (!text) text = "";

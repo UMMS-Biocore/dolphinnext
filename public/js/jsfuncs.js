@@ -2020,6 +2020,7 @@ function fillFormByName(formId, find, data) {
                     $(formValues[k]).attr("checked", true);
                 } 
             } else {
+                console.log(data[nameAttr])
                 if (data[nameAttr] === "on") {
                     $(formValues[k]).attr('checked', true);
                 } else {

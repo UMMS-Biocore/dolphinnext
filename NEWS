@@ -1,3 +1,7 @@
+29.11.2021 Version 1.2.66
+Environment Variables in Public Run Environment Templates fixed.
+Run environment and work directory fields swapped in the run page.
+
 22.11.2021 Version 1.2.65
 Overwrite:true option removed from PublishDir to prevent copy operations on resumed runs.
 Run Status page loading improved.
