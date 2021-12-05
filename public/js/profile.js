@@ -372,7 +372,6 @@ $(document).ready(function () {
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             }
-            console.log(data[0].group_id)
             console.log(data)
             if (data[0].perms){
                 if (data[0].perms == "3"){

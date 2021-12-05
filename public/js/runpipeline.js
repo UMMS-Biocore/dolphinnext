@@ -7,7 +7,14 @@ $runscope = {
 
     //-------- Functions:
     //Generic function to save ajax data
-    getAjaxData: function (varName, getValuesObj) {
+    getAjaxData: async function (varName, getValuesObj) {
+        if ($runscope[varName] === null) {
+            $runscope[varName] = await doAjax(getValuesObj);
+            //            Object.defineProperty($runscope, varName, {configureable: false, writable:false});
+        }
+        return $runscope[varName];
+    },
+    getAjaxDataSync: function (varName, getValuesObj) {
         if ($runscope[varName] === null) {
             $runscope[varName] = getValues(getValuesObj);
             //            Object.defineProperty($runscope, varName, {configureable: false, writable:false});
@@ -70,19 +77,28 @@ $runscope = {
         }
         return uploadDir;
     },
-    checkUserWritePerm: function () {
+    checkUserWritePerm: async function () {
         var project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
         // if user owns the permission to write, then return 1 else 0;
-        var writePerm = $runscope.getAjaxData("checkUserWritePermRun", {
+        var writePerm = await $runscope.getAjaxData("checkUserWritePermRun", {
             p: "checkUserWritePermRun",
             project_pipeline_id: project_pipeline_id,
         });
         return writePerm;
     },
-    checkProjectPipelineOwn: function () {
+    checkUserWritePermSync: function () {
         var project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
         // if user owns the permission to write, then return 1 else 0;
-        var pipeData = $runscope.getAjaxData("getProjectPipelines", {
+        var writePerm = $runscope.getAjaxDataSync("checkUserWritePermRun", {
+            p: "checkUserWritePermRun",
+            project_pipeline_id: project_pipeline_id,
+        });
+        return writePerm;
+    },
+    checkProjectPipelineOwn: async function () {
+        var project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
+        // if user owns the permission to write, then return 1 else 0;
+        var pipeData = await $runscope.getAjaxData("getProjectPipelines", {
             p: "getProjectPipelines",
             id: project_pipeline_id,
         });
@@ -341,7 +357,7 @@ function translateSVG(mG, pObj) {
     pObj.lastMG = [transX, transY, transS, widthC, height];
 }
 
-function openSubPipeline(piID, pObj) {
+async function openSubPipeline(piID, pObj) {
     var sData = pObj.sData[0];
     var MainGNum = pObj.MainGNum;
     var lastGnum = pObj.lastGnum;
@@ -448,7 +464,7 @@ function openSubPipeline(piID, pObj) {
                         ];
                         window[newMainGnum].lastPipeName = pObj.name;
                         // create new SVG workplace inside panel, if not added before
-                        openSubPipeline(newPiID, window[newMainGnum]);
+                        await openSubPipeline(newPiID, window[newMainGnum]);
                         // add pipeline circle to main workplace
                         addPipeline(
                             newPiID,
@@ -481,7 +497,7 @@ function openSubPipeline(piID, pObj) {
     }
 }
 
-function openPipeline(id) {
+async function openPipeline(id) {
     createSVG();
     sData = [window.pipeObj["main_pipeline_" + id]];
     if (sData) {
@@ -511,7 +527,7 @@ function openPipeline(id) {
                     ];
                     window[newMainGnum].lastPipeName = name;
                     // create new SVG workplace inside panel, if not added before
-                    openSubPipeline(piID, window[newMainGnum]);
+                    await openSubPipeline(piID, window[newMainGnum]);
                     // add pipeline circle to main workplace
                     addPipeline(piID, x, y, name, window, window[newMainGnum]);
                     //for process circles
@@ -1818,7 +1834,7 @@ function hideProcessOptionsAsIcons() {
 }
 
 //fill file/Val buttons
-function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
+async function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
     var button = $(buttonText);
     var checkDropDown = false;
     if (button.attr("indropdown")) {
@@ -1841,7 +1857,7 @@ function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
     // insert into project pipeline input table
     if (value && value != "") {
         if (checkDropDown == false && checkFileExist == false) {
-            checkInputInsert(
+            await checkInputInsert(
                 data,
                 gNumParam,
                 given_name,
@@ -1859,7 +1875,7 @@ function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
             checkFileExist == true &&
             keepExist == false
         ) {
-            checkInputEdit(
+            await checkInputEdit(
                 data,
                 gNumParam,
                 given_name,
@@ -1876,12 +1892,12 @@ function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
         } else if (checkDropDown == true && keepExist == false) {
             // if proPipeInputID exist, then first remove proPipeInputID.
             if (proPipeInputID) {
-                var removeInput = getValues({
+                var removeInput = await doAjax({
                     p: "removeProjectPipelineInput",
                     id: proPipeInputID,
                 });
             }
-            checkInputInsert(
+            await checkInputInsert(
                 data,
                 gNumParam,
                 given_name,
@@ -1899,7 +1915,7 @@ function autoFillButton(buttonText, value, keepExist, url, urlzip, checkPath) {
         // if value is empty:"" then remove from project pipeline input table
         if (keepExist == false) {
             var fillingType = "default";
-            var removeInput = getValues({
+            var removeInput = await doAjax({
                 p: "removeProjectPipelineInput",
                 id: proPipeInputID,
             });
@@ -1954,7 +1970,7 @@ function autofillEmptyInputs(autoFillJSON) {
             if (conds.$HOSTNAME) {
                 var statusCond = checkConds(conds);
                 if (statusCond === true) {
-                    $.each(states, function (st) {
+                    $.each(states, async function (st) {
                         var defName = states[st]; // expected Value
                         var defUrl = url[st] || null; // expected Value
                         var defUrlzip = urlzip[st] || null; // expected Value
@@ -1969,7 +1985,7 @@ function autofillEmptyInputs(autoFillJSON) {
                                 var varNameButAr = $(checkVarName).find(".firstsec >");
                                 if (varNameButAr && varNameButAr[0]) {
                                     var keepExist = true;
-                                    autoFillButton(
+                                    await autoFillButton(
                                         varNameButAr[0],
                                         defName,
                                         keepExist,
@@ -2006,7 +2022,7 @@ function getDefaultImage(states) {
 function fillStates(states, url, urlzip, checkPath) {
     $("#inputsTab").loading("start");
     var $DEFAULT_IMAGE = getDefaultImage(states);
-    $.each(states, function (st) {
+    $.each(states, async function (st) {
         var defName = states[st]; // expected Value
         var defUrl = url[st] || null; // expected Value
         var defUrlzip = urlzip[st] || null; // expected Value
@@ -2021,7 +2037,7 @@ function fillStates(states, url, urlzip, checkPath) {
                 var varNameButAr = $(checkVarName).find(".firstsec >");
                 if (varNameButAr && varNameButAr[0]) {
                     var keepExist = false;
-                    autoFillButton(
+                    await autoFillButton(
                         varNameButAr[0],
                         defName,
                         keepExist,
@@ -2114,13 +2130,13 @@ function fillStates(states, url, urlzip, checkPath) {
     });
 }
 
-function getJobData(getType) {
+async function getJobData(getType) {
     var chooseEnv = $("#chooseEnv option:selected").val();
     if (chooseEnv) {
         var patt = /(.*)-(.*)/;
         var proType = chooseEnv.replace(patt, "$1");
         var proId = chooseEnv.replace(patt, "$2");
-        var profileData = getProfileData(proType, proId);
+        var profileData = await getProfileData(proType, proId);
         var allProSett = {};
         if (profileData) {
             allProSett.job_queue = profileData[0].job_queue;
@@ -2141,10 +2157,10 @@ function getJobData(getType) {
 
 // to execute autofill function, binds event handlers to chooseEnv
 function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
-    $("#chooseEnv").bindFirst("change", function () {
-        var onchangechooseEnvFunc1 = function () {
+    $("#chooseEnv").bindFirst("change", async function () {
+        var onchangechooseEnvFunc1 = async function () {
             if (jsonType == "pipeline") {
-                var [allProSett, profileData] = getJobData("both");
+                var [allProSett, profileData] = await getJobData("both");
                 // autofill def_publishdir and def_workdir
                 var def_publishdir = "";
                 var def_workdir = "";
@@ -2275,8 +2291,8 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
             fillHostFunc(autoFillJSON, "default", filledVars);
         };
 
-        var sequentialUpdate = function (callback) {
-            onchangechooseEnvFunc1();
+        var sequentialUpdate = async function (callback) {
+            await onchangechooseEnvFunc1();
             callback();
         };
 
@@ -2304,7 +2320,7 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
         if (jsonType == "pipeline") {
             var ask = askAutoFill();
             if (ask) {
-                onchangechooseEnvFunc1();
+                await onchangechooseEnvFunc1();
                 var text =
                     "Would you like to update System Inputs according to selected run environment?";
                 var savedData = "";
@@ -2314,10 +2330,10 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                 var btnText = "Yes";
                 showConfirmDeleteModal(text, savedData, execFunc, btnText);
             } else {
-                sequentialUpdate(onchangechooseEnvFunc2);
+                await sequentialUpdate(onchangechooseEnvFunc2);
             }
         } else {
-            sequentialUpdate(onchangechooseEnvFunc2);
+            await sequentialUpdate(onchangechooseEnvFunc2);
         }
     });
 }
@@ -2433,8 +2449,8 @@ var addProfileLib = function (oldLibObj, profileVariables) {
     }
 };
 
-function addProfileVar(autoFillJSON) {
-    var profileVar = getValues({ p: "getProfileVariables" });
+async function addProfileVar(autoFillJSON) {
+    var profileVar = await doAjax({ p: "getProfileVariables" });
     var defaultLib = {};
     if (autoFillJSON) {
         for (var i = 0; i < profileVar.length; i++) {
@@ -2916,7 +2932,7 @@ function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier) {
         }
         if (getProPipeInputs.length > 1) {
             for (var k = 1; k < getProPipeInputs.length; k++) {
-                var removeInput = getValues({
+                var removeInput = doAjax({
                     p: "removeProjectPipelineInput",
                     id: getProPipeInputs[k].id,
                 });
@@ -4485,7 +4501,7 @@ function showhideOnEnv(profileData) {
 
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
-function insertInputOutputRow(
+async function insertInputOutputRow(
 rowType,
  MainGNum,
  firGnum,
@@ -5191,7 +5207,7 @@ function loadPipelineDetails(pipeline_id, pipeData) {
         url: "ajax/ajaxquery.php",
         data: getPipelineD,
         async: true,
-        success: function (s) {
+        success: async function (s) {
             window.pipeObj = s;
             window.ajaxData.pipelineData = [
                 window.pipeObj["main_pipeline_" + pipeline_id],
@@ -5207,6 +5223,10 @@ function loadPipelineDetails(pipeline_id, pipeData) {
             $("#project-title").attr("href", "index.php?np=2&id=" + project_id);
             $("#pipelineSum").val(decodeHtml(pData[0].summary));
             $("#pipelineSum").attr("disabled", "disabled");
+            projectPipeInputs = await doAjax({
+                p: "getProjectPipelineInputs",
+                project_pipeline_id: project_pipeline_id,
+            });
             var script_pipe_header_config = "";
             if (pData[0].script_pipe_header !== null) {
                 script_pipe_header_config +=
@@ -5230,18 +5250,18 @@ function loadPipelineDetails(pipeline_id, pipeData) {
                 //generate json for autofill by using script of pipeline header
                 autoFillJSON = parseAutofill(script_pipe_header_config);
                 // get Profile variables -> update library of $HOSTNAME conditions
-                autoFillJSON = addProfileVar(autoFillJSON);
+                autoFillJSON = await addProfileVar(autoFillJSON);
                 autoFillJSON = decodeGenericCond(autoFillJSON);
             }
             // first openPipeline() will create tables and forms
             // then loadProjectPipeline will load process options
-            var sequentialCmd = function (pipeline_id, callback) {
-                openPipeline(pipeline_id);
-                callback();
+            var sequentialCmd = async function (pipeline_id, callback) {
+                await openPipeline(pipeline_id);
+                await callback();
             };
-            sequentialCmd(pipeline_id, function () {
+            await sequentialCmd(pipeline_id, async function () {
                 //## position where all inputs created and filled
-                loadProjectPipeline(pipeData); // will load process options
+                await loadProjectPipeline(pipeData); // will load process options
             });
         },
         error: function (errorThrown) {
@@ -5251,9 +5271,9 @@ function loadPipelineDetails(pipeline_id, pipeData) {
 }
 
 // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
-function cleanDepProPipeInputs() {
+async function cleanDepProPipeInputs() {
     project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
-    var getProPipeInputs = getValues({
+    var getProPipeInputs = await doAjax({
         p: "getProjectPipelineInputs",
         project_pipeline_id: project_pipeline_id,
     });
@@ -5263,11 +5283,11 @@ function cleanDepProPipeInputs() {
         var inGName = $(numInputRows[el]).attr("given_name");
         givenNameObj[inGName] = "";
     });
-    $.each(getProPipeInputs, function (el) {
+    $.each(getProPipeInputs, async function (el) {
         var givenName = getProPipeInputs[el].given_name;
         //clean inputs whose given_name is not found in numInputRows
         if (givenNameObj[givenName] == undefined) {
-            var removeInput = getValues({
+            var removeInput = await doAjax({
                 p: "removeProjectPipelineInput",
                 id: getProPipeInputs[el].id,
             });
@@ -5293,8 +5313,8 @@ function updateCheckBox(check_id, status) {
     }
 }
 
-function refreshCreatorData(project_pipeline_id) {
-    pipeData = getValues({ p: "getProjectPipelines", id: project_pipeline_id });
+async function refreshCreatorData(project_pipeline_id) {
+    pipeData = await doAjax({ p: "getProjectPipelines", id: project_pipeline_id });
     if (pipeData && pipeData != "") {
         $("#creatorInfoPip").css("display", "block");
         $("#ownUserNamePip").text(pipeData[0].username);
@@ -5303,17 +5323,17 @@ function refreshCreatorData(project_pipeline_id) {
     }
 }
 
-function loadExecSettings(pipeData) {
+async function loadExecSettings(pipeData) {
     var chooseEnv = $("#chooseEnv option:selected").val();
     if (pipeData[0].profile !== "") {
         if (chooseEnv) {
-            var [allProSett, profileData] = getJobData("both");
+            var [allProSett, profileData] = await getJobData("both");
         } else {
             var prof = pipeData[0].profile;
             var patt = /(.*)-(.*)/;
             var proType = prof.replace(patt, "$1");
             var proId = prof.replace(patt, "$2");
-            var profileData = getProfileData(proType, proId);
+            var profileData = await getProfileData(proType, proId);
         }
         showhideOnEnv(profileData);
 
@@ -5340,8 +5360,8 @@ function loadExecSettings(pipeData) {
     }
 }
 
-function loadUserGroups(pipeData) {
-    var allUserGrp = getValues({ p: "getUserGroups" });
+async function loadUserGroups(pipeData) {
+    var allUserGrp = await doAjax({ p: "getUserGroups" });
     if (allUserGrp && allUserGrp != "") {
         for (var i = 0; i < allUserGrp.length; i++) {
             var param = allUserGrp[i];
@@ -5376,7 +5396,7 @@ function fillProPipeInputsRev(projectPipeInputs_rev, fillingType) {
     });
 }
 
-function loadRunSettings(pipeData) {
+async function loadRunSettings(pipeData) {
     $("#rOut_dir").val(pipeData[0].output_dir);
     $("#publish_dir").val(pipeData[0].publish_dir);
     $("#chooseEnv").val(pipeData[0].profile);
@@ -5387,7 +5407,7 @@ function loadRunSettings(pipeData) {
     $("#docker_opt").val(pipeData[0].docker_opt);
     $("#singu_img").val(pipeData[0].singu_img);
     $("#singu_opt").val(pipeData[0].singu_opt);
-    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+    var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
     toogleReleaseDiv(pipeData[0].perms, projectpipelineOwn);
     updateCheckBox("#publish_dir_check", pipeData[0].publish_dir_check);
     updateCheckBox("#intermeDel", pipeData[0].interdel);
@@ -5405,21 +5425,19 @@ function loadRunSettings(pipeData) {
         loadProcessOpt(decodeHtml(pipeData[0].process_opt));
     }
     // fill executor settings:
-    loadExecSettings(pipeData);
+    await loadExecSettings(pipeData);
 }
 
-function loadProjectPipeline(pipeData) {
-    loadRunOptions("change");
+async function loadProjectPipeline(pipeData) {
+    await loadRunOptions("change");
     $("#creatorInfoPip").css("display", "block");
-    $("#project-title").text(decodeHtml(pipeData[0].project_name));
-    $("#run-title").changeVal(decodeHtml(pipeData[0].pp_name));
-    $("#runSum").val(decodeHtml(pipeData[0].summary).replaceAll("</br>", "\r\n"));
+
     disableRunSum();
     $("#permsRun").val(pipeData[0].perms);
     $("#ownUserNamePip").text(pipeData[0].username);
     $("#datecreatedPip").text(pipeData[0].date_created);
     $(".lasteditedPip").text(pipeData[0].date_modified);
-    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+    var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
     // release
     if (pipeData[0].release_date) {
         var parts = pipeData[0].release_date.split("-"); //YYYY-MM-DD
@@ -5441,10 +5459,10 @@ function loadProjectPipeline(pipeData) {
 
     // release ends --
 
-    loadRunSettings(pipeData);
+    await loadRunSettings(pipeData);
     checkShub();
     // bind event handlers for autofill
-    setTimeout(function () {
+    setTimeout(async function () {
         if (autoFillJSON !== null && autoFillJSON !== undefined) {
             bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
             bindEveHandler(autoFillJSON);
@@ -5452,20 +5470,20 @@ function loadProjectPipeline(pipeData) {
             if (pipeData[0].onload) {
                 if (pipeData[0].onload == "refreshEnv") {
                     console.log("onload refreshEnv");
-                    refreshEnv();
+                    await refreshEnv();
                 }
             }
         }
     }, 1000);
     checkCloudType(pipeData[0].profile);
     //load cloud keys for possible s3/gs connection
-    loadCloudKeys(pipeData);
+    await loadCloudKeys(pipeData);
     // load group info
-    loadUserGroups(pipeData);
+    await loadUserGroups(pipeData);
     // activate collapse icon for process options
     refreshCollapseIconDiv();
 
-    fillRunVerOpt("#runVerLog");
+    await fillRunVerOpt("#runVerLog");
     //hide system inputs
     $("#systemInputs").trigger("click");
     //insert icon for process_options according to show_setting attribute
@@ -5475,14 +5493,14 @@ function loadProjectPipeline(pipeData) {
         autofillEmptyInputs(autoFillJSON);
     }
     // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
-    cleanDepProPipeInputs();
+    await cleanDepProPipeInputs();
     //after loading pipeline disable all the inputs
     if (projectpipelineOwn !== "1") {
         toogleRunInputs("disable");
     }
     updateDiskSpace();
-    setTimeout(function () {
-        checkReadytoRun();
+    setTimeout(async function () {
+        await checkReadytoRun();
     }, 1000);
 }
 
@@ -5492,16 +5510,16 @@ $("#inputsTable").on("click", "#systemInputs", function (e) {
     $("#inputsTable> tbody > tr:gt(" + indx + ")").toggle();
 });
 
-function refreshEnv() {
-    loadRunOptions("change");
+async function refreshEnv() {
+    await loadRunOptions("change");
 }
 
 //type="change","silent"
-function loadRunOptions(type) {
+async function loadRunOptions(type) {
     var selectedOpt = $("#chooseEnv").find(":selected").val();
     $("#chooseEnv").find("option").not(":disabled").remove();
     //get profiles for user
-    var proData = getValues({ p: "getProfiles", type: "run" });
+    var proData = await doAjax({ p: "getProfiles", type: "run" });
     if (proData) {
         for (var c = 0; c < proData.length; c++) {
             var data = proData[c];
@@ -5582,13 +5600,11 @@ function loadRunOptions(type) {
         }
     }
     if (selectedOpt) {
-        if (selectedOpt != "") {
-            $("#chooseEnv").val(selectedOpt);
-            if (type == "silent") {
-                checkReadytoRun();
-            } else {
-                $("#chooseEnv").trigger("change");
-            }
+        $("#chooseEnv").val(selectedOpt);
+        if (type == "silent") {
+            await checkReadytoRun();
+        } else {
+            $("#chooseEnv").trigger("change");
         }
     }
 }
@@ -5772,7 +5788,7 @@ function removeSelectFile(rowID, sType, fillingType) {
     }
 }
 
-function checkInputInsert(
+async function checkInputInsert(
 data,
  gNumParam,
  given_name,
@@ -5804,7 +5820,7 @@ data,
     var urlData = url || "";
     var urlzipData = urlzip || "";
     var checkPathData = checkPath || "";
-    var fillInput = getValues({
+    var fillInput = await doAjax({
         p: "fillInput",
         inputID: inputID,
         collection_id: collection_id,
@@ -5852,7 +5868,7 @@ data,
     }
 }
 
-function checkInputEdit(
+async function checkInputEdit(
 data,
  gNumParam,
  given_name,
@@ -5885,7 +5901,7 @@ data,
     var urlData = url || "";
     var urlzipData = urlzip || "";
     var checkPathData = checkPath || "";
-    var fillInput = getValues({
+    var fillInput = await doAjax({
         p: "fillInput",
         inputID: inputID,
         collection_id: collection_id,
@@ -5925,7 +5941,7 @@ data,
     $("#urlBut-" + rowID).attr("checkpath", checkPathData);
 }
 
-function saveFileSetValModal(data, sType, inputID, collection) {
+async function saveFileSetValModal(data, sType, inputID, collection) {
     if (sType === "file" || sType === "set") {
         sType = "file"; //for simplification
         var rowID = $("#mIdFile").attr("rowID"); //the id of table-row to be updated #inputTa-3
@@ -5939,7 +5955,7 @@ function saveFileSetValModal(data, sType, inputID, collection) {
         urlzip = null,
         checkPath = null;
     //check database if file is exist, if not exist then insert
-    checkInputInsert(
+    await checkInputInsert(
         data,
         gNumParam,
         given_name,
@@ -5952,10 +5968,10 @@ function saveFileSetValModal(data, sType, inputID, collection) {
         urlzip,
         checkPath
     );
-    checkReadytoRun();
+    await checkReadytoRun();
 }
 
-function editFileSetValModal(data, sType, inputID, collection) {
+async function editFileSetValModal(data, sType, inputID, collection) {
     if (sType === "file" || sType === "set") {
         sType = "file";
         var rowID = $("#mIdFile").attr("rowID"); //the id of table-row to be updated #inputTa-3
@@ -5970,7 +5986,7 @@ function editFileSetValModal(data, sType, inputID, collection) {
         urlzip = null,
         checkPath = null;
     //check database if file is exist, if not exist then insert
-    checkInputEdit(
+    await checkInputEdit(
         data,
         gNumParam,
         given_name,
@@ -5984,7 +6000,7 @@ function editFileSetValModal(data, sType, inputID, collection) {
         urlzip,
         checkPath
     );
-    checkReadytoRun();
+    await checkReadytoRun();
 }
 
 //keep record of missing variables
@@ -6010,9 +6026,9 @@ function addMissingVar(defName) {
     }
 }
 
-function checkMissingVar() {
+async function checkMissingVar() {
     window["undefinedVarObj"] = {};
-    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+    var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
     if (projectpipelineOwn === "1") {
         var systemInputAr = $("#inputsTable > tbody")
         .find("td[given_name]")
@@ -6050,15 +6066,15 @@ function checkMissingVar() {
 
 checkType = "";
 //checkType become "rerun" or "resumerun" when rerun or resume button is clicked.
-function checkReadytoRun(type) {
+async function checkReadytoRun(type) {
     console.log("checkReady");
     if (checkType === "") {
         checkType = type || "";
     }
-    checkMissingVar();
-    runStatus = getRunStatus(project_pipeline_id);
+    await checkMissingVar();
+    runStatus = await getRunStatus(project_pipeline_id);
     project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
-    var getProPipeInputs = getValues({
+    var getProPipeInputs = await doAjax({
         p: "getProjectPipelineInputs",
         project_pipeline_id: project_pipeline_id,
     });
@@ -6093,13 +6109,13 @@ function checkReadytoRun(type) {
         publishReady = true;
     }
     //check if s3: is defined in publish_dir and getProPipeInputs
-//    var s3Status = checkCloudPatt(
-//        "s3:",
-//        "#mRunAmzKeyDiv",
-//        "#mRunAmzKey",
-//        publish_dir,
-//        getProPipeInputs
-//    );
+    //    var s3Status = checkCloudPatt(
+    //        "s3:",
+    //        "#mRunAmzKeyDiv",
+    //        "#mRunAmzKey",
+    //        publish_dir,
+    //        getProPipeInputs
+    //    );
     //    var gsStatus = checkCloudPatt("gs:", "#mRunGoogKeyDiv", '#mRunGoogKey', publish_dir, getProPipeInputs);
 
     //if ready and not running/waits/error
@@ -6116,7 +6132,7 @@ function checkReadytoRun(type) {
                     console.log("checkType", checkType);
                     if (checkType === "rerun" || checkType === "resumerun") {
                         runStatus = "aboutToStart";
-                        runProjectPipe(runProPipeCall, checkType);
+                        await runProjectPipe(runProPipeCall, checkType);
                     } else if (checkType === "newrun") {
                         displayButton("runProPipe");
                     } else {
@@ -6129,7 +6145,7 @@ function checkReadytoRun(type) {
                 console.log("checkType", checkType);
                 if (checkType === "rerun" || checkType === "resumerun") {
                     runStatus = "aboutToStart";
-                    runProjectPipe(runProPipeCall, checkType);
+                    await runProjectPipe(runProPipeCall, checkType);
                 } else if (checkType === "newrun") {
                     displayButton("runProPipe");
                 } else {
@@ -6354,19 +6370,19 @@ function autoCheck(type) {
     var autoCheckType = type || "";
     if (timeoutCheck) clearTimeout(timeoutCheck);
     if (autoCheckType == "fillstates") {
-        timeoutCheck = setTimeout(function () {
+        timeoutCheck = setTimeout(async function () {
             $("#inputsTab").loading("stop");
-            checkReadytoRun();
+            await checkReadytoRun();
             if (changeOnchooseEnv != undefined) {
                 if (changeOnchooseEnv == true) {
                     //save run after all parameters loaded on change of chooseEnv
-                    saveRun(false, true);
+                    await saveRun(false, true);
                 }
             }
         }, 2000);
     } else {
-        timeoutCheck = setTimeout(function () {
-            checkReadytoRun();
+        timeoutCheck = setTimeout(async function () {
+            await checkReadytoRun();
         }, 2000);
     }
 }
@@ -6461,8 +6477,8 @@ function checkCloudPatt(pattern, div, key, path, getProPipeInputs) {
     return status;
 }
 
-function loadCloudKeys(pipeData) {
-    var data = getValues({ p: "getAmz" });
+async function loadCloudKeys(pipeData) {
+    var data = await doAjax({ p: "getAmz" });
     if (data && data != "") {
         $.each(data, function (i, item) {
             $("#mRunAmzKey").append(
@@ -6479,7 +6495,7 @@ function loadCloudKeys(pipeData) {
             );
         });
     }
-    var dataG = getValues({ p: "getGoogle" });
+    var dataG =  await doAjax({ p: "getGoogle" });
     if (dataG && dataG != "") {
         $.each(dataG, function (i, item) {
             $("#mRunGoogKey").append(
@@ -6640,7 +6656,7 @@ function displayButton(idButton) {
     }
 }
 //xxxxx
-function terminateProjectPipe() {
+async function terminateProjectPipe() {
     if ($runscope.beforeunload) {
         showInfoModal(
             "#infoModal",
@@ -6650,9 +6666,9 @@ function terminateProjectPipe() {
     } else {
         var proType = proTypeWindow;
         var proId = proIdWindow;
-        var [allProSett, profileData] = getJobData("both");
+        var [allProSett, profileData] = await getJobData("both");
         var executor = profileData[0].executor;
-        var terminateRun = getValues({
+        var terminateRun = await doAjax({
             p: "terminateRun",
             project_pipeline_id: project_pipeline_id,
             profileType: proType,
@@ -6661,7 +6677,7 @@ function terminateProjectPipe() {
         });
         console.log(terminateRun);
 
-        var setStatus = getValues({
+        var setStatus = await doAjax({
             p: "updateRunStatus",
             run_status: "Terminated",
             project_pipeline_id: project_pipeline_id,
@@ -6744,10 +6760,10 @@ function getPathArray() {
         "span[id*='filePath']"
     );
     if (inputPaths && inputPaths != null) {
-        $.each(inputPaths, function (el) {
+        $.each(inputPaths, async function (el) {
             var collection_id = $(inputPaths[el]).attr("collection_id");
             if (collection_id) {
-                var colFiles = getValues({
+                var colFiles = await doAjax({
                     id: collection_id,
                     p: "getCollectionFiles",
                 });
@@ -6906,7 +6922,7 @@ function getPathArrayL1(pathArray) {
 }
 
 //callbackfunction to first change the status of button to connecting
-function runProjectPipe(runProPipeCall, checkType) {
+async function runProjectPipe(runProPipeCall, checkType) {
     //reset the checktype
     var keepCheckType = checkType;
     var pathArray = [];
@@ -6916,7 +6932,7 @@ function runProjectPipe(runProPipeCall, checkType) {
     window.execOtherOpt = "";
     window.sshCheck = false;
     // check ssh key
-    profileData = getJobData("job");
+    profileData = await getJobData("job");
     if (profileData) {
         if (profileData[0]) {
             if (profileData[0].ssh_id) {
@@ -6949,7 +6965,7 @@ function runProjectPipe(runProPipeCall, checkType) {
             },
             cache: false,
             type: "POST",
-            success: function (uuid) {
+            success: async function (uuid) {
                 updateNewRunStatus("0");
                 var hostname = $("#chooseEnv").find("option:selected").attr("host");
                 pathArray = getPathArray();
@@ -6961,10 +6977,10 @@ function runProjectPipe(runProPipeCall, checkType) {
                 //Autofill runOptions of singularity and docker image
                 window["imageRunOpt"] = autofillMountPathImage(pathArrayL1);
                 // Call the callback
-                var runAfterSave = function () {
-                    runProPipeCall(keepCheckType, uuid);
+                var runAfterSave = async function () {
+                    await runProPipeCall(keepCheckType, uuid);
                 };
-                saveRun(runAfterSave, true);
+                await saveRun(runAfterSave, true);
             },
             error: function (jqXHR, exception) {
                 toastr.error("Error occured.");
@@ -6976,7 +6992,7 @@ function runProjectPipe(runProPipeCall, checkType) {
 }
 
 //click on run button (callback function)
-function runProPipeCall(checkType, uuid) {
+async function runProPipeCall(checkType, uuid) {
     console.log("runProPipeCall");
     nxf_runmode = true;
     var nextTextRaw = createNextflowFile("run", uuid);
@@ -6991,7 +7007,7 @@ function runProPipeCall(checkType, uuid) {
     var proId = profileTypeId.replace(patt, "$2");
     proTypeWindow = proType;
     proIdWindow = proId;
-    var [allProSett, profileData] = getJobData("both");
+    var [allProSett, profileData] = await getJobData("both");
     var executor_job = profileData[0].executor_job;
     var executor = profileData[0].executor;
     var manualRunCheck = "false";
@@ -7016,11 +7032,11 @@ function runProPipeCall(checkType, uuid) {
         },
         cache: false,
         type: "POST",
-        success: function (serverLogGet) {
+        success: async function (serverLogGet) {
             $runscope.beforeunload = "";
             updateNewRunStatus("0");
-            fillRunVerOpt("#runVerLog");
-            updateRunVerNavBar();
+            await fillRunVerOpt("#runVerLog");
+            await updateRunVerNavBar();
             $("#refreshVerReport").trigger("click");
             if (manualRunCheck == "true") {
                 if (serverLogGet) {
@@ -7044,12 +7060,12 @@ function runProPipeCall(checkType, uuid) {
 function readNextflowLogTimer(proType, proId, type) {
     //to trigger fast loading for new page reload
     if (type === "reload") {
-        setTimeout(function () {
-            readNextLog(proType, proId, "no_reload");
+        setTimeout(async function () {
+            await readNextLog(proType, proId, "no_reload");
         }, 3500);
     }
-    interval_readNextlog = setInterval(function () {
-        readNextLog(proType, proId, "no_reload");
+    interval_readNextlog = setInterval(async function () {
+        await readNextLog(proType, proId, "no_reload");
     }, 7000);
     interval_readPubWeb = setInterval(function () {
         readPubWeb(proType, proId, "no_reload");
@@ -7124,8 +7140,8 @@ function saveNexLg(proType, proId) {
         profileId: proId,
     });
     //update log navbar after saving files
-    setTimeout(function () {
-        updateRunVerNavBar();
+    setTimeout(async function () {
+        await updateRunVerNavBar();
     }, 2500);
 }
 
@@ -7150,10 +7166,10 @@ function clearIntNextLog(proType, proId) {
     }, 5000);
 }
 // type= reload for reload the page
-function readNextLog(proType, proId, type) {
-    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+async function readNextLog(proType, proId, type) {
+    var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
     if (projectpipelineOwn === "1") {
-        var updateProPipeStatus = getValues({
+        var updateProPipeStatus = await doAjax({
             p: "updateProPipeStatus",
             project_pipeline_id: project_pipeline_id,
         });
@@ -7218,7 +7234,7 @@ function readNextLog(proType, proId, type) {
             if (window["countFailRead"] > 3) {
                 displayButton("abortedProPipe");
                 //log file might be deleted or couldn't read the log file
-                var setStatus = getValues({
+                var setStatus = await doAjax({
                     p: "updateRunStatus",
                     run_status: "Aborted",
                     project_pipeline_id: project_pipeline_id,
@@ -7285,28 +7301,16 @@ function addOutFileDb() {
         //	          data.push({ name: "name", value: filePath });
         //	          data.push({ name: "p", value: "saveInput" });
         //insert into input table
-        //	          var inputGet = getValues(data);
+        //	          var inputGet = await doAjax(data);
         //	          if (inputGet) {
         //	              var input_id = inputGet.id;
         //	          }
         //insert into project_input table
         //bug: it adds NA named files after each run
-        //	          var proInputGet = getValues({ "p": "saveProjectInput", "input_id": input_id, "project_id": project_id });
+        //	          var proInputGet = await doAjax({ "p": "saveProjectInput", "input_id": input_id, "project_id": project_id });
     }
 }
 
-function getServerLog(project_pipeline_id, name) {
-    var logText = getValues({
-        p: "getFileContent",
-        project_pipeline_id: project_pipeline_id,
-        filename: "run/" + name,
-    });
-    if (logText && logText != "") {
-        return $.trim(logText);
-    } else {
-        return "";
-    }
-}
 
 function filterKeys(obj, filter) {
     var key,
@@ -7542,8 +7546,8 @@ function formToJsonEachPro() {
     return encodeURIComponent(JSON.stringify(formDataArr));
 }
 
-function checkNewRunStatus() {
-    var pipeData = $runscope.getAjaxData("getProjectPipelines", {
+async function checkNewRunStatus() {
+    var pipeData = await $runscope.getAjaxData("getProjectPipelines", {
         p: "getProjectPipelines",
         id: project_pipeline_id,
     });
@@ -7581,10 +7585,10 @@ function createNewRunFunc(newRunExist) {
             },
             cache: false,
             type: "POST",
-            success: function (data) {
+            success: async function (data) {
                 if (data) {
                     updateNewRunStatus("1");
-                    fillRunVerOpt("#runVerLog");
+                    await fillRunVerOpt("#runVerLog");
                     $('.nav-tabs a[href="#configTab"]').tab("show");
                     toastr.info("New run is ready.");
                 } else {
@@ -7605,14 +7609,14 @@ function createNewRunFunc(newRunExist) {
             },
             cache: false,
             type: "POST",
-            success: function (data) {
+            success: async function (data) {
                 if (data) {
                     //refresh existing pipeData
                     pipeData = data;
                     if ($runscope.getProjectPipelines) {
                         $runscope.getProjectPipelines = data;
                     }
-                    fillRunVerOpt("#runVerLog");
+                    await fillRunVerOpt("#runVerLog");
                     $('.nav-tabs a[href="#configTab"]').tab("show");
                     toastr.info("New run is ready.");
                 } else {
@@ -7626,16 +7630,16 @@ function createNewRunFunc(newRunExist) {
     }
 }
 
-function saveRunIcon() {
+async function saveRunIcon() {
     //check if lastrun is running, then show warning
     if (runStatus == "NextRun" || runStatus == "Waiting" || runStatus == "init") {
-        saveRun(false, true);
+        await saveRun(false, true);
     } else {
-        var newRunExist = checkNewRunStatus();
+        var newRunExist = await checkNewRunStatus();
         var newRun = $("option:selected", "#runVerLog").attr("newrun") || false;
         if (newRunExist && newRun) {
-            saveRun(false, true);
-            checkReadytoRun();
+            await saveRun(false, true);
+            await checkReadytoRun();
         } else if (!newRunExist) {
             var sucFunc = function () {
                 getValuesAsync(
@@ -7648,8 +7652,8 @@ function saveRunIcon() {
                     }
                 );
             };
-            saveRun(sucFunc, true);
-            checkReadytoRun();
+            await saveRun(sucFunc, true);
+            await checkReadytoRun();
         }
     }
 }
@@ -7673,7 +7677,7 @@ function saveRunSum() {
     });
 }
 
-function saveRun(sucFunc, showToastr) {
+async function saveRun(sucFunc, showToastr) {
     var data = [];
     var runSummary = encodeURIComponent($("#runSum").val());
     var run_name = $("#run-title").val();
@@ -7687,7 +7691,7 @@ function saveRun(sucFunc, showToastr) {
         var target_perms;
         var new_project_id = getTargetProject();
         [numOfErr, target_group_id, target_perms] =
-            validateMoveCopyRun(new_project_id);
+            await validateMoveCopyRun(new_project_id);
         if (!numOfErr) {
             //if project belong to other user's project than change its value
             $("#groupSelRun").val(target_group_id);
@@ -7782,12 +7786,12 @@ function saveRun(sucFunc, showToastr) {
             url: "ajax/ajaxquery.php",
             data: data,
             async: true,
-            success: function (s) {
+            success: async function (s) {
                 if (showToastr) {
                     toastr.info("All changes are saved.");
                 }
                 if (typeof sucFunc === "function") {
-                    sucFunc();
+                    await sucFunc();
                 }
                 if (dupliProPipe === false) {
                     if (s) {
@@ -7803,10 +7807,10 @@ function saveRun(sucFunc, showToastr) {
                             }
                         }
                     }
-                    refreshCreatorData(project_pipeline_id);
+                    await refreshCreatorData(project_pipeline_id);
                     updateSideBarProPipe("", project_pipeline_id, run_name, "edit");
                 } else if (dupliProPipe === true) {
-                    var duplicateProPipeIn = getValues({
+                    var duplicateProPipeIn = await doAjax({
                         p: "duplicateProjectPipelineInput",
                         new_id: s.id,
                         old_id: old_project_pipeline_id,
@@ -7828,15 +7832,15 @@ function saveRun(sucFunc, showToastr) {
     }
 }
 
-function getProfileData(proType, proId) {
+async function getProfileData(proType, proId) {
     if (proType === "cluster") {
-        var profileData = getValues({
+        var profileData = await doAjax({
             p: "getProfileCluster",
             id: proId,
             type: "run",
         });
     } else if (proType === "amazon" || proType === "google") {
-        var profileData = getValues({
+        var profileData = await doAjax({
             p: "getProfileCloud",
             cloud: proType,
             id: proId,
@@ -7860,8 +7864,8 @@ project_id,
     }
 }
 
-function getRunStatus(project_pipeline_id) {
-    var runStatusGet = getValues({
+async function getRunStatus(project_pipeline_id) {
+    var runStatusGet = await doAjax({
         p: "getRunStatus",
         project_pipeline_id: project_pipeline_id,
     });
@@ -7874,9 +7878,9 @@ function getRunStatus(project_pipeline_id) {
 }
 dupliProPipe = false;
 
-function checkNewRevision() {
+async function checkNewRevision() {
     //getPipelineRevision will retrive pipeline revisions that user allows to use
-    var checkNewRew = getValues({
+    var checkNewRew = await doAjax({
         p: "getPipelineRevision",
         pipeline_id: pipeline_id,
     });
@@ -8032,13 +8036,13 @@ function refreshPipeRevisions(id, revData) {
     $(id).val(pipeline_id);
 }
 
-function duplicateProPipe(type) {
+async function duplicateProPipe(type) {
     $('#confirmDuplicate a[href="#userProjectTab"]').trigger("click");
     dupliProPipe = false;
     confirmNewRev = false;
     if (type == "copy") {
         refreshProjectDatatable("selectproject");
-        var askNewRev = checkNewRevision();
+        var askNewRev = await checkNewRevision();
         $("#moveRunBut").css("display", "none");
         $("#copyRunBut").css("display", "inline-block");
         $("#pipelineRevsDiv").css("display", "block");
@@ -8056,7 +8060,7 @@ function duplicateProPipe(type) {
         $("#confirmDuplicate").modal("show");
     } else if (type == "move" || type == "changeproject") {
         refreshProjectDatatable("default");
-        saveRun(false, true);
+        await saveRun(false, true);
         $("#copyRunBut").css("display", "none");
         $("#moveRunBut").css("display", "inline-block");
         $("#pipelineRevsDiv").css("display", "none");
@@ -8074,9 +8078,9 @@ function duplicateProPipe(type) {
     $("#confirmDuplicate").modal("show");
 }
 
-function fillRunVerOpt(dropDownId) {
+async function fillRunVerOpt(dropDownId) {
     console.log("fillRunVerOpt");
-    var runLogs = getValues({
+    var runLogs = await doAjax({
         p: "getRunLog",
         project_pipeline_id: project_pipeline_id,
     });
@@ -8162,7 +8166,7 @@ function fillRunVerOpt(dropDownId) {
     $(dropDownId).prepend(
         $("<option disabled></option>").val(0).html("-- Run History --")
     );
-    var newrunCheck = checkNewRunStatus();
+    var newrunCheck = await checkNewRunStatus();
     if (n === 0) {
         updateNewRunStatus("1");
         newrunCheck = "1";
@@ -8196,7 +8200,7 @@ function fillRunVerOpt(dropDownId) {
     }
 }
 
-function updateRunVerNavBar() {
+async function updateRunVerNavBar() {
     var run_log_uuid = $("#runVerLog").val();
     var lastrun = $("option:selected", "#runVerLog").attr("lastrun");
     if (lastrun) {
@@ -8206,7 +8210,7 @@ function updateRunVerNavBar() {
         if (activeTab[0]) {
             activeID = $(activeTab[0]).attr("href");
         }
-        var fileList = getValues({
+        var fileList = await doAjax({
             p: "getFileList",
             uuid: run_log_uuid,
             path: "run",
@@ -8276,7 +8280,7 @@ function resetPatternList() {
     fillArray2Select([], "#r4List", true);
 }
 
-function viewDirButSearch(dir) {
+async function viewDirButSearch(dir) {
     var amazon_cre_id = "";
     var google_cre_id = "";
     var warnUser = false;
@@ -8291,14 +8295,14 @@ function viewDirButSearch(dir) {
         console.log(dir);
         if (dir.match(/s3:/i)) {
             amazon_cre_id = $("#mRunAmzKeyS3").val();
-//            if (!amazon_cre_id) {
-//                showInfoModal(
-//                    "#infoModal",
-//                    "#infoModalText",
-//                    "Please select Amazon Keys to search files in your S3 storage."
-//                );
-//                warnUser = true;
-//            }
+            //            if (!amazon_cre_id) {
+            //                showInfoModal(
+            //                    "#infoModal",
+            //                    "#infoModalText",
+            //                    "Please select Amazon Keys to search files in your S3 storage."
+            //                );
+            //                warnUser = true;
+            //            }
         } else if (dir.match(/gs:/i)) {
             google_cre_id = $("#mRunGoogKeyGS").val();
             if (!google_cre_id) {
@@ -8311,7 +8315,7 @@ function viewDirButSearch(dir) {
             }
         }
         if (!warnUser) {
-            var dirList = getValues({
+            var dirList = await doAjax({
                 p: "getLsDir",
                 dir: dir,
                 profileType: proTypeWindow,
@@ -8419,11 +8423,67 @@ function fillFileSearchBox(item, targetDiv) {
     }
 }
 
-function validateMoveCopyRun(new_project_id) {
+var selectizeCollection = function (idArr, selVal, multipleItems, cb) {
+    var maxItems = 1
+    if (multipleItems) maxItems = 1000;
+    var renderMenu = {
+        option: function (data, escape) {
+            var files = "file";
+            if (data.fileCount > 1) {
+                files = "files";
+            }
+            return (
+                '<div class="option">' +
+                '<span class="title"><i>' +
+                escape(data.name) +
+                "<i><small> (" +
+                escape(data.fileCount) +
+                " " +
+                files +
+                ")</small></i>" +
+                "</i></span>" +
+                "</div>"
+            );
+        },
+        item: function (data, escape) {
+            return (
+                '<div class="item" data-value="' +
+                escape(data.id) +
+                '">' +
+                escape(data.name) +
+                "</div>"
+            );
+        },
+    };
+
+    getValuesAsync({ p: "getCollection" }, function (colData) {
+        for (var i = 0; i < idArr.length; i++) {
+            if ($(idArr[i])[0].selectize){
+                $(idArr[i])[0].selectize.destroy();
+            }
+            $(idArr[i]).selectize({
+                maxItems: maxItems,
+                valueField: "id",
+                searchField: ["name"],
+                createOnBlur: true,
+                render: renderMenu,
+                options: colData,
+                create: function (input, callback) {
+                    callback({ id: "_newItm_" + input, name: input });
+                },
+            });
+            $(idArr[i])[0].selectize.clear();
+            if (selVal) $(idArr[i])[0].selectize.setValue(selVal)
+            if (cb && typeof cb === "function") cb()
+        }
+    });
+};
+
+async function validateMoveCopyRun(new_project_id) {
     var infoText = "";
     var target_group_id = $("#groupSelRun").val();
     var target_perms = $("#permsRun").val();
-    var target_project_data = getValues({ p: "getProjects", id: new_project_id });
+    var target_project_data = await doAjax({ p: "getProjects", id: new_project_id });
     //if owner of the project is not the user, then change its target_group_id and target_perms
     if (target_project_data[0]) {
         if (
@@ -8435,7 +8495,7 @@ function validateMoveCopyRun(new_project_id) {
             target_perms = target_project_data[0].perms;
         }
     }
-    var checkPermissionUpdt = getValues({
+    var checkPermissionUpdt = await doAjax({
         p: "checkPermUpdtRun",
         pipeline_id: pipeline_id,
         project_id: new_project_id,
@@ -8713,12 +8773,12 @@ $(function () {
                                 return ret;
                             };
 
-                            var dynrows_savefile = function (filePath, text) {
+                            var dynrows_savefile = async function (filePath, text) {
                                 var obj = getFileName(filePath);
                                 var newPath = obj.rest + "/" + obj.filename;
                                 text = encodeURIComponent(text);
                                 var run_log_uuid = $("#runVerLog").val();
-                                var saveData = getValues({
+                                var saveData = await doAjax({
                                     p: "saveFileContent",
                                     text: text,
                                     uuid: run_log_uuid,
@@ -8739,10 +8799,10 @@ $(function () {
                                 return obj;
                             };
 
-                            var dynrows_movefile = function (file1, file2) {
+                            var dynrows_movefile = async function (file1, file2) {
                                 var run_log_uuid = $("#runVerLog").val();
                                 if (file1 && file2) {
-                                    var moveFile = getValues({
+                                    var moveFile = await doAjax({
                                         p: "moveFile",
                                         type: "pubweb",
                                         from: run_log_uuid + "/pubweb/" + file1,
@@ -8859,7 +8919,7 @@ $(function () {
                                     });
                                 });
 
-                                $("#dynRowsInfo").on("click", ".save", function (event) {
+                                $("#dynRowsInfo").on("click", ".save", async function (event) {
                                     event.preventDefault();
                                     var obj = getFileNameObj();
                                     if ($("#" + "dynRowsEmptyFileCheck").is(":checked")) {
@@ -8870,7 +8930,7 @@ $(function () {
                                             if (!checkDuplicate) {
                                                 var filepath = oData.name + "/" + newName;
                                                 var text = "";
-                                                dynrows_savefile(filepath, text);
+                                                await dynrows_savefile(filepath, text);
                                                 $("#dynRowsInfo").modal("hide");
                                             } else {
                                                 showInfoModal(
@@ -8902,10 +8962,10 @@ $(function () {
                                         var text =
                                             "Are you sure you want to delete " + obj.filename + "?";
                                         var savedData = $(activeLiA[0]);
-                                        var execFunc = function (savedData) {
+                                        var execFunc = async function (savedData) {
                                             var filePath = savedData.attr("filepath");
                                             var run_log_uuid = $("#runVerLog").val();
-                                            var deleteFile = getValues({
+                                            var deleteFile = await doAjax({
                                                 p: "deleteFile",
                                                 uuid: run_log_uuid,
                                                 filename: "pubweb/" + filePath,
@@ -8937,7 +8997,7 @@ $(function () {
                                     }
                                 );
 
-                                $("#dynRowsInfo").on("click", ".rename", function (event) {
+                                $("#dynRowsInfo").on("click", ".rename", async function (event) {
                                     event.preventDefault();
                                     var obj = getFileNameObj();
                                     var newName = $("#dynRowsEditFileName").val();
@@ -8946,7 +9006,7 @@ $(function () {
                                         if (!checkDuplicate) {
                                             var filepath1 = oData.name + "/" + obj.filename;
                                             var filepath2 = oData.name + "/" + newName;
-                                            dynrows_movefile(filepath1, filepath2);
+                                            await dynrows_movefile(filepath1, filepath2);
                                             $("#dynRowsInfo").modal("hide");
                                         } else {
                                             showInfoModal(
@@ -9031,7 +9091,8 @@ $(function () {
                             return wrapDiv;
                         };
                         var IconDiv = "";
-                        var writePerm = $runscope.checkUserWritePerm();
+                        var writePerm = $runscope.checkUserWritePermSync();
+                        console.log(writePerm)
                         //allows user to edit run page
                         if (writePerm) {
                             if (oData.pubWeb == "run_description") {
@@ -9261,8 +9322,8 @@ $(function () {
         }
     }
 
-    function updateRunConfigTab(prevUID) {
-        var loadRunLogOpt = function () {
+    async function updateRunConfigTab(prevUID) {
+        var loadRunLogOpt = async function () {
             var run_log_uuid = $("#runVerLog").val();
             var runTitleConfig = "";
             var runTitleAdvanced = "";
@@ -9278,7 +9339,7 @@ $(function () {
             $("#runTitleAdvanced").html(runTitleAdvanced);
             var lastrun = $("option:selected", "#runVerLog").attr("lastrun") || false;
             var newRun = $("option:selected", "#runVerLog").attr("newrun") || false;
-            var newRunExist = checkNewRunStatus();
+            var newRunExist = await checkNewRunStatus();
 
             //load from projectpipelinedata
             if (newRun || (!newRunExist && lastrun)) {
@@ -9287,10 +9348,10 @@ $(function () {
                     url: "ajax/ajaxquery.php",
                     data: { p: "getProjectPipelines", id: project_pipeline_id },
                     async: true,
-                    success: function (pipe) {
+                    success: async function (pipe) {
                         if (pipe) {
-                            loadRunSettings(pipe);
-                            checkReadytoRun();
+                            await loadRunSettings(pipe);
+                            await checkReadytoRun();
                         }
                     },
                     error: function (errorThrown) {
@@ -9305,9 +9366,9 @@ $(function () {
                         project_pipeline_id: project_pipeline_id,
                     },
                     async: true,
-                    success: function (projectPipeInputs_rev) {
+                    success: async function (projectPipeInputs_rev) {
                         if (projectPipeInputs_rev) {
-                            var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+                            var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
                             if (projectpipelineOwn == "1") {
                                 fillProPipeInputsRev(projectPipeInputs_rev, "default");
                             } else {
@@ -9326,7 +9387,7 @@ $(function () {
                     url: "ajax/ajaxquery.php",
                     data: { p: "getRunLogOpt", uuid: run_log_uuid },
                     async: true,
-                    success: function (s) {
+                    success: async function (s) {
                         var pipe = s.run_opt;
                         if (pipe) {
                             console.log(IsJsonString(pipe));
@@ -9336,7 +9397,7 @@ $(function () {
                                 if (json) {
                                     var pipeData = [];
                                     pipeData[0] = json;
-                                    loadRunSettings(pipeData);
+                                    await loadRunSettings(pipeData);
                                     if (json.project_pipeline_input) {
                                         var projectPipeInputs_rev = json.project_pipeline_input;
                                         fillProPipeInputsRev(projectPipeInputs_rev, "dry");
@@ -9359,20 +9420,20 @@ $(function () {
             $('#runVerLog option[value="' + prevUID + '"]').attr("lastrun") || false;
         var prevnewRun =
             $('#runVerLog option[value="' + prevUID + '"]').attr("newRun") || false;
-        var newRunExist = checkNewRunStatus();
-        var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+        var newRunExist = await checkNewRunStatus();
+        var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
         // if prevUID belong to newrun then saveRun before loadRunLogOpt
         if (
             projectpipelineOwn == "1" &&
             (prevnewRun || (!newRunExist && prevlastrun))
         ) {
-            saveRun(loadRunLogOpt, false);
+            await saveRun(loadRunLogOpt, false);
         } else {
-            loadRunLogOpt();
+            await loadRunLogOpt();
         }
     }
 
-    function updateRunLogTab(run_log_uuid) {
+    async function updateRunLogTab(run_log_uuid) {
         console.log("updateRunLogTab");
         if (run_log_uuid) {
             var runTitleLog = "";
@@ -9401,7 +9462,7 @@ $(function () {
             } else {
                 var path = "run";
             }
-            var fileList = getValues({
+            var fileList = await doAjax({
                 p: "getFileList",
                 uuid: run_log_uuid,
                 path: path,
@@ -9487,27 +9548,27 @@ $(function () {
                     '" >';
                 if (fileName[n] == "log.txt") {
                     var serverlogText = "";
-                    var logText = getValues({
+                    var logText = await doAjax({
                         p: "getFileContent",
                         uuid: run_log_uuid,
                         filename: path + "/log.txt",
                     });
                     if (fileListAr.includes("serverlog.txt")) {
-                        serverlogText = getValues({
+                        serverlogText = await doAjax({
                             p: "getFileContent",
                             uuid: run_log_uuid,
                             filename: path + "/serverlog.txt",
                         });
                         //to support outdated log directory system
                     } else if (fileListAr.includes("nextflow.log")) {
-                        logText += getValues({
+                        logText += await doAjax({
                             p: "getFileContent",
                             uuid: run_log_uuid,
                             filename: path + "/nextflow.log",
                         });
                     }
                     if (fileListAr.includes("err.log")) {
-                        serverlogText += getValues({
+                        serverlogText += await doAjax({
                             p: "getFileContent",
                             uuid: run_log_uuid,
                             filename: path + "/err.log",
@@ -9515,7 +9576,7 @@ $(function () {
                     }
                     // new version of keeping  initial.log
                     if (fileListAr.includes("initialrun/initial.log")) {
-                        serverlogText += getValues({
+                        serverlogText += await doAjax({
                             p: "getFileContent",
                             uuid: run_log_uuid,
                             filename: path + "/initialrun/initial.log",
@@ -9523,7 +9584,7 @@ $(function () {
                     }
                     // old version of keeping initial.log:
                     if (fileListAr.includes("initial.log")) {
-                        serverlogText += getValues({
+                        serverlogText += await doAjax({
                             p: "getFileContent",
                             uuid: run_log_uuid,
                             filename: path + "/initial.log",
@@ -9532,7 +9593,7 @@ $(function () {
                     navTabDiv +=
                         "<textarea " +
                         lastrun +
-                        ' readonly id="runLogArea" rows="25" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' +
+                        ' readonly id="runLogArea" rows="20" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" >' +
                         serverlogText +
                         logText +
                         "</textarea>";
@@ -9570,7 +9631,7 @@ $(function () {
         $('[data-toggle="tooltip"]').tooltip();
     }
 
-    $(document).on("click", ".createNewRun", function (event) {
+    $(document).on("click", ".createNewRun", async function (event) {
         //check if lastrun is running, then show warning
         if (
             runStatus == "NextRun" ||
@@ -9583,7 +9644,7 @@ $(function () {
                 "Please wait for your last run to finish, before creating new run."
             );
         } else {
-            var newRunExist = checkNewRunStatus();
+            var newRunExist = await checkNewRunStatus();
             if (newRunExist) {
                 var text =
                     "New run has already been created. Are you sure you want to overwrite the settings of existing new run page?";
@@ -9601,7 +9662,7 @@ $(function () {
         }
     });
 
-    $(document).on("change", "#runVerLog", function (event) {
+    $(document).on("change", "#runVerLog", async function (event) {
         console.log("change:runVerLog");
         //check which tab is active:
         var activeTab = "";
@@ -9636,8 +9697,8 @@ $(function () {
             $("#runVerLog").attr("prevUID", run_log_uuid);
         }
         var lastrun = $("option:selected", "#runVerLog").attr("lastrun") || false;
-        var newRunExist = checkNewRunStatus();
-        var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+        var newRunExist = await checkNewRunStatus();
+        var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
         console.log("lastrun", lastrun);
         console.log("newRun", newRun);
         console.log("newRunExist", newRunExist);
@@ -9648,7 +9709,7 @@ $(function () {
             toogleMainIcons("show");
             toogleRunInputs("enable");
             checkType = "newrun";
-            checkReadytoRun();
+            await checkReadytoRun();
             //last run mode
         } else if (lastrun && !newRunExist && projectpipelineOwn == "1") {
             toogleStatusMode("default");
@@ -9675,8 +9736,8 @@ $(function () {
         if (activeID == "#logTab") {
             if (logTabUID != run_log_uuid) {
                 $("#runVerLog").attr("logTabUID", run_log_uuid);
-                readNextLog(proTypeWindow, proIdWindow, "no_reload");
-                updateRunLogTab(run_log_uuid);
+                await readNextLog(proTypeWindow, proIdWindow, "no_reload");
+                await updateRunLogTab(run_log_uuid);
             }
         } else if (activeID == "#reportTab") {
             if (reportTabUID != run_log_uuid) {
@@ -9687,7 +9748,7 @@ $(function () {
             //don't fill on page load
             if (configTabUID != run_log_uuid) {
                 $("#runVerLog").attr("configTabUID", run_log_uuid);
-                updateRunConfigTab(configTabUID);
+                await updateRunConfigTab(configTabUID);
             }
         }
     });
@@ -9722,13 +9783,16 @@ function updateRunLogStat(run_log_uuid, projectpipelineOwn) {
     });
 }
 
-$(document).ready(function () {
+$(document).ready(async function () {
     project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
-    pipeData = $runscope.getAjaxData("getProjectPipelines", {
+    pipeData = await $runscope.getAjaxData("getProjectPipelines", {
         p: "getProjectPipelines",
         id: project_pipeline_id,
     });
-    var projectpipelineOwn = $runscope.checkProjectPipelineOwn();
+    $("#project-title").text(decodeHtml(pipeData[0].project_name));
+    $("#run-title").changeVal(decodeHtml(pipeData[0].pp_name));
+    $("#runSum").val(decodeHtml(pipeData[0].summary).replaceAll("</br>", "\r\n"));
+    var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
     pipeline_id = pipeData[0].pipeline_id;
     project_id = pipeData[0].project_id;
     countFailRead = 0; //count failed read amount if it reaches 5, show connection lost
@@ -9750,7 +9814,7 @@ $(document).ready(function () {
     }
     runStatus = "";
     if (projectpipelineOwn === "1") {
-        runStatus = getRunStatus(project_pipeline_id);
+        runStatus = await getRunStatus(project_pipeline_id);
     }
     var profileTypeId = pipeData[0].profile; //local-32
     proTypeWindow = "";
@@ -9765,7 +9829,7 @@ $(document).ready(function () {
 
     if (runStatus !== "") {
         //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init
-        readNextLog(proTypeWindow, proIdWindow, "reload");
+        await readNextLog(proTypeWindow, proIdWindow, "reload");
         readPubWeb(proTypeWindow, proIdWindow, "reload");
     } else {
         $("#statusProPipe").css("display", "inline");
@@ -9773,10 +9837,6 @@ $(document).ready(function () {
 
     $("#pipeline-title").attr("pipeline_id", pipeline_id);
     if (project_pipeline_id !== "" && pipeline_id !== "") {
-        projectPipeInputs = getValues({
-            p: "getProjectPipelineInputs",
-            project_pipeline_id: project_pipeline_id,
-        });
         loadPipelineDetails(pipeline_id, pipeData);
     }
 
@@ -9861,7 +9921,19 @@ $(document).ready(function () {
             createMultiselect("#select-" + columnsToSearch[i]);
             createMultiselectBinder("#filter-" + columnsToSearch[i]);
             var selCollectionNameArr = $("#sampleTable").data("select");
-            if (selCollectionNameArr) {
+            var selIdxArr = $("#sampleTable").data("selectIdx");
+            // when file updates
+            if (selIdxArr && selCollectionNameArr) {
+                if (selIdxArr.length) {
+                    $("#sampleTable").removeData("selectIdx");
+                    $("#sampleTable").DataTable().rows(selIdxArr).select();
+                }
+                if (selCollectionNameArr.length) {
+                    $("#sampleTable").removeData("select");
+                    selectMultiselect("#select-Collection", selCollectionNameArr);
+                }
+                // when new collection created or edit collection button
+            } else if (selCollectionNameArr) {
                 if (selCollectionNameArr.length) {
                     $("#sampleTable").removeData("select");
                     selectMultiselect("#select-Collection", selCollectionNameArr);
@@ -10069,9 +10141,9 @@ $(document).ready(function () {
                 });
             }
         }
-        $(document).on("click", "#runHistoryConsole", function () {
+        $(document).on("click", "#runHistoryConsole", async function () {
             $("#runHistoryModal").modal("show");
-            var newRunExist = checkNewRunStatus();
+            var newRunExist = await checkNewRunStatus();
             if (newRunExist) {
                 $("#removeNewRunIcon").css("display", "inline");
             } else {
@@ -10121,10 +10193,10 @@ $(document).ready(function () {
                 },
                 cache: false,
                 type: "POST",
-                success: function (data) {
+                success: async function (data) {
                     if (data) {
                         updateNewRunStatus("0");
-                        fillRunVerOpt("#runVerLog");
+                        await fillRunVerOpt("#runVerLog");
                         $("#runVerLog").trigger("change");
                         $("#removeNewRunIcon").css("display", "none");
                         showInfoModal(
@@ -10155,9 +10227,9 @@ $(document).ready(function () {
                     runName = encodeURIComponent(runName);
                     getValuesAsync(
                         { p: "saveRunLogName", name: runName, id: logid },
-                        function (s) {
+                        async function (s) {
                             loadRunHistoryTable("default");
-                            fillRunVerOpt("#runVerLog");
+                            await fillRunVerOpt("#runVerLog");
                             $("#editRunModal").modal("hide");
                         }
                     );
@@ -10200,10 +10272,10 @@ $(document).ready(function () {
                                 runlogs: selRowsId,
                                 project_pipeline_id: project_pipeline_id,
                             },
-                            function (s) {
+                            async function (s) {
                                 $("#runHistoryModalBut").css("display", "none");
                                 loadRunHistoryTable("default");
-                                fillRunVerOpt("#runVerLog");
+                                await fillRunVerOpt("#runVerLog");
                             }
                         );
                     };
@@ -10245,10 +10317,10 @@ $(document).ready(function () {
                                 runlogs: selRowsId,
                                 project_pipeline_id: project_pipeline_id,
                             },
-                            function (s) {
+                            async function (s) {
                                 $("#runHistoryModalBut").css("display", "none");
                                 loadRunHistoryTable("default");
-                                fillRunVerOpt("#runVerLog");
+                                await fillRunVerOpt("#runVerLog");
                             }
                         );
                     };
@@ -10258,53 +10330,7 @@ $(document).ready(function () {
         });
     });
 
-    var selectizeCollection = function (idArr) {
-        var renderMenu = {
-            option: function (data, escape) {
-                var files = "file";
-                if (data.fileCount > 1) {
-                    files = "files";
-                }
-                return (
-                    '<div class="option">' +
-                    '<span class="title"><i>' +
-                    escape(data.name) +
-                    "<i><small> (" +
-                    escape(data.fileCount) +
-                    " " +
-                    files +
-                    ")</small></i>" +
-                    "</i></span>" +
-                    "</div>"
-                );
-            },
-            item: function (data, escape) {
-                return (
-                    '<div class="item" data-value="' +
-                    escape(data.id) +
-                    '">' +
-                    escape(data.name) +
-                    "</div>"
-                );
-            },
-        };
 
-        getValuesAsync({ p: "getCollection" }, function (colData) {
-            for (var i = 0; i < idArr.length; i++) {
-                $(idArr[i]).selectize({
-                    valueField: "id",
-                    searchField: ["name"],
-                    createOnBlur: true,
-                    render: renderMenu,
-                    options: colData,
-                    create: function (input, callback) {
-                        callback({ id: "_newItm_" + input, name: input });
-                    },
-                });
-                $(idArr[i])[0].selectize.clear();
-            }
-        });
-    };
 
     $(function () {
         // Re-Execute initCompleteFunction when table draw is completed
@@ -10368,18 +10394,18 @@ $(document).ready(function () {
             $("#mArchAmzKeyS3Div").css("display", "none");
             $("#file_dir_div").css("display", "block");
             $("#viewDirInfo").css("display", "block");
-            selectizeCollection(["#collection_id", "#collection_id_geo"]);
+            selectizeCollection(["#collection_id", "#collection_id_geo"], "", false);
             //#uploadFiles tab:
             $("#target_dir").val($runscope.getUploadDir("new"));
         });
 
-        $("#viewDirBut").click(function () {
+        $("#viewDirBut").click(async function () {
             var dir = $("#file_dir").val();
             dir = $.trim(dir);
-            viewDirButSearch(dir);
+            await viewDirButSearch(dir);
         });
 
-        $("#addFileModal").on("dblclick", "#viewDir option", function () {
+        $("#addFileModal").on("dblclick", "#viewDir option", async function () {
             var selectedOpt = $(this).val();
             var olddir = $("#file_dir").val();
             olddir = $.trim(olddir);
@@ -10403,7 +10429,7 @@ $(document).ready(function () {
             }
             if (newdir) {
                 $("#file_dir").val(newdir);
-                viewDirButSearch(newdir);
+                await viewDirButSearch(newdir);
             }
         });
 
@@ -11184,7 +11210,7 @@ $(document).ready(function () {
         });
         //--GEO SEARCH ENDS--
 
-        $("#addFileModal").on("click", "#mSaveFiles", function (event) {
+        $("#addFileModal").on("click", "#mSaveFiles", async function (event) {
             event.preventDefault();
             var checkTab = $("#addFileModal")
             .find(".active.tab-pane")[0]
@@ -11256,7 +11282,7 @@ $(document).ready(function () {
                     )[0].innerHTML;
                     collection_name = cleanSpecChar(collection_name);
                     if (formObj.collection_id.match(/^_newItm_(.*)/)) {
-                        var collection_data = getValues({
+                        var collection_data = await doAjax({
                             p: "saveCollection",
                             name: collection_name,
                         });
@@ -11310,13 +11336,13 @@ $(document).ready(function () {
                 }
                 var s3_archive_dir_geo = $.trim($("#s3_archive_dir_geo").val());
                 var amzArchKey = $("#mArchAmzKeyS3_GEO").val();
-//                if (s3_archive_dir_geo.match(/s3:/i)) {
-//                    if (!amzArchKey) {
-//                        infoModalText +=
-//                            " * Please select Amazon Keys to save files into your S3 storage.\n";
-//                        warnUser = true;
-//                    }
-//                }
+                //                if (s3_archive_dir_geo.match(/s3:/i)) {
+                //                    if (!amzArchKey) {
+                //                        infoModalText +=
+                //                            " * Please select Amazon Keys to save files into your S3 storage.\n";
+                //                        warnUser = true;
+                //                    }
+                //                }
                 var gs_archive_dir_geo = $.trim($("#gs_archive_dir_geo").val());
                 var googArchKey = $("#mArchGoogKeyGS_GEO").val();
                 if (gs_archive_dir_geo.match(/gs:/i)) {
@@ -11344,7 +11370,7 @@ $(document).ready(function () {
                         formObj.collection_id
                     )[0].innerHTML;
                     if (formObj.collection_id.match(/^_newItm_(.*)/)) {
-                        var collection_data = getValues({
+                        var collection_data = await doAjax({
                             p: "saveCollection",
                             name: collection_name,
                         });
@@ -11422,7 +11448,7 @@ $(document).ready(function () {
         });
     };
 
-    var buildSampleTable = function (cb) {
+    var buildSampleTable = async function (cb) {
         if (!$.fn.DataTable.isDataTable("#sampleTable")) {
             $("#sampleTable").DataTable({
                 dom: '<"#searchBarST.pull-left"f>rt<"pull-left"i><"bottom"p><"clear">',
@@ -11460,7 +11486,7 @@ $(document).ready(function () {
                         data: null,
                         fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                             $(nTd).html(
-                                '<button type="button" class="btn btn-default btn-sm showDetailSample"> Details</button>'
+                                '<button type="button" class="btn btn-default btn-sm singleEditSample"> Edit</button><button style="margin-left:2px;" type="button" class="btn btn-default btn-sm showDetailSample"> Details</button>'
                             );
                         },
                     },
@@ -11481,11 +11507,11 @@ $(document).ready(function () {
                     },
                 ],
             });
-            $("#sampleTable").on("init.dt", function () {
-                cb();
+            $("#sampleTable").on("init.dt", async function () {
+                await cb();
             });
         } else {
-            cb();
+            await cb();
         }
     };
 
@@ -11513,6 +11539,11 @@ $(document).ready(function () {
             .DataTable()
             .rows({ selected: true })
             .data();
+            if (selectedRows.length > 1) {
+                $("#editSample").css("display", "inline-block");
+            } else {
+                $("#editSample").css("display", "none");
+            }
             if (selectedRows.length > 0) {
                 $("#deleteSample").css("display", "inline-block");
             } else {
@@ -12314,7 +12345,7 @@ $(document).ready(function () {
     //##################
 
     //click on "use default" button
-    $("#inputsTab").on("click", "#defValUse", function (e) {
+    $("#inputsTab").on("click", "#defValUse", async function (e) {
         var button = $(this);
         var rowID = "";
         var gNumParam = "";
@@ -12332,7 +12363,7 @@ $(document).ready(function () {
             urlzip = null,
             checkPath = null;
         //check database if file is exist, if not exist then insert
-        checkInputInsert(
+        await checkInputInsert(
             data,
             gNumParam,
             given_name,
@@ -12366,7 +12397,7 @@ $(document).ready(function () {
     });
     //change on dropDown button
     $(function () {
-        $(document).on("change", "select[indropdown]", function () {
+        $(document).on("change", "select[indropdown]", async function () {
             var button = $(this);
             var value = $(this).val();
             var rowID = "";
@@ -12379,7 +12410,7 @@ $(document).ready(function () {
             var proPipeInputID = $("#" + rowID).attr("propipeinputid");
             // if proPipeInputID exist, then first remove proPipeInputID.
             if (proPipeInputID) {
-                var removeInput = getValues({
+                var removeInput = await doAjax({
                     p: "removeProjectPipelineInput",
                     id: proPipeInputID,
                 });
@@ -12393,7 +12424,7 @@ $(document).ready(function () {
                 var url = null,
                     urlzip = null,
                     checkPath = null;
-                checkInputInsert(
+                await checkInputInsert(
                     data,
                     gNumParam,
                     given_name,
@@ -12408,32 +12439,32 @@ $(document).ready(function () {
                 );
             } else {
                 // remove from project pipeline input table
-                var removeInput = getValues({
+                var removeInput = await doAjax({
                     p: "removeProjectPipelineInput",
                     id: proPipeInputID,
                 });
                 var fillingType = "default";
                 removeSelectFile(rowID, qualifier, fillingType);
             }
-            checkReadytoRun();
+            await checkReadytoRun();
         });
     });
 
     $(function () {
-        $(document).on("change", "#mRunAmzKey", function () {
-            checkReadytoRun();
+        $(document).on("change", "#mRunAmzKey", async function () {
+            await checkReadytoRun();
         });
-        $(document).on("change", "#mRunGoogKey", function () {
-            checkReadytoRun();
+        $(document).on("change", "#mRunGoogKey", async function () {
+            await checkReadytoRun();
         });
     });
 
     $(function () {
-        $(document).on("change", "#chooseEnv", function () {
+        $(document).on("change", "#chooseEnv", async function () {
             //reset before autofill feature actived for #runCmd
             changeOnchooseEnv = true;
             $("#runCmd").val("");
-            var [allProSett, profileData] = getJobData("both");
+            var [allProSett, profileData] = await getJobData("both");
             showhideOnEnv(profileData);
             var profileTypeId = $("#chooseEnv").find(":selected").val();
             var patt = /(.*)-(.*)/;
@@ -12445,16 +12476,16 @@ $(document).ready(function () {
             selectCloudKey();
             checkShub();
             checkCloudType(profileTypeId);
-            checkReadytoRun();
+            await checkReadytoRun();
             updateDiskSpace();
             //save run in change
-            saveRun(false, true);
+            await saveRun(false, true);
         });
     });
 
     $.getScript("js/runpipeline/fileModal.js");
 
-    $("#inputFilemodal").on("show.bs.modal", function (e) {
+    $("#inputFilemodal").on("show.bs.modal", async function (e) {
         var cleanDmetaTable = function () {
             var dmetaurl = $("#dmetaFileTab").attr("dmetaurl");
             var dmetaid = $("#dmetaFileTab").attr("dmetaid");
@@ -12470,7 +12501,7 @@ $(document).ready(function () {
                 }
             }
         };
-        var sampleTableCallback = function () {
+        var sampleTableCallback = async function () {
             $("#projectFileTable").DataTable().rows().deselect();
             $('.nav-tabs a[href="#importedFiles"]').trigger("click");
             $("#detailsOffileDiv").css("display", "none");
@@ -12492,7 +12523,7 @@ $(document).ready(function () {
                 var proPipeInputID = $("#" + rowID).attr("propipeinputid");
                 $("#mIdFile").val(proPipeInputID);
                 // Get the input id of proPipeInput;
-                var proInputGet = getValues({
+                var proInputGet = await doAjax({
                     p: "getProjectPipelineInputs",
                     id: proPipeInputID,
                 });
@@ -12509,7 +12540,7 @@ $(document).ready(function () {
                                 .select();
                             $('.nav-tabs a[href="#importedFilesTab"]').tab("show");
                         } else if (input_id) {
-                            var inputGet = getValues({ p: "getInputs", id: input_id })[0];
+                            var inputGet = await doAjax({ p: "getInputs", id: input_id })[0];
                             if (inputGet) {
                                 //insert data (input_id) into form
                                 var formValues = $("#manualTab").find("input");
@@ -12524,7 +12555,7 @@ $(document).ready(function () {
             }
         };
         $(this).find("form").trigger("reset");
-        buildSampleTable(sampleTableCallback);
+        await buildSampleTable(sampleTableCallback);
         cleanDmetaTable();
     });
 
@@ -12566,7 +12597,7 @@ $(document).ready(function () {
         return ret;
     };
 
-    checkOneCollection = function (selectedRows) {
+    checkOneCollection = async function (selectedRows) {
         //get collection_id of first item. it can be space separated multiple ids
         var pushFeatureIntoArray = function (ar, column) {
             var vals = [];
@@ -12579,7 +12610,7 @@ $(document).ready(function () {
         var selRowsfileIdAr = [];
         selRowsfileIdAr = pushFeatureIntoArray(selectedRows, "id");
         for (var n = 0; n < collectionIdAr.length; n++) {
-            var selColData = getValues({
+            var selColData = await doAjax({
                 id: collectionIdAr[n],
                 p: "getCollectionFiles",
             });
@@ -12597,19 +12628,19 @@ $(document).ready(function () {
         return [false, selRowsfileIdAr];
     };
 
-    $("#inputFilemodal").on("click", "#savefile", function (e) {
+    $("#inputFilemodal").on("click", "#savefile", async function (e) {
         $("#inputFilemodal").loading({
             message: "Working...",
         });
         e.preventDefault();
-        var fillCollection = function (savetype, collection) {
+        var fillCollection = async function (savetype, collection) {
             if (!savetype.length) {
                 //add item
-                saveFileSetValModal(null, "file", null, collection);
+                await saveFileSetValModal(null, "file", null, collection);
             } else {
-                editFileSetValModal(null, "file", null, collection);
+                await editFileSetValModal(null, "file", null, collection);
             }
-            var insertFileProject = getValues({
+            var insertFileProject = await doAjax({
                 p: "insertFileProject",
                 collection_id: collection.collection_id,
                 project_id: project_id,
@@ -12619,6 +12650,8 @@ $(document).ready(function () {
         var checkValidCollection = function (selectedRows) {
             var collTypes = {};
             var fileTypes = {};
+            var nameAr = [];
+            var invalidNameAr = [];
             var ret = "";
             for (var i = 0; i < selectedRows.length; i++) {
                 var collection_type = selectedRows[i].collection_type;
@@ -12634,13 +12667,24 @@ $(document).ready(function () {
                 } else {
                     fileTypes[file_type].push(name);
                 }
+                if (!nameAr.includes(name)){
+                    nameAr.push(name)
+                } else {
+                    invalidNameAr.push(name)
+                }
+            }
+            if (invalidNameAr.length > 0){
+                ret += "Duplicate file names are not allowed in a collection:</br>";
+                for (var n = 0; n < invalidNameAr.length; n++) {
+                    ret +="  <b>* " + invalidNameAr[n] +"</b></br>";
+                }
             }
             if (
                 Object.keys(fileTypes).length > 1 ||
                 Object.keys(collTypes).length > 1
             ) {
                 if (Object.keys(fileTypes).length > 1) {
-                    ret += "Multiple file types are not allowed in one collection:</br>";
+                    ret += "Multiple file types are not allowed in a collection:</br>";
                     $.each(fileTypes, function (el) {
                         ret +=
                             "  <b>* " +
@@ -12656,7 +12700,7 @@ $(document).ready(function () {
                 }
                 if (Object.keys(collTypes).length > 1) {
                     ret +=
-                        "Multiple collection types are not allowed in one collection:</br>";
+                        "Multiple collection types are not allowed in a collection:</br>";
                     $.each(collTypes, function (el) {
                         ret +=
                             " <b>* " +
@@ -12695,7 +12739,7 @@ $(document).ready(function () {
                 var collection_id = "";
                 var selRowsfileIdAr = [];
                 var checkOneCol = "";
-                [checkOneCol, selRowsfileIdAr] = checkOneCollection(selectedRows);
+                [checkOneCol, selRowsfileIdAr] = await checkOneCollection(selectedRows);
                 var warningText = checkValidCollection(selectedRows);
                 if (warningText) {
                     showInfoModal("#infoModal", "#infoModalText", warningText);
@@ -12709,22 +12753,22 @@ $(document).ready(function () {
                         $("#newCollectionModalText").html(
                             "Selected files are not match with the one collection. Please enter <b> a new collection name </b> or <b>choose collection from dropdown</b> to add your files into existing collection."
                         );
-                        selectizeCollection(["#newCollectionName"]);
+                        selectizeCollection(["#newCollectionName"], "", false);
                     });
-                    $("#newCollectionModal").on("click", "#saveNewCollect", function (e) {
+                    $("#newCollectionModal").on("click", "#saveNewCollect", async function (e) {
                         e.preventDefault();
                         var newCollName = $("#newCollectionName")[0].selectize.getItem(
                             $("#newCollectionName").val()
                         )[0].innerHTML;
                         if (newCollName != "") {
                             newCollName = cleanSpecChar(newCollName);
-                            var collection_data = getValues({
+                            var collection_data = await doAjax({
                                 p: "saveCollection",
                                 name: newCollName,
                             });
                             if (collection_data.id) {
                                 collection_id = collection_data.id;
-                                var savecollection = getValues({
+                                var savecollection = await doAjax({
                                     p: "insertFileCollection",
                                     file_array: selRowsfileIdAr,
                                     collection_id: collection_id,
@@ -12734,7 +12778,7 @@ $(document).ready(function () {
                                         collection_id: collection_id,
                                         collection_name: newCollName,
                                     };
-                                    fillCollection(savetype, collection);
+                                    await fillCollection(savetype, collection);
                                     $("#sampleTable").DataTable().ajax.reload(null, false);
                                     $("#newCollectionModal").modal("hide");
                                     $("#inputFilemodal").modal("hide");
@@ -12745,7 +12789,7 @@ $(document).ready(function () {
                     $("#newCollectionModal").modal("show");
                 } else {
                     collection_id = checkOneCol;
-                    var getcollection = getValues({
+                    var getcollection = await doAjax({
                         p: "getCollection",
                         id: collection_id,
                     });
@@ -12755,7 +12799,7 @@ $(document).ready(function () {
                                 collection_id: collection_id,
                                 collection_name: getcollection[0].name,
                             };
-                            fillCollection(savetype, collection);
+                            await fillCollection(savetype, collection);
                             $("#inputFilemodal").modal("hide");
                         }
                     }
@@ -12817,9 +12861,9 @@ $(document).ready(function () {
                     fileObj.file_dir = fileDirArr;
                     fileObj.p = "saveFile";
                     console.log(fileObj);
-                    getValuesAsync(fileObj, function (fileIdAr) {
+                    getValuesAsync(fileObj, async function (fileIdAr) {
                         if (fileIdAr) {
-                            var savecollection = getValues({
+                            var savecollection = await doAjax({
                                 p: "insertFileCollection",
                                 file_array: fileIdAr,
                                 collection_id: collection_id,
@@ -12828,7 +12872,7 @@ $(document).ready(function () {
                                 collection_id: collection_id,
                                 collection_name: collection_name,
                             };
-                            fillCollection(savetype, collection);
+                            await fillCollection(savetype, collection);
                             $("#sampleTable").DataTable().ajax.reload(null, false);
                             $("#newCollectionModal").modal("hide");
                             $("#inputFilemodal").modal("hide");
@@ -12843,16 +12887,16 @@ $(document).ready(function () {
                         $("#newCollectionModalText").html(
                             "Please enter <b> a new collection name </b> or <b>choose collections from dropdown</b> to add  your files into existing collections."
                         );
-                        selectizeCollection(["#newCollectionName"]);
+                        selectizeCollection(["#newCollectionName"], "",false);
                     });
-                    $("#newCollectionModal").on("click", "#saveNewCollect", function (e) {
+                    $("#newCollectionModal").on("click", "#saveNewCollect", async function (e) {
                         e.preventDefault();
                         var collection_name = $("#newCollectionName")[0].selectize.getItem(
                             $("#newCollectionName").val()
                         )[0].innerHTML;
                         if (collection_name != "") {
                             collection_name = cleanSpecChar(collection_name);
-                            var collection_data = getValues({
+                            var collection_data = await doAjax({
                                 p: "saveCollection",
                                 name: collection_name,
                             });
@@ -12872,14 +12916,14 @@ $(document).ready(function () {
                 // 1. get collection name of first item.
                 var collection_name = selectedRows[0].collection_name;
                 collection_name = cleanSpecChar(collection_name);
-                var collection_data = getValues({
+                var collection_data = await doAjax({
                     p: "saveCollection",
                     name: collection_name,
                 });
                 if (collection_data.id) {
                     collection_id = collection_data.id;
                     // 2. get number of files of collection
-                    var colFiles = getValues({
+                    var colFiles = await doAjax({
                         id: collection_id,
                         p: "getCollectionFiles",
                     });
@@ -12902,7 +12946,7 @@ $(document).ready(function () {
                     // check if name is entered
                     data[1].value = $.trim(data[1].value);
                     if (data[1].value !== "") {
-                        saveFileSetValModal(data, "file", null, null);
+                        await saveFileSetValModal(data, "file", null, null);
                         $("#inputFilemodal").loading("stop");
                         $("#inputFilemodal").modal("hide");
                     } else {
@@ -12917,7 +12961,7 @@ $(document).ready(function () {
                     var rows_selected = publicFileTable.column(0).checkboxes.selected();
                     if (rows_selected.length === 1) {
                         var input_id = rows_selected[0];
-                        saveFileSetValModal(null, "file", input_id, null);
+                        await saveFileSetValModal(null, "file", input_id, null);
                     }
                     $("#inputFilemodal").loading("stop");
                     $("#inputFilemodal").modal("hide");
@@ -12930,7 +12974,7 @@ $(document).ready(function () {
                     // check if file_path is entered
                     data[1].value = $.trim(data[1].value);
                     if (data[1].value !== "") {
-                        editFileSetValModal(data, "file", null, null);
+                        await editFileSetValModal(data, "file", null, null);
                         $("#inputFilemodal").loading("stop");
                         $("#inputFilemodal").modal("hide");
                     } else {
@@ -12945,7 +12989,7 @@ $(document).ready(function () {
                     var rows_selected = publicFileTable.column(0).checkboxes.selected();
                     if (rows_selected.length === 1) {
                         var input_id = rows_selected[0];
-                        editFileSetValModal(null, "file", input_id, null);
+                        await editFileSetValModal(null, "file", input_id, null);
                         $("#inputFilemodal").loading("stop");
                         $("#inputFilemodal").modal("hide");
                     }
@@ -13135,22 +13179,22 @@ $(document).ready(function () {
         createFileTable(table_id, ajax);
     });
 
-    $("#inputsTab").on("click", "#inputDelDelete, #inputValDelete", function (e) {
+    $("#inputsTab").on("click", "#inputDelDelete, #inputValDelete", async function (e) {
         var clickedRow = $(this).closest("tr");
         var rowID = clickedRow[0].id; //#inputTa-3
         var gNumParam = rowID.split("Ta-")[1];
         var proPipeInputID = $("#" + rowID).attr("propipeinputid");
-        var removeInput = getValues({
+        var removeInput = await doAjax({
             p: "removeProjectPipelineInput",
             id: proPipeInputID,
         });
         var qualifier = $("#" + rowID + " > :nth-child(4)").text();
         var fillingType = "default;";
         removeSelectFile(rowID, qualifier, fillingType);
-        checkReadytoRun();
+        await checkReadytoRun();
     });
 
-    $("#inputValmodal").on("show.bs.modal", function (e) {
+    $("#inputValmodal").on("show.bs.modal", async function (e) {
         var button = $(e.relatedTarget);
         $(this).find("form").trigger("reset");
         $("#projectValTable").DataTable().rows().deselect();
@@ -13167,13 +13211,13 @@ $(document).ready(function () {
             var proPipeInputID = $("#" + rowID).attr("propipeinputid");
             $("#mIdVal").val(proPipeInputID);
             // Get the input id of proPipeInput;
-            var proInputGet = getValues({
+            var proInputGet = await doAjax({
                 p: "getProjectPipelineInputs",
                 id: proPipeInputID,
             });
             if (proInputGet) {
                 var input_id = proInputGet[0].input_id;
-                var inputGet = getValues({ p: "getInputs", id: input_id })[0];
+                var inputGet = await doAjax({ p: "getInputs", id: input_id })[0];
                 if (inputGet) {
                     //insert data into form
                     var formValues = $("#inputValmodal").find("input");
@@ -13189,7 +13233,7 @@ $(document).ready(function () {
         $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
     });
 
-    $("#inputValmodal").on("click", "#saveValue", function (e) {
+    $("#inputValmodal").on("click", "#saveValue", async function (e) {
         e.preventDefault();
         $("#inputValmodal").loading({
             message: "Working...",
@@ -13206,7 +13250,7 @@ $(document).ready(function () {
                 // check if name is entered
                 data[1].value = $.trim(data[1].value);
                 if (data[1].value !== "") {
-                    saveFileSetValModal(data, "val", null, null);
+                    await saveFileSetValModal(data, "val", null, null);
                     $("#inputValmodal").loading("stop");
                     $("#inputValmodal").modal("hide");
                 } else {
@@ -13221,7 +13265,7 @@ $(document).ready(function () {
                 var rows_selected = publicValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
                     var input_id = rows_selected[0];
-                    saveFileSetValModal(null, "val", input_id, null);
+                    await saveFileSetValModal(null, "val", input_id, null);
                 }
                 $("#inputValmodal").loading("stop");
                 $("#inputValmodal").modal("hide");
@@ -13234,7 +13278,7 @@ $(document).ready(function () {
                 // check if file_path is entered
                 data[1].value = $.trim(data[1].value);
                 if (data[1].value !== "") {
-                    editFileSetValModal(data, "val", null, null);
+                    await editFileSetValModal(data, "val", null, null);
                     $("#inputValmodal").loading("stop");
                     $("#inputValmodal").modal("hide");
                 } else {
@@ -13249,7 +13293,7 @@ $(document).ready(function () {
                 var rows_selected = publicValTable.column(0).checkboxes.selected();
                 if (rows_selected.length === 1) {
                     var input_id = rows_selected[0];
-                    editFileSetValModal(null, "val", input_id, null);
+                    await editFileSetValModal(null, "val", input_id, null);
                     $("#inputValmodal").loading("stop");
                     $("#inputValmodal").modal("hide");
                 }
@@ -13737,12 +13781,12 @@ $(document).ready(function () {
         };
         initPlupload();
 
-        $("#addFileModal").on("click", ".plupload_start_dummy", function (e) {
+        $("#addFileModal").on("click", ".plupload_start_dummy", async function (e) {
             var target_dir = $runscope.getUploadDir("exist");
             var run_env = $("#chooseEnv").find(":selected").val();
             var warning = "";
             if (target_dir && run_env) {
-                var chkRmDirWritable = getValues({
+                var chkRmDirWritable = await doAjax({
                     p: "chkRmDirWritable",
                     dir: target_dir,
                     run_env: run_env,
@@ -13771,7 +13815,7 @@ $(document).ready(function () {
         $("#addFileModal").on(
             "click",
             ".plupload_rsync > .plupload_file_action > a",
-            function (e) {
+            async function (e) {
                 var clickedFileUID = $(e.target).closest("li").attr("id");
                 var uploader = $("#pluploader").pluploadQueue();
                 var files = uploader.files;
@@ -13786,7 +13830,7 @@ $(document).ready(function () {
                 var target_dir = $runscope.getUploadDir("exist");
                 var run_env = $("#chooseEnv").find(":selected").val();
                 if (fileName && target_dir && run_env) {
-                    var retryRsync = getValues({
+                    var retryRsync = await doAjax({
                         p: "retryRsync",
                         dir: target_dir,
                         run_env: run_env,
@@ -13797,7 +13841,7 @@ $(document).ready(function () {
             }
         );
 
-        $("#addFileModal").on("click", "#pluploaderReset", function (e) {
+        $("#addFileModal").on("click", "#pluploaderReset", async function (e) {
             var uploader = $("#pluploader").pluploadQueue();
             var files = uploader.files;
             for (var i = 0; i < files.length; i++) {
@@ -13813,7 +13857,7 @@ $(document).ready(function () {
                             window["plupload_transfer_obj"][fileID]["rsync"]
                         ) {
                             if (window["plupload_transfer_obj"][fileID]["status"] != "done") {
-                                var killRsync = getValues({
+                                var killRsync = await doAjax({
                                     p: "resetUpload",
                                     filename: fileName,
                                 });
@@ -13854,7 +13898,7 @@ $(document).ready(function () {
         //        });
     });
 
-    $("#addFileModal").on("click", "#showHostFiles", function (e) {
+    $("#addFileModal").on("click", "#showHostFiles", async function (e) {
         var perms = $("#chooseEnv").find(":selected").attr("perms");
         var sharedProfile = false;
         if (perms) {
@@ -13865,7 +13909,7 @@ $(document).ready(function () {
         var target_dir = $runscope.getUploadDir("exist");
         $("#file_dir").val(target_dir);
         if (sharedProfile) {
-            viewDirButSearch(target_dir);
+            await viewDirButSearch(target_dir);
             $("#file_dir_div").css("display", "none");
             $("#viewDirInfo").css("display", "none");
             $("#viewDir > option").attr("style", "pointer-events: none;");
@@ -13880,7 +13924,7 @@ $(document).ready(function () {
     //### pluplouder ends
 
     //######### copy/move runs
-    $("#confirmDuplicate").on("click", "#moveRunBut", function (e) {
+    $("#confirmDuplicate").on("click", "#moveRunBut", async function (e) {
         var new_project_id = getTargetProject();
         if (!new_project_id) {
             showInfoModal(
@@ -13894,7 +13938,7 @@ $(document).ready(function () {
             var target_group_id;
             var target_perms;
             [numOfErr, target_group_id, target_perms] =
-                validateMoveCopyRun(new_project_id);
+                await validateMoveCopyRun(new_project_id);
             if (!numOfErr) {
                 $.ajax({
                     type: "POST",
@@ -13922,7 +13966,7 @@ $(document).ready(function () {
             }
         }
     });
-    $("#confirmDuplicate").on("click", "#copyRunBut", function (e) {
+    $("#confirmDuplicate").on("click", "#copyRunBut", async function (e) {
         var new_project_id = getTargetProject();
         if (!new_project_id) {
             showInfoModal(
@@ -13933,7 +13977,7 @@ $(document).ready(function () {
         } else {
             confirmNewRev = true;
             dupliProPipe = true;
-            saveRun(false, true);
+            await saveRun(false, true);
         }
     });
 
@@ -13981,7 +14025,7 @@ $(document).ready(function () {
 
     //$(document) allows to trigger when a.reportFile added later into the DOM
     $(function () {
-        $(document).on("shown.bs.tab click", "a.reportFile", function (event) {
+        $(document).on("shown.bs.tab click", "a.reportFile", async function (event) {
             var href = $(this).attr("href");
             // change height of the div to reload its content for pdf/iframe
             var currHeight = $(href).closest("div.fullsize").css("height")
@@ -13996,7 +14040,7 @@ $(document).ready(function () {
             $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
             //check if div is empty
             if (!$.trim($(href).html()).length) {
-                var writePerm = $runscope.checkUserWritePerm();
+                var writePerm = await $runscope.checkUserWritePerm();
                 var uuid = $("#runVerLog").val();
                 var visType = $(this).attr("visType");
                 var filePath = $(this).attr("filepath");
@@ -14212,7 +14256,7 @@ $(document).ready(function () {
                         fileid +
                         '"></div>';
                     $(href).append(contentDiv);
-                    var data = getValues({
+                    var data = await doAjax({
                         p: "getFileContent",
                         uuid: uuid,
                         filename: "pubweb/" + filePath,
@@ -14244,7 +14288,7 @@ $(document).ready(function () {
                         fileid +
                         '"></div>';
                     $(href).append(contentDiv);
-                    var data = getValues({
+                    var data = await doAjax({
                         p: "getFileContent",
                         uuid: uuid,
                         filename: "pubweb/" + filePath,
@@ -14419,7 +14463,7 @@ $(document).ready(function () {
                             );
                             var debrowserlink =
                                 debrowserUrl + link;
-                                console.log(debrowserlink)
+                            console.log(debrowserlink)
                             var iframe =
                                 '<iframe id="deb-' +
                                 fileid +
@@ -14782,10 +14826,10 @@ $(document).ready(function () {
         };
     })(jQuery);
 
-    $("#manualRunModal").on("show.bs.modal", function () {
+    $("#manualRunModal").on("show.bs.modal", async function () {
         window.sshCheck = false;
         // check ssh key
-        var profileData = getJobData("job");
+        var profileData = await getJobData("job");
         if (profileData) {
             if (profileData[0]) {
                 if (profileData[0].ssh_id) {
@@ -14821,13 +14865,13 @@ $(document).ready(function () {
         }
     });
 
-    $("#getManualRunCmd").on("click", function (e) {
+    $("#getManualRunCmd").on("click", async function (e) {
         var checkType = $("#manuaRunType").val();
         if (checkType) {
             window["manualRun"] = "true";
             showLoadingDiv("manuaRunPanel");
             $("#manualRunCmd").val("");
-            runProjectPipe(runProPipeCall, checkType);
+            await runProjectPipe(runProPipeCall, checkType);
         }
     });
 
@@ -14958,7 +15002,7 @@ $(document).ready(function () {
         $("#releaseModal").modal("show");
     });
 
-    $(".cancelReleaseDateBut").on("click", function (e) {
+    $(".cancelReleaseDateBut").on("click", async function (e) {
         var currRelDate = $("#releaseVal").attr("date");
         var today = getCurrDate();
         $("#releaseVal").attr("date", today);
@@ -14967,10 +15011,10 @@ $(document).ready(function () {
             $("#getTokenLink").css("display", "inline");
             $("#releaseModal").modal("hide");
         };
-        saveRun(sucFunc, false);
+        await saveRun(sucFunc, false);
     });
 
-    $("#setReleaseDateBut").on("click", function (e) {
+    $("#setReleaseDateBut").on("click", async function (e) {
         var date = $("#relDateInput").val();
         if (!date) {
             showInfoModal(
@@ -14985,7 +15029,7 @@ $(document).ready(function () {
                 $("#getTokenLink").css("display", "inline");
                 $("#releaseModal").modal("hide");
             };
-            saveRun(sucFunc, false);
+            await saveRun(sucFunc, false);
         }
     });
 

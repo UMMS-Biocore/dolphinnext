@@ -73,7 +73,7 @@ session_write_close();
             </div>';
                 }
             ?>
-            <div id="pipeRevSpan" style="margin-right:5px; width:110px; float:right;">
+            <div id="pipeRevSpan" style="margin-right:5px; width:115px; float:right;">
                 <select id="pipeRev" class="fbtn btn-default form-control mPipeChange" prev="-1" name="pipeline_rev_id"></select>
             </div>
         </div>

@@ -4097,6 +4097,10 @@ class dbfuncs {
         $sql = "UPDATE $this->db.file_collection SET deleted = 1, date_modified = now() WHERE f_id = '$id' AND owner_id='$ownerID'";
         return self::runSQL($sql);
     }
+    function removeSingleFileCollection($f_id, $c_id, $ownerID) {
+        $sql = "UPDATE $this->db.file_collection SET deleted = 1, date_modified = now() WHERE f_id = '$f_id' AND c_id = '$c_id' AND owner_id='$ownerID'";
+        return self::runSQL($sql);
+    }
     function removeProjectPipelineInput($id) {
         $sql = "UPDATE $this->db.project_pipeline_input SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
@@ -5175,6 +5179,23 @@ class dbfuncs {
         $sql = "INSERT INTO $this->db.file(name, file_dir, file_type, files_used, collection_type, archive_dir, s3_archive_dir, gs_archive_dir, run_env, owner_id, perms, date_created, date_modified, last_modified_user) VALUES ('$name', '$file_dir', '$file_type', '$files_used', '$collection_type', '$archive_dir', '$s3_archive_dir', '$gs_archive_dir', '$run_env', '$ownerID', 3, now(), now(), '$ownerID')";
         return self::insTable($sql);
     }
+    function updateFile($id, $name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $ownerID) {
+        $name = is_null($name) ? $name : trim($name);
+        $file_dir = is_null($file_dir) ? $file_dir : trim($file_dir);
+        $archive_dir = is_null($archive_dir) ? $archive_dir : trim($archive_dir);
+        $s3_archive_dir = is_null($s3_archive_dir) ? $s3_archive_dir : trim($s3_archive_dir);
+        $gs_archive_dir = is_null($gs_archive_dir) ? $gs_archive_dir : trim($gs_archive_dir);
+        $name_update = is_null($name) ? "" : "name='$name',";
+        $file_dir_update = is_null($file_dir) ? "" : "file_dir='$file_dir',";
+        $file_type_update = is_null($file_type) ? "" : "file_type='$file_type',";
+        $files_used_update = is_null($files_used) ? "" : "files_used='$files_used',";
+        $collection_type_update = is_null($collection_type) ? "" : "collection_type='$collection_type',";
+        $archive_dir_update = is_null($archive_dir) ? "" : "archive_dir='$archive_dir',";
+        $s3_archive_dir_update = is_null($s3_archive_dir) ? "" : "s3_archive_dir='$s3_archive_dir',";
+        $gs_archive_dir_update = is_null($gs_archive_dir) ? "" : "gs_archive_dir='$gs_archive_dir',";
+        $sql = "UPDATE $this->db.file SET $name_update $file_dir_update $file_type_update $files_used_update $collection_type_update $archive_dir_update $s3_archive_dir_update $gs_archive_dir_update date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
 
     function saveCollection($name, $ownerID) {
         $colData = $this->getCollectionByName($name, $ownerID);
@@ -5202,8 +5223,9 @@ class dbfuncs {
         $sql = "UPDATE $this->db.collection SET name='$name', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    //ON DUPLICATE KEY UPDATE prevents DUPLICATE KEY ERROR
     function insertFileCollection($f_id, $c_id, $ownerID) {
-        $sql = "INSERT INTO $this->db.file_collection (f_id, c_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$c_id', '$ownerID', now(), now(), '$ownerID', 3) ON DUPLICATE KEY UPDATE date_modified = now() ";
+        $sql = "INSERT INTO $this->db.file_collection (f_id, c_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$f_id', '$c_id', '$ownerID', now(), now(), '$ownerID', 3) ON DUPLICATE KEY UPDATE deleted=0 AND date_modified = now() ";
         return self::insTable($sql);
     }
     function insertFileProject($f_id, $p_id, $ownerID) {

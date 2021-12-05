@@ -313,23 +313,7 @@ $DMETA_LABEL= DMETA_LABEL;
             <div><textarea id="runSum" rows="3" placeholder="Enter run description here.." style="min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea></div>
             <div id="runSettings" style="padding-top:7px;">
                 <div>
-                    <div class="row" id="rOut_dirDiv">
-                        <div class="col-md-12">
-                            <label style="float:left; margin-right:4px;"> Work Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the work directory in your host. eg. /project/rna-seq/run1"><i style="font-size: 14px;" class='fa fa-info-circle'></i></a></span></label>
-                            <!--                            <button id="refreshDiskSpaceBut" type="button" class="btn" data-backdrop="false" onclick="updateDiskSpace()" style="display:none; float:left; background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check Disk Space"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>-->
-                            <span title="Check Disk Space" style="cursor:pointer;" onclick="updateDiskSpace()">
-                                <div id="workdir_diskpercent_div" class="col-md-1 progress" style=" display:none; margin-bottom:0px; padding-left:0px; padding-right:0px; margin-right:5px; margin-left:5px;">
-                                    <div id="workdir_diskpercent" class="progress-bar progress-bar-info" role="progressbar" style="padding-left:3px; color:black; width:60%"></div>
-                                </div>
-                            </span>
-                            <p id="workdir_diskspace" style="float:left; display:none;" class="small"></p>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <input type="text" class="form-control" style="width: 100%;" id="rOut_dir" name="output_dir" placeholder="Enter output directory">
-                            </div>
-                        </div>
-                    </div>
+                    
                     <div class="row">
                         <div class="col-md-12">
                             <div id="mRunAmzKeyDiv" class="form-group" style="display:none;">
@@ -362,6 +346,23 @@ $DMETA_LABEL= DMETA_LABEL;
                                 <select id="chooseEnv" style="width: 100%;" class="fbtn btn-default form-control" name="runEnv">
                                     <option value="" disabled selected>Choose environment </option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" id="rOut_dirDiv">
+                        <div class="col-md-12">
+                            <label style="float:left; margin-right:4px;"> Work Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the work directory in your host. eg. /project/rna-seq/run1"><i style="font-size: 14px;" class='fa fa-info-circle'></i></a></span></label>
+                            <!--                            <button id="refreshDiskSpaceBut" type="button" class="btn" data-backdrop="false" onclick="updateDiskSpace()" style="display:none; float:left; background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check Disk Space"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>-->
+                            <span title="Check Disk Space" style="cursor:pointer;" onclick="updateDiskSpace()">
+                                <div id="workdir_diskpercent_div" class="col-md-1 progress" style=" display:none; margin-bottom:0px; padding-left:0px; padding-right:0px; margin-right:5px; margin-left:5px;">
+                                    <div id="workdir_diskpercent" class="progress-bar progress-bar-info" role="progressbar" style="padding-left:3px; color:black; width:60%"></div>
+                                </div>
+                            </span>
+                            <p id="workdir_diskspace" style="float:left; display:none;" class="small"></p>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <input type="text" class="form-control" style="width: 100%;" id="rOut_dir" name="output_dir" placeholder="Enter output directory">
                             </div>
                         </div>
                     </div>
@@ -890,7 +891,8 @@ $DMETA_LABEL= DMETA_LABEL;
                             <div class="panel-body">
                                 <div class="pull-right">
                                     <button type="button" class="btn btn-success btn-sm" id="addSample" data-toggle="modal" data-backdrop="static" data-keyboard="false"><i class="fa fa-plus"></i> Add File</button>
-                                    <button type="button" class="btn btn-danger btn-sm" style="display:none;" id="deleteSample" data-toggle="modal" href="#confirmModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-trash"></i> Delete File</button>
+                                    <button type="button" class="btn btn-primary btn-sm" style="display:none;" id="editSample" data-toggle="modal" href="#editSampleModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-pencil"></i> Edit Multiple Files</button>
+                                    <button type="button" class="btn btn-primary btn-sm" style="display:none;" id="deleteSample" data-toggle="modal" href="#confirmModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-trash"></i> Remove File</button>
                                 </div>
                                 <table id="sampleTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                     <thead>
@@ -901,7 +903,7 @@ $DMETA_LABEL= DMETA_LABEL;
                                             <th>Run Environment</th>
                                             <th>Project</th>
                                             <th>Added on</th>
-                                            <th>View</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -981,29 +983,29 @@ $DMETA_LABEL= DMETA_LABEL;
                 </div>
             </div>
             <?php if ($SHOW_DMETA != false){ 
-            $dURLS = array_map('trim', explode(',', $DMETA_URL));
-            $dLabels = array_map('trim', explode(',', $DMETA_LABEL));
-            $ids = array();
-            $tabList = "";
-            $tabContent= "";
-            for ($i = 0; $i < count($dURLS); $i++) {
-                if (count($dURLS) == count($dLabels)){
-                    $pre = $dLabels[$i];
-                } else {
-                    $pre = str_replace("https:", "", $dURLS[$i]);
-                    $pre = str_replace("http:", "", $pre);
-                    $pre = str_replace("/", "", $pre);
-                    $pre = str_replace(":", "", $pre);
-                }
-                $ids[] = $pre;
-                $tabDivId = $pre."Tab";
-                $tableDivId = $pre."Table";
-                $active = "";
-                if ($i === 0){
-                    $active = "active";
-                }
-                $tabList .= '<li class="'.$active.'"><a class="nav-item" data-toggle="tab" href="#'.$tabDivId.'">'.$pre.'</a></li>';
-                $tabContent .= '
+    $dURLS = array_map('trim', explode(',', $DMETA_URL));
+    $dLabels = array_map('trim', explode(',', $DMETA_LABEL));
+    $ids = array();
+    $tabList = "";
+    $tabContent= "";
+    for ($i = 0; $i < count($dURLS); $i++) {
+        if (count($dURLS) == count($dLabels)){
+            $pre = $dLabels[$i];
+        } else {
+            $pre = str_replace("https:", "", $dURLS[$i]);
+            $pre = str_replace("http:", "", $pre);
+            $pre = str_replace("/", "", $pre);
+            $pre = str_replace(":", "", $pre);
+        }
+        $ids[] = $pre;
+        $tabDivId = $pre."Tab";
+        $tableDivId = $pre."Table";
+        $active = "";
+        if ($i === 0){
+            $active = "active";
+        }
+        $tabList .= '<li class="'.$active.'"><a class="nav-item" data-toggle="tab" href="#'.$tabDivId.'">'.$pre.'</a></li>';
+        $tabContent .= '
             <div id="'.$tabDivId.'" role="tabpanel" class="tab-pane '.$active.'" searchmetatab="true">
                 <div class="row">
                     <div class="col-sm-12" style="padding-top:6px;">
@@ -1035,10 +1037,10 @@ $DMETA_LABEL= DMETA_LABEL;
                             </div>
                         </div>
             </div>';
-            }
-            
-    
-            $dmetaDiv = '
+    }
+
+
+    $dmetaDiv = '
             <div role="tabpanel" id="dmetaFileTab" dmetaurl="'.$DMETA_URL.'" dmetaid="'.join(",",$ids).'" class="tab-pane" searchTab="true">
                <div role="tabpanel">
                     <!-- Nav tabs -->
@@ -1052,7 +1054,7 @@ $DMETA_LABEL= DMETA_LABEL;
                 </div>
             </div>
             ';
-            echo $dmetaDiv; }
+    echo $dmetaDiv; }
             ?>
         </div>
     </div>
@@ -1692,8 +1694,8 @@ $DMETA_LABEL= DMETA_LABEL;
                             <label for="mUserLab" class="col-sm-2 control-label">Collection</label>
                             <div class="col-sm-10">
                                 <select id="newCollectionName" class="fbtn btn-default form-control" >
-                                <option value="" disabled selected>Type New Collection Name or Choose to Add into Existing Collection</option>
-                            </select>
+                                    <option value="" disabled selected>Type New Collection Name or Choose to Add into Existing Collection</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -1729,6 +1731,103 @@ $DMETA_LABEL= DMETA_LABEL;
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary cancelReleaseDateBut" data-dismiss="modal">Release Immediately</button>
                 <button type="button" class="btn btn-primary" id="setReleaseDateBut">Set Release Date</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Edit Sample Modal-->
+<div id="editSampleModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Edit File</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Name</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" name="name">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">GEO ID</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" name="geo_used">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Input File(s) <span><a data-toggle="tooltip" data-placement="bottom" title="To merge files, please enter each file set into a new line. If you're entering paired/triple/quadruple file set, please separate each file with a comma."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        
+                        <div class="col-sm-9">
+                            <textarea spellcheck="false" rows="3" class="form-control"   name="files_used"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Input File(s) Location</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" name="file_dir">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Collection Type</label>
+                        <div class="col-sm-9">
+                            <select class="fbtn btn-default form-control" name="collection_type">
+                                <option value="single" >Single/List</option>
+                                <option value="pair" >Paired List</option>
+                                <option value="triple" >Triple List</option>
+                                <option value="quadruple" >Quadruple List</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">File Type</label>
+                        <div class="col-sm-9">
+                            <select id="file_type" class="fbtn btn-default form-control" name="file_type">
+                                <option value="fastq" selected>FASTQ</option>
+                                <option value="bam">BAM</option>
+                                <option value="bai">BAI</option>
+                                <option value="bed">BED</option>
+                                <option value="csv">CSV</option>
+                                <option value="tab">TAB</option>
+                                <option value="tsv">TSV</option>
+                                <option value="txt">TXT</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Local Archive Directory</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" name="archive_dir">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Amazon S3 Backup</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" name="s3_archive_dir">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Google Storage Backup</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control" name="gs_archive_dir">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Collection</label>
+                        <div class="col-sm-9">
+                            <select name="collection_id" class="fbtn btn-default form-control" id="collection_id_edit">
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditSampleModal">Save</button>
             </div>
         </div>
     </div>
