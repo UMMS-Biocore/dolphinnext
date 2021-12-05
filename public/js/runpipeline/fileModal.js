@@ -171,40 +171,36 @@ $('#inputFilemodal').on('click', '#dmetaFiles', function (e) {
 
 
 
+var fillEditSampleModal = function (data, type, cb){
+    var newObj = {} 
+    console.log(data)
+    newObj.name = data.name
+    newObj.collection_type = data.collection_type
+    newObj.s3_archive_dir = data.s3_archive_dir
+    newObj.archive_dir = data.archive_dir
+    newObj.gs_archive_dir = data.gs_archive_dir
+    newObj.run_env = data.run_env
+    newObj.project_name = data.project_name
+    newObj.collection_id = data.collection_id
+    newObj.file_type = data.file_type
 
+    var cpData = $.extend(true, {}, data);
 
+    var file_dir = cpData.file_dir
+    var files_used = cpData.files_used
+    if (file_dir.constructor === Array){
+        file_dir = file_dir.join("\t");
+    }
+    newObj.file_dir = file_dir
 
-$(document).on('show.bs.modal', '#editSampleModal', function (e) {
-    $('#editSampleModal').find("form").trigger("reset");
-
-    var fillEditSampleModal = function (data){
-        var newObj = {} 
-        console.log(data)
-        newObj.name = data.name
-        newObj.collection_type = data.collection_type
-        newObj.s3_archive_dir = data.s3_archive_dir
-        newObj.archive_dir = data.archive_dir
-        newObj.gs_archive_dir = data.gs_archive_dir
-        newObj.run_env = data.run_env
-        newObj.project_name = data.project_name
-        newObj.collection_id = data.collection_id
-        newObj.file_type = data.file_type
-
-        var cpData = $.extend(true, {}, data);
-
-        var file_dir = cpData.file_dir
-        var files_used = cpData.files_used
-        if (file_dir.constructor === Array){
-            file_dir = file_dir.join("\t");
+    if (files_used.constructor === Array){
+        for (var i = 0; i < files_used.length; i++) {
+            files_used[i] = files_used[i].join(",");;
         }
-        newObj.file_dir = file_dir
-
-        if (files_used.constructor === Array){
-            for (var i = 0; i < files_used.length; i++) {
-                files_used[i] = files_used[i].join(",");;
-            }
-            files_used = files_used.join(" | ");
-        }
+        files_used = files_used.join(" | ");
+    }
+    if (type == "single"){
+        $("#editSampleModal").find("[name=name]").closest(".form-group").css("display","block");
         //geo files:
         if (!data.file_dir){
             newObj.geo_used = files_used.replace(/ \| /g, "\n")
@@ -215,81 +211,133 @@ $(document).on('show.bs.modal', '#editSampleModal', function (e) {
             $("#editSampleModal").find("[name=files_used]").closest(".form-group").css("display","block");
             newObj.files_used = files_used.replace(/ \| /g, "\n")
         }
-        selectizeCollection(["#collection_id_edit"], newObj.collection_id.split(","), true);
-        fillFormByName('#editSampleModal', 'input, select, textarea', newObj);
+    } else if (type == "multi"){
+        $("#editSampleModal").find("[name=geo_used]").closest(".form-group").css("display","none");
+        $("#editSampleModal").find("[name=name]").closest(".form-group").css("display","none");
+        $("#editSampleModal").find("[name=files_used]").closest(".form-group").css("display","none");
     }
+    selectizeCollection(["#collection_id_edit"], newObj.collection_id.split(","), true, cb);
+    fillFormByName('#editSampleModal', 'input, select, textarea', newObj);
+    //    
 
-    var selRowsData = $("#sampleTable")
-    .DataTable()
-    .rows({ selected: true })
-    .data();
+}
+
+
+
+
+$(document).on('click', '.singleEditSample', function (e) {
+    $('#editSampleModal').find("form").trigger("reset");
+    removeMultiUpdateModal('#editSampleModal')
+        var clickedRow = $(this).closest("tr");
+    console.log(clickedRow)
+    var selRows = $("#sampleTable").DataTable().rows({ selected: true })
+    
+    var clickedRowsData = $("#sampleTable").DataTable().rows(clickedRow).data();
+    var selRowsIds = []
+    for (var i = 0; i < clickedRowsData.length; i++) {
+        selRowsIds.push(clickedRowsData[i].id);
+    }
+    $('#saveEditSampleModal').data('selRows', selRows[0]);
+    $('#saveEditSampleModal').data('clickedrows', selRowsIds);
+    $('#saveEditSampleModal').data('oldcollections', clickedRowsData[0].collection_id.split(","));
+    if (clickedRowsData.length > 1){
+        var cb = function(){
+            prepareMultiUpdateModal('#editSampleModal', 'input, select, textarea')
+        }
+        fillEditSampleModal(clickedRowsData[0], "multi", cb)
+
+    } else {
+        fillEditSampleModal(clickedRowsData[0], "single", null)
+    }
+    $('#editSampleModal').modal("show");
+});
+
+$(document).on('click', '#editSample', function (e) {
+    $('#editSampleModal').find("form").trigger("reset");
+    removeMultiUpdateModal('#editSampleModal')
+    var selRows = $("#sampleTable").DataTable().rows({ selected: true })
+    console.log(selRows)
+    var selRowsData = selRows.data();
     var selRowsIds = []
     for (var i = 0; i < selRowsData.length; i++) {
         selRowsIds.push(selRowsData[i].id);
     }
+    $('#saveEditSampleModal').data('selRows', selRows[0]);
     $('#saveEditSampleModal').data('clickedrows', selRowsIds);
+    $('#saveEditSampleModal').data('oldcollections', selRowsData[0].collection_id.split(","));
     if (selRowsData.length > 1){
-        console.log("show multi update")
+        var cb = function(){
+            prepareMultiUpdateModal('#editSampleModal', 'input, select, textarea')
+        }
+        fillEditSampleModal(selRowsData[0], "multi", cb)
+
     } else {
-        fillEditSampleModal(selRowsData[0])
+        fillEditSampleModal(selRowsData[0], "single", null)
     }
+    $('#editSampleModal').modal("show");
 })
 
 $(document).on('click', '#saveEditSampleModal', async function (e) {
     e.preventDefault();
+    var selRows = $('#saveEditSampleModal').data('selRows');
     var clickedRows = $('#saveEditSampleModal').data('clickedrows');
+    var type = clickedRows.length > 1 ? "multi" : "single";
+    var oldcollections = $('#saveEditSampleModal').data('oldcollections');
     var formValues = $('#editSampleModal').find('input, select, textarea');
-    var requiredFields = ["name"]
-    console.log(clickedRows)
 
+    var requiredFields = [];
+    if (type == "single") requiredFields = ["name"];
     var formObj = {};
     var stop = "";
-    [formObj, stop] = createFormObj(formValues, requiredFields);
-    console.log(formObj);
-
+    [formObj, stop] = createFormObj(formValues, requiredFields, {onlyVisible:true});
+    formObj.file_id = clickedRows;
+    var removedCollections = []
+    if (type == "single"){
+        if (formObj.geo_used) formObj.files_used = formObj.geo_used
+        formObj.files_used = formObj.files_used.replaceAll("\n"," | ")
+    }
     if ( stop === false) {
-        //new items come with prefix: _newItm_
-        for (var i = 0; i < formObj.collection_id.length; i++) {
-            var eachCollID = formObj.collection_id[i]
-            var collection_name = $("#collection_id_edit")[0].selectize.getItem(
-                eachCollID
-            )[0].innerHTML;
-            collection_name = cleanSpecChar(collection_name);
-            console.log(eachCollID)
-            console.log(collection_name)
-            if (eachCollID.match(/^_newItm_(.*)/)) {
-                var collection_data = await doAjax({
-                    p: "saveCollection",
-                    name: collection_name,
-                });
-                console.log(collection_data)
-                if (collection_data.id) {
-                    formObj.collection_id[i] = collection_data.id;
+        if (formObj.collection_id){
+            removedCollections = $(oldcollections).not(formObj.collection_id).get();
+            //new items come with prefix: _newItm_
+            for (var i = 0; i < formObj.collection_id.length; i++) {
+                var eachCollID = formObj.collection_id[i]
+                var collection_name = $("#collection_id_edit")[0].selectize.getItem(
+                    eachCollID
+                )[0].innerHTML;
+                collection_name = cleanSpecChar(collection_name);
+                if (eachCollID.match(/^_newItm_(.*)/)) {
+                    var collection_data = await doAjax({
+                        p: "saveCollection",
+                        name: collection_name,
+                    });
+                    if (collection_data.id) {
+                        formObj.collection_id[i] = collection_data.id;
+                    }
                 }
             }
         }
-        console.log(formObj)
-
-        //        formObj.file_dir = fileDirArr;
-        //        formObj.file_array = ret.file_array;
-        formObj.p = "saveFile";
+        formObj.removedCollections = removedCollections;
+        formObj.p = "updateFile";
         console.log(formObj);
-        //        $.ajax({
-        //            type: "POST",
-        //            url: "ajax/ajaxquery.php",
-        //            data: formObj,
-        //            async: true,
-        //            success: function (s) {
-        //                if (s.length) {
-        //                    $("#sampleTable").data("select", [collection_name]);
-        //                    $("#sampleTable").DataTable().ajax.reload(null, false);
-        //                    $("#addFileModal").modal("hide");
-        //                }
-        //            },
-        //            error: function (errorThrown) {
-        //                alert("Error: " + errorThrown);
-        //            },
-        //        });
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: formObj,
+            async: true,
+            success: function (s) {
+                if (s.length) {
+                    var collectionNameArr = $("#select-Collection").val()
+                    $("#sampleTable").data("select", collectionNameArr);
+                    $("#sampleTable").data("selectIdx", selRows);
+                    $("#sampleTable").DataTable().ajax.reload(null, false);
+                    $("#editSampleModal").modal("hide");
+                }
+            },
+            error: function (errorThrown) {
+                alert("Error: " + errorThrown);
+            },
+        });
     }
 })
 

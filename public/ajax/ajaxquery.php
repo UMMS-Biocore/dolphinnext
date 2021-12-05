@@ -1548,6 +1548,38 @@ else if ($p=="insertFileProject"){
     endforeach;
     $data = $projectFileID;
 }
+else if ($p=="updateFile"){
+    $name = isset($_REQUEST['name']) ? $_REQUEST['name'] : null;
+    $file_dir = isset($_REQUEST['file_dir']) ? $_REQUEST['file_dir'] : null;
+    $file_type = isset($_REQUEST['file_type']) ? $_REQUEST['file_type'] : null;
+    $files_used = isset($_REQUEST['files_used']) ? $_REQUEST['files_used'] : null;
+    $collection_type = isset($_REQUEST['collection_type']) ? $_REQUEST['collection_type'] : null;
+    $archive_dir = isset($_REQUEST['archive_dir']) ? $_REQUEST['archive_dir'] : null;
+    $s3_archive_dir = isset($_REQUEST['s3_archive_dir']) ? $_REQUEST['s3_archive_dir'] : null;
+    $gs_archive_dir = isset($_REQUEST['gs_archive_dir']) ? $_REQUEST['gs_archive_dir'] : null;
+    $collection_ids = isset($_REQUEST['collection_id']) ? $_REQUEST['collection_id'] : array();
+    $file_ids = $_REQUEST['file_id'];
+    $removedCollections = isset($_REQUEST['removedCollections']) ? $_REQUEST['removedCollections'] : array();
+    $updateArr = array();
+
+    for ($i = 0; $i < count($file_ids); $i++) {
+        $file_id = $file_ids[$i];
+        for ($c = 0; $c < count($removedCollections); $c++) {
+            $c_id = $removedCollections[$c];
+            settype($c_id, 'integer');
+            $db->removeSingleFileCollection($file_id, $c_id, $ownerID);
+        }
+        $update = $db->updateFile($file_id, $name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $ownerID);
+        $updateArr[] = $file_id;
+        for ($d = 0; $d < count($collection_ids); $d++) {
+            $collection_id = $collection_ids[$d];
+            settype($collection_id, 'integer');
+            $db->insertFileCollection($file_id, $collection_id, $ownerID);
+
+        }
+    }
+    $data = json_encode($updateArr);
+}
 else if ($p=="saveFile"){
     $collection_id = $_REQUEST['collection_id'];
     settype($collection_id, 'integer');

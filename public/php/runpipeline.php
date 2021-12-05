@@ -891,7 +891,7 @@ $DMETA_LABEL= DMETA_LABEL;
                             <div class="panel-body">
                                 <div class="pull-right">
                                     <button type="button" class="btn btn-success btn-sm" id="addSample" data-toggle="modal" data-backdrop="static" data-keyboard="false"><i class="fa fa-plus"></i> Add File</button>
-                                    <button type="button" class="btn btn-primary btn-sm" style="display:none;" id="editSample" data-toggle="modal" href="#editSampleModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-pencil"></i> Edit File</button>
+                                    <button type="button" class="btn btn-primary btn-sm" style="display:none;" id="editSample" data-toggle="modal" href="#editSampleModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-pencil"></i> Edit Multiple Files</button>
                                     <button type="button" class="btn btn-primary btn-sm" style="display:none;" id="deleteSample" data-toggle="modal" href="#confirmModal" data-backdrop="static" data-keyboard="false"><i class="fa fa-trash"></i> Remove File</button>
                                 </div>
                                 <table id="sampleTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
@@ -903,7 +903,7 @@ $DMETA_LABEL= DMETA_LABEL;
                                             <th>Run Environment</th>
                                             <th>Project</th>
                                             <th>Added on</th>
-                                            <th>View</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                 </table>
@@ -1759,7 +1759,8 @@ $DMETA_LABEL= DMETA_LABEL;
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-3 control-label">Input File(s)</label>
+                        <label class="col-sm-3 control-label">Input File(s) <span><a data-toggle="tooltip" data-placement="bottom" title="To merge files, please enter each file set into a new line. If you're entering paired/triple/quadruple file set, please separate each file with a comma."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
+                        
                         <div class="col-sm-9">
                             <textarea spellcheck="false" rows="3" class="form-control"   name="files_used"></textarea>
                         </div>

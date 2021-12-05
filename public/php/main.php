@@ -88,7 +88,7 @@ folder instead of downloading all of them to reduce the load. -->
         <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
         <link rel="stylesheet" href="bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker3.min.css" type="text/css" />
         <!-- to fix favicon.ico not found error-->
-<!--        <link rel="shortcut icon" href="#">-->
+        <!--        <link rel="shortcut icon" href="#">-->
         <link rel="icon" type="image/png" href="images/favicon.ico" />
         <style>
             /* strikethrough css deleted rows in Datatables */
@@ -443,6 +443,26 @@ folder instead of downloading all of them to reduce the load. -->
             white-space: nowrap;
             }
             */
+            
+            /* modal show form values on multiple values */
+            div.multi-value {
+                border: 1px dotted #666;
+                border-radius: 3px;
+                padding: 5px;
+                background-color: #fafafa;
+                cursor: pointer;
+            }
+
+            div.multi-restore {
+                margin-top: 0.5em;
+                font-size: 0.8em;
+                line-height: 1.25em;
+                color: #3879d9;
+            }
+            div.multi-restore:hover {
+                text-decoration: underline;
+                cursor: pointer;
+            }
 
         </style>
 
@@ -467,9 +487,9 @@ folder instead of downloading all of them to reduce the load. -->
                         <ul class="nav navbar-nav">
                             <li><a href="index.php?np=1">Pipelines </a></li>
                             <?php 
-                            if ($login == 1){
-                                echo '<li><a href="index.php?np=2">Projects </a></li><li><a href="index.php?np=5">Run Status </a></li>';
-                            }  
+    if ($login == 1){
+        echo '<li><a href="index.php?np=2">Projects </a></li><li><a href="index.php?np=5">Run Status </a></li>';
+    }  
                             ?>
                         </ul>
                     </div>
@@ -486,8 +506,8 @@ folder instead of downloading all of them to reduce the load. -->
                                 </a>
                             </li>
                             <?php 
-    if ($login == 1 && $SHOW_WIZARD){
-        echo '<li id="manageProfileWizard" class="dropdown notifications-menu" >
+                            if ($login == 1 && $SHOW_WIZARD){
+                                echo '<li id="manageProfileWizard" class="dropdown notifications-menu" >
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true" >
                                     <i data-toggle="tooltip" data-placement="bottom" title="Wizards" style="padding:3px; padding-left:0px; padding-right:5px;" class="fa fa-magic"></i>
                                     <small id="wizAmount" style="display:none" class="label pull-right label-warning"></small>
@@ -507,11 +527,11 @@ folder instead of downloading all of them to reduce the load. -->
                                     </li>
                                 </ul>
                             </li>';
-    }
+                            }
 
-            if ($login == 1){
-                echo '<li><a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" title="Profiles"><i class="glyphicon glyphicon-user"></i> </a></li>';
-            } 
+                            if ($login == 1){
+                                echo '<li><a href="index.php?np=4" data-toggle="tooltip" data-placement="bottom" title="Profiles"><i class="glyphicon glyphicon-user"></i> </a></li>';
+                            } 
                             ?>
 
                             <li class="dropdown">
@@ -579,12 +599,12 @@ folder instead of downloading all of them to reduce the load. -->
                                         </div>
                                     </li>';
     }
-    if ($login != 1){
-        echo '<li><a id="signinbtn" href="index.php?p=login">Sign In</i> </a></li>';
-    }                                                                                                                                   
-                                                                                                                                        
+                                                                                                                                        if ($login != 1){
+                                                                                                                                            echo '<li><a id="signinbtn" href="index.php?p=login">Sign In</i> </a></li>';
+                                                                                                                                        }                                                                                                                                   
+
                             ?>
-                            
+
                         </ul>
                     </div>
                 </nav>
@@ -599,8 +619,8 @@ folder instead of downloading all of them to reduce the load. -->
                     <!-- Sidebar user panel -->
                     <div class="user-panel" <?php 
                          if ($login != 1){
-                                    echo 'style="display:none;"';
-                        }
+                             echo 'style="display:none;"';
+                         }
                          ?>style="padding-bottom:5px;">
                         <div id="userAvatar" style="display:inline" class="pull-left image">
                             <img id="userAvatarImg" src="

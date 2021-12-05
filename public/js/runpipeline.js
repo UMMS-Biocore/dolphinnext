@@ -8423,10 +8423,8 @@ function fillFileSearchBox(item, targetDiv) {
     }
 }
 
-var selectizeCollection = function (idArr, selVal, multipleItems) {
+var selectizeCollection = function (idArr, selVal, multipleItems, cb) {
     var maxItems = 1
-
-
     if (multipleItems) maxItems = 1000;
     var renderMenu = {
         option: function (data, escape) {
@@ -8476,7 +8474,7 @@ var selectizeCollection = function (idArr, selVal, multipleItems) {
             });
             $(idArr[i])[0].selectize.clear();
             if (selVal) $(idArr[i])[0].selectize.setValue(selVal)
-
+            if (cb && typeof cb === "function") cb()
         }
     });
 };
@@ -9923,7 +9921,19 @@ $(document).ready(async function () {
             createMultiselect("#select-" + columnsToSearch[i]);
             createMultiselectBinder("#filter-" + columnsToSearch[i]);
             var selCollectionNameArr = $("#sampleTable").data("select");
-            if (selCollectionNameArr) {
+            var selIdxArr = $("#sampleTable").data("selectIdx");
+            // when file updates
+            if (selIdxArr && selCollectionNameArr) {
+                if (selIdxArr.length) {
+                    $("#sampleTable").removeData("selectIdx");
+                    $("#sampleTable").DataTable().rows(selIdxArr).select();
+                }
+                if (selCollectionNameArr.length) {
+                    $("#sampleTable").removeData("select");
+                    selectMultiselect("#select-Collection", selCollectionNameArr);
+                }
+                // when new collection created or edit collection button
+            } else if (selCollectionNameArr) {
                 if (selCollectionNameArr.length) {
                     $("#sampleTable").removeData("select");
                     selectMultiselect("#select-Collection", selCollectionNameArr);
@@ -11476,7 +11486,7 @@ $(document).ready(async function () {
                         data: null,
                         fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
                             $(nTd).html(
-                                '<button type="button" class="btn btn-default btn-sm showDetailSample"> Details</button>'
+                                '<button type="button" class="btn btn-default btn-sm singleEditSample"> Edit</button><button style="margin-left:2px;" type="button" class="btn btn-default btn-sm showDetailSample"> Details</button>'
                             );
                         },
                     },
@@ -11529,12 +11539,15 @@ $(document).ready(async function () {
             .DataTable()
             .rows({ selected: true })
             .data();
-            if (selectedRows.length > 0) {
-                $("#deleteSample").css("display", "inline-block");
+            if (selectedRows.length > 1) {
                 $("#editSample").css("display", "inline-block");
             } else {
-                $("#deleteSample").css("display", "none");
                 $("#editSample").css("display", "none");
+            }
+            if (selectedRows.length > 0) {
+                $("#deleteSample").css("display", "inline-block");
+            } else {
+                $("#deleteSample").css("display", "none");
             }
         }
     );
@@ -12637,6 +12650,8 @@ $(document).ready(async function () {
         var checkValidCollection = function (selectedRows) {
             var collTypes = {};
             var fileTypes = {};
+            var nameAr = [];
+            var invalidNameAr = [];
             var ret = "";
             for (var i = 0; i < selectedRows.length; i++) {
                 var collection_type = selectedRows[i].collection_type;
@@ -12652,13 +12667,24 @@ $(document).ready(async function () {
                 } else {
                     fileTypes[file_type].push(name);
                 }
+                if (!nameAr.includes(name)){
+                    nameAr.push(name)
+                } else {
+                    invalidNameAr.push(name)
+                }
+            }
+            if (invalidNameAr.length > 0){
+                ret += "Duplicate file names are not allowed in a collection:</br>";
+                for (var n = 0; n < invalidNameAr.length; n++) {
+                    ret +="  <b>* " + invalidNameAr[n] +"</b></br>";
+                }
             }
             if (
                 Object.keys(fileTypes).length > 1 ||
                 Object.keys(collTypes).length > 1
             ) {
                 if (Object.keys(fileTypes).length > 1) {
-                    ret += "Multiple file types are not allowed in one collection:</br>";
+                    ret += "Multiple file types are not allowed in a collection:</br>";
                     $.each(fileTypes, function (el) {
                         ret +=
                             "  <b>* " +
@@ -12674,7 +12700,7 @@ $(document).ready(async function () {
                 }
                 if (Object.keys(collTypes).length > 1) {
                     ret +=
-                        "Multiple collection types are not allowed in one collection:</br>";
+                        "Multiple collection types are not allowed in a collection:</br>";
                     $.each(collTypes, function (el) {
                         ret +=
                             " <b>* " +

@@ -1352,7 +1352,7 @@ function getDropdownDef(id, attr, optionArr, defText) {
 
 function getIconButtonModal(name, buttons, icon) {
     var buttonId = buttons.split(' ')[0];
-    var button = '<button type="submit" style="background:none; padding:0px;" class="btn" title="' + buttons + '" id="' + name + buttonId + '" data-toggle="modal" data-target="#' + name + 'modal"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' + name + '"><i class="' + icon + '" style="font-size: 17px;"></i></a></button>';
+    var button = '<button type="submit" style="background:none; padding:0px; margin-right:4px; margin-left:3px;" class="btn" title="' + buttons + '" id="' + name + buttonId + '" data-toggle="modal" data-target="#' + name + 'modal"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' + name + '"><i class="' + icon + '" style="font-size: 17px;"></i></a></button>';
     return button;
 }
 
@@ -1937,10 +1937,16 @@ function getObjectValues(obj) {
 }
 
 //creates ajax object and change color of requiredFields
-function createFormObj(formValues, requiredFields) {
+function createFormObj(formValues, requiredFields, settings) {
+    var onlyVisible = (settings && settings.onlyVisible) ? true: false;
     var formObj = {}
     var stop = false;
     for (var i = 0; i < formValues.length; i++) {
+        const isSelectized = $(formValues[i]).hasClass('selectized');
+        if ( !isSelectized && onlyVisible && ($(formValues[i]).css('display') == 'none' ||
+                                              $(formValues[i]).closest('.row').css('display') == 'none')) {
+            continue;
+        }
         var name = $(formValues[i]).attr("name");
         var type = $(formValues[i]).attr("type");
         var val = "";
@@ -2096,3 +2102,78 @@ function decodeHtml(str) {
     }
     return str.replace(/&amp;|&lt;|&gt;|&quot;|&#039;/g, function (m) { return map[m]; });
 }
+
+//globalEventBinders
+/* modal show form values on multiple values */
+//show field
+$(document).on('click', `.multi-value`, function(e) {
+    $(this).css('display', 'none');
+    const field = $(this).next();
+    const isCustomized = field.hasClass('customized');
+    const isSelectized = field.hasClass('selectized');
+    const isDataPerms = field.hasClass('data-perms');
+    const isDataRestrictTo = field.hasClass('data-restrictTo');
+    if (isSelectized || isDataPerms || isDataRestrictTo || isCustomized) {
+        field.css('display', 'none');
+        field.next().css('display', 'block');
+    } else {
+        field.css('display', 'block');
+    }
+    $(this)
+        .siblings('.multi-restore')
+        .css('display', 'block');
+});
+//hide field
+$(document).on('click', `.multi-restore`, function(e) {
+    $(this).css('display', 'none');
+    const field = $(this)
+    .siblings('.multi-value')
+    .next();
+    const isSelectized = field.hasClass('selectized');
+    const isDataPerms = field.hasClass('data-perms');
+    const isCustomized = field.hasClass('customized');
+    const isDataRestrictTo = field.hasClass('data-restrictTo');
+    $(this)
+        .siblings('.multi-value')
+        .css('display', 'block');
+    field.css('display', 'none');
+    if (isSelectized || isDataPerms || isDataRestrictTo || isCustomized)
+        field.next().css('display', 'none');
+});
+
+var removeMultiUpdateModal = (formId) =>{
+    $(formId).find(".multi-value-text").remove();
+    $(formId).find(".multi-value").remove();
+    $(formId).find(".multi-restore").remove();
+    $(formId).find(".form-control").css('display', 'block');
+}
+const prepareMultiUpdateModal = (formId, find) => {
+    const formValues = $(formId).find(find);
+    $(formId).find(".modal-body").prepend(
+        '<p class="multi-value-text"> Each field contains different values for that input. To edit and set all items to the same value, click on the field, otherwise they will retain their values.</p>'
+    );
+    for (var k = 0; k < formValues.length; k++) {
+        const isSelectized = $(formValues[k]).hasClass('selectized');
+        const isDataPerms = $(formValues[k]).hasClass('data-perms');
+        const isDataRestrictTo = $(formValues[k]).hasClass('data-restrictTo');
+        const isCustomized = $(formValues[k]).hasClass('customized');
+
+        const nameAttr = $(formValues[k]).attr('name');
+        if (nameAttr) {
+            $(formValues[k]).before(`<div class="multi-value" > Multiple Values</div>`);
+            $(formValues[k]).css('display', 'none');
+            if (isSelectized || isDataPerms || isDataRestrictTo || isCustomized) {
+                $(formValues[k])
+                    .next()
+                    .css('display', 'none');
+                $(formValues[k])
+                    .next()
+                    .after(`<div class="multi-restore" style="display:none;"> Undo changes</div>`);
+            } else {
+                $(formValues[k]).after(
+                    `<div class="multi-restore" style="display:none;"> Undo changes</div>`
+                );
+            }
+        }
+    }
+};
