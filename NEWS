@@ -1,3 +1,7 @@
+06.12.2021 Version 1.2.67
+Merge selected files button added.
+Optional input feature upgraded to support AWS batch environment.
+
 05.12.2021 Version 1.2.66
 Run page loading improved.
 Environment Variables in Public Run Environment Templates fixed.

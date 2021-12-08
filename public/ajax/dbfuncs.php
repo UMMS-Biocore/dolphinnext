@@ -1827,6 +1827,8 @@ class dbfuncs {
     function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzBashConfigText, $attempt, $runType, $ownerID){
         //create files and folders
         $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
+        // Dummy file to be used as an optional input where required
+        $this -> createDirFile ("{$this->run_path}/$uuid/run", ".emptyfile", 'w', "" );
         //create Run Description
         $this -> createCopyReadmeMD($attempt,$uuid,$project_pipeline_id);
         //separate nextflow config (by using @config tag).

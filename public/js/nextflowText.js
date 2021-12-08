@@ -443,6 +443,8 @@ function createNextflowFile(nxf_runmode, uuid) {
     window["processVarObj"]={} // it will be appended to the nextflow.config file 
     var run_uuid = uuid || false; //default false
     nextText = "";
+    
+    
     createPiGnumList();
     if (nxf_runmode === "run") {
         var chooseEnv = $('#chooseEnv option:selected').val();
@@ -511,6 +513,7 @@ function createNextflowFile(nxf_runmode, uuid) {
 
     //initial input data added
     var iniTextSecond = ""
+    window.channelTypeDict = {};
     for (var i = 0; i < sortedProcessList.length; i++) {
         var inParamCheck = $("#" + sortedProcessList[i]+".g-inPro");
         if (inParamCheck.length){
@@ -521,6 +524,8 @@ function createNextflowFile(nxf_runmode, uuid) {
         }
 
     };
+    nextText += '// Stage empty file to be used as an optional input where required\n';
+    nextText += 'ch_empty_file = file("$projectDir/.emptyfile", hidden:true)\n';
 
     nextText += "\n" + iniTextSecond + "\n";
 
@@ -589,6 +594,7 @@ function addFormat2chnObj(chnObj, channelFormat, newChn){
     return chnObj;
 }
 
+// channelTypeDict
 function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, secParQual, secParName, secNodeName, sNodeProId, chnName){
     var channelFormat = "";
     var secPartTemp = "";
@@ -647,6 +653,7 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
         secPartTemp = "Channel.value(params." + inputParamName + ")" + getChannelSetInto(chnObj[channelFormat]) + "\n"
     }
     chnObj[channelFormat+"text"] = secPartTemp;
+    window.channelTypeDict[chnName] = channelFormat
     return chnObj
 }
 
@@ -896,13 +903,19 @@ function getWhenCond(script) {
 
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty(file('tophatSum')) // depricated
 //g164_9_outputFileTSV_g_165 = g164_9_outputFileTSV_g_165.ifEmpty([])
-function getOptionalInText(optionalInAr, optionalInQualAr) {
+function getOptionalInText(optionalInAr, optionalInQualAr, optionalInChannelNameAr) {
     var optText = "";
     for (var i = 0; i < optionalInAr.length; i++) {
         if (optionalInQualAr[i] == "val"){
             optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty(\"\") \n";
         } else {
-            optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
+            // optional input line for file(params.staticfile)
+            // prevents Unknown method invocation `ifEmpty` on UnixPath type
+            if (window.channelTypeDict[optionalInChannelNameAr[i]] && window.channelTypeDict[optionalInChannelNameAr[i]] == "f1"){
+                optText += optionalInAr[i] + "= " + optionalInAr[i] + ".exists() ? " + optionalInAr[i] + " : ch_empty_file \n";
+            } else {
+                optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
+            }
         }
     }
     return optText;
@@ -972,6 +985,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
     var whenText = '';
     //check optional inputs
     var optionalInAr = [];
+    var optionalInChannelNameAr = [];
     var optionalInQualAr = [];
 
     if (processData[0].script_header !== null) {
@@ -1057,19 +1071,23 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                 //output node clicked first
                 if (fNode.indexOf('o') > -1) {
                     var inputIdSplit = fNode.split("-")
-                    var genParName = parametersData.filter(function (el) { return el.id == inputIdSplit[3] })[0].name;
-                    var qualNode = parametersData.filter(function (el) { return el.id == inputIdSplit[3] })[0].qualifier;
+                    var filteredParamData = parametersData.filter(function (el) { return el.id == inputIdSplit[3] })[0];
+                    var genParName = filteredParamData.name;
+                    var qualNode   = filteredParamData.qualifier;
                     var channelName = gFormat(document.getElementById(fNode).getAttribute("parentG")) + "_" + genParName + "_" + gFormat(document.getElementById(sNode).getAttribute("parentG"));
                 } else {
                     var inputIdSplit = sNode.split("-");
-                    var genParName = parametersData.filter(function (el) { return el.id == inputIdSplit[3] })[0].name;
-                    var qualNode = parametersData.filter(function (el) { return el.id == inputIdSplit[3] })[0].qualifier;
+                    var filteredParamData = parametersData.filter(function (el) { return el.id == inputIdSplit[3] })[0];
+                    var genParName = filteredParamData.name;
+                    var qualNode   = filteredParamData.qualifier;
                     var channelName = gFormat(document.getElementById(sNode).getAttribute("parentG")) + "_" + genParName + "_" + gFormat(document.getElementById(fNode).getAttribute("parentG"));
+                    
                 }
                 whenInLib = addChannelName(whenCond, whenInLib, file_type, channelName, param_name, qual)
                 if (inputOptional == "true") {
                     optionalInAr.push(channelName)
                     optionalInQualAr.push(qual)
+                    optionalInChannelNameAr.push(channelName)
                 }
                 bodyInput = bodyInput + " " + qual + " " + inputName + " from " + channelName + inputOperatorText + "\n";
             }
@@ -1146,7 +1164,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
 
     }
     if (optionalInAr.length > 0) {
-        var optionalInText = getOptionalInText(optionalInAr, optionalInQualAr)
+        var optionalInText = getOptionalInText(optionalInAr, optionalInQualAr, optionalInChannelNameAr)
         script_header = optionalInText + "\n" + script_header
     }
 

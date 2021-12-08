@@ -206,15 +206,18 @@ var fillEditSampleModal = function (data, type, cb){
             newObj.geo_used = files_used.replace(/ \| /g, "\n")
             $("#editSampleModal").find("[name=geo_used]").closest(".form-group").css("display","block");
             $("#editSampleModal").find("[name=files_used]").closest(".form-group").css("display","none");
+            $("#editSampleModal").find("[name=file_dir]").closest(".form-group").css("display","none");
         } else {
             $("#editSampleModal").find("[name=geo_used]").closest(".form-group").css("display","none");
             $("#editSampleModal").find("[name=files_used]").closest(".form-group").css("display","block");
+            $("#editSampleModal").find("[name=file_dir]").closest(".form-group").css("display","block");
             newObj.files_used = files_used.replace(/ \| /g, "\n")
         }
     } else if (type == "multi"){
         $("#editSampleModal").find("[name=geo_used]").closest(".form-group").css("display","none");
         $("#editSampleModal").find("[name=name]").closest(".form-group").css("display","none");
         $("#editSampleModal").find("[name=files_used]").closest(".form-group").css("display","none");
+        $("#editSampleModal").find("[name=file_dir]").closest(".form-group").css("display","block");
     }
     selectizeCollection(["#collection_id_edit"], newObj.collection_id.split(","), true, cb);
     fillFormByName('#editSampleModal', 'input, select, textarea', newObj);
@@ -228,10 +231,9 @@ var fillEditSampleModal = function (data, type, cb){
 $(document).on('click', '.singleEditSample', function (e) {
     $('#editSampleModal').find("form").trigger("reset");
     removeMultiUpdateModal('#editSampleModal')
-        var clickedRow = $(this).closest("tr");
-    console.log(clickedRow)
+    var clickedRow = $(this).closest("tr");
     var selRows = $("#sampleTable").DataTable().rows({ selected: true })
-    
+
     var clickedRowsData = $("#sampleTable").DataTable().rows(clickedRow).data();
     var selRowsIds = []
     for (var i = 0; i < clickedRowsData.length; i++) {
@@ -256,7 +258,6 @@ $(document).on('click', '#editSample', function (e) {
     $('#editSampleModal').find("form").trigger("reset");
     removeMultiUpdateModal('#editSampleModal')
     var selRows = $("#sampleTable").DataTable().rows({ selected: true })
-    console.log(selRows)
     var selRowsData = selRows.data();
     var selRowsIds = []
     for (var i = 0; i < selRowsData.length; i++) {
@@ -364,7 +365,6 @@ $(document).on('click', '.showDetailSample', function (e) {
         return text;
     }
     var insertDetailsTable = function (data, type){
-        console.log(data)
         // type: meta or file
         var tableRows = "";
         var detTableID = "#details_of_"+type+"_table"
