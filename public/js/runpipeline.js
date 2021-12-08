@@ -14154,96 +14154,121 @@ $(document).ready(async function () {
                     return wrapDiv;
                 };
                 if (visType == "table" || visType == "table-percent") {
-                    var headerStyle = "";
-                    var tableStyle = "";
-                    if (visType == "table-percent") {
-                        headerStyle = "white-space: nowrap;";
-                    } else {
-                        tableStyle = "white-space: nowrap; table-layout:fixed;";
-                    }
-                    var contentDiv =
-                        getHeaderIconDiv(fileid, visType) +
-                        '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; overflow-x:auto; width:calc(100% - 35px);" class="table-responsive"><table style="' +
-                        headerStyle +
-                        ' border:none;  width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' +
-                        dir +
-                        '" filename="' +
-                        filename +
-                        '" filepath="' +
-                        filePath +
-                        '" id="' +
-                        fileid +
-                        '"><thead style="' +
-                        tableStyle +
-                        '" "></thead></table></div>';
-                    $.ajax({
-                        url: "ajax/ajaxquery.php",
-                        data: {
-                            p: "getFileContent",
-                            uuid: uuid,
-                            filename: "pubweb/" + filePath,
-                        },
-                        async: true,
-                        beforeSend: function () {
-                            showLoadingDiv(href.substr(1));
-                        },
-                        cache: false,
-                        type: "POST",
-                        success: function (data) {
-                            $(href).append(contentDiv);
-                            var ext = getExtension(filePath);
-                            var fixHeader = true;
-                            var dataTableObj;
-                            if (ext && ext.toLowerCase() == "csv") {
-                                dataTableObj = tsvCsvDatatablePrep(data, fixHeader, ",");
-                            } else {
-                                if (visType == "table-percent") {
-                                    //by default based on second column data, calculate percentages for each row
-                                    data = tsvPercent(data);
+                    var ext = getExtension(filePath);
+                    var validList = [ "csv", "tsv", "txt" ];
+                    if (validList.includes(ext)) {
+                        var headerStyle = "";
+                        var tableStyle = "";
+                        if (visType == "table-percent") {
+                            headerStyle = "white-space: nowrap;";
+                        } else {
+                            tableStyle = "white-space: nowrap; table-layout:fixed;";
+                        }
+                        var contentDiv =
+                            getHeaderIconDiv(fileid, visType) +
+                            '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; overflow-x:auto; width:calc(100% - 35px);" class="table-responsive"><table style="' +
+                            headerStyle +
+                            ' border:none;  width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' +
+                            dir +
+                            '" filename="' +
+                            filename +
+                            '" filepath="' +
+                            filePath +
+                            '" id="' +
+                            fileid +
+                            '"><thead style="' +
+                            tableStyle +
+                            '" "></thead></table></div>';
+                        $.ajax({
+                            url: "ajax/ajaxquery.php",
+                            data: {
+                                p: "getFileContent",
+                                uuid: uuid,
+                                filename: "pubweb/" + filePath,
+                            },
+                            async: true,
+                            beforeSend: function () {
+                                showLoadingDiv(href.substr(1));
+                            },
+                            cache: false,
+                            type: "POST",
+                            success: function (data) {
+                                $(href).append(contentDiv);
+                                var fixHeader = true;
+                                var dataTableObj;
+                                if (ext && ext.toLowerCase() == "csv") {
+                                    dataTableObj = tsvCsvDatatablePrep(data, fixHeader, ",");
+                                } else {
+                                    if (visType == "table-percent") {
+                                        //by default based on second column data, calculate percentages for each row
+                                        data = tsvPercent(data);
+                                    }
+                                    dataTableObj = tsvCsvDatatablePrep(data, fixHeader, "\t");
                                 }
-                                dataTableObj = tsvCsvDatatablePrep(data, fixHeader, "\t");
-                            }
-                            //speed up the table loading
-                            dataTableObj.deferRender = true;
-                            dataTableObj.scroller = true;
-                            dataTableObj.scrollCollapse = true;
-                            dataTableObj.scrollY = 395;
-                            dataTableObj.scrollX = true;
-                            dataTableObj.sScrollX = true;
-                            //hides undefined error
-                            dataTableObj.columnDefs = [
-                                { defaultContent: "-", targets: "_all" },
-                            ];
-                            $("#" + fileid).DataTable(dataTableObj);
-                            hideLoadingDiv(href.substr(1));
-                            bindEveHandlerIcon(fileid);
-                        },
-                        error: function (errorThrown) {
-                            hideLoadingDiv(href.substr(1));
-                            console.log("AJAX Error occured.");
-                            var content =
-                                '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
-                                fileid +
-                                '" id="downUrl-' +
-                                fileid +
-                                '" href="#">download</a> the file.</div>';
-                            var contentDiv =
-                                getHeaderIconDiv(fileid, visType) +
-                                '<div style="width:100%; height:calc(100% - 35px);" dir="' +
-                                dir +
-                                '" filename="' +
-                                filename +
-                                '" filepath="' +
-                                filePath +
-                                '" id="' +
-                                fileid +
-                                '">' +
-                                content +
-                                "</div>";
-                            $(href).append(contentDiv);
-                            bindEveHandlerIcon(fileid);
-                        },
-                    });
+                                //speed up the table loading
+                                dataTableObj.deferRender = true;
+                                dataTableObj.scroller = true;
+                                dataTableObj.scrollCollapse = true;
+                                dataTableObj.scrollY = 395;
+                                dataTableObj.scrollX = true;
+                                dataTableObj.sScrollX = true;
+                                //hides undefined error
+                                dataTableObj.columnDefs = [
+                                    { defaultContent: "-", targets: "_all" },
+                                ];
+                                $("#" + fileid).DataTable(dataTableObj);
+                                hideLoadingDiv(href.substr(1));
+                                bindEveHandlerIcon(fileid);
+                            },
+                            error: function (errorThrown) {
+                                hideLoadingDiv(href.substr(1));
+                                console.log("AJAX Error occured.");
+                                var content =
+                                    '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
+                                    fileid +
+                                    '" id="downUrl-' +
+                                    fileid +
+                                    '" href="#">download</a> the file.</div>';
+                                var contentDiv =
+                                    getHeaderIconDiv(fileid, visType) +
+                                    '<div style="width:100%; height:calc(100% - 35px);" dir="' +
+                                    dir +
+                                    '" filename="' +
+                                    filename +
+                                    '" filepath="' +
+                                    filePath +
+                                    '" id="' +
+                                    fileid +
+                                    '">' +
+                                    content +
+                                    "</div>";
+                                $(href).append(contentDiv);
+                                bindEveHandlerIcon(fileid);
+                            },
+                        });
+                    } else {
+                        var content =
+                            '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
+                            fileid +
+                            '" id="downUrl-' +
+                            fileid +
+                            '" href="#">download</a> the file.</div>';
+                        var contentDiv =
+                            getHeaderIconDiv(fileid, visType) +
+                            '<div style="width:100%; height:calc(100% - 35px);" dir="' +
+                            dir +
+                            '" filename="' +
+                            filename +
+                            '" filepath="' +
+                            filePath +
+                            '" id="' +
+                            fileid +
+                            '">' +
+                            content +
+                            "</div>";
+                        $(href).append(contentDiv);
+                        bindEveHandlerIcon(fileid);
+                    }
                 } else if (visType == "rmarkdown") {
                     var contentDiv =
                         '<div style="width:100%;" dir="' +

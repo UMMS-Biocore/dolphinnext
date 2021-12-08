@@ -866,7 +866,7 @@ function loadSelectedProcess(selProcessId) {
         }
     }
     // disable modal based on permissions
-    if (processOwn === "1") {
+    if (processOwn === "1" || usRole === "admin") {
         $('#createRevision').css('display', "inline");
     } else {
         $('#mProActionsDiv').css('display', "none");
