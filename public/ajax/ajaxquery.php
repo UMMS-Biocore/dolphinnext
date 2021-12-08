@@ -2215,7 +2215,8 @@ else if ($p=="getMaxPipRev_id"){
     $pipeline_gid = $_REQUEST['pipeline_gid'];
     $curr_ownerID= $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE pipeline_gid='$pipeline_gid' AND deleted=0");
     $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
-    if (!empty($permCheck)){
+    $userRole = $db->getUserRoleVal($ownerID);
+    if (!empty($permCheck) || $userRole == "admin"){
         $data = $db->getMaxPipRev_id($pipeline_gid);
     }
 }
