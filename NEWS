@@ -1,6 +1,10 @@
-06.12.2021 Version 1.2.67
+09.12.2021 Version 1.2.68
 Merge selected files button added.
 Optional input feature upgraded to support AWS batch environment.
+
+08.12.2021 Version 1.2.67
+The pipeline page is updated to pipeline and process editing for admin.
+PDF loading in datatables prevented.
 
 05.12.2021 Version 1.2.66
 Run page loading improved.
