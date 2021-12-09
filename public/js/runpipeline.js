@@ -14482,9 +14482,15 @@ $(document).ready(async function () {
                             showLoadingDiv(href.substr(1));
                         },
                         type: "POST",
-                        success: function (filePathJson) {
+                        success: function (jsonData) {
+                            console.log(jsonData)
+                            var filePathJson = jsonData.count_file
+                            var metadataFile = ""
+                            if (jsonData.metadata_file){
+                                metadataFile = "&meta="+pubWebPath + "/" + uuid + "/" + "pubweb" + "/" +jsonData.metadata_file
+                            }
                             var link = encodeURIComponent(
-                                pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson
+                                pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson + metadataFile
                             );
                             var debrowserlink =
                                 debrowserUrl + link;
