@@ -4372,7 +4372,7 @@ class dbfuncs {
         $sql = "SELECT run_status, IF(run_opt IS NULL,0,1) as run_opt_check FROM $this->db.run_log WHERE run_log_uuid = '$uuid'";
         return self::queryTable($sql);
     }
-    
+
     function updateLastRunDate($project_pipeline_id,$ownerID){
         $curr_ownerID= $this->queryAVal("SELECT owner_id FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
         $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
@@ -5408,7 +5408,7 @@ class dbfuncs {
                     $where = " LEFT JOIN $this->db.user_group ug ON pp.group_id=ug.g_id 
                     WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and pp.perms = 15))";
                 }
-                
+
                 $sql = "SELECT DISTINCT r.date_created_last_run as run_date_created, r.run_status, pp.id as project_pipeline_id, pp.name, pp.summary, pp.output_dir,  pp.date_created as pp_date_created, pip.name as pipeline_name, pip.rev_id as pipeline_rev, pip.id as pipeline_id, u.email, u.username, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
                 FROM $this->db.project_pipeline pp
                 LEFT JOIN $this->db.run r  ON r.project_pipeline_id = pp.id
@@ -6970,15 +6970,19 @@ class dbfuncs {
     }
 
     // tsv to json converter
-    function tsvConvert($tsv){
+    function tsvCsvToJson($tsv){
         ini_set('memory_limit','900M');
         $tsv = trim($tsv);
         $lines = explode("\n", $tsv);
-        $header = explode("\t", $lines[0]);
+        $sep = ",";
+        if (preg_match("/\t/", $lines[0])) {
+            $sep ="\t";
+        }
+        $header = explode($sep, $lines[0]);
         $data = array();
         for ($i = 1; $i < count($lines); $i++) {
             $obj = new stdClass();
-            $currentline = explode("\t", $lines[$i]);
+            $currentline = explode($sep, $lines[$i]);
             for ($j = 0; $j < count($header); $j++) {
                 $name = $header[$j];
                 $obj->$name = $currentline[$j];
@@ -6990,13 +6994,39 @@ class dbfuncs {
 
 
     function callDebrowser($uuid, $dir, $filename){
+        $pubwebDir = "{$this->run_path}/$uuid/pubweb/";
         $targetDir = "{$this->run_path}/$uuid/pubweb/$dir";
         $targetFile = "{$targetDir}/{$filename}";
         $targetJson = "{$targetDir}/.{$filename}";
         $tsv= file_get_contents($targetFile);
-        $array = $this->tsvConvert($tsv);
+        $array = $this->tsvCsvToJson($tsv);
         file_put_contents($targetJson, json_encode($array));
-        return json_encode("$dir/.{$filename}");
+        $ret = array();
+        $ret["count_file"] = "$dir/.{$filename}";
+        // search for metadata file in pubweb directory
+        $validMetadataFiles = ["samples.txt", "group.txt", "metadata.txt", "samples.tsv", "group.tsv", "metadata.tsv", "samples.csv", "group.csv", "metadata.csv"];
+        $metadata = "";
+        $it = new RecursiveDirectoryIterator($pubwebDir);
+        foreach(new RecursiveIteratorIterator($it) as $file){
+            $pathAr = explode('/', $file);
+            $onlymeta = array_pop($pathAr);
+            $metaDir = substr($file, strlen($pubwebDir));
+            if (in_array(strtolower($onlymeta), $validMetadataFiles)){
+                $subDir = preg_replace('/'.$onlymeta.'$/', '', $metaDir);
+                $targetDir = "{$this->run_path}/$uuid/pubweb/$subDir";
+                $targetFile = "{$targetDir}/{$onlymeta}";
+                $targetJson = "{$targetDir}/.{$onlymeta}";
+                $tsv= file_get_contents($targetFile);
+                $array = $this->tsvCsvToJson($tsv);
+                file_put_contents($targetJson, json_encode($array));
+                $metadata = "{$subDir}/.{$onlymeta}";
+                break;
+            }
+        }
+
+        $ret["count_file"] = "$dir/.{$filename}";
+        $ret["metadata_file"] = $metadata;
+        return json_encode($ret);
     }
     function callRmarkdown($type, $uuid, $text, $dir, $filename){
         //travis fix
