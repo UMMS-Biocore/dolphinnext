@@ -14487,9 +14487,9 @@ $(document).ready(async function () {
                             var filePathJson = jsonData.count_file
                             var metadataFile = ""
                             if (jsonData.metadata_file){
-                                 metadataFile = "&meta="+pubWebPath + "/" + uuid + "/" + "pubweb" + "/" +jsonData.metadata_file
+                                 metadataFile = "&meta=" + encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" +jsonData.metadata_file);
                             }
-                            var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson + metadataFile;
+                            var link = encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson) + metadataFile;
                             
                             var debrowserlink =
                                 debrowserUrl + link;
