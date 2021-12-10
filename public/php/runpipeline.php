@@ -625,7 +625,7 @@ $DMETA_LABEL= DMETA_LABEL;
     <div class="row" style="margin-top:10px; margin-bottom:2px;">
         <div class="col-md-12">
             <div class="form-group">
-                <h5 id="runTitleLog">Run Version 1:</h5>
+                <h5 id="runTitleLog"></h5>
             </div>
         </div>
     </div>
