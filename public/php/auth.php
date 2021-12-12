@@ -176,6 +176,7 @@ if (!isset($_SESSION['username']) || $_SESSION['username'] == ""){
                 $inUser = $db->insTable($sql);
                 $idArray = json_decode($inUser,true);
                 $id = $idArray["id"];
+                $db->insertDefaultGroup($id);               
             }
 
             if (!empty($id)){

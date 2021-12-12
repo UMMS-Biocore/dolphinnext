@@ -42,15 +42,14 @@ $runscope = {
         }
         if (perms) {
             if (perms == "15") {
-                if (type == "work" || type == "report") {
+                if (type == "work") {
                     var auto_workdir = $("#chooseEnv")
                     .find(":selected")
                     .attr("auto_workdir");
-                    dir = auto_workdir + "/id" + project_pipeline_id;
-                    if (type == "report") {
-                        dir = dir + "/report" + project_pipeline_id;
+                    if (auto_workdir){
+                        dir = auto_workdir;
                     }
-                } else if (type == "publish" || type == "runcmd") {
+                } else if (type == "runcmd") {
                     dir = "";
                 }
             }
@@ -4457,14 +4456,11 @@ function showhideOnEnv(profileData) {
         // shared run environments
         if (perms == "15") {
             $("#rOut_dirDiv").css("display", "none");
-            $("#publishDirHide").css("display", "none");
-            $("#jobSettingsDiv").css("display", "none");
             $("#runCmdDiv").css("display", "none");
-            $("#intermeDelDiv").css("display", "none");
             $("#target_dir_div").css("display", "none");
-            $("#archive_dir_geo_div").css("display", "none");
-            $("#archive_dir_div").css("display", "none");
+            $("#containersDiv").css("display", "none");
         } else {
+            $("#containersDiv").css("display", "block");
             if (profileData[0].google_cre_id != undefined) {
                 $("#rOut_dirDiv").css("display", "none");
             } else {
@@ -5325,6 +5321,7 @@ async function refreshCreatorData(project_pipeline_id) {
 
 async function loadExecSettings(pipeData) {
     var chooseEnv = $("#chooseEnv option:selected").val();
+    console.log(pipeData[0].profile)
     if (pipeData[0].profile !== "") {
         if (chooseEnv) {
             var [allProSett, profileData] = await getJobData("both");
@@ -5355,9 +5352,7 @@ async function loadExecSettings(pipeData) {
                 fillForm("#" + el, "input", each_settings);
             });
         }
-    } else {
-        $("#jobSettingsDiv").css("display", "none");
-    }
+    } 
 }
 
 async function loadUserGroups(pipeData) {
@@ -14487,10 +14482,10 @@ $(document).ready(async function () {
                             var filePathJson = jsonData.count_file
                             var metadataFile = ""
                             if (jsonData.metadata_file){
-                                 metadataFile = "&meta=" + encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" +jsonData.metadata_file);
+                                metadataFile = "&meta=" + encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" +jsonData.metadata_file);
                             }
                             var link = encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson) + metadataFile;
-                            
+
                             var debrowserlink =
                                 debrowserUrl + link;
                             console.log(debrowserlink)

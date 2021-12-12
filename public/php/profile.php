@@ -127,6 +127,7 @@ $GOOGPATH=GOOGPATH;
                                 <table id="grouptable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
+                                            <th>ID</th>
                                             <th>Group Name</th>
                                             <th>Owner</th>
                                             <th>Created on</th>
@@ -1033,10 +1034,10 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="mUserLoginType" class="col-sm-3 control-label">Login Type</label>
+                        <label class="col-sm-3 control-label">Login Type (optional)<span><a data-toggle="tooltip" data-placement="bottom" title="Please leave this field unselected if users sign in through OKTA."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <select id="mUserLoginType" class="form-control" name="logintype">
-                                <option value="" disabled selected>Select Login Type </option>
+                                <option value="" disabled selected> Select Login Type </option>
                                 <option value="password">Password</option>
                                 <option value="google">Google</option>
                                 <option value="ldap">LDAP</option>

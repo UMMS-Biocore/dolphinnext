@@ -94,6 +94,8 @@ class AuthCode {
                 $inUser = $dbfuncs->insTable($sql);
                 $idArray = json_decode($inUser,true);
                 $db_id = $idArray["id"];
+                $dbfuncs->insertDefaultGroup($db_id);               
+                
             }
             if (!empty($db_id)){
                 $dbfuncs->insertAccessToken($accessToken, $expirationDate, $sso_user_id, $this->CLIENT_ID, $scope, $db_id);

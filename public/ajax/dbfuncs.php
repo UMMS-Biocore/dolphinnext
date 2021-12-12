@@ -26,6 +26,7 @@ class dbfuncs {
     private static $link;
     private $JWT_SECRET = JWT_SECRET;
     private $JWT_COOKIE_EXPIRES_IN = JWT_COOKIE_EXPIRES_IN;
+    private $DEFAULT_GROUP_ID = DEFAULT_GROUP_ID;
 
     function __construct() {
         if (!isset(self::$link)) {
@@ -4265,6 +4266,16 @@ class dbfuncs {
             return $checkTestGroup;
         }
     }
+    function insertDefaultGroup($u_id){
+        $g_id = $this->DEFAULT_GROUP_ID;
+        if (!empty($g_id) && !empty($u_id)){
+            $checkTestGroup = $this->getUserGroupsById($g_id,$u_id);
+            if (empty(json_decode($checkTestGroup))){
+                $this->insertUserGroup($g_id, $u_id, $u_id);
+            } 
+        }
+
+    }
     function insertUserGroup($g_id, $u_id, $ownerID) {
         $sql = "INSERT INTO $this->db.user_group (g_id, u_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$g_id', '$u_id', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
@@ -4911,7 +4922,7 @@ class dbfuncs {
                     if (empty($auto_workdir)){
                         return json_encode("Query failed! Generic work directory not defined in shared run environment.");
                     }
-                    $rundir = $auto_workdir."/id".$project_pipeline_id;
+                    $rundir = $auto_workdir;
                     $rundir = preg_replace('/(\/+)/','/',$rundir);
                     $dir = preg_replace('/(\/+)/','/',$dir);
                     if (strpos($dir, $rundir) === false) {
@@ -7004,7 +7015,7 @@ class dbfuncs {
         $ret = array();
         $ret["count_file"] = "$dir/.{$filename}";
         // search for metadata file in pubweb directory
-        $validMetadataFiles = ["samples.txt", "group.txt", "metadata.txt", "samples.tsv", "group.tsv", "metadata.tsv", "samples.csv", "group.csv", "metadata.csv"];
+        $validMetadataFiles = ["debrowser_metadata.tsv", "debrowser_metadata.csv", "debrowser_metadata.txt"];
         $metadata = "";
         $it = new RecursiveDirectoryIterator($pubwebDir);
         foreach(new RecursiveIteratorIterator($it) as $file){
