@@ -88,7 +88,7 @@ if (isset($_POST['request'])){
             $err_password = '<font class="text-center" color="crimson">Passwords must match.</font>';
         }
     }
-    
+
     if(!isset($_SESSION['google_login']) && !isset($err_lastname) && !isset($err_firstname) && !isset($err_username) && !isset($err_email) && !isset($err_password) && !isset($err_verifypassword) && !isset($err_lab) && !isset($err_institute)){
         //	Calc pass hash
         $pass_hash=hash('md5', $password_val . SALT) . hash('sha256', $password_val . PEPPER);
@@ -104,6 +104,9 @@ if (isset($_POST['request'])){
             $role = "admin";
             $active = 1;
             $insert_user = $query->insertUserManual($fullname_space, strtolower($email_val), $username_val, $institute_val, $lab_val, $logintype, $role, $active, $pass_hash, $verify, $google_id); 
+            $ownerIDarr = json_decode($insert_user,true); 
+            $user_id = $ownerIDarr["id"];
+            $query->insertDefaultGroup($user_id); 
             $queryEmail = strtolower(str_replace("'","''",$email_val));
             $checkUserData = json_decode($query->getUserByEmail($queryEmail));
             //check if user exits
@@ -123,6 +126,9 @@ if (isset($_POST['request'])){
         } else {
             //	Add new user to the database
             $insert_user = $query->insertUserManual($fullname_space, strtolower($email_val), $username_val, $institute_val, $lab_val, $logintype, $role, $active, $pass_hash, $verify, $google_id); 
+            $ownerIDarr = json_decode($insert_user,true); 
+            $user_id = $ownerIDarr["id"];
+            $query->insertDefaultGroup($user_id); 
             sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email_val, $lab_val, $verify, $query);  
             session_destroy();
             require_once("newuserverification.php"); 
@@ -141,6 +147,9 @@ if (isset($_POST['request'])){
             $verify = NULL;
             $pass_hash = NULL;
             $insert_user = $query->insertUserManual($fullname_space, strtolower($email), $username_val, $institute_val, $lab_val, $logintype, $role, $active, $pass_hash, $verify, $google_id); 
+            $ownerIDarr = json_decode($insert_user,true); 
+            $user_id = $ownerIDarr["id"];
+            $query->insertDefaultGroup($user_id); 
             $queryEmail = strtolower(str_replace("'","''",$email));
             $checkUserData = json_decode($query->getUserByEmail($queryEmail));
             //check if user exits
@@ -164,6 +173,9 @@ if (isset($_POST['request'])){
             $verify=hash('md5', $email . VERIFY);
             $pass_hash = NULL;
             $insert_user = $query->insertUserManual($fullname_space, strtolower($email), $username_val, $institute_val, $lab_val, $logintype, $role, $active, $pass_hash, $verify, $google_id); 
+            $ownerIDarr = json_decode($insert_user,true); 
+            $user_id = $ownerIDarr["id"];
+            $query->insertDefaultGroup($user_id); 
             sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email, $lab_val, $verify,$query);
             session_destroy();
             require_once("newuserverification.php");

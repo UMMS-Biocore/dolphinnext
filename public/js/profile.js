@@ -752,6 +752,8 @@ $(document).ready(function () {
             "dataSrc": ""
         },
         "columns": [{
+            "data": "id"
+        },{
             "data": "name"
         }, {
             "data": "username"

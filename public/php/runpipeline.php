@@ -366,7 +366,7 @@ $DMETA_LABEL= DMETA_LABEL;
                             </div>
                         </div>
                     </div>
-                    <div class="row">
+                    <div class="row" id="containersDiv">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <div>
