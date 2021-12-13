@@ -2183,41 +2183,40 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                 }
 
                 // fillForm('#allProcessSettTable', 'input', allProSett);
-                $("input.execcheckbox").each(function () {
-                    $(this).prop("checked", false);
-                });
-                if (allProSett.job_cpu != null) {
-                    $(".form-control.execcpu").each(function () {
-                        $(this).val(allProSett.job_cpu);
-                    });
-                }
-                if (allProSett.job_memory != null) {
-                    $(".form-control.execmemory").each(function () {
-                        $(this).val(allProSett.job_memory);
-                    });
-                }
-                if (allProSett.job_queue != null) {
-                    $(".form-control.execqueue").each(function () {
-                        $(this).val(allProSett.job_queue);
-                    });
-                }
-                if (allProSett.job_time != null) {
-                    $(".form-control.exectime").each(function () {
-                        $(this).val(allProSett.job_time);
-                    });
-                }
-                if (allProSett.job_clu_opt != null) {
-                    $(".form-control.execopt").each(function () {
-                        $(this).val(allProSett.job_clu_opt);
-                    });
-                }
+//                $("input.execcheckbox").each(function () {
+//                    $(this).prop("checked", false);
+//                });
+//                if (allProSett.job_cpu != null) {
+//                    $(".form-control.execcpu").each(function () {
+//                        $(this).val(allProSett.job_cpu);
+//                    });
+//                }
+//                if (allProSett.job_memory != null) {
+//                    $(".form-control.execmemory").each(function () {
+//                        $(this).val(allProSett.job_memory);
+//                    });
+//                }
+//                if (allProSett.job_queue != null) {
+//                    $(".form-control.execqueue").each(function () {
+//                        $(this).val(allProSett.job_queue);
+//                    });
+//                }
+//                if (allProSett.job_time != null) {
+//                    $(".form-control.exectime").each(function () {
+//                        $(this).val(allProSett.job_time);
+//                    });
+//                }
+//                if (allProSett.job_clu_opt != null) {
+//                    $(".form-control.execopt").each(function () {
+//                        $(this).val(allProSett.job_clu_opt);
+//                    });
+//                }
             }
         };
 
         var onchangechooseEnvFunc2 = function () {
             console.log(autoFillJSON);
             var fillHostFunc = function (autoFillJSON, type, filledVars) {
-                console.log(jsonType);
                 $.each(autoFillJSON, function (el) {
                     var conds = autoFillJSON[el].condition;
                     var states = autoFillJSON[el].statement;

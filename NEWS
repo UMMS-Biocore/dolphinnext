@@ -1,3 +1,7 @@
+13.12.2021 Version 1.2.70
+Delete run option added into run status page
+Remove run warning fixed in projects page. 
+
 13.12.2021 Version 1.2.69
 DEFAULT_RUN_ENVIRONMENT option added to .sec file.
 

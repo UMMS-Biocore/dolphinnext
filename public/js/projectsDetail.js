@@ -310,7 +310,8 @@ $(document).ready(function () {
     $("#runtable").on('click', '#projectrunremove', function (event) {
         var clickedRow = $(this).closest('tr');
         var rowData = runsTable.row(clickedRow).data();
-        var text = 'Are you sure you want to delete this run: "'+rowData.name+'" ?';
+        console.log(rowData)
+        var text = 'Are you sure you want to delete this run: "'+rowData.pp_name+'" ?';
         var savedData = clickedRow;
         var execFunc = function(clickedRow){
             var runsTable = $('#runtable').DataTable();
