@@ -11,11 +11,15 @@ $(document).ready(function () {
 
     function getRunStatusButton(oData) {
         var sendEmail = "";
+        var deleteRun = "";
         var viewRun = '<li><a class="runLink">View Run</a></li>';
         if (oData.own !== "1" && usRole === "admin") {
             sendEmail = '<li><a href="#sendMailModal" data-toggle="modal">Send E-Mail to User</a></li>';
         }
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu">' + viewRun + sendEmail + '</ul></div>';
+        if (oData.own === "1") {
+            deleteRun = '<li><a href="#confirmDelProModal" data-toggle="modal">Delete Run</a></li>';
+        }
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu">' + viewRun + deleteRun + sendEmail + '</ul></div>';
         return button;
     }
 
@@ -214,8 +218,8 @@ $(document).ready(function () {
                 $(row).css("background-color", "#f4f4f4");
             }
         },
-        sScrollX: "100%",
-       deferRender: true
+        "autoWidth" : false,
+        deferRender: true
     });
 
 
@@ -224,6 +228,41 @@ $(document).ready(function () {
         runStatusTable.ajax.reload(null,false);
     }, 30000);
 
+    // confirm Delete ssh modal 
+    $('#confirmDelProModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var clickedRow = button.closest('tr');
+        var rowData = runStatusTable.row(clickedRow).data();
+        $('#mDelProBtn').data('clickedRow', rowData);
+        $('#mDelProBtn').attr('class', 'btn btn-primary deleteRun');
+        $('#confirmDelProModalText').html(`Are you sure you want to delete "${rowData.name}"?`);
 
+    });
+
+    $('#confirmDelProModal').on('click', '.deleteRun', function (event) {
+        var rowData = $('#mDelProBtn').data('clickedRow');
+        var title = $('#confirmDelProModalText').html();
+        var proId = rowData.project_pipeline_id;
+        var data = { "id": proId, "p": "removeProjectPipeline" };
+        if (proId) {
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: data,
+                async: true,
+                success: function (s) {
+                    if (s.error){
+                        showInfoModal("#infoMod","#infoModText", s.error)
+                    } else {
+                        runStatusTable.ajax.reload(null, false);
+                        $('#confirmDelProModal').modal('hide');
+                    }
+                },
+                error: function (errorThrown) {
+                    alert("Error: " + errorThrown);
+                }
+            });
+        }
+    });
 
 });

@@ -92,7 +92,7 @@ $GOOGPATH=GOOGPATH;
                                         <h5><i class="fa fa-user " style="margin-left:0px; margin-right:0px;"></i> Public Run Environment Templates</h5>
                                     </div>
                                 </div>
-                                <div class="panel-body">
+                                <div class="panel-body" style="overflow-x:auto;">
                                     <table id="publicProfileTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                         <thead>
                                             <tr>
@@ -298,7 +298,7 @@ $GOOGPATH=GOOGPATH;
                                             <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> User Panel</h5>
                                         </div>
                                     </div>
-                                    <div class="panel-body">
+                                    <div class="panel-body" style="overflow-x:auto;">
                                         <table id="AdminUserTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                             <thead>
                                             <tr>
