@@ -1,5 +1,7 @@
+13.12.2021 Version 1.2.69
+DEFAULT_RUN_ENVIRONMENT option added to .sec file.
+
 12.12.2021 Version 1.2.68
-Minor bug fixed in the profile page autoload.
 DEFAULT_GROUP_ID option added to .sec file.
 
 08.12.2021 Version 1.2.67

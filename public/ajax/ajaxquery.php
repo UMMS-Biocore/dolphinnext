@@ -503,6 +503,7 @@ else if ($p=="saveUserManual"){
             $ownerIDarr = json_decode($data,true); 
             $user_id = $ownerIDarr["id"];
             $db->insertDefaultGroup($user_id);            
+            $db->insertDefaultRunEnvironment($user_id);            
         }
     }
 }
