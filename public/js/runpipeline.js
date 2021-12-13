@@ -2154,12 +2154,37 @@ async function getJobData(getType) {
     }
 }
 
+function getJobDataSync(getType) {
+    var chooseEnv = $("#chooseEnv option:selected").val();
+    if (chooseEnv) {
+        var patt = /(.*)-(.*)/;
+        var proType = chooseEnv.replace(patt, "$1");
+        var proId = chooseEnv.replace(patt, "$2");
+        var profileData = getProfileDataSync(proType, proId);
+        var allProSett = {};
+        if (profileData) {
+            allProSett.job_queue = profileData[0].job_queue;
+            allProSett.job_memory = profileData[0].job_memory;
+            allProSett.job_cpu = profileData[0].job_cpu;
+            allProSett.job_time = profileData[0].job_time;
+            allProSett.job_clu_opt = profileData[0].job_clu_opt;
+            if (getType === "job") {
+                return profileData;
+            } else if (getType === "both") {
+                return [allProSett, profileData];
+            }
+        } else {
+            return [allProSett, profileData];
+        }
+    }
+}
+
 // to execute autofill function, binds event handlers to chooseEnv
 function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
-    $("#chooseEnv").bindFirst("change", async function () {
-        var onchangechooseEnvFunc1 = async function () {
+    $("#chooseEnv").bindFirst("change", function () {
+        var onchangechooseEnvFunc1 = function () {
             if (jsonType == "pipeline") {
-                var [allProSett, profileData] = await getJobData("both");
+                var [allProSett, profileData] = getJobDataSync("both");
                 // autofill def_publishdir and def_workdir
                 var def_publishdir = "";
                 var def_workdir = "";
@@ -2183,34 +2208,34 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                 }
 
                 // fillForm('#allProcessSettTable', 'input', allProSett);
-//                $("input.execcheckbox").each(function () {
-//                    $(this).prop("checked", false);
-//                });
-//                if (allProSett.job_cpu != null) {
-//                    $(".form-control.execcpu").each(function () {
-//                        $(this).val(allProSett.job_cpu);
-//                    });
-//                }
-//                if (allProSett.job_memory != null) {
-//                    $(".form-control.execmemory").each(function () {
-//                        $(this).val(allProSett.job_memory);
-//                    });
-//                }
-//                if (allProSett.job_queue != null) {
-//                    $(".form-control.execqueue").each(function () {
-//                        $(this).val(allProSett.job_queue);
-//                    });
-//                }
-//                if (allProSett.job_time != null) {
-//                    $(".form-control.exectime").each(function () {
-//                        $(this).val(allProSett.job_time);
-//                    });
-//                }
-//                if (allProSett.job_clu_opt != null) {
-//                    $(".form-control.execopt").each(function () {
-//                        $(this).val(allProSett.job_clu_opt);
-//                    });
-//                }
+                $("input.execcheckbox").each(function () {
+                    $(this).prop("checked", false);
+                });
+                if (allProSett.job_cpu != null) {
+                    $(".form-control.execcpu").each(function () {
+                        $(this).val(allProSett.job_cpu);
+                    });
+                }
+                if (allProSett.job_memory != null) {
+                    $(".form-control.execmemory").each(function () {
+                        $(this).val(allProSett.job_memory);
+                    });
+                }
+                if (allProSett.job_queue != null) {
+                    $(".form-control.execqueue").each(function () {
+                        $(this).val(allProSett.job_queue);
+                    });
+                }
+                if (allProSett.job_time != null) {
+                    $(".form-control.exectime").each(function () {
+                        $(this).val(allProSett.job_time);
+                    });
+                }
+                if (allProSett.job_clu_opt != null) {
+                    $(".form-control.execopt").each(function () {
+                        $(this).val(allProSett.job_clu_opt);
+                    });
+                }
             }
         };
 
@@ -2289,8 +2314,8 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
             fillHostFunc(autoFillJSON, "default", filledVars);
         };
 
-        var sequentialUpdate = async function (callback) {
-            await onchangechooseEnvFunc1();
+        var sequentialUpdate = function (callback) {
+            onchangechooseEnvFunc1();
             callback();
         };
 
@@ -2318,7 +2343,7 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
         if (jsonType == "pipeline") {
             var ask = askAutoFill();
             if (ask) {
-                await onchangechooseEnvFunc1();
+                onchangechooseEnvFunc1();
                 var text =
                     "Would you like to update System Inputs according to selected run environment?";
                 var savedData = "";
@@ -2328,10 +2353,10 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                 var btnText = "Yes";
                 showConfirmDeleteModal(text, savedData, execFunc, btnText);
             } else {
-                await sequentialUpdate(onchangechooseEnvFunc2);
+                sequentialUpdate(onchangechooseEnvFunc2);
             }
         } else {
-            await sequentialUpdate(onchangechooseEnvFunc2);
+            sequentialUpdate(onchangechooseEnvFunc2);
         }
     });
 }
@@ -7835,6 +7860,24 @@ async function getProfileData(proType, proId) {
         });
     } else if (proType === "amazon" || proType === "google") {
         var profileData = await doAjax({
+            p: "getProfileCloud",
+            cloud: proType,
+            id: proId,
+            type: "run",
+        });
+    }
+    return profileData;
+}
+
+function getProfileDataSync(proType, proId) {
+    if (proType === "cluster") {
+        var profileData = getValues({
+            p: "getProfileCluster",
+            id: proId,
+            type: "run",
+        });
+    } else if (proType === "amazon" || proType === "google") {
+        var profileData = getValues({
             p: "getProfileCloud",
             cloud: proType,
             id: proId,
