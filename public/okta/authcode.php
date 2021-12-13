@@ -95,6 +95,7 @@ class AuthCode {
                 $idArray = json_decode($inUser,true);
                 $db_id = $idArray["id"];
                 $dbfuncs->insertDefaultGroup($db_id);               
+                $dbfuncs->insertDefaultRunEnvironment($db_id);               
                 
             }
             if (!empty($db_id)){

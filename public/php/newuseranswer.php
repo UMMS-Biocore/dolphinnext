@@ -107,6 +107,7 @@ if (isset($_POST['request'])){
             $ownerIDarr = json_decode($insert_user,true); 
             $user_id = $ownerIDarr["id"];
             $query->insertDefaultGroup($user_id); 
+            $query->insertDefaultRunEnvironment($user_id); 
             $queryEmail = strtolower(str_replace("'","''",$email_val));
             $checkUserData = json_decode($query->getUserByEmail($queryEmail));
             //check if user exits
@@ -129,6 +130,7 @@ if (isset($_POST['request'])){
             $ownerIDarr = json_decode($insert_user,true); 
             $user_id = $ownerIDarr["id"];
             $query->insertDefaultGroup($user_id); 
+            $query->insertDefaultRunEnvironment($user_id); 
             sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email_val, $lab_val, $verify, $query);  
             session_destroy();
             require_once("newuserverification.php"); 
@@ -150,6 +152,7 @@ if (isset($_POST['request'])){
             $ownerIDarr = json_decode($insert_user,true); 
             $user_id = $ownerIDarr["id"];
             $query->insertDefaultGroup($user_id); 
+            $query->insertDefaultRunEnvironment($user_id); 
             $queryEmail = strtolower(str_replace("'","''",$email));
             $checkUserData = json_decode($query->getUserByEmail($queryEmail));
             //check if user exits
@@ -176,6 +179,7 @@ if (isset($_POST['request'])){
             $ownerIDarr = json_decode($insert_user,true); 
             $user_id = $ownerIDarr["id"];
             $query->insertDefaultGroup($user_id); 
+            $query->insertDefaultRunEnvironment($user_id); 
             sendMailAdmin($fullname_space, $firstname_val, $lastname_val, $username_val, $institute_val, $email, $lab_val, $verify,$query);
             session_destroy();
             require_once("newuserverification.php");

@@ -27,6 +27,7 @@ class dbfuncs {
     private $JWT_SECRET = JWT_SECRET;
     private $JWT_COOKIE_EXPIRES_IN = JWT_COOKIE_EXPIRES_IN;
     private $DEFAULT_GROUP_ID = DEFAULT_GROUP_ID;
+    private $DEFAULT_RUN_ENVIRONMENT = DEFAULT_RUN_ENVIRONMENT;
 
     function __construct() {
         if (!isset(self::$link)) {
@@ -3551,6 +3552,12 @@ class dbfuncs {
         $sql = "SELECT * FROM $this->db.ssh WHERE $hide owner_id = '$ownerID' AND name = BINARY '$name'";
         return self::queryTable($sql);
     }
+    function getProfileClusterSSHWithID($id) {
+        $sql = "SELECT p.ssh_id, p.owner_id
+                FROM $this->db.profile_cluster p
+                WHERE p.id = '$id'";
+        return self::queryTable($sql);
+    }
     function getProfileClusterbyID($id, $ownerID) {
         $where = " WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
         $userRole = $this->getUserRoleVal($ownerID);
@@ -4274,7 +4281,32 @@ class dbfuncs {
                 $this->insertUserGroup($g_id, $u_id, $u_id);
             } 
         }
+    }
+    function insertDefaultRunEnvironment($u_id){
+        $runEnv_id = $this->DEFAULT_RUN_ENVIRONMENT;
+        $new_ssh_id = "";
+        if (!empty($runEnv_id) && !empty($u_id)){
+            // TODO: add other profile types  
+            $type = "cluster";
+            if ($type == "cluster"){
+                $sshData = json_decode($this->getProfileClusterSSHWithID($runEnv_id),true);
+                if (!empty($sshData[0])) {
+                    $ssh_id = $sshData[0]["ssh_id"];
+                    $ssh_owner_id = $sshData[0]["owner_id"];
+                    if (!empty($ssh_id) && !empty($ssh_owner_id)){
+                        $data = $this->duplicateSSHKey($ssh_id, $u_id);
+                        $idArray = json_decode($data,true);
+                        $new_ssh_id = $idArray["id"];
+                        $prikey = $this->readKey($ssh_id, 'ssh_pri', $ssh_owner_id);
+                        $pubkey = $this->readKey($ssh_id, 'ssh_pub', $ssh_owner_id);
+                        $this->insertKey($new_ssh_id, $prikey, "ssh_pri", $u_id);
+                        $this->insertKey($new_ssh_id, $pubkey, "ssh_pub", $u_id);
+                    }
+                }
+                $this->duplicateRunEnvironment($runEnv_id, $type, $u_id, $new_ssh_id);
+            }
 
+        }
     }
     function insertUserGroup($g_id, $u_id, $ownerID) {
         $sql = "INSERT INTO $this->db.user_group (g_id, u_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$g_id', '$u_id', '$ownerID', now(), now(), '$ownerID', 3)";
@@ -5714,6 +5746,29 @@ class dbfuncs {
             }
             return $newProPipeId;
         }
+    }
+
+    function duplicateSSHKey($old_id, $ownerID){
+        $sql = "INSERT INTO $this->db.ssh(name, hide, check_userkey, check_ourkey, date_created, date_modified, last_modified_user, perms, owner_id)
+                    SELECT name, hide, check_userkey, check_ourkey, now(), now(), '$ownerID', perms, '$ownerID'
+                    FROM $this->db.ssh
+                    WHERE id='$old_id'";
+        return self::insTable($sql);
+    }
+
+    function duplicateRunEnvironment($old_id, $type, $ownerID, $new_ssh_id) {
+        $ssh_id = "ssh_id";
+        if (!empty($new_ssh_id)){
+            $ssh_id = "'$new_ssh_id'";
+        }
+        if ($type == "cluster"){
+            $sql = "INSERT INTO $this->db.profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, variable, bash_variable, group_id, auto_workdir, owner_id, perms, date_created, date_modified, amazon_cre_id, def_publishdir, def_workdir, last_modified_user)
+                    SELECT name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, $ssh_id, next_clu_opt, job_clu_opt, public, variable, bash_variable, group_id, auto_workdir, '$ownerID', perms, now(), now(), amazon_cre_id, def_publishdir, def_workdir, '$ownerID'
+                    FROM $this->db.profile_cluster
+                    WHERE id='$old_id'"; 
+        }
+
+        return self::insTable($sql);
     }
     function duplicateProcess($new_process_gid, $new_name, $old_id, $ownerID) {
         $sql = "INSERT INTO $this->db.process(process_uuid, process_rev_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid)
