@@ -96,7 +96,7 @@ Run Environments
 This section is used for defining connection profiles by clicking on "Add Environment" button. As a type, please choose one of these options: Host, Amazon or Google. 
 
 * **A. Host:** If you have an access to High Performance Computing (HPC) environments, or personal workstations. 
-* **B. Host for AWS BATCH:** If you have an Amazon Web Services (AWS) account and planning to submit jobs to AWS Batch. 
+* **B. Host for AWS Batch:** If you have an Amazon Web Services (AWS) account and planning to submit jobs to AWS Batch. 
 * **C. Amazon:** If you have an Amazon Web Services (AWS) account or planning to create an EC2 instance in order to run your jobs in the cloud. 
 * **D. Google:** If you want to use Google Cloud account to run your jobs in the cloud.
 

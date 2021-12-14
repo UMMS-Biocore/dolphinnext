@@ -157,6 +157,7 @@
 <p class="caption"><span class="caption-text">Administrator Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="admin_quick.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin_rds.html">Amazon RDS MySQL Database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="admin_faq.html">Frequently Asked Questions</a></li>
 </ul>
 
@@ -330,9 +331,9 @@
 </ul>
 <p>If you want use optional input parameter, you can check the optional checkbox. This feature allows flexibility for the user while defining process since the process will be executed in spite of the absence of the input parameter. Please check the example below for the use case:</p>
 <img alt="../_images/process_optional_input.png" class="align-center" src="../_images/process_optional_input.png" />
-<p>Here, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as blank string in case input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is empty. Otherwise, when input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is found, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as <code class="docutils literal notranslate"><span class="pre">---filter</span> <span class="pre">${genome}&quot;</span></code>.</p>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined with <code class="docutils literal notranslate"><span class="pre">NO_FILE</span></code> prefix in case input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is empty. Otherwise, when input parameter <code class="docutils literal notranslate"><span class="pre">genome</span></code> is found, <code class="docutils literal notranslate"><span class="pre">filter</span></code> parameter will be defined as <code class="docutils literal notranslate"><span class="pre">---filter</span> <span class="pre">${genome}&quot;</span></code>.</p>
 <p>Note that the existance of <code class="docutils literal notranslate"><span class="pre">genome</span></code> variable is required to be checked after using <code class="docutils literal notranslate"><span class="pre">toString()</span></code> operator:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>filter = genome.toString() == &quot;&quot; ? &quot;&quot; : &quot;--filter ${genome}&quot;
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>filter = genome.name.startsWith(&#39;NO_FILE&#39;) ? &quot;&quot; : &quot;--filter ${genome}&quot;
 </pre></div>
 </div>
 </div>

@@ -2153,9 +2153,12 @@ else if ($p=="checkPipeMenuGr")
 {
     $data = $db->checkPipeMenuGr($id);
 }
-else if ($p=="getMaxProcess_gid")
-{
+else if ($p=="getMaxProcess_gid"){
     $data = $db->getMaxProcess_gid();
+}
+else if ($p=="getMaxOptionalInputNum"){
+    $pipeline_id = $_REQUEST['pipeline_id'];
+    $data = $db->getMaxOptionalInputNum($pipeline_id,$ownerID);
 }
 else if ($p=="getMaxPipeline_gid")
 {

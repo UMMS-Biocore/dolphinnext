@@ -11999,16 +11999,36 @@ $(document).ready(async function () {
         }
     };
 
-    smartSelection = function () {
+   
+
+    getMultipleSelected = function (options) {
+        var result = [];
+        var opt;
+        for (var i=0, iLen=options.length; i<iLen; i++) {
+            opt = options[i];
+            if (opt.selected) {
+                result.push(opt);
+            }
+        }
+        return result;
+    }
+
+    // mode->all, selected
+    smartSelection = function (mode) {
         var collection_type = $("#collection_type").val();
         if (collection_type == "single") {
             var files_select1 = document.getElementById("singleList").options;
+            if (mode == "only") files_select1 = getMultipleSelected(files_select1)
             var regex1 = $("#single_pattern").val();
         } else {
             var files_select1 = document.getElementById("forwardList").options;
             var files_select2 = document.getElementById("reverseList").options;
             var files_select3 = document.getElementById("r3List").options;
             var files_select4 = document.getElementById("r4List").options;
+            if (mode == "only") files_select1 = getMultipleSelected(files_select1)
+            if (mode == "only") files_select2 = getMultipleSelected(files_select2)
+            if (mode == "only") files_select3 = getMultipleSelected(files_select3)
+            if (mode == "only") files_select4 = getMultipleSelected(files_select4)
             var regex1 = $("#forward_pattern").val();
             var regex2 = $("#reverse_pattern").val();
             var regex3 = $("#r3_pattern").val();
@@ -12036,15 +12056,15 @@ $(document).ready(async function () {
                 if (regex1 === "") {
                     regex1 = ".";
                 }
+
                 var regex_string = files_select1[0].value.split(regex1)[0];
                 for (var x = 0; x < files_select1.length; x++) {
                     var prefix = files_select1[x].value.split(regex1)[0];
                     if (regex_string === prefix) {
                         file_string += files_select1[x].value + " | ";
                         recordDelList("#singleList", files_select1[x].value, "del");
-                        $(
-                            '#singleList option[value="' + files_select1[x].value + '"]'
-                        )[0].remove();
+                        $('#singleList option[value="' + files_select1[x].value + '"]')[0].remove();
+                        if (mode == "only") files_select1.splice(x, 1);
                         x--;
                     }
                 }
@@ -12069,6 +12089,8 @@ $(document).ready(async function () {
                         $(
                             '#reverseList option[value="' + files_select2[x].value + '"]'
                         )[0].remove();
+                        if (mode == "only") files_select1.splice(x, 1);
+                        if (mode == "only") files_select2.splice(x, 1);
                         x--;
                     }
                 }
@@ -12110,6 +12132,9 @@ $(document).ready(async function () {
                         $(
                             '#r3List option[value="' + files_select3[x].value + '"]'
                         )[0].remove();
+                        if (mode == "only") files_select1.splice(x, 1);
+                        if (mode == "only") files_select2.splice(x, 1);
+                        if (mode == "only") files_select3.splice(x, 1);
                         x--;
                     }
                 }
@@ -12162,6 +12187,10 @@ $(document).ready(async function () {
                         $(
                             '#r4List option[value="' + files_select4[x].value + '"]'
                         )[0].remove();
+                        if (mode == "only") files_select1.splice(x, 1);
+                        if (mode == "only") files_select2.splice(x, 1);
+                        if (mode == "only") files_select3.splice(x, 1);
+                        if (mode == "only") files_select4.splice(x, 1);
                         x--;
                     }
                 }

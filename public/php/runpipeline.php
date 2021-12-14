@@ -1330,11 +1330,12 @@ $DMETA_LABEL= DMETA_LABEL;
                     </div>
                     <div class="form-group patternButs" style="display:none;">
                         <div class="col-sm-12">
-                            <div class="col-sm-8"></div>
-                            <div class="col-sm-4">
+                            <div class="col-sm-4"></div>
+                            <div class="col-sm-8">
                                 <span class="pull-right" style="padding-top:7px; padding-left:5px;"><a data-toggle="tooltip" data-placement="bottom" title="In order to merge multiple files, first select the files and then click 'Add Selected Files' button. If you don't need to merge files, you can simply click 'Add All Files' button."><i class='glyphicon glyphicon-info-sign'></i></a></span>
-                                <button id="add_selection_file" type="button" class="btn btn-primary pull-right" onclick="addSelection()">Add Selected Files</button>
-                                <button id="smart_add_file" type="button" class="btn btn-primary pull-right" style="margin-right:3px;" onclick="smartSelection()">Add All Files</button>
+                                <button id="smart_add_file" type="button" class="btn btn-primary pull-right" style="margin-right:3px;" onclick="smartSelection('all')">Add All Files</button>
+                                <button type="button" class="btn btn-primary pull-right" onclick="smartSelection('only')" style="margin-right:3px;">Add Selected Files</button>
+                                <button id="add_selection_file" type="button" class="btn btn-primary pull-right" onclick="addSelection()" style="margin-right:3px;">Merge Selected Files</button>
                                 <button id="clear_selection" type="button" class="btn btn-warning pull-right" style="margin-right:3px;" onclick="clearSelection()">Reset</button>
                             </div>
                         </div>
