@@ -5,7 +5,7 @@
         </div>
     </div>
 
-    <div class="panel-body">
+    <div class="panel-body" style="overflow-x:auto;">
         <table id="runstatustable" class="table table-striped table-bordered" cellspacing="0" width="100%">
             <thead>
                 <tr>
@@ -83,3 +83,23 @@
 
     </div>
 </div>
+
+
+<!--Confirm Modal-->
+
+<div id="confirmDelProModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="confirmDelProModalTitle">Confirm</h4>
+            </div>
+            <div class="modal-body" id="confirmDelProModalText">Text</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="mDelProBtn">Delete</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Confirm Modal Ends-->

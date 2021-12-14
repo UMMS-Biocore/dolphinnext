@@ -26,6 +26,8 @@ class dbfuncs {
     private static $link;
     private $JWT_SECRET = JWT_SECRET;
     private $JWT_COOKIE_EXPIRES_IN = JWT_COOKIE_EXPIRES_IN;
+    private $DEFAULT_GROUP_ID = DEFAULT_GROUP_ID;
+    private $DEFAULT_RUN_ENVIRONMENT = DEFAULT_RUN_ENVIRONMENT;
 
     function __construct() {
         if (!isset(self::$link)) {
@@ -3552,6 +3554,12 @@ class dbfuncs {
         $sql = "SELECT * FROM $this->db.ssh WHERE $hide owner_id = '$ownerID' AND name = BINARY '$name'";
         return self::queryTable($sql);
     }
+    function getProfileClusterSSHWithID($id) {
+        $sql = "SELECT p.ssh_id, p.owner_id
+                FROM $this->db.profile_cluster p
+                WHERE p.id = '$id'";
+        return self::queryTable($sql);
+    }
     function getProfileClusterbyID($id, $ownerID) {
         $where = " WHERE (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND p.perms = 15)) AND p.id = '$id'";
         $userRole = $this->getUserRoleVal($ownerID);
@@ -4267,6 +4275,41 @@ class dbfuncs {
             return $checkTestGroup;
         }
     }
+    function insertDefaultGroup($u_id){
+        $g_id = $this->DEFAULT_GROUP_ID;
+        if (!empty($g_id) && !empty($u_id)){
+            $checkTestGroup = $this->getUserGroupsById($g_id,$u_id);
+            if (empty(json_decode($checkTestGroup))){
+                $this->insertUserGroup($g_id, $u_id, $u_id);
+            } 
+        }
+    }
+    function insertDefaultRunEnvironment($u_id){
+        $runEnv_id = $this->DEFAULT_RUN_ENVIRONMENT;
+        $new_ssh_id = "";
+        if (!empty($runEnv_id) && !empty($u_id)){
+            // TODO: add other profile types  
+            $type = "cluster";
+            if ($type == "cluster"){
+                $sshData = json_decode($this->getProfileClusterSSHWithID($runEnv_id),true);
+                if (!empty($sshData[0])) {
+                    $ssh_id = $sshData[0]["ssh_id"];
+                    $ssh_owner_id = $sshData[0]["owner_id"];
+                    if (!empty($ssh_id) && !empty($ssh_owner_id)){
+                        $data = $this->duplicateSSHKey($ssh_id, $u_id);
+                        $idArray = json_decode($data,true);
+                        $new_ssh_id = $idArray["id"];
+                        $prikey = $this->readKey($ssh_id, 'ssh_pri', $ssh_owner_id);
+                        $pubkey = $this->readKey($ssh_id, 'ssh_pub', $ssh_owner_id);
+                        $this->insertKey($new_ssh_id, $prikey, "ssh_pri", $u_id);
+                        $this->insertKey($new_ssh_id, $pubkey, "ssh_pub", $u_id);
+                    }
+                }
+                $this->duplicateRunEnvironment($runEnv_id, $type, $u_id, $new_ssh_id);
+            }
+
+        }
+    }
     function insertUserGroup($g_id, $u_id, $ownerID) {
         $sql = "INSERT INTO $this->db.user_group (g_id, u_id, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$g_id', '$u_id', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
@@ -4374,7 +4417,7 @@ class dbfuncs {
         $sql = "SELECT run_status, IF(run_opt IS NULL,0,1) as run_opt_check FROM $this->db.run_log WHERE run_log_uuid = '$uuid'";
         return self::queryTable($sql);
     }
-    
+
     function updateLastRunDate($project_pipeline_id,$ownerID){
         $curr_ownerID= $this->queryAVal("SELECT owner_id FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
         $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
@@ -4913,7 +4956,7 @@ class dbfuncs {
                     if (empty($auto_workdir)){
                         return json_encode("Query failed! Generic work directory not defined in shared run environment.");
                     }
-                    $rundir = $auto_workdir."/id".$project_pipeline_id;
+                    $rundir = $auto_workdir;
                     $rundir = preg_replace('/(\/+)/','/',$rundir);
                     $dir = preg_replace('/(\/+)/','/',$dir);
                     if (strpos($dir, $rundir) === false) {
@@ -5410,7 +5453,7 @@ class dbfuncs {
                     $where = " LEFT JOIN $this->db.user_group ug ON pp.group_id=ug.g_id 
                     WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and pp.perms = 15))";
                 }
-                
+
                 $sql = "SELECT DISTINCT r.date_created_last_run as run_date_created, r.run_status, pp.id as project_pipeline_id, pp.name, pp.summary, pp.output_dir,  pp.date_created as pp_date_created, pip.name as pipeline_name, pip.rev_id as pipeline_rev, pip.id as pipeline_id, u.email, u.username, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own
                 FROM $this->db.project_pipeline pp
                 LEFT JOIN $this->db.run r  ON r.project_pipeline_id = pp.id
@@ -5705,6 +5748,29 @@ class dbfuncs {
             }
             return $newProPipeId;
         }
+    }
+
+    function duplicateSSHKey($old_id, $ownerID){
+        $sql = "INSERT INTO $this->db.ssh(name, hide, check_userkey, check_ourkey, date_created, date_modified, last_modified_user, perms, owner_id)
+                    SELECT name, hide, check_userkey, check_ourkey, now(), now(), '$ownerID', perms, '$ownerID'
+                    FROM $this->db.ssh
+                    WHERE id='$old_id'";
+        return self::insTable($sql);
+    }
+
+    function duplicateRunEnvironment($old_id, $type, $ownerID, $new_ssh_id) {
+        $ssh_id = "ssh_id";
+        if (!empty($new_ssh_id)){
+            $ssh_id = "'$new_ssh_id'";
+        }
+        if ($type == "cluster"){
+            $sql = "INSERT INTO $this->db.profile_cluster(name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, ssh_id, next_clu_opt, job_clu_opt, public, variable, bash_variable, group_id, auto_workdir, owner_id, perms, date_created, date_modified, amazon_cre_id, def_publishdir, def_workdir, last_modified_user)
+                    SELECT name, executor, next_path, port, singu_cache, username, hostname, cmd, next_memory, next_queue, next_time, next_cpu, executor_job, job_memory, job_queue, job_time, job_cpu, $ssh_id, next_clu_opt, job_clu_opt, public, variable, bash_variable, group_id, auto_workdir, '$ownerID', perms, now(), now(), amazon_cre_id, def_publishdir, def_workdir, '$ownerID'
+                    FROM $this->db.profile_cluster
+                    WHERE id='$old_id'"; 
+        }
+
+        return self::insTable($sql);
     }
     function duplicateProcess($new_process_gid, $new_name, $old_id, $ownerID) {
         $sql = "INSERT INTO $this->db.process(process_uuid, process_rev_uuid, process_group_id, name, summary, script, script_header, script_footer, script_mode, script_mode_header, owner_id, perms, date_created, date_modified, last_modified_user, rev_id, process_gid)
@@ -6972,15 +7038,19 @@ class dbfuncs {
     }
 
     // tsv to json converter
-    function tsvConvert($tsv){
+    function tsvCsvToJson($tsv){
         ini_set('memory_limit','900M');
         $tsv = trim($tsv);
         $lines = explode("\n", $tsv);
-        $header = explode("\t", $lines[0]);
+        $sep = ",";
+        if (preg_match("/\t/", $lines[0])) {
+            $sep ="\t";
+        }
+        $header = explode($sep, $lines[0]);
         $data = array();
         for ($i = 1; $i < count($lines); $i++) {
             $obj = new stdClass();
-            $currentline = explode("\t", $lines[$i]);
+            $currentline = explode($sep, $lines[$i]);
             for ($j = 0; $j < count($header); $j++) {
                 $name = $header[$j];
                 $obj->$name = $currentline[$j];
@@ -6992,13 +7062,39 @@ class dbfuncs {
 
 
     function callDebrowser($uuid, $dir, $filename){
+        $pubwebDir = "{$this->run_path}/$uuid/pubweb/";
         $targetDir = "{$this->run_path}/$uuid/pubweb/$dir";
         $targetFile = "{$targetDir}/{$filename}";
         $targetJson = "{$targetDir}/.{$filename}";
         $tsv= file_get_contents($targetFile);
-        $array = $this->tsvConvert($tsv);
+        $array = $this->tsvCsvToJson($tsv);
         file_put_contents($targetJson, json_encode($array));
-        return json_encode("$dir/.{$filename}");
+        $ret = array();
+        $ret["count_file"] = "$dir/.{$filename}";
+        // search for metadata file in pubweb directory
+        $validMetadataFiles = ["debrowser_metadata.tsv", "debrowser_metadata.csv", "debrowser_metadata.txt"];
+        $metadata = "";
+        $it = new RecursiveDirectoryIterator($pubwebDir);
+        foreach(new RecursiveIteratorIterator($it) as $file){
+            $pathAr = explode('/', $file);
+            $onlymeta = array_pop($pathAr);
+            $metaDir = substr($file, strlen($pubwebDir));
+            if (in_array(strtolower($onlymeta), $validMetadataFiles)){
+                $subDir = preg_replace('/'.$onlymeta.'$/', '', $metaDir);
+                $targetDir = "{$this->run_path}/$uuid/pubweb/$subDir";
+                $targetFile = "{$targetDir}/{$onlymeta}";
+                $targetJson = "{$targetDir}/.{$onlymeta}";
+                $tsv= file_get_contents($targetFile);
+                $array = $this->tsvCsvToJson($tsv);
+                file_put_contents($targetJson, json_encode($array));
+                $metadata = "{$subDir}/.{$onlymeta}";
+                break;
+            }
+        }
+
+        $ret["count_file"] = "$dir/.{$filename}";
+        $ret["metadata_file"] = $metadata;
+        return json_encode($ret);
     }
     function callRmarkdown($type, $uuid, $text, $dir, $filename){
         //travis fix

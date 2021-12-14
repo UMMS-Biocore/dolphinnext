@@ -270,6 +270,16 @@ $(document).ready(function () {
         for (var i = 0; i < allMenuGroup.length; i++) {
             allMenuGroup[i].variable = decodeHtml(allMenuGroup[i].variable);
             allMenuGroup[i].bash_variable = decodeHtml(allMenuGroup[i].bash_variable);
+            var proType = "";
+            if (allMenuGroup[i].hostname != undefined) {
+                proType = "cluster";
+            }
+            if (proType === "cluster"){
+                allMenuGroup[i].amazon_cre_id2 = allMenuGroup[i].amazon_cre_id
+                allMenuGroup[i].def_workdir2 = allMenuGroup[i].def_workdir
+                allMenuGroup[i].def_publishdir2 = allMenuGroup[i].def_publishdir
+            }
+            
         }
         $('#mEnvName').selectize({
             valueField: 'id',
@@ -298,6 +308,7 @@ $(document).ready(function () {
                     } else if (cpOptions[valueID].google_cre_id != undefined){
                         $('#chooseEnv').val('google').trigger('change');
                     }
+                    console.log(cpOptions[valueID])
                     fillFormByName('#profilemodal', 'input, select, textarea', cpOptions[valueID]);
                     $('#mExec').trigger('change');
                 }
@@ -502,7 +513,7 @@ $(document).ready(function () {
     });
 
     $('#profilemodal').on('hide.bs.modal', function (event) {
-        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv","mDefWorkDirDiv2", "mDefPublishDirDiv"];
+        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv","mDefWorkDirDiv2", "mDefPublishDirDiv","mDefPublishDirDiv2"];
         $.each(noneList, function (element) {
             $('#' + noneList[element]).css('display', 'none');
         });
@@ -741,6 +752,8 @@ $(document).ready(function () {
             "dataSrc": ""
         },
         "columns": [{
+            "data": "id"
+        },{
             "data": "name"
         }, {
             "data": "username"

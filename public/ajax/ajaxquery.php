@@ -501,6 +501,9 @@ else if ($p=="saveUserManual"){
             $google_id = NULL;
             $data = $db->insertUserManual($name, $email, $username, $institute, $lab, $logintype, $role, $active, $pass_hash, $verify,$google_id); 
             $ownerIDarr = json_decode($data,true); 
+            $user_id = $ownerIDarr["id"];
+            $db->insertDefaultGroup($user_id);            
+            $db->insertDefaultRunEnvironment($user_id);            
         }
     }
 }

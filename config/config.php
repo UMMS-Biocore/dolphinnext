@@ -37,6 +37,8 @@ if (!empty($secConf)){
     $EMAIL_ADMIN= isset($secConf['EMAIL_ADMIN']) ? $secConf['EMAIL_ADMIN'] : "";
     $ENV_PATH = isset($secConf['ENV_PATH']) ? $secConf['ENV_PATH'] : "";
     $TIMEZONE = isset($secConf['TIMEZONE']) ? $secConf['TIMEZONE'] : "";
+    $DEFAULT_GROUP_ID = isset($secConf['DEFAULT_GROUP_ID']) ? $secConf['DEFAULT_GROUP_ID'] : "";
+    $DEFAULT_RUN_ENVIRONMENT = isset($secConf['DEFAULT_RUN_ENVIRONMENT']) ? $secConf['DEFAULT_RUN_ENVIRONMENT'] : "";
     date_default_timezone_set($TIMEZONE);
 
     define('TIMEZONE', $TIMEZONE);
@@ -57,6 +59,8 @@ if (!empty($secConf)){
     define('BIND_PASS', $BIND_PASS);
     define('EMAIL_SENDER', $EMAIL_SENDER);
     define('EMAIL_ADMIN', $EMAIL_ADMIN);
+    define('DEFAULT_GROUP_ID', $DEFAULT_GROUP_ID);
+    define('DEFAULT_RUN_ENVIRONMENT', $DEFAULT_RUN_ENVIRONMENT);
 }
 $secUiconfig = $secRaw['UICONFIG'];
 if (!empty($secUiconfig)){

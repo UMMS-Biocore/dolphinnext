@@ -42,15 +42,14 @@ $runscope = {
         }
         if (perms) {
             if (perms == "15") {
-                if (type == "work" || type == "report") {
+                if (type == "work") {
                     var auto_workdir = $("#chooseEnv")
                     .find(":selected")
                     .attr("auto_workdir");
-                    dir = auto_workdir + "/id" + project_pipeline_id;
-                    if (type == "report") {
-                        dir = dir + "/report" + project_pipeline_id;
+                    if (auto_workdir){
+                        dir = auto_workdir;
                     }
-                } else if (type == "publish" || type == "runcmd") {
+                } else if (type == "runcmd") {
                     dir = "";
                 }
             }
@@ -2155,12 +2154,37 @@ async function getJobData(getType) {
     }
 }
 
+function getJobDataSync(getType) {
+    var chooseEnv = $("#chooseEnv option:selected").val();
+    if (chooseEnv) {
+        var patt = /(.*)-(.*)/;
+        var proType = chooseEnv.replace(patt, "$1");
+        var proId = chooseEnv.replace(patt, "$2");
+        var profileData = getProfileDataSync(proType, proId);
+        var allProSett = {};
+        if (profileData) {
+            allProSett.job_queue = profileData[0].job_queue;
+            allProSett.job_memory = profileData[0].job_memory;
+            allProSett.job_cpu = profileData[0].job_cpu;
+            allProSett.job_time = profileData[0].job_time;
+            allProSett.job_clu_opt = profileData[0].job_clu_opt;
+            if (getType === "job") {
+                return profileData;
+            } else if (getType === "both") {
+                return [allProSett, profileData];
+            }
+        } else {
+            return [allProSett, profileData];
+        }
+    }
+}
+
 // to execute autofill function, binds event handlers to chooseEnv
 function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
-    $("#chooseEnv").bindFirst("change", async function () {
-        var onchangechooseEnvFunc1 = async function () {
+    $("#chooseEnv").bindFirst("change", function () {
+        var onchangechooseEnvFunc1 = function () {
             if (jsonType == "pipeline") {
-                var [allProSett, profileData] = await getJobData("both");
+                var [allProSett, profileData] = getJobDataSync("both");
                 // autofill def_publishdir and def_workdir
                 var def_publishdir = "";
                 var def_workdir = "";
@@ -2218,7 +2242,6 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
         var onchangechooseEnvFunc2 = function () {
             console.log(autoFillJSON);
             var fillHostFunc = function (autoFillJSON, type, filledVars) {
-                console.log(jsonType);
                 $.each(autoFillJSON, function (el) {
                     var conds = autoFillJSON[el].condition;
                     var states = autoFillJSON[el].statement;
@@ -2291,8 +2314,8 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
             fillHostFunc(autoFillJSON, "default", filledVars);
         };
 
-        var sequentialUpdate = async function (callback) {
-            await onchangechooseEnvFunc1();
+        var sequentialUpdate = function (callback) {
+            onchangechooseEnvFunc1();
             callback();
         };
 
@@ -2320,7 +2343,7 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
         if (jsonType == "pipeline") {
             var ask = askAutoFill();
             if (ask) {
-                await onchangechooseEnvFunc1();
+                onchangechooseEnvFunc1();
                 var text =
                     "Would you like to update System Inputs according to selected run environment?";
                 var savedData = "";
@@ -2330,10 +2353,10 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                 var btnText = "Yes";
                 showConfirmDeleteModal(text, savedData, execFunc, btnText);
             } else {
-                await sequentialUpdate(onchangechooseEnvFunc2);
+                sequentialUpdate(onchangechooseEnvFunc2);
             }
         } else {
-            await sequentialUpdate(onchangechooseEnvFunc2);
+            sequentialUpdate(onchangechooseEnvFunc2);
         }
     });
 }
@@ -4457,14 +4480,11 @@ function showhideOnEnv(profileData) {
         // shared run environments
         if (perms == "15") {
             $("#rOut_dirDiv").css("display", "none");
-            $("#publishDirHide").css("display", "none");
-            $("#jobSettingsDiv").css("display", "none");
             $("#runCmdDiv").css("display", "none");
-            $("#intermeDelDiv").css("display", "none");
             $("#target_dir_div").css("display", "none");
-            $("#archive_dir_geo_div").css("display", "none");
-            $("#archive_dir_div").css("display", "none");
+            $("#containersDiv").css("display", "none");
         } else {
+            $("#containersDiv").css("display", "block");
             if (profileData[0].google_cre_id != undefined) {
                 $("#rOut_dirDiv").css("display", "none");
             } else {
@@ -5325,6 +5345,7 @@ async function refreshCreatorData(project_pipeline_id) {
 
 async function loadExecSettings(pipeData) {
     var chooseEnv = $("#chooseEnv option:selected").val();
+    console.log(pipeData[0].profile)
     if (pipeData[0].profile !== "") {
         if (chooseEnv) {
             var [allProSett, profileData] = await getJobData("both");
@@ -5355,9 +5376,7 @@ async function loadExecSettings(pipeData) {
                 fillForm("#" + el, "input", each_settings);
             });
         }
-    } else {
-        $("#jobSettingsDiv").css("display", "none");
-    }
+    } 
 }
 
 async function loadUserGroups(pipeData) {
@@ -7841,6 +7860,24 @@ async function getProfileData(proType, proId) {
         });
     } else if (proType === "amazon" || proType === "google") {
         var profileData = await doAjax({
+            p: "getProfileCloud",
+            cloud: proType,
+            id: proId,
+            type: "run",
+        });
+    }
+    return profileData;
+}
+
+function getProfileDataSync(proType, proId) {
+    if (proType === "cluster") {
+        var profileData = getValues({
+            p: "getProfileCluster",
+            id: proId,
+            type: "run",
+        });
+    } else if (proType === "amazon" || proType === "google") {
+        var profileData = getValues({
             p: "getProfileCloud",
             cloud: proType,
             id: proId,
@@ -14511,10 +14548,15 @@ $(document).ready(async function () {
                             showLoadingDiv(href.substr(1));
                         },
                         type: "POST",
-                        success: function (filePathJson) {
-                            var link = encodeURIComponent(
-                                pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson
-                            );
+                        success: function (jsonData) {
+                            console.log(jsonData)
+                            var filePathJson = jsonData.count_file
+                            var metadataFile = ""
+                            if (jsonData.metadata_file){
+                                metadataFile = "&meta=" + encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" +jsonData.metadata_file);
+                            }
+                            var link = encodeURIComponent(pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePathJson) + metadataFile;
+
                             var debrowserlink =
                                 debrowserUrl + link;
                             console.log(debrowserlink)

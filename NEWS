@@ -1,10 +1,22 @@
-09.12.2021 Version 1.2.68
+13.12.2021 Version 1.2.71
 Merge selected files button added.
 Optional input feature upgraded to support AWS batch environment.
+
+13.12.2021 Version 1.2.70
+Delete run option added into run status page
+Remove run warning fixed in projects page. 
+
+13.12.2021 Version 1.2.69
+DEFAULT_RUN_ENVIRONMENT option added to .sec file.
+
+12.12.2021 Version 1.2.68
+DEFAULT_GROUP_ID option added to .sec file.
 
 08.12.2021 Version 1.2.67
 The pipeline page is updated to pipeline and process editing for admin.
 PDF loading in datatables prevented.
+Debrowser metadata file support added.
+Minor bug fixed in the profile page autoload.
 
 05.12.2021 Version 1.2.66
 Run page loading improved.
