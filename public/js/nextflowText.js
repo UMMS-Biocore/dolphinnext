@@ -525,8 +525,10 @@ function createNextflowFile(nxf_runmode, uuid) {
 
     };
     nextText += '// Stage empty file to be used as an optional input where required\n';
-    nextText += 'ch_empty_file = file("$projectDir/.emptyfile", hidden:true)\n';
-
+    var maxOptionalInputNum = getValues({p:"getMaxOptionalInputNum", "pipeline_id":pipeline_id})
+    for (var k = 1; k < maxOptionalInputNum+1; k++) {
+        nextText += `ch_empty_file_${k} = file("$projectDir/.emptyfiles/NO_FILE_${k}", hidden:true)\n`;
+    }
     nextText += "\n" + iniTextSecond + "\n";
 
 
@@ -912,7 +914,7 @@ function getOptionalInText(optionalInAr, optionalInQualAr, optionalInChannelName
             // optional input line for file(params.staticfile)
             // prevents Unknown method invocation `ifEmpty` on UnixPath type
             if (window.channelTypeDict[optionalInChannelNameAr[i]] && window.channelTypeDict[optionalInChannelNameAr[i]] == "f1"){
-                optText += optionalInAr[i] + "= " + optionalInAr[i] + ".exists() ? " + optionalInAr[i] + " : ch_empty_file \n";
+                optText += optionalInAr[i] + "= " + optionalInAr[i] + ".exists() ? " + optionalInAr[i] + ` : ch_empty_file_${i+1} \n`;
             } else {
                 optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
             }

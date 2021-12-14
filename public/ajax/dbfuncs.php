@@ -1826,11 +1826,44 @@ class dbfuncs {
         }
     }
 
+    function getOptionalProcessParameter($id) {
+        $sql = "SELECT COUNT(pp.parameter_id) as opt_input_count
+                FROM $this->db.process_parameter pp
+                WHERE pp.process_id = '$id' and pp.type = 'input' and pp.optional = 'true'";
+        return self::queryTable($sql);
+    }
+
+    // get the maximum optional input number for the processes of the pipeline
+    function getMaxOptionalInputNum($pipeline_id,$ownerID){
+        $pipe = $this->loadPipeline($pipeline_id,$ownerID);
+        $pipe_obj = json_decode($pipe,true);
+        $process_list = $pipe_obj[0]["process_list"];
+        $max = 0;
+        if (!empty($process_list)){
+            $process_list_ar = explode(",",$process_list);
+            for ($i=0; $i<count($process_list_ar); $i++) {
+                $proID= $process_list_ar[$i];
+                $opt = $this->getOptionalProcessParameter($proID);
+                $opt_obj = json_decode($opt,true);
+                $opt_input_count = $opt_obj[0]["opt_input_count"];
+                settype($opt_input_count, 'integer');
+                if (!empty($opt_input_count) && $opt_input_count>$max){
+                    $max = $opt_input_count;
+                }
+            }
+        }
+        return $max;
+    }
+
     function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzBashConfigText, $attempt, $runType, $ownerID){
         //create files and folders
         $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
         // Dummy file to be used as an optional input where required
-        $this -> createDirFile ("{$this->run_path}/$uuid/run", ".emptyfile", 'w', "" );
+        $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
+        $optionalInputNum = $this->getMaxOptionalInputNum($pipeline_id, $ownerID);
+        for ($i=1; $i<$optionalInputNum+1; $i++) {
+            $this -> createDirFile ("{$this->run_path}/$uuid/run/.emptyfiles", "NO_FILE_$i", 'w', "" );
+        }
         //create Run Description
         $this -> createCopyReadmeMD($attempt,$uuid,$project_pipeline_id);
         //separate nextflow config (by using @config tag).
