@@ -47,7 +47,7 @@
 
 
 <!-- Add Process Modal -->
-<div id="addProcessModal" style="overflow-y:scroll;" class="modal fade " tabindex="-1" role="dialog">
+<div id="addProcessModal" data-keyboard="false" style="overflow-y:scroll;" class="modal fade " tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" style="width:1300px;" role="document">
         <div class="modal-content">
             <span id="addHeader"></span>

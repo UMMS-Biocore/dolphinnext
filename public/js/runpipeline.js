@@ -1696,6 +1696,7 @@ function hideProcessOptionsAsIcons() {
 
             for (var t = 0; t < show_settingArr.length; t++) {
                 show_setting = show_settingArr[t];
+                console.log(show_setting)
                 var show_settingProcessPanel = $(
                     '#ProcessPanel > div[processorgname="' +
                     show_setting +
@@ -1704,12 +1705,37 @@ function hideProcessOptionsAsIcons() {
                     '"]'
                 );
 
+                var paramsPrefix = "params.";
+                if (show_setting.substring(0, paramsPrefix.length) === paramsPrefix){
+                    var varName = show_setting.replace(paramsPrefix, "");
+                    var checkVarName = $("#inputsTab").find( "td[given_name='" + varName + "']")[0];
+                    console.log(checkVarName)
+                    if (checkVarName){
+
+
+                        var panelContent = `<table class="table"><thead>
+<tr>
+<th style="width:30%;" scope="col">Given Name</th>
+<th style="display:none;" scope="col">Identifier</th>
+<th style="display:none;" scope="col">File Type</th>
+<th style="display:none;" scope="col">Qualifier</th>
+<th style="display:none;" scope="col">Process Name</th>
+<th style="color:#D59035;  width:70%;" scope="col">Select Items</th>
+</tr>
+</thead><tbody id="test-10" style="word-break: break-all;"></tbody></table>`;
+                    }
+                    $(panelContent).appendTo("#addProcessRow-127")
+                    $("#inputTa-230").appendTo("#test-10")
+                }
+                console.log(panelContent)
+
                 for (var k = 0; k < show_settingProcessPanel.length; k++) {
                     var panel = $(show_settingProcessPanel[k]);
                     var panelContent = $(show_settingProcessPanel[k])
                     .children()
                     .children()
                     .eq(1);
+
                     var label = panel.attr("label");
                     var processname = panel.attr("processname");
                     var processorgname = panel.attr("processorgname");
