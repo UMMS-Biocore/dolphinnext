@@ -527,7 +527,7 @@ function createNextflowFile(nxf_runmode, uuid) {
     nextText += '// Stage empty file to be used as an optional input where required\n';
     var maxOptionalInputNum = getValues({p:"getMaxOptionalInputNum", "pipeline_id":pipeline_id})
     for (var k = 1; k < maxOptionalInputNum+1; k++) {
-        nextText += `ch_empty_file_${k} = file("$projectDir/.emptyfiles/NO_FILE_${k}", hidden:true)\n`;
+        nextText += `ch_empty_file_${k} = file("$baseDir/.emptyfiles/NO_FILE_${k}", hidden:true)\n`;
     }
     nextText += "\n" + iniTextSecond + "\n";
 

@@ -923,8 +923,10 @@ $DMETA_LABEL= DMETA_LABEL;
                     </div>
                     <div role="tabpanel" class="tab-pane" id="manualTab" searchTab="true">
                         <div class="panel panel-default">
-                            </br>
-                        <form style="padding-top:30px; padding-right:10px; padding-bottom:50px; border-bottom:1px solid lightgrey; " class="form-horizontal">
+                        <div class="pull-right" style="margin:5px;">
+                        <button type="button" class="btn btn-success btn-sm" id="uploadManualFile" data-toggle="modal" data-backdrop="static" data-keyboard="false"><i class="fa fa-upload"></i> Upload File</button>
+                                </div>
+                        <form style="padding-top:50px; padding-right:10px; padding-bottom:40px; border-bottom:1px solid lightgrey; " class="form-horizontal">
                             <div class="form-group" style="display:none">
                                 <label for="mIdFile" class="col-sm-2 control-label">ID</label>
                                 <div class="col-sm-10">
@@ -1550,6 +1552,16 @@ $DMETA_LABEL= DMETA_LABEL;
     <div class="form-group">
         <div class="col-sm-6" style="padding-left:30px;">
             <button type="button" class="btn btn-success" id="showHostFiles">Select Files</button>
+        </div>
+    </div>
+</form>
+<form class="form-horizontal" id="uploadSucSingleDiv" style="display:none;">
+    <div class="form-group">
+        <label class="col-sm-12 control-label text-left" style="padding-left:30px;">3. Your file successfully uploaded. </label>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-6" style="padding-left:30px;">
+            <button type="button" class="btn btn-success" id="selectAsManually">Use Uploaded File </button>
         </div>
     </div>
 </form>

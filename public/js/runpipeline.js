@@ -11999,7 +11999,7 @@ $(document).ready(async function () {
         }
     };
 
-   
+
 
     getMultipleSelected = function (options) {
         var result = [];
@@ -12593,6 +12593,7 @@ $(document).ready(async function () {
                     p: "getProjectPipelineInputs",
                     id: proPipeInputID,
                 });
+                console.log(proInputGet)
                 if (proInputGet) {
                     if (proInputGet[0]) {
                         var input_id = proInputGet[0].input_id;
@@ -12606,11 +12607,16 @@ $(document).ready(async function () {
                                 .select();
                             $('.nav-tabs a[href="#importedFilesTab"]').tab("show");
                         } else if (input_id) {
-                            var inputGet = await doAjax({ p: "getInputs", id: input_id })[0];
+                            $('.nav-tabs a[href="#manualTab"]').tab("show");
+                            var inputGet = await doAjax({ p: "getInputs", id: input_id });
+                            console.log(inputGet)
+                            inputGet = inputGet[0]
                             if (inputGet) {
                                 //insert data (input_id) into form
-                                var formValues = $("#manualTab").find("input");
+                                var formValues = $("#manualTab").find("form").find("input");
                                 var keys = Object.keys(inputGet);
+                                console.log(keys)
+                                console.log(inputGet)
                                 for (var i = 0; i < keys.length; i++) {
                                     $(formValues[i]).val(inputGet[keys[i]]);
                                 }
@@ -13283,7 +13289,8 @@ $(document).ready(async function () {
             });
             if (proInputGet) {
                 var input_id = proInputGet[0].input_id;
-                var inputGet = await doAjax({ p: "getInputs", id: input_id })[0];
+                var inputGet = await doAjax({ p: "getInputs", id: input_id });
+                inputGet = inputGet[0];
                 if (inputGet) {
                     //insert data into form
                     var formValues = $("#inputValmodal").find("input");
@@ -13512,20 +13519,26 @@ $(document).ready(async function () {
             var transferedFile = 0;
             var totalFile = uploader.files.length;
             var transferedFile = getTransferedFiles();
-            console.log(totalFile);
-            console.log(totalFile > 0);
-            console.log(transferedFile);
-            console.log(transferedFile == totalFile);
             if (transferedFile && totalFile) {
-                if (totalFile > 0 && transferedFile == totalFile) {
+                if (totalFile === 1 && transferedFile == totalFile) {
+                    $("#uploadSucSingleDiv").css("display", "inline");
+                    $("#uploadSucDiv").css("display", "none");
+                } else if (totalFile > 1 && transferedFile == totalFile) {
                     $("#uploadSucDiv").css("display", "inline");
+                    $("#uploadSucSingleDiv").css("display", "none");
                 }
             }
-            if (totalFile) {
-                $("span.plupload_transfer_status").html(
-                    "  Transfered " + transferedFile + "/" + totalFile + " files"
-                );
+            if (transferedFile && totalFile && transferedFile == totalFile) {
+                $("#plupload_tiny_spinner").css("display","none");
             }
+
+            if (totalFile) {
+                if (!$(".plupload_filelist_footer").find("#plupload_tiny_spinner")[0]){
+                    $("span.plupload_transfer_status").after("<div id='plupload_tiny_spinner' class='tiny-spinner' style='display:none;'></div>")
+                }
+
+            }
+            $("span.plupload_transfer_status").html("  Transfered " + transferedFile + "/" + totalFile + " files " );
         }
         //interval will decide the check period
         function checkRsyncTimer(up, fileName, fileId, interval) {
@@ -13691,6 +13704,7 @@ $(document).ready(async function () {
                             up.settings.multipart_params.target_dir = target_dir;
                             up.settings.multipart_params.run_env = run_env;
                         }
+                        $("#plupload_tiny_spinner").css("display","inline-block");
                     },
                     UploadProgress: function (up, file) {
                         // Called while file is being uploaded
@@ -13747,22 +13761,22 @@ $(document).ready(async function () {
                                 }
                             }
                             //remove file found in the remote host
-                            if ($.inArray(file.name, fileArr) !== -1) {
-                                removedFiles.push(file.name);
-                                up.removeFile(file);
-                            }
+                            //                            if ($.inArray(file.name, fileArr) !== -1) {
+                            //                                removedFiles.push(file.name);
+                            //                                up.removeFile(file);
+                            //                            }
                             log("  File:", file);
                         });
 
                         var delRowsTxt = "";
                         var dupFilesTxt = "";
                         var emptyFilesTxt = "";
-                        if (removedFiles.length > 0) {
-                            var delRowsTxt =
-                                "Following file(s) already found in the target directory. Therefore, they removed from download queue.<br/><br/>File List:<br/>" +
-                                removedFiles.join("<br/>") +
-                                "<br/><br/>";
-                        }
+                        //                        if (removedFiles.length > 0) {
+                        //                            var delRowsTxt =
+                        //                                "Following file(s) already found in the target directory. Therefore, they removed from download queue.<br/><br/>File List:<br/>" +
+                        //                                removedFiles.join("<br/>") +
+                        //                                "<br/><br/>";
+                        //                        }
                         if (dupFiles.length > 0) {
                             var dupFilesTxt =
                                 "Following file(s) already found in the queue list. <br/><br/>File List:<br/>" +
@@ -13833,6 +13847,7 @@ $(document).ready(async function () {
                     UploadComplete: function (up, files) {
                         // Called when all files are either uploaded or failed
                         log("[UploadComplete]");
+
                     },
                     Destroy: function (up) {
                         // Called when uploader is destroyed
@@ -13936,6 +13951,8 @@ $(document).ready(async function () {
             uploader.destroy();
             window["plupload_transfer_obj"] = {};
             initPlupload();
+            $("#uploadSucDiv").css("display", "none");
+            $("#uploadSucSingleDiv").css("display", "none");
         });
 
         //        $('#addFileModal').on('click', '#pluploaderStop', function (e) {
@@ -13963,6 +13980,43 @@ $(document).ready(async function () {
         ////            $(".plupload_buttons,.plupload_upload_status,.plupload_transfer_status").css("display", "inline");
         //        });
     });
+
+
+
+
+    $("#inputFilemodal").on("click", "#uploadManualFile", async function (e) {
+        $("#addFileModal").modal("show");
+        $('.nav-tabs a[href="#uploadFiles"]').tab("show");
+    });
+
+    $("#addFileModal").on("click", "#selectAsManually", async function (e) {
+        var uploader = $("#pluploader").pluploadQueue();
+        var totalFile = 0;
+        var transferedFile = 0;
+        var totalFile = uploader.files
+        if (totalFile.length < 1 ){
+            showInfoModal("#infoMod","#infoModText","Please first upload the file.");
+        } else if (totalFile.length > 0){
+            var finalFile = totalFile[totalFile.length-1].name
+            if (finalFile){
+                var targetDir = $("#target_dir").val()
+                finalFile = targetDir +"/"+finalFile
+                var data = [];
+                data.push({ name: "id", value: "" });
+                data.push({ name: "name", value: finalFile });
+                var savetype = $("#mIdFile").val();
+                if (!savetype.length) {
+                    //add item
+                    await saveFileSetValModal(data, "file", null, null);
+                } else {
+                    //edit item
+                    await editFileSetValModal(data, "file", null, null);
+                }
+                $("#addFileModal").modal("hide");
+                $("#inputFilemodal").modal("hide");
+            }
+        }
+    })
 
     $("#addFileModal").on("click", "#showHostFiles", async function (e) {
         var perms = $("#chooseEnv").find(":selected").attr("perms");

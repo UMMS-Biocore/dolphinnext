@@ -1,3 +1,7 @@
+16.12.2021 Version 1.2.72
+Uploaded single file could be used in the run page.
+Default initial run code could be overwritten by the "initialrun.nf" file in the base directory.
+
 14.12.2021 Version 1.2.71
 Merge selected files button added.
 Optional input feature upgraded to support AWS batch environment.
