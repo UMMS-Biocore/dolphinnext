@@ -590,13 +590,13 @@ class dbfuncs {
                 $file_type = $allfiles[0]->{'file_type'};
                 $collection_type = $allfiles[0]->{'collection_type'};
                 if ($collection_type == "single"){
-                    $inputName = "$inputsPath/$reg.$file_type";
+                    $inputName = "$inputsPath/$reg.$file_type*";
                 } else if ($collection_type == "pair"){
-                    $inputName = "$inputsPath/$reg.{R1,R2}.$file_type";
+                    $inputName = "$inputsPath/$reg.{R1,R2}.$file_type*";
                 } else if ($collection_type == "triple"){
-                    $inputName = "$inputsPath/$reg.{R1,R2,R3}.$file_type";
+                    $inputName = "$inputsPath/$reg.{R1,R2,R3}.$file_type*";
                 } else if ($collection_type == "quadruple"){
-                    $inputName = "$inputsPath/$reg.{R1,R2,R3,R4}.$file_type";
+                    $inputName = "$inputsPath/$reg.{R1,R2,R3,R4}.$file_type*";
                 }
             }
             //if profile variable not defined in the profile then use run_work directory (eg. ${params.DOWNDIR}) 
