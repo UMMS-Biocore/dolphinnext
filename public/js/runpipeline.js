@@ -832,7 +832,7 @@ function parseRegPartAutofill(regPart) {
     return [url, urlzip, checkPath];
 }
 
-//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings
+//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file
 //parse style categories: @multicolumn, @array, @condition
 function parseRegPart(regPart) {
     var type = null;
@@ -844,6 +844,8 @@ function parseRegPart(regPart) {
     var allOptCurly = null;
     var multiCol = null;
     var autoform = null;
+    var optional = null;
+    var file = null;
     var arr = null;
     var cond = null;
     if (regPart.match(/@/)) {
@@ -851,6 +853,8 @@ function parseRegPart(regPart) {
         for (var i = 0; i < regSplit.length; i++) {
             // find type among following list:checkbox|textbox|input|dropdown
             var typeCheck = regSplit[i].match(/^checkbox|^textbox|^input|^dropdown/i);
+            var optionalCheck = regSplit[i].match(/^optional/i);
+            var fileCheck = regSplit[i].match(/^file/i);
             // check if @autofill tag is defined //* @autofill:{var1="yes", "filling_text"}
             // for multiple options @autofill:{var1=("yes","no"), "filling_text"}
             // for dynamic filling @autofill:{var1=("yes","no"), _build+"filling_text"}
@@ -894,6 +898,13 @@ function parseRegPart(regPart) {
             if (typeCheck) {
                 type = typeCheck[0].toLowerCase();
             }
+            if (optionalCheck) {
+                optional = true;
+            }
+            if (fileCheck) {
+                file = true;
+            }
+
             // find description
             var descCheck = regSplit[i].match(
                 /^description:"(.*)"|^description:'(.*)'/i
@@ -987,6 +998,8 @@ function parseRegPart(regPart) {
         title,
         autoform,
         showsett,
+        optional,
+        file
     ];
 }
 
@@ -1615,7 +1628,7 @@ function checkConds(conds, type) {
         } else {
             var varName = co.match(/params\.(.*)/)[1]; //variable Name
             var defName = conds[co]; // expected Value
-            var checkVarName = $("#inputsTab").find(
+            var checkVarName = $("#inputsTab, .ui-dialog").find(
                 "td[given_name='" + varName + "']"
             )[0];
             if (checkVarName) {
@@ -1642,7 +1655,7 @@ function checkConds(conds, type) {
 function getInputVariables(button) {
     var rowID = button.closest("tr").attr("id"); //"inputTa-5"
     var gNumParam = rowID.split("Ta-")[1];
-    var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
+    var given_name = $("#input-PName-" + gNumParam).attr("name"); //input-PName-3
     var qualifier = $("#" + rowID + " > :nth-child(4)").text();
     var sType = "";
     if (qualifier === "file" || qualifier === "set") {
@@ -1679,6 +1692,8 @@ function hideProcessOptionsAsIcons() {
     var showSettingInputsAr = $("#inputsTable > tbody > tr[show_setting]");
     if (showSettingInputsAr.length > 0) {
         for (var i = 0; i < showSettingInputsAr.length; i++) {
+            var tooltip = "Edit";
+            var insertButton = false;
             var rowId = $(showSettingInputsAr[i]).attr("id");
             var givenName = $(showSettingInputsAr[i])
             .find("td[given_name]")
@@ -1689,6 +1704,7 @@ function hideProcessOptionsAsIcons() {
             var show_setting = $(showSettingInputsAr[i]).attr("show_setting");
             var show_settingArr = show_setting.split(",");
             var wrapperID = "wrapper-" + i;
+            var buttonId = "show_sett_" + wrapperID;
             $("#ProcessPanel").append('<div id="' + wrapperID + '"></div>');
             $("#" + wrapperID).append(
                 `<ul id="${wrapperID}-ul" class="nav nav-tabs"></ul><div class="tab-content"></div>`
@@ -1704,12 +1720,41 @@ function hideProcessOptionsAsIcons() {
                     '"]'
                 );
 
+                var paramsPrefix = "params.";
+                if (show_setting.substring(0, paramsPrefix.length) === paramsPrefix){
+                    var varName = show_setting.replace(paramsPrefix, "");
+                    var checkVarName = $("#inputsTab, .ui-dialog").find( "td[given_name='" + varName + "']").parent();
+                    if (checkVarName[0]){
+                        var checkOptional = checkVarName.attr("optional")
+                        var optionalText = ""
+                        if (checkOptional)  optionalText = ' (Optional)'
+                        var panelContent = `<table style="margin-bottom:10px; margin-left:10px;" class="table"><thead>
+<tr>
+<th style="display:none; width:30%;" scope="col">Given Name</th>
+<th style="display:none;" scope="col">Identifier</th>
+<th style="display:none;" scope="col">File Type</th>
+<th style="display:none;" scope="col">Qualifier</th>
+<th style="display:none;" scope="col">Process Name</th>
+<th style="width:70%; padding-bottom:4px;" scope="col">${varName}${optionalText}</th>
+</tr>
+</thead><tbody id="processInputs-${i}" style="word-break: break-all;"></tbody></table>`;
+                    }
+                    $(panelContent).prependTo("#" + wrapperID)
+                    checkVarName.appendTo(`#processInputs-${i}`)
+                    checkVarName.css("display","table-row")
+
+                    checkVarName.children(":first").css("display","none")
+                    if (!$("#" + buttonId).length){
+                        insertButton = true;
+                    }
+                }
                 for (var k = 0; k < show_settingProcessPanel.length; k++) {
                     var panel = $(show_settingProcessPanel[k]);
                     var panelContent = $(show_settingProcessPanel[k])
                     .children()
                     .children()
                     .eq(1);
+
                     var label = panel.attr("label");
                     var processname = panel.attr("processname");
                     var processorgname = panel.attr("processorgname");
@@ -1746,7 +1791,7 @@ function hideProcessOptionsAsIcons() {
                         .removeClass("collapse")
                         .appendTo(`#${wrapperID}-${modulename}`);
 
-                    var tooltip = "Edit: " + processname;
+                    tooltip = "Edit: " + processname;
                     if (
                         show_settingArr.length > 1 ||
                         show_settingProcessPanel.length > 1
@@ -1754,7 +1799,6 @@ function hideProcessOptionsAsIcons() {
                         tooltip = "Edit: " + label;
                     }
 
-                    var buttonId = "show_sett_" + wrapperID;
                     if (processorgname == show_setting || allname == show_setting) {
                         panel.css("display", "none");
                     }
@@ -1763,68 +1807,72 @@ function hideProcessOptionsAsIcons() {
                         !$("#" + buttonId).length &&
                         (processorgname == show_setting || allname == show_setting)
                     ) {
-                        //insert button
-                        var button =
-                            '<button style="display:none; margin-left:7px;" show_sett_but="' +
-                            wrapperID +
-                            '" type="button" class="btn btn-primary btn-sm"  id="' +
-                            buttonId +
-                            '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' +
-                            tooltip +
-                            '"><span><i class="fa fa-wrench"></i></span></a></button>';
-                        $(showSettingInputsAr[i]).find(".firstsec").append(button);
-                        var doCall = function (
-                        panel,
-                         givenName,
-                         dropdownID,
-                         buttonId,
-                         rowId,
-                         wrapperID
-                        ) {
-                            if (rowId) {
-                                showHideSett(rowId);
-                                $(function () {
-                                    $(document).on("change", "#" + dropdownID, function (event) {
-                                        showHideSett(rowId);
-                                    });
-                                });
-                            }
-                            //ui-dialog
-                            $("#" + wrapperID).dialog({
-                                title: `Process Settings`,
-                                resizable: false,
-                                draggable: true,
-                                autoOpen: false,
-                                closeOnEscape: true,
-                                position: ["middle", 100],
-                                width: "90%",
-                                modal: true,
-                                minHeight: 0,
-                                maxHeight: 650,
-                                buttons: {
-                                    Ok: function () {
-                                        $(this).dialog("close");
-                                    },
-                                },
-                                open: function (event, ui) {
-                                    $("body").css({ overflow: "hidden" });
-                                    $("html").css({ overflow: "hidden" });
-                                },
-                                beforeClose: function (event, ui) {
-                                    $("html").css({ overflow: "auto" });
-                                    $("body").css({ overflow: "auto" });
-                                },
-                            });
-
-                            $(function () {
-                                $(document).on("click", "#" + buttonId, function (event) {
-                                    $("#" + wrapperID).dialog("open");
-                                    return false;
-                                });
-                            });
-                        };
-                        doCall(panel, givenName, dropdownID, buttonId, rowId, wrapperID);
+                        insertButton = true;
                     }
+
+                }
+                if (insertButton){
+                    //insert button
+                    var button =
+                        '<button style="display:none; margin-left:7px;" show_sett_but="' +
+                        wrapperID +
+                        '" type="button" class="btn btn-primary btn-sm"  id="' +
+                        buttonId +
+                        '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' +
+                        tooltip +
+                        '"><span><i class="fa fa-wrench"></i></span></a></button>';
+                    $(showSettingInputsAr[i]).find(".firstsec").append(button);
+                    var doCall = function (
+                    panel,
+                     givenName,
+                     dropdownID,
+                     buttonId,
+                     rowId,
+                     wrapperID
+                    ) {
+                        if (rowId) {
+                            showHideSett(rowId);
+                            $(function () {
+                                $(document).on("change", "#" + dropdownID, function (event) {
+                                    showHideSett(rowId);
+                                });
+                            });
+                        }
+                        //ui-dialog
+                        $("#" + wrapperID).dialog({
+                            title: `Process Settings`,
+                            resizable: false,
+                            draggable: true,
+                            autoOpen: false,
+                            closeOnEscape: true,
+                            position: ["middle", 100],
+                            width: "90%",
+                            modal: true,
+                            minHeight: 0,
+                            maxHeight: 650,
+                            buttons: {
+                                Ok: function () {
+                                    $(this).dialog("close");
+                                },
+                            },
+                            open: function (event, ui) {
+                                $("body").css({ overflow: "hidden" });
+                                $("html").css({ overflow: "hidden" });
+                            },
+                            beforeClose: function (event, ui) {
+                                $("html").css({ overflow: "auto" });
+                                $("body").css({ overflow: "auto" });
+                            },
+                        });
+
+                        $(function () {
+                            $(document).on("click", "#" + buttonId, function (event) {
+                                $("#" + wrapperID).dialog("open");
+                                return false;
+                            });
+                        });
+                    };
+                    doCall(panel, givenName, dropdownID, buttonId, rowId, wrapperID);
                 }
             }
         }
@@ -1953,8 +2001,10 @@ function fillExecSettings(id, defName, type, inputName) {
 //execute after page loads to fill missing inputs
 //reason-1: new input added into pipeline without changing rev
 //reason-2: run copied into new revision
-function autofillEmptyInputs(autoFillJSON) {
-    $.each(autoFillJSON, function (el) {
+async function autofillEmptyInputs(autoFillJSON) {
+    var autoFillJSONKeys = Object.keys(autoFillJSON);
+    for (var n = 0; n < autoFillJSONKeys.length; n++) {
+        var el = autoFillJSONKeys[n];
         var conds = autoFillJSON[el].condition;
         var states = autoFillJSON[el].statement;
         var url = autoFillJSON[el].url;
@@ -1969,7 +2019,9 @@ function autofillEmptyInputs(autoFillJSON) {
             if (conds.$HOSTNAME) {
                 var statusCond = checkConds(conds);
                 if (statusCond === true) {
-                    $.each(states, async function (st) {
+                    var statesKeys = Object.keys(states);
+                    for (var k = 0; k < statesKeys.length; k++) {
+                        var st = statesKeys[k]
                         var defName = states[st]; // expected Value
                         var defUrl = url[st] || null; // expected Value
                         var defUrlzip = urlzip[st] || null; // expected Value
@@ -1977,7 +2029,7 @@ function autofillEmptyInputs(autoFillJSON) {
                         //if variable start with "params." then check #inputsTab
                         if (st.match(/params\.(.*)/)) {
                             var varName = st.match(/params\.(.*)/)[1]; //variable Name
-                            var checkVarName = $("#inputsTab").find(
+                            var checkVarName = $("#inputsTab, .ui-dialog").find(
                                 "td[given_name='" + varName + "']"
                             )[0];
                             if (checkVarName) {
@@ -1996,11 +2048,11 @@ function autofillEmptyInputs(autoFillJSON) {
                             }
                             autoCheck("fillstates");
                         }
-                    });
+                    }
                 }
             }
         }
-    });
+    }
 }
 
 function getDefaultImage(states) {
@@ -2029,7 +2081,7 @@ function fillStates(states, url, urlzip, checkPath) {
         //if variable start with "params." then check #inputsTab
         if (st.match(/params\.(.*)/)) {
             var varName = st.match(/params\.(.*)/)[1]; //variable Name
-            var checkVarName = $("#inputsTab").find(
+            var checkVarName = $("#inputsTab, .ui-dialog").find(
                 "td[given_name='" + varName + "']"
             )[0];
             if (checkVarName) {
@@ -2326,7 +2378,7 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
             // if filled systemInputs found then ask
             var systemInputFilled = false;
             for (var t = 0; t < systemInputs.length; t++) {
-                var checkVarName = $("#inputsTab").find(
+                var checkVarName = $("#inputsTab, .ui-dialog").find(
                     "td[given_name='" + systemInputs[t] + "']"
                 )[0];
                 if (checkVarName) {
@@ -2383,7 +2435,7 @@ function bindEveHandler(autoFillJSON) {
                     //if variable starts with "params." then check #inputsTab
                     if (el.match(/params\.(.*)/)) {
                         var varName = el.match(/params\.(.*)/)[1]; //variable Name
-                        var checkVarName = $("#inputsTab").find(
+                        var checkVarName = $("#inputsTab, .ui-dialog").find(
                             "td[given_name='" + varName + "']"
                         )[0];
                         if (checkVarName) {
@@ -2426,7 +2478,7 @@ function bindEveHandler(autoFillJSON) {
                                     //if variable starts with "params." then check #inputsTab
                                     if (el.match(/params\.(.*)/)) {
                                         var varName = el.match(/params\.(.*)/)[1]; //variable Name
-                                        var checkVarName = $("#inputsTab").find(
+                                        var checkVarName = $("#inputsTab, .ui-dialog").find(
                                             "td[given_name='" + varName + "']"
                                         )[0];
                                         if (checkVarName) {
@@ -2971,18 +3023,10 @@ function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier) {
 
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
-function insertInputRowParams(
-defaultVal,
- opt,
- pipeGnum,
- varName,
- type,
- desc,
- name,
- showsett
-) {
+function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett, optional, file ) {
     var dropDownQual = false;
     var paraQualifier = "val";
+    if (file) paraQualifier = "file";
     var paramGivenName = varName;
     var processName = "-";
     var paraIdentifier = "-";
@@ -3032,7 +3076,8 @@ defaultVal,
         paraQualifier,
         processName,
         selectFileButton,
-        show_setting
+        show_setting,
+        optional
     );
     // check if parameters added into table before, if not fill table
     insertInRow(inRow, paramGivenName, rowType, "paramsInputs", desc);
@@ -3086,6 +3131,8 @@ function parseProPipePanelScript(script) {
         var multiCol = null;
         var autoform = null;
         var showsett = null;
+        var optional = null;
+        var file = null;
         var arr = null;
         var cond = null;
         var title = null;
@@ -3099,7 +3146,7 @@ function parseProPipePanelScript(script) {
             [varName, defaultVal] = parseVarPart(varPart);
         }
         if (regPart) {
-            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett] =
+            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file] =
                 parseRegPart(regPart);
         }
         if (type && varName) {
@@ -3113,6 +3160,8 @@ function parseProPipePanelScript(script) {
                 title: title,
                 autoform: autoform,
                 showsett: showsett,
+                optional: optional,
+                file: file
             });
         }
         if (multiCol || arr || cond) {
@@ -3213,6 +3262,8 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                 var title = panelObj.schema[i].title;
                 var autoform = panelObj.schema[i].autoform;
                 var showsett = panelObj.schema[i].showsett;
+                var optional = panelObj.schema[i].optional;
+                var file = panelObj.schema[i].file;
                 if (type && varName) {
                     // if variable start with "params." then insert into inputs table
                     if (varName.match(/params\./)) {
@@ -3226,7 +3277,9 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                             type,
                             desc,
                             name,
-                            showsett
+                            showsett,
+                            optional,
+                            file
                         );
                     } else {
                         displayProDiv = true;
@@ -3388,9 +3441,16 @@ rowType,
  paraQualifier,
  processName,
  button,
- show_setting
+ show_setting,
+ optional
 ) {
     var trID = 'id="' + rowType + "Ta-" + firGnum + '"';
+    var optional_attr = "";
+    var optional_txt = "";
+    if (optional) {
+        optional_attr = ' optional="true" ';
+        optional_txt = ' (Optional)';
+    }
     var show_setting_attr = "";
     if (show_setting) {
         show_setting_attr = ' show_setting="' + show_setting + '" ';
@@ -3401,13 +3461,14 @@ rowType,
     return (
         "<tr " +
         trID +
+        optional_attr +
         show_setting_attr +
-        ' ><td id="' +
+        ' ><td name="'+paramGivenName+'" id="' +
         rowType +
         "-PName-" +
         firGnum +
         '" scope="row">' +
-        paramGivenName +
+        paramGivenName + optional_txt + 
         '</td><td style="display:none;">' +
         paraIdentifier +
         '</td><td style="display:none;">' +
@@ -4347,7 +4408,7 @@ function replaceNextVar(outName, inputName) {
                 var gNumInputParam = fNode.split("-")[4];
                 //get the given name from outputs table
                 if (gNumInputParam !== "") {
-                    var givenNameInParam = $("#input-PName-" + gNumInputParam).text();
+                    var givenNameInParam = $("#input-PName-" + gNumInputParam).attr("name");
                     var pattern = /(.*)\$\{(.*)\}(.*)/;
                     if (givenNameInParam !== "") {
                         outName = outName.replace(pattern, "$1" + givenNameInParam + "$3");
@@ -4399,7 +4460,7 @@ paraQualifier,
 
 //insert inRow to inputs table. insertType:{paramsInputs,mainInputs}
 function insertInRow(inRow, paramGivenName, rowType, insertType, desc) {
-    var checkTable = $("#inputsTable > tbody")
+    var checkTable = $("#inputsTable, .ui-dialog")
     .find("td[given_name]")
     .filter(function () {
         return $(this).attr("given_name") === paramGivenName;
@@ -4424,7 +4485,7 @@ function insertInRow(inRow, paramGivenName, rowType, insertType, desc) {
         }
     }
     if (desc) {
-        $("#inputsTable")
+        $("#inputsTable, .ui-dialog")
             .find("td[given_name=" + paramGivenName + "] > .secondsec > .indesc")
             .html(desc);
     }
@@ -4528,7 +4589,8 @@ rowType,
  secGnum,
  pObj,
  prefix,
- second
+ second,
+ optional
 ) {
     var paramGivenName = document
     .getElementById("text" + MainGNum + "-" + firGnum)
@@ -4634,7 +4696,8 @@ rowType,
                 paraQualifier,
                 processName,
                 selectFileButton,
-                show_setting
+                show_setting,
+                optional
             );
             insertInRow(inRow, paramGivenName, rowType, "mainInputs", desc);
             //get project_pipeline_inputs:
@@ -4645,6 +4708,7 @@ rowType,
             fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier);
             //outputsTable
         } else if (rowType === "output") {
+            optional = null;
             var outName = document
             .getElementById(prefix + second)
             .getAttribute("name");
@@ -4675,7 +4739,8 @@ rowType,
                     paraQualifier,
                     processName,
                     outNameEl,
-                    show_setting
+                    show_setting,
+                    optional
                 );
                 $("#" + rowType + "sTable > tbody:last-child").append(inRow);
             }
@@ -4739,6 +4804,7 @@ function createEdges(first, second, pObj) {
             );
             d3.selectAll("#" + prefix + first).attr("class", pObj.secClassName);
             //update the parameter of the inputparam based on selected second circle
+            var optional = $("#"+prefix + second).attr("optional") == "true"
             var firGnum = document.getElementById(prefix + first).id.split("-")[4]; //first g-number
             var firPI = document.getElementById(prefix + first).id.split("-")[3]; //first parameter id
             var secGnum = document.getElementById(prefix + second).id.split("-")[4]; //first g-number
@@ -4770,7 +4836,8 @@ function createEdges(first, second, pObj) {
                     secGnum,
                     pObj,
                     prefix,
-                    second
+                    second,
+                    optional
                 );
             }
         } else {
@@ -5217,6 +5284,7 @@ function addCandidates2DictForLoad(fir, pObj) {
 }
 
 function loadPipelineDetails(pipeline_id, pipeData) {
+
     window.pipeObj = {};
     var getPipelineD = [];
     getPipelineD.push({ name: "id", value: pipeline_id });
@@ -5228,6 +5296,7 @@ function loadPipelineDetails(pipeline_id, pipeData) {
         data: getPipelineD,
         async: true,
         success: async function (s) {
+
             window.pipeObj = s;
             window.ajaxData.pipelineData = [
                 window.pipeObj["main_pipeline_" + pipeline_id],
@@ -5273,9 +5342,10 @@ function loadPipelineDetails(pipeline_id, pipeData) {
                 autoFillJSON = await addProfileVar(autoFillJSON);
                 autoFillJSON = decodeGenericCond(autoFillJSON);
             }
+
             // first openPipeline() will create tables and forms
             // then loadProjectPipeline will load process options
-            var sequentialCmd = async function (pipeline_id, callback) {
+            var sequentialCmd = async function (pipeline_id, callback) {                
                 await openPipeline(pipeline_id);
                 await callback();
             };
@@ -5297,12 +5367,18 @@ async function cleanDepProPipeInputs() {
         p: "getProjectPipelineInputs",
         project_pipeline_id: project_pipeline_id,
     });
-    var numInputRows = $("#inputsTable > tbody").find("td[given_name]");
     var givenNameObj = {};
-    $.each(numInputRows, function (el) {
-        var inGName = $(numInputRows[el]).attr("given_name");
-        givenNameObj[inGName] = "";
+    var allInputNames = [];
+    $("#inputsTab, .ui-dialog")
+        .find("td[given_name]")
+        .filter(function () {
+        allInputNames.push($(this).attr("given_name"));
     });
+    for (var c = 0; c < allInputNames.length; c++) {
+        var inGName = allInputNames[c]
+        givenNameObj[inGName] = "";
+    }
+
     $.each(getProPipeInputs, async function (el) {
         var givenName = getProPipeInputs[el].given_name;
         //clean inputs whose given_name is not found in numInputRows
@@ -5395,7 +5471,7 @@ async function loadUserGroups(pipeData) {
 
 //fillingType:"default" or "dry"
 function fillProPipeInputsRev(projectPipeInputs_rev, fillingType) {
-    var numInputRows = $("#inputsTable > tbody").find("td[given_name]");
+    var numInputRows = $("tbody").find("td[given_name]");
     $.each(numInputRows, function (el) {
         var given_name = $(numInputRows[el]).attr("given_name");
         var in_row = $(numInputRows[el]).closest("tr");
@@ -5448,6 +5524,7 @@ async function loadRunSettings(pipeData) {
 }
 
 async function loadProjectPipeline(pipeData) {
+    $("#inputsTab").loading("start");
     await loadRunOptions("change");
     $("#creatorInfoPip").css("display", "block");
 
@@ -5507,9 +5584,11 @@ async function loadProjectPipeline(pipeData) {
     $("#systemInputs").trigger("click");
     //insert icon for process_options according to show_setting attribute
     hideProcessOptionsAsIcons();
+    $("#inputsTab").loading("stop");
+
     //autofillEmptyInputs
     if (autoFillJSON !== undefined && autoFillJSON !== null) {
-        autofillEmptyInputs(autoFillJSON);
+        await autofillEmptyInputs(autoFillJSON);
     }
     // clean depricated project pipeline inputs(propipeinputs) in case it is not found in the inputs table.
     await cleanDepProPipeInputs();
@@ -5968,8 +6047,8 @@ async function saveFileSetValModal(data, sType, inputID, collection) {
         var rowID = $("#mIdVal").attr("rowID"); //the id of table-row to be updated #inputTa-3
     }
     var gNumParam = rowID.split("Ta-")[1];
-    var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
-    var qualifier = $("#" + rowID + " > :nth-child(4)").text(); //input-PName-3
+    var given_name = $("#input-PName-" + gNumParam).attr("name"); //input-PName-3
+    var qualifier = $("#" + rowID + " > :nth-child(4)").text(); 
     var url = null,
         urlzip = null,
         checkPath = null;
@@ -5999,8 +6078,8 @@ async function editFileSetValModal(data, sType, inputID, collection) {
     }
     var proPipeInputID = $("#" + rowID).attr("propipeinputid");
     var gNumParam = rowID.split("Ta-")[1];
-    var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
-    var qualifier = $("#" + rowID + " > :nth-child(4)").text(); //input-PName-3
+    var given_name = $("#input-PName-" + gNumParam).attr("name"); //input-PName-3
+    var qualifier = $("#" + rowID + " > :nth-child(4)").text(); 
     var url = null,
         urlzip = null,
         checkPath = null;
@@ -6049,7 +6128,7 @@ async function checkMissingVar() {
     window["undefinedVarObj"] = {};
     var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
     if (projectpipelineOwn === "1") {
-        var systemInputAr = $("#inputsTable > tbody")
+        var systemInputAr = $("#inputsTab, .ui-dialog")
         .find("td[given_name]")
         .filter(function () {
             return systemInputs.indexOf($(this).attr("given_name")) > -1;
@@ -6099,17 +6178,19 @@ async function checkReadytoRun(type) {
     });
     var filledInputsCheck = false;
     var allInputNames = [];
-    $("#inputsTable > tbody")
+    $("#inputsTab, .ui-dialog")
         .find("td[given_name]")
         .filter(function () {
-        allInputNames.push($(this).attr("given_name"));
+        if (!$(this).parent().attr("optional")){
+            allInputNames.push($(this).attr("given_name"));
+        }
     });
+
     var existingInputNames = $.map(getProPipeInputs, function (n, i) {
         return n.given_name;
     });
-    allInputNames.sort();
-    existingInputNames.sort();
-    var filledInputsCheck = checkArraysEqual(allInputNames, existingInputNames);
+
+    var filledInputsCheck = $(allInputNames).not(existingInputNames).get().length < 1;
     var profileNext = $("#chooseEnv").find(":selected").val();
     var cloudStatus = $("#chooseEnv").find(":selected").attr("status");
     var output_dir = $runscope.getPubVal("work");
@@ -6742,7 +6823,7 @@ function getNewExecOpt(oldExecOpt, newPaths) {
 }
 function removeCollectionFromInputs(col_id) {
     //get all input paths
-    var inputPaths = $("#inputsTab > table > tbody >tr").find(
+    var inputPaths = $("#inputsTab, .ui-dialog").find(
         "span[id*='filePath']"
     );
     if (inputPaths && inputPaths != null) {
@@ -6775,7 +6856,7 @@ function getPathArray() {
     }
 
     //get all input paths
-    var inputPaths = $("#inputsTab > table > tbody >tr").find(
+    var inputPaths = $("#inputsTab, .ui-dialog").find(
         "span[id*='filePath']"
     );
     if (inputPaths && inputPaths != null) {
@@ -7314,7 +7395,7 @@ function addOutFileDb() {
         var outTableRow = $("#" + rowID + " >:last-child").find("span");
         var filePath = $(outTableRow[0]).text();
         //	          var gNumParam = rowID.split("Ta-")[1];
-        //	          var given_name = $("#input-PName-" + gNumParam).text(); //input-PName-3
+        //	          var given_name = $("#input-PName-" + gNumParam).attr("name"); //input-PName-3
         //	          var qualifier = $('#' + rowID + ' > :nth-child(4)').text(); //input-PName-3
         //	          data.push({ name: "id", value: "" });
         //	          data.push({ name: "name", value: filePath });
@@ -12411,7 +12492,7 @@ $(document).ready(async function () {
     //##################
 
     //click on "use default" button
-    $("#inputsTab").on("click", "#defValUse", async function (e) {
+    $(document).on("click", "#defValUse", async function (e) {
         var button = $(this);
         var rowID = "";
         var gNumParam = "";
@@ -13251,7 +13332,7 @@ $(document).ready(async function () {
         createFileTable(table_id, ajax);
     });
 
-    $("#inputsTab").on("click", "#inputDelDelete, #inputValDelete", async function (e) {
+    $(document).on("click", "#inputDelDelete, #inputValDelete", async function (e) {
         var clickedRow = $(this).closest("tr");
         var rowID = clickedRow[0].id; //#inputTa-3
         var gNumParam = rowID.split("Ta-")[1];

@@ -131,6 +131,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#description">&#64;description</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#tooltip">&#64;tooltip</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#title">&#64;title</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optional">&#64;optional</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#file">&#64;file</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#options">&#64;options</a></li>
 </ul>
 </li>
@@ -587,15 +589,30 @@ system(&quot;tophat2 -o . ${newPath} !{name}&quot;);
 </div>
 <div class="section" id="tooltip">
 <h3>&#64;tooltip<a class="headerlink" href="#tooltip" title="Permalink to this headline">¶</a></h3>
-<p>You can also create tooltip to add detailed explanation by using <code class="docutils literal notranslate"><span class="pre">&#64;tooltip</span></code> tag. See the example at below:</p>
+<p>You can also create tooltip to add detailed explanation by using <code class="docutils literal notranslate"><span class="pre">&#64;tooltip</span></code> tag. See the example below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@tooltip</span><span class="p">:</span><span class="s2">&quot;parameters for Tophat2 version 2.6&quot;</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="title">
 <h3>&#64;title<a class="headerlink" href="#title" title="Permalink to this headline">¶</a></h3>
-<p>You can also create header on top of the variable by using <code class="docutils literal notranslate"><span class="pre">&#64;title</span></code> tag. This way you can easily organize the complicated form structures. See the example at below:</p>
+<p>You can also create header on top of the variable by using <code class="docutils literal notranslate"><span class="pre">&#64;title</span></code> tag. This way you can easily organize the complicated form structures. See the example below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params_tophat</span> <span class="o">=</span> <span class="s2">&quot;-N 4&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@title</span><span class="p">:</span><span class="s2">&quot;Alignment Section&quot;</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;Tophat parameters&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="optional">
+<h3>&#64;optional<a class="headerlink" href="#optional" title="Permalink to this headline">¶</a></h3>
+<p>You can specify optional inputs with <code class="docutils literal notranslate"><span class="pre">&#64;optional</span></code> tag. This way users can leave optional inputs empty. See the example below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">tsv_input</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@optional</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;TSV input for process&quot;</span>
+<span class="n">params</span><span class="o">.</span><span class="n">csv_input</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@optional</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;CSV input for process&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="file">
+<h3>&#64;file<a class="headerlink" href="#file" title="Permalink to this headline">¶</a></h3>
+<p>You can specify what kind of window will show up for selected input. By default, a value modal is used. If the <code class="docutils literal notranslate"><span class="pre">&#64;file</span></code> tag is added, then the file modal will show up and allow users to upload files and use them as a parameter. See the example below:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">params</span><span class="o">.</span><span class="n">tsv_input</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">//*</span> <span class="nd">@input</span> <span class="nd">@file</span> <span class="nd">@description</span><span class="p">:</span><span class="s2">&quot;TSV file path for process&quot;</span>
 </pre></div>
 </div>
 </div>

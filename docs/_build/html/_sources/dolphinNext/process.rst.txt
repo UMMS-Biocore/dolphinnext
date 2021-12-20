@@ -322,16 +322,31 @@ You can describe inputs by using ``@description`` tag. Please check the examples
 @tooltip
 ********
 
-You can also create tooltip to add detailed explanation by using ``@tooltip`` tag. See the example at below::
+You can also create tooltip to add detailed explanation by using ``@tooltip`` tag. See the example below::
 
     params_tophat = "-N 4" //* @input @tooltip:"parameters for Tophat2 version 2.6" @description:"Tophat parameters"
 
 @title
 ******
 
-You can also create header on top of the variable by using ``@title`` tag. This way you can easily organize the complicated form structures. See the example at below::
+You can also create header on top of the variable by using ``@title`` tag. This way you can easily organize the complicated form structures. See the example below::
 
     params_tophat = "-N 4" //* @input @title:"Alignment Section" @description:"Tophat parameters"
+
+@optional
+*********
+
+You can specify optional inputs with ``@optional`` tag. This way users can leave optional inputs empty. See the example below::
+
+    params.tsv_input = "" //* @input @optional @description:"TSV input for process"
+    params.csv_input = "" //* @input @optional @description:"CSV input for process"
+    
+@file
+*****
+
+You can specify what kind of window will show up for selected input. By default, a value modal is used. If the ``@file`` tag is added, then the file modal will show up and allow users to upload files and use them as a parameter. See the example below::
+
+    params.tsv_input = "" //* @input @file @description:"TSV file path for process"
 
 @options
 ********

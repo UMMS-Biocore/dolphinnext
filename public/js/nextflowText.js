@@ -443,8 +443,8 @@ function createNextflowFile(nxf_runmode, uuid) {
     window["processVarObj"]={} // it will be appended to the nextflow.config file 
     var run_uuid = uuid || false; //default false
     nextText = "";
-    
-    
+
+
     createPiGnumList();
     if (nxf_runmode === "run") {
         var chooseEnv = $('#chooseEnv option:selected').val();
@@ -597,7 +597,7 @@ function addFormat2chnObj(chnObj, channelFormat, newChn){
 }
 
 // channelTypeDict
-function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, secParQual, secParName, secNodeName, sNodeProId, chnName){
+function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, secParQual, secParName, secNodeName, sNodeProId, chnName, optionalInputID){
     var channelFormat = "";
     var secPartTemp = "";
     var ret = "";
@@ -619,8 +619,11 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
             var channelNameAll = chnObj[channelFormat];
             var chanList = channelNameAll.split(";");
             for (var e = 0; e < chanList.length; e++) {
-                secPartTemp += chanList[e] + " = " + "file(params." + inputParamName + ", type: 'any') \n";
+                //g_18_genome_url_g_17 = params.inputparam && file(params.inputparam, type: 'any').exists() ? file(params.inputparam, type: 'any') : ch_empty_file_3
+                secPartTemp += chanList[e] + " = " + `params.${inputParamName} && file(params.${inputParamName}, type: 'any').exists() ? file(params.${inputParamName}, type: 'any') : ch_empty_file_${optionalInputID}\n`;
             }
+
+
         } else if (checkRegex === true) {
             channelFormat = "f2";
             chnObj = addFormat2chnObj(chnObj, channelFormat, chnName);
@@ -659,6 +662,21 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
     return chnObj
 }
 
+function getOptionalInputID(sNode, sNodeProId){
+    var id = 1;
+    var process = $(document.getElementById(sNode)).parent()
+    var processInputs = process.find(`circle[kind=input][optional=true]`);
+    var count = 0
+    for (var c = 0; c < processInputs.length; c++) {
+        var inId = $(processInputs[c]).attr("id")
+        var inIdSplit = inId.split("-");
+        var inIdParam = parametersData.filter(function (el) { return el.id == inIdSplit[3] })[0];
+        var inIdParamQual = inIdParam.qualifier;
+        if (inIdParamQual != 'val') count++
+        if (inId == sNode) id = count
+    }
+    return id 
+}
 
 //Input parameters and channels with file paths
 function InputParameters(inGNum, getProPipeInputs, allEdges) {
@@ -674,12 +692,14 @@ function InputParameters(inGNum, getProPipeInputs, allEdges) {
     var inputParamName = document.getElementById(userEntryId).getAttribute('name');
     var firstPart = 'if (!params.' + inputParamName + '){params.' + inputParamName + ' = ""} \n';
     var secPart = "";
+    var optionalInputID = "";
     //inputIdSplit[3] === "inPara" means node is not connected.
     if (proId === "inPro" && inputIdSplit[3] !== "inPara") {
         //group channels based on their formats
         var chnObj = {};
         for (var c = 0; c < allEdges.length; c++) {
             if (allEdges[c].indexOf(inId) !== -1) {
+
                 var fNode = "";
                 var sNode = "";
                 var secPartTemp = "";
@@ -691,9 +711,13 @@ function InputParameters(inGNum, getProPipeInputs, allEdges) {
                 var secParam = parametersData.filter(function (el) { return el.id == secNodeSplit[3] })[0];
                 var secParName = secParam.name;
                 var secParQual = secParam.qualifier;
+                var isSecNodeOptional = $(document.getElementById(sNode)).attr("optional") == "true";
+                if (isSecNodeOptional && secParQual != "val") {
+                    optionalInputID = getOptionalInputID(sNode, sNodeProId);
+                }
                 //g_3_reads_g_0
                 var chnName = gFormat(inGNum) + "_" + secParName + "_" + gFormat(document.getElementById(sNode).getAttribute("parentG"));
-                chnObj = getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, secParQual, secParName, secNodeName, sNodeProId, chnName);
+                chnObj = getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, secParQual, secParName, secNodeName, sNodeProId, chnName, optionalInputID);
             }
         }
         //combine chnObj text
@@ -914,7 +938,7 @@ function getOptionalInText(optionalInAr, optionalInQualAr, optionalInChannelName
             // optional input line for file(params.staticfile)
             // prevents Unknown method invocation `ifEmpty` on UnixPath type
             if (window.channelTypeDict[optionalInChannelNameAr[i]] && window.channelTypeDict[optionalInChannelNameAr[i]] == "f1"){
-                optText += optionalInAr[i] + "= " + optionalInAr[i] + ".exists() ? " + optionalInAr[i] + ` : ch_empty_file_${i+1} \n`;
+                //                optText += optionalInAr[i] + "= " + optionalInAr[i] + ".exists() ? " + optionalInAr[i] + ` : ch_empty_file_${i+1} \n`;
             } else {
                 optText += optionalInAr[i] + "= " + optionalInAr[i] + ".ifEmpty([\"\"]) \n";
             }
@@ -1083,7 +1107,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                     var genParName = filteredParamData.name;
                     var qualNode   = filteredParamData.qualifier;
                     var channelName = gFormat(document.getElementById(sNode).getAttribute("parentG")) + "_" + genParName + "_" + gFormat(document.getElementById(fNode).getAttribute("parentG"));
-                    
+
                 }
                 whenInLib = addChannelName(whenCond, whenInLib, file_type, channelName, param_name, qual)
                 if (inputOptional == "true") {

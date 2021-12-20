@@ -455,6 +455,9 @@ folder instead of downloading all of them to reduce the load. -->
                 100% { transform: rotate(360deg); }
             }
 
+            /*    Modal behind the ui-dialog fix */
+            .ui-dialog { z-index: 1000 !important ;}
+
             .disp_none {
                 display: none !important;
             }
