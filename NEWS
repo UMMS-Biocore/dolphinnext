@@ -1,3 +1,8 @@
+20.12.2021 Version 1.2.73
+@optional flag added to process input settings.
+Show_settings option now supports "params.inputs" and shows them in the process settings.
+Optional inputs are supported, no need to enter NA for optional inputs. 
+
 16.12.2021 Version 1.2.72
 Uploaded single file could be used in the run page.
 Default initial run code could be overwritten by the "initialrun.nf" file in the base directory.
