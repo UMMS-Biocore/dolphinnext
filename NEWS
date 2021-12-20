@@ -1,5 +1,6 @@
 20.12.2021 Version 1.2.73
-@optional flag added to process input settings.
+@optional tag added to process input settings.
+@file tag added to show file modal by using process settings.
 Show_settings option now supports "params.inputs" and shows them in the process settings.
 Optional inputs are supported, no need to enter NA for optional inputs. 
 

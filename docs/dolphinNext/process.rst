@@ -340,6 +340,13 @@ You can specify optional inputs with ``@optional`` tag. This way users can leave
 
     params.tsv_input = "" //* @input @optional @description:"TSV input for process"
     params.csv_input = "" //* @input @optional @description:"CSV input for process"
+    
+@file
+*****
+
+You can specify what kind of window will show up for selected input. By default, a value modal is used. If the ``@file`` tag is added, then the file modal will show up and allow users to upload files and use them as a parameter. See the example below::
+
+    params.tsv_input = "" //* @input @file @description:"TSV file path for process"
 
 @options
 ********

@@ -832,7 +832,7 @@ function parseRegPartAutofill(regPart) {
     return [url, urlzip, checkPath];
 }
 
-//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional
+//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file
 //parse style categories: @multicolumn, @array, @condition
 function parseRegPart(regPart) {
     var type = null;
@@ -845,6 +845,7 @@ function parseRegPart(regPart) {
     var multiCol = null;
     var autoform = null;
     var optional = null;
+    var file = null;
     var arr = null;
     var cond = null;
     if (regPart.match(/@/)) {
@@ -853,6 +854,7 @@ function parseRegPart(regPart) {
             // find type among following list:checkbox|textbox|input|dropdown
             var typeCheck = regSplit[i].match(/^checkbox|^textbox|^input|^dropdown/i);
             var optionalCheck = regSplit[i].match(/^optional/i);
+            var fileCheck = regSplit[i].match(/^file/i);
             // check if @autofill tag is defined //* @autofill:{var1="yes", "filling_text"}
             // for multiple options @autofill:{var1=("yes","no"), "filling_text"}
             // for dynamic filling @autofill:{var1=("yes","no"), _build+"filling_text"}
@@ -898,6 +900,9 @@ function parseRegPart(regPart) {
             }
             if (optionalCheck) {
                 optional = true;
+            }
+            if (fileCheck) {
+                file = true;
             }
 
             // find description
@@ -993,7 +998,8 @@ function parseRegPart(regPart) {
         title,
         autoform,
         showsett,
-        optional
+        optional,
+        file
     ];
 }
 
@@ -3017,9 +3023,10 @@ function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier) {
 
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
-function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett, optional ) {
+function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett, optional, file ) {
     var dropDownQual = false;
     var paraQualifier = "val";
+    if (file) paraQualifier = "file";
     var paramGivenName = varName;
     var processName = "-";
     var paraIdentifier = "-";
@@ -3125,6 +3132,7 @@ function parseProPipePanelScript(script) {
         var autoform = null;
         var showsett = null;
         var optional = null;
+        var file = null;
         var arr = null;
         var cond = null;
         var title = null;
@@ -3138,7 +3146,7 @@ function parseProPipePanelScript(script) {
             [varName, defaultVal] = parseVarPart(varPart);
         }
         if (regPart) {
-            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional] =
+            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file] =
                 parseRegPart(regPart);
         }
         if (type && varName) {
@@ -3152,7 +3160,8 @@ function parseProPipePanelScript(script) {
                 title: title,
                 autoform: autoform,
                 showsett: showsett,
-                optional: optional
+                optional: optional,
+                file: file
             });
         }
         if (multiCol || arr || cond) {
@@ -3254,6 +3263,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                 var autoform = panelObj.schema[i].autoform;
                 var showsett = panelObj.schema[i].showsett;
                 var optional = panelObj.schema[i].optional;
+                var file = panelObj.schema[i].file;
                 if (type && varName) {
                     // if variable start with "params." then insert into inputs table
                     if (varName.match(/params\./)) {
@@ -3268,7 +3278,8 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                             desc,
                             name,
                             showsett,
-                            optional
+                            optional,
+                            file
                         );
                     } else {
                         displayProDiv = true;
