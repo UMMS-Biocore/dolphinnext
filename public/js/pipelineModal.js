@@ -1159,7 +1159,6 @@ function refreshAllD3Processes(proID, pName){
         var allGnum = $(allprocesses[k]).attr("id");
         var eachGNum = allGnum.replace("bc-","")
         var proText = $("#text-"+eachGNum).attr("name")
-        console.log(proText)
         if (eachGNum.match(/-/)) { //for pipeline module windows
             var coorProRaw = d3.select("#g" + eachGNum)[0][0].attributes.transform.value;
         } else {
@@ -1172,14 +1171,13 @@ function refreshAllD3Processes(proID, pName){
         var scale = d3main.scale[0];
         var translateX = d3main.translate[0];
         var translateY = d3main.translate[1];
-        var lastGnum = gNum;
         var xCor = xProCoor * scale + 30 - r - ior + translateX;
         var yCor = yProCoor * scale + 10 - r - ior + translateY;
         remove('del-' + eachGNum);
-        addProcess(processDat, xCor, yCor);
-        recoverEdges(eachGNum, proID, lastGnum);
+        addProcess(processDat, xCor, yCor, eachGNum);
+        recoverEdges(eachGNum, proID, eachGNum);
         // rename process after insert
-        renameTextID = "text-"+lastGnum //text-22
+        renameTextID = "text-"+eachGNum //text-22
         renameText = proText
         $("#mRenName").val(proText)
         changeName()
@@ -1193,11 +1191,10 @@ function refreshD3Process(gNumInfo, proID, pName ){
     var scale = d3main.scale[0];
     var translateX = d3main.translate[0];
     var translateY = d3main.translate[1];
-    var lastGnum = gNum;
     var xCor = $('#selectProcess').attr("xCoor") * scale + 30 - r - ior + translateX;
     var yCor = $('#selectProcess').attr("yCoor") * scale + 10 - r - ior + translateY;
-    addProcess(processDat, xCor, yCor);
-    recoverEdges(gNumInfo, proID, lastGnum);
+    addProcess(processDat, xCor, yCor, gNumInfo);
+    recoverEdges(gNumInfo, proID, gNumInfo);
 }
 
 function checkProParaUpdate(inputsBefore, outputsBefore, proID, pName) {
