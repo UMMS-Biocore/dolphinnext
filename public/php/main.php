@@ -74,7 +74,7 @@ folder instead of downloading all of them to reduce the load. -->
         <!--    jquery loading-->
         <link href="dist/jquery_loading/jquery.loading.min.css" rel="stylesheet" />
         <!--    jquery-ui-bootstrap-->
-        <link href="bower_components/jquery-ui-bootstrap/css/custom-theme/jquery-ui-1.10.0.custom.css" rel="stylesheet" />
+        <link href="bower_components/jquery-ui-1.13.0.custom/jquery-ui.min.css" rel="stylesheet" />
         <!--    bootstrap-multiselect-->
         <link href="bower_components/bootstrap-multiselect/dist/css/bootstrap-multiselect.css" rel="stylesheet" />
         <!-- dropzone -->
@@ -454,10 +454,12 @@ folder instead of downloading all of them to reduce the load. -->
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
             }
-
-            /*    Modal behind the ui-dialog fix */
+            
             .ui-dialog { z-index: 1000 !important ;}
-
+            .ui-widget { 
+                font-size:95% !important; 
+                font-family:'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            }
             .disp_none {
                 display: none !important;
             }
@@ -488,6 +490,8 @@ folder instead of downloading all of them to reduce the load. -->
                 text-decoration: underline;
                 cursor: pointer;
             }
+            
+            
 
         </style>
 
@@ -1023,10 +1027,10 @@ immediately after the control sidebar -->
 <script src="https://apis.google.com/js/platform.js" async defer></script>
 <!-- jQuery 3 -->
 <script src="bower_components/jquery/dist/jquery.min-3.6.0.js"></script>
-<!-- jquery-ui-1.9.2.custom.min-->
-<script src="bower_components/jquery-ui-bootstrap/assets/js/jquery-ui-1.10.0.custom.min.js"></script>
 <!-- Bootstrap 3.3.7 -->
 <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<!-- jquery-ui-1.13.0.custom.min-->
+<script src="bower_components/jquery-ui-1.13.0.custom/jquery-ui.js"></script>
 <!-- jquery-migrate-3.0.0-->
 <script src="bower_components/jquery-ui-bootstrap/js/jquery-migrate-3.0.0.js"></script>
 <!-- bootstrap-multiselect-->

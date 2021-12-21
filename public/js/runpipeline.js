@@ -1689,6 +1689,12 @@ showHideSett = function (rowId) {
 };
 
 function hideProcessOptionsAsIcons() {
+    // allows click events when new modal opens after ui dialog
+    $.widget( "ui.dialog", $.ui.dialog, {
+        _allowInteraction: function (event) {
+            return !!true || this._super(event);
+        }
+    });
     var showSettingInputsAr = $("#inputsTable > tbody > tr[show_setting]");
     if (showSettingInputsAr.length > 0) {
         for (var i = 0; i < showSettingInputsAr.length; i++) {
@@ -1839,13 +1845,13 @@ function hideProcessOptionsAsIcons() {
                             });
                         }
                         //ui-dialog
+
                         $("#" + wrapperID).dialog({
                             title: `Process Settings`,
                             resizable: false,
                             draggable: true,
                             autoOpen: false,
                             closeOnEscape: true,
-                            position: ["middle", 100],
                             width: "90%",
                             modal: true,
                             minHeight: 0,
@@ -1856,6 +1862,9 @@ function hideProcessOptionsAsIcons() {
                                 },
                             },
                             open: function (event, ui) {
+                                $(event.target).dialog('widget')
+                                    .css({ position: 'fixed' })
+                                    .position({ my: 'center', at: 'center', of: window });
                                 $("body").css({ overflow: "hidden" });
                                 $("html").css({ overflow: "hidden" });
                             },
