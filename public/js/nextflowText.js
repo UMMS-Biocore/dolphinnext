@@ -524,8 +524,10 @@ function createNextflowFile(nxf_runmode, uuid) {
         }
 
     };
-    nextText += '// Stage empty file to be used as an optional input where required\n';
     var maxOptionalInputNum = getValues({p:"getMaxOptionalInputNum", "pipeline_id":pipeline_id})
+    if (maxOptionalInputNum >0){
+        nextText += '// Stage empty file to be used as an optional input where required\n';
+    }
     for (var k = 1; k < maxOptionalInputNum+1; k++) {
         nextText += `ch_empty_file_${k} = file("$baseDir/.emptyfiles/NO_FILE_${k}", hidden:true)\n`;
     }
@@ -605,12 +607,16 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
     var checkRegex = false;
     if (getProPipeInputs) {
         var inputName = getProPipeInputs.filter(function (el) {
-            return el.g_num == inGID
+            return el.given_name == inputParamName
         })[0]
         if (inputName) {
             checkRegex = /(\{|\*|\?|\})/.test(inputName.name);
+            if (inputName.collection_name) checkRegex = true;
         }
     }
+    console.log("inputParamName", inputParamName)
+    console.log("inputName", inputName)
+    console.log("checkRegex", checkRegex)
 
     if (secParQual === "file") {
         if (checkRegex === false) {
