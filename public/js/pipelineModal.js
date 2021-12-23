@@ -1186,6 +1186,7 @@ function refreshAllD3Processes(proID, pName){
 
 function refreshD3Process(gNumInfo, proID, pName ){
     var processDat = pName + '@' + proID;
+    var proText = $("#text-"+gNumInfo).attr("name")
     remove('del-' + gNumInfo);
     var d3main = d3.transform(d3.select('#' + "mainG").attr("transform"));
     var scale = d3main.scale[0];
@@ -1195,6 +1196,10 @@ function refreshD3Process(gNumInfo, proID, pName ){
     var yCor = $('#selectProcess').attr("yCoor") * scale + 10 - r - ior + translateY;
     addProcess(processDat, xCor, yCor, gNumInfo);
     recoverEdges(gNumInfo, proID, gNumInfo);
+    renameTextID = "text-"+gNumInfo //text-22
+    renameText = proText
+    $("#mRenName").val(proText)
+    changeName()
 }
 
 function checkProParaUpdate(inputsBefore, outputsBefore, proID, pName) {
@@ -2028,21 +2033,20 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         var xPos = $('#selectPipeline').attr("xCoor")
         var yPos = $('#selectPipeline').attr("yCoor")
         piID = lastPipeID;
-        var newMainGnum = "pObj" + gNum;
+        var newMainGnum = "pObj" + gNumInfo;
         window[newMainGnum] = {};
         window[newMainGnum].piID = piID;
-        window[newMainGnum].MainGNum = gNum;
-        window[newMainGnum].lastGnum = gNum;
+        window[newMainGnum].MainGNum = gNumInfo;
+        window[newMainGnum].lastGnum = gNumInfo;
         var newPipeObj = getValues({ p: "exportPipeline", id: piID });
         $.extend(window.pipeObj, newPipeObj);
         window[newMainGnum].sData = [window.pipeObj["main_pipeline_" + piID]]
         window[newMainGnum].lastPipeName = pName;
-        var lastGNum = gNum;
         // create new SVG workplace inside panel, if not added before
         openSubPipeline(piID, window[newMainGnum]);
         // add pipeline circle to main workplace
         addPipeline(piID, xPos, yPos, pName, window, window[newMainGnum]);
-        recoverEdges(gNumInfo, "", lastGNum);
+        recoverEdges(gNumInfo, "", gNumInfo);
         autosave();
     }
     $('#selectPipelineModal').modal('hide');

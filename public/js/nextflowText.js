@@ -614,10 +614,6 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
             if (inputName.collection_name) checkRegex = true;
         }
     }
-    console.log("inputParamName", inputParamName)
-    console.log("inputName", inputName)
-    console.log("checkRegex", checkRegex)
-
     if (secParQual === "file") {
         if (checkRegex === false) {
             channelFormat = "f1";
@@ -773,20 +769,20 @@ function getPublishDirRegex(outputName) {
         for (var i = 0; i < groups.length; i++) {
             groupsArr.push(groups[i].match(/file\((.*)\)/i)[1])
         }
-        var outputName = "(" + groupsArr.join("|") + ")";
+        var outputName = "{" + groupsArr.join(",") + "}";
 
     } else if (outputName.match(/file\((.*)\)/)) {
         var outputName = outputName.match(/file\((.*)\)/i)[1];
     }
     //if name contains path and separated by '/' then replace with escape character '\/'
-    outputName = outputName.replace(/\//g, '\\\/')
+//    outputName = outputName.replace(/\//g, '\\\/')
     //if name contains regular expression with curly brackets: {a,b,c} then turn into (a|b|c) format
-    var outputName = fixCurlyBrackets(outputName);
-    outputName = outputName.replace(/\*/g, '.*')
-    outputName = outputName.replace(/\?/g, '.?')
+//    var outputName = fixCurlyBrackets(outputName);
+//    outputName = outputName.replace(/\*/g, '.*')
+//    outputName = outputName.replace(/\?/g, '.?')
     outputName = outputName.replace(/\'/g, '')
     outputName = outputName.replace(/\"/g, '')
-    outputName = outputName + "$";
+//    outputName = outputName + "$";
     return outputName;
 }
 
@@ -821,6 +817,10 @@ function getPublishDirWithOutputPattern(outputPattern, currgid, mainPipeEdges){
     }
     return "";
 }
+
+
+// publishDir "$params.outdir/$sampleId/counts", pattern: "*_counts.txt"
+// publishDir "$params.outdir/$sampleId/outlooks", pattern: '*_outlook.txt'
 
 //overwrite: true, removed-> it was opening lot of threads on resumed runs.
 //publishDir params.outdir, overwrite: true, mode: 'copy',
