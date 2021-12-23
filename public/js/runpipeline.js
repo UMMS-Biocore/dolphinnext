@@ -8492,6 +8492,8 @@ async function viewDirButSearch(dir) {
                     errorAr = fileArr.filter((line) => line.match(/ls:/));
                     fileArr = fileArr.filter((line) => !line.match(/:/));
                 }
+                // remove space containing lines
+                fileArr = fileArr.filter((l) => l.indexOf(' ') < 0);
                 console.log(fileArr);
                 console.log(errorAr);
                 if (fileArr.length > 0) {
