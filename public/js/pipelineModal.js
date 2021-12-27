@@ -2045,7 +2045,7 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         // create new SVG workplace inside panel, if not added before
         openSubPipeline(piID, window[newMainGnum]);
         // add pipeline circle to main workplace
-        addPipeline(piID, xPos, yPos, pName, window, window[newMainGnum]);
+        addPipeline(piID, xPos, yPos, pName, window, window[newMainGnum], gNumInfo);
         recoverEdges(gNumInfo, "", gNumInfo);
         autosave();
     }
