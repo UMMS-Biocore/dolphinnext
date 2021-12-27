@@ -249,8 +249,6 @@ class Run
         $dbfuncs = new dbfuncs();
         $process_opt=isset($info["process_opt"]) ? addslashes(htmlspecialchars(urldecode($info["process_opt"]), ENT_QUOTES)) : "";
         
-error_log(print_r($process_opt, TRUE));
-            
         $run_name= $doc["name"]; // test_run
         $tmplt_run_id= $doc["tmplt_id"]; //template run id e.g. 140
         $run_env= !empty($doc["run_env"]) ? $doc["run_env"] : ""; //run_env e.g. cluster-5

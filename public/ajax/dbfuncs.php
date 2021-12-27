@@ -380,7 +380,7 @@ class dbfuncs {
                 $connect = $cluDataArr[0]["ssh"];
             }
         }
-        $cluDataArr[0]["bash_variable"]= trim($this->amazonDecode($cluDataArr[0]["bash_variable"]));
+        $cluDataArr[0]["bash_variable"]= isset($cluDataArr[0]["bash_variable"]) ? trim($this->amazonDecode($cluDataArr[0]["bash_variable"])) : "";
         $ssh_port = !empty($cluDataArr[0]["port"]) ? " -p ".$cluDataArr[0]["port"] : "";
         $scp_port = !empty($cluDataArr[0]["port"]) ? " -P ".$cluDataArr[0]["port"] : "";
         return array($connect, $ssh_port, $scp_port, $cluDataArr);
@@ -4984,9 +4984,9 @@ class dbfuncs {
             }
         } else {
             list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
-            $ssh_id = $cluDataArr[0]["ssh_id"];
-            $perms = $cluDataArr[0]["perms"];
-            $auto_workdir = $cluDataArr[0]["auto_workdir"];
+            $ssh_id = isset($cluDataArr[0]["ssh_id"]) ? $cluDataArr[0]["ssh_id"] : ""; 
+            $perms = isset($cluDataArr[0]["perms"]) ? $cluDataArr[0]["perms"] : ""; 
+            $auto_workdir = !empty($cluDataArr[0]["auto_workdir"]) ? $cluDataArr[0]["auto_workdir"] : "";
             if (!empty($perms)){
                 if ($perms == "15"){
                     if (empty($auto_workdir)){

@@ -814,7 +814,10 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
 
 }
 
-function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
+function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
+    var useGnum = pObjOrigin.gNum;
+    if (oldGnum) useGnum = oldGnum;
+
     var id = piID
     var prefix = "p";
     var MainGNum = "";
@@ -826,13 +829,13 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
 
     //gnum uniqe, id same id (Written in class) in same type process
     pObjOrigin.g = d3.select("#mainG" + MainGNum).append("g")
-        .attr("id", "g" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr("id", "g" + MainGNum + "-" + useGnum)
         .attr("class", "g-p" + id) //for pipeline modules
         .attr("transform", "translate(" + x + "," + y + ")")
         .on("mouseover", mouseOverG)
         .on("mouseout", mouseOutG)
     //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
-    pObjOrigin.g.append("circle").attr("id", "bc" + MainGNum + "-" + pObjOrigin.gNum)
+    pObjOrigin.g.append("circle").attr("id", "bc" + MainGNum + "-" + useGnum)
         .attr("class", "bc" + MainGNum + "-" + id)
         .attr("type", "bc")
         .attr("cx", cx)
@@ -849,7 +852,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
             cx: 0,
             cy: 0
         }])
-        .attr("id", "sc-" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr("id", "sc-" + MainGNum + "-" + useGnum)
         .attr("class", "sc" + MainGNum + "-" + id)
         .attr("type", "sc")
         .attr("r", rP - ior)
@@ -859,7 +862,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .on("mouseout", scMouseOut)
         .call(drag)
     //gnum(written in id): uniqe,
-    pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + pObjOrigin.gNum)
+    pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + useGnum)
         .datum([{
             cx: 0,
             cy: 0
@@ -874,7 +877,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .on("mouseout", scMouseOut)
         .call(drag)
     if (pObjOrigin == window) {
-        pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + pObjOrigin.gNum)
+        pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + useGnum)
             .datum([{
                 cx: 0,
                 cy: 0
@@ -888,7 +891,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
 
         //gnum(written in id): uniqe,
         pObjOrigin.g.append("text")
-            .attr("id", "del" + MainGNum + "-" + pObjOrigin.gNum)
+            .attr("id", "del" + MainGNum + "-" + useGnum)
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '1em')
             .attr("x", -6)
@@ -898,7 +901,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
             .on("mousedown", removeElement)
     }
     pObjOrigin.g.append("text")
-        .attr("id", "info" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr("id", "info" + MainGNum + "-" + useGnum)
         .attr("class", "info" + MainGNum + "-" + id)
         .attr('font-family', "FontAwesome, sans-serif")
         .attr('font-size', '1em')
@@ -908,7 +911,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .style("opacity", 0.2)
         .on("mousedown", getInfoPipe)
     pObjOrigin.g.append("text")
-        .attr("id", "link" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr("id", "link" + MainGNum + "-" + useGnum)
         .attr('font-family', "FontAwesome, sans-serif")
         .attr('font-size', '1em')
         .attr('type', 'Show Module')
@@ -972,13 +975,13 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
                             var parId = pObjSub.inNodes[k][0].split("-")[3];
                             var ccNodeId = "p" + pObjSub.MainGNum + pObjSub.inNodes[k][0];
                             var ccNode = $("#" + ccNodeId);
-                            ccIDList[prefix + "i-" + proId + "-" + c + "-" + parId + "-" + pObjOrigin.gNum] = ccNodeId;
-                            d3.select("#g" + MainGNum + "-" + pObjOrigin.gNum).append("circle")
-                                .attr("id", prefix + "i-" + proId + "-" + c + "-" + parId + "-" + pObjOrigin.gNum)
+                            ccIDList[prefix + "i-" + proId + "-" + c + "-" + parId + "-" + useGnum] = ccNodeId;
+                            d3.select("#g" + MainGNum + "-" + useGnum).append("circle")
+                                .attr("id", prefix + "i-" + proId + "-" + c + "-" + parId + "-" + useGnum)
                                 .attr("ccID", ccNodeId) //copyID for pipeline modules
                                 .attr("type", "I/O")
                                 .attr("kind", "input")
-                                .attr("parentG", "g" + MainGNum + "-" + pObjOrigin.gNum)
+                                .attr("parentG", "g" + MainGNum + "-" + useGnum)
                                 .attr("name", ccNode.attr('name'))
                                 .attr("status", "standard")
                                 .attr("connect", "single")
@@ -999,15 +1002,15 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
                                 pObjSub.ccIDAr[i] = "p" + pObjSub.MainGNum + pObjSub.inNodes[k][i];
                                 var proId = pObjSub.inNodes[k][i].split("-")[1];
                                 var parId = pObjSub.inNodes[k][i].split("-")[3];
-                                ccIDList[prefix + "i-" + proId + "-" + c + "-" + parId + "-" + pObjOrigin.gNum] = "p" + pObjSub.MainGNum + pObjSub.inNodes[k][i];
+                                ccIDList[prefix + "i-" + proId + "-" + c + "-" + parId + "-" + useGnum] = "p" + pObjSub.MainGNum + pObjSub.inNodes[k][i];
                             }
                             var ccNode = $("#" + pObjSub.ccIDAr[0])
-                            d3.select("#g" + MainGNum + "-" + pObjOrigin.gNum).append("circle")
-                                .attr("id", prefix + "i-" + proId + "-" + c + "-" + parId + "-" + pObjOrigin.gNum)
+                            d3.select("#g" + MainGNum + "-" + useGnum).append("circle")
+                                .attr("id", prefix + "i-" + proId + "-" + c + "-" + parId + "-" + useGnum)
                                 .attr("ccID", pObjSub.ccIDAr) //copyID for pipeline modules
                                 .attr("type", "I/O")
                                 .attr("kind", "input")
-                                .attr("parentG", "g" + MainGNum + "-" + pObjOrigin.gNum)
+                                .attr("parentG", "g" + MainGNum + "-" + useGnum)
                                 .attr("name", ccNode.attr('name'))
                                 .attr("status", "standard")
                                 .attr("connect", "single")
@@ -1029,9 +1032,9 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
                         var parId = pObjSub.outNodes[k].split("-")[3];
                         var ccNodeID = "p" + pObjSub.MainGNum + pObjSub.outNodes[k];
                         var ccNode = $("#" + ccNodeID)
-                        ccIDList[prefix + "o-" + proId + "-" + k + "-" + parId + "-" + pObjOrigin.gNum] = ccNodeID;
-                        d3.select("#g" + MainGNum + "-" + pObjOrigin.gNum).append("circle")
-                            .attr("id", prefix + "o-" + proId + "-" + k + "-" + parId + "-" + pObjOrigin.gNum)
+                        ccIDList[prefix + "o-" + proId + "-" + k + "-" + parId + "-" + useGnum] = ccNodeID;
+                        d3.select("#g" + MainGNum + "-" + useGnum).append("circle")
+                            .attr("id", prefix + "o-" + proId + "-" + k + "-" + parId + "-" + useGnum)
                             .attr("ccID", ccNodeID) //copyID for pipeline modules
                             .attr("type", "I/O")
                             .attr("kind", "output")
@@ -1053,10 +1056,10 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
             }
         }
     }
-    pObjOrigin.processList[("g" + MainGNum + "-" + pObjOrigin.gNum)] = name
-    pObjOrigin.processListNoOutput[("g" + MainGNum + "-" + pObjOrigin.gNum)] = name
-    pObjOrigin.gNum = pObjOrigin.gNum + 1
 
+    pObjOrigin.processList[("g" + MainGNum + "-" + useGnum)] = name
+    pObjOrigin.processListNoOutput[("g" + MainGNum + "-" + useGnum)] = name
+    if (!oldGnum) pObjOrigin.gNum = pObjOrigin.gNum + 1
 }
 
 function findType(id) {
@@ -2213,6 +2216,14 @@ function createSaveNodes() {
             }
         }
     }
+    // sort saveNodes
+    saveNodes = Object.keys(saveNodes).sort().reduce(
+        (obj, key) => { 
+            obj[key] = saveNodes[key]; 
+            return obj;
+        }, 
+        {}
+    );
 }
 
 
@@ -2305,7 +2316,7 @@ function save(type) {
     },{
         "publish_dmeta_dir": encodeURIComponent(JSON.stringify(pubDmetaDirListDb))
     }];
-    
+
     //A. Add new pipeline
     if (sName && id === "" && !pipeGroupWarn) {
         var maxPipeline_gid = getValues({ p: "getMaxPipeline_gid" })[0].pipeline_gid;
@@ -2494,7 +2505,6 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         pObj.x = pObj.t.translate[0]
     pObj.y = pObj.t.translate[1]
     pObj.z = pObj.t.scale[0]
-
     pObj.gNum = parseInt(gN)
     var name = sDataName
     var id = sDatapId
