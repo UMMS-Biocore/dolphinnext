@@ -611,9 +611,12 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
         })[0]
         if (inputName) {
             checkRegex = /(\{|\*|\?|\})/.test(inputName.name);
-            if (inputName.collection_id) checkRegex = true;
+            if (inputName.collection_name) checkRegex = true;
         }
     }
+    console.log("inputParamName", inputParamName)
+    console.log("inputName", inputName)
+    console.log("checkRegex", checkRegex)
 
     if (secParQual === "file") {
         if (checkRegex === false) {
