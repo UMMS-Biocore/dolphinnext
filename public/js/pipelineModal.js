@@ -854,11 +854,6 @@ function loadSelectedProcess(selProcessId) {
             $('#mOutOpt-' + numForm).val(outputs[i].operator);
             $('#mOutOptBut-' + numForm).trigger('click');
         }
-        if (outputs[i].reg_ex !== '' && outputs[i].reg_ex !== null) {
-            var reg_exText = decodeHtml(outputs[i].reg_ex);
-            $('#mOutReg-' + numForm).val(reg_exText);
-            $('#mOutRegBut-' + numForm).trigger('click');
-        }
         if (outputs[i].optional) {
             if (outputs[i].optional == 'true') {
                 $('#mOutOptional-' + numForm).trigger('click');
@@ -998,14 +993,6 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
                 }
             }
         } else if (matchFPart === 'mOutputs' && matchVal !== '') {
-            //first check if regEx are visible
-            if ($("#mOutReg-" + matchSPart).css('visibility') === 'visible') {
-                for (var n = startPoint; n < data.length; n++) {
-                    if (data[n].name === 'mOutReg-' + matchSPart) {
-                        dataToProcessParam.push({ name: "reg_ex", value: encodeURIComponent(data[n].value) });
-                    }
-                }
-            }
             //first check if closures are visible
             if ($("#mOutClosure-" + matchSPart).css('visibility') === 'visible') {
                 for (var n = startPoint; n < data.length; n++) {
@@ -1098,14 +1085,6 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
                 }
             }
         } else if (matchFPart === 'mOutputs' && matchVal !== '') {
-            //first check if regEx are visible
-            if ($("#mOutReg-" + matchSPart).css('visibility') === 'visible') {
-                for (var n = startPoint; n < data.length; n++) {
-                    if (data[n].name === 'mOutReg-' + matchSPart) {
-                        dataToProcessParam.push({ name: "reg_ex", value: encodeURIComponent(data[n].value) });
-                    }
-                }
-            }
             //first check if closures are visible
             if ($("#mOutClosure-" + matchSPart).css('visibility') === 'visible') {
                 for (var n = startPoint; n < data.length; n++) {
@@ -1541,9 +1520,6 @@ function disableProModal(selProcessId) {
         $('#mOutOptional-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptdel-' + numFormOut).remove();
-        $('#mOutReg-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutRegBut-' + numFormOut).css("pointer-events", "none");
-        $('#mOutRegdel-' + numFormOut).remove();
     }
     var delNumOut = numFormOut + 1;
     $('#mOutputs-' + delNumOut + '-selectized').parent().parent().remove();
@@ -1601,9 +1577,6 @@ function disableProModalPublic(selProcessId) {
         $('#mOutOpt-' + numFormOut).attr('disabled', "disabled");
         $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptdel-' + numFormOut).remove();
-        $('#mOutReg-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutRegBut-' + numFormOut).css("pointer-events", "none");
-        $('#mOutRegdel-' + numFormOut).remove();
     }
     var delNumOut = numFormOut + 1;
     $('#mOutputs-' + delNumOut + '-selectized').parent().parent().remove();

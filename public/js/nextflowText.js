@@ -769,20 +769,20 @@ function getPublishDirRegex(outputName) {
         for (var i = 0; i < groups.length; i++) {
             groupsArr.push(groups[i].match(/file\((.*)\)/i)[1])
         }
-        var outputName = "{" + groupsArr.join(",") + "}";
+        var outputName = "(" + groupsArr.join("|") + ")";
 
     } else if (outputName.match(/file\((.*)\)/)) {
         var outputName = outputName.match(/file\((.*)\)/i)[1];
     }
     //if name contains path and separated by '/' then replace with escape character '\/'
-//    outputName = outputName.replace(/\//g, '\\\/')
+    outputName = outputName.replace(/\//g, '\\\/')
     //if name contains regular expression with curly brackets: {a,b,c} then turn into (a|b|c) format
-//    var outputName = fixCurlyBrackets(outputName);
-//    outputName = outputName.replace(/\*/g, '.*')
-//    outputName = outputName.replace(/\?/g, '.?')
+    var outputName = fixCurlyBrackets(outputName);
+    outputName = outputName.replace(/\*/g, '.*')
+    outputName = outputName.replace(/\?/g, '.?')
     outputName = outputName.replace(/\'/g, '')
     outputName = outputName.replace(/\"/g, '')
-//    outputName = outputName + "$";
+    outputName = outputName + "$";
     return outputName;
 }
 
@@ -818,21 +818,16 @@ function getPublishDirWithOutputPattern(outputPattern, currgid, mainPipeEdges){
     return "";
 }
 
-
-// publishDir "$params.outdir/$sampleId/counts", pattern: "*_counts.txt"
-// publishDir "$params.outdir/$sampleId/outlooks", pattern: '*_outlook.txt'
-
 //overwrite: true, removed-> it was opening lot of threads on resumed runs.
-//publishDir params.outdir, overwrite: true, mode: 'copy',
+//publishDir params.outdir, mode: 'copy',
 //	saveAs: {filename ->
 //	if (filename =~ /${basedir}\/${newDirName}\/$/) "star_build_index/$filename"
 //}
 function publishDir(id, currgid, mainPipeEdges) {
-    oText = ""
-    var closePar = false
-    var oList = d3.select("#" + currgid).selectAll("circle[kind ='output']")[0]
+    var oText = "";
+    var oList = d3.select("#" + currgid).selectAll("circle[kind ='output']")[0];
     for (var i = 0; i < oList.length; i++) {
-        oId = oList[i].id
+        var oId = oList[i].id
         for (var e = 0; e < mainPipeEdges.length; e++) {
             if (mainPipeEdges[e].indexOf(oId) > -1) {
                 var fNode = "";
@@ -843,67 +838,38 @@ function publishDir(id, currgid, mainPipeEdges) {
                 var sNode_qual = sNode_paramData.qualifier
                 //publishDir Section
                 if (fNode.split("-")[1] === "outPro" && sNode_qual != "val") {
-                    if (closePar === false) {
-                        closePar = true
-                        //outPro node : get userEntryId and userEntryText
-                        var parId = fNode.split("-")[4]
-                        var userEntryId = "text-" + fNode.split("-")[4]
-                        outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
+                    //outPro node : get userEntryId and userEntryText
+                    var parId = fNode.split("-")[4]
+                    var userEntryId = "text-" + fNode.split("-")[4]
+                    outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
 
-                        reg_ex = document.getElementById(oId).getAttribute("reg_ex");
-                        if (reg_ex !== "" && reg_ex !== null) {
-                            reg_ex = decodeHtml(reg_ex);
-                            if (reg_ex.length > 0) {
-                                var lastLetter = reg_ex.length - 1;
-                                if (reg_ex[0] === "\/" && reg_ex[lastLetter] === "\/") {
-                                    outputName = reg_ex;
-                                } else {
-                                    outputName = "\/" + reg_ex + "\/";
-                                }
+                    reg_ex = document.getElementById(oId).getAttribute("reg_ex");
+                    if (reg_ex !== "" && reg_ex !== null) {
+                        reg_ex = decodeHtml(reg_ex);
+                        if (reg_ex.length > 0) {
+                            var lastLetter = reg_ex.length - 1;
+                            if (reg_ex[0] === "\/" && reg_ex[lastLetter] === "\/") {
+                                outputName = reg_ex;
+                            } else {
+                                outputName = "\/" + reg_ex + "\/";
                             }
-
-                        } else {
-                            outputName = document.getElementById(oId).getAttribute("name")
-                            outputName = "/" + getPublishDirRegex(outputName) + "/";
-
                         }
-                        oText = "publishDir params.outdir, mode: 'copy',\n\tsaveAs: {filename ->\n"
-                        tempText = "\tif \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
-                        // if (filename =~ /^path.8.fastq$/) filename
-                        oText = oText + tempText
-                    } else if (closePar === true) {
-                        reg_ex = document.getElementById(oId).getAttribute("reg_ex");
-                        if (reg_ex !== "" && reg_ex !== null) {
-                            reg_ex = decodeHtml(reg_ex);
-                            if (reg_ex.length > 0) {
-                                var lastLetter = reg_ex.length - 1;
-                                if (reg_ex[0] === "\/" && reg_ex[lastLetter] === "\/") {
-                                    outputName = reg_ex;
-                                } else {
-                                    outputName = "\/" + reg_ex + "\/";
-                                }
-                            }
-                        } else {
-                            outputName = document.getElementById(oId).getAttribute("name")
-                            outputName = "/" + getPublishDirRegex(outputName) + "/";
-                        }
-                        var parId = fNode.split("-")[4]
-                        var userEntryId = "text-" + fNode.split("-")[4]
-                        outParUserEntry = document.getElementById(userEntryId).getAttribute('name');
-                        tempText = "\telse if \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "\n"
-                        oText = oText + tempText
+
+                    } else {
+                        outputName = document.getElementById(oId).getAttribute("name")
+                        outputName = "/" + getPublishDirRegex(outputName) + "/";
+
+                    }
+                    if (!outputName && !reg_ex ) {
+                        oText += "publishDir \"${params.outdir}/" + outParUserEntry + "\", mode: 'copy'\n\n";
+                    } else {
+                        oText += "publishDir params.outdir, mode: 'copy', saveAs: {filename -> if \(filename =~ " + outputName + "\) " + getParamOutdir(outParUserEntry) + "}\n"
                     }
                 }
             }
         }
     }
-    if (closePar === true) {
-        oText = oText + "}\n\n";
-        if (outputName === '' && reg_ex === "") {
-            oText = "publishDir \"${params.outdir}/" + outParUserEntry + "\", mode: 'copy'\n\n";
-        }
-        closePar = false
-    }
+
     return oText;
 }
 
