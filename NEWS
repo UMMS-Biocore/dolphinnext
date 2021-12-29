@@ -2,6 +2,7 @@
 The regex section in the process window is deprecated.
 Process/pipeline update improved by using existing g-nums in the workflow.
 Optional outputs upgraded to support multiple process outputs that share the same location.
+Duplicate output channel error fixed.
 
 22.12.2021 Version 1.2.75
 Fix for space containing lines in search of files in run page.

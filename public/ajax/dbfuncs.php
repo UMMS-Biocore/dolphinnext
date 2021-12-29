@@ -1907,10 +1907,10 @@ class dbfuncs {
         if (!empty($getCloudConfigFileDir)){
             $this->recurse_copy($getCloudConfigFileDir, $run_path_real."/initialrun");
         }
-        //.aws_cred file to export credentials to remote machine
+        //.cred file to export credentials to remote machine
         if (!empty($amzBashConfigText)){
-            $this->createDirFile ($run_path_real, ".aws_cred", 'w', $amzBashConfigText );
-            $amzCmd = "source $dolphin_path_real/.aws_cred && rm $dolphin_path_real/.aws_cred && ";
+            $this->createDirFile ($run_path_real, ".cred", 'w', $amzBashConfigText );
+            $amzCmd = "source $dolphin_path_real/.cred && rm $dolphin_path_real/.cred && ";
         }
         //create run cmd file (.dolphinnext.init)
         $runCmdAll = "$amzCmd $renameLog $createUUID $exec_next_all";
@@ -1923,9 +1923,9 @@ class dbfuncs {
         if (file_exists($run_path_real."/initialrun")) {
             system('rm -rf ' . escapeshellarg($run_path_real."/initialrun") . "/.conf*", $retval);
         }
-        // remove .aws_cred file after compressing run folder
-        if (file_exists($run_path_real."/.aws_cred")) {
-            unlink($run_path_real."/.aws_cred");
+        // remove .cred file after compressing run folder
+        if (file_exists($run_path_real."/.cred")) {
+            unlink($run_path_real."/.cred");
         }
         // save $targz_file into $run_template_dir
         $run_arch_file = $this->getServerRunTemplateFile($project_pipeline_id);

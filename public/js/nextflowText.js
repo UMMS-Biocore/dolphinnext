@@ -1155,7 +1155,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         }
         // if output node is not connected to input node.
         if (channelNameAll === '') {
-            channelNameAll = channelName;
+            channelNameAll = channelName + o;
         }
         whenOutLib = addChannelName(whenCond, whenOutLib, file_type, channelNameAll, param_name, qual)
         bodyOutput = bodyOutput + " " + qual + " " + outputName + outputOptionalText + " into " + channelNameAll + outputOperatorText + "\n"
