@@ -854,11 +854,6 @@ function loadSelectedProcess(selProcessId) {
             $('#mOutOpt-' + numForm).val(outputs[i].operator);
             $('#mOutOptBut-' + numForm).trigger('click');
         }
-        if (outputs[i].reg_ex !== '' && outputs[i].reg_ex !== null) {
-            var reg_exText = decodeHtml(outputs[i].reg_ex);
-            $('#mOutReg-' + numForm).val(reg_exText);
-            $('#mOutRegBut-' + numForm).trigger('click');
-        }
         if (outputs[i].optional) {
             if (outputs[i].optional == 'true') {
                 $('#mOutOptional-' + numForm).trigger('click');
@@ -998,14 +993,6 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
                 }
             }
         } else if (matchFPart === 'mOutputs' && matchVal !== '') {
-            //first check if regEx are visible
-            if ($("#mOutReg-" + matchSPart).css('visibility') === 'visible') {
-                for (var n = startPoint; n < data.length; n++) {
-                    if (data[n].name === 'mOutReg-' + matchSPart) {
-                        dataToProcessParam.push({ name: "reg_ex", value: encodeURIComponent(data[n].value) });
-                    }
-                }
-            }
             //first check if closures are visible
             if ($("#mOutClosure-" + matchSPart).css('visibility') === 'visible') {
                 for (var n = startPoint; n < data.length; n++) {
@@ -1098,14 +1085,6 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
                 }
             }
         } else if (matchFPart === 'mOutputs' && matchVal !== '') {
-            //first check if regEx are visible
-            if ($("#mOutReg-" + matchSPart).css('visibility') === 'visible') {
-                for (var n = startPoint; n < data.length; n++) {
-                    if (data[n].name === 'mOutReg-' + matchSPart) {
-                        dataToProcessParam.push({ name: "reg_ex", value: encodeURIComponent(data[n].value) });
-                    }
-                }
-            }
             //first check if closures are visible
             if ($("#mOutClosure-" + matchSPart).css('visibility') === 'visible') {
                 for (var n = startPoint; n < data.length; n++) {
@@ -1159,7 +1138,6 @@ function refreshAllD3Processes(proID, pName){
         var allGnum = $(allprocesses[k]).attr("id");
         var eachGNum = allGnum.replace("bc-","")
         var proText = $("#text-"+eachGNum).attr("name")
-        console.log(proText)
         if (eachGNum.match(/-/)) { //for pipeline module windows
             var coorProRaw = d3.select("#g" + eachGNum)[0][0].attributes.transform.value;
         } else {
@@ -1172,14 +1150,13 @@ function refreshAllD3Processes(proID, pName){
         var scale = d3main.scale[0];
         var translateX = d3main.translate[0];
         var translateY = d3main.translate[1];
-        var lastGnum = gNum;
         var xCor = xProCoor * scale + 30 - r - ior + translateX;
         var yCor = yProCoor * scale + 10 - r - ior + translateY;
         remove('del-' + eachGNum);
-        addProcess(processDat, xCor, yCor);
-        recoverEdges(eachGNum, proID, lastGnum);
+        addProcess(processDat, xCor, yCor, eachGNum);
+        recoverEdges(eachGNum, proID, eachGNum);
         // rename process after insert
-        renameTextID = "text-"+lastGnum //text-22
+        renameTextID = "text-"+eachGNum //text-22
         renameText = proText
         $("#mRenName").val(proText)
         changeName()
@@ -1188,16 +1165,20 @@ function refreshAllD3Processes(proID, pName){
 
 function refreshD3Process(gNumInfo, proID, pName ){
     var processDat = pName + '@' + proID;
+    var proText = $("#text-"+gNumInfo).attr("name")
     remove('del-' + gNumInfo);
     var d3main = d3.transform(d3.select('#' + "mainG").attr("transform"));
     var scale = d3main.scale[0];
     var translateX = d3main.translate[0];
     var translateY = d3main.translate[1];
-    var lastGnum = gNum;
     var xCor = $('#selectProcess').attr("xCoor") * scale + 30 - r - ior + translateX;
     var yCor = $('#selectProcess').attr("yCoor") * scale + 10 - r - ior + translateY;
-    addProcess(processDat, xCor, yCor);
-    recoverEdges(gNumInfo, proID, lastGnum);
+    addProcess(processDat, xCor, yCor, gNumInfo);
+    recoverEdges(gNumInfo, proID, gNumInfo);
+    renameTextID = "text-"+gNumInfo //text-22
+    renameText = proText
+    $("#mRenName").val(proText)
+    changeName()
 }
 
 function checkProParaUpdate(inputsBefore, outputsBefore, proID, pName) {
@@ -1539,9 +1520,6 @@ function disableProModal(selProcessId) {
         $('#mOutOptional-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptdel-' + numFormOut).remove();
-        $('#mOutReg-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutRegBut-' + numFormOut).css("pointer-events", "none");
-        $('#mOutRegdel-' + numFormOut).remove();
     }
     var delNumOut = numFormOut + 1;
     $('#mOutputs-' + delNumOut + '-selectized').parent().parent().remove();
@@ -1599,9 +1577,6 @@ function disableProModalPublic(selProcessId) {
         $('#mOutOpt-' + numFormOut).attr('disabled', "disabled");
         $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptdel-' + numFormOut).remove();
-        $('#mOutReg-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutRegBut-' + numFormOut).css("pointer-events", "none");
-        $('#mOutRegdel-' + numFormOut).remove();
     }
     var delNumOut = numFormOut + 1;
     $('#mOutputs-' + delNumOut + '-selectized').parent().parent().remove();
@@ -2031,21 +2006,20 @@ $("#selectPipelineModal").on('click', '#selectPipeline', function (event) {
         var xPos = $('#selectPipeline').attr("xCoor")
         var yPos = $('#selectPipeline').attr("yCoor")
         piID = lastPipeID;
-        var newMainGnum = "pObj" + gNum;
+        var newMainGnum = "pObj" + gNumInfo;
         window[newMainGnum] = {};
         window[newMainGnum].piID = piID;
-        window[newMainGnum].MainGNum = gNum;
-        window[newMainGnum].lastGnum = gNum;
+        window[newMainGnum].MainGNum = gNumInfo;
+        window[newMainGnum].lastGnum = gNumInfo;
         var newPipeObj = getValues({ p: "exportPipeline", id: piID });
         $.extend(window.pipeObj, newPipeObj);
         window[newMainGnum].sData = [window.pipeObj["main_pipeline_" + piID]]
         window[newMainGnum].lastPipeName = pName;
-        var lastGNum = gNum;
         // create new SVG workplace inside panel, if not added before
         openSubPipeline(piID, window[newMainGnum]);
         // add pipeline circle to main workplace
-        addPipeline(piID, xPos, yPos, pName, window, window[newMainGnum]);
-        recoverEdges(gNumInfo, "", lastGNum);
+        addPipeline(piID, xPos, yPos, pName, window, window[newMainGnum], gNumInfo);
+        recoverEdges(gNumInfo, "", gNumInfo);
         autosave();
     }
     $('#selectPipelineModal').modal('hide');

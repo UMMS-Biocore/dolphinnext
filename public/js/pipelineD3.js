@@ -430,7 +430,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pObj) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pObj, oldGnum) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -438,9 +438,11 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         MainGNum = pObj.MainGNum;
         prefix = "p" + MainGNum; //prefix for node ids
     }
+    var useGnum = pObj.gNum;
+    if (oldGnum) useGnum = oldGnum;
     //gnum uniqe, id same id (Written in class) in same type process
     pObj.g = d3.select("#mainG" + MainGNum).append("g")
-        .attr("id", "g" + MainGNum + "-" + pObj.gNum)
+        .attr("id", "g" + MainGNum + "-" + useGnum)
         .attr("class", "g" + MainGNum + "-" + id)
         .attr("transform", "translate(" + sDataX + "," + sDataY + ")")
         .on("mouseover", mouseOverG)
@@ -448,7 +450,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
 
     //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
     //outermost circle transparent
-    pObj.g.append("circle").attr("id", "bc" + MainGNum + "-" + pObj.gNum)
+    pObj.g.append("circle").attr("id", "bc" + MainGNum + "-" + useGnum)
         .attr("class", "bc" + MainGNum + "-" + id)
         .attr("type", "bc")
         .attr("cx", cx)
@@ -463,7 +465,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
             cx: 0,
             cy: 0
         }])
-        .attr("id", "sc" + MainGNum + "-" + pObj.gNum)
+        .attr("id", "sc" + MainGNum + "-" + useGnum)
         .attr("class", "sc" + MainGNum + "-" + id)
         .attr("type", "sc")
         .attr("r", ipR + ipIor)
@@ -475,11 +477,11 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
 
     //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
     //inner parameter circle 
-    d3.select("#g" + MainGNum + "-" + pObj.gNum).append("circle")
-        .attr("id", prefix + init + "-" + id + "-" + 1 + "-" + paramid + "-" + pObj.gNum)
+    d3.select("#g" + MainGNum + "-" + useGnum).append("circle")
+        .attr("id", prefix + init + "-" + id + "-" + 1 + "-" + paramid + "-" + useGnum)
         .attr("type", "I/O")
         .attr("kind", kind) //connection candidate=input
-        .attr("parentG", "g" + MainGNum + "-" + pObj.gNum)
+        .attr("parentG", "g" + MainGNum + "-" + useGnum)
         .attr("name", name)
         .attr("status", "standard")
         .attr("connect", "single")
@@ -495,7 +497,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         .on("mousedown", IOconnect)
 
     //gnum(written in id): unique,
-    pObj.g.append("text").attr("id", "text" + MainGNum + "-" + pObj.gNum)
+    pObj.g.append("text").attr("id", "text" + MainGNum + "-" + useGnum)
         .datum([{
             cx: 0,
             cy: 20,
@@ -514,26 +516,26 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         .on("mouseout", scMouseOut)
         .call(drag)
     if (defVal) {
-        $("#text" + MainGNum + "-" + pObj.gNum).attr('defVal', defVal)
+        $("#text" + MainGNum + "-" + useGnum).attr('defVal', defVal)
     }
     if (dropDown) {
-        $("#text" + MainGNum + "-" + pObj.gNum).attr('dropDown', dropDown)
+        $("#text" + MainGNum + "-" + useGnum).attr('dropDown', dropDown)
     }
     if (showSett != null) {
-        $("#text" + MainGNum + "-" + pObj.gNum).attr('showSett', showSett)
+        $("#text" + MainGNum + "-" + useGnum).attr('showSett', showSett)
     }
     if (inDescOpt != null) {
-        $("#text" + MainGNum + "-" + pObj.gNum).data('inDescOpt', inDescOpt)
+        $("#text" + MainGNum + "-" + useGnum).data('inDescOpt', inDescOpt)
     }
     if (pubDmeta != null) {
-        $("#text" + MainGNum + "-" + pObj.gNum).data('pubDmeta', pubDmeta)
+        $("#text" + MainGNum + "-" + useGnum).data('pubDmeta', pubDmeta)
     }
     if (pubWeb) {
-        $("#text" + MainGNum + "-" + pObj.gNum).attr('pubWeb', pubWeb)
+        $("#text" + MainGNum + "-" + useGnum).attr('pubWeb', pubWeb)
     }
 
     if (pObj == window) {
-        pObj.g.append("text").attr("id", "text" + MainGNum + "-" + gNum)
+        pObj.g.append("text").attr("id", "text" + MainGNum + "-" + useGnum)
             .datum([{
                 cx: 0,
                 cy: 0
@@ -546,7 +548,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
             .on("mousedown", rename)
         //gnum(written in id): unique,
         pObj.g.append("text")
-            .attr("id", "del" + MainGNum + "-" + pObj.gNum)
+            .attr("id", "del" + MainGNum + "-" + useGnum)
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '1em')
             .attr("x", +30)
@@ -599,7 +601,9 @@ function removeProPipeTab(id) {
     }
 }
 
-function addProcess(processDat, xpos, ypos) {
+function addProcess(processDat, xpos, ypos, oldGnum) {
+    var useGnum = gNum;
+    if (oldGnum) useGnum = oldGnum;
     t = d3.transform(d3.select('#' + "mainG").attr("transform")),
         x = (xpos - t.translate[0])
     y = (ypos - t.translate[1])
@@ -626,11 +630,10 @@ function addProcess(processDat, xpos, ypos) {
         var classtoparam = classtoparam || "connect_to_input output"
         var init = "o"
         var pColor = "orange"
-
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, window)
-        processList[("g-" + gNum)] = name
-        processListNoOutput[("g-" + gNum)] = name
-        gNum = gNum + 1
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, window, oldGnum)
+        processList[("g-" + useGnum)] = name
+        processListNoOutput[("g-" + useGnum)] = name
+        if (!oldGnum) gNum = gNum + 1
     }
     //for output parameters:  
     else if (processDat === "outputparam@outPro") {
@@ -647,10 +650,10 @@ function addProcess(processDat, xpos, ypos) {
         var classtoparam = classtoparam || "connect_to_output input"
         var init = "i"
         var pColor = "green"
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, window)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, window, oldGnum)
 
-        processList[("g-" + gNum)] = name
-        gNum = gNum + 1
+        processList[("g-" + useGnum)] = name
+        if (!oldGnum) gNum = gNum + 1
     }
     //for processes:
     else {
@@ -672,14 +675,14 @@ function addProcess(processDat, xpos, ypos) {
         })
         //gnum uniqe, id same id (Written in class) in same type process
         g = d3.select("#mainG").append("g")
-            .attr("id", "g-" + gNum)
+            .attr("id", "g-" + useGnum)
             .attr("class", "g-" + id)
             .attr("transform", "translate(" + (-30 + x + r + ior) / z + "," + (-10 + y + r + ior) / z + ")")
 
             .on("mouseover", mouseOverG)
             .on("mouseout", mouseOutG)
         //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
-        g.append("circle").attr("id", "bc-" + gNum)
+        g.append("circle").attr("id", "bc-" + useGnum)
             .attr("class", "bc-" + id)
             .attr("type", "bc")
             .attr("cx", cx)
@@ -697,7 +700,7 @@ function addProcess(processDat, xpos, ypos) {
                 cx: 0,
                 cy: 0
             }])
-            .attr("id", "sc-" + gNum)
+            .attr("id", "sc-" + useGnum)
             .attr("class", "sc-" + id)
             .attr("type", "sc")
             .attr("r", r - ior)
@@ -707,7 +710,7 @@ function addProcess(processDat, xpos, ypos) {
             .on("mouseout", scMouseOut)
             .call(drag)
         //gnum(written in id): uniqe,
-        g.append("text").attr("id", "text-" + gNum)
+        g.append("text").attr("id", "text-" + useGnum)
             .datum([{
                 cx: 0,
                 cy: 0
@@ -722,7 +725,7 @@ function addProcess(processDat, xpos, ypos) {
             .on("mouseout", scMouseOut)
             .call(drag)
 
-        g.append("text").attr("id", "text-" + gNum)
+        g.append("text").attr("id", "text-" + useGnum)
             .datum([{
                 cx: 0,
                 cy: 0
@@ -736,7 +739,7 @@ function addProcess(processDat, xpos, ypos) {
 
         //gnum(written in id): uniqe,
         g.append("text")
-            .attr("id", "del-" + gNum)
+            .attr("id", "del-" + useGnum)
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '1em')
             .attr("x", -6)
@@ -746,7 +749,7 @@ function addProcess(processDat, xpos, ypos) {
             .on("mousedown", removeElement)
 
         g.append("text")
-            .attr("id", "info-" + gNum)
+            .attr("id", "info-" + useGnum)
             .attr("class", "info-" + id)
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '1em')
@@ -758,11 +761,11 @@ function addProcess(processDat, xpos, ypos) {
 
         // I/O id naming:[0]i = input,o = output -[1]process database ID -[2]The number of I/O of the selected process -[3]Parameter database ID- [4]uniqe number
         for (var k = 0; k < inputs.length; k++) {
-            d3.select("#g-" + gNum).append("circle")
-                .attr("id", "i-" + (id) + "-" + k + "-" + inputs[k].parameter_id + "-" + gNum)
+            d3.select("#g-" + useGnum).append("circle")
+                .attr("id", "i-" + (id) + "-" + k + "-" + inputs[k].parameter_id + "-" + useGnum)
                 .attr("type", "I/O")
                 .attr("kind", "input")
-                .attr("parentG", "g-" + gNum)
+                .attr("parentG", "g-" + useGnum)
                 .attr("name", inputs[k].sname)
                 .attr("operator", inputs[k].operator)
                 .attr("closure", inputs[k].closure)
@@ -781,11 +784,11 @@ function addProcess(processDat, xpos, ypos) {
                 .on("mousedown", IOconnect)
         }
         for (var k = 0; k < outputs.length; k++) {
-            d3.select("#g-" + gNum).append("circle")
-                .attr("id", "o-" + (id) + "-" + k + "-" + outputs[k].parameter_id + "-" + gNum)
+            d3.select("#g-" + useGnum).append("circle")
+                .attr("id", "o-" + (id) + "-" + k + "-" + outputs[k].parameter_id + "-" + useGnum)
                 .attr("type", "I/O")
                 .attr("kind", "output")
-                .attr("parentG", "g-" + gNum)
+                .attr("parentG", "g-" + useGnum)
                 .attr("name", outputs[k].sname)
                 .attr("operator", outputs[k].operator)
                 .attr("closure", outputs[k].closure)
@@ -803,15 +806,18 @@ function addProcess(processDat, xpos, ypos) {
                 .on("mouseout", IOmouseOut)
                 .on("mousedown", IOconnect)
         }
-        processList[("g-" + gNum)] = name
-        processListMain[("g-" + gNum)] = name
-        processListNoOutput[("g-" + gNum)] = name
-        gNum = gNum + 1
+        processList[("g-" + useGnum)] = name
+        processListMain[("g-" + useGnum)] = name
+        processListNoOutput[("g-" + useGnum)] = name
+        if (!oldGnum) gNum = gNum + 1
     }
 
 }
 
-function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
+function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
+    var useGnum = pObjOrigin.gNum;
+    if (oldGnum) useGnum = oldGnum;
+
     var id = piID
     var prefix = "p";
     var MainGNum = "";
@@ -823,13 +829,13 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
 
     //gnum uniqe, id same id (Written in class) in same type process
     pObjOrigin.g = d3.select("#mainG" + MainGNum).append("g")
-        .attr("id", "g" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr("id", "g" + MainGNum + "-" + useGnum)
         .attr("class", "g-p" + id) //for pipeline modules
         .attr("transform", "translate(" + x + "," + y + ")")
         .on("mouseover", mouseOverG)
         .on("mouseout", mouseOutG)
     //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
-    pObjOrigin.g.append("circle").attr("id", "bc" + MainGNum + "-" + pObjOrigin.gNum)
+    pObjOrigin.g.append("circle").attr("id", "bc" + MainGNum + "-" + useGnum)
         .attr("class", "bc" + MainGNum + "-" + id)
         .attr("type", "bc")
         .attr("cx", cx)
@@ -846,7 +852,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
             cx: 0,
             cy: 0
         }])
-        .attr("id", "sc-" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr("id", "sc-" + MainGNum + "-" + useGnum)
         .attr("class", "sc" + MainGNum + "-" + id)
         .attr("type", "sc")
         .attr("r", rP - ior)
@@ -856,7 +862,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .on("mouseout", scMouseOut)
         .call(drag)
     //gnum(written in id): uniqe,
-    pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + pObjOrigin.gNum)
+    pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + useGnum)
         .datum([{
             cx: 0,
             cy: 0
@@ -871,7 +877,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .on("mouseout", scMouseOut)
         .call(drag)
     if (pObjOrigin == window) {
-        pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + pObjOrigin.gNum)
+        pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + useGnum)
             .datum([{
                 cx: 0,
                 cy: 0
@@ -885,7 +891,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
 
         //gnum(written in id): uniqe,
         pObjOrigin.g.append("text")
-            .attr("id", "del" + MainGNum + "-" + pObjOrigin.gNum)
+            .attr("id", "del" + MainGNum + "-" + useGnum)
             .attr('font-family', "FontAwesome, sans-serif")
             .attr('font-size', '1em')
             .attr("x", -6)
@@ -895,7 +901,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
             .on("mousedown", removeElement)
     }
     pObjOrigin.g.append("text")
-        .attr("id", "info" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr("id", "info" + MainGNum + "-" + useGnum)
         .attr("class", "info" + MainGNum + "-" + id)
         .attr('font-family', "FontAwesome, sans-serif")
         .attr('font-size', '1em')
@@ -905,7 +911,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
         .style("opacity", 0.2)
         .on("mousedown", getInfoPipe)
     pObjOrigin.g.append("text")
-        .attr("id", "link" + MainGNum + "-" + pObjOrigin.gNum)
+        .attr("id", "link" + MainGNum + "-" + useGnum)
         .attr('font-family', "FontAwesome, sans-serif")
         .attr('font-size', '1em')
         .attr('type', 'Show Module')
@@ -969,13 +975,13 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
                             var parId = pObjSub.inNodes[k][0].split("-")[3];
                             var ccNodeId = "p" + pObjSub.MainGNum + pObjSub.inNodes[k][0];
                             var ccNode = $("#" + ccNodeId);
-                            ccIDList[prefix + "i-" + proId + "-" + c + "-" + parId + "-" + pObjOrigin.gNum] = ccNodeId;
-                            d3.select("#g" + MainGNum + "-" + pObjOrigin.gNum).append("circle")
-                                .attr("id", prefix + "i-" + proId + "-" + c + "-" + parId + "-" + pObjOrigin.gNum)
+                            ccIDList[prefix + "i-" + proId + "-" + c + "-" + parId + "-" + useGnum] = ccNodeId;
+                            d3.select("#g" + MainGNum + "-" + useGnum).append("circle")
+                                .attr("id", prefix + "i-" + proId + "-" + c + "-" + parId + "-" + useGnum)
                                 .attr("ccID", ccNodeId) //copyID for pipeline modules
                                 .attr("type", "I/O")
                                 .attr("kind", "input")
-                                .attr("parentG", "g" + MainGNum + "-" + pObjOrigin.gNum)
+                                .attr("parentG", "g" + MainGNum + "-" + useGnum)
                                 .attr("name", ccNode.attr('name'))
                                 .attr("status", "standard")
                                 .attr("connect", "single")
@@ -996,15 +1002,15 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
                                 pObjSub.ccIDAr[i] = "p" + pObjSub.MainGNum + pObjSub.inNodes[k][i];
                                 var proId = pObjSub.inNodes[k][i].split("-")[1];
                                 var parId = pObjSub.inNodes[k][i].split("-")[3];
-                                ccIDList[prefix + "i-" + proId + "-" + c + "-" + parId + "-" + pObjOrigin.gNum] = "p" + pObjSub.MainGNum + pObjSub.inNodes[k][i];
+                                ccIDList[prefix + "i-" + proId + "-" + c + "-" + parId + "-" + useGnum] = "p" + pObjSub.MainGNum + pObjSub.inNodes[k][i];
                             }
                             var ccNode = $("#" + pObjSub.ccIDAr[0])
-                            d3.select("#g" + MainGNum + "-" + pObjOrigin.gNum).append("circle")
-                                .attr("id", prefix + "i-" + proId + "-" + c + "-" + parId + "-" + pObjOrigin.gNum)
+                            d3.select("#g" + MainGNum + "-" + useGnum).append("circle")
+                                .attr("id", prefix + "i-" + proId + "-" + c + "-" + parId + "-" + useGnum)
                                 .attr("ccID", pObjSub.ccIDAr) //copyID for pipeline modules
                                 .attr("type", "I/O")
                                 .attr("kind", "input")
-                                .attr("parentG", "g" + MainGNum + "-" + pObjOrigin.gNum)
+                                .attr("parentG", "g" + MainGNum + "-" + useGnum)
                                 .attr("name", ccNode.attr('name'))
                                 .attr("status", "standard")
                                 .attr("connect", "single")
@@ -1026,9 +1032,9 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
                         var parId = pObjSub.outNodes[k].split("-")[3];
                         var ccNodeID = "p" + pObjSub.MainGNum + pObjSub.outNodes[k];
                         var ccNode = $("#" + ccNodeID)
-                        ccIDList[prefix + "o-" + proId + "-" + k + "-" + parId + "-" + pObjOrigin.gNum] = ccNodeID;
-                        d3.select("#g" + MainGNum + "-" + pObjOrigin.gNum).append("circle")
-                            .attr("id", prefix + "o-" + proId + "-" + k + "-" + parId + "-" + pObjOrigin.gNum)
+                        ccIDList[prefix + "o-" + proId + "-" + k + "-" + parId + "-" + useGnum] = ccNodeID;
+                        d3.select("#g" + MainGNum + "-" + useGnum).append("circle")
+                            .attr("id", prefix + "o-" + proId + "-" + k + "-" + parId + "-" + useGnum)
                             .attr("ccID", ccNodeID) //copyID for pipeline modules
                             .attr("type", "I/O")
                             .attr("kind", "output")
@@ -1050,10 +1056,10 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
             }
         }
     }
-    pObjOrigin.processList[("g" + MainGNum + "-" + pObjOrigin.gNum)] = name
-    pObjOrigin.processListNoOutput[("g" + MainGNum + "-" + pObjOrigin.gNum)] = name
-    pObjOrigin.gNum = pObjOrigin.gNum + 1
 
+    pObjOrigin.processList[("g" + MainGNum + "-" + useGnum)] = name
+    pObjOrigin.processListNoOutput[("g" + MainGNum + "-" + useGnum)] = name
+    if (!oldGnum) pObjOrigin.gNum = pObjOrigin.gNum + 1
 }
 
 function findType(id) {
@@ -2210,6 +2216,14 @@ function createSaveNodes() {
             }
         }
     }
+    // sort saveNodes
+    saveNodes = Object.keys(saveNodes).sort().reduce(
+        (obj, key) => { 
+            obj[key] = saveNodes[key]; 
+            return obj;
+        }, 
+        {}
+    );
 }
 
 
@@ -2302,7 +2316,7 @@ function save(type) {
     },{
         "publish_dmeta_dir": encodeURIComponent(JSON.stringify(pubDmetaDirListDb))
     }];
-    
+
     //A. Add new pipeline
     if (sName && id === "" && !pipeGroupWarn) {
         var maxPipeline_gid = getValues({ p: "getMaxPipeline_gid" })[0].pipeline_gid;
@@ -2491,7 +2505,6 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         pObj.x = pObj.t.translate[0]
     pObj.y = pObj.t.translate[1]
     pObj.z = pObj.t.scale[0]
-
     pObj.gNum = parseInt(gN)
     var name = sDataName
     var id = sDatapId
