@@ -313,7 +313,7 @@ $DMETA_LABEL= DMETA_LABEL;
             <div><textarea id="runSum" rows="3" placeholder="Enter run description here.." style="min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea></div>
             <div id="runSettings" style="padding-top:7px;">
                 <div>
-                    
+
                     <div class="row">
                         <div class="col-md-12">
                             <div id="mRunAmzKeyDiv" class="form-group" style="display:none;">
@@ -352,7 +352,6 @@ $DMETA_LABEL= DMETA_LABEL;
                     <div class="row" id="rOut_dirDiv">
                         <div class="col-md-12">
                             <label style="float:left; margin-right:4px;"> Work Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the work directory in your host. eg. /project/rna-seq/run1"><i style="font-size: 14px;" class='fa fa-info-circle'></i></a></span></label>
-                            <!--                            <button id="refreshDiskSpaceBut" type="button" class="btn" data-backdrop="false" onclick="updateDiskSpace()" style="display:none; float:left; background:none; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Check Disk Space"><i class="fa fa-refresh" style="font-size: 14px;"></i></a></button>-->
                             <span title="Check Disk Space" style="cursor:pointer;" onclick="updateDiskSpace()">
                                 <div id="workdir_diskpercent_div" class="col-md-1 progress" style=" display:none; margin-bottom:0px; padding-left:0px; padding-right:0px; margin-right:5px; margin-left:5px;">
                                     <div id="workdir_diskpercent" class="progress-bar progress-bar-info" role="progressbar" style="padding-left:3px; color:black; width:60%"></div>
@@ -409,13 +408,13 @@ $DMETA_LABEL= DMETA_LABEL;
                             <label for="singu_save" class="col-sm-3 control-label"> Save over Image <span><a data-toggle="tooltip" data-placement="bottom" title="If you want to download and save over an existing image, you can check this box."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                             <div class="col-sm-9">
                                 <input type="checkbox" id="singu_save" name="singu_save"></input>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 <!--            End of runsettings div-->
 <div id="workDetails">
     <div id="pipefiles">
@@ -923,37 +922,55 @@ $DMETA_LABEL= DMETA_LABEL;
                     </div>
                     <div role="tabpanel" class="tab-pane" id="manualTab" searchTab="true">
                         <div class="panel panel-default">
-                        <div class="pull-right" style="margin:5px;">
-                        <button type="button" class="btn btn-success btn-sm" id="uploadManualFile" data-toggle="modal" data-backdrop="static" data-keyboard="false"><i class="fa fa-upload"></i> Upload File</button>
-                                </div>
-                        <form style="padding-top:50px; padding-right:10px; padding-bottom:40px; border-bottom:1px solid lightgrey; " class="form-horizontal">
-                            <div class="form-group" style="display:none">
-                                <label for="mIdFile" class="col-sm-2 control-label">ID</label>
-                                <div class="col-sm-10">
-                                    <input type="text" class="form-control" id="mIdFile" name="id">
-                                </div>
+                            <div class="pull-right" style="margin:5px;">
+                                <button type="button" class="btn btn-success btn-sm" id="uploadManualFile" data-toggle="modal" data-backdrop="static" data-keyboard="false"><i class="fa fa-upload"></i> Upload File</button>
                             </div>
-                            <div class="form-group">
-                                <label for="mFilePath" class="col-sm-2 control-label">File Path</label>
-                                <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="mFilePath" name="name">
+                            <form style="padding-top:50px; padding-right:10px; padding-bottom:40px; border-bottom:1px solid lightgrey; " class="form-horizontal">
+                                <div class="form-group" style="display:none">
+                                    <label for="mIdFile" class="col-sm-2 control-label">ID</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="mIdFile" name="id">
+                                    </div>
                                 </div>
+                                <div class="form-group">
+                                    <label for="mFilePath" class="col-sm-2 control-label">File Path</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" id="mFilePath" name="name">
+                                    </div>
+                                </div>
+                            </form>
+                            </br>
+                        <div class="row">
+                            <div class="col-sm-3" style="border-right:1px solid lightgrey; padding-top:6px;">
+                                <table id="projectListTable" class="table  table-striped display" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Project Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
                             </div>
-                        </form>
-                        </br>
-                    <div class="row">
-                        <div class="col-sm-3" style="border-right:1px solid lightgrey; padding-top:6px;">
-                            <table id="projectListTable" class="table  table-striped display" cellspacing="0" width="100%">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Project Name</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
+                            <div class="col-sm-9" style="overflow:auto">
+                                <table id="projectFileTable" class="table table-striped  display" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Check</th>
+                                            <th scope="col">File/Values</th>
+                                            <th scope="col">Modified On</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="word-break: break-all; "></tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div class="col-sm-9" style="overflow:auto">
-                            <table id="projectFileTable" class="table table-striped  display" cellspacing="0" width="100%">
+                    </div>
+                </div>
+                <div role="tabpanel" id="publicFileTab" class="tab-pane" searchTab="true">
+                    <div class="row">
+                        <div class="col-sm-12" style="padding-top:6px;">
+                            <p id="publicFileTabWarn"></p>
+                            <table id="publicFileTable" class="table table-striped table-bordered display" cellspacing="0" width="100%">
                                 <thead>
                                     <tr>
                                         <th scope="col">Check</th>
@@ -961,30 +978,12 @@ $DMETA_LABEL= DMETA_LABEL;
                                         <th scope="col">Modified On</th>
                                     </tr>
                                 </thead>
-                                <tbody style="word-break: break-all; "></tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div role="tabpanel" id="publicFileTab" class="tab-pane" searchTab="true">
-                <div class="row">
-                    <div class="col-sm-12" style="padding-top:6px;">
-                        <p id="publicFileTabWarn"></p>
-                        <table id="publicFileTable" class="table table-striped table-bordered display" cellspacing="0" width="100%">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Check</th>
-                                    <th scope="col">File/Values</th>
-                                    <th scope="col">Modified On</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <?php if ($SHOW_DMETA != false){ 
+                <?php if ($SHOW_DMETA != false){ 
     $dURLS = array_map('trim', explode(',', $DMETA_URL));
     $dLabels = array_map('trim', explode(',', $DMETA_LABEL));
     $ids = array();
@@ -1057,14 +1056,14 @@ $DMETA_LABEL= DMETA_LABEL;
             </div>
             ';
     echo $dmetaDiv; }
-            ?>
+                ?>
+            </div>
         </div>
     </div>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-    <button type="button" class="btn btn-primary" id="savefile" data-clickedrow="">Save</button>
-</div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="savefile" data-clickedrow="">Save</button>
+    </div>
 </div>
 </div>
 </div>
@@ -1779,7 +1778,7 @@ $DMETA_LABEL= DMETA_LABEL;
                     </div>
                     <div class="form-group">
                         <label class="col-sm-3 control-label">Input File(s) <span><a data-toggle="tooltip" data-placement="bottom" title="To merge files, please enter each file set into a new line. If you're entering paired/triple/quadruple file set, please separate each file with a comma."><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
-                        
+
                         <div class="col-sm-9">
                             <textarea spellcheck="false" rows="3" class="form-control"   name="files_used"></textarea>
                         </div>
@@ -1801,7 +1800,7 @@ $DMETA_LABEL= DMETA_LABEL;
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label class="col-sm-3 control-label">File Type</label>
                         <div class="col-sm-9">

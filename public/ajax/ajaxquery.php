@@ -1784,6 +1784,17 @@ else if ($p=="saveProcess"){
     $script = addslashes(htmlspecialchars(urldecode($_REQUEST['script']), ENT_QUOTES));
     $script_header = addslashes(htmlspecialchars(urldecode($_REQUEST['script_header']), ENT_QUOTES));
     $script_footer = addslashes(htmlspecialchars(urldecode($_REQUEST['script_footer']), ENT_QUOTES));
+    
+    $test_env = isset($_REQUEST['test_env']) ? $_REQUEST['test_env'] : "";
+    $test_work_dir = isset($_REQUEST['test_work_dir']) ? $_REQUEST['test_work_dir'] : "";
+    $docker_check = !empty($_REQUEST['docker_check']) ? 1 : 0;
+    $docker_img = isset($_REQUEST['docker_img']) ? $_REQUEST['docker_img'] : "";
+    $docker_opt = isset($_REQUEST['docker_opt']) ? $_REQUEST['docker_opt'] : "";
+    $singu_check = !empty($_REQUEST['singu_check']) ? 1 : 0;
+    $singu_img = isset($_REQUEST['singu_img']) ? $_REQUEST['singu_img'] : "";
+    $singu_opt = isset($_REQUEST['singu_opt']) ? $_REQUEST['singu_opt'] : "";
+    $script_test = addslashes(htmlspecialchars(urldecode($_REQUEST['script_test']), ENT_QUOTES));
+    $script_test_mode = isset($_REQUEST['script_test_mode']) ? $_REQUEST['script_test_mode'] : "";
     $script_mode = $_REQUEST['script_mode'];
     $script_mode_header = $_REQUEST['script_mode_header'];
     $rev_id = isset($_REQUEST['rev_id']) ? $_REQUEST['rev_id'] : "";
@@ -1799,9 +1810,9 @@ else if ($p=="saveProcess"){
     if (!empty($id)) {
         $db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
         $db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
-        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $ownerID);
+        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
     } else {
-        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID);
+        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
         $idArray = json_decode($data,true);
         $new_pro_id = $idArray["id"];
         if (empty($id) && empty($process_uuid)) {
@@ -2002,6 +2013,7 @@ else if ($p=="saveProjectPipeline"){
 }
 else if ($p=="saveProcessParameter"){
     $closure = isset($_REQUEST['closure']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['closure']), ENT_QUOTES)) : "";
+    $test = isset($_REQUEST['test']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['test']), ENT_QUOTES)) : "";
     $reg_ex = isset($_REQUEST['reg_ex']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['reg_ex']), ENT_QUOTES)) : "";
     $operator = isset($_REQUEST['operator']) ? $_REQUEST['operator'] : "";
     $optional = isset($_REQUEST['optional']) ? $_REQUEST['optional'] : "";
@@ -2017,9 +2029,9 @@ else if ($p=="saveProcessParameter"){
     settype($parameter_id, 'integer');
     settype($process_id, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID);
+        $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $test, $optional, $perms, $group_id, $ownerID);
     } else {
-        $data = $db->insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID);
+        $data = $db->insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $test, $optional, $perms, $group_id, $ownerID);
     }
 }
 else if ($p=="getProcessData")

@@ -3952,13 +3952,13 @@ class dbfuncs {
         return self::queryTable($sql);
     }
 
-    function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID) {
-        $sql = "INSERT INTO $this->db.process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, script_mode, script_mode_header, process_uuid, process_rev_uuid) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group','$script_mode', '$script_mode_header', '$process_uuid', '$process_rev_uuid')";
+    function insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID) {
+        $sql = "INSERT INTO $this->db.process(name, process_gid, summary, process_group_id, script, script_header, script_footer, rev_id, rev_comment, owner_id, date_created, date_modified, last_modified_user, perms, group_id, script_mode, script_mode_header, process_uuid, process_rev_uuid, test_env, test_work_dir, docker_check, docker_img, docker_opt, singu_check, singu_img, singu_opt, script_test, script_test_mode) VALUES ('$name', '$process_gid', '$summary', '$process_group_id', '$script', '$script_header', '$script_footer', '$rev_id','$rev_comment', '$ownerID', now(), now(), '$ownerID', '$perms', '$group','$script_mode', '$script_mode_header', '$process_uuid', '$process_rev_uuid', '$test_env', '$test_work_dir', '$docker_check', '$docker_img', '$docker_opt', '$singu_check', '$singu_img', '$singu_opt', '$script_test', '$script_test_mode')";
         return self::insTable($sql);
     }
 
-    function updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group, $perms, $script_mode, $script_mode_header, $ownerID) {
-        $sql = "UPDATE $this->db.process SET name= '$name', process_gid='$process_gid', summary='$summary', process_group_id='$process_group_id', script='$script', script_header='$script_header',  script_footer='$script_footer', last_modified_user='$ownerID', group_id='$group', perms='$perms', script_mode='$script_mode', date_modified = now(), script_mode_header='$script_mode_header' WHERE id = '$id'";
+    function updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID) {
+        $sql = "UPDATE $this->db.process SET name= '$name', process_gid='$process_gid', summary='$summary', process_group_id='$process_group_id', script='$script', script_header='$script_header',  script_footer='$script_footer', last_modified_user='$ownerID', group_id='$group', perms='$perms', script_mode='$script_mode', date_modified = now(), script_mode_header='$script_mode_header', test_env='$test_env', test_work_dir='$test_work_dir', docker_check='$docker_check', docker_img='$docker_img', docker_opt='$docker_opt', singu_check='$singu_check', singu_img='$singu_img', singu_opt='$singu_opt', script_test='$script_test', script_test_mode='$script_test_mode' WHERE id = '$id'";
         return self::runSQL($sql);
     }
     function removeProcess($id) {
@@ -5881,14 +5881,14 @@ class dbfuncs {
         return self::queryTable($sql);
 
     }
-    function insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID) {
-        $sql = "INSERT INTO $this->db.process_parameter(sname, process_id, parameter_id, type, closure, operator, reg_ex, optional, owner_id, date_created, date_modified, last_modified_user, perms, group_id)
-                    VALUES ('$sname', '$process_id', '$parameter_id', '$type', '$closure', '$operator', '$reg_ex', '$optional', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id')";
+    function insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $test, $optional, $perms, $group_id, $ownerID) {
+        $sql = "INSERT INTO $this->db.process_parameter(sname, process_id, parameter_id, type, closure, operator, reg_ex, test, optional, owner_id, date_created, date_modified, last_modified_user, perms, group_id)
+                    VALUES ('$sname', '$process_id', '$parameter_id', '$type', '$closure', '$operator', '$reg_ex', '$test', '$optional', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id')";
         return self::insTable($sql);
     }
 
-    function updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID) {
-        $sql = "UPDATE $this->db.process_parameter SET sname='$sname', process_id='$process_id', parameter_id='$parameter_id', type='$type', closure='$closure', operator='$operator', reg_ex='$reg_ex', optional='$optional', last_modified_user ='$ownerID', perms='$perms', group_id='$group_id'  WHERE id = '$id'";
+    function updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $test, $optional, $perms, $group_id, $ownerID) {
+        $sql = "UPDATE $this->db.process_parameter SET sname='$sname', process_id='$process_id', parameter_id='$parameter_id', type='$type', closure='$closure', operator='$operator', reg_ex='$reg_ex', test='$test', optional='$optional', last_modified_user ='$ownerID', perms='$perms', group_id='$group_id'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
@@ -5975,12 +5975,12 @@ class dbfuncs {
             if (isset(json_decode($userRoleCheck)[0])){
                 $userRole = json_decode($userRoleCheck)[0]->{'role'};
                 if ($userRole == "admin"){
-                    $sql = "SELECT DISTINCT p.id, p.process_group_id, p.name, p.summary, p.script, p.script_header, p.script_footer, p.script_mode, p.script_mode_header, p.rev_id, p.perms, p.group_id, p.publish, IF(p.owner_id='$ownerID',1,0) as own FROM $this->db.process p ";
+                    $sql = "SELECT DISTINCT p.id, p.process_group_id, p.name, p.summary, p.script, p.script_header, p.script_footer, p.script_mode, p.script_mode_header, p.test_env, p.test_work_dir, p.docker_check, p.docker_img, p.docker_opt, p.singu_check, p.singu_img, p.singu_opt, p.script_test, p.script_test_mode, p.rev_id, p.perms, p.group_id, p.publish, IF(p.owner_id='$ownerID',1,0) as own FROM $this->db.process p ";
                     return self::queryTable($sql);
                 }
             }
         }
-        $sql = "SELECT DISTINCT p.id, p.process_group_id, p.name, p.summary, p.script, p.script_header, p.script_footer, p.script_mode, p.script_mode_header, p.rev_id, p.perms, p.group_id, p.publish, IF(p.owner_id='$ownerID',1,0) as own
+        $sql = "SELECT DISTINCT p.id, p.process_group_id, p.name, p.summary, p.script, p.script_header, p.script_footer, p.script_mode, p.script_mode_header, p.test_env, p.test_work_dir, p.docker_check, p.docker_img, p.docker_opt, p.singu_check, p.singu_img, p.singu_opt, p.script_test, p.script_test_mode, p.rev_id, p.perms, p.group_id, p.publish, IF(p.owner_id='$ownerID',1,0) as own
                         FROM $this->db.process p
                         LEFT JOIN $this->db.user_group ug ON p.group_id=ug.g_id
                         WHERE p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)";
@@ -6118,7 +6118,7 @@ class dbfuncs {
     }
 
     function getInputsPP($id) {
-        $sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, pp.optional, p.name, p.file_type, p.qualifier
+        $sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, pp.optional, pp.test, p.name, p.file_type, p.qualifier
                             FROM $this->db.process_parameter pp
                             INNER JOIN $this->db.parameter p ON pp.parameter_id = p.id
                             WHERE pp.process_id = '$id' and pp.type = 'input'";
@@ -6254,7 +6254,7 @@ class dbfuncs {
         return self::queryTable($sql);
     }
     function getOutputsPP($id) {
-        $sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, pp.optional, p.name, p.file_type, p.qualifier
+        $sql = "SELECT pp.parameter_id, pp.sname, pp.id, pp.operator, pp.closure, pp.reg_ex, pp.optional, pp.test, p.name, p.file_type, p.qualifier
                             FROM $this->db.process_parameter pp
                             INNER JOIN $this->db.parameter p ON pp.parameter_id = p.id
                             WHERE pp.process_id = '$id' and pp.type = 'output'";

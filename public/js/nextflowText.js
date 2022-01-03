@@ -1155,6 +1155,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         }
         // if output node is not connected to input node.
         if (channelNameAll === '') {
+            // o prevents duplicate channel name error
             channelNameAll = channelName + o;
         }
         whenOutLib = addChannelName(whenCond, whenOutLib, file_type, channelNameAll, param_name, qual)

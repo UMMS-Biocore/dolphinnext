@@ -48,7 +48,7 @@
 
 <!-- Add Process Modal -->
 <div id="addProcessModal" data-keyboard="false" style="overflow-y:scroll;" class="modal fade " tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" style="width:1300px;" role="document">
+    <div class="modal-dialog modal-lg" style="width:1350px;" role="document">
         <div class="modal-content">
             <span id="addHeader"></span>
             <div id="revModalHeader" class="modal-header">
@@ -151,6 +151,9 @@
                         <div class="col-sm-2 " style="width:100px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:15px;">Optional <span><a data-toggle="tooltip" data-placement="bottom" title="Optional input parameter. Process will be executed in case parameter is empty."><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
+                        <div id="mInTestValueT" class="col-sm-2" style="width:220px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
+                            <p style="padding-left:20px;">Test Value <span><a data-toggle="tooltip" data-placement="bottom" title="example values for each qualifier: val: 5, file: /export/file, set: [1, 'a'], [2, 'b'], set: /path/*.fastq, each: [5, 10]"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
+                        </div>
                     </div>
                     <div id="inputGroup" class="form-group">
                         <label for="mInputs-1" style="width:150px;" class="col-sm-2 control-label">Inputs</label>
@@ -231,6 +234,9 @@
                         <div id="mInOptional" class="col-sm-1" style="width:40px; padding-left:0;padding-right:0;">
                             <label style="display:none;" class="btn btn-default form-control"><input id="mInOptional-0" name="mInOptional-0" type="checkbox" autocomplete="off"> </label>
                         </div>
+                        <div id="mInTestValue" class="col-sm-2 " style="width:250px; padding-left:30px; padding-right:0;">
+                            <input type="text" style="display:none; " placeholder="Enter value" class="form-control" ppID="" id="mInTestValue-0" name="mInTestValue-0">
+                        </div>
                     </div>
                     <div id="outputTitle" class="form-group" style="  margin-bottom:15px; padding-top:15px;">
                         <p style="width:150px;" class="col-sm-2 control-label"></p>
@@ -255,12 +261,9 @@
                         <div class="col-sm-2 " style="width:100px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:15px;">Optional <span><a data-toggle="tooltip" data-placement="bottom" title="Optional output parameter. Process won't fail in case output parameter isn't created."><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
-                        <!--
-<div id="mOutOptdelT" class="col-sm-1" style="width:45px; padding-left:0;padding-right:5px; padding-bottom:22px; border-bottom:1px solid lightgrey;">
-<p> </p>
-</div>
--->
-
+                        <div id="mOutTestValueT" class="col-sm-2" style="width:220px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
+                            <p style="padding-left:20px;">Test Value <span><a data-toggle="tooltip" data-placement="bottom" title="example values for each qualifier: val: 5, file: /export/file, set: [1, 'a'], [2, 'b'], set: /path/*.fastq, each: [5, 10]"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
+                        </div>
                     </div>
                     <div id="outputGroup" class="form-group">
                         <label for="mOutput-1" style="width:150px;" class="col-sm-2 control-label">Outputs</label>
@@ -338,8 +341,11 @@
                         <div id="mOutOptdel" class="col-sm-1" style="width:40px; padding-left:0;margin-right:10px; padding-right:0;">
                             <button type="submit" style="display:none;" class="btn btn-default form-control" id="mOutOptdel-0" name="mOutOptdel-0"><i class="glyphicon glyphicon-remove"></i></button>
                         </div>
-                        <div id="mOutOptional" class="col-sm-1" style="width:40px; padding-left:0;padding-right:0; margin-right:30px;">
+                        <div id="mOutOptional" class="col-sm-1" style="width:40px; padding-left:0;padding-right:0; ">
                             <label style="display:none;" class="btn btn-default form-control"><input id="mOutOptional-0" name="mOutOptional-0" type="checkbox" autocomplete="off"> </label>
+                        </div>
+                        <div id="mOutTestValue" class="col-sm-2 " style="width:250px; padding-left:30px; padding-right:0;">
+                            <input type="text" style="display:none; " placeholder="Enter value" class="form-control" ppID="" id="mOutTestValue-0" name="mOutTestValue-0">
                         </div>
                     </div>
                     <div class="form-group" style=" padding-top:15px; border-top:0.094em solid lightgrey;">
@@ -360,6 +366,7 @@
                             </div>
                         </div>
                     </div>
+
 
                     <div id="advOptProDiv">
                         <div class="form-group">
@@ -426,9 +433,104 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
-
+                    <div id="testOptProDiv">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Test Section</label>
+                            <div class="col-sm-10">
+                                <i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a id="mtestProCollap" class="fa fa-plus-square-o collapseIcon" style=" font-size:15px; padding-top:10px; padding-left:5px;" data-toggle="collapse" data-target="#testOptPro"></a></i>
+                            </div>
+                        </div>
+                        <!-- collapsed settings-->
+                        <div id="testOptPro" class="row collapse">
+                            <div class="form-horizontal" style="margin-top:15px;">
+                                <div class="col-md-12">
+                                    <div class="col-md-1"></div>
+                                    <div class="col-md-5" style="padding-left:0px;">
+                                        <label>Run Environment </label>
+                                        <select id="test_env" style="width: 100%;" class="fbtn btn-default form-control" name="test_env">
+                                            <option value="" disabled selected>Choose environment </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5" style="padding-left:0px;">
+                                        <label style="float:left; margin-right:4px;"> Work Directory <span><a data-toggle="tooltip" data-placement="bottom" title="Please enter the full path of the work directory in your host. eg. /project/rna-seq/run1"><i style="font-size: 14px;" class='fa fa-info-circle'></i></a></span></label>
+                                        <input type="text" class="form-control" style="width: 100%;" id="test_work_dir" name="test_work_dir" placeholder="Enter work directory">
+                                    </div>
+                                    <div class="col-md-1"></div>
+                                </div>
+                                <div id="containersDiv" class="col-md-12" style="margin-top:15px;">
+                                    <div class="col-md-1"></div>
+                                    <div class="col-md-5">
+                                        <div class="form-group">
+                                            <input type="checkbox" id="docker_check" name="docker_check" data-toggle="collapse" data-target="#docker_imgDiv"> Use Docker Image
+                                        </div>
+                                        <div id="docker_imgDiv" class="collapse">
+                                            <div class="form-group row">
+                                                <label for="docker_img" class="col-sm-2 control-label">Image </label>
+                                                <div class="col-sm-10">
+                                                    <input type="text" class="form-control" id="docker_img" name="docker_img" placeholder="Enter docker image">
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="docker_opt" class="col-sm-2 control-label"> RunOptions</label>
+                                                <div class="col-sm-10">
+                                                    <input type="text" class="form-control" id="docker_opt" name="docker_opt" placeholder="Enter docker runOptions">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="form-group">
+                                            <input type="checkbox" id="singu_check" name="singu_check" data-toggle="collapse" data-target="#singu_imgDiv"> Use Singularity Image
+                                        </div>
+                                        <div id="singu_imgDiv" class="collapse">
+                                            <div class="form-group ">
+                                                <label for="singu_img" class="col-sm-3 control-label">Image Path <span><a data-toggle="tooltip" data-placement="bottom" title="(eg. project/umw_biocore/singularity/ UMMS-Biocore-singularity-master.simg)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" id="singu_img" name="singu_img" placeholder="Enter singularity image path">
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="singu_opt" class="col-sm-3 control-label"> RunOptions <span><a data-toggle="tooltip" data-placement="bottom" title="You can mount the directories by usig --bind command (eg. --bind /project:/project --bind /nl:/nl --bind /share:/share). It requires you to create the directories in the image beforehand. "><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                                                <div class="col-sm-9">
+                                                    <input type="text" class="form-control" id="singu_opt" name="singu_opt" placeholder="Enter singularity runOptions">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-1"></div>
+                            <div id="editorTestProdiv" class="col-sm-10" style="margin-top:20px; margin-bottom:25px; padding-left:12px;">
+                                <label>Test Parameters </label>
+                                <div id="editorTestPro" style="height:100px;"></div>
+                                <div style="display:none;" class="row">
+                                    <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
+                                    <div class="col-sm-3" style="padding-left:0;">
+                                        <select id="script_mode_test_pro" name="script_mode_test_pro" class="form-control">
+                                            <option value="groovy">groovy</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-1"></div>
+                            <div class="form-group col-sm-12">
+                                <label class="col-sm-1 control-label"></label>
+                                <div class="col-sm-11" >
+                                    <button type="button" class="btn btn-primary testscript" id="testscript">Test Script</button>
+                                </div>
+                            </div>
+                            <div class="form-group col-sm-12">
+                                <label class="col-sm-1"></label>
+                                <div class="col-sm-10" >
+                                    <label>Log</label>
+                                    <textarea readonly id="testrunLogArea" rows="10" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea>
+                                </div>
+                                <label class="col-sm-1 control-label"></label>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
