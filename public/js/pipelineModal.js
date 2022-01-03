@@ -1731,6 +1731,8 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     $('#importPipeline').css('display', 'inline');
                     $('#exportPipeline').css('display', 'inline');
                     $('#pipeMenuGroupBottom').css('display', 'inline');
+                    editorPipeFooter.setReadOnly(false);
+                    editorPipeHeader.setReadOnly(false);
                 }
                 // fill Script_modes
                 if (pData[0].script_mode_header) {
