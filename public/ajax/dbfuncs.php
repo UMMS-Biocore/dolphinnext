@@ -590,13 +590,13 @@ class dbfuncs {
                 $file_type = $allfiles[0]->{'file_type'};
                 $collection_type = $allfiles[0]->{'collection_type'};
                 if ($collection_type == "single"){
-                    $inputName = "$inputsPath/$reg.$file_type*";
+                    $inputName = "$inputsPath/$reg.$file_type";
                 } else if ($collection_type == "pair"){
-                    $inputName = "$inputsPath/$reg.{R1,R2}.$file_type*";
+                    $inputName = "$inputsPath/$reg.{R1,R2}.$file_type";
                 } else if ($collection_type == "triple"){
-                    $inputName = "$inputsPath/$reg.{R1,R2,R3}.$file_type*";
+                    $inputName = "$inputsPath/$reg.{R1,R2,R3}.$file_type";
                 } else if ($collection_type == "quadruple"){
-                    $inputName = "$inputsPath/$reg.{R1,R2,R3,R4}.$file_type*";
+                    $inputName = "$inputsPath/$reg.{R1,R2,R3,R4}.$file_type";
                 }
             }
             //if profile variable not defined in the profile then use run_work directory (eg. ${params.DOWNDIR}) 
@@ -971,7 +971,7 @@ class dbfuncs {
                 $nxf_work_init = "-w $dolphin_publish_real/initialrun/work";
             }
             $replaceInitialRunCode = "cp $dolphin_path_real/initialrun.nf $dolphin_path_real/initialrun/nextflow.nf 2> /dev/null || true &&";
-            
+
             $initialRunCmd = "$replaceInitialRunCode cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $nxf_work_init $igniteCmd $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
         $mainNextCmd = "$preCmd $cleanReportCmd $initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $nxf_work $igniteCmd $runType $reportOptions > $dolphin_path_real/$logName $postCmd";
@@ -1311,6 +1311,33 @@ class dbfuncs {
             $configText .= "process.container = '".$imagePath."'\n";
             $configText .= "singularity.enabled = true\n";
         } 
+        return $configText;
+    }
+
+    function getMainTestRunConfig($proPipeAll, $configText,$project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID){
+        $containerConfig = $this->getContainerConfig($proPipeAll, $profileType, $profileId, "main", $ownerID);
+        $containerRunOpt = $this->getContainerRunOpt($proPipeAll, $profileType, $profileId, "main", $ownerID);
+
+        $configText = "// Process Config:\n\n{$containerConfig}{$containerRunOpt}{$configText}";
+        //get nextflow.config from pipeline.
+        $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
+        $pipe = $this->loadPipeline($pipeline_id,$ownerID);
+        $pipe_obj = json_decode($pipe,true);
+        $script_pipe_configRaw = isset($pipe_obj[0]["script_pipe_config"]) ? $pipe_obj[0]["script_pipe_config"] : "";
+        $script_pipe_config = htmlspecialchars_decode($script_pipe_configRaw , ENT_QUOTES);
+        $configText .= "\n// Pipeline Config:\n\n";
+        list($hostVar,$variable) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
+        $reportDir = $this->getReportDir($proPipeAll);
+
+        $configText .= "\$HOSTNAME='".$hostVar."'\n";
+        $configText .= "params.outdir='".$reportDir."'\n";
+        $configText .= "$variable\n";
+        $configText .= "$script_pipe_config\n";
+        //get main run input parameters
+        $mainRunParams = $this->getMainRunInputs($project_pipeline_id, $proPipeAll, $profileType, $profileId, $ownerID);
+        $configText .= "\n// Run Parameters:\n\n".$mainRunParams;
+        //get main run local variable parameters:
+        $configText = $this->getProcessParams(json_decode($proVarObj), $configText);
         return $configText;
     }
 
@@ -1858,6 +1885,83 @@ class dbfuncs {
         return $max;
     }
 
+    function initTestRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzBashConfigText, $attempt, $runType, $ownerID){
+        //create files and folders
+        $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
+        // Dummy file to be used as an optional input where required
+        $pipeline_id = $proPipeAll[0]->{'pipeline_id'};
+        $optionalInputNum = $this->getMaxOptionalInputNum($pipeline_id, $ownerID);
+        for ($i=1; $i<$optionalInputNum+1; $i++) {
+            $this -> createDirFile ("{$this->run_path}/$uuid/run/.emptyfiles", "NO_FILE_$i", 'w', "" );
+        }
+        //separate nextflow config (by using @config tag).
+        $this -> createMultiConfig ("{$this->run_path}/$uuid/run", $mainConfigText);
+        //create clean serverlog.txt 
+        $this -> writeLog($uuid,'','w','serverlog.txt');
+        $run_path_real = "{$this->run_path}/$uuid/run";
+        if (!empty($initialRunParams)){
+            $this->createDirFile ("{$this->run_path}/$uuid/run/initialrun", "nextflow.config", 'w', $initialConfigText );
+            copy("{$this->nf_path}/initialrun.nf", "{$this->run_path}/$uuid/run/initialrun/nextflow.nf");
+            $this->createInitialRunConfigFiles($project_pipeline_id, $uuid, $ownerID);
+        }
+        if (!file_exists($run_path_real."/nextflow.nf")) {
+            $this->triggerRunErr('ERROR: Nextflow file is not found in server!', $uuid,$project_pipeline_id,$ownerID);
+        }
+        if (!file_exists($run_path_real."/nextflow.config")) {
+            $this->triggerRunErr('ERROR: Nextflow config file is not found!', $uuid,$project_pipeline_id,$ownerID);
+        }
+
+        //get nextflow executor parameters
+        list($dolphin_path_real, $dolphin_publish_real, $proPipeCmd, $jobname, $imageCmd, $initImageCmd, $reportOptions) = $this->getNextExecParam($proPipeAll, $project_pipeline_id,$profileType, $profileId, $initialRunParams, $ownerID);
+
+        //get username and hostname and exec info for connection
+        list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port)=$this->getNextConnectExec($profileId,$ownerID, $profileType);
+        //get cmd before run
+        $downCacheCmd = $this->getDownCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType); 
+        $preCmd = $this->getPreCmd($profileType,$profileCmd,$proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd); 
+        $next_path_real = $this->getNextPathReal($next_path); //eg. /project/umw_biocore/bin
+        $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job); 
+
+
+        //get command for renaming previous log file
+        $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
+        $createUUID = $this->createUUIDCmd($dolphin_path_real, $uuid);
+        $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue,$next_cpu,$next_time,$next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $preCmd, $ownerID);
+        $amzCmd = "";
+        //temporarily copy s3/gs config file into initialrun folder 
+        if (!empty($getCloudConfigFileDir)){
+            $this->recurse_copy($getCloudConfigFileDir, $run_path_real."/initialrun");
+        }
+        //.cred file to export credentials to remote machine
+        if (!empty($amzBashConfigText)){
+            $this->createDirFile ($run_path_real, ".cred", 'w', $amzBashConfigText );
+            $amzCmd = "source $dolphin_path_real/.cred && rm $dolphin_path_real/.cred && ";
+        }
+        //create run cmd file (.dolphinnext.init)
+        $runCmdAll = "$amzCmd $renameLog $createUUID $exec_next_all";
+        $this->createDirFile ($run_path_real, ".dolphinnext.init", 'w', $runCmdAll);
+
+        // compress run folder
+        $targz_file= $run_path_real.".tar.gz";
+        $this->tarGzDirectory($run_path_real,$targz_file);
+        // remove credentials from run folder after compressing run folder
+        if (file_exists($run_path_real."/initialrun")) {
+            system('rm -rf ' . escapeshellarg($run_path_real."/initialrun") . "/.conf*", $retval);
+        }
+        // remove .cred file after compressing run folder
+        if (file_exists($run_path_real."/.cred")) {
+            unlink($run_path_real."/.cred");
+        }
+        // save $targz_file into $run_template_dir
+        $run_arch_file = $this->getServerRunTemplateFile($project_pipeline_id);
+        $run_tmp_dir = $this->getServerRunTemplateDir();
+        if (!file_exists($run_tmp_dir)) {
+            mkdir($run_tmp_dir, 0700, true);
+        }
+        copy($targz_file, $run_arch_file);
+        return array($targz_file, $dolphin_path_real, $runCmdAll);
+    }
+
     function initRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $amzBashConfigText, $attempt, $runType, $ownerID){
         //create files and folders
         $this -> createDirFile ("{$this->run_path}/$uuid/run", "nextflow.nf", 'w', $nextText );
@@ -1991,7 +2095,43 @@ class dbfuncs {
         return json_encode($ret);
     }
 
-
+    //            inputs: [],
+    //            outputs: [],
+    //            code: {
+    //                header: "",
+    //                script: "",
+    //                footer: "",
+    //                test_params: ""
+    //            },
+    //            env: {
+    //                test_env: "",
+    //                test_work_dir: "",
+    //                singu_check: "",
+    //                docker_check: "",
+    //                singu_img: "",
+    //                docker_img: "",
+    //                singu_opt: "",
+    //                docker_opt: ""
+    //        }
+    function saveTestRun($inputs, $outputs, $code, $env, $ownerID){
+        $profile = $env->{'test_env'};
+        error_log($profile);
+        $profileAr = explode("-", $profile);
+        $profileType = $profileAr[0];
+        $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
+//        $res= $this->getUUIDLocal("run_log");
+//        $uuid = $res->rev_uuid;
+//        $nextText = "";
+//        $attempt = "1";
+//        $runConfig = $this->getMainRunOpt($proPipeAll,$profileId, $profileType, $ownerID);
+//        $bashConfigText = $this->getBashVariables($profileId, $profileType, $ownerID);
+//        $mainConfigText = $this->getMainTestRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+//        //create file and folders
+//        list($targz_file, $dolphin_path_real, $runCmdAll) = $this->initTestRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $bashConfigText, $attempt, $runType, $ownerID);
+//        //run the script in remote machine
+//        $data = $this->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
+        $data = json_encode("test");
+    }
 
     function saveRun($project_pipeline_id, $nextText, $runType, $manualRun, $uuid, $proVarObj, $ownerID){
         $data = null;

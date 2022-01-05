@@ -833,8 +833,6 @@ function loadModalRevision(selProcessId) {
 }
 
 function updateCheckBox(check_id, status) {
-    console.log(check_id)
-    console.log(status)
     var targetDiv = $(check_id).attr("data-target");
     if (targetDiv) {
         if (status === "1") {
@@ -2788,10 +2786,6 @@ $(document).ready(function () {
     });
 
 
-    // duplicate control in array
-    function hasDuplicates(arr) {
-        return arr.some(x => arr.indexOf(x) !== arr.lastIndexOf(x))
-    }
 
     // validate data of test script
     function validate_data(data) {
@@ -2799,107 +2793,91 @@ $(document).ready(function () {
             isValid: true,
             message: ""
         }
-        console.log(data)
         // name is required
         data.inputs.every((input) => {
             if (!input.name) {
                 result.isValid = false
-                result.message += "inputs: name cannot be empty\n"
+                result.message += "Inputs: name cannot be empty\n"
                 return false
             }
         })
         data.outputs.every((output) => {
             if (!output.name) {
                 result.isValid = false
-                result.message += "outputs: name cannot be empty\n"
-                return false
-            }
-        })
-        // names must be unique
-        if (hasDuplicates(data.inputs)) {
-            result.isValid = false
-            result.message += "inputs: names must be unique\n"
-        }
-        if (hasDuplicates(data.outputs)) {
-            result.isValid = false
-            result.message += "outputs: names must be unique\n"
-        }
-        // operator and operator content must be used together
-        data.inputs.every((input) => {
-            if ((input.operator && !input.operator_content) || (!input.operator && input.operator_content)) {
-                result.isValid = false
-                result.message += "inputs: operator and content must be used together\n"
-                return false
-            }
-        })
-        data.outputs.every((output) => {
-            if ((output.operator && !output.operator_content) || (!output.operator && output.operator_content)) {
-                result.isValid = false
-                result.message += "outputs: operator and content must be used together\n"
-                return false
-            }
-        })
-        // test value is required
-        data.inputs.every((input) => {
-            if (!input.test_value) {
-                result.isValid = false
-                result.message += "inputs: test value is required\n"
-                return false
-            }
-        })
-        data.outputs.every((output) => {
-            if (!output.test_value) {
-                result.isValid = false
-                result.message += "outputs: test value is required\n"
+                result.message += "Outputs: name cannot be empty\n"
                 return false
             }
         })
         // any kind of code is required
-        if (!(data.code.nextflow_header || data.code.script || data.code.nextflow_footer)) {
+        if (!(data.code.header || data.code.script || data.code.footer)) {
             result.isValid = false
-            result.message += "any kind of code is required\n"
+            result.message += "Any kind of code is required\n"
         }
         // test environment must be selected
-        if (!(data.test_environment.username && data.test_environment.hostname)) {
+        if (!(data.env.test_env)) {
             result.isValid = false
-            result.message += "test environment must be selected\n"
+            result.message += "Test environment must be selected\n"
         }
-        // selected test environment must have ssh and owner id
-        if (!(data.test_environment.owner_id && data.test_environment.ssh_id)) {
+        if (!(data.env.test_work_dir)) {
             result.isValid = false
-            result.message += "selected test environment must have owner and ssh id\n"
+            result.message += "Work directory is required\n"
         }
-
         return result
     }
 
-    // convert json object to form data
-    function convertToFormData(data) {
-        let res = []
-        res.push({name: "p", value: data.p})
-        for (let i=0; i<data.inputs.length; i++) {
-            res.push({name: "input"+i+"_name", value: data.inputs[i].name})
-            res.push({name: "input"+i+"_qualifier", value: data.inputs[i].qualifier})
-            res.push({name: "input"+i+"_operator", value: data.inputs[i].operator})
-            res.push({name: "input"+i+"_operator_content", value: data.inputs[i].operator_content})
-            res.push({name: "input"+i+"_test_value", value: data.inputs[i].test_value})
-        }
-        for (let i=0; i<data.outputs.length; i++) {
-            res.push({name: "output"+i+"_name", value: data.outputs[i].name})
-            res.push({name: "output"+i+"_qualifier", value: data.outputs[i].qualifier})
-            res.push({name: "output"+i+"_operator", value: data.outputs[i].operator})
-            res.push({name: "output"+i+"_operator_content", value: data.outputs[i].operator_content})
-            res.push({name: "output"+i+"_test_value", value: data.outputs[i].test_value})
-        }
-        res.push({name: "code_nextflow_header", value: data.code.nextflow_header})
-        res.push({name: "code_script", value: data.code.script})
-        res.push({name: "code_nextflow_footer", value: data.code.nextflow_footer})
-        res.push({name: "test_environment_username", value: data.test_environment.username})
-        res.push({name: "test_environment_hostname", value: data.test_environment.hostname})
-        res.push({name: "test_environment_owner_id", value: data.test_environment.owner_id})
-        res.push({name: "test_environment_ssh_id", value: data.test_environment.ssh_id})
 
-        return res
+    function getProcessParameterArray(type){
+        let ret =[];
+        var formValues = $('#addProcessModal').find('input, select, textarea');
+        var prefix = "In";
+        if (type == "output") prefix = "Out";
+        var data = formValues.serializeArray();
+        for (var i = 0; i < data.length; i++) {
+            var obj = {}
+            var PattPar = /(.*)-(.*)/;
+            var matchFPart = '';
+            var matchSPart = '';
+            var matchVal = '';
+            var matchFPart = data[i].name.replace(PattPar, '$1')
+            var matchSPart = data[i].name.replace(PattPar, '$2')
+            var matchVal = data[i].value
+            if (matchFPart === `m${prefix}puts` && matchVal !== '') {
+                //first check if closures are visible
+                if ($(`#m${prefix}Closure-` + matchSPart).css('visibility') === 'visible') {
+                    for (var n = 0; n < data.length; n++) {
+                        if (data[n].name === `m${prefix}Opt-` + matchSPart) {
+                            obj.operator = data[n].value
+                        } else if (data[n].name === `m${prefix}Closure-` + matchSPart) {
+                            obj.closure = encodeURIComponent(data[n].value)
+                        }
+                    }
+                }
+                //rgb(255, 255, 255) for activated Optional button
+                if ($(`#m${prefix}Optional-` + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
+                    obj.optional = "true"
+                }
+                //for process parameters
+                for (var k = 0; k < data.length; k++) {
+                    if (data[k].name === `m${prefix}TestValue-` + matchSPart) {
+                        obj.test = encodeURIComponent(data[k].value)
+                    }
+                    if (data[k].name === `m${prefix}Name-` + matchSPart && data[k].value === '') {
+                        obj = {};
+                        break;
+                    } else if (data[k].name === `m${prefix}Name-` + matchSPart && data[k].value !== '') {
+                        obj.parameter_id = matchVal
+                        var parameter = parametersData.filter(function (el) { return el.id == obj.parameter_id });
+                        if (parameter && parameter[0] && parameter[0].qualifier){
+                            obj.qualifier = parameter[0].qualifier
+                        } 
+                        obj.name = encodeURIComponent(data[k].value)
+                        ret.push(obj)
+                        break;
+                    }
+                }
+            }
+        }
+        return ret
     }
 
 
@@ -2907,172 +2885,63 @@ $(document).ready(function () {
     $('#addProcessModal').on('click', '.testscript', function (event) {
         event.preventDefault()
         // data to send
-        let data = {
+        var data = {
             p: "testScript",
             inputs: [],
             outputs: [],
             code: {
-                nextflow_header: "",
+                header: "",
                 script: "",
-                nextflow_footer: ""
+                footer: "",
+                test_params: ""
             },
-            test_environment: {
-                username: "",
-                hostname: "",
-                owner_id: "",
-                ssh_id: ""
+            env: {
+                test_env: "",
+                test_work_dir: "",
+                singu_check: "",
+                docker_check: "",
+                singu_img: "",
+                docker_img: "",
+                singu_opt: "",
+                docker_opt: ""
             }
         }
-        /**
-         * inputs
-         */
-        // get selected input count
-        const input_count = $("#mInputs .item").size()
-        // get selected input names
-        let input_names = new Array(input_count)
-        for (let i=1; i<=input_count; i++) {
-            input_names[i-1] = $("#mInName-"+i).val()
-        }
-        // get selected input qualifiers
-        const input_qualifiers = $("#mInputs .item").find('small').map(function(){
-            return $.trim($(this).text()).match(/val|file|set|each/g)
-        }).get()
-        // get selected input operator
-        let input_operators = new Array(input_count)
-        $("#mInOpt [style*='visible']").each(function(){
-            if (!this.options[this.selectedIndex].disabled) {
-                let id = this.name.match(/\d+/)[0]
-                input_operators[id-1] = this.options[this.selectedIndex].text
-            }
-        })
-        // get selected input operator content
-        let input_operators_content = new Array(input_count)
-        $("#mInClosure [style*='visible']").each(function(){
-            let id = this.name.match(/\d+/)[0]
-            input_operators_content[id-1] = this.value
-        })
-        // get selected input test value
-        let input_test_values = new Array(input_count)
-        for (let i=1; i<=input_count; i++) {
-            input_test_values[i-1] = $("#mInTestValue-"+i).val()
-        }
-        /**
-         * outputs
-         */
-        // get selected output count
-        const output_count = $("#mOutputs .item").size()
-        // get selected output names
-        let output_names = new Array(output_count)
-        for (let i=1; i<=output_count; i++) {
-            output_names[i-1] = $("#mOutName-"+i).val()
-        }
-        // get selected output qualifiers
-        const output_qualifiers = $("#mOutputs .item").find('small').map(function(){
-            return $.trim($(this).text()).match(/val|file|set|each/g)
-        }).get()
-        // get selected output operator
-        let output_operators = new Array(output_count)
-        $("#mOutOpt [style*='visible']").each(function(){
-            if (!this.options[this.selectedIndex].disabled) {
-                let id = this.name.match(/\d+/)[0]
-                output_operators[id-1] = this.options[this.selectedIndex].text
-            }
-        })
-        // get selected output operator content
-        let output_operators_content = new Array(output_count)
-        $("#mOutClosure [style*='visible']").each(function(){
-            let id = this.name.match(/\d+/)[0]
-            output_operators_content[id-1] = this.value
-        });
-        // get selected output test value
-        let output_test_values = new Array(output_count)
-        for (let i=1; i<=output_count; i++) {
-            output_test_values[i-1] = $("#mOutTestValue-"+i).val()
-        }
-        /**
-         * code
-         */
-        const nextflow_header = getScriptEditor('editorProHeader')
-        const script = getScriptEditor('editor')
-        const nextflow_footer = getScriptEditor('editorProFooter')
-        data.inputs = new Array(input_count)
-        for (let i=0; i<input_count; i++) {
-            data.inputs[i] = {}
-            data.inputs[i].name = input_names[i]
-            data.inputs[i].qualifier = input_qualifiers[i]
-            data.inputs[i].operator = input_operators[i]
-            data.inputs[i].operator_content = input_operators_content[i]
-            data.inputs[i].test_value = input_test_values[i]
-            console.log("input values :" + input_test_values[i])
-        }
-        data.outputs = new Array(output_count)
-        for (let i=0; i<output_count; i++) {
-            data.outputs[i] = {}
-            data.outputs[i].name = output_names[i]
-            data.outputs[i].qualifier = output_qualifiers[i]
-            data.outputs[i].operator = output_operators[i]
-            data.outputs[i].operator_content = output_operators_content[i]
-            data.outputs[i].test_value = output_test_values[i]
-            console.log("output values :" + output_test_values[i])
-        }
-        data.code.nextflow_header = nextflow_header
-        data.code.script = script
-        data.code.nextflow_footer = nextflow_footer
+        data.code.header = getScriptEditor('editorProHeader')
+        data.code.script = getScriptEditor('editor')
+        data.code.footer = getScriptEditor('editorProFooter')
+        data.code.test_params = getScriptEditor('editorTestPro')
+        data.inputs = getProcessParameterArray("input")
+        data.outputs = getProcessParameterArray("output")
         // get test environment
-        const selected_env = $("#test_environment").find('option:selected').text()
-        const selected_ids = $("#test_environment").find('option:selected').val()
-        // e.g. Local (docker@localhost)
-        let matched = ""
-        if (selected_env)
-            matched = selected_env.match(/\(([^)]+)\)/)
-        if (matched) {
-            data.test_environment.username = matched[1].split('@')[0]
-            data.test_environment.hostname = matched[1].split('@')[1]
-        }
-        // e.g. cluster-1_1
-        const splitted = selected_ids.split('-')
-        if (splitted) {
-            const ids = splitted[1].split('_')
-            if (ids) {
-                data.test_environment.owner_id = ids[0]
-                data.test_environment.ssh_id = ids[1]
-            }
-        }
+        data.env.test_env = $("#test_env").val()
+        data.env.test_work_dir = $("#test_work_dir").val()
+        data.env.docker_check = $("#docker_check").is(":checked") ? 1 : 0;
+        data.env.docker_img = $("#docker_img").val();
+        data.env.docker_opt = $("#docker_opt").val();
+        data.env.singu_check = $("#singu_check").is(":checked")? 1 : 0;
+        data.env.singu_img = $("#singu_img").val();
+        data.env.singu_opt = $("#singu_opt").val();
+
         const result = validate_data(data)
-        // reset modal box
-        $("#modal-process-body").empty()
-        $("#modal-process-footer").empty()
-        $('<h3>Please wait ...</h3>').appendTo('#modal-process-footer')
-        document.getElementsByClassName("close-modal")[0].onclick = null
+        console.log(data)
         if (result.isValid) {
-            $("#processModal").css("display", "block")
-            // convert to array to make it compatible
-            const dataToProcess = convertToFormData(data)
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",
-                /*data: JSON.stringify(data),
-                dataType: "text",
-                contentType: "application/json",*/
-                data: dataToProcess,
+                data: data,
                 async: true,
                 success: function (response) {
                     // replace new-line character (\n) with html break (<br/>)
-                    $('<p>'+decodeURIComponent(response).replace(/\n/g, "<br/>")+'</p>').appendTo('#modal-process-body')
-                    $("#modal-process-footer").empty()
-                    $('<h3>Process completed. You can close it with click on close button.</h3>').appendTo('#modal-process-footer')
-                    document.getElementsByClassName("close-modal")[0].onclick = function() {
-                        $("#processModal").css("display", "none")
-                    }
+                    //                    $('<p>'+decodeURIComponent(response).replace(/\n/g, "<br/>")+'</p>').appendTo('#modal-process-body')
+                    console.log(response)
                 },
                 error: function (error) {
                     console.log("Error: " + JSON.stringify(error))
-                    alert("Error: " + JSON.stringify(error))
-                    $("#processModal").css("display", "none")
+                    showInfoModal("#infoMod", "#infoModText", "Error: " + JSON.stringify(error))
                 }
             });
         } else {
-            alert(result.message)
+            showInfoModal("#infoMod", "#infoModText", result.message)
         }
     })
 

@@ -12,4 +12,4 @@ ALTER TABLE `process` ADD `script_test_mode` varchar(20) DEFAULT NULL after `scr
 
 
 INSERT INTO `update_db` (`name`, `owner_id`, `date_created`, `date_modified`, `last_modified_user`) VALUES 
-("updateVersion1.2.77.sql", "1", NOW(), NOW(), "1");
+("updateVersion1.2.78.sql", "1", NOW(), NOW(), "1");

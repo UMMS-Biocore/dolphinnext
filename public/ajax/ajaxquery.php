@@ -1764,6 +1764,14 @@ else if ($p=="saveProcessGroup"){
         }
     }
 }
+
+else if ($p=="testScript"){
+    $inputs = $_REQUEST['inputs'];
+    $outputs= $_REQUEST['outputs'];
+    $code= $_REQUEST['code'];
+    $env= $_REQUEST['env'];
+    $data = $db->saveTestRun($inputs, $outputs, $code, $env, $ownerID);
+}
 else if ($p=="saveProcess"){
     $name = $_REQUEST['name'];
     $process_gid = isset($_REQUEST['process_gid']) ? $_REQUEST['process_gid'] : "";
