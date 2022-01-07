@@ -43,7 +43,14 @@ else if ($p=="updateRunAttemptLog") {
 else if ($p=="updateProPipeStatus") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $loadtype = "fast";
-    $data = $db->updateProPipeStatus($project_pipeline_id, $loadtype, $ownerID);
+    $process_id = "";
+    $data = $db->updateProPipeStatus($project_pipeline_id, $process_id, $loadtype, $ownerID);
+}
+else if ($p=="updateProcessStatus") {
+    $process_id = $_REQUEST['process_id'];
+    $loadtype = "fast";
+    $project_pipeline_id = "";
+    $data = $db->updateProPipeStatus($project_pipeline_id, $process_id, $loadtype, $ownerID);
 }
 else if ($p=="saveRunLogSize"){
     $uuid = isset($_REQUEST['uuid']) ? $_REQUEST['uuid'] : "";
@@ -211,15 +218,29 @@ else if ($p=="savePubWeb"){
     } 
 }
 else if ($p=="saveNextflowLog"){
-    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
-    $profileType = $_REQUEST['profileType'];
-    $profileId = $_REQUEST['profileId'];
-    $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
     $data = json_encode("");
-    if (!empty($uuid) && !empty($ownerID)){
-        // get outputdir
-        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
+    $profileType = $_REQUEST['profileType'];
+    $profileId = isset($_REQUEST['profileId']) ? $_REQUEST['profileId'] : "";
+    $process_id = isset($_REQUEST['process_id']) ? $_REQUEST['process_id'] : "";
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    if (!empty($project_pipeline_id)){
+        $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
+        if (!empty($uuid) && !empty($ownerID)){
+            // get outputdir
+            $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+            list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
+        }
+    } else if (!empty($process_id)){
+        $process_data = json_decode($db->getProcessDataById($process_id, $ownerID),true);
+        if (!empty($process_data[0])){
+            $uuid = $process_data[0]["run_uuid"];
+            $output_dir = $process_data[0]["test_work_dir"];
+            $dolphin_path_real = "$output_dir/run{$project_pipeline_id}";
+        }
+    }
+
+
+    if (!empty($uuid) && !empty($ownerID) && !empty($dolphin_path_real)){
         $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log", "initialrun/.nextflow.log", "initialrun/trace.txt");
         foreach ($down_file_list as &$value) {
             $value = $dolphin_path_real."/".$value;
@@ -1792,7 +1813,7 @@ else if ($p=="saveProcess"){
     $script = addslashes(htmlspecialchars(urldecode($_REQUEST['script']), ENT_QUOTES));
     $script_header = addslashes(htmlspecialchars(urldecode($_REQUEST['script_header']), ENT_QUOTES));
     $script_footer = addslashes(htmlspecialchars(urldecode($_REQUEST['script_footer']), ENT_QUOTES));
-    
+
     $test_env = isset($_REQUEST['test_env']) ? $_REQUEST['test_env'] : "";
     $test_work_dir = isset($_REQUEST['test_work_dir']) ? $_REQUEST['test_work_dir'] : "";
     $docker_check = !empty($_REQUEST['docker_check']) ? 1 : 0;

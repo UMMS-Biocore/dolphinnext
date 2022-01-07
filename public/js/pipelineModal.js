@@ -1077,7 +1077,6 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
         var matchFPart = data[i].name.replace(PattPar, '$1')
         var matchSPart = data[i].name.replace(PattPar, '$2')
         var matchVal = data[i].value
-        console.log(data)
         if (matchFPart === 'mInputs' && matchVal !== '') {
             //first check if closures are visible
             if ($("#mInClosure-" + matchSPart).css('visibility') === 'visible') {
@@ -2180,6 +2179,191 @@ function saveCircleCoordinates(selProcessId){
 }
 
 
+
+//#########read nextflow log file for status  ################################################
+function displayButton(idButton) {
+    var buttonList = [
+        "runProPipe",
+        "errorProPipe",
+        "completeProPipe",
+        "runningProPipe",
+        "waitingProPipe",
+        "statusProPipe",
+        "connectingProPipe",
+        "terminatedProPipe",
+        "abortedProPipe",
+        "manualProPipe",
+    ];
+    for (var i = 0; i < buttonList.length; i++) {
+        if (document.getElementById(buttonList[i])) {
+            document.getElementById(buttonList[i]).style.display = "none";
+        }
+    }
+    if (document.getElementById(idButton)) {
+        document.getElementById(idButton).style.display = "inline";
+    }
+}
+autoScrollLog = true;
+$(document).on("click", "#testrunLogArea", function () {
+    autoScrollLog = false;
+});
+
+function autoScrollLogArea() {
+    if (autoScrollLog) {
+        if (document.getElementById("testrunLogArea")) {
+            document.getElementById("testrunLogArea").scrollTop =
+                document.getElementById("testrunLogArea").scrollHeight;
+        }
+    }
+}
+function callAsyncSaveNextLog(data) {
+    getValuesAsync(data, function (d) {
+        if (d == "logNotFound") {
+            window.saveNextLog = "logNotFound";
+        } else if (d == "nextflow log saved") {
+            window.saveNextLog = true;
+        } 
+        //        else if (d == "pubweb is not defined") {
+        //            if (typeof interval_readPubWeb !== "undefined") {
+        //                clearInterval(interval_readPubWeb);
+        //            }
+        //        }
+    });
+}
+function clearIntNextLog(proType, proId) {
+    if (typeof interval_readNextlog !== "undefined") {
+        clearInterval(interval_readNextlog);
+    }
+    //last save call after run completed
+    setTimeout(function () {
+        saveNexLg(proType, proId);
+    }, 5000);
+}
+function saveNexLg(process_id, proType, proId) {
+    callAsyncSaveNextLog({
+        p: "saveNextflowLog",
+        process_id: process_id,
+        profileType: proType,
+        profileId: proId,
+    });
+    //update log navbar after saving files
+    //    setTimeout(async function () {
+    //        await updateRunVerNavBar();
+    //    }, 2500);
+}
+// type= reload for reload the page
+async function readNextLog(proType, proId, type) {
+    var showProcess = $('#addProcessModal').data("prodata");
+    var processOwn = showProcess.own;
+    var process_id = showProcess.id;
+    if (processOwn === "1") {
+        var updateProPipeStatus = await doAjax({
+            p: "updateProcessStatus",
+            process_id: process_id,
+        });
+        window.serverLog = "";
+        window.nextflowLog = "";
+        window.runStatus = "";
+        if (updateProPipeStatus) {
+            window.serverLog = updateProPipeStatus.serverLog;
+            window.nextflowLog = updateProPipeStatus.nextflowLog;
+            window.runStatus = updateProPipeStatus.runStatus;
+        }
+        // Available Run_status States: Terminated,NextSuc,Error,NextErr,NextRun, Waiting,init, Aborted
+        // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
+        if (
+            runStatus === "Terminated" ||
+            runStatus === "NextSuc" ||
+            runStatus === "Error" ||
+            runStatus === "NextErr" ||
+            runStatus === "Manual"
+        ) {
+            window["countFailRead"] = 0;
+            if (type !== "reload") {
+                clearIntNextLog(proType, proId);
+                //                clearIntPubWeb(proType, proId);
+            }
+            if (runStatus === "NextSuc") {
+                displayButton("completeProPipe");
+            } else if (runStatus === "Error" || runStatus === "NextErr") {
+                displayButton("errorProPipe");
+            } else if (runStatus === "Terminated") {
+                displayButton("terminatedProPipe");
+            } 
+        }
+        // when run hasn't finished yet and page reloads then show connecting button
+        else if (
+            type == "reload" ||
+            window.saveNextLog === false ||
+            window.saveNextLog === undefined
+        ) {
+            window["countFailRead"] = 0;
+            displayButton("connectingProPipe");
+            if (type === "reload") {
+                readNextflowLogTimer(proType, proId, type);
+            }
+        }
+        // when run hasn't finished yet and connection is down
+        else if (
+            window.saveNextLog == "logNotFound" &&
+            runStatus !== "Waiting" &&
+            runStatus !== "init"
+        ) {
+            if (window["countFailRead"] > 3) {
+                displayButton("abortedProPipe");
+                //log file might be deleted or couldn't read the log file
+                //                var setStatus = await doAjax({
+                //                    p: "updateRunStatus",
+                //                    run_status: "Aborted",
+                //                    project_pipeline_id: project_pipeline_id,
+                //                });
+                if (nextflowLog !== null && nextflowLog !== undefined) {
+                    nextflowLog += "\nConnection is lost.";
+                } else {
+                    serverLog += "\nConnection is lost.";
+                }
+            } else {
+                window["countFailRead"]++;
+            }
+        }
+        // otherwise parse nextflow file to get status
+        else if (
+            runStatus === "Waiting" ||
+            runStatus === "init" ||
+            runStatus === "NextRun"
+        ) {
+            window["countFailRead"] = 0;
+            if (runStatus === "Waiting" || runStatus === "init") {
+                displayButton("waitingProPipe");
+            } else if (runStatus === "NextRun") {
+                displayButton("runningProPipe");
+            }
+        }
+
+        $("#testrunLogArea").val(serverLog + "\n" + nextflowLog);
+        autoScrollLogArea();
+
+        setTimeout(function () {
+            saveNexLg(process_id, proType, proId);
+        }, 8000);
+    }
+}
+function readNextflowLogTimer(proType, proId, type) {
+    //to trigger fast loading for new page reload
+    if (type === "reload") {
+        setTimeout(async function () {
+            await readNextLog(proType, proId, "no_reload");
+        }, 3500);
+    }
+    interval_readNextlog = setInterval(async function () {
+        await readNextLog(proType, proId, "no_reload");
+    }, 7000);
+    //    interval_readPubWeb = setInterval(function () {
+    //        readPubWeb(proType, proId, "no_reload");
+    //    }, 60000);
+}
+
+
 $(document).ready(function () {
     filterSideBar([]); //trigger filter function of sidebar for admin filtering
     var usRole = callusRole();
@@ -2644,6 +2828,7 @@ $(document).ready(function () {
         loadRunEnv();
         updateCheckBox("#docker_check","0")
         updateCheckBox("#singu_check","0")
+        displayButton("runProPipe");
         if (checkAddprocess) {
             $('#processmodaltitle').html('Add New Process');
             $('#proPermGroPubDiv').css('display', "inline");
@@ -2869,13 +3054,14 @@ $(document).ready(function () {
                         var parameter = parametersData.filter(function (el) { return el.id == obj.parameter_id });
                         if (parameter && parameter[0] && parameter[0].qualifier){
                             obj.qualifier = parameter[0].qualifier
+                            obj.parameter_name = parameter[0].name
                         } 
                         obj.name = encodeURIComponent(data[k].value)
-                        ret.push(obj)
-                        break;
                     }
                 }
             }
+            if (type == "input" && obj.test && obj.name) ret.push(obj)
+            if (type == "output" && obj.name) ret.push(obj)
         }
         return ret
     }
@@ -2884,16 +3070,20 @@ $(document).ready(function () {
     // test script
     $('#addProcessModal').on('click', '.testscript', function (event) {
         event.preventDefault()
+        var process_id = $('#mIdPro').val();
+        var pipeline_id = $('#pipeline-title').attr('pipelineid');
         // data to send
         var data = {
             p: "testScript",
             inputs: [],
             outputs: [],
             code: {
-                header: "",
+                pro_header: "",
                 script: "",
-                footer: "",
-                test_params: ""
+                pro_footer: "",
+                test_params: "",
+                pipe_header: "",
+                script_pipe_footer: ""
             },
             env: {
                 test_env: "",
@@ -2903,13 +3093,17 @@ $(document).ready(function () {
                 singu_img: "",
                 docker_img: "",
                 singu_opt: "",
-                docker_opt: ""
+                docker_opt: "",
+                pipeline_id : pipeline_id,
+                process_id : process_id
             }
         }
-        data.code.header = getScriptEditor('editorProHeader')
+        data.code.pro_header = getScriptEditor('editorProHeader')
         data.code.script = getScriptEditor('editor')
-        data.code.footer = getScriptEditor('editorProFooter')
+        data.code.pro_footer = getScriptEditor('editorProFooter')
         data.code.test_params = getScriptEditor('editorTestPro')
+        data.code.pipe_header = getScriptEditor('editorPipeHeader')
+        data.code.pipe_footer = getScriptEditor('editorPipeFooter')
         data.inputs = getProcessParameterArray("input")
         data.outputs = getProcessParameterArray("output")
         // get test environment
@@ -2921,19 +3115,23 @@ $(document).ready(function () {
         data.env.singu_check = $("#singu_check").is(":checked")? 1 : 0;
         data.env.singu_img = $("#singu_img").val();
         data.env.singu_opt = $("#singu_opt").val();
+        var patt = /(.*)-(.*)/;
+        var proType = data.env.test_env.replace(patt, "$1");
+        var proId = data.env.test_env.replace(patt, "$2");
 
         const result = validate_data(data)
         console.log(data)
+        displayButton("connectingProPipe");
+
         if (result.isValid) {
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",
                 data: data,
                 async: true,
-                success: function (response) {
-                    // replace new-line character (\n) with html break (<br/>)
-                    //                    $('<p>'+decodeURIComponent(response).replace(/\n/g, "<br/>")+'</p>').appendTo('#modal-process-body')
-                    console.log(response)
+                success: function (s) {
+                    readNextflowLogTimer(proType, proId, "default");
+                    console.log(s)
                 },
                 error: function (error) {
                     console.log("Error: " + JSON.stringify(error))

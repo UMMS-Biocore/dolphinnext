@@ -1790,8 +1790,10 @@ class dbfuncs {
 
     function triggerRunErr($message, $uuid,$project_pipeline_id,$ownerID){
         $this->writeLog($uuid,$message,'a','serverlog.txt');
-        $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-        $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
+        if (!empty($project_pipeline_id)){
+            $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
+            $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
+        }
         die(json_encode($message));
     }
     function createReadmeMD($uuid){
@@ -1899,11 +1901,7 @@ class dbfuncs {
         //create clean serverlog.txt 
         $this -> writeLog($uuid,'','w','serverlog.txt');
         $run_path_real = "{$this->run_path}/$uuid/run";
-        if (!empty($initialRunParams)){
-            $this->createDirFile ("{$this->run_path}/$uuid/run/initialrun", "nextflow.config", 'w', $initialConfigText );
-            copy("{$this->nf_path}/initialrun.nf", "{$this->run_path}/$uuid/run/initialrun/nextflow.nf");
-            $this->createInitialRunConfigFiles($project_pipeline_id, $uuid, $ownerID);
-        }
+
         if (!file_exists($run_path_real."/nextflow.nf")) {
             $this->triggerRunErr('ERROR: Nextflow file is not found in server!', $uuid,$project_pipeline_id,$ownerID);
         }
@@ -2095,12 +2093,157 @@ class dbfuncs {
         return json_encode($ret);
     }
 
+    function getInputParamContent($input,$inputParamName, $channelName, $mateExist){
+        $qualifier = $input["qualifier"];
+        $test = urldecode($input["test"]);
+        $parameter_name = $input["parameter_name"];
+        $input_name =  urldecode($input["name"]);
+        $channelFormat = "";
+        $secPartTemp = "";
+        //check if input has glob(*,?{,}) characters -> use in the file section
+        $checkRegex = false;
+        if (preg_match('/(\{|\*|\?|\})/', $test)) $checkRegex = true;
+        if ($qualifier === "file") {
+            if ($checkRegex === false) {
+                $channelFormat = "f1";
+                //g_18_genome_url_g_17 = params.inputparam && file(params.inputparam, type: 'any').exists() ? file(params.inputparam, type: 'any') : ch_empty_file_3
+                $secPartTemp = $channelName." = file(params.{$inputParamName}, type: 'any')\n";
+            } else if ($checkRegex === true) {
+                $channelFormat = "f2";
+                $secPartTemp = "Channel.fromPath(params.{$inputParamName}, type: 'any').set{{$channelName}}\n";
+            }
+        } else if ($qualifier === "set") {
+            //if mate defined in process use fromFilePairs
+            if ($mateExist === true){
+                $channelFormat = "f3";
+                $secPartTemp = "Channel\n\t.fromFilePairs( params.{$inputParamName} , size: params.mate == \"single\" ? 1 : params.mate == \"pair\" ? 2 : params.mate == \"triple\" ? 3 : params.mate == \"quadruple\" ? 4 : -1 )\n\t.ifEmpty { error \"Cannot find any {$parameter_name} matching: \${params.{$inputParamName}}\" }\n\t.set{{$channelName}}\n\n";
+                //if mate not defined in process use fromPath
+            } else {
+                //if val(name), file(read) format -> turn into set input
+                if (preg_match('/.*val\(.*\).*file\(.*\).*/', $input_name)) {
+                    $channelFormat = "f4";
+                    $secPartTemp = "Channel.fromPath(params.{$inputParamName}, type: 'any').map{ file -> tuple(file.baseName, file) }.set{{$channelName}}\n";
+                    //or other formats eg. file(fastq1), file(fastq2), file(fastq3)    
+                } else {
+                    $channelFormat = "f5";
+                    $secPartTemp = "Channel.fromPath(params.{$inputParamName}, type: 'any').toSortedList().set{{$channelName}}\n";
+                }
+            }
+        } else if ($qualifier === "val") {
+            $channelFormat = "f6";
+            $secPartTemp = "Channel.value(params.{$inputParamName}).set{{$channelName}}\n";
+        }
+        return $secPartTemp;
+    }
+
+    function getOperatorText($in){
+        $inputOperatorText = '';
+        $operator = !empty($in["operator"]) ? urldecode($in["operator"]) : "";
+        $closure = !empty($in["closure"]) ? urldecode($in["closure"]) : "";
+        if ($operator === 'mode flatten') {
+            $inputOperatorText = ' '. $operator + $closure;
+        } else if (!empty($operator)) {
+            if (!empty($closure)) {
+                $inputOperatorText = '.'. $operator.  $closure;
+            } else {
+                $inputOperatorText = '.'. $operator. "()";
+            }
+        }
+        return $inputOperatorText;
+    }
+
+    function createTestNextflowNF($inputs, $outputs, $code){
+        $script = urldecode($code["script"]); 
+        $pro_header = $code["pro_header"]; 
+        $pro_footer = $code["pro_footer"]; 
+        $pipe_header = $code["pipe_header"]; 
+        $test_params = $code["test_params"]; 
+        $pipe_footer = $code["pipe_footer"]; 
+        $input_count = count($inputs);
+        $output_count = count($outputs);
+
+        $nextflow = "";
+        if (!empty($pipe_header)) {
+            $nextflow .= urldecode($pipe_header) . "\n\n";
+        }
+        if (!empty($test_params)) {
+            $nextflow .= urldecode($test_params) . "\n\n";
+        }
+        // method: file-fromPath(''), value-(), set-of([1, 'alpha'], [2, 'beta']), each-[5,10]
+
+        //Input parameters and channels
+        $inChn_firstPart = "";
+        $inChn_secondPart = "";
+        $mateExist = false;
+        for ($i=0; $i<$input_count; $i++) {
+            if ($inputs[$i]["parameter_name"] == "mate"){
+                $mateExist = true;
+            }
+        }
+
+        for ($i=0; $i<$input_count; $i++) {
+            $num = $i+1;
+            $inputParamName = "input{$num}";
+            $channelName = "channel{$num}";
+            $test = urldecode($inputs[$i]["test"]);
+            $inChn_firstPart .= "params.{$inputParamName} = \"{$test}\" \n";
+            $inChn_secondPart .= $this->getInputParamContent($inputs[$i],$inputParamName, $channelName, $mateExist);
+        }
+        $nextflow .=$inChn_firstPart.$inChn_secondPart."\n";
+
+        $nextflow .= "process test {\n";
+        for ($i=0; $i<$input_count; $i++) {
+            $num = $i+1;
+            $inputOperatorText = $this->getOperatorText($inputs[$i]);
+            if ($i===0) $nextflow .= "\tinput:\n";
+            $channelName = "channel{$num}";
+            $nextflow .= "\t".$inputs[$i]["qualifier"]." ".urldecode($inputs[$i]["name"])." from " . $channelName . $inputOperatorText. "\n";
+        }
+
+        for ($i=0; $i<$output_count; $i++) {
+            $num = $i+1;
+            $channelName = "result{$num}";
+            $operatorText = $this->getOperatorText($outputs[$i]);
+            if ($i===0) $nextflow .= "\n\toutput:\n";
+            $nextflow .= "\t".$outputs[$i]["qualifier"]." ".urldecode($outputs[$i]["name"])." into " . $channelName . $operatorText. "\n";
+        }
+        //insert """ for script if not exist
+        error_log(strpos($script, '"""'));
+        error_log(strpos($script, '"""') === false);
+        if ( strpos($script, '"""') === false && strpos($script, "'''") === false && strpos($script, 'when:') === false && strpos($script, 'script:') === false && strpos($script, 'shell:') === false && strpos($script, 'exec:') === false){
+            $script = "\"\"\"\n".$script."\n\"\"\"";
+        }
+        $nextflow .= $script."\n}\n";
+        for ($i=0; $i<$output_count; $i++) {
+            $output_test = !empty($outputs[$i]["test"]) ? urldecode($outputs[$i]["test"]) : "";
+            $output_test = str_replace('"', "", $output_test);
+            $output_test = str_replace("'", "", $output_test);
+            $output_test_text = !empty($output_test) ? "##Expected:$output_test\\n" : "";
+            
+            $nextflow .= "result" . ($i+1) . ".subscribe { println \"$output_test_text##Received:\$it\\n\" }\n";
+        }
+
+        if (!empty($pipe_footer)) {
+            $nextflow .= urldecode($pipe_footer) . "\n";
+        }
+        $nextflow .= "workflow.onComplete {\n\tprintln \"##Pipeline execution summary##\"";
+        $nextflow .= "\n\tprintln \"----------------------------\"";
+        $nextflow .= "\n\tprintln \"##Completed at: \${workflow.complete}\"";
+        $nextflow .= "\n\tprintln \"##Duration: \${workflow.duration}\"";
+        $nextflow .= "\n\tprintln \"##Success: \${workflow.success ? 'OK' : 'FAILED' }\"";
+        $nextflow .= "\n\tprintln \"##Exit status: \${workflow.exitStatus}\"";
+        $nextflow .= "\n}\n";
+        return $nextflow;
+    }
+
     //            inputs: [],
     //            outputs: [],
     //            code: {
-    //                header: "",
+    //                pro_header: "",
+    //                pro_footer: "",
+    //                pipe_header: "",
+    //                pipe_footer: "",
     //                script: "",
-    //                footer: "",
     //                test_params: ""
     //            },
     //            env: {
@@ -2111,26 +2254,73 @@ class dbfuncs {
     //                singu_img: "",
     //                docker_img: "",
     //                singu_opt: "",
-    //                docker_opt: ""
+    //                docker_opt: "",
+    //                pipeline_id: "",    
+    //                process_id: ""   
     //        }
     function saveTestRun($inputs, $outputs, $code, $env, $ownerID){
-        $profile = $env->{'test_env'};
-        error_log($profile);
+        $profile = $env['test_env'];
+        $test_work_dir = $env['test_work_dir'];
+        $singu_check = $env['singu_check'] == "1" ? 'true' : 'false';
+        $docker_check = $env['docker_check'] == "1" ? 'true' : 'false';
+        $singu_img = $env['singu_img'];
+        $docker_img = $env['docker_img'];
+        $singu_opt = $env['singu_opt'];
+        $docker_opt = $env['docker_opt'];
+        $pipeline_id = $env['pipeline_id'];
+        $process_id = $env['process_id'];
+        $nextText = $this->createTestNextflowNF($inputs, $outputs, $code);
+        $proPipeAll = array();
+        $object = new stdClass();
+        $proPipeAll[] = $object;
+        $proPipeAll[0]->{'docker_check'} = $docker_check;
+        $proPipeAll[0]->{'singu_check'} = $singu_check;
+        $proPipeAll[0]->{'docker_img'} = $docker_img;
+        $proPipeAll[0]->{'singu_img'} = $singu_img;
+        $proPipeAll[0]->{'singu_save'} = "false";
+        $proPipeAll[0]->{'docker_opt'} = $docker_opt;
+        $proPipeAll[0]->{'singu_opt'} = $singu_opt;
+        $proPipeAll[0]->{'id'} = "";
+        $proPipeAll[0]->{'output_dir'} = $test_work_dir;
+        $proPipeAll[0]->{'publish_dir_check'} = "";
+        $proPipeAll[0]->{'publish_dir'} = "";
+        $proPipeAll[0]->{'exec_all_settings'} = "";
+        $proPipeAll[0]->{'exec_all'} = "false";
+        $proPipeAll[0]->{'exec_each'} = "false";
+        $proPipeAll[0]->{'exec_each_settings'} = "";
+        $proPipeAll[0]->{'pipeline_id'} = $pipeline_id;
+        $proPipeAll[0]->{'cmd'} = "";
+        $proPipeAll[0]->{'pp_name'} = "process_test";
+        $proPipeAll[0]->{'withReport'} = "";
+        $proPipeAll[0]->{'withTrace'} = "";
+        $proPipeAll[0]->{'withTimeline'} = "";
+        $proPipeAll[0]->{'withDag'} = "";
+        $proPipeAll[0]->{'interdel'} = "";
+
         $profileAr = explode("-", $profile);
         $profileType = $profileAr[0];
         $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
-//        $res= $this->getUUIDLocal("run_log");
-//        $uuid = $res->rev_uuid;
-//        $nextText = "";
-//        $attempt = "1";
-//        $runConfig = $this->getMainRunOpt($proPipeAll,$profileId, $profileType, $ownerID);
-//        $bashConfigText = $this->getBashVariables($profileId, $profileType, $ownerID);
-//        $mainConfigText = $this->getMainTestRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
-//        //create file and folders
-//        list($targz_file, $dolphin_path_real, $runCmdAll) = $this->initTestRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $bashConfigText, $attempt, $runType, $ownerID);
-//        //run the script in remote machine
-//        $data = $this->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
-        $data = json_encode("test");
+        $res= $this->getUUIDLocal("run_log");
+        $uuid = $res->rev_uuid;
+        $this->updateProcessRunUUID($process_id,$uuid);
+        $runStatus = "init";
+        $this->updateProcessStatus($process_id, $runStatus, $ownerID);
+        $attempt = "1";
+        $project_pipeline_id = "";
+        $proVarObj = "";
+        $initialRunParams = "";
+        $initialConfigText = "";
+        $getCloudConfigFileDir = "";
+        $runType = "newrun"; 
+        $runConfig = $this->getMainRunOpt($proPipeAll,$profileId, $profileType, $ownerID);
+        $bashConfigText = $this->getBashVariables($profileId, $profileType, $ownerID);
+        $mainConfigText = $this->getMainTestRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+        //create file and folders
+        list($targz_file, $dolphin_path_real, $runCmdAll) = $this->initTestRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $bashConfigText, $attempt, $runType, $ownerID);
+        //run the script in remote machine
+        $data = $this->runCmd($project_pipeline_id, $profileType, $profileId, $uuid, $targz_file, $dolphin_path_real, $runCmdAll, $ownerID);
+        $data = json_encode("");
+        return $data;
     }
 
     function saveRun($project_pipeline_id, $nextText, $runType, $manualRun, $uuid, $proVarObj, $ownerID){
@@ -3117,7 +3307,9 @@ class dbfuncs {
         preg_match("/Session uuid:(.*)/",$dotNextflowLogInitial, $initialUUIDAr);
         if (!empty($mainUUIDAr[1])) $mainUUID = trim($mainUUIDAr[1]);
         if (!empty($initialUUIDAr[1])) $initialUUID = trim($initialUUIDAr[1]);
-        $this->updateRunSessionUUID($mainUUID, $initialUUID, $project_pipeline_id, $ownerID);
+        if (!empty($project_pipeline_id)){
+            $this->updateRunSessionUUID($mainUUID, $initialUUID, $project_pipeline_id, $ownerID);
+        }
     }
 
     //for lsf: Job <203477> is submitted to queue <long>.\n"
@@ -3139,7 +3331,7 @@ class dbfuncs {
             if (!empty($runPidAr) && !empty($runPidAr[1])){
                 $runPid = trim($runPidAr[1]);
             }
-            if (!empty($runPid)) {
+            if (!empty($runPid) && !empty($project_pipeline_id)) {
                 $this->updateRunPid($project_pipeline_id, $runPid, $ownerID);
             }
         }
@@ -3148,42 +3340,59 @@ class dbfuncs {
 
 
 
-    function updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID){
-        $curr_ownerID= $this->queryAVal("SELECT owner_id FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
-        $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
-        if (empty($permCheck)){
-            exit();
-        }
-        // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted, Manual
-        // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
+    function updateProPipeStatus ($project_pipeline_id, $process_id, $loadtype, $ownerID){
         $out = array();
         $duration = ""; //run duration
         $newRunStatus = "";
         $saveNextLog = "";
-        $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
-        //fix for old runs 
-        if (empty($uuid)){
-            //old run folder format may exist (runID)
-            $runStat = json_decode($this->getRunStatus($project_pipeline_id, $ownerID));
-            if (!empty($runStat)){
-                $runStatus = $runStat[0]->{"run_status"};
-                $last_run_uuid = "run".$project_pipeline_id;
-                $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-                $output_dir = $proPipeAll[0]->{'output_dir'};
-                $profile = $proPipeAll[0]->{'profile'};
-                $subRunLogDir = "";
+        if (!empty($project_pipeline_id)){
+            $curr_ownerID= $this->queryAVal("SELECT owner_id FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
+            $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+            if (empty($permCheck)){
+                exit();
             }
-        } else {
-            // latest last_uuid format exist
-            $runDataJS = $this->getLastRunData($project_pipeline_id);
-            if (!empty(json_decode($runDataJS,true))){
-                $runData = json_decode($runDataJS,true)[0];
-                $runStatus = $runData["run_status"];
-                $last_run_uuid = $runData["last_run_uuid"];
-                $output_dir = $runData["output_dir"];
-                $profile = $runData["profile"];
+            // get active runs //Available Run_status States: NextErr,NextSuc,NextRun,Error,Waiting,init,Terminated, Aborted, Manual
+            // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. 
+            $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
+            //fix for old runs 
+            if (empty($uuid)){
+                //old run folder format may exist (runID)
+                $runStat = json_decode($this->getRunStatus($project_pipeline_id, $ownerID));
+                if (!empty($runStat)){
+                    $runStatus = $runStat[0]->{"run_status"};
+                    $last_run_uuid = "run".$project_pipeline_id;
+                    $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+                    $output_dir = $proPipeAll[0]->{'output_dir'};
+                    $profile = $proPipeAll[0]->{'profile'};
+                    $subRunLogDir = "";
+                }
+            } else {
+                // latest last_uuid format exist
+                $runDataJS = $this->getLastRunData($project_pipeline_id);
+                if (!empty(json_decode($runDataJS,true))){
+                    $runData = json_decode($runDataJS,true)[0];
+                    $runStatus = $runData["run_status"];
+                    $last_run_uuid = $runData["last_run_uuid"];
+                    $output_dir = $runData["output_dir"];
+                    $profile = $runData["profile"];
+                    $subRunLogDir = "run";
+                }
+            }
+        } else if (!empty($process_id)){
+            $process_data = json_decode($this->getProcessDataById($process_id, $ownerID),true);
+            if (!empty($process_data[0])){
+                $pro_owner_id = $process_data[0]["owner_id"];
+                $permCheck = $this->checkUserOwnPerm($pro_owner_id, $ownerID);
+                if (empty($permCheck)){
+                    exit();
+                }
+                $runStatus = $process_data[0]["run_status"];
+                $last_run_uuid = $process_data[0]["run_uuid"];
+                $output_dir = $process_data[0]["test_work_dir"];
+                $profile = $process_data[0]["test_env"];
                 $subRunLogDir = "run";
             }
+
         }
         if (!empty($profile)){
             $profileAr = explode("-", $profile);
@@ -3287,7 +3496,7 @@ class dbfuncs {
 
                 // if runStatus is active =>make sure pid is exist
                 // if checkRunPid returns EXIT, ZOMBIE or UKNOWN code than trigger error
-                if ( (!empty($runStatus) && !in_array($runStatus, $inactiveJobStatus)) && (empty($newRunStatus) || !in_array($newRunStatus, $inactiveJobStatus)) ) {
+                if ( !empty($project_pipeline_id) && (!empty($runStatus) && !in_array($runStatus, $inactiveJobStatus)) && (empty($newRunStatus) || !in_array($newRunStatus, $inactiveJobStatus)) ) {
                     if ($executor == "lsf"){
                         $pid = json_decode($this->getRunPid($project_pipeline_id))[0]->{'pid'};
                         if (!empty($pid)){
@@ -3324,8 +3533,13 @@ class dbfuncs {
                     }
                 }
                 if (!empty($newRunStatus)){
-                    $setStatus = $this -> updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
-                    $setLog = $this -> updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID); 
+                    if (!empty($project_pipeline_id)){
+                        $setStatus = $this -> updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
+                        $setLog = $this -> updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID); 
+                    } else if (!empty($process_id)){
+                        $setStatus = $this -> updateProcessStatus($process_id, $newRunStatus, $ownerID);
+                    }
+
                     $out["runStatus"] = $newRunStatus;
                     if (($newRunStatus == "NextErr" || $newRunStatus == "NextSuc" || $newRunStatus == "Error") && ($profileType == "amazon" || $profileType == "google") ){
                         error_log("triggerShutdown fast1");
@@ -4612,6 +4826,15 @@ class dbfuncs {
         $sql = "UPDATE $this->db.run SET run_status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
+    function updateProcessStatus($process_id, $status, $ownerID) {
+        $curr_ownerID= $this->queryAVal("SELECT owner_id FROM $this->db.process WHERE id='$process_id'");
+        $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (empty($permCheck)){
+            exit();
+        }
+        $sql = "UPDATE $this->db.process SET run_status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$process_id'";
+        return self::runSQL($sql);
+    }
     function updateRunAttempt($project_pipeline_id, $attempt, $ownerID) {
         $sql = "UPDATE $this->db.run SET attempt= '$attempt', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
@@ -4927,7 +5150,9 @@ class dbfuncs {
             }
         }
         if (!is_null($nextflow_log) && !empty($nextflow_log)){
-            $this->saveRunLogSize($uuid, $project_pipeline_id, $ownerID);
+            if (!empty($project_pipeline_id)) {
+                $this->saveRunLogSize($uuid, $project_pipeline_id, $ownerID);
+            }
             return json_encode("nextflow log saved");
         } else {
             return json_encode("logNotFound");
@@ -5592,6 +5817,11 @@ class dbfuncs {
     function getProPipeLastRunUUID($project_pipeline_id) {
         $uuid = $this->queryAVal("SELECT last_run_uuid FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
         return $uuid;
+    }
+
+    function updateProcessRunUUID($process_id, $uuid) {
+        $sql = "UPDATE $this->db.process SET run_uuid='$uuid' WHERE id='$process_id'";
+        return self::runSQL($sql);
     }
     function updateProPipeLastRunUUID($project_pipeline_id, $uuid) {
         $sql = "UPDATE $this->db.project_pipeline SET last_run_uuid='$uuid' WHERE id='$project_pipeline_id'";

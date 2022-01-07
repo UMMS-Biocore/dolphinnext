@@ -517,8 +517,75 @@
                             <div class="col-md-1"></div>
                             <div class="form-group col-sm-12">
                                 <label class="col-sm-1 control-label"></label>
-                                <div class="col-sm-11" >
-                                    <button type="button" class="btn btn-primary testscript" id="testscript">Test Script</button>
+                                <div class="col-sm-11" id="pipeRunDiv" style="">
+                                    <div id="errorProPipe" style="display:none;  " class="btn-group">
+                                        <button class="btn btn-danger" type="button" id="errorProPipeBut">Run Error</button>
+                                        <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                            <li><a class="testscript">ReRun</a></li>
+                                        </ul>
+                                    </div>
+                                    <div id="completeProPipe" style="display:none;  " class="btn-group">
+                                        <button class="btn btn-success" type="button" id="completeProPipeBut">Completed</button>
+                                        <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                            <li><a class="testscript">ReRun</a></li>
+                                        </ul>
+                                    </div>
+                                    <div id="runningProPipe" style="display:none;  " class="btn-group">
+                                        <button class="btn btn-info" type="button" id="runningProPipeBut">Running</button>
+                                        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                            <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
+                                        </ul>
+                                    </div>
+                                    <div id="waitingProPipe" style="display:none;  " class="btn-group">
+                                        <button class="btn btn-info" type="button" id="waitingProPipeBut">Initializing..</button>
+                                        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                            <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
+                                        </ul>
+                                    </div>
+                                    <div id="connectingProPipe" style="display:none;  " class="btn-group">
+                                        <button class="btn btn-info" type="button" id="connectingProPipeBut">Connecting..</button>
+                                        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                            <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
+                                        </ul>
+                                    </div>
+                                    <div id="terminatedProPipe" style="display:none;  " class="btn-group">
+                                        <button class="btn btn-danger" type="button" id="terminatedProPipeBut">Terminated</button>
+                                        <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                            <li><a class="testscript">ReRun</a></li>
+                                        </ul>
+                                    </div>
+                                    <div id="abortedProPipe" style="display:none;  " class="btn-group">
+                                        <button class="btn btn-info" type="button" id="abortedProPipeBut">Reconnecting..</button>
+                                        <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                            <li><a href="#" onclick="terminateProjectPipe();return false;">Terminate</a></li>
+                                            <li><a class="testscript">ReRun</a></li>
+                                        </ul>
+                                    </div>
+                                    <div id="runProPipe" style="display:none;  " class="btn-group">
+                                        <button class="btn btn-success testscript" type="button" id="runProPipeBut"><i class="fa fa-play " style=""></i> Test Process</button>
+                                    </div>
+                                    <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; vertical-align:middle;" data-original-title="Waiting for input parameters, output directory and selection of active environment" data-placement="bottom" data-toggle="tooltip">Waiting</button>
                                 </div>
                             </div>
                             <div class="form-group col-sm-12">

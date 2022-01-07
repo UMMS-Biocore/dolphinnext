@@ -2217,7 +2217,8 @@ function createSaveNodes() {
         }
     }
     // sort saveNodes
-    saveNodes = Object.keys(saveNodes).sort().reduce(
+    const sortAlphaNum = (a, b) => a.localeCompare(b, 'en', { numeric: true })
+    saveNodes = Object.keys(saveNodes).sort(sortAlphaNum).reduce(
         (obj, key) => { 
             obj[key] = saveNodes[key]; 
             return obj;

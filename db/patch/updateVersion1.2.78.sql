@@ -9,6 +9,10 @@ ALTER TABLE `process` ADD `singu_img` varchar(300) DEFAULT NULL after `script_mo
 ALTER TABLE `process` ADD `singu_opt` varchar(300) DEFAULT NULL after `script_mode_header`;
 ALTER TABLE `process` ADD `script_test` text DEFAULT NULL after `script_mode_header`;
 ALTER TABLE `process` ADD `script_test_mode` varchar(20) DEFAULT NULL after `script_mode_header`;
+ALTER TABLE `process` ADD `run_status` varchar(20) DEFAULT NULL after `script_mode_header`;
+ALTER TABLE `process` ADD `run_uuid` varchar(100) DEFAULT NULL after `script_mode_header`;
+
+
 
 
 INSERT INTO `update_db` (`name`, `owner_id`, `date_created`, `date_modified`, `last_modified_user`) VALUES 
