@@ -43,7 +43,14 @@ else if ($p=="updateRunAttemptLog") {
 else if ($p=="updateProPipeStatus") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $loadtype = "fast";
-    $data = $db->updateProPipeStatus($project_pipeline_id, $loadtype, $ownerID);
+    $process_id = "";
+    $data = $db->updateProPipeStatus($project_pipeline_id, $process_id, $loadtype, $ownerID);
+}
+else if ($p=="updateProcessStatus") {
+    $process_id = $_REQUEST['process_id'];
+    $loadtype = "fast";
+    $project_pipeline_id = "";
+    $data = $db->updateProPipeStatus($project_pipeline_id, $process_id, $loadtype, $ownerID);
 }
 else if ($p=="saveRunLogSize"){
     $uuid = isset($_REQUEST['uuid']) ? $_REQUEST['uuid'] : "";
@@ -211,15 +218,29 @@ else if ($p=="savePubWeb"){
     } 
 }
 else if ($p=="saveNextflowLog"){
-    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
-    $profileType = $_REQUEST['profileType'];
-    $profileId = $_REQUEST['profileId'];
-    $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
     $data = json_encode("");
-    if (!empty($uuid) && !empty($ownerID)){
-        // get outputdir
-        $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
+    $profileType = $_REQUEST['profileType'];
+    $profileId = isset($_REQUEST['profileId']) ? $_REQUEST['profileId'] : "";
+    $process_id = isset($_REQUEST['process_id']) ? $_REQUEST['process_id'] : "";
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
+    if (!empty($project_pipeline_id)){
+        $uuid = $db->getProPipeLastRunUUID($project_pipeline_id);
+        if (!empty($uuid) && !empty($ownerID)){
+            // get outputdir
+            $proPipeAll = json_decode($db->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+            list($dolphin_path_real,$dolphin_publish_real) = $db->getDolphinPathReal($proPipeAll);
+        }
+    } else if (!empty($process_id)){
+        $process_data = json_decode($db->getProcessDataById($process_id, $ownerID),true);
+        if (!empty($process_data[0])){
+            $uuid = $process_data[0]["run_uuid"];
+            $output_dir = $process_data[0]["test_work_dir"];
+            $dolphin_path_real = "$output_dir/run{$project_pipeline_id}";
+        }
+    }
+
+
+    if (!empty($uuid) && !empty($ownerID) && !empty($dolphin_path_real)){
         $down_file_list=array("log.txt",".nextflow.log","report.html", "timeline.html", "trace.txt","dag.html","err.log", "initialrun/initial.log", "initialrun/.nextflow.log", "initialrun/trace.txt");
         foreach ($down_file_list as &$value) {
             $value = $dolphin_path_real."/".$value;
@@ -263,19 +284,32 @@ else if ($p=="getRun"){
 }
 else if ($p=="terminateRun"){
     $commandType = "terminateRun";
-    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $process_id = isset($_REQUEST['process_id']) ? $_REQUEST['process_id'] : "";
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $executor = $_REQUEST['executor'];
+
     if ($executor != 'local') {
-        $pid = json_decode($db->getRunPid($project_pipeline_id))[0]->{'pid'};
+        if (!empty($project_pipeline_id)){
+            $pid = json_decode($db->getRunPid($project_pipeline_id))[0]->{'pid'};
+        } else if (!empty($process_id)){
+            $pid = json_decode($db->getProcessRunPid($process_id))[0]->{'run_pid'};
+        }
         if (!empty($pid)){
-            $data = $db -> sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID);
+            $data = $db -> sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $process_id, $ownerID);
         } else {
             $data = json_encode("pidNotExist");	
         }
     } else if ($executor == 'local'){
-        $data = $db -> sshExeCommand($commandType, "", $profileType, $profileId, $project_pipeline_id, $ownerID);
+        $data = $db -> sshExeCommand($commandType, "", $profileType, $profileId, $project_pipeline_id, $process_id, $ownerID);
+    }
+}
+else if ($p=="updateProcessRunStatus"){
+    $process_id = $_REQUEST['process_id'];
+    $run_status = $_REQUEST['run_status'];
+    if (!empty($ownerID)){
+        $data = $db -> updateProcessRunStatus($process_id, $run_status, $ownerID);
     }
 }
 else if ($p=="updateRunStatus"){
@@ -1764,6 +1798,14 @@ else if ($p=="saveProcessGroup"){
         }
     }
 }
+
+else if ($p=="testScript"){
+    $inputs = $_REQUEST['inputs'];
+    $outputs= $_REQUEST['outputs'];
+    $code= $_REQUEST['code'];
+    $env= $_REQUEST['env'];
+    $data = $db->saveTestRun($inputs, $outputs, $code, $env, $ownerID);
+}
 else if ($p=="saveProcess"){
     $name = $_REQUEST['name'];
     $process_gid = isset($_REQUEST['process_gid']) ? $_REQUEST['process_gid'] : "";
@@ -1784,6 +1826,17 @@ else if ($p=="saveProcess"){
     $script = addslashes(htmlspecialchars(urldecode($_REQUEST['script']), ENT_QUOTES));
     $script_header = addslashes(htmlspecialchars(urldecode($_REQUEST['script_header']), ENT_QUOTES));
     $script_footer = addslashes(htmlspecialchars(urldecode($_REQUEST['script_footer']), ENT_QUOTES));
+
+    $test_env = isset($_REQUEST['test_env']) ? $_REQUEST['test_env'] : "";
+    $test_work_dir = isset($_REQUEST['test_work_dir']) ? $_REQUEST['test_work_dir'] : "";
+    $docker_check = !empty($_REQUEST['docker_check']) ? 1 : 0;
+    $docker_img = isset($_REQUEST['docker_img']) ? $_REQUEST['docker_img'] : "";
+    $docker_opt = isset($_REQUEST['docker_opt']) ? $_REQUEST['docker_opt'] : "";
+    $singu_check = !empty($_REQUEST['singu_check']) ? 1 : 0;
+    $singu_img = isset($_REQUEST['singu_img']) ? $_REQUEST['singu_img'] : "";
+    $singu_opt = isset($_REQUEST['singu_opt']) ? $_REQUEST['singu_opt'] : "";
+    $script_test = addslashes(htmlspecialchars(urldecode($_REQUEST['script_test']), ENT_QUOTES));
+    $script_test_mode = isset($_REQUEST['script_test_mode']) ? $_REQUEST['script_test_mode'] : "";
     $script_mode = $_REQUEST['script_mode'];
     $script_mode_header = $_REQUEST['script_mode_header'];
     $rev_id = isset($_REQUEST['rev_id']) ? $_REQUEST['rev_id'] : "";
@@ -1799,9 +1852,9 @@ else if ($p=="saveProcess"){
     if (!empty($id)) {
         $db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
         $db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
-        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $ownerID);
+        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
     } else {
-        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $ownerID);
+        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
         $idArray = json_decode($data,true);
         $new_pro_id = $idArray["id"];
         if (empty($id) && empty($process_uuid)) {
@@ -2002,6 +2055,7 @@ else if ($p=="saveProjectPipeline"){
 }
 else if ($p=="saveProcessParameter"){
     $closure = isset($_REQUEST['closure']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['closure']), ENT_QUOTES)) : "";
+    $test = isset($_REQUEST['test']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['test']), ENT_QUOTES)) : "";
     $reg_ex = isset($_REQUEST['reg_ex']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['reg_ex']), ENT_QUOTES)) : "";
     $operator = isset($_REQUEST['operator']) ? $_REQUEST['operator'] : "";
     $optional = isset($_REQUEST['optional']) ? $_REQUEST['optional'] : "";
@@ -2017,9 +2071,9 @@ else if ($p=="saveProcessParameter"){
     settype($parameter_id, 'integer');
     settype($process_id, 'integer');
     if (!empty($id)) {
-        $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID);
+        $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $test, $optional, $perms, $group_id, $ownerID);
     } else {
-        $data = $db->insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $optional, $perms, $group_id, $ownerID);
+        $data = $db->insertProcessParameter($sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $test, $optional, $perms, $group_id, $ownerID);
     }
 }
 else if ($p=="getProcessData")

@@ -153,7 +153,8 @@ class updates
             if (!empty($accTk) && !empty($accTk[0]) && !empty($accTk[0]["accessToken"])){
                 $accessToken = $accTk[0]["accessToken"];
             }
-            $outJS = $dbfun -> updateProPipeStatus ($project_pipeline_id, $loadtype, $ownerID);
+            $process_id = "";
+            $outJS = $dbfun -> updateProPipeStatus($project_pipeline_id, $process_id, $loadtype, $ownerID);
             $out = json_decode($outJS,true);
             $finalRunStatus = $out["runStatus"];
             $ret .= "$time runId:$project_pipeline_id status:$finalRunStatus\n";

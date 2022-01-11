@@ -106,8 +106,9 @@ session_write_close();
 
             <div class="col-md-12" style="margin-bottom:20px;">
                 <div id="pipelineSum"></div>
-                <div id="pipelineSumEditorDiv" style="display:none;" class="col-sm-12">
+                <div id="pipelineSumEditordiv" style="display:none;" class="col-sm-12">
                     <div id="pipelineSumEditor" style="height:400px;"></div>
+                    <div id="pipelineSumEditor_dragbar" class="app_editor_dragbar"></div>
                     <div class="row" style="display:none;">
                         <div class="col-sm-3" style="padding-left:0;">
                             <select id="pipelineSumEditor_mode" class="form-control">
@@ -213,6 +214,7 @@ session_write_close();
                         <label style="width:150px;" class="col-sm-2 control-label">Pipeline Header Script</label>
                         <div id="editorPipeHeaderdiv" class="col-sm-10">
                             <div id="editorPipeHeader" style="height:200px;"></div>
+                            <div id="editorPipeHeader_dragbar" class="app_editor_dragbar"></div>
                             <div class="row">
                                 <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
                                 <div class="col-sm-3" style="padding-left:0;">
@@ -230,6 +232,7 @@ session_write_close();
                         <label style="width:150px;" class="col-sm-2 control-label">Pipeline Footer Script</label>
                         <div id="editorPipeFooterdiv" class="col-sm-10">
                             <div id="editorPipeFooter" style="height:200px;"></div>
+                            <div id="editorPipeFooter_dragbar" class="app_editor_dragbar"></div>
                             <div class="row">
                                 <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
                                 <div class="col-sm-3" style="padding-left:0;">

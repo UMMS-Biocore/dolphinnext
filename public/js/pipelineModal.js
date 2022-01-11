@@ -485,6 +485,7 @@
 
 
 //template text for ace editor
+window.draggingAceEditor = {};
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
 templateperl = '#perl example: \n\n#!/usr/bin/env perl \n print \'Hi there!\' . \'\\n\';';
 templatepython = '#python example: \n\n#!/usr/bin/env python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
@@ -497,6 +498,58 @@ createAceEditors("editorProFooter", "#script_mode_footer") //ace process header 
 createAceEditors("editorPipeHeader", "#script_mode_pipe_header") //ace pipeline header editor
 createAceEditors("editorPipeFooter", "#script_mode_pipe_footer") //ace pipeline footer editor
 createAceEditors("pipelineSumEditor", "#pipelineSumEditor_mode") 
+createAceEditors("editorTestPro", "#script_mode_test_pro") //ace process header editor
+/**
+ * Global variable to store the ids of the status of the current dragged ace editor.
+ */
+
+
+function makeAceEditorResizable(editor){
+    var id_editor = editor.container.id;
+    var id_dragbar = '#' + id_editor + '_dragbar';
+    var id_wrapper = '#' + id_editor + 'div';
+    var wpoffset = 0;
+    window.draggingAceEditor[id_editor] = false;
+
+    $(id_dragbar).mousedown(function(e) {
+        e.preventDefault();
+        window.draggingAceEditor[id_editor] = true;
+        var _editor = $('#' + id_editor);
+        var top_offset = _editor.offset().top - wpoffset;
+
+        // Set editor opacity to 0 to make transparent so our wrapper div shows
+        _editor.css('opacity', 0);
+
+        // handle mouse movement
+        $(document).mousemove(function(e){
+            var actualY = e.pageY - wpoffset;
+            // editor height
+            var eheight = actualY - top_offset;
+            // Set wrapper height
+            $(id_wrapper).css('height', eheight);
+            // Set dragbar opacity while dragging (set to 0 to not show)
+            $(id_dragbar).css('opacity', 0.15);
+        });
+    });
+
+    $(document).mouseup(function(e){
+        if (window.draggingAceEditor[id_editor])
+        {
+            var ctx_editor = $('#' + id_editor);
+            var actualY = e.pageY - wpoffset;
+            var top_offset = ctx_editor.offset().top - wpoffset;
+            var eheight = actualY - top_offset;
+            $( document ).unbind('mousemove');
+            // Set dragbar opacity back to 1
+            $(id_dragbar).css('opacity', 1);
+            // Set height on actual editor element, and opacity back to 1
+            ctx_editor.css('height', eheight).css('opacity', 1);
+            // Trigger ace editor resize()
+            editor.resize();
+            window.draggingAceEditor[id_editor] = false;
+        }
+    });
+}
 
 function createAceEditors(editorId, script_modeId) {
     //ace process editor
@@ -506,6 +559,7 @@ function createAceEditors(editorId, script_modeId) {
         window[editorId].getSession().setMode("ace/mode/sh");
         window[editorId].setOptions({useSoftTabs: false });
         window[editorId].$blockScrolling = Infinity;
+        //        makeAceEditorResizable(window[editorId])
         //If mode is exist, then apply it
         var mode = $(script_modeId).val();
         if (mode && mode != "") {
@@ -545,6 +599,49 @@ $('#advOpt').on('show.bs.collapse', function () {
     editorPipeFooter.setValue(scriptPipeFooter);
     editorPipeFooter.clearSelection();
 });
+$('#testOptPro').on('show.bs.collapse', function () {
+    var scriptProHeader = editorTestPro.getValue();
+    editorTestPro.setValue(scriptProHeader);
+    editorTestPro.clearSelection();
+});
+
+//not allow to check both docker and singularity
+$("#docker_imgDiv").on("show.bs.collapse", function () {
+    if ($("#singu_check").is(":checked") && $("#docker_check").is(":checked")) {
+        $("#singu_check").trigger("click");
+    }
+    $("#docker_check").attr("onclick", "return false;");
+});
+$("#singu_imgDiv").on("show.bs.collapse", function () {
+    if ($("#singu_check").is(":checked") && $("#docker_check").is(":checked")) {
+        $("#docker_check").trigger("click");
+    }
+    $("#singu_check").attr("onclick", "return false;");
+});
+$("#docker_imgDiv").on("shown.bs.collapse", function () {
+    if ($("#singu_check").is(":checked") && $("#docker_check").is(":checked")) {
+        $("#singu_check").trigger("click");
+    }
+    $("#docker_check").removeAttr("onclick");
+});
+$("#singu_imgDiv").on("shown.bs.collapse", function () {
+    if ($("#singu_check").is(":checked") && $("#docker_check").is(":checked")) {
+        $("#docker_check").trigger("click");
+    }
+    $("#singu_check").removeAttr("onclick");
+});
+$("#singu_imgDiv").on("hide.bs.collapse", function () {
+    $("#singu_check").attr("onclick", "return false;");
+});
+$("#docker_imgDiv").on("hide.bs.collapse", function () {
+    $("#docker_check").attr("onclick", "return false;");
+});
+$("#docker_imgDiv").on("hidden.bs.collapse", function () {
+    $("#docker_check").removeAttr("onclick");
+});
+$("#singu_imgDiv").on("hidden.bs.collapse", function () {
+    $("#singu_check").removeAttr("onclick");
+});
 
 // cleanProcessModal when modal is closed     
 function cleanProcessModal() {
@@ -574,7 +671,10 @@ function cleanProcessModal() {
     editor.setValue("");
     editorProHeader.setValue("");
     editorProFooter.setValue("");
+    editorTestPro.setValue("");
     $('#mProActionsDiv').css('display', "none");
+    $('#pipeRunStatDiv').css('display', "inline");
+
     $('#mProRevSpan').css('display', "none");
     $('#mName').removeAttr('disabled');
     $('#permsPro').removeAttr('disabled');
@@ -582,9 +682,37 @@ function cleanProcessModal() {
     if (advOptProClass !== "row collapse") {
         $('#mAdvProCollap').trigger("click");
     }
+    $(`a[href*=pro_editor_tab`).click()
     $('#createRevisionBut').css('display', "none");
     $('#saveprocess').css('display', "inline");
 
+}
+
+function loadRunEnv() {
+    $.ajax({
+        type: "GET",
+        url: "ajax/ajaxquery.php",
+        data: {
+            p: "getProfiles",
+            type: "run"
+        },
+        async: false,
+        success: function (s) {
+            $("#test_env").find("option").not(":disabled").remove();
+            for (let i = 0; i < s.length; i++) {
+                const param = s[i]
+                if (param.hostname != undefined && param.perms !== "15"){
+                    const optionGroup = new Option(`${param.name} (${param.username}@${param.hostname}) `, "cluster-"+param.id)
+                    optionGroup.setAttribute("executor", param.executor);
+                    $("#test_env").append(optionGroup)
+                }
+
+            }
+        },
+        error: function (e) {
+            alert("Error: " + e)
+        }
+    })
 }
 
 function cleanInfoModal() {
@@ -600,6 +728,7 @@ function cleanInfoModal() {
     editor.setReadOnly(false);
     editorProHeader.setReadOnly(false);
     editorProFooter.setReadOnly(false);
+    editorTestPro.setReadOnly(false);
     $('#saveprocess').css('display', "inline");
     $('#selectProcess').css('display', "none");
     $('#createRevisionBut').css('display', "none");
@@ -614,6 +743,7 @@ function refreshProcessModal(selProId) {
     loadModalParam();
     $('#processmodaltitle').html('Edit/Delete Process');
     $('#mProActionsDiv').css('display', "inline");
+    $('#pipeRunStatDiv').css('display', "inline");
     $('#mProRevSpan').css('display', "inline");
     $('#proPermGroPubDiv').css('display', "inline");
     loadModalRevision(selProId);
@@ -755,6 +885,24 @@ function loadModalRevision(selProcessId) {
     $('#mProRev')[0].selectize.setValue(selProcessId, false);
 }
 
+function updateCheckBox(check_id, status) {
+    var targetDiv = $(check_id).attr("data-target");
+    if (targetDiv) {
+        if (status === "1") {
+            $(targetDiv).collapse("show");
+            $(check_id).prop("checked", true);
+        } else if (status === "0") {
+            $(targetDiv).collapse("hide");
+            $(check_id).prop("checked", false);
+        }
+    }
+    if (status === "1") {
+        $(check_id).prop("checked", true);
+    } else if (status === "0") {
+        $(check_id).prop("checked", false);
+    }
+}
+
 function loadSelectedProcess(selProcessId) {
     $('#mIdPro').val(selProcessId);
     //Ajax for selected process
@@ -765,12 +913,32 @@ function loadSelectedProcess(selProcessId) {
     $('#addProcessModal').removeData("prodata");
     $('#addProcessModal').data("prodata", showProcess);
     var processOwn = showProcess.own;
+    if (showProcess.test_env){
+        $('#test_env').val(showProcess.test_env);
+        var patt = /(.*)-(.*)/;
+        var proType = showProcess.test_env.replace(patt, "$1");
+        var proId = showProcess.test_env.replace(patt, "$2");
+        readNextLog(proType, proId, "reload");
+    } else {
+        displayButton("runProPipe");
+    }
     //insert data into form
     var formValues = $('#addProcessModal').find('input, select, textarea');
     $(formValues[2]).val(showProcess.id);
     $(formValues[3]).val(showProcess.name);
     $(formValues[5]).val(decodeHtml(showProcess.summary));
     $('#permsPro').val(showProcess.perms);
+    if (showProcess.test_work_dir) $('#test_work_dir').val(showProcess.test_work_dir);
+    if (showProcess.docker_check !== null) updateCheckBox("#docker_check",showProcess.docker_check)
+    if (showProcess.singu_check !== null) updateCheckBox("#singu_check",showProcess.singu_check)
+    if (showProcess.docker_img) $('#docker_img').val(showProcess.docker_img);
+    if (showProcess.docker_opt) $('#docker_opt').val(showProcess.docker_opt);
+    if (showProcess.singu_img) $('#singu_img').val(showProcess.singu_img);
+    if (showProcess.singu_opt) $('#singu_opt').val(showProcess.singu_opt);
+    if (showProcess.script_test_mode) {
+        $('#script_mode_test_pro').val(showProcess.script_test_mode);
+    }
+
     if (showProcess.username !== "" && showProcess.username !== null) {
         $('#creatorInfoPro').css("display", "inline");
         $('#ownUserNamePro').text(showProcess.username);
@@ -807,6 +975,11 @@ function loadSelectedProcess(selProcessId) {
         editorProFooter.setValue(editorProFooterScript);
         editorProFooter.clearSelection();
     }
+    if (showProcess.script_test !== null) {
+        var editorScript = decodeHtml(showProcess.script_test);
+        editorTestPro.setValue(editorScript);
+        editorTestPro.clearSelection();
+    }
     if (showProcess.process_group_id !== "" && showProcess.process_group_id !== null) {
         $('#mProcessGroup')[0].selectize.setValue(showProcess.process_group_id, false);
     }
@@ -829,6 +1002,10 @@ function loadSelectedProcess(selProcessId) {
             closureText = decodeHtml(inputs[i].closure);
         }
         $('#mInClosure-' + numForm).val(closureText);
+        var testText = inputs[i].test ? decodeHtml(inputs[i].test) : "";
+        $('#mInTestValue-' + numForm).val(testText);
+
+        $('#mInClosure-' + numForm).val(closureText);
         if (inputs[i].operator !== '' && inputs[i].operator !== null) {
             $('#mInOpt-' + numForm).val(inputs[i].operator);
             $('#mInOptBut-' + numForm).trigger('click');
@@ -850,6 +1027,8 @@ function loadSelectedProcess(selProcessId) {
             closureText = decodeHtml(outputs[i].closure);
             $('#mOutClosure-' + numForm).val(closureText);
         }
+        var testText = outputs[i].test ? decodeHtml(outputs[i].test) : "";
+        $('#mOutTestValue-' + numForm).val(testText);
         if (outputs[i].operator !== '' && outputs[i].operator !== null) {
             $('#mOutOpt-' + numForm).val(outputs[i].operator);
             $('#mOutOptBut-' + numForm).trigger('click');
@@ -976,6 +1155,9 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
             }
             //for process parameters
             for (var k = startPoint; k < data.length; k++) {
+                if (data[k].name === 'mInTestValue-' + matchSPart) {
+                    dataToProcessParam.push({ name: "test", value: encodeURIComponent(data[k].value) });
+                }
                 if (data[k].name === 'mInName-' + matchSPart && data[k].value === '') {
                     dataToProcessParam = [];
                     break;
@@ -1009,6 +1191,9 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
             }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
+                if (data[k].name === 'mOutTestValue-' + matchSPart) {
+                    dataToProcessParam.push({ name: "test", value: encodeURIComponent(data[k].value) });
+                }
                 if (data[k].name === 'mOutName-' + matchSPart && data[k].value === '') {
                     dataToProcessParam = [];
                     break;
@@ -1071,6 +1256,9 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
             }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
+                if (data[k].name === 'mInTestValue-' + matchSPart) {
+                    dataToProcessParam.push({ name: "test", value: encodeURIComponent(data[k].value) });
+                }
                 if (data[k].name === 'mInName-' + matchSPart && data[k].value === '') {
                     dataToProcessParam = [];
                     break;
@@ -1101,6 +1289,9 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
             }
             //for process parameters 
             for (var k = startPoint; k < data.length; k++) {
+                if (data[k].name === 'mOutTestValue-' + matchSPart) {
+                    dataToProcessParam.push({ name: "test", value: encodeURIComponent(data[k].value) });
+                }
                 if (data[k].name === 'mOutName-' + matchSPart && data[k].value === '') {
                     dataToProcessParam = [];
                     break;
@@ -1486,6 +1677,7 @@ function disableProModal(selProcessId) {
     editor.setReadOnly(true);
     editorProHeader.setReadOnly(true);
     editorProFooter.setReadOnly(true);
+    editorTestPro.setReadOnly(true);
     //Ajax for selected process input/outputs
     var inputs = getValues({
         p: "getInputsPP",
@@ -1504,6 +1696,7 @@ function disableProModal(selProcessId) {
         $('#mInOpt-' + numFormIn).attr('disabled', "disabled");
         $('#mInOptBut-' + numFormIn).css("pointer-events", "none");
         $('#mInOptional-' + numFormIn).css("pointer-events", "none");
+        $('#mInTestValue-' + numFormIn).css("disabled", "disabled");
         $('#mInOptdel-' + numFormIn).remove();
 
     }
@@ -1519,6 +1712,7 @@ function disableProModal(selProcessId) {
         $('#mOutOpt-' + numFormOut).attr('disabled', "disabled");
         $('#mOutOptional-' + numFormOut).css("pointer-events", "none");
         $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
+        $('#mOutTestValue-' + numFormOut).css("disabled", "disabled");
         $('#mOutOptdel-' + numFormOut).remove();
     }
     var delNumOut = numFormOut + 1;
@@ -1533,70 +1727,11 @@ function disableProModal(selProcessId) {
     $('#createRevision').css('display', "none");
     $('#createRevisionBut').css('display', "none");
     $('#deleteRevision').css('display', "none");
-};
-//disable when it is selected as everyone
-function disableProModalPublic(selProcessId) {
-    var formValues = $('#addProcessModal').find('input, select, textarea');
-    $('#mName').attr('disabled', "disabled");
-    $('#mDescription').attr('disabled', "disabled");
-    //    $('#modeAce').attr('disabled', "disabled");
-    $('#mProcessGroup')[0].selectize.disable();
-    editor.setReadOnly(true);
-    editorProHeader.setReadOnly(true);
-    editorProFooter.setReadOnly(true);
-    //Ajax for selected process input/outputs
-    var inputs = getValues({
-        p: "getInputsPP",
-        "process_id": selProcessId
-    });
-    var outputs = getValues({
-        p: "getOutputsPP",
-        "process_id": selProcessId
-    });
-    for (var i = 0; i < inputs.length; i++) {
-        var numFormIn = i + 1;
-        $('#mInputs-' + numFormIn)[0].selectize.disable();
-        $('#mInName-' + numFormIn).attr('disabled', "disabled");
-        $('#mInNamedel-' + numFormIn).remove();
-        $('#mInClosure-' + numFormIn).attr('disabled', "disabled");
-        $('#mInOptional-' + numFormIn).css("pointer-events", "none");
-        $('#mInOpt-' + numFormIn).attr('disabled', "disabled");
-        $('#mInOptBut-' + numFormIn).css("pointer-events", "none");
-        $('#mInOptdel-' + numFormIn).remove();
-    }
-    //
-    var delNumIn = numFormIn + 1;
-    $('#mInputs-' + delNumIn + '-selectized').parent().parent().remove();
-    for (var i = 0; i < outputs.length; i++) {
-        var numFormOut = i + 1;
-        $('#mOutputs-' + numFormOut)[0].selectize.disable();
-        $('#mOutName-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutNamedel-' + numFormOut).remove();
-        $('#mOutClosure-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutOptional-' + numFormOut).css("pointer-events", "none");
-        $('#mOutOpt-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
-        $('#mOutOptdel-' + numFormOut).remove();
-    }
-    var delNumOut = numFormOut + 1;
-    $('#mOutputs-' + delNumOut + '-selectized').parent().parent().remove();
-    $('#mParameters').remove();
-    $('#mProcessGroupAdd').remove();
-    $('#mProcessGroupEdit').remove();
-    $('#mProcessGroupDel').remove();
-    $('#saveprocess').css('display', "none");
-    $('#deleteRevision').css('display', "none");
-    $('#createRevision').css('display', "inline");
-    $('#createRevisionBut').css('display', "inline");
+    $('#pipeRunStatDiv').css('display', "none");
+
 };
 
-function prepareInfoModal() {
-    $('#processmodaltitle').html('Select Process Revision');
-    $('#mProActionsDiv').css('display', "none");
-    $('#proPermGroPubDiv').css('display', "none");
-    $('#mProRevSpan').css('display', "inline");
-    $('#createRevisionBut').css('display', "none");
-}
+
 
 function updateGitTitle(github_username, github_repo, commit_id){
     if (commit_id && github_username && github_repo){
@@ -2043,6 +2178,233 @@ function saveCircleCoordinates(selProcessId){
 }
 
 
+
+//#########read nextflow log file for status  ################################################
+function displayButton(idButton) {
+    var buttonList = [
+        "runProPipe",
+        "errorProPipe",
+        "completeProPipe",
+        "runningProPipe",
+        "waitingProPipe",
+        "statusProPipe",
+        "connectingProPipe",
+        "terminatedProPipe",
+        "abortedProPipe",
+        "manualProPipe",
+    ];
+    for (var i = 0; i < buttonList.length; i++) {
+        if (document.getElementById(buttonList[i])) {
+            document.getElementById(buttonList[i]).style.display = "none";
+        }
+    }
+    if (document.getElementById(idButton)) {
+        document.getElementById(idButton).style.display = "inline";
+    }
+}
+autoScrollLog = true;
+$(document).on("click", "#testrunLogArea", function () {
+    autoScrollLog = false;
+});
+
+function autoScrollLogArea() {
+    if (autoScrollLog) {
+        if (document.getElementById("testrunLogArea")) {
+            document.getElementById("testrunLogArea").scrollTop =
+                document.getElementById("testrunLogArea").scrollHeight;
+        }
+    }
+}
+function callAsyncSaveNextLog(data) {
+    getValuesAsync(data, function (d) {
+        if (d == "logNotFound") {
+            window.saveNextLog = "logNotFound";
+        } else if (d == "nextflow log saved") {
+            window.saveNextLog = true;
+        } 
+        //        else if (d == "pubweb is not defined") {
+        //            if (typeof interval_readPubWeb !== "undefined") {
+        //                clearInterval(interval_readPubWeb);
+        //            }
+        //        }
+    });
+}
+function clearIntNextLog(proType, proId) {
+    if (typeof interval_readNextlog !== "undefined") {
+        clearInterval(interval_readNextlog);
+    }
+    //last save call after run completed
+    setTimeout(function () {
+        saveNexLg(proType, proId);
+    }, 5000);
+}
+
+async function terminateProjectPipe() {
+    if (typeof $runscope !== 'undefined' && $runscope.beforeunload) {
+        showInfoModal(
+            "#infoModal",
+            "#infoModalText",
+            "Please wait for the submission."
+        );
+    } else {
+        var process_id = $('#mIdPro').val();
+        var test_env_opt  = $("#test_env").find('option:selected');
+        var test_env  = test_env_opt.val()
+        var patt = /(.*)-(.*)/;
+        var proType = test_env.replace(patt, "$1");
+        var proId = test_env.replace(patt, "$2");
+        var executor = test_env_opt.attr("executor");
+        var terminateRun = await doAjax({
+            p: "terminateRun",
+            process_id: process_id,
+            profileType: proType,
+            profileId: proId,
+            executor: executor,
+        });
+        console.log(terminateRun);
+
+        var setStatus = await doAjax({
+            p: "updateProcessRunStatus",
+            run_status: "Terminated",
+            process_id: process_id,
+        });
+        if (setStatus) {
+            displayButton("terminatedProPipe");
+            window.runStatus = "Terminated";
+            //trigger saving newxtflow log file
+            setTimeout(function () {
+                clearIntNextLog(proType, proId);
+            }, 3000);
+            //            readPubWeb(proType, proId, "no_reload");
+        }
+    }
+}
+
+function saveNexLg(process_id, proType, proId) {
+    callAsyncSaveNextLog({
+        p: "saveNextflowLog",
+        process_id: process_id,
+        profileType: proType,
+        profileId: proId,
+    });
+    //update log navbar after saving files
+    //    setTimeout(async function () {
+    //        await updateRunVerNavBar();
+    //    }, 2500);
+}
+// type= reload for reload the page
+async function readNextLog(proType, proId, type) {
+    var showProcess = $('#addProcessModal').data("prodata");
+    var processOwn = showProcess.own;
+    var process_id = showProcess.id;
+    if (processOwn === "1") {
+        var updateProPipeStatus = await doAjax({
+            p: "updateProcessStatus",
+            process_id: process_id,
+        });
+        window.serverLog = "";
+        window.nextflowLog = "";
+        window.runStatus = "";
+        if (updateProPipeStatus) {
+            window.serverLog = updateProPipeStatus.serverLog;
+            window.nextflowLog = updateProPipeStatus.nextflowLog;
+            window.runStatus = updateProPipeStatus.runStatus;
+        }
+        // Available Run_status States: Terminated,NextSuc,Error,NextErr,NextRun, Waiting,init, Aborted
+        // if runStatus equal to  Terminated, NextSuc, Error,NextErr, it means run already stopped. Show the status based on these status.
+        if (
+            runStatus === "Terminated" ||
+            runStatus === "NextSuc" ||
+            runStatus === "Error" ||
+            runStatus === "NextErr" ||
+            runStatus === "Manual"
+        ) {
+            window["countFailRead"] = 0;
+            if (type !== "reload") {
+                clearIntNextLog(proType, proId);
+                //                clearIntPubWeb(proType, proId);
+            }
+            if (runStatus === "NextSuc") {
+                displayButton("completeProPipe");
+            } else if (runStatus === "Error" || runStatus === "NextErr") {
+                displayButton("errorProPipe");
+            } else if (runStatus === "Terminated") {
+                displayButton("terminatedProPipe");
+            } 
+        }
+        // when run hasn't finished yet and page reloads then show connecting button
+        else if (
+            type == "reload" ||
+            window.saveNextLog === false ||
+            window.saveNextLog === undefined
+        ) {
+            window["countFailRead"] = 0;
+            displayButton("connectingProPipe");
+            if (type === "reload") {
+                readNextflowLogTimer(proType, proId, type);
+            }
+        }
+        // when run hasn't finished yet and connection is down
+        else if (
+            window.saveNextLog == "logNotFound" &&
+            runStatus !== "Waiting" &&
+            runStatus !== "init"
+        ) {
+            if (window["countFailRead"] > 3) {
+                displayButton("abortedProPipe");
+                //log file might be deleted or couldn't read the log file
+                //                var setStatus = await doAjax({
+                //                    p: "updateRunStatus",
+                //                    run_status: "Aborted",
+                //                    project_pipeline_id: project_pipeline_id,
+                //                });
+                if (nextflowLog !== null && nextflowLog !== undefined) {
+                    nextflowLog += "\nConnection is lost.";
+                } else {
+                    serverLog += "\nConnection is lost.";
+                }
+            } else {
+                window["countFailRead"]++;
+            }
+        }
+        // otherwise parse nextflow file to get status
+        else if (
+            runStatus === "Waiting" ||
+            runStatus === "init" ||
+            runStatus === "NextRun"
+        ) {
+            window["countFailRead"] = 0;
+            if (runStatus === "Waiting" || runStatus === "init") {
+                displayButton("waitingProPipe");
+            } else if (runStatus === "NextRun") {
+                displayButton("runningProPipe");
+            }
+        }
+
+        $("#testrunLogArea").val(serverLog + "\n" + nextflowLog);
+        autoScrollLogArea();
+
+        setTimeout(function () {
+            saveNexLg(process_id, proType, proId);
+        }, 8000);
+    }
+}
+function readNextflowLogTimer(proType, proId, type) {
+    //to trigger fast loading for new page reload
+    if (type === "reload") {
+        setTimeout(async function () {
+            await readNextLog(proType, proId, "no_reload");
+        }, 3500);
+    }
+    interval_readNextlog = setInterval(async function () {
+        await readNextLog(proType, proId, "no_reload");
+    }, 7000);
+    //    interval_readPubWeb = setInterval(function () {
+    //        readPubWeb(proType, proId, "no_reload");
+    //    }, 60000);
+}
+
+
 $(document).ready(function () {
     filterSideBar([]); //trigger filter function of sidebar for admin filtering
     var usRole = callusRole();
@@ -2087,7 +2449,7 @@ $(document).ready(function () {
     }
 
     //Make modal draggable    
-    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorFooterdiv, button, span, a, #amazonTable, #googleTable' });
+    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorProHeaderdiv, #editorTestProdiv, #editorProFooterdiv, button, span, a, #amazonTable, #googleTable' });
 
     // Selectize pubDmetaTarget Dropdown
     $("#pubDmetaTarget").selectize({ create:true, placeholder: "Choose or Type for New", createOnBlur: true })
@@ -2449,7 +2811,7 @@ $(document).ready(function () {
     $(function () {
         $(document).on('click', '#editPipeSum', function (e) {
             pipelineSumEditor.clearSelection();
-            $("#pipelineSumEditorDiv").css("display", "inline-block")
+            $("#pipelineSumEditordiv").css("display", "inline-block")
             $("#pipelineSum").css("display", "none")
             $("#editPipeSum").css("display", "none")
             $("#confirmPipeSum").css("display","inline-block")
@@ -2461,7 +2823,7 @@ $(document).ready(function () {
             var scriptSumEditor = pipelineSumEditor.getValue();
             updateMarkdown(scriptSumEditor, "pipelineSum")
             $("#pipelineSum").css("display", "inline-block")
-            $("#pipelineSumEditorDiv").css("display", "none")
+            $("#pipelineSumEditordiv").css("display", "none")
             $("#editPipeSum").css("display", "inline-block")
             $("#confirmPipeSum").css("display","none")
         });
@@ -2504,6 +2866,10 @@ $(document).ready(function () {
         var checkEditprocess = button.is('a.processItems') === true;
         var checkPipeModuleModal = button.is('a.pipeMode') === true;
         var checkSettingsIcon = !checkAddprocess && !checkEditprocess && !checkPipeModuleModal;
+        loadRunEnv();
+        updateCheckBox("#docker_check","0")
+        updateCheckBox("#singu_check","0")
+        displayButton("runProPipe");
         if (checkAddprocess) {
             $('#processmodaltitle').html('Add New Process');
             $('#proPermGroPubDiv').css('display', "inline");
@@ -2511,6 +2877,8 @@ $(document).ready(function () {
             $('#mProActionsDiv').css('display', "inline");
             $('#mProRevSpan').css('display', "inline");
             $('#proPermGroPubDiv').css('display', "inline");
+            $('#pipeRunStatDiv').css('display', "inline");
+
             var processOwn = "";
             var proPerms = "";
             var selProcessId = "";
@@ -2526,6 +2894,7 @@ $(document).ready(function () {
                 saveCircleCoordinates(selProcessId)
             } 
             loadModalRevision(selProcessId);
+
             [proPerms, processOwn] = loadSelectedProcess(selProcessId);
             $('#selectProcess').attr("pName", $('#mName').val());
         }
@@ -2645,6 +3014,187 @@ $(document).ready(function () {
     });
 
 
+
+    // validate data of test script
+    function validate_data(data) {
+        let result = {
+            isValid: true,
+            message: ""
+        }
+        var prodata = $('#addProcessModal').data("prodata")
+        if (!prodata){
+            result.isValid = false
+            result.message += "Please save the process before testing it.</br>"
+        }
+        // name is required
+        data.inputs.every((input) => {
+            if (!input.name) {
+                result.isValid = false
+                result.message += "Inputs: name cannot be empty</br>"
+                return false
+            }
+        })
+        data.outputs.every((output) => {
+            if (!output.name) {
+                result.isValid = false
+                result.message += "Outputs: name cannot be empty</br>"
+                return false
+            }
+        })
+        // any kind of code is required
+        if (!(data.code.header || data.code.script || data.code.footer)) {
+            result.isValid = false
+            result.message += "Any kind of code is required</br>"
+        }
+        // test environment must be selected
+        if (!(data.env.test_env)) {
+            result.isValid = false
+            result.message += "Test environment must be selected</br>"
+        }
+        if (!(data.env.test_work_dir)) {
+            result.isValid = false
+            result.message += "Work directory is required</br>"
+        }
+        return result
+    }
+
+
+    function getProcessParameterArray(type){
+        let ret =[];
+        var formValues = $('#addProcessModal').find('input, select, textarea');
+        var prefix = "In";
+        if (type == "output") prefix = "Out";
+        var data = formValues.serializeArray();
+        for (var i = 0; i < data.length; i++) {
+            var obj = {}
+            var PattPar = /(.*)-(.*)/;
+            var matchFPart = '';
+            var matchSPart = '';
+            var matchVal = '';
+            var matchFPart = data[i].name.replace(PattPar, '$1')
+            var matchSPart = data[i].name.replace(PattPar, '$2')
+            var matchVal = data[i].value
+            if (matchFPart === `m${prefix}puts` && matchVal !== '') {
+                //first check if closures are visible
+                if ($(`#m${prefix}Closure-` + matchSPart).css('visibility') === 'visible') {
+                    for (var n = 0; n < data.length; n++) {
+                        if (data[n].name === `m${prefix}Opt-` + matchSPart) {
+                            obj.operator = data[n].value
+                        } else if (data[n].name === `m${prefix}Closure-` + matchSPart) {
+                            obj.closure = encodeURIComponent(data[n].value)
+                        }
+                    }
+                }
+                //rgb(255, 255, 255) for activated Optional button
+                if ($(`#m${prefix}Optional-` + matchSPart).css('background-color') === 'rgb(255, 255, 255)') {
+                    obj.optional = "true"
+                }
+                //for process parameters
+                for (var k = 0; k < data.length; k++) {
+                    if (data[k].name === `m${prefix}TestValue-` + matchSPart) {
+                        obj.test = encodeURIComponent(data[k].value)
+                    }
+                    if (data[k].name === `m${prefix}Name-` + matchSPart && data[k].value === '') {
+                        obj = {};
+                        break;
+                    } else if (data[k].name === `m${prefix}Name-` + matchSPart && data[k].value !== '') {
+                        obj.parameter_id = matchVal
+                        var parameter = parametersData.filter(function (el) { return el.id == obj.parameter_id });
+                        if (parameter && parameter[0] && parameter[0].qualifier){
+                            obj.qualifier = parameter[0].qualifier
+                            obj.parameter_name = parameter[0].name
+                        } 
+                        obj.name = encodeURIComponent(data[k].value)
+                    }
+                }
+            }
+            if (type == "input" && obj.test && obj.name) ret.push(obj)
+            if (type == "output" && obj.name) ret.push(obj)
+        }
+        return ret
+    }
+
+
+    // test script
+    $('#addProcessModal').on('click', '.testscript', function (event) {
+        event.preventDefault()
+        var process_id = $('#mIdPro').val();
+        var pipeline_id = $('#pipeline-title').attr('pipelineid');
+        // data to send
+        var data = {
+            p: "testScript",
+            inputs: [],
+            outputs: [],
+            code: {
+                pro_header: "",
+                script: "",
+                pro_footer: "",
+                test_params: "",
+                pipe_header: "",
+                script_pipe_footer: ""
+            },
+            env: {
+                test_env: "",
+                test_work_dir: "",
+                singu_check: "",
+                docker_check: "",
+                singu_img: "",
+                docker_img: "",
+                singu_opt: "",
+                docker_opt: "",
+                pipeline_id : pipeline_id,
+                process_id : process_id
+            }
+        }
+        data.code.pro_header = getScriptEditor('editorProHeader')
+        data.code.script = getScriptEditor('editor')
+        data.code.pro_footer = getScriptEditor('editorProFooter')
+        data.code.test_params = getScriptEditor('editorTestPro')
+        data.code.pipe_header = getScriptEditor('editorPipeHeader')
+        data.code.pipe_footer = getScriptEditor('editorPipeFooter')
+        data.inputs = getProcessParameterArray("input")
+        data.outputs = getProcessParameterArray("output")
+        // get test environment
+        data.env.test_env = $("#test_env").val()
+        data.env.test_work_dir = $("#test_work_dir").val()
+        data.env.docker_check = $("#docker_check").is(":checked") ? 1 : 0;
+        data.env.docker_img = $("#docker_img").val();
+        data.env.docker_opt = $("#docker_opt").val();
+        data.env.singu_check = $("#singu_check").is(":checked")? 1 : 0;
+        data.env.singu_img = $("#singu_img").val();
+        data.env.singu_opt = $("#singu_opt").val();
+        var patt = /(.*)-(.*)/;
+        if (data.env && data.env.test_env){
+            var proType = data.env.test_env.replace(patt, "$1");
+            var proId = data.env.test_env.replace(patt, "$2");
+        }
+
+
+        const result = validate_data(data)
+        console.log(data)
+
+        if (result.isValid) {
+            displayButton("connectingProPipe");
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: data,
+                async: true,
+                success: function (s) {
+                    readNextflowLogTimer(proType, proId, "default");
+                    console.log(s)
+                },
+                error: function (error) {
+                    console.log("Error: " + JSON.stringify(error))
+                    showInfoModal("#infoMod", "#infoModText", "Error: " + JSON.stringify(error))
+                }
+            });
+        } else {
+            showInfoModal("#infoMod", "#infoModText", result.message)
+        }
+    })
+
+
     // Add process modal to database
     $('#addProcessModal').on('click', '.saveprocess', function (event) {
         var clickedButID = $(this).attr("id");  //saveprocess, createRevision, createRevisionBut
@@ -2671,12 +3221,32 @@ $(document).ready(function () {
             var scripteditor = getScriptEditor('editor');
             var scripteditorProHeader = getScriptEditor('editorProHeader');
             var scripteditorProFooter = getScriptEditor('editorProFooter');
+            var scripteditorTestPro = getScriptEditor('editorTestPro');
+            var script_mode_test = $('#script_mode_test_pro').val();
             var script_mode = $('#script_mode').val();
             var script_mode_header = $('#script_mode_header').val();
+            var test_env = $('#test_env').val();
+            var test_work_dir = $('#test_work_dir').val();
+            var docker_check = $("#docker_check").is(":checked") ? 1 : 0;
+            var docker_img = $("#docker_img").val();
+            var docker_opt = $("#docker_opt").val();
+            var singu_check = $("#singu_check").is(":checked")? 1 : 0;
+            var singu_img = $("#singu_img").val();
+            var singu_opt = $("#singu_opt").val();
+            dataToProcess.push({ name: "test_env", value: test_env });
+            dataToProcess.push({ name: "test_work_dir", value: test_work_dir });
+            dataToProcess.push({ name: "docker_check", value: docker_check });
+            dataToProcess.push({ name: "docker_img", value: docker_img });
+            dataToProcess.push({ name: "docker_opt", value: docker_opt });
+            dataToProcess.push({ name: "singu_check", value: singu_check });
+            dataToProcess.push({ name: "singu_img", value: singu_img });
+            dataToProcess.push({ name: "singu_opt", value: singu_opt });
             dataToProcess.push({ name: "perms", value: perms });
             dataToProcess.push({ name: "group", value: group });
             dataToProcess.push({ name: "process_gid", value: "" });
             dataToProcess.push({ name: "script", value: scripteditor });
+            dataToProcess.push({ name: "script_test", value: scripteditorTestPro });
+            dataToProcess.push({ name: "script_test_mode", value: script_mode_test });
             dataToProcess.push({ name: "script_mode", value: script_mode });
             dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
             dataToProcess.push({ name: "script_header", value: scripteditorProHeader });
@@ -2736,13 +3306,33 @@ $(document).ready(function () {
                 var scripteditor = getScriptEditor('editor');
                 var scripteditorProHeader = getScriptEditor('editorProHeader');
                 var scripteditorProFooter = getScriptEditor('editorProFooter');
+                var scripteditorTestPro = getScriptEditor('editorTestPro');
+                var script_mode_test = $('#script_mode_test_pro').val();
                 var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
                 var process_uuid = getValues({ p: "getProcess_uuid", "process_id": proID })[0].process_uuid;
 
                 var script_mode = $('#script_mode').val();
                 var script_mode_header = $('#script_mode_header').val();
+                var test_env = $('#test_env').val();
+                var test_work_dir = $('#test_work_dir').val();
+                var docker_check = $("#docker_check").is(":checked") ? 1 : 0;
+                var docker_img = $("#docker_img").val();
+                var docker_opt = $("#docker_opt").val();
+                var singu_check = $("#singu_check").is(":checked")? 1 : 0;
+                var singu_img = $("#singu_img").val();
+                var singu_opt = $("#singu_opt").val();
+                dataToProcess.push({ name: "test_env", value: test_env });
+                dataToProcess.push({ name: "test_work_dir", value: test_work_dir });
+                dataToProcess.push({ name: "docker_check", value: docker_check });
+                dataToProcess.push({ name: "docker_img", value: docker_img });
+                dataToProcess.push({ name: "docker_opt", value: docker_opt });
+                dataToProcess.push({ name: "singu_check", value: singu_check });
+                dataToProcess.push({ name: "singu_img", value: singu_img });
+                dataToProcess.push({ name: "singu_opt", value: singu_opt });
                 dataToProcess.push({ name: "script_mode", value: script_mode });
                 dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
+                dataToProcess.push({ name: "script_test", value: scripteditorTestPro });
+                dataToProcess.push({ name: "script_test_mode", value: script_mode_test });
                 dataToProcess.push({ name: "perms", value: perms });
                 dataToProcess.push({ name: "group", value: group });
                 dataToProcess.push({ name: "process_gid", value: process_gid });
@@ -2814,10 +3404,30 @@ $(document).ready(function () {
                     var scripteditor = getScriptEditor('editor');
                     var scripteditorProHeader = getScriptEditor('editorProHeader');
                     var scripteditorProFooter = getScriptEditor('editorProFooter');
+                    var scripteditorTestPro = getScriptEditor('editorTestPro');
+                    var script_mode_test = $('#script_mode_test_pro').val();
                     var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
                     var process_uuid = getValues({ p: "getProcess_uuid", "process_id": proID })[0].process_uuid;
                     var script_mode = $('#script_mode').val();
                     var script_mode_header = $('#script_mode_header').val();
+                    var test_env = $('#test_env').val();
+                    var test_work_dir = $('#test_work_dir').val();
+                    var docker_check = $("#docker_check").is(":checked") ? 1 : 0;
+                    var docker_img = $("#docker_img").val();
+                    var docker_opt = $("#docker_opt").val();
+                    var singu_check = $("#singu_check").is(":checked")? 1 : 0;
+                    var singu_img = $("#singu_img").val();
+                    var singu_opt = $("#singu_opt").val();
+                    dataToProcess.push({ name: "test_env", value: test_env });
+                    dataToProcess.push({ name: "test_work_dir", value: test_work_dir });
+                    dataToProcess.push({ name: "docker_check", value: docker_check });
+                    dataToProcess.push({ name: "docker_img", value: docker_img });
+                    dataToProcess.push({ name: "docker_opt", value: docker_opt });
+                    dataToProcess.push({ name: "singu_check", value: singu_check });
+                    dataToProcess.push({ name: "singu_img", value: singu_img });
+                    dataToProcess.push({ name: "singu_opt", value: singu_opt });
+                    dataToProcess.push({ name: "script_test", value: scripteditorTestPro });
+                    dataToProcess.push({ name: "script_test_mode", value: script_mode_test });
                     dataToProcess.push({ name: "script_mode", value: script_mode });
                     dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
                     dataToProcess.push({ name: "perms", value: perms });
@@ -2876,12 +3486,33 @@ $(document).ready(function () {
                         var scripteditor = getScriptEditor('editor');
                         var scripteditorProHeader = getScriptEditor('editorProHeader');
                         var scripteditorProFooter = getScriptEditor('editorProFooter');
+                        var scripteditorTestPro = getScriptEditor('editorTestPro');
+                        var script_mode_test = $('#script_mode_test_pro').val();
                         var process_gid = getValues({ p: "getProcess_gid", "process_id": proID })[0].process_gid;
                         var process_uuid = getValues({ p: "getProcess_uuid", "process_id": proID })[0].process_uuid;
                         var maxRev_id = getValues({ p: "getMaxRev_id", "process_gid": process_gid })[0].rev_id;
                         var newRev_id = parseInt(maxRev_id) + 1;
                         var script_mode = $('#script_mode').val();
                         var script_mode_header = $('#script_mode_header').val();
+                        var test_env = $('#test_env').val();
+                        var test_work_dir = $('#test_work_dir').val();
+                        var docker_check = $("#docker_check").is(":checked") ? 1 : 0;
+                        var docker_img = $("#docker_img").val();
+                        var docker_opt = $("#docker_opt").val();
+                        var singu_check = $("#singu_check").is(":checked")? 1 : 0;
+                        var singu_img = $("#singu_img").val();
+                        var singu_opt = $("#singu_opt").val();
+                        dataToProcess.push({ name: "test_env", value: test_env });
+                        dataToProcess.push({ name: "test_work_dir", value: test_work_dir });
+                        dataToProcess.push({ name: "docker_check", value: docker_check });
+                        dataToProcess.push({ name: "docker_img", value: docker_img });
+                        dataToProcess.push({ name: "docker_opt", value: docker_opt });
+                        dataToProcess.push({ name: "singu_check", value: singu_check });
+                        dataToProcess.push({ name: "singu_img", value: singu_img });
+                        dataToProcess.push({ name: "singu_opt", value: singu_opt });
+                        dataToProcess.push({ name: "script_test", value: scripteditorTestPro });
+                        dataToProcess.push({ name: "script_test_mode", value: script_mode_test });
+
                         dataToProcess.push({ name: "script_mode", value: script_mode });
                         dataToProcess.push({ name: "script_mode_header", value: script_mode_header });
                         dataToProcess.push({ name: "perms", value: "3" });
@@ -2944,6 +3575,7 @@ $(document).ready(function () {
                 var col9init = "m" + type + "RegBut";
                 var col10init = "m" + type + "Reg";
                 var col11init = "m" + type + "Regdel";
+                var col12init = "m" + type + "TestValue";
 
                 var num = id.replace(Patt, '$2');
                 var prevParId = $("#" + id).attr("prev");
@@ -2969,6 +3601,7 @@ $(document).ready(function () {
                     $("#" + col9init).append('<button  type="button" class="btn btn-default form-control addRegEx" style ="margin-bottom: 6px;" id="' + col9init + '-' + String(idRows - 1) + '" name="' + col9init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add/Remove Output RegEx"><span><i class="fa fa-code"></i></span></a></button>');
                     $("#" + col10init).append('<input type="text" ppID="" placeholder="Enter RegEx" class="form-control " style ="visibility:hidden; margin-bottom: 6px;" id="' + col10init + '-' + String(idRows - 1) + '" name="' + col10init + '-' + String(idRows - 1) + '">');
                     $("#" + col11init).append('<button type="submit" class="btn btn-default form-control delRegEx" style ="visibility:hidden; margin-bottom: 6px;" id="' + col11init + '-' + String(idRows - 1) + '" name="' + col11init + '-' + String(idRows - 1) + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Remove Output RegEx"><span><i class="glyphicon glyphicon-remove"></i></span></a></button>');
+                    $('#' + col12init).append('<input type="text" ppID="" placeholder="Enter test value" class="form-control " style ="margin-bottom: 6px;" id="' + col12init + '-' + String(idRows - 1) + '" name="' + col12init + '-' + String(idRows - 1) + '">');
                     //refresh tooltips
                     $('[data-toggle="tooltip"]').tooltip();
                     //load closure options
@@ -3113,6 +3746,7 @@ $(document).ready(function () {
         var col9init = "m" + type + "RegBut";
         var col10init = "m" + type + "Reg";
         var col11init = "m" + type + "Regdel";
+        var col12init = "m" + type + "TestValue";
         $("#" + col1init + "-" + String(num)).next().remove();
         $("#" + col1init + "-" + String(num)).remove();
         $("#" + col2init + "-" + String(num)).remove();
@@ -3125,6 +3759,7 @@ $(document).ready(function () {
         $("#" + col9init + "-" + String(num)).remove();
         $("#" + col10init + "-" + String(num)).remove();
         $("#" + col11init + "-" + String(num)).remove();
+        $("#" + col12init + "-" + String(num)).remove();
     });
 
     //parameter modal file type change:(save file type as identifier for val)
