@@ -2208,18 +2208,20 @@ class dbfuncs {
             $nextflow .= "\t".$outputs[$i]["qualifier"]." ".urldecode($outputs[$i]["name"])." into " . $channelName . $operatorText. "\n";
         }
         //insert """ for script if not exist
-        error_log(strpos($script, '"""'));
-        error_log(strpos($script, '"""') === false);
         if ( strpos($script, '"""') === false && strpos($script, "'''") === false && strpos($script, 'when:') === false && strpos($script, 'script:') === false && strpos($script, 'shell:') === false && strpos($script, 'exec:') === false){
             $script = "\"\"\"\n".$script."\n\"\"\"";
         }
         $nextflow .= $script."\n}\n";
         for ($i=0; $i<$output_count; $i++) {
-            $output_test = !empty($outputs[$i]["test"]) ? urldecode($outputs[$i]["test"]) : "";
-            $output_test = str_replace('"', "", $output_test);
-            $output_test = str_replace("'", "", $output_test);
-            $output_test_text = !empty($output_test) ? "##Expected:$output_test\\n" : "";
-            
+            $num = $i +1;
+            $output_test = "";
+            $output_parameter_name = !empty($outputs[$i]["parameter_name"]) ? urldecode($outputs[$i]["parameter_name"]) : "";
+            $output_qualifier = !empty($outputs[$i]["qualifier"]) ? $outputs[$i]["qualifier"] : "";
+            if (!empty($output_parameter_name) && !empty($output_qualifier)){
+                $output_test = "{$output_parameter_name}({$output_qualifier})";
+            }
+            $output_test_text = !empty($output_test) ? "##Output-{$num}:$output_test\\n" : "";
+
             $nextflow .= "result" . ($i+1) . ".subscribe { println \"$output_test_text##Received:\$it\\n\" }\n";
         }
 
@@ -2302,9 +2304,10 @@ class dbfuncs {
         $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
         $res= $this->getUUIDLocal("run_log");
         $uuid = $res->rev_uuid;
+        $this->updateProcessRunPid($process_id, "0", $ownerID);
         $this->updateProcessRunUUID($process_id,$uuid);
         $runStatus = "init";
-        $this->updateProcessStatus($process_id, $runStatus, $ownerID);
+        $this->updateProcessRunStatus($process_id, $runStatus, $ownerID);
         $attempt = "1";
         $project_pipeline_id = "";
         $proVarObj = "";
@@ -3315,7 +3318,7 @@ class dbfuncs {
     //for lsf: Job <203477> is submitted to queue <long>.\n"
     //for sge: Your job 2259 ("run_bowtie2") has been submitted
     //for slurm: Submitted batch job 8748700
-    function parseUpdateRunPid($serverLog, $project_pipeline_id, $ownerID) {
+    function parseUpdateRunPid($serverLog, $project_pipeline_id, $process_id, $ownerID) {
         $runPid = "";
         $regEx = "";
 
@@ -3333,6 +3336,8 @@ class dbfuncs {
             }
             if (!empty($runPid) && !empty($project_pipeline_id)) {
                 $this->updateRunPid($project_pipeline_id, $runPid, $ownerID);
+            } else if (!empty($runPid) && !empty($process_id)){
+                $this->updateProcessRunPid($process_id, $runPid, $ownerID);
             }
         }
     }
@@ -3430,7 +3435,7 @@ class dbfuncs {
                 if (!empty($initialLog)) { $nextflowLog = $initialLog . "\n" . $nextflowLog; }
                 $out["serverLog"] = $serverLog;
                 $out["nextflowLog"] = $nextflowLog;
-                $this->parseUpdateRunPid($serverLog, $project_pipeline_id, $ownerID);
+                $this->parseUpdateRunPid($serverLog, $project_pipeline_id, $process_id, $ownerID);
                 $this->parseUpdateSessionUUID($dotNextflowLog, $dotNextflowLogInitial, $project_pipeline_id, $ownerID);
                 // run is not active
                 if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr" || $runStatus === "Manual") {
@@ -3500,7 +3505,7 @@ class dbfuncs {
                     if ($executor == "lsf"){
                         $pid = json_decode($this->getRunPid($project_pipeline_id))[0]->{'pid'};
                         if (!empty($pid)){
-                            $checkRunPid = $this -> sshExeCommand("checkRunPid", $pid, $profileType, $profileId, $project_pipeline_id, $ownerID);
+                            $checkRunPid = $this -> sshExeCommand("checkRunPid", $pid, $profileType, $profileId, $project_pipeline_id, $process_id, $ownerID);
                             $checkRunPid = json_decode($checkRunPid);
                             if ($checkRunPid == "exited"){
                                 // $newRunStatus = "Error";
@@ -3537,7 +3542,7 @@ class dbfuncs {
                         $setStatus = $this -> updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
                         $setLog = $this -> updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID); 
                     } else if (!empty($process_id)){
-                        $setStatus = $this -> updateProcessStatus($process_id, $newRunStatus, $ownerID);
+                        $setStatus = $this -> updateProcessRunStatus($process_id, $newRunStatus, $ownerID);
                     }
 
                     $out["runStatus"] = $newRunStatus;
@@ -4826,7 +4831,7 @@ class dbfuncs {
         $sql = "UPDATE $this->db.run SET run_status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
-    function updateProcessStatus($process_id, $status, $ownerID) {
+    function updateProcessRunStatus($process_id, $status, $ownerID) {
         $curr_ownerID= $this->queryAVal("SELECT owner_id FROM $this->db.process WHERE id='$process_id'");
         $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
         if (empty($permCheck)){
@@ -4847,8 +4852,16 @@ class dbfuncs {
         $sql = "UPDATE $this->db.run SET pid='$pid', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
+    function updateProcessRunPid($process_id, $pid, $ownerID) {
+        $sql = "UPDATE $this->db.process SET run_pid='$pid', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$process_id'";
+        return self::runSQL($sql);
+    }
     function getRunPid($project_pipeline_id) {
         $sql = "SELECT pid FROM $this->db.run WHERE project_pipeline_id = '$project_pipeline_id'";
+        return self::queryTable($sql);
+    }
+    function getProcessRunPid($process_id) {
+        $sql = "SELECT run_pid FROM $this->db.process WHERE id = '$process_id'";
         return self::queryTable($sql);
     }
     function getRunSessionUUID($project_pipeline_id) {
@@ -4894,7 +4907,7 @@ class dbfuncs {
         $sql = "SELECT pid FROM $this->db.profile_amazon WHERE id = '$id'";
         return self::queryTable($sql);
     }
-    function sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID) {
+    function sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $process_id, $ownerID) {
         $ret = array();
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $ssh_id = $cluDataArr[0]["ssh_id"];
@@ -4904,9 +4917,13 @@ class dbfuncs {
 
         //get $preSSH to load prerequisites and run qstat qdel
         $preSSH = "source /etc/profile && ";
-        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
-        list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
-        $upCacheCmd = $this->getUploadCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType); 
+        $upCacheCmd = "";
+        if (!empty($project_pipeline_id)){
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id,"",$ownerID,""));
+            list($dolphin_path_real,$dolphin_publish_real) = $this->getDolphinPathReal($proPipeAll);
+            $upCacheCmd = $this->getUploadCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType); 
+        }
+
         if (!empty($upCacheCmd)){
             $upCacheCmd = str_replace('$', '\$', $upCacheCmd);
             $upCacheCmd = "; $upCacheCmd";
@@ -4965,10 +4982,21 @@ class dbfuncs {
             return json_encode('terminateCommandExecuted');
         } else if ($executor == "local" && $commandType == "terminateRun"){
             $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH ps -ef |grep nextflow.*/run$project_pipeline_id/ |grep -v grep | awk '{print \\\"kill \\\"\\\$2}' |bash $upCacheCmd\" 2>&1 &";
-            $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
-            $run_path_real = $this->getServerRunPath($uuid);
-            $ret = $this->execute_cmd_logfile($cmd, $ret, "terminate_cmd_log", "terminate_cmd", "$run_path_real/serverlog.txt", "a");
-            return json_encode('terminateCommandExecuted');
+            $uuid = "";
+            if (!empty($project_pipeline_id)){
+                $uuid = $this->getProPipeLastRunUUID($project_pipeline_id);
+            } else if (!empty($process_id)){
+                $process_data = json_decode($this->getProcessDataById($process_id, $ownerID),true);
+                if (!empty($process_data[0])){
+                    $uuid = $process_data[0]["run_uuid"];
+                }
+            }
+            if (!empty($uuid)){
+                $run_path_real = $this->getServerRunPath($uuid);
+                $ret = $this->execute_cmd_logfile($cmd, $ret, "terminate_cmd_log", "terminate_cmd", "$run_path_real/serverlog.txt", "a");
+                return json_encode('terminateCommandExecuted');
+            }
+            return json_encode('');
         } else if ($commandType == "getRemoteFileList"){
             $target_dir = $pid;
             $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"$preSSH ls $target_dir \" 2>&1 & echo $! &";

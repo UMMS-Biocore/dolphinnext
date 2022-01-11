@@ -485,6 +485,7 @@
 
 
 //template text for ace editor
+window.draggingAceEditor = {};
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
 templateperl = '#perl example: \n\n#!/usr/bin/env perl \n print \'Hi there!\' . \'\\n\';';
 templatepython = '#python example: \n\n#!/usr/bin/env python \nx = \'Hello\'  \ny = \'world!\' \nprint "%s - %s" % (x,y)';
@@ -498,7 +499,57 @@ createAceEditors("editorPipeHeader", "#script_mode_pipe_header") //ace pipeline 
 createAceEditors("editorPipeFooter", "#script_mode_pipe_footer") //ace pipeline footer editor
 createAceEditors("pipelineSumEditor", "#pipelineSumEditor_mode") 
 createAceEditors("editorTestPro", "#script_mode_test_pro") //ace process header editor
+/**
+ * Global variable to store the ids of the status of the current dragged ace editor.
+ */
 
+
+function makeAceEditorResizable(editor){
+    var id_editor = editor.container.id;
+    var id_dragbar = '#' + id_editor + '_dragbar';
+    var id_wrapper = '#' + id_editor + 'div';
+    var wpoffset = 0;
+    window.draggingAceEditor[id_editor] = false;
+
+    $(id_dragbar).mousedown(function(e) {
+        e.preventDefault();
+        window.draggingAceEditor[id_editor] = true;
+        var _editor = $('#' + id_editor);
+        var top_offset = _editor.offset().top - wpoffset;
+
+        // Set editor opacity to 0 to make transparent so our wrapper div shows
+        _editor.css('opacity', 0);
+
+        // handle mouse movement
+        $(document).mousemove(function(e){
+            var actualY = e.pageY - wpoffset;
+            // editor height
+            var eheight = actualY - top_offset;
+            // Set wrapper height
+            $(id_wrapper).css('height', eheight);
+            // Set dragbar opacity while dragging (set to 0 to not show)
+            $(id_dragbar).css('opacity', 0.15);
+        });
+    });
+
+    $(document).mouseup(function(e){
+        if (window.draggingAceEditor[id_editor])
+        {
+            var ctx_editor = $('#' + id_editor);
+            var actualY = e.pageY - wpoffset;
+            var top_offset = ctx_editor.offset().top - wpoffset;
+            var eheight = actualY - top_offset;
+            $( document ).unbind('mousemove');
+            // Set dragbar opacity back to 1
+            $(id_dragbar).css('opacity', 1);
+            // Set height on actual editor element, and opacity back to 1
+            ctx_editor.css('height', eheight).css('opacity', 1);
+            // Trigger ace editor resize()
+            editor.resize();
+            window.draggingAceEditor[id_editor] = false;
+        }
+    });
+}
 
 function createAceEditors(editorId, script_modeId) {
     //ace process editor
@@ -508,6 +559,7 @@ function createAceEditors(editorId, script_modeId) {
         window[editorId].getSession().setMode("ace/mode/sh");
         window[editorId].setOptions({useSoftTabs: false });
         window[editorId].$blockScrolling = Infinity;
+        //        makeAceEditorResizable(window[editorId])
         //If mode is exist, then apply it
         var mode = $(script_modeId).val();
         if (mode && mode != "") {
@@ -621,6 +673,8 @@ function cleanProcessModal() {
     editorProFooter.setValue("");
     editorTestPro.setValue("");
     $('#mProActionsDiv').css('display', "none");
+    $('#pipeRunStatDiv').css('display', "inline");
+
     $('#mProRevSpan').css('display', "none");
     $('#mName').removeAttr('disabled');
     $('#permsPro').removeAttr('disabled');
@@ -628,10 +682,7 @@ function cleanProcessModal() {
     if (advOptProClass !== "row collapse") {
         $('#mAdvProCollap').trigger("click");
     }
-    var testOptProClass = $('#testOptPro').attr('class');
-    if (testOptProClass !== "row collapse") {
-        $('#mtestProCollap').trigger("click");
-    }
+    $(`a[href*=pro_editor_tab`).click()
     $('#createRevisionBut').css('display', "none");
     $('#saveprocess').css('display', "inline");
 
@@ -652,6 +703,7 @@ function loadRunEnv() {
                 const param = s[i]
                 if (param.hostname != undefined && param.perms !== "15"){
                     const optionGroup = new Option(`${param.name} (${param.username}@${param.hostname}) `, "cluster-"+param.id)
+                    optionGroup.setAttribute("executor", param.executor);
                     $("#test_env").append(optionGroup)
                 }
 
@@ -691,6 +743,7 @@ function refreshProcessModal(selProId) {
     loadModalParam();
     $('#processmodaltitle').html('Edit/Delete Process');
     $('#mProActionsDiv').css('display', "inline");
+    $('#pipeRunStatDiv').css('display', "inline");
     $('#mProRevSpan').css('display', "inline");
     $('#proPermGroPubDiv').css('display', "inline");
     loadModalRevision(selProId);
@@ -860,13 +913,21 @@ function loadSelectedProcess(selProcessId) {
     $('#addProcessModal').removeData("prodata");
     $('#addProcessModal').data("prodata", showProcess);
     var processOwn = showProcess.own;
+    if (showProcess.test_env){
+        $('#test_env').val(showProcess.test_env);
+        var patt = /(.*)-(.*)/;
+        var proType = showProcess.test_env.replace(patt, "$1");
+        var proId = showProcess.test_env.replace(patt, "$2");
+        readNextLog(proType, proId, "reload");
+    } else {
+        displayButton("runProPipe");
+    }
     //insert data into form
     var formValues = $('#addProcessModal').find('input, select, textarea');
     $(formValues[2]).val(showProcess.id);
     $(formValues[3]).val(showProcess.name);
     $(formValues[5]).val(decodeHtml(showProcess.summary));
     $('#permsPro').val(showProcess.perms);
-    if (showProcess.test_env) $('#test_env').val(showProcess.test_env);
     if (showProcess.test_work_dir) $('#test_work_dir').val(showProcess.test_work_dir);
     if (showProcess.docker_check !== null) updateCheckBox("#docker_check",showProcess.docker_check)
     if (showProcess.singu_check !== null) updateCheckBox("#singu_check",showProcess.singu_check)
@@ -1666,73 +1727,11 @@ function disableProModal(selProcessId) {
     $('#createRevision').css('display', "none");
     $('#createRevisionBut').css('display', "none");
     $('#deleteRevision').css('display', "none");
-};
-//disable when it is selected as everyone
-function disableProModalPublic(selProcessId) {
-    var formValues = $('#addProcessModal').find('input, select, textarea');
-    $('#mName').attr('disabled', "disabled");
-    $('#mDescription').attr('disabled', "disabled");
-    //    $('#modeAce').attr('disabled', "disabled");
-    $('#mProcessGroup')[0].selectize.disable();
-    editor.setReadOnly(true);
-    editorProHeader.setReadOnly(true);
-    editorProFooter.setReadOnly(true);
-    editorTestPro.setReadOnly(true);
-    //Ajax for selected process input/outputs
-    var inputs = getValues({
-        p: "getInputsPP",
-        "process_id": selProcessId
-    });
-    var outputs = getValues({
-        p: "getOutputsPP",
-        "process_id": selProcessId
-    });
-    for (var i = 0; i < inputs.length; i++) {
-        var numFormIn = i + 1;
-        $('#mInputs-' + numFormIn)[0].selectize.disable();
-        $('#mInName-' + numFormIn).attr('disabled', "disabled");
-        $('#mInNamedel-' + numFormIn).remove();
-        $('#mInClosure-' + numFormIn).attr('disabled', "disabled");
-        $('#mInOptional-' + numFormIn).css("pointer-events", "none");
-        $('#mInOpt-' + numFormIn).attr('disabled', "disabled");
-        $('#mInOptBut-' + numFormIn).css("pointer-events", "none");
-        $('#mInTestValue-' + numFormIn).css("disabled", "disabled");
-        $('#mInOptdel-' + numFormIn).remove();
-    }
-    //
-    var delNumIn = numFormIn + 1;
-    $('#mInputs-' + delNumIn + '-selectized').parent().parent().remove();
-    for (var i = 0; i < outputs.length; i++) {
-        var numFormOut = i + 1;
-        $('#mOutputs-' + numFormOut)[0].selectize.disable();
-        $('#mOutName-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutNamedel-' + numFormOut).remove();
-        $('#mOutClosure-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutOptional-' + numFormOut).css("pointer-events", "none");
-        $('#mOutOpt-' + numFormOut).attr('disabled', "disabled");
-        $('#mOutOptBut-' + numFormOut).css("pointer-events", "none");
-        $('#mOutTestValue-' + numFormOut).css("disabled", "disabled");
-        $('#mOutOptdel-' + numFormOut).remove();
-    }
-    var delNumOut = numFormOut + 1;
-    $('#mOutputs-' + delNumOut + '-selectized').parent().parent().remove();
-    $('#mParameters').remove();
-    $('#mProcessGroupAdd').remove();
-    $('#mProcessGroupEdit').remove();
-    $('#mProcessGroupDel').remove();
-    $('#saveprocess').css('display', "none");
-    $('#deleteRevision').css('display', "none");
-    $('#createRevision').css('display', "inline");
-    $('#createRevisionBut').css('display', "inline");
+    $('#pipeRunStatDiv').css('display', "none");
+
 };
 
-function prepareInfoModal() {
-    $('#processmodaltitle').html('Select Process Revision');
-    $('#mProActionsDiv').css('display', "none");
-    $('#proPermGroPubDiv').css('display', "none");
-    $('#mProRevSpan').css('display', "inline");
-    $('#createRevisionBut').css('display', "none");
-}
+
 
 function updateGitTitle(github_username, github_repo, commit_id){
     if (commit_id && github_username && github_repo){
@@ -2239,6 +2238,48 @@ function clearIntNextLog(proType, proId) {
         saveNexLg(proType, proId);
     }, 5000);
 }
+
+async function terminateProjectPipe() {
+    if (typeof $runscope !== 'undefined' && $runscope.beforeunload) {
+        showInfoModal(
+            "#infoModal",
+            "#infoModalText",
+            "Please wait for the submission."
+        );
+    } else {
+        var process_id = $('#mIdPro').val();
+        var test_env_opt  = $("#test_env").find('option:selected');
+        var test_env  = test_env_opt.val()
+        var patt = /(.*)-(.*)/;
+        var proType = test_env.replace(patt, "$1");
+        var proId = test_env.replace(patt, "$2");
+        var executor = test_env_opt.attr("executor");
+        var terminateRun = await doAjax({
+            p: "terminateRun",
+            process_id: process_id,
+            profileType: proType,
+            profileId: proId,
+            executor: executor,
+        });
+        console.log(terminateRun);
+
+        var setStatus = await doAjax({
+            p: "updateProcessRunStatus",
+            run_status: "Terminated",
+            process_id: process_id,
+        });
+        if (setStatus) {
+            displayButton("terminatedProPipe");
+            window.runStatus = "Terminated";
+            //trigger saving newxtflow log file
+            setTimeout(function () {
+                clearIntNextLog(proType, proId);
+            }, 3000);
+            //            readPubWeb(proType, proId, "no_reload");
+        }
+    }
+}
+
 function saveNexLg(process_id, proType, proId) {
     callAsyncSaveNextLog({
         p: "saveNextflowLog",
@@ -2408,7 +2449,7 @@ $(document).ready(function () {
     }
 
     //Make modal draggable    
-    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorHeaderdiv, #editorTestProdiv, #editorFooterdiv, button, span, a, #amazonTable, #googleTable' });
+    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorProHeaderdiv, #editorTestProdiv, #editorProFooterdiv, button, span, a, #amazonTable, #googleTable' });
 
     // Selectize pubDmetaTarget Dropdown
     $("#pubDmetaTarget").selectize({ create:true, placeholder: "Choose or Type for New", createOnBlur: true })
@@ -2770,7 +2811,7 @@ $(document).ready(function () {
     $(function () {
         $(document).on('click', '#editPipeSum', function (e) {
             pipelineSumEditor.clearSelection();
-            $("#pipelineSumEditorDiv").css("display", "inline-block")
+            $("#pipelineSumEditordiv").css("display", "inline-block")
             $("#pipelineSum").css("display", "none")
             $("#editPipeSum").css("display", "none")
             $("#confirmPipeSum").css("display","inline-block")
@@ -2782,7 +2823,7 @@ $(document).ready(function () {
             var scriptSumEditor = pipelineSumEditor.getValue();
             updateMarkdown(scriptSumEditor, "pipelineSum")
             $("#pipelineSum").css("display", "inline-block")
-            $("#pipelineSumEditorDiv").css("display", "none")
+            $("#pipelineSumEditordiv").css("display", "none")
             $("#editPipeSum").css("display", "inline-block")
             $("#confirmPipeSum").css("display","none")
         });
@@ -2836,6 +2877,8 @@ $(document).ready(function () {
             $('#mProActionsDiv').css('display', "inline");
             $('#mProRevSpan').css('display', "inline");
             $('#proPermGroPubDiv').css('display', "inline");
+            $('#pipeRunStatDiv').css('display', "inline");
+
             var processOwn = "";
             var proPerms = "";
             var selProcessId = "";
@@ -2978,34 +3021,39 @@ $(document).ready(function () {
             isValid: true,
             message: ""
         }
+        var prodata = $('#addProcessModal').data("prodata")
+        if (!prodata){
+            result.isValid = false
+            result.message += "Please save the process before testing it.</br>"
+        }
         // name is required
         data.inputs.every((input) => {
             if (!input.name) {
                 result.isValid = false
-                result.message += "Inputs: name cannot be empty\n"
+                result.message += "Inputs: name cannot be empty</br>"
                 return false
             }
         })
         data.outputs.every((output) => {
             if (!output.name) {
                 result.isValid = false
-                result.message += "Outputs: name cannot be empty\n"
+                result.message += "Outputs: name cannot be empty</br>"
                 return false
             }
         })
         // any kind of code is required
         if (!(data.code.header || data.code.script || data.code.footer)) {
             result.isValid = false
-            result.message += "Any kind of code is required\n"
+            result.message += "Any kind of code is required</br>"
         }
         // test environment must be selected
         if (!(data.env.test_env)) {
             result.isValid = false
-            result.message += "Test environment must be selected\n"
+            result.message += "Test environment must be selected</br>"
         }
         if (!(data.env.test_work_dir)) {
             result.isValid = false
-            result.message += "Work directory is required\n"
+            result.message += "Work directory is required</br>"
         }
         return result
     }
@@ -3116,14 +3164,17 @@ $(document).ready(function () {
         data.env.singu_img = $("#singu_img").val();
         data.env.singu_opt = $("#singu_opt").val();
         var patt = /(.*)-(.*)/;
-        var proType = data.env.test_env.replace(patt, "$1");
-        var proId = data.env.test_env.replace(patt, "$2");
+        if (data.env && data.env.test_env){
+            var proType = data.env.test_env.replace(patt, "$1");
+            var proId = data.env.test_env.replace(patt, "$2");
+        }
+
 
         const result = validate_data(data)
         console.log(data)
-        displayButton("connectingProPipe");
 
         if (result.isValid) {
+            displayButton("connectingProPipe");
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",

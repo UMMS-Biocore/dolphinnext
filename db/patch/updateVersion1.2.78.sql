@@ -11,6 +11,7 @@ ALTER TABLE `process` ADD `script_test` text DEFAULT NULL after `script_mode_hea
 ALTER TABLE `process` ADD `script_test_mode` varchar(20) DEFAULT NULL after `script_mode_header`;
 ALTER TABLE `process` ADD `run_status` varchar(20) DEFAULT NULL after `script_mode_header`;
 ALTER TABLE `process` ADD `run_uuid` varchar(100) DEFAULT NULL after `script_mode_header`;
+ALTER TABLE `process` ADD `run_pid` varchar(10) DEFAULT NULL after `script_mode_header`;
 
 
 

@@ -2301,7 +2301,6 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
         };
 
         var onchangechooseEnvFunc2 = function () {
-            console.log(autoFillJSON);
             var fillHostFunc = function (autoFillJSON, type, filledVars) {
                 $.each(autoFillJSON, function (el) {
                     var conds = autoFillJSON[el].condition;
@@ -2350,8 +2349,6 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
                                             delete not_filled_states["$DOCKER_OPTIONS"];
                                         }
                                     });
-                                    console.log(states);
-                                    console.log(not_filled_states);
                                     fillStates(
                                         not_filled_states,
                                         not_filled_url,
@@ -5430,7 +5427,6 @@ async function refreshCreatorData(project_pipeline_id) {
 
 async function loadExecSettings(pipeData) {
     var chooseEnv = $("#chooseEnv option:selected").val();
-    console.log(pipeData[0].profile)
     if (pipeData[0].profile !== "") {
         if (chooseEnv) {
             var [allProSett, profileData] = await getJobData("both");
@@ -5501,6 +5497,7 @@ function fillProPipeInputsRev(projectPipeInputs_rev, fillingType) {
 }
 
 async function loadRunSettings(pipeData) {
+    console.log("loadRunSettings")
     $("#rOut_dir").val(pipeData[0].output_dir);
     $("#publish_dir").val(pipeData[0].publish_dir);
     $("#chooseEnv").val(pipeData[0].profile);
@@ -5530,6 +5527,15 @@ async function loadRunSettings(pipeData) {
     }
     // fill executor settings:
     await loadExecSettings(pipeData);
+}
+
+function chooseDefaultRunEnv(pipeData){
+    var selectedOption = $('#chooseEnv').val()
+    if ($('#chooseEnv option').length === 2 && !selectedOption && !pipeData[0].onload){
+        console.log("chooseDefaultRunEnv")
+        var defEnv = $('#chooseEnv option:eq(1)').val()
+        $('#chooseEnv').val(defEnv).change();
+    }
 }
 
 async function loadProjectPipeline(pipeData) {
@@ -5618,6 +5624,7 @@ $("#inputsTable").on("click", "#systemInputs", function (e) {
 });
 
 async function refreshEnv() {
+    console.log("refreshEnv")
     await loadRunOptions("change");
 }
 
@@ -6174,7 +6181,7 @@ async function checkMissingVar() {
 checkType = "";
 //checkType become "rerun" or "resumerun" when rerun or resume button is clicked.
 async function checkReadytoRun(type) {
-    console.log("checkReady");
+    console.log("checkReadytoRun");
     if (checkType === "") {
         checkType = type || "";
     }
@@ -9480,7 +9487,12 @@ $(function () {
                     success: async function (pipe) {
                         if (pipe) {
                             await loadRunSettings(pipe);
+                            var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
+                            if (projectpipelineOwn == "1") {
+                                chooseDefaultRunEnv(pipe)
+                            }
                             await checkReadytoRun();
+
                         }
                     },
                     error: function (errorThrown) {
@@ -9559,6 +9571,7 @@ $(function () {
             await saveRun(loadRunLogOpt, false);
         } else {
             await loadRunLogOpt();
+
         }
     }
 

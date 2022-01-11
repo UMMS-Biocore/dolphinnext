@@ -454,7 +454,7 @@ folder instead of downloading all of them to reduce the load. -->
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
             }
-            
+
             .ui-dialog { z-index: 1000 !important ;}
             .ui-widget { 
                 font-size:95% !important; 
@@ -490,8 +490,23 @@ folder instead of downloading all of them to reduce the load. -->
                 text-decoration: underline;
                 cursor: pointer;
             }
+
+
+/*      draggable ace editor
             
-            
+            .app_editor_dragbar {
+                background-color: #f6f6f6;
+                width: 100%;
+                height: 5px;
+                cursor: row-resize;
+                opacity: 1;
+            }
+
+            .app_editor_wrapper {
+                background-color: #cccccc;
+                border-bottom: 1px solid #222222;
+            }
+*/
 
         </style>
 

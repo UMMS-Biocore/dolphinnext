@@ -284,19 +284,32 @@ else if ($p=="getRun"){
 }
 else if ($p=="terminateRun"){
     $commandType = "terminateRun";
-    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $process_id = isset($_REQUEST['process_id']) ? $_REQUEST['process_id'] : "";
+    $project_pipeline_id = isset($_REQUEST['project_pipeline_id']) ? $_REQUEST['project_pipeline_id'] : "";
     $profileType = $_REQUEST['profileType'];
     $profileId = $_REQUEST['profileId'];
     $executor = $_REQUEST['executor'];
+
     if ($executor != 'local') {
-        $pid = json_decode($db->getRunPid($project_pipeline_id))[0]->{'pid'};
+        if (!empty($project_pipeline_id)){
+            $pid = json_decode($db->getRunPid($project_pipeline_id))[0]->{'pid'};
+        } else if (!empty($process_id)){
+            $pid = json_decode($db->getProcessRunPid($process_id))[0]->{'run_pid'};
+        }
         if (!empty($pid)){
-            $data = $db -> sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $ownerID);
+            $data = $db -> sshExeCommand($commandType, $pid, $profileType, $profileId, $project_pipeline_id, $process_id, $ownerID);
         } else {
             $data = json_encode("pidNotExist");	
         }
     } else if ($executor == 'local'){
-        $data = $db -> sshExeCommand($commandType, "", $profileType, $profileId, $project_pipeline_id, $ownerID);
+        $data = $db -> sshExeCommand($commandType, "", $profileType, $profileId, $project_pipeline_id, $process_id, $ownerID);
+    }
+}
+else if ($p=="updateProcessRunStatus"){
+    $process_id = $_REQUEST['process_id'];
+    $run_status = $_REQUEST['run_status'];
+    if (!empty($ownerID)){
+        $data = $db -> updateProcessRunStatus($process_id, $run_status, $ownerID);
     }
 }
 else if ($p=="updateRunStatus"){
