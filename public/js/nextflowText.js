@@ -622,10 +622,12 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
             var chanList = channelNameAll.split(";");
             for (var e = 0; e < chanList.length; e++) {
                 //g_18_genome_url_g_17 = params.inputparam && file(params.inputparam, type: 'any').exists() ? file(params.inputparam, type: 'any') : ch_empty_file_3
-                secPartTemp += chanList[e] + " = " + `params.${inputParamName} && file(params.${inputParamName}, type: 'any').exists() ? file(params.${inputParamName}, type: 'any') : ch_empty_file_${optionalInputID}\n`;
+                if (optionalInputID){
+                    secPartTemp += chanList[e] + " = " + `params.${inputParamName} && file(params.${inputParamName}, type: 'any').exists() ? file(params.${inputParamName}, type: 'any') : ch_empty_file_${optionalInputID}\n`; 
+                } else {
+                    secPartTemp += chanList[e] + " = " + `file(params.${inputParamName}, type: 'any')\n`; 
+                }
             }
-
-
         } else if (checkRegex === true) {
             channelFormat = "f2";
             chnObj = addFormat2chnObj(chnObj, channelFormat, chnName);
