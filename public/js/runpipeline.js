@@ -9489,7 +9489,7 @@ $(function () {
                             await loadRunSettings(pipe);
                             var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
                             if (projectpipelineOwn == "1") {
-                                chooseDefaultRunEnv(pipe)
+//                                chooseDefaultRunEnv(pipe)
                             }
                             await checkReadytoRun();
 
@@ -13873,8 +13873,6 @@ $(document).ready(async function () {
                                 return specialChars.test(str);
                             }
                             //remove file if it has paranthesis or space in the name 
-                            console.log(file.name)
-                            console.log(containsSpecialChars(file.name))
                             if (containsSpecialChars(file.name)) {
                                 removedFiles.push(file.name);
                                 up.removeFile(file);
