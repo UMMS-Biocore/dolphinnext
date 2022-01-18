@@ -10539,6 +10539,8 @@ $(document).ready(async function () {
             selectizeCollection(["#collection_id", "#collection_id_geo"], "", false);
             //#uploadFiles tab:
             $("#target_dir").val($runscope.getUploadDir("new"));
+            $("#pluploaderReset").trigger("click");
+
         });
 
         $("#viewDirBut").click(async function () {
@@ -13747,7 +13749,7 @@ $(document).ready(async function () {
                 //multipart_params : {'target_dir': "old"},
                 filters: {
                     // Maximum file size
-                    max_file_size: "10gb",
+                    max_file_size: "2gb",
                 },
                 // PreInit events, bound before any internal events
                 preinit: {
@@ -13865,23 +13867,29 @@ $(document).ready(async function () {
                                     up.removeFile(file);
                                 }
                             }
-                            //remove file found in the remote host
-                            //                            if ($.inArray(file.name, fileArr) !== -1) {
-                            //                                removedFiles.push(file.name);
-                            //                                up.removeFile(file);
-                            //                            }
+                            var containsSpecialChars = function (str) {
+                                //with space as special character
+                                const specialChars = /[ `!#$%^&*()+\=\[\]{};':"\\|,<>\/?~]/;
+                                return specialChars.test(str);
+                            }
+                            //remove file if it has paranthesis or space in the name 
+                            console.log(file.name)
+                            console.log(containsSpecialChars(file.name))
+                            if (containsSpecialChars(file.name)) {
+                                removedFiles.push(file.name);
+                                up.removeFile(file);
+                            }
                             log("  File:", file);
                         });
 
                         var delRowsTxt = "";
                         var dupFilesTxt = "";
                         var emptyFilesTxt = "";
-                        //                        if (removedFiles.length > 0) {
-                        //                            var delRowsTxt =
-                        //                                "Following file(s) already found in the target directory. Therefore, they removed from download queue.<br/><br/>File List:<br/>" +
-                        //                                removedFiles.join("<br/>") +
-                        //                                "<br/><br/>";
-                        //                        }
+                        if (removedFiles.length > 0) {
+                            var delRowsTxt = "Please don't use special character or space in your file name.<br/>Following file(s) removed from download queue.<br/><br/>File List:<br/>" +
+                                removedFiles.join("<br/>") +
+                                "<br/><br/>";
+                        }
                         if (dupFiles.length > 0) {
                             var dupFilesTxt =
                                 "Following file(s) already found in the queue list. <br/><br/>File List:<br/>" +
