@@ -1,4 +1,8 @@
-14.01.2021 Version 1.2.78
+17.01.2021 Version 1.2.80
+Special character control added to upload file section.
+Reset of upload added on hide of upload modal.
+
+14.01.2021 Version 1.2.79
 Minor bug fixed in channel creation function.
 
 11.01.2021 Version 1.2.78
