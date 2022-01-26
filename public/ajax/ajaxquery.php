@@ -1800,8 +1800,8 @@ else if ($p=="saveProcessGroup"){
 }
 
 else if ($p=="testScript"){
-    $inputs = $_REQUEST['inputs'];
-    $outputs= $_REQUEST['outputs'];
+    $outputs = isset($_REQUEST['outputs']) ? $_REQUEST['outputs'] : array();
+    $inputs = isset($_REQUEST['inputs']) ? $_REQUEST['inputs'] : array();
     $code= $_REQUEST['code'];
     $env= $_REQUEST['env'];
     $data = $db->saveTestRun($inputs, $outputs, $code, $env, $ownerID);
@@ -1849,20 +1849,23 @@ else if ($p=="saveProcess"){
     settype($process_gid, "integer");
     settype($perms, "integer");
     settype($process_group_id, "integer");
-    if (!empty($id)) {
-        $db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
-        $db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
-        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
-    } else {
-        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
-        $idArray = json_decode($data,true);
-        $new_pro_id = $idArray["id"];
-        if (empty($id) && empty($process_uuid)) {
-            $db->getUUIDAPI($data, "process", $new_pro_id);
-        } else if (empty($id) && empty($process_rev_uuid)){
-            $db->getUUIDAPI($data, "process_rev", $new_pro_id);
+    if (!empty($ownerID)){
+        if (!empty($id)) {
+            $db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
+            $db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
+            $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
+        } else {
+            $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
+            $idArray = json_decode($data,true);
+            $new_pro_id = $idArray["id"];
+            if (empty($id) && empty($process_uuid)) {
+                $db->getUUIDAPI($data, "process", $new_pro_id);
+            } else if (empty($id) && empty($process_rev_uuid)){
+                $db->getUUIDAPI($data, "process_rev", $new_pro_id);
+            }
         }
     }
+
 }
 else if ($p=="callRmarkdown"){
     $uuid = $_REQUEST['uuid'];

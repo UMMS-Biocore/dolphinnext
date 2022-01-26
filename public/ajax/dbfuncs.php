@@ -1869,18 +1869,20 @@ class dbfuncs {
     function getMaxOptionalInputNum($pipeline_id,$ownerID){
         $pipe = $this->loadPipeline($pipeline_id,$ownerID);
         $pipe_obj = json_decode($pipe,true);
-        $process_list = $pipe_obj[0]["process_list"];
         $max = 0;
-        if (!empty($process_list)){
-            $process_list_ar = explode(",",$process_list);
-            for ($i=0; $i<count($process_list_ar); $i++) {
-                $proID= $process_list_ar[$i];
-                $opt = $this->getOptionalProcessParameter($proID);
-                $opt_obj = json_decode($opt,true);
-                $opt_input_count = $opt_obj[0]["opt_input_count"];
-                settype($opt_input_count, 'integer');
-                if (!empty($opt_input_count) && $opt_input_count>$max){
-                    $max = $opt_input_count;
+        if (!empty($pipe_obj[0])){
+            $process_list = $pipe_obj[0]["process_list"];
+            if (!empty($process_list)){
+                $process_list_ar = explode(",",$process_list);
+                for ($i=0; $i<count($process_list_ar); $i++) {
+                    $proID= $process_list_ar[$i];
+                    $opt = $this->getOptionalProcessParameter($proID);
+                    $opt_obj = json_decode($opt,true);
+                    $opt_input_count = $opt_obj[0]["opt_input_count"];
+                    settype($opt_input_count, 'integer');
+                    if (!empty($opt_input_count) && $opt_input_count>$max){
+                        $max = $opt_input_count;
+                    }
                 }
             }
         }
