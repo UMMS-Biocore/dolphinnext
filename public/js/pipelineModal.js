@@ -685,7 +685,8 @@ function cleanProcessModal() {
     $(`a[href*=pro_editor_tab`).click()
     $('#createRevisionBut').css('display', "none");
     $('#saveprocess').css('display', "inline");
-
+    updateCheckBox("#docker_check","0");
+    updateCheckBox("#singu_check","0");
 }
 
 function loadRunEnv() {
@@ -2841,6 +2842,7 @@ $(document).ready(function () {
     //Add Process Modal
     $('#addProcessModal').on('show.bs.modal', function (event) {
         $(this).find('form').trigger('reset');
+        
         var backUpObj = {};
         backUpObj.menuRevBackup = $('#revModalHeader').clone();
         backUpObj.menuGrBackup = $('#proGroup').clone();
@@ -2868,8 +2870,7 @@ $(document).ready(function () {
         var checkPipeModuleModal = button.is('a.pipeMode') === true;
         var checkSettingsIcon = !checkAddprocess && !checkEditprocess && !checkPipeModuleModal;
         loadRunEnv();
-        updateCheckBox("#docker_check","0")
-        updateCheckBox("#singu_check","0")
+        
         displayButton("runProPipe");
         if (checkAddprocess) {
             $('#processmodaltitle').html('Add New Process');
