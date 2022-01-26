@@ -2334,10 +2334,10 @@ async function readNextLog(proType, proId, type) {
         }
         // when run hasn't finished yet and page reloads then show connecting button
         else if (
-            type == "reload" ||
+            runStatus && (type == "reload" ||
             window.saveNextLog === false ||
             window.saveNextLog === undefined
-        ) {
+        )) {
             window["countFailRead"] = 0;
             displayButton("connectingProPipe");
             if (type === "reload") {
@@ -2380,8 +2380,9 @@ async function readNextLog(proType, proId, type) {
                 displayButton("runningProPipe");
             }
         }
-
-        $("#testrunLogArea").val(serverLog + "\n" + nextflowLog);
+        var textserverLog = serverLog ? serverLog : ""
+        var textnextflowLog = nextflowLog ? nextflowLog : ""
+        $("#testrunLogArea").val(textserverLog + "\n" + textnextflowLog);
         autoScrollLogArea();
 
         setTimeout(function () {
