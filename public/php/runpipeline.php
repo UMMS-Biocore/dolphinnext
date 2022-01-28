@@ -408,13 +408,13 @@ $DMETA_LABEL= DMETA_LABEL;
                             <label for="singu_save" class="col-sm-3 control-label"> Save over Image <span><a data-toggle="tooltip" data-placement="bottom" title="If you want to download and save over an existing image, you can check this box."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                             <div class="col-sm-9">
                                 <input type="checkbox" id="singu_save" name="singu_save"></input>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 <!--            End of runsettings div-->
 <div id="workDetails">
     <div id="pipefiles">
@@ -1069,6 +1069,48 @@ $DMETA_LABEL= DMETA_LABEL;
 </div>
 
 
+
+
+<!--input SingleFile modal-->
+<div id="inputSingleFilemodal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg"  role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" >Enter File</h4>
+            </div>
+            <div class="modal-body">
+                <form style="padding-top:30px; padding-right:10px; padding-bottom:50px; border-bottom:1px solid lightgrey; " class="form-horizontal">
+                    <div class="form-group" style="display:none">
+                        <label class="col-sm-2 control-label">ID</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="mIdSingleFile" name="id">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">File Path</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="singleFilePath" name="name">
+                        </div>
+                    </div>
+                    <div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center"><span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span></div>
+                </form>
+                <div id="importModalPart1">
+                    <form id="uploadSingleFile" action="ajax/import.php" class="dropzone">
+                        <div class="fallback">
+                            <input name="file" type="file" multiple />
+                        </div>
+                    </form>
+                </div>
+                <div id="importModalPart2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveSingleFile" data-clickedrow="">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!--Save Value modal-->
 <div id="inputValmodal" class="modal fade" tabindex="-1" role="dialog">

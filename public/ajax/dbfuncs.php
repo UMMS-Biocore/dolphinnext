@@ -5189,9 +5189,13 @@ class dbfuncs {
         }
     }
 
-    function rsyncTransfer($localFile,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID){
+    function rsyncTransfer($localFile,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID, $type){
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $cmd_log = "";
+        $async = " & echo $! &";
+        if ($type == "sync"){
+            $async = "&& echo rsync successfully completed || cat $upload_dir/.$fileName";
+        }
         if (!empty($cluDataArr)){
             $fileName = str_replace(" ", "\\ ", $fileName);
             $localFile = str_replace(" ", "\\ ", $localFile);
@@ -5199,7 +5203,7 @@ class dbfuncs {
             $ssh_own_id = $cluDataArr[0]["owner_id"];
             $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
-            $cmd="rsync --info=progress2 --partial-dir='$target_dir/.tmp_$fileName' -avzu --rsync-path='mkdir -p $target_dir && rsync' -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $localFile $connect:$target_dir/ > $upload_dir/.$fileName 2>&1 & echo $! &"; 
+            $cmd="rsync --info=progress2 --partial-dir='$target_dir/.tmp_$fileName' -avzu --rsync-path='mkdir -p $target_dir && rsync' -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $localFile $connect:$target_dir/ > $upload_dir/.$fileName 2>&1 $async"; 
             $cmd_log = shell_exec($cmd);
             if (!empty($cmd_log)){
                 $cmd_log = trim($cmd_log);
@@ -5249,7 +5253,7 @@ class dbfuncs {
             mkdir($upload_dir, 0755, true);
         }
         $localFile = $upload_dir . DIRECTORY_SEPARATOR . $fileName;
-        $data = $this->rsyncTransfer($localFile,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID);
+        $data = $this->rsyncTransfer($localFile,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID, "async");
         return json_encode($data);
     }
 

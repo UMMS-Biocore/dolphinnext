@@ -491,22 +491,25 @@ folder instead of downloading all of them to reduce the load. -->
                 cursor: pointer;
             }
 
+            .dz-error-mark svg g g {
+                fill: #c00;
+            }
 
-/*      draggable ace editor
-            
+            /*      draggable ace editor
+
             .app_editor_dragbar {
-                background-color: #f6f6f6;
-                width: 100%;
-                height: 5px;
-                cursor: row-resize;
-                opacity: 1;
+            background-color: #f6f6f6;
+            width: 100%;
+            height: 5px;
+            cursor: row-resize;
+            opacity: 1;
             }
 
             .app_editor_wrapper {
-                background-color: #cccccc;
-                border-bottom: 1px solid #222222;
+            background-color: #cccccc;
+            border-bottom: 1px solid #222222;
             }
-*/
+            */
 
         </style>
 

@@ -1680,6 +1680,9 @@ else if ($p=="saveProPipeInput"){
 else if ($p=="fillInput"){
     $inputID = isset($_REQUEST['inputID']) ? $_REQUEST['inputID'] : "";
     $inputType = $_REQUEST['inputType'];
+    $qualifier = $_REQUEST['qualifier'];
+    if ($inputType == "single_file") $inputType = "file";
+    if ($qualifier == "single_file") $qualifier = "file";
     $inputName = $_REQUEST['inputName'];
     $project_id = $_REQUEST['project_id'];
     $collection_id = isset($_REQUEST['collection_id']) ? $_REQUEST['collection_id'] : "";
@@ -1689,7 +1692,6 @@ else if ($p=="fillInput"){
     settype($g_num, 'integer');
     settype($collection_id, 'integer');
     $given_name = $_REQUEST['given_name'];
-    $qualifier = $_REQUEST['qualifier'];
     $proPipeInputID = $_REQUEST['proPipeInputID'];
     $url = isset($_REQUEST['url']) ? $_REQUEST['url'] : "";
     $urlzip = isset($_REQUEST['urlzip']) ? $_REQUEST['urlzip'] : "";

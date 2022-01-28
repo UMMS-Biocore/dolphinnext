@@ -832,7 +832,7 @@ function parseRegPartAutofill(regPart) {
     return [url, urlzip, checkPath];
 }
 
-//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file
+//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file @single_file
 //parse style categories: @multicolumn, @array, @condition
 function parseRegPart(regPart) {
     var type = null;
@@ -846,6 +846,7 @@ function parseRegPart(regPart) {
     var autoform = null;
     var optional = null;
     var file = null;
+    var singleFile = null;
     var arr = null;
     var cond = null;
     if (regPart.match(/@/)) {
@@ -855,6 +856,7 @@ function parseRegPart(regPart) {
             var typeCheck = regSplit[i].match(/^checkbox|^textbox|^input|^dropdown/i);
             var optionalCheck = regSplit[i].match(/^optional/i);
             var fileCheck = regSplit[i].match(/^file/i);
+            var singleFileCheck = regSplit[i].match(/^single_file/i);
             // check if @autofill tag is defined //* @autofill:{var1="yes", "filling_text"}
             // for multiple options @autofill:{var1=("yes","no"), "filling_text"}
             // for dynamic filling @autofill:{var1=("yes","no"), _build+"filling_text"}
@@ -903,6 +905,9 @@ function parseRegPart(regPart) {
             }
             if (fileCheck) {
                 file = true;
+            }
+            if (singleFileCheck) {
+                singleFile = true;
             }
 
             // find description
@@ -999,7 +1004,8 @@ function parseRegPart(regPart) {
         autoform,
         showsett,
         optional,
-        file
+        file,
+        singleFile
     ];
 }
 
@@ -1661,7 +1667,9 @@ function getInputVariables(button) {
     if (qualifier === "file" || qualifier === "set") {
         sType = "file"; //for simplification
     } else if (qualifier === "val") {
-        sType = qualifier;
+        sType = "val";
+    } else if (qualifier === "single_file") {
+        sType = "single_file";
     }
     return [rowID, gNumParam, given_name, qualifier, sType];
 }
@@ -3029,10 +3037,11 @@ function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier) {
 
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
-function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett, optional, file ) {
+function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett, optional, file, singleFile ) {
     var dropDownQual = false;
     var paraQualifier = "val";
     if (file) paraQualifier = "file";
+    if (singleFile) paraQualifier = "single_file";
     var paramGivenName = varName;
     var processName = "-";
     var paraIdentifier = "-";
@@ -3139,6 +3148,7 @@ function parseProPipePanelScript(script) {
         var showsett = null;
         var optional = null;
         var file = null;
+        var singleFile = null;
         var arr = null;
         var cond = null;
         var title = null;
@@ -3152,7 +3162,7 @@ function parseProPipePanelScript(script) {
             [varName, defaultVal] = parseVarPart(varPart);
         }
         if (regPart) {
-            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file] =
+            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file, singleFile] =
                 parseRegPart(regPart);
         }
         if (type && varName) {
@@ -3167,7 +3177,8 @@ function parseProPipePanelScript(script) {
                 autoform: autoform,
                 showsett: showsett,
                 optional: optional,
-                file: file
+                file: file,
+                singleFile: singleFile
             });
         }
         if (multiCol || arr || cond) {
@@ -3270,6 +3281,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                 var showsett = panelObj.schema[i].showsett;
                 var optional = panelObj.schema[i].optional;
                 var file = panelObj.schema[i].file;
+                var singleFile = panelObj.schema[i].singleFile;
                 if (type && varName) {
                     // if variable start with "params." then insert into inputs table
                     if (varName.match(/params\./)) {
@@ -3285,7 +3297,8 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                             name,
                             showsett,
                             optional,
-                            file
+                            file,
+                            singleFile
                         );
                     } else {
                         displayProDiv = true;
@@ -3463,7 +3476,7 @@ rowType,
     }
     if (paraQualifier == "val") {
         paraFileType = "-";
-    }
+    } 
     return (
         "<tr " +
         trID +
@@ -4455,7 +4468,9 @@ paraQualifier,
             var buttons = getButtonsModal("inputFile", "Enter File") + defValButton;
         } else if (paraQualifier === "val") {
             var buttons = getButtonsModal("inputVal", "Enter Value") + defValButton;
-        } else {
+        } else if (paraQualifier === "single_file") {
+            var buttons = getButtonsModal("inputSingleFile", "Enter File") + defValButton;
+        }else {
             var buttons = getButtonsModal("inputFile", "Enter File") + defValButton;
         }
     } else {
@@ -5757,7 +5772,16 @@ rowID,
             $("#" + rowID)
                 .find("#defValUse")
                 .css("display", "none");
-        } else {
+        } else if (qualifier === "single_file") {
+            var editIcon = getIconButtonModal("inputSingleFile", "Edit", "fa fa-pencil");
+            var deleteIcon = getIconButton("inputSingleFile", "Delete", "fa fa-trash-o");
+            $("#" + rowID)
+                .find("#inputSingleFileEnter")
+                .css("display", "none");
+            $("#" + rowID)
+                .find("#defValUse")
+                .css("display", "none");
+        }else {
             var editIcon = getIconButtonModal("inputVal", "Edit", "fa fa-pencil");
             var deleteIcon = getIconButton("inputVal", "Delete", "fa fa-trash-o");
             $("#" + rowID)
@@ -5857,6 +5881,25 @@ function removeSelectFile(rowID, sType, fillingType) {
                     .find("#defValUse")
                     .css("display", "inline");
             }
+        } else if (sType === "single_file") {
+            $("#" + rowID)
+                .find("#inputSingleFileEnter")
+                .css("display", "inline");
+            if (fillingType == "dry") {
+                $("#" + rowID)
+                    .find("#inputSingleFileEnter")
+                    .prop("disabled", true);
+                $("#" + rowID)
+                    .find("#defValUse")
+                    .css("display", "none");
+            } else {
+                $("#" + rowID)
+                    .find("#inputSingleFileEnter")
+                    .prop("disabled", false);
+                $("#" + rowID)
+                    .find("#defValUse")
+                    .css("display", "inline");
+            }
         } else if (sType === "val") {
             $("#" + rowID)
                 .find("#inputValEnter")
@@ -5891,6 +5934,8 @@ function removeSelectFile(rowID, sType, fillingType) {
                 butid == "inputDelDelete" ||
                 butid == "inputValDelete" ||
                 butid == "inputValEdit" ||
+                butid == "inputSingleFileDelete" ||
+                butid == "inputSingleFileEdit" ||
                 butid == "inputFileDelete" ||
                 butid == "inputFileEdit" ||
                 butid.match(/^urlBut-/)
@@ -6061,6 +6106,8 @@ async function saveFileSetValModal(data, sType, inputID, collection) {
         var rowID = $("#mIdFile").attr("rowID"); //the id of table-row to be updated #inputTa-3
     } else if (sType === "val") {
         var rowID = $("#mIdVal").attr("rowID"); //the id of table-row to be updated #inputTa-3
+    } else if (sType === "single_file") {
+        var rowID = $("#mIdSingleFile").attr("rowID"); //the id of table-row to be updated #inputTa-3
     }
     var gNumParam = rowID.split("Ta-")[1];
     var given_name = $("#input-PName-" + gNumParam).attr("name"); //input-PName-3
@@ -6091,6 +6138,8 @@ async function editFileSetValModal(data, sType, inputID, collection) {
         var rowID = $("#mIdFile").attr("rowID"); //the id of table-row to be updated #inputTa-3
     } else if (sType === "val") {
         var rowID = $("#mIdVal").attr("rowID"); //the id of table-row to be updated #inputTa-3
+    } else if (sType === "single_file") {
+        var rowID = $("#mIdSingleFile").attr("rowID"); //the id of table-row to be updated #inputTa-3
     }
     var proPipeInputID = $("#" + rowID).attr("propipeinputid");
     var gNumParam = rowID.split("Ta-")[1];
@@ -9489,7 +9538,7 @@ $(function () {
                             await loadRunSettings(pipe);
                             var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
                             if (projectpipelineOwn == "1") {
-//                                chooseDefaultRunEnv(pipe)
+                                //                                chooseDefaultRunEnv(pipe)
                             }
                             await checkReadytoRun();
 
@@ -9924,7 +9973,7 @@ function updateRunLogStat(run_log_uuid, projectpipelineOwn) {
         },
     });
 }
-
+Dropzone.autoDiscover = false;
 $(document).ready(async function () {
     project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
     pipeData = await $runscope.getAjaxData("getProjectPipelines", {
@@ -9981,6 +10030,151 @@ $(document).ready(async function () {
     if (project_pipeline_id !== "" && pipeline_id !== "") {
         loadPipelineDetails(pipeline_id, pipeData);
     }
+
+
+    //##################
+    //Single File Modal
+
+    var createDropzoneForSingleFile = function () {
+        console.log("createDropzoneForSingleFile");
+        if (Dropzone.options.uploadSingleFile) {
+            $("#uploadSingleFile")[0].dropzone.destroy();
+            $("#uploadSingleFile").off();
+        }
+        // Configuriation of dropzone of id:dynRowsUploadForm in mdEditorInfo modal
+        window.uploadSingleFile = {};
+        window.uploadSingleFile.filename = "";
+        Dropzone.options.uploadSingleFile = {
+            paramName: "single_file", // The name that will be used to transfer the file
+            maxFilesize: 200, // MB
+            maxFiles: 1,
+            createImageThumbnails: false,
+            dictDefaultMessage:
+            'Drop your file here or <button type="button" class="btn btn-default" >Select File </button>',
+            accept: function (file, done) {
+                var run_env = $("#chooseEnv").val()
+                var target_dir = $("#rOut_dir").val()
+                if (!run_env) {
+                    done("Please select run environment.");
+                    return;
+                }
+                if (!target_dir) {
+                    done("Please enter work directory.");
+                    return;
+                }
+                window.uploadSingleFile.filename = file.name;
+                done();
+                $("#uploadSingleFile_upload_name_span").text(file.name);
+            },
+            init: function () {
+                this.on("sending", function (file, xhr, formData) {
+                    var run_env = $("#chooseEnv").val()
+                    var target_dir = $("#rOut_dir").val()
+                    if (target_dir){
+                        target_dir = `${target_dir}/run${project_pipeline_id}/upload`
+                    }
+                    formData.append("target_dir", target_dir);
+                    formData.append("run_env", run_env);
+                });
+                this.on("maxfilesexceeded", function(file) { 
+                    this.removeAllFiles(); 
+                    this.addFile(file); 
+                }); 
+
+            },
+            success:function(file, response){
+                var target_dir = $("#rOut_dir").val()
+                target_dir = target_dir.replace(/\/$/, '');
+                var target_file = `${target_dir}/run${project_pipeline_id}/upload/${file.name}`
+                $("#singleFilePath").val(target_file)
+                return file.previewElement.classList.add("dz-success");
+            }
+
+        };
+        $("#uploadSingleFile").dropzone();
+    };
+
+    $('#inputSingleFilemodal').on('show.bs.modal', async function (e) {
+        createDropzoneForSingleFile()
+        var button = $(e.relatedTarget);
+        $(this).find("form").trigger("reset");
+        var clickedRow = button.closest("tr");
+        var rowID = clickedRow[0].id; //#inputTa-3
+        var gNumParam = rowID.split("Ta-")[1];
+        $("#mIdSingleFile").attr("rowID", rowID);
+        if (button.attr("id") === "inputSingleFileEdit") {
+            var proPipeInputID = $("#" + rowID).attr("propipeinputid");
+            $("#mIdSingleFile").val(proPipeInputID);
+            // Get the input id of proPipeInput;
+            var proInputGet = await doAjax({
+                p: "getProjectPipelineInputs",
+                id: proPipeInputID,
+            });
+            if (proInputGet) {
+                var input_id = proInputGet[0].input_id;
+                var inputGet = await doAjax({ p: "getInputs", id: input_id });
+                inputGet = inputGet[0];
+                if (inputGet) {
+                    //insert data into form
+                    var formValues = $("#inputSingleFilemodal").find("input");
+                    var keys = Object.keys(inputGet);
+                    for (var i = 0; i < keys.length; i++) {
+                        $(formValues[i]).val(inputGet[keys[i]]);
+                    }
+                }
+            }
+        }
+    })
+
+    $('#inputSingleFilemodal').on('hide.bs.modal', function (e) {
+        //reset import area
+        var myDropzone = Dropzone.forElement("#uploadSingleFile");
+    })
+
+    $("#inputSingleFilemodal").on("click", "#saveSingleFile", async function (e) {
+        e.preventDefault();
+        $("#inputSingleFilemodal").loading({
+            message: "Working...",
+        });
+        var savetype = $("#mIdSingleFile").val();
+        if (!savetype.length) {
+            //add item
+            var formValues = $("#inputSingleFilemodal").find("input");
+            var data = formValues.serializeArray(); // convert form to array
+            // check if name is entered
+            data[1].value = $.trim(data[1].value);
+            if (data[1].value !== "") {
+                await saveFileSetValModal(data, "single_file", null, null);
+                $("#inputSingleFilemodal").loading("stop");
+                $("#inputSingleFilemodal").modal("hide");
+            } else {
+                $("#inputSingleFilemodal").loading("stop");
+                showInfoModal(
+                    "#infoModal",
+                    "#infoModalText",
+                    "Please enter file path or upload file to save."
+                );
+            }
+        } else {
+            //edit item
+            var formValues = $("#inputSingleFilemodal").find("input");
+            var data = formValues.serializeArray(); // convert form to array
+            // check if file_path is entered
+            data[1].value = $.trim(data[1].value);
+            if (data[1].value !== "") {
+                await editFileSetValModal(data, "single_file", null, null);
+                $("#inputSingleFilemodal").loading("stop");
+                $("#inputSingleFilemodal").modal("hide");
+            } else {
+                $("#inputSingleFilemodal").loading("stop");
+                showInfoModal(
+                    "#infoModal",
+                    "#infoModalText",
+                    "Please enter file path or upload file to save."
+                );
+            }
+        }
+    });
 
     //##################
     //Sample Modal
@@ -13358,7 +13552,7 @@ $(document).ready(async function () {
         createFileTable(table_id, ajax);
     });
 
-    $(document).on("click", "#inputDelDelete, #inputValDelete", async function (e) {
+    $(document).on("click", "#inputDelDelete, #inputValDelete, #inputSingleFileDelete", async function (e) {
         var clickedRow = $(this).closest("tr");
         var rowID = clickedRow[0].id; //#inputTa-3
         var gNumParam = rowID.split("Ta-")[1];
