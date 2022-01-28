@@ -108,7 +108,7 @@ if (!$chunks || $chunk == $chunks - 1) {
     $profileAr = explode("-", $run_env);
     $profileType = $profileAr[0];
     $profileId = $profileAr[1];
-    $cmd_log = $db->rsyncTransfer($filePath,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID);
+    $cmd_log = $db->rsyncTransfer($filePath,$fileName, $target_dir, $upload_dir, $profileId, $profileType, $ownerID, "async");
     die('{"jsonrpc" : "2.0", "result" : null, "id" : "id", "rsync_log": '.json_encode($cmd_log).'}');
     
 }
