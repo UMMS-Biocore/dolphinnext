@@ -797,7 +797,7 @@ function updateMarkdown (text, targetDiv){
         regex: new RegExp(`<${key}(.*)>`, 'g'),
         replace: `<${key} style="width: auto;" class="${classMap[key]}" $1>`
     }));
-    var converter = new showdown.Converter({tables: true ,extensions: [bindings]});
+    var converter = new showdown.Converter({noHeaderId: true, tables: true ,extensions: [bindings]});
     var html = converter.makeHtml(text);
     target.innerHTML = html;
 }

@@ -1088,9 +1088,17 @@ $DMETA_LABEL= DMETA_LABEL;
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="col-sm-2 control-label">File Path</label>
+                        <label class="col-sm-2 control-label">File Location</label>
                         <div class="col-sm-10">
                             <input type="text" class="form-control" id="singleFilePath" name="name">
+                        </div>
+                        <div>
+                            <div class="col-sm-2"></div>
+                            <div class="col-sm-10">
+                                <span class="small">
+                                You can enter the full path of a file, Amazon (S3) or Google (GS) location
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <div style="width: 100%; height: 16px; border-bottom: 1px solid #E0E6E8; text-align: center"><span style="font-size: 18px; background-color: white; padding: 0 7px; color:#B7BFC6;"> or </span></div>

@@ -14,7 +14,7 @@ function getAllMarkdown(arr){
 }
 
 function getMarkdown(text){
-    var converter = new showdown.Converter({tables: true});
+    var converter = new showdown.Converter({noHeaderId: true, tables: true, tables: true});
     var html = converter.makeHtml(text);
     return html
 }

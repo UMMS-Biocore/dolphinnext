@@ -1438,7 +1438,10 @@ else if ($p=="saveProfileCluster"){
     settype($amazon_cre_id, 'integer');
     $def_publishdir = isset($_REQUEST['def_publishdir']) ? $_REQUEST['def_publishdir'] : "";
     $def_workdir = isset($_REQUEST['def_workdir']) ? $_REQUEST['def_workdir'] : "";
-
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     if (!empty($id)) {
         $data = $db->updateProfileCluster($id, $name, $executor,$next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $bash_variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID);
     } else {
@@ -1485,6 +1488,10 @@ else if ($p=="saveProfileAmazon"){
     $def_workdir = isset($_REQUEST['def_workdir']) ? $_REQUEST['def_workdir'] : "";
     $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
     settype($perms, 'integer');
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     if (!empty($id)) {
         $data = $db->updateProfileAmazon($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $subnet_id, $shared_storage_id,$shared_storage_mnt, $ssh_id, $amazon_cre_id, $next_clu_opt, $job_clu_opt, $public, $security_group, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
     } else {
@@ -1528,6 +1535,10 @@ else if ($p=="saveProfileGoogle"){
     $def_workdir = isset($_REQUEST['def_workdir']) ? $_REQUEST['def_workdir'] : "";
     $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
     settype($perms, 'integer');
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     if (!empty($id)) {
         $data = $db->updateProfileGoogle($id, $name, $executor, $next_path, $port, $singu_cache, $ins_type, $image_id, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $ssh_id, $google_cre_id, $next_clu_opt, $job_clu_opt, $public, $zone, $variable, $bash_variable, $group_id, $auto_workdir, $def_publishdir, $def_workdir, $perms, $ownerID);
     } else {
@@ -1537,6 +1548,10 @@ else if ($p=="saveProfileGoogle"){
 else if ($p=="saveInput"){
     $type = $_REQUEST['type'];
     $name = $_REQUEST['name'];
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     if (!empty($id)) {
         $data = $db->updateInput($id, $name, $type, $ownerID);
     } else {
@@ -1545,6 +1560,10 @@ else if ($p=="saveInput"){
 }
 else if ($p=="saveCollection"){
     $name = $_REQUEST['name'];
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     $data = $db->saveCollection($name, $ownerID);
 }
 else if ($p=="insertFileCollection"){
@@ -1631,6 +1650,10 @@ else if ($p=="saveFile"){
     $run_env = $_REQUEST['run_env'];
     $run_env = $db->getRunEnv($run_env, $ownerID);
     $insertArr = array();
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     for ($i = 0; $i < count($file_array); $i++) {
         $item = $file_array[$i];
         $item_file_dir = isset($file_dir[$i]) ? $file_dir[$i] : ""; 
@@ -1851,20 +1874,22 @@ else if ($p=="saveProcess"){
     settype($process_gid, "integer");
     settype($perms, "integer");
     settype($process_group_id, "integer");
-    if (!empty($ownerID)){
-        if (!empty($id)) {
-            $db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
-            $db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
-            $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
-        } else {
-            $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
-            $idArray = json_decode($data,true);
-            $new_pro_id = $idArray["id"];
-            if (empty($id) && empty($process_uuid)) {
-                $db->getUUIDAPI($data, "process", $new_pro_id);
-            } else if (empty($id) && empty($process_rev_uuid)){
-                $db->getUUIDAPI($data, "process_rev", $new_pro_id);
-            }
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
+    if (!empty($id)) {
+        $db->updateAllProcessGroupByGid($process_gid, $process_group_id,$ownerID);
+        $db->updateAllProcessNameByGid($process_gid, $name,$ownerID);
+        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
+    } else {
+        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
+        $idArray = json_decode($data,true);
+        $new_pro_id = $idArray["id"];
+        if (empty($id) && empty($process_uuid)) {
+            $db->getUUIDAPI($data, "process", $new_pro_id);
+        } else if (empty($id) && empty($process_rev_uuid)){
+            $db->getUUIDAPI($data, "process_rev", $new_pro_id);
         }
     }
 
@@ -2075,6 +2100,10 @@ else if ($p=="saveProcessParameter"){
     settype($perms, 'integer');
     settype($parameter_id, 'integer');
     settype($process_id, 'integer');
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     if (!empty($id)) {
         $data = $db->updateProcessParameter($id, $sname, $process_id, $parameter_id, $type, $closure, $operator, $reg_ex, $test, $optional, $perms, $group_id, $ownerID);
     } else {
@@ -2296,7 +2325,11 @@ else if ($p=="getOutputsPP")
     $data = $db->getOutputsPP($process_id);
 }
 else if ($p=="saveAllPipeline")
-{
+{   
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     $dat = $_REQUEST['dat'];
     $obj = json_decode($dat);
     $newObj = new stdClass();
@@ -2358,6 +2391,10 @@ else if ($p=="savePipelineDetails")
     $publicly_searchable = isset($_REQUEST['publicly_searchable']) ? $_REQUEST['publicly_searchable'] : "false";
     $pipeline_group_id = $_REQUEST['pipeline_group_id'];
     $release_date = $_REQUEST['release_date'];
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
     if (!empty($release_date)){
         $release_date = date('Y-m-d', strtotime($release_date));
     }
