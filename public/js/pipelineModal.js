@@ -778,7 +778,7 @@ function loadModalProGro() {
                 }});
         },
         error: function (errorThrown) {
-            alert("Error: " + errorThrown);
+            toastr.error("Error occured.");
         }
     });
 };
@@ -818,7 +818,7 @@ function loadPipeMenuGroup(newPipe) {
 
         },
         error: function (errorThrown) {
-            alert("Error: " + errorThrown);
+            toastr.error("Error occured.");
         }
     });
 };
@@ -854,7 +854,7 @@ function loadModalParam() {
             $('#mParamAllIn').parent().hide();
         },
         error: function (errorThrown) {
-            alert("Error: " + errorThrown);
+            toastr.error("Error occured.");
         }
     });
 };
@@ -1220,7 +1220,7 @@ function addProParatoDB(data, startPoint, process_id, perms, group) {
                 async: false,
                 success: function (s) {},
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
         }
@@ -1315,7 +1315,7 @@ function addProParatoDBbyRev(data, startPoint, process_id, perms, group) {
                 async: false,
                 success: function (s) {},
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
         }
@@ -1400,7 +1400,7 @@ function updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputLis
                 async: false,
                 success: function () {},
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
         }
@@ -1418,7 +1418,7 @@ function updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputLis
                 async: false,
                 success: function () {},
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
         }
@@ -1946,7 +1946,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
 
         },
         error: function (errorThrown) {
-            alert("Error: " + errorThrown);
+            toastr.error("Error occured.");
         }
     });
 
@@ -2650,7 +2650,7 @@ $(document).ready(function () {
 
                 },
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
         });
@@ -2745,7 +2745,7 @@ $(document).ready(function () {
                             }
                         },
                         error: function (errorThrown) {
-                            alert("Error: " + errorThrown);
+                            toastr.error("Error occured.");
                         }
                     });
                 }
@@ -3273,7 +3273,7 @@ $(document).ready(function () {
                         $('#addProcessModal').modal('hide');
                     },
                     error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
+                        toastr.error("Error occured.");
                     }
                 });
             }
@@ -3367,7 +3367,7 @@ $(document).ready(function () {
                             $('#addProcessModal').modal('hide');
                         },
                         error: function (errorThrown) {
-                            alert("Error: " + errorThrown);
+                            toastr.error("Error occured.");
                         }
                     });
                 }
@@ -3466,7 +3466,7 @@ $(document).ready(function () {
                                 $('#addProcessModal').modal('hide');
                             },
                             error: function (errorThrown) {
-                                alert("Error: " + errorThrown);
+                                toastr.error("Error occured.");
                             }
                         });
                     }
@@ -3547,7 +3547,7 @@ $(document).ready(function () {
                                     $('#addProcessModal').modal('hide');
                                 },
                                 error: function (errorThrown) {
-                                    alert("Error: " + errorThrown);
+                                    toastr.error("Error occured.");
                                 }
                             });
                         }
@@ -3898,7 +3898,7 @@ $(document).ready(function () {
                     }
                 },
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
             $('#delparametermodal').modal('hide');
@@ -4025,7 +4025,7 @@ $(document).ready(function () {
                         refreshDataset()
                     },
                     error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
+                        toastr.error("Error occured.");
                     }
                 });
             }
@@ -4294,7 +4294,7 @@ $(document).ready(function () {
                         }
                     },
                     error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
+                        toastr.error("Error occured.");
                     }
                 });
             } else {
@@ -4339,7 +4339,7 @@ $(document).ready(function () {
 
                 },
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
         }
@@ -4406,7 +4406,7 @@ $(document).ready(function () {
                         $('#delprocessGrmodal').modal('hide');
                     },
                     error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
+                        toastr.error("Error occured.");
                     }
                 });
             }
@@ -4576,7 +4576,7 @@ $(document).ready(function () {
                 $('#projectmodal').modal('hide');
             },
             error: function (errorThrown) {
-                alert("Error: " + errorThrown);
+                toastr.error("Error occured.");
             }
         });
     });
@@ -4696,7 +4696,7 @@ $(document).ready(function () {
                     }
                 },
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
         }
@@ -4737,7 +4737,7 @@ $(document).ready(function () {
                     }
                 },
                 error: function (errorThrown) {
-                    alert("Error: " + errorThrown);
+                    toastr.error("Error occured.");
                 }
             });
         }
@@ -4797,7 +4797,7 @@ $(document).ready(function () {
                         $('#pipeDelGroupModal').modal('hide');
                     },
                     error: function (errorThrown) {
-                        alert("Error: " + errorThrown);
+                        toastr.error("Error occured.");
                     }
                 });
             }
