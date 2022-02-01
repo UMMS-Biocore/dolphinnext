@@ -40,6 +40,9 @@ if (!empty($secConf)){
     $DEFAULT_GROUP_ID = isset($secConf['DEFAULT_GROUP_ID']) ? $secConf['DEFAULT_GROUP_ID'] : "";
     $DEFAULT_RUN_ENVIRONMENT = isset($secConf['DEFAULT_RUN_ENVIRONMENT']) ? $secConf['DEFAULT_RUN_ENVIRONMENT'] : "";
     date_default_timezone_set($TIMEZONE);
+    $INITIAL_RUN_DOCKER = isset($secConf['INITIAL_RUN_DOCKER']) ? $secConf['INITIAL_RUN_DOCKER'] : "ummsbiocore/initialrun-docker:1.0";
+    $INITIAL_RUN_SINGULARITY = isset($secConf['INITIAL_RUN_SINGULARITY']) ? $secConf['INITIAL_RUN_SINGULARITY'] : "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-09.06.2020.simg";
+    
 
     define('TIMEZONE', $TIMEZONE);
     define('RUNPATH', $secConf['RUNPATH']);
@@ -61,6 +64,8 @@ if (!empty($secConf)){
     define('EMAIL_ADMIN', $EMAIL_ADMIN);
     define('DEFAULT_GROUP_ID', $DEFAULT_GROUP_ID);
     define('DEFAULT_RUN_ENVIRONMENT', $DEFAULT_RUN_ENVIRONMENT);
+    define('INITIAL_RUN_DOCKER', $INITIAL_RUN_DOCKER);
+    define('INITIAL_RUN_SINGULARITY', $INITIAL_RUN_SINGULARITY);
 }
 $secUiconfig = $secRaw['UICONFIG'];
 if (!empty($secUiconfig)){

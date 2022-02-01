@@ -1,3 +1,6 @@
+01.02.2021 Version 1.2.86
+Test process bug fixed for $HOSTNAME variable.
+
 31.01.2021 Version 1.2.85
 Collection creation table updated to prevent pagination change.
 
