@@ -1,3 +1,6 @@
+31.01.2021 Version 1.2.85
+Collection creation table updated to prevent pagination change.
+
 30.01.2021 Version 1.2.84
 Ajax warning added for ended user session.
 Markdown headerID's removed for container error.

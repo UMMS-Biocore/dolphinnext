@@ -10803,8 +10803,7 @@ $(document).ready(async function () {
 
         selectSRA = function (name, srr_id, collection_type, button) {
             var row = $(button).closest("tr");
-            searchedGeoSamplesTable.fnDeleteRow(row);
-            searchedGeoSamplesTable.fnDraw();
+            $("#searchedGeoSamples").DataTable().row( row ).remove().draw( false );
             $("#selGeoSamplesDiv").css("display", "block");
             selectedGeoSamplesTable.fnAddData([
                 '<input type="text" id="' +
@@ -12261,8 +12260,7 @@ $(document).ready(async function () {
                 recordDelList("#singleList", files_used[x], "add");
             }
         }
-        selectedSamplesTable.fnDeleteRow(row);
-        selectedSamplesTable.fnDraw();
+        $("#selectedSamples").DataTable().row( row ).remove().draw( false );
     };
     updateNameTable = function (input) {
         input.id = input.value;
