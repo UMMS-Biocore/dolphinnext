@@ -28,6 +28,8 @@ class dbfuncs {
     private $JWT_COOKIE_EXPIRES_IN = JWT_COOKIE_EXPIRES_IN;
     private $DEFAULT_GROUP_ID = DEFAULT_GROUP_ID;
     private $DEFAULT_RUN_ENVIRONMENT = DEFAULT_RUN_ENVIRONMENT;
+    private $INITIAL_RUN_DOCKER = INITIAL_RUN_DOCKER;
+    private $INITIAL_RUN_SINGULARITY = INITIAL_RUN_SINGULARITY;
 
     function __construct() {
         if (!isset(self::$link)) {
@@ -338,9 +340,9 @@ class dbfuncs {
     function getInitialRunImg($docker_check, $singu_check){
         $initialrun_img = ""; 
         if ($docker_check == "true"){
-            $initialrun_img = "ummsbiocore/initialrun-docker:1.0";
+            $initialrun_img = $this->INITIAL_RUN_DOCKER;
         } else if ($singu_check == "true"){
-            $initialrun_img = "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-09.06.2020.simg";
+            $initialrun_img = $this->INITIAL_RUN_SINGULARITY;
         }
         return $initialrun_img;
     }
@@ -2154,7 +2156,7 @@ class dbfuncs {
         return $inputOperatorText;
     }
 
-    function createTestNextflowNF($inputs, $outputs, $code){
+    function createTestNextflowNF($inputs, $outputs, $code, $profileId, $profileType, $ownerID){
         $script = urldecode($code["script"]); 
         $pro_header = $code["pro_header"]; 
         $pro_footer = $code["pro_footer"]; 
@@ -2165,11 +2167,13 @@ class dbfuncs {
         $output_count = count($outputs);
 
         $nextflow = "";
-        if (!empty($pipe_header)) {
-            $nextflow .= urldecode($pipe_header) . "\n\n";
-        }
+        list($hostVar,$variable) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
+        $nextflow .= "\$HOSTNAME='".$hostVar."'\n";
         if (!empty($test_params)) {
             $nextflow .= urldecode($test_params) . "\n\n";
+        }
+        if (!empty($pipe_header)) {
+            $nextflow .= urldecode($pipe_header) . "\n\n";
         }
         // method: file-fromPath(''), value-(), set-of([1, 'alpha'], [2, 'beta']), each-[5,10]
 
@@ -2264,6 +2268,10 @@ class dbfuncs {
     //        }
     function saveTestRun($inputs, $outputs, $code, $env, $ownerID){
         $profile = $env['test_env'];
+        $profileAr = explode("-", $profile);
+        $profileType = $profileAr[0];
+        $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
+        
         $test_work_dir = $env['test_work_dir'];
         $singu_check = $env['singu_check'] == "1" ? 'true' : 'false';
         $docker_check = $env['docker_check'] == "1" ? 'true' : 'false';
@@ -2273,7 +2281,7 @@ class dbfuncs {
         $docker_opt = $env['docker_opt'];
         $pipeline_id = $env['pipeline_id'];
         $process_id = $env['process_id'];
-        $nextText = $this->createTestNextflowNF($inputs, $outputs, $code);
+        $nextText = $this->createTestNextflowNF($inputs, $outputs, $code, $profileId, $profileType, $ownerID);
         $proPipeAll = array();
         $object = new stdClass();
         $proPipeAll[] = $object;
@@ -2301,9 +2309,7 @@ class dbfuncs {
         $proPipeAll[0]->{'withDag'} = "";
         $proPipeAll[0]->{'interdel'} = "";
 
-        $profileAr = explode("-", $profile);
-        $profileType = $profileAr[0];
-        $profileId = isset($profileAr[1]) ? $profileAr[1] : "";
+        
         $res= $this->getUUIDLocal("run_log");
         $uuid = $res->rev_uuid;
         $this->updateProcessRunPid($process_id, "0", $ownerID);
