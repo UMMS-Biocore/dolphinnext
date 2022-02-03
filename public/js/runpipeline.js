@@ -7492,7 +7492,7 @@ function formToJson(rawFormData, stringify) {
     var formDataSerial = serializeDisabledArray(rawFormData);
     var formDataArr = {};
     $.each(formDataSerial, function (el) {
-        formDataArr[formDataSerial[el].name] = formDataSerial[el].value;
+        formDataArr[formDataSerial[el].name] = $.trim(formDataSerial[el].value);
     });
     if (stringify && stringify === "stringify") {
         return encodeURIComponent(JSON.stringify(formDataArr));
@@ -7846,6 +7846,7 @@ async function saveRun(sucFunc, showToastr) {
     var data = [];
     var runSummary = encodeURIComponent($("#runSum").val());
     var run_name = $("#run-title").val();
+    run_name = $.trim(run_name);
     var newpipelineID = pipeline_id;
     var onload = ""; //trigger onload function after loading run page
     if (dupliProPipe === false) {
@@ -7905,6 +7906,10 @@ async function saveRun(sucFunc, showToastr) {
     var singu_save = $("#singu_save").is(":checked").toString();
     var singu_img = $("#singu_img").val();
     var singu_opt = $("#singu_opt").val();
+    singu_img = $.trim(singu_img);
+    singu_opt = $.trim(singu_opt);
+    docker_img = $.trim(docker_img);
+    docker_opt = $.trim(docker_opt);
     var withReport = $("#withReport").is(":checked").toString();
     var withTrace = $("#withTrace").is(":checked").toString();
     var withTimeline = $("#withTimeline").is(":checked").toString();
@@ -9109,6 +9114,7 @@ $(function () {
                                     var obj = getFileNameObj();
                                     if ($("#" + "dynRowsEmptyFileCheck").is(":checked")) {
                                         var newName = $("#dynRowsFileName").val();
+                                        newName = $.trim(newName);
                                         if (newName) {
                                             var checkDuplicate = checkDuplicateFile(newName, obj);
                                             console.log(checkDuplicate);
@@ -9186,6 +9192,7 @@ $(function () {
                                     event.preventDefault();
                                     var obj = getFileNameObj();
                                     var newName = $("#dynRowsEditFileName").val();
+                                    newName = $.trim(newName);
                                     if (newName) {
                                         var checkDuplicate = checkDuplicateFile(newName, obj);
                                         if (!checkDuplicate) {
@@ -11636,6 +11643,7 @@ $(document).ready(async function () {
                         gs_archive_dir = $.trim(gs_archive_dir);
                         formObj.gs_archive_dir = gs_archive_dir + "\t" + googArchKey;
                     }
+                    formObj.archive_dir = $.trim(formObj.archive_dir)
                     formObj.file_array = ret.file_array;
                     formObj.run_env = $("#chooseEnv").find(":selected").val();
                     formObj.project_id = project_id;
@@ -11728,6 +11736,7 @@ $(document).ready(async function () {
                     if (gs_archive_dir_geo.match(/gs:/i)) {
                         formObj.gs_archive_dir = gs_archive_dir_geo + "\t" + googArchKey;
                     }
+                    formObj.archive_dir = $.trim(formObj.archive_dir);
                     formObj.file_array = ret.file_array;
                     formObj.run_env = $("#chooseEnv").find(":selected").val();
                     formObj.project_id = project_id;
