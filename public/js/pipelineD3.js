@@ -2242,6 +2242,7 @@ function save(type) {
     var svgW = $("#pipeTabDiv").width() - 32; //container div is 32px smaller than pipeTabDiv
     var svgH = $("#container").height();
     sName = document.getElementById("pipeline-title").value;
+    sName = $.trim(sName);
     sName = sName.replace(/\"/g, "").replace(/\'/g, "").replace(/\\/g, "");
     $("#pipeline-title").changeVal(sName);
     warnUserRedBorder('#pipeline-title', sName)

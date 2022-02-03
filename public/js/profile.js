@@ -554,6 +554,11 @@ $(document).ready(function () {
         } else {
             formObj.perms = "3";
         }
+        formObj.username = $.trim(formObj.username)
+        formObj.next_path = $.trim(formObj.next_path)
+        formObj.singu_cache = $.trim(formObj.singu_cache)
+        formObj.variable = $.trim(formObj.variable)
+        formObj.bash_variable = $.trim(formObj.bash_variable)
         formObj.variable = encodeURIComponent(formObj.variable);
         formObj.bash_variable = encodeURIComponent(formObj.bash_variable);
         if (formObj.executor_job == "ignite") {

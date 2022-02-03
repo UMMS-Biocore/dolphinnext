@@ -1763,6 +1763,7 @@ function createElement(type, fields, options) {
 
 function cleanProcessName(proName) {
     if (proName){
+        proName = proName.trim();
         proName = proName.replace(/ /g, "_");
         proName = proName.replace(/-/g, "_");
         proName = proName.replace(/:/g, "_");

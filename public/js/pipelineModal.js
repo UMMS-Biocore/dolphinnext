@@ -378,6 +378,7 @@
                 var newName = $("#tEditorInfoName").val();
                 var activeLi = $("#tEditorInfo").data("li_element")
                 if (activeLi[0] &&  newName){
+                    newName = newName.trim()
                     var activeSpan = $(activeLi[0]).find("span")
                     if (activeSpan[0]){
                         $(activeLi[0]).attr("id",newName) 
@@ -1786,6 +1787,7 @@ function combineTextEditor(divID){
         var filename = $(liAr[i]).attr("id");
         var editorID = $(liAr[i]).attr("editorID");
         if (editorID && filename){
+            filename = filename.trim()
             var script = window[editorID].getValue();
             ret += sep + label + '"'+filename+'"' + sep +script + sep
         }
@@ -3958,9 +3960,11 @@ $(document).ready(function () {
         var data = formValues.serializeArray(); // convert form to array
         data.splice(1, 1); //Remove "ParamAllIn"
         var selParID = data[0].value;
-        var selParName = $.trim(data[1].value);
+        data[1].value = $.trim(data[1].value);
+        data[3].value = $.trim(data[3].value);
+        var selParName = data[1].value;
         var selParQual = data[2].value;
-        var selParType = $.trim(data[3].value);
+        var selParType = data[3].value;
         if (selParQual === 'val') {
             data[3].value = selParName;
             selParType = selParName;
@@ -4316,6 +4320,7 @@ $(document).ready(function () {
             data[0].value = selProGroupID;
             savetype = "edit";
         }
+        data[1].value = $.trim(data[1].value);
         var selProGroupName = data[1].value;
         data.push({ name: "p", value: "saveProcessGroup" });
         if ((savetype === "edit" && selProGroupID !== '' && selProGroupName !== '') || (savetype === "add" && selProGroupName !== '')) {

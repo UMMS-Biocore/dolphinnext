@@ -292,6 +292,7 @@ $(document).on('click', '#saveEditSampleModal', async function (e) {
     var stop = "";
     [formObj, stop] = createFormObj(formValues, requiredFields, {onlyVisible:true});
     formObj.file_id = clickedRows;
+    formObj.files_used = $.trim(formObj.files_used);
     var removedCollections = []
     if (type == "single"){
         if (formObj.geo_used) formObj.files_used = formObj.geo_used

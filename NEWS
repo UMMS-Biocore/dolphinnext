@@ -1,5 +1,9 @@
+03.02.2021 Version 1.2.87
+Trailing and leading spaces trimmed from pipeline, run and profile pages. 
+
 01.02.2021 Version 1.2.86
 Test process bug fixed for $HOSTNAME variable.
+INITIAL_RUN_DOCKER, INITIAL_RUN_SINGULARITY parameters added to .sec file under CONFIG section.
 
 31.01.2021 Version 1.2.85
 Collection creation table updated to prevent pagination change.
