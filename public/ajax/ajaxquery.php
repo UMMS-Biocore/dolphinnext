@@ -1846,11 +1846,11 @@ else if ($p=="saveProcess"){
     $process_uuid = isset($_REQUEST['process_uuid']) ? $_REQUEST['process_uuid'] : "";
     $process_rev_uuid = isset($_REQUEST['process_rev_uuid']) ? $_REQUEST['process_rev_uuid'] : "";
     $process_uuid = "$process_uuid";
-    $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
+    $summary = isset($_REQUEST['summary']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES)) : "";
     $process_group_id = $_REQUEST['process_group_id'];
-    $script = addslashes(htmlspecialchars(urldecode($_REQUEST['script']), ENT_QUOTES));
-    $script_header = addslashes(htmlspecialchars(urldecode($_REQUEST['script_header']), ENT_QUOTES));
-    $script_footer = addslashes(htmlspecialchars(urldecode($_REQUEST['script_footer']), ENT_QUOTES));
+    $script = isset($_REQUEST['script']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['script']), ENT_QUOTES)) : "";
+    $script_header = isset($_REQUEST['script_header']) ?  addslashes(htmlspecialchars(urldecode($_REQUEST['script_header']), ENT_QUOTES)) : "";
+    $script_footer = isset($_REQUEST['script_footer']) ?  addslashes(htmlspecialchars(urldecode($_REQUEST['script_footer']), ENT_QUOTES)) : "";
 
     $test_env = isset($_REQUEST['test_env']) ? $_REQUEST['test_env'] : "";
     $test_work_dir = isset($_REQUEST['test_work_dir']) ? $_REQUEST['test_work_dir'] : "";
@@ -1860,14 +1860,14 @@ else if ($p=="saveProcess"){
     $singu_check = !empty($_REQUEST['singu_check']) ? 1 : 0;
     $singu_img = isset($_REQUEST['singu_img']) ? $_REQUEST['singu_img'] : "";
     $singu_opt = isset($_REQUEST['singu_opt']) ? $_REQUEST['singu_opt'] : "";
-    $script_test = addslashes(htmlspecialchars(urldecode($_REQUEST['script_test']), ENT_QUOTES));
+    $script_test = isset($_REQUEST['script_test_mode']) ?addslashes(htmlspecialchars(urldecode($_REQUEST['script_test_mode']), ENT_QUOTES)) : "";
     $script_test_mode = isset($_REQUEST['script_test_mode']) ? $_REQUEST['script_test_mode'] : "";
-    $script_mode = $_REQUEST['script_mode'];
-    $script_mode_header = $_REQUEST['script_mode_header'];
+    $script_mode = isset($_REQUEST['script_mode']) ? $_REQUEST['script_mode'] : "";
+    $script_mode_header = isset($_REQUEST['script_mode_header']) ? $_REQUEST['script_mode_header'] : "";
     $rev_id = isset($_REQUEST['rev_id']) ? $_REQUEST['rev_id'] : "";
     $rev_comment = isset($_REQUEST['rev_comment']) ? $_REQUEST['rev_comment'] : "";
-    $group_id = $_REQUEST['group']; 
-    $perms = $_REQUEST['perms']; 
+    $group_id = isset($_REQUEST['group']) ? $_REQUEST['group'] : "";
+    $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
     settype($id, 'integer');
     settype($rev_id, 'integer');
     settype($group_id, 'integer');
