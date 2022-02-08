@@ -703,9 +703,9 @@ process downloadUrl {
             my $slashCount = () = $url =~ /\\//g;
             my $cutDir =$slashCount - 3;
             if ($url_type eq "dir"){
-                runCommand ("wget --no-check-certificate -l inf -nc -nH --cut-dirs=$cutDir -R 'index.html*' -r --no-parent --directory-prefix=$target_path $url");
+                runCommand ("wget --no-check-certificate --secure-protocol=TLSv1 -l inf -nc -nH --cut-dirs=$cutDir -R 'index.html*' -r --no-parent --directory-prefix=$target_path $url");
             } elsif ($url_type eq "file"){
-                runCommand ("wget --no-check-certificate -l inf -nc -nH --cut-dirs=$cutDir -R 'index.html*' --directory-prefix=$target_path $url");
+                runCommand ("wget --no-check-certificate --secure-protocol=TLSv1 -l inf -nc -nH --cut-dirs=$cutDir -R 'index.html*' --directory-prefix=$target_path $url");
             }
             
         }
@@ -1793,7 +1793,7 @@ process createCollection {
             ## Both --no-clobber and -N cannot be used at the same time.
             my $slashCount = () = $url =~ /\\//g;
             my $cutDir =$slashCount - 3;
-            runCommand ("wget --no-check-certificate -nH --cut-dirs=$cutDir -R 'index.html*' --directory-prefix=$target_path $url");
+            runCommand ("wget --no-check-certificate --secure-protocol=TLSv1 -nH --cut-dirs=$cutDir -R 'index.html*' --directory-prefix=$target_path $url");
         }
 
           sub fasterqDump {

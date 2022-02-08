@@ -2338,9 +2338,9 @@ async function readNextLog(proType, proId, type) {
         // when run hasn't finished yet and page reloads then show connecting button
         else if (
             runStatus && (type == "reload" ||
-            window.saveNextLog === false ||
-            window.saveNextLog === undefined
-        )) {
+                          window.saveNextLog === false ||
+                          window.saveNextLog === undefined
+                         )) {
             window["countFailRead"] = 0;
             displayButton("connectingProPipe");
             if (type === "reload") {
@@ -2844,7 +2844,7 @@ $(document).ready(function () {
     //Add Process Modal
     $('#addProcessModal').on('show.bs.modal', function (event) {
         $(this).find('form').trigger('reset');
-        
+
         var backUpObj = {};
         backUpObj.menuRevBackup = $('#revModalHeader').clone();
         backUpObj.menuGrBackup = $('#proGroup').clone();
@@ -2872,7 +2872,7 @@ $(document).ready(function () {
         var checkPipeModuleModal = button.is('a.pipeMode') === true;
         var checkSettingsIcon = !checkAddprocess && !checkEditprocess && !checkPipeModuleModal;
         loadRunEnv();
-        
+
         displayButton("runProPipe");
         if (checkAddprocess) {
             $('#processmodaltitle').html('Add New Process');
@@ -3272,7 +3272,11 @@ $(document).ready(function () {
                         var startPoint = 5; //first object in data array where inputparameters starts.
                         addProParatoDB(data, startPoint, process_id, perms, group);
                         refreshDataset();
-                        $('#addProcessModal').modal('hide');
+                        if (clickedButID !== "saveProcessTest"){
+                            $('#addProcessModal').modal('hide');
+                        } else {
+                            toastr.success("Changes saved.");
+                        }
                     },
                     error: function (errorThrown) {
                         toastr.error("Error occured.");
@@ -3299,7 +3303,7 @@ $(document).ready(function () {
             var numOfProPipePublic = '';
             [warnUser, infoText, numOfProcess, numOfProcessPublic, numOfProPipePublic] = checkRevisionProc(data, proID);
             //B.1)Save on current process
-            if (warnUser === false && clickedButID == "saveprocess") {
+            if (warnUser === false && (clickedButID == "saveprocess" || clickedButID == "saveProcessTest" )) {
                 var proGroId = data[5].value;
                 var sMenuProIdFinal = proName + '@' + proID;
                 var sMenuProGroupIdFinal = proGroId;
@@ -3366,7 +3370,11 @@ $(document).ready(function () {
                             updateProPara(inputsBefore, outputsBefore, ppIDinputList, ppIDoutputList);
                             checkProParaUpdate(inputsBefore, outputsBefore, proID, proName);
                             refreshDataset();
-                            $('#addProcessModal').modal('hide');
+                            if (clickedButID !== "saveProcessTest"){
+                                $('#addProcessModal').modal('hide');
+                            } else {
+                                toastr.success("Changes saved.");
+                            }
                         },
                         error: function (errorThrown) {
                             toastr.error("Error occured.");
@@ -3379,7 +3387,7 @@ $(document).ready(function () {
                 $('#confirmRevision').off();
                 $('#confirmRevision').on('show.bs.modal', function (event) {
                     $(this).find('form').trigger('reset');
-                    if (clickedButID == "saveprocess"){
+                    if (clickedButID == "saveprocess" || clickedButID == "saveProcessTest"){
                         $('#confirmYesNoText').html(infoText);
                         if ((numOfProcessPublic === 0 && numOfProPipePublic === 0) || usRole == "admin") {
                             $('#saveOnExist').css('display', 'inline');
@@ -3465,7 +3473,11 @@ $(document).ready(function () {
                                 checkProParaUpdate(inputsBefore, outputsBefore, proID, proName);
                                 refreshDataset();
                                 $('#confirmRevision').modal('hide');
-                                $('#addProcessModal').modal('hide');
+                                if (clickedButID !== "saveProcessTest"){
+                                    $('#addProcessModal').modal('hide');
+                                } else {
+                                    toastr.success("Changes saved.");
+                                }
                             },
                             error: function (errorThrown) {
                                 toastr.error("Error occured.");

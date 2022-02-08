@@ -135,7 +135,7 @@ class dbfuncs {
             $imageNameAr = explode('/',$img);
             $imageName=$imageNameAr[count($imageNameAr)-1];
             $imgPath ="$downPath/$imageName";
-            $wgetCmd = "if [ ! -f $downPath/$imageName ]; then wget --no-check-certificate $img; fi";
+            $wgetCmd = "if [ ! -f $downPath/$imageName ]; then wget --secure-protocol=TLSv1 --no-check-certificate $img; fi";
             if ($singu_save == "true"){
                 $cmd = "mkdir -p $downPath && cd $downPath && rm -f ".$imageName." && $wgetCmd";
             } else {
