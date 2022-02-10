@@ -2021,7 +2021,7 @@ function fillFormByName(formId, find, data) {
         var radioCheck = $(formValues[k]).is(':radio');
         var checkboxCheck = $(formValues[k]).is(':checkbox');
         var keys = Object.keys(data);
-        if (data[nameAttr]) {
+        if (data[nameAttr] || data[nameAttr] === "") {
             if (radioCheck){
                 if (data[nameAttr] == $(formValues[k]).val()) {
                     $(formValues[k]).attr("checked", true);

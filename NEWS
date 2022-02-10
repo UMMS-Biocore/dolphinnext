@@ -1,3 +1,6 @@
+09.02.2021 Version 1.2.89
+Minor bug fixed in fillFormByName function.
+
 08.02.2021 Version 1.2.88
 Save button added to test window.
 Secure flag added to wget command for initial run: --secure-protocol=TLSv1.
