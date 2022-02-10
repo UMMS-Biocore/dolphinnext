@@ -1860,7 +1860,7 @@ else if ($p=="saveProcess"){
     $singu_check = !empty($_REQUEST['singu_check']) ? 1 : 0;
     $singu_img = isset($_REQUEST['singu_img']) ? $_REQUEST['singu_img'] : "";
     $singu_opt = isset($_REQUEST['singu_opt']) ? $_REQUEST['singu_opt'] : "";
-    $script_test = isset($_REQUEST['script_test']) ?addslashes(htmlspecialchars(urldecode($_REQUEST['script_test']), ENT_QUOTES)) : "";
+    $script_test = isset($_REQUEST['script_test']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['script_test']), ENT_QUOTES)) : "";
     $script_test_mode = isset($_REQUEST['script_test_mode']) ? $_REQUEST['script_test_mode'] : "";
     $script_mode = isset($_REQUEST['script_mode']) ? $_REQUEST['script_mode'] : "";
     $script_mode_header = isset($_REQUEST['script_mode_header']) ? $_REQUEST['script_mode_header'] : "";

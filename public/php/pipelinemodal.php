@@ -380,10 +380,10 @@
                                     <div id="testOptProDiv">
                                         <div id="testOptPro" class="row">
                                             <div class="form-horizontal" style="margin-top:15px;">
-                                                <div class="col-sm-10" >
+                                                <div class="col-sm-9" >
                                                     <label>Log</label>
                                                 </div>
-                                                <div class="col-sm-2" id="pipeRunStatDiv" style="padding-bottom: 5px;">
+                                                <div class="col-sm-3" id="pipeRunStatDiv" style="padding-bottom: 5px;">                                                    
                                                     <div id="errorProPipe" style="display:none; float: right;" class="btn-group">
                                                         <button class="btn btn-danger" type="button" id="errorProPipeBut">Run Error</button>
                                                         <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
@@ -452,6 +452,8 @@
                                                         <button class="btn btn-success testscript" type="button" id="runProPipeBut"><i class="fa fa-play " style=""></i> Test</button>
                                                     </div>
                                                     <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; float: right; vertical-align:middle;" data-original-title="Waiting for input parameters, output directory and selection of active environment" data-placement="bottom" data-toggle="tooltip">Waiting</button>
+                                                    <button style="float:right; margin-right: 5px;" id="saveProcessTest" class="btn btn-default saveprocess" type="button" id="saveProcessTest"><i class="fa fa-save " ></i></button>
+                                                    
                                                 </div>
                                                 <div class="col-sm-12" >
                                                     <textarea readonly id="testrunLogArea" rows="10" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea>
