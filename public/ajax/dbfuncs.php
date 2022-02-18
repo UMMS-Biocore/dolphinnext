@@ -909,7 +909,9 @@ class dbfuncs {
     function getNextCluOpt($next_clu_opt, $executor){
         $next_clu_optText = "";
         if (!empty($next_clu_opt)){
-            if ($executor == "sge"){
+            if ($executor == "lsf"){
+                $next_clu_optText = "#BSUB $next_clu_opt\\n";
+            } else if ($executor == "sge"){
                 $next_clu_optText = "#$ $next_clu_opt\\n";
             } else if ($executor == "slurm"){
                 $next_clu_optText = "#SBATCH $next_clu_opt\\n";
@@ -987,8 +989,9 @@ class dbfuncs {
             $timeText = $this->getTime($next_time, $executor);
             $queueText = $this->getQueue($next_queue, $executor);
             $cpuText = $this->getCPU($next_cpu, $executor);
-            $lsfRunFile = "printf '#!/bin/bash \\n".$queueText.$jobnameText.$cpuText.$timeText.$memoryText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
-            $exec_string = "bsub -o $dolphin_path_real/out.log -e $dolphin_path_real/err.log $next_clu_opt < $dolphin_path_real/.dolphinnext.run";
+            $clu_optText = $this->getNextCluOpt($next_clu_opt, $executor);
+            $lsfRunFile = "printf '#!/bin/bash \\n".$queueText.$jobnameText.$cpuText.$timeText.$memoryText.$clu_optText."$mainNextCmd"."'> $dolphin_path_real/.dolphinnext.run";
+            $exec_string = "bsub -o $dolphin_path_real/out.log -e $dolphin_path_real/err.log  < $dolphin_path_real/.dolphinnext.run";
             $exec_next_all = "cd $dolphin_path_real && $lsfRunFile && $exec_string";
         } else if ($executor == "sge"){
             $jobnameText = $this->getJobName($jobname, $executor);
