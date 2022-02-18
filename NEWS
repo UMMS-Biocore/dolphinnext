@@ -1,3 +1,6 @@
+18.02.2021 Version 1.2.90
+Executor settings for nextflow options fixed for LSF. 
+
 09.02.2021 Version 1.2.89
 Minor bug fixed in fillFormByName function.
 

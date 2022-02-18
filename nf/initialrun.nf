@@ -1476,7 +1476,8 @@ process createCollection {
             my $check = 'false';
             if ($err){
                 print "S3bucket Not Found: $bucket\\n";
-                runCommand("s3cmd mb $confText $bucket ");
+                ## replace s3cmd with awscli for IAM roles
+                ## runCommand("s3cmd mb $confText $bucket ");
             } 
           }
           

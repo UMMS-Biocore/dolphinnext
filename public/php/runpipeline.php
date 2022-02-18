@@ -1096,7 +1096,7 @@ $DMETA_LABEL= DMETA_LABEL;
                             <div class="col-sm-2"></div>
                             <div class="col-sm-10">
                                 <span class="small">
-                                You can enter the full path of a file, Amazon (S3) or Google (GS) location
+                                    You can enter the full path of a file, Amazon (S3) or Google (GS) location
                                 </span>
                             </div>
                         </div>
