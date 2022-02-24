@@ -15046,7 +15046,11 @@ $(document).ready(async function () {
                             var col = settings.columnsBody;
                             $.each(existBodyDiv, function (el) {
                                 if (existBodyDiv[el]) {
-                                    getColumnContent(dataObj, col[el], existBodyDiv[el]);
+                                    if (content.id && content.id == dataObj.id){
+                                        getColumnContent(dataObj, col[el], existBodyDiv[el]);
+                                    } else {
+                                        getColumnContent(dataObj, col[el], existBodyDiv[el]);
+                                    }
                                 }
                             });
                         }

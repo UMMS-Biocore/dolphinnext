@@ -452,25 +452,7 @@ function createNextflowFile(nxf_runmode, uuid) {
         if (hostname) {
             nextText += '$HOSTNAME = "' + hostname + '"\n';
         }  
-        if (chooseEnv) {
-            var patt = /(.*)-(.*)/;
-            var proType = chooseEnv.replace(patt, '$1');
-            var proId = chooseEnv.replace(patt, '$2');
-            var profileVar = getValues({ p: "getProfileVariables", proType: proType, id:proId  });
-            if (profileVar){
-                if (profileVar[0]){
-                    if (profileVar[0].variable){
-                        nextText += decodeHtml(profileVar[0].variable) + '\n';
-                    }
-                }
-            }
-        }
-
-
-        //        var output_dir = await $runscope.getPubVal("report");
-        //        if (output_dir) {
-        //            nextText += "params.outdir = '" + output_dir + "' " + " \n\n";
-        //        }
+       
         var proOptDiv = $('#ProcessPanel').children()[0];
         if (proOptDiv) {
             var process_opt = getProcessOpt();

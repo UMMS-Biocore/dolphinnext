@@ -536,6 +536,12 @@ folder instead of downloading all of them to reduce the load. -->
                             <?php 
     if ($login == 1){
         echo '<li><a href="index.php?np=2">Projects </a></li><li><a href="index.php?np=5">Run Status </a></li>';
+        echo '<li class="dropdown" >
+        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Data <span class="caret"></span></a>
+        <ul class="dropdown-menu" role="menu" style="left: 0;">
+            <li><a href="index.php?np=7" >Containers</a></li>
+        </ul>
+        </li>';
     }  
                             ?>
                         </ul>

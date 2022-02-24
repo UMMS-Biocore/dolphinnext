@@ -1237,12 +1237,17 @@ class dbfuncs {
 
     function getInitialRunOpt($proPipeAll,$profileId, $profileType,$ownerID){
         $configText = "";
+        // Step 1a. Add profile Variables 
+        list($hostVar,$variable) = $this->getConfigHostnameVariable($profileId, $profileType, $ownerID);
+        if (!empty($variable)) {
+            $configText .=  "$variable\n";
+        }
         $docker_opt = $proPipeAll[0]->{'docker_opt'};
         $singu_opt = $proPipeAll[0]->{'singu_opt'};
         $singu_check = $proPipeAll[0]->{'singu_check'};
         $docker_check = $proPipeAll[0]->{'docker_check'};
 
-        // Step 1. Add runOptions for singularity (default) or docker
+        // Step 1b. Add runOptions for singularity (default) or docker
         // e.g. singularity.runOptions='-B /project:/project -B /home:/home -B /share:/share '
         if ($docker_check == "true") {
             if (!empty($docker_opt)) {

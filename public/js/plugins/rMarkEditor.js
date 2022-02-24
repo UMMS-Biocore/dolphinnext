@@ -499,7 +499,16 @@
                         if ($('#rMarkRename').find("input.rmarkfilename")) {
                             var newName = $($('#rMarkRename').find("input.rmarkfilename")[0]).val();
                             var saveData = saveCommand(editorId, newName)
-                            $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody"})
+                            // remove "-editor" + divOldName.length
+                            var dynamicRowID = editorId.substring(0, editorId.length - (1+ "-editor".length + divOldName.length));
+                            console.log(editorId)
+                            console.log(newName)
+                            console.log(divOldName)
+                            console.log(divOldDir)
+                            console.log(dynamicRowID)
+                            // editor id: g-161_rmarkdown_1_rmd-editor
+                            // g-161_rmarkdown
+                            $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody", id:dynamicRowID})
                             var newFilepath = divOldDir + newName;
                             var allfiles = elems.closest("div.panel-body").find("a[filepath]")
                             for (var i = 0; i < allfiles.length; i++) {
