@@ -173,6 +173,7 @@ class Run
             if (isset($currentUser[0])) $currentUser = $currentUser[0];
         }
         if (!empty($currentUser)){
+            error_log("BearerToken Verified");
             return $currentUser;
         } 
         return null;
@@ -324,5 +325,3 @@ class Run
 
 
 }
-
-?>

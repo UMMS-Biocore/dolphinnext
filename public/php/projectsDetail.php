@@ -1,22 +1,24 @@
 <div id="projectHeader" class="box-header" style=" padding-top:0px; font-size:large; ">
     <div style=" border-bottom:1px solid lightgrey;">
         <i class="fa fa-calendar-o " style="margin-left:0px; margin-right:0px;"></i> Project:
-        <input class="box-dynamic width-dynamic" type="text" projectid="<?php echo $id;?>" name="projectTitle" autocomplete="off" placeholder="Enter Project Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="project-title"><span class="width-dynamic" style="display:none"></span></input>
-        <button type="submit" id="saveProjectIcon" class="btn" name="button" data-backdrop="false" onclick="saveProjectIcon()" style=" margin:0px; padding:0px;">
-                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Project">
-                        <i class="fa fa-save" style="font-size: 17px;"></i></a></button>
+        <input class="box-dynamic width-dynamic" type="text" projectid="<?php echo $id; ?>" name="projectTitle" autocomplete="off" placeholder="Enter Project Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="project-title"><span class="width-dynamic" style="display:none"></span></input>
+        <button type="submit" id="saveProjectIcon" class="btn" name="button" data-backdrop="false" onclick="saveProjectIcon()" style=" margin:0px; padding:0px; background: none;">
+            <a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Project">
+                <i class="fa fa-save" style="font-size: 17px;"></i></a></button>
         <!--
         <button type="submit" id="dupProject" class="btn" name="button" data-backdrop="false" onclick="duplicateProject()" style=" margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Duplicate Project">
                         <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
 -->
-        <button type="button" class="btn deleteProject" name="button" data-backdrop="false"  style=" margin:0px; padding:0px;">
-                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Project">
-                        <i class="glyphicon glyphicon-trash"></i></a></button>
+        <button type="button" class="btn deleteProject" name="button" data-backdrop="false" style=" margin:0px; padding:0px; background: none;">
+            <a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Project">
+                <i class="glyphicon glyphicon-trash"></i></a></button>
         <div id="projectActDiv" style="float:right; margin-right:5px;" class="dropdown">
-            <button class="btn btn-default dropdown-toggle" type="button" id="projectAct" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;"><div class="fa fa-ellipsis-h"></div></button>
+            <button class="btn btn-default dropdown-toggle" type="button" id="projectAct" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;">
+                <div class="fa fa-ellipsis-h"></div>
+            </button>
             <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu4">
-                <li><a class="deleteProject" >Delete Project</a></li>
+                <li><a class="deleteProject">Delete Project</a></li>
             </ul>
         </div>
     </div>
@@ -44,21 +46,21 @@
 
         </div>
     </div>
-        <div class="panel-body">
-            <table id="runtable" class="table table-striped table-bordered" cellspacing="0" width="100%">
-                <thead>
-                    <tr>
-                        <th>Run Name</th>
-                        <th>Pipeline Name</th>
-                        <th>Revision</th>
-                        <th>Description</th>
-                        <th>Owner</th>
-                        <th>Modified on</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
+    <div class="panel-body">
+        <table id="runtable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Run Name</th>
+                    <th>Pipeline Name</th>
+                    <th>Revision</th>
+                    <th>Description</th>
+                    <th>Owner</th>
+                    <th>Modified on</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
 </div>
 </br>
 
@@ -68,16 +70,16 @@
             <h5><i class="fa fa-folder-open-o"></i> Project Files/Values</h5>
         </div>
     </div>
-        <div class="panel-body">
-            <table id="filetable" class="table table-striped table-bordered" cellspacing="0" width="100%">
-                <thead>
-                    <tr>
-                        <th>Files/Values</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
+    <div class="panel-body">
+        <table id="filetable" class="table table-striped table-bordered" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Files/Values</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
 </div>
 
 
