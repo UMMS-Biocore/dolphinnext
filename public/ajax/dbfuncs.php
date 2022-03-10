@@ -5060,7 +5060,17 @@ class dbfuncs
         }
         return $ret;
     }
-
+    //   ------------ Apps   -------------
+    function insertApp($type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID)
+    {
+        $sql = "INSERT INTO $this->db.app(type, run_log_uuid, location, dir, filename, container_id, memory, cpu, last_pid, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$type', '$uuid', '$location', '$dir', '$filename', '$container_id', '$memory', '$cpu', '$pUUID', '$ownerID', now(), now(), '$ownerID', 3)";
+        return self::insTable($sql);
+    }
+    function updateApp($id, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID)
+    {
+        $sql = "UPDATE $this->db.app SET type= '$type', run_log_uuid= '$uuid', location= '$location', dir='$dir', filename='$filename', container_id='$container_id', memory='$memory', cpu='$cpu', last_pid='$pUUID', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
+        return self::runSQL($sql);
+    }
     //    ----------- Projects   ---------
     function getProjects($id, $type, $ownerID)
     {
@@ -7074,6 +7084,11 @@ class dbfuncs
         $sql = "SELECT id FROM $this->db.file_project WHERE deleted=0 AND f_id = '$file_id' AND p_id = '$project_id'";
         return self::queryTable($sql);
     }
+    function checkApp($type, $uuid, $location, $ownerID)
+    {
+        $sql = "SELECT id FROM $this->db.app WHERE deleted=0 AND run_log_uuid = '$uuid' AND ownerID = '$ownerID' AND location='$location' AND type = '$type' ";
+        return self::queryTable($sql);
+    }
     function checkProPipeInput($project_id, $input_id, $pipeline_id, $project_pipeline_id)
     {
         $sql = "SELECT id FROM $this->db.project_pipeline_input WHERE deleted =0 AND input_id = '$input_id' AND project_id = '$project_id' AND pipeline_id = '$pipeline_id' AND project_pipeline_id = '$project_pipeline_id'";
@@ -8205,7 +8220,7 @@ class dbfuncs
         }
     }
 
-    function callApp($type, $uuid, $text, $dir, $filename, $app_id, $ownerID)
+    function callApp($type, $uuid, $text, $dir, $filename, $app_id, $pUUID, $ownerID)
     {
         //travis fix
         if (!headers_sent()) {
@@ -8233,7 +8248,7 @@ class dbfuncs
             }
             $format = "";
             $type = "rmdtext";
-            $pUUID = uniqid();
+
             $log = "{$targetDir}/{$filename}.log{$pUUID}";
             $response = "{$targetDir}/{$filename}.curl{$pUUID}";
             $file = "{$targetDir}/{$filename}.{$pUUID}";

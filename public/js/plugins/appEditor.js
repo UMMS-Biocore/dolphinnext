@@ -14,34 +14,27 @@
         elems.css("height", "100%")
         var elemsID = $(this).attr("id");
         var getEditorIconDiv = function() {
-            var appeditorrun = "";
             var appeditorsaveas = "";
             var appeditorsave = "";
             var appeditorsett = "";
+            var appeditorlog = "";
             if (settings.ajax.editable) {
-                appeditorrun = `<li role="presentation"><a class="appeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>`;
-                appeditorsaveas = `<li role="presentation"><a class="appeditorsaveas" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As"><span class="glyphicon-stack"><i class="fa fa-pencil glyphicon-stack-3x"></i><i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i></span></a></li>`;
-                appeditorsave = `<li role="presentation"><a class="appeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>`;
-                appeditorsett = `<li role="presentation"><a class="appeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>`;
+                appeditorsett = `<li role="presentation"><a class="appeditorsett-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Launch App"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>`;
+                appeditorsaveas = `<li role="presentation"><a class="appeditorsaveas-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As"><span class="glyphicon-stack"><i class="fa fa-pencil glyphicon-stack-3x"></i><i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i></span></a></li>`;
+                appeditorsave = `<li role="presentation"><a class="appeditorsave-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>`;
+                appeditorlog = `<li role="presentation"><a class="appeditorlog-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="App Logs"><i style="font-size: 18px;" class="fa fa-file-text-o"></i></a></li>`;
             }
-            return `<ul style="float:inherit" class="nav nav-pills appeditor">` + appeditorrun + appeditorsaveas + appeditorsave + appeditorsett + `</ul>`
+            return `<ul style="float:inherit" class="nav nav-pills appeditor">` + appeditorsaveas + appeditorsave + appeditorlog + appeditorsett + `</ul>`
         }
         var getReportIconDiv = function() {
             return `<ul style="float:inherit"  class="nav nav-pills appeditor">
-<li role="presentation"><a class="appeditorlink" data-toggle="tooltip" data-placement="bottom" data-original-title="Open Report in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>
-<li role="presentation"><a class="appeditorfull" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
-<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-<i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
-<ul class="dropdown-menu dropdown-menu-right">
-<li><a class="appreportdownpdf" href="#">Download PDF</a></li>
-<li><a class="appeditordownrmd" href="#">Download RMD</a></li>
-</ul>
-</li>
+<li role="presentation"><a class="appeditorlink-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Open Report in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>
+<li role="presentation"><a class="appeditorfull-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
 </ul>`
 
         }
         var renameModal = `
-<div id="appRename" class="modal fade" tabindex="-1" role="dialog">
+<div id="appRename-${elemsID}" class="modal fade" tabindex="-1" role="dialog">
 <div class="modal-dialog" role="document">
 <div class="modal-content">
 <div class="modal-header">
@@ -67,15 +60,15 @@
 </div>`;
 
         var infoModal = `
-<div id="appInfo" class="modal fade" tabindex="-1" role="dialog">
-<div class="modal-dialog" role="document">
+<div id="appInfo-${elemsID}" class="modal fade" tabindex="-1" role="dialog">
+<div class="modal-dialog modal-xl" role="document">
 <div class="modal-content">
 <div class="modal-header">
 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 <h4 class="modal-title">Info</h4>
 </div>
 <div class="modal-body">
-<p id="appInfoText"></p>
+    <textarea readonly rows="10" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;" id="appInfoText-${elemsID}"></textarea>
 </div>
 <div class="modal-footer">
 <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
@@ -84,7 +77,7 @@
 </div>
 </div>`;
         var settingsModal = ` 
-        <div id="appSett" class="modal fade" tabindex="-1" role="dialog">
+        <div id="appSett-${elemsID}" class="modal fade" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -96,34 +89,25 @@
                         <div class="form-group">
                             <div class="col-sm-5 control-label"><label>App Name</label></div>
                             <div class="col-sm-7">
-                                <select class="form-control" id="pubWebApp" name="pubWebApp">
+                                <select class="form-control" id="pubWebApp-${elemsID}" name="pubWebApp">
                                 </select>
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="col-sm-5 control-label"><label>Memory</label></div>
                             <div class="col-sm-7">
-                                <select class="form-control" id="appMemory" name="appMemory">
+                                <select class="form-control" id="appMemory-${elemsID}" name="appMemory">
                                     <option value="10">10GB</option>
                                     <option value="30">30GB</option>
                                     <option value="100">100GB</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="col-sm-5 control-label">Autosave <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="If active, DolphinNext will autosave the file content every 30 seconds."><i class="glyphicon glyphicon-info-sign"></i></a></span></label>
-                            <div class="col-sm-7">
-                                <label class="switch">
-    <input class="aSave" type="checkbox">
-    <span class="slider round"></span>
-    </label>
-                            </div>
-                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-dismiss="modal">close</button>
-                    <button type="button" class="btn btn-success appeditorrun" data-dismiss="modal">Launch App</button>
+                    <button type="button" class="btn btn-success appeditorlaunch-${elemsID}" data-dismiss="modal">Launch App</button>
                 </div>
             </div>
         </div>
@@ -131,7 +115,6 @@
 
 
         var getDiv = function(settings, outputHtml) {
-            var id = "appEditor"
             if (!outputHtml || outputHtml == null) {
                 outputHtml = ""
             } else {
@@ -155,17 +138,17 @@
             window[editorId].setValue(settings.ajax.text);
         }
         var createModal = function() {
-            if (document.getElementById("appSett") === null) {
+            if (document.getElementById(`appSett-${elemsID}`) === null) {
                 $('body').append(settingsModal);
             }
-            if (document.getElementById("appRename") === null) {
+            if (document.getElementById(`appRename-${elemsID}`) === null) {
                 $('body').append(renameModal);
             }
-            if (document.getElementById("appInfo") === null) {
+            if (document.getElementById(`appInfo-${elemsID}`) === null) {
                 $('body').append(infoModal);
             }
             var allApps = getValues({ p: "getContainers" });
-            $('#pubWebApp').selectize({
+            $(`#pubWebApp-${elemsID}`).selectize({
                 valueField: 'id',
                 searchField: 'name',
                 placeholder: "Choose App...",
@@ -184,7 +167,7 @@
                 }
             })
             if (options.pubWebApp && options.pubWebApp.app) {
-                $('#pubWebApp')[0].selectize.setValue(options.pubWebApp.app, false);
+                $(`#pubWebApp-${elemsID}`)[0].selectize.setValue(options.pubWebApp.app, false);
             }
         }
 
@@ -253,8 +236,8 @@
                 //check if readonly
             if (elems.attr("read_only") || type == "saveas") {
                 //ask new name  
-                $("#appRename").attr("filename", obj.filename)
-                $("#appRename").modal("show");
+                $(`#appRename-${elemsID}`).attr("filename", obj.filename)
+                $(`#appRename-${elemsID}`).modal("show");
             } else {
                 var saveData = saveCommand(editorId, obj.filename)
                 if (saveData) {
@@ -385,20 +368,9 @@
             document.body.removeChild(element);
         }
 
-        var downpdf = function(editorId) {
-            var text = window[editorId].getValue();
-            callData(text, settings, "rmdpdf", callback);
-        }
-
-        var downRmd = function(editorId) {
-            var text = window[editorId].getValue();
-            var filename = elems.attr("filename")
-            downloadText(text, filename)
-        }
-
         var update = function(editorId) {
             var text = window[editorId].getValue();
-            callData(text, settings, "rmdtext", callback);
+            callData(text, settings, "report", callback);
         }
         var timeoutId = 0;
         var autoUpdate = function(editorId) {
@@ -434,51 +406,37 @@
                 $('[data-toggle="tooltip"]').tooltip();
             });
             $(function() {
-                $(document).on('click', '.appeditorrun', function(event) {
-                    /////***** TODO: It executes ALL OF THEM FIX THIS  */
-                    // if ($(this).parents("#" + elemsID).length) {
+
+                $(document).on("show.bs.modal", `#appSett-${elemsID}`, function(e) {
+                    // 1. check if app is exist in db. and fill the modal
+                    console.log(elemsID);
+                })
+
+                $(`#appSett-${elemsID}`).on('click', `.appeditorlaunch-${elemsID}`, async function(event) {
                     update(editorId);
-                    // }
-                });
-                $('a.appreportdownpdf').on('click', function(event) {
-                    if ($(this).parents("#" + elemsID).length) {
-                        event.preventDefault();
-                        downpdf(editorId);
-                    }
-                });
-                $('a.appeditordownrmd').on('click', function(event) {
-                    if ($(this).parents("#" + elemsID).length) {
-                        event.preventDefault();
-                        downRmd(editorId);
-                    }
                 });
             });
             $(function() {
-                //check current status on first creation
-                checkAutoUpdateOut(editorId)
-                $(document).on('change', 'input.aUpdateOut', function(event) {
-                    checkAutoUpdateOut(editorId)
-                });
-                checkAutoSave(editorId)
-                $(document).on('change', 'input.aSave', function(event) {
-                    checkAutoSave(editorId)
-                });
-            });
-            $(function() {
-                $('a.appeditorsave').on('click', function(event) {
+                $(`a.appeditorsave-${elemsID}`).on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         saveRmd(editorId, "save")
                     }
                 });
-                $('a.appeditorsaveas').on('click', function(event) {
+                $(`a.appeditorsaveas-${elemsID}`).on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         saveRmd(editorId, "saveas")
                     }
                 });
-                $('a.appeditorsett').on('click', function(event) {
-                    $("#appSett").modal("show");
+                $(`a.appeditorsett-${elemsID}`).on('click', function(event) {
+                    $(`.appeditorlaunch-${elemsID}`).data("elemsID", elemsID)
+                    $(`#appSett-${elemsID}`).modal("show");
                 });
-                $('a.appeditorfull').on('click', function(event) {
+                $(`a.appeditorlog-${elemsID}`).on('click', function(event) {
+                    $(`#appInfo-${elemsID}`).modal("show");
+                });
+
+
+                $(`a.appeditorfull-${elemsID}`).on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         var iconClass = $(this).children().attr("class");
                         if (iconClass == "fa fa-expand") {
@@ -490,7 +448,7 @@
                         }
                     }
                 });
-                $('a.appeditorlink').on('click', function(event) {
+                $(`a.appeditorlink-${elemsID}`).on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         openBlankPage(elemsID)
                     }
@@ -499,32 +457,27 @@
 
             });
             $(function() {
-                $('#appRename').on('show.bs.modal', function(event) {
+                $(`#appRename-${elemsID}`).on('show.bs.modal', function(event) {
                     var divOldName = elems.attr("filename")
-                    var modalOldName = $("#appRename").attr("filename")
+                    var modalOldName = $(`#appRename-${elemsID}`).attr("filename")
                     if (divOldName === modalOldName) {
-                        if ($('#appRename').find("input.appfilename")) {
-                            $($('#appRename').find("input.appfilename")[0]).val(divOldName)
+                        if ($(`#appRename-${elemsID}`).find("input.appfilename")) {
+                            $($(`#appRename-${elemsID}`).find("input.appfilename")[0]).val(divOldName)
                         }
                     }
                 });
-                $("#appRename").on('click', '.save', function(event) {
+                $(`#appRename-${elemsID}`).on('click', '.save', function(event) {
                     var divOldName = elems.attr("filename")
                     var divOldDir = elems.attr("dir")
-                    var modalOldName = $("#appRename").attr("filename")
+                    var modalOldName = $(`#appRename-${elemsID}`).attr("filename")
                     if (divOldName === modalOldName) {
-                        if ($('#appRename').find("input.appfilename")) {
-                            var newName = $($('#appRename').find("input.appfilename")[0]).val();
+                        if ($(`#appRename-${elemsID}`).find("input.appfilename")) {
+                            var newName = $($(`#appRename-${elemsID}`).find("input.appfilename")[0]).val();
                             var saveData = saveCommand(editorId, newName)
                                 // remove "-editor" + divOldName.length
                             var dynamicRowID = editorId.substring(0, editorId.length - (1 + "-editor".length + divOldName.length));
-                            console.log(editorId)
-                            console.log(newName)
-                            console.log(divOldName)
-                            console.log(divOldDir)
-                            console.log(dynamicRowID)
-                                // editor id: g-161_appdown_1_rmd-editor
-                                // g-161_appdown
+                            // editor id: g-161_appdown_1_rmd-editor
+                            // g-161_appdown
                             $("#reportRows").dynamicRows("fnRefresh", { type: "columnsBody", id: dynamicRowID })
                             var newFilepath = divOldDir + newName;
                             var allfiles = elems.closest("div.panel-body").find("a[filepath]")
@@ -535,7 +488,7 @@
                                 }
                             }
                             if (saveData) {
-                                $("#appRename").modal("hide");
+                                $(`#appRename-${elemsID}`).modal("hide");
                             }
                         }
                     }
@@ -592,9 +545,9 @@
                     if (checkExistError) {
                         getUrlContent(containerErrPath).success(function(data) {
                             if (data) {
-                                if (!$('#myModal').hasClass('in')) {
-                                    $("#appInfoText").text(data)
-                                    $("#appInfo").modal("show");
+                                if (!$(`#appInfo-${elemsID}`).hasClass('in')) {
+                                    $(`#appInfoText-${elemsID}`).text(data)
+                                    $(`#appInfo-${elemsID}`).modal("show");
                                 }
                             }
 
@@ -639,7 +592,6 @@
 
         }
         var initialUrlCheck = function(settings, type) {
-            var format = ""
             var orgPath = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.app/" + settings.ajax.filename
             var checkExistUrl = checkUrl(orgPath)
             if (checkExistUrl) {
@@ -657,28 +609,33 @@
             progress()
             updateLogText("Preparing..")
             var editTextSend = encodeURIComponent(JSON.stringify(editText));
-            var app_id = $('#pubWebApp').val()
+            var container_id = $('#pubWebApp').val()
+
+            var formObj = {};
+            var stop = "";
+            [formObj, stop] = createFormObj($(`#appSett-${elemsID}`).find("input, select"), []);
+            formObj.p = "callApp"
+            formObj.location = elemsID
+            formObj.type = type;
+            formObj.text = editTextSend
+            formObj.uuid = settings.ajax.uuid
+            formObj.dir = settings.ajax.dir
+            formObj.filename = settings.ajax.filename
+            formObj.container_id = container_id
+
 
             var ret = null
             $.ajax({
                 type: "POST",
                 url: settings.ajax.url,
-                data: {
-                    "p": "callApp",
-                    "text": editTextSend,
-                    "type": type,
-                    "uuid": settings.ajax.uuid,
-                    "dir": settings.ajax.dir,
-                    "filename": settings.ajax.filename,
-                    "app_id": app_id,
-
-                },
+                data: formObj,
                 async: false,
                 cache: false,
                 success: function(results) {
-                    ret = results;
-                    if (ret) {
-                        getUrl(settings, type, callback, ret)
+                    console.log(results)
+                    var pid = results;
+                    if (pid) {
+                        getUrl(settings, type, callback, pid)
                     }
                 },
                 error: function(jqXHR, exception) {
@@ -696,7 +653,7 @@
         elems.append(getDiv(settings, ""));
         // var initialFileCheck = initialUrlCheck(settings, "rmdtext")
         // if (!initialFileCheck) {
-        //     callData(settings.ajax.text, settings, "rmdtext", callback);
+        //     callData(settings.ajax.text, settings, "report", callback);
         // }
         createEditor(settings)
         createModal()

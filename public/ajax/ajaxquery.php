@@ -159,9 +159,10 @@ if ($p == "saveRun") {
                     if (!empty($fileList)) {
                         $out["fileList"] = $fileList;
                         //split each view method into new array
+                        $savedID = $out["id"];
                         foreach ($pubWebAr as $eachPubWeb) :
                             $out["pubWeb"] = $eachPubWeb;
-                            $out["id"] = $out["id"] . "_" . $eachPubWeb;
+                            $out["id"] = $savedID . "_" . $eachPubWeb;
                             if (strtolower($name) == "summary"  || strtolower($name) == "multiqc" || strtolower($name) == "fastqc" || strtolower($name) == "report") {
                                 array_unshift($data, $out); //push to the top of the array
                             } else {
@@ -1739,12 +1740,28 @@ if ($p == "publishGithub") {
     }
 } else if ($p == "callApp") {
     $uuid = $_REQUEST['uuid'];
+    $location = $_REQUEST['location'];
     $dir = $_REQUEST['dir'];
     $type = $_REQUEST['type'];
     $filename = $_REQUEST['filename'];
-    $app_id = $_REQUEST['app_id'];
+    $container_id = $_REQUEST['container_id'];
+    $memory = $_REQUEST['memory'];
+    $cpu = $_REQUEST['cpu'];
     $text = urldecode($_REQUEST['text']);
-    $data = $db->callApp($type, $uuid, $text, $dir, $filename, $app_id, $ownerID);
+    $pUUID = uniqid();
+    // 1. check if app exists
+    $checkApp = json_decode($db->checkApp($type, $uuid, $location, $ownerID), true);
+    //insert into file_project table
+    if (!isset($checkApp[0])) {
+        $insertApp = $db->insertApp($type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID);
+    } else {
+        $id = $checkApp[0]["id"];
+        error_log(print_r($checkApp[0], TRUE));
+        error_log(print_r($id, TRUE));
+
+        $updateApp = $db->updateApp($id, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID);
+    }
+    $data = $db->callApp($type, $uuid, $text, $dir, $filename, $app_id, $pUUID, $ownerID);
 } else if ($p == "callRmarkdown") {
     $uuid = $_REQUEST['uuid'];
     $dir = $_REQUEST['dir'];
