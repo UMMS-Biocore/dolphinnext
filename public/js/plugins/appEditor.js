@@ -96,11 +96,17 @@
                         <div class="form-group">
                             <div class="col-sm-5 control-label"><label>Memory</label></div>
                             <div class="col-sm-7">
-                                <select class="form-control" id="appMemory-${elemsID}" name="appMemory">
+                                <select class="form-control" name="memory">
                                     <option value="10">10GB</option>
                                     <option value="30">30GB</option>
                                     <option value="100">100GB</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-5 control-label"><label>CPU</label></div>
+                            <div class="col-sm-7">
+                                <input class="form-control" type="number" name="cpu" min="1" max="10" value="1"></input>
                             </div>
                         </div>
                     </form>
@@ -609,20 +615,20 @@
             progress()
             updateLogText("Preparing..")
             var editTextSend = encodeURIComponent(JSON.stringify(editText));
-            var container_id = $('#pubWebApp').val()
+            var container_id = $(`#pubWebApp-${elemsID}`).val()
 
             var formObj = {};
             var stop = "";
             [formObj, stop] = createFormObj($(`#appSett-${elemsID}`).find("input, select"), []);
-            formObj.p = "callApp"
-            formObj.location = elemsID
+            formObj.p = "callApp";
+            formObj.location = elemsID;
             formObj.type = type;
-            formObj.text = editTextSend
-            formObj.uuid = settings.ajax.uuid
-            formObj.dir = settings.ajax.dir
-            formObj.filename = settings.ajax.filename
-            formObj.container_id = container_id
-
+            formObj.text = editTextSend;
+            formObj.uuid = settings.ajax.uuid;
+            formObj.dir = settings.ajax.dir;
+            formObj.filename = settings.ajax.filename;
+            formObj.container_id = container_id;
+            console.log(formObj)
 
             var ret = null
             $.ajax({

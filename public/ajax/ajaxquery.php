@@ -1739,6 +1739,7 @@ if ($p == "publishGithub") {
         }
     }
 } else if ($p == "callApp") {
+    $ret = array();
     $uuid = $_REQUEST['uuid'];
     $location = $_REQUEST['location'];
     $dir = $_REQUEST['dir'];
@@ -1749,19 +1750,27 @@ if ($p == "publishGithub") {
     $cpu = $_REQUEST['cpu'];
     $text = urldecode($_REQUEST['text']);
     $pUUID = uniqid();
+    //available app status: initiated, terminated, running
+    $status = "initiated";
     // 1. check if app exists
     $checkApp = json_decode($db->checkApp($type, $uuid, $location, $ownerID), true);
     //insert into file_project table
     if (!isset($checkApp[0])) {
-        $insertApp = $db->insertApp($type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID);
+        $insertApp = $db->insertApp($status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID);
+        $data = $db->callApp($uuid, $text, $dir, $filename, $container_id, $pUUID, $ownerID);
     } else {
         $id = $checkApp[0]["id"];
+        $old_status = $checkApp[0]["status"];
         error_log(print_r($checkApp[0], TRUE));
         error_log(print_r($id, TRUE));
-
-        $updateApp = $db->updateApp($id, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID);
+        if ($old_status == "terminated" || empty($old_status)) {
+            $updateApp = $db->updateApp($id, $status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID);
+            $data = $db->callApp($uuid, $text, $dir, $filename, $container_id, $pUUID, $ownerID);
+        } else {
+            $ret["message"] = "The app is still running. Please terminate your app and try again.";
+            $data = json_encode($ret);
+        }
     }
-    $data = $db->callApp($type, $uuid, $text, $dir, $filename, $app_id, $pUUID, $ownerID);
 } else if ($p == "callRmarkdown") {
     $uuid = $_REQUEST['uuid'];
     $dir = $_REQUEST['dir'];
@@ -1829,6 +1838,8 @@ if ($p == "publishGithub") {
     }
 } else if ($p == "saveTestGroup") {
     $data = $db->saveTestGroup($ownerID);
+} else if ($p == "checkUpdateAppStatus") {
+    $data = $db->checkUpdateAppStatus($app_id, $ownerID);
 } else if ($p == "saveUserGroup") {
     $u_id = $_REQUEST['u_id'];
     $g_id = $_REQUEST['g_id'];

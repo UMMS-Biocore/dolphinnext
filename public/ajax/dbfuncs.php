@@ -3498,7 +3498,30 @@ class dbfuncs
         }
     }
 
+    function checkUpdateAppStatus($app_id, $ownerID)
+    {
+        $ret = array();
 
+        $appData = $this->getApps($app_id, "", $ownerID);
+        $appData = json_decode($appData, true);
+        $run_log_uuid = $appData[0]["run_log_uuid"];
+        $last_pid = $appData[0]["last_pid"];
+        $filename = $appData[0]["filename"];
+        $oldStatus = $appData[0]["status"];
+        $newStatus = "";
+        $ret["status"] = $oldStatus;
+        $dir = $appData[0]["dir"];
+        $appLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.app/{$filename}.log{$last_pid}", $ownerID));
+        $ret["log"] = $appLog;
+        if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $appLog) || preg_match("/command not found/i", $appLog)) {
+            $newStatus = "Error";
+        }
+        if (!empty($newStatus)) {
+            $ret["status"] = $newStatus;
+            $this->updateAppStatus($app_id, $newStatus, $ownerID);
+        }
+        return $ret;
+    }
 
 
     function updateProPipeStatus($project_pipeline_id, $process_id, $loadtype, $ownerID)
@@ -5061,14 +5084,31 @@ class dbfuncs
         return $ret;
     }
     //   ------------ Apps   -------------
-    function insertApp($type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID)
+    function getApps($id, $type, $ownerID)
     {
-        $sql = "INSERT INTO $this->db.app(type, run_log_uuid, location, dir, filename, container_id, memory, cpu, last_pid, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$type', '$uuid', '$location', '$dir', '$filename', '$container_id', '$memory', '$cpu', '$pUUID', '$ownerID', now(), now(), '$ownerID', 3)";
+        if ($type == "user") {
+            $where = " where u.deleted=0 AND p.deleted=0 AND p.owner_id = '$ownerID'";
+        } else {
+            $where = " where u.deleted=0 AND p.deleted=0 AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
+            if (!empty($id)) {
+                $where = " where u.deleted=0 AND p.deleted=0 AND p.id = '$id' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
+            }
+        }
+        $sql = "SELECT DISTINCT p.*, u.username, IF(p.owner_id='$ownerID',1,0) as own, u.deleted
+                  FROM $this->db.app p
+                  INNER JOIN $this->db.users u ON p.owner_id = u.id
+                  LEFT JOIN $this->db.user_group ug ON p.group_id=ug.g_id
+                  $where";
+        return  self::queryTable($sql);
+    }
+    function insertApp($status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID)
+    {
+        $sql = "INSERT INTO $this->db.app(status, type, run_log_uuid, location, dir, filename, container_id, memory, cpu, last_pid, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$status', '$type', '$uuid', '$location', '$dir', '$filename', '$container_id', '$memory', '$cpu', '$pUUID', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
-    function updateApp($id, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID)
+    function updateApp($id, $status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID)
     {
-        $sql = "UPDATE $this->db.app SET type= '$type', run_log_uuid= '$uuid', location= '$location', dir='$dir', filename='$filename', container_id='$container_id', memory='$memory', cpu='$cpu', last_pid='$pUUID', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
+        $sql = "UPDATE $this->db.app SET status= '$status', type= '$type', run_log_uuid= '$uuid', location= '$location', dir='$dir', filename='$filename', container_id='$container_id', memory='$memory', cpu='$cpu', last_pid='$pUUID', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
     //    ----------- Projects   ---------
@@ -5202,6 +5242,11 @@ class dbfuncs
             exit();
         }
         $sql = "UPDATE $this->db.run SET date_created_last_run= now(), date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
+        return self::runSQL($sql);
+    }
+    function updateAppStatus($app_id, $status, $ownerID)
+    {
+        $sql = "UPDATE $this->db.app SET status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$app_id' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
     function updateRunStatus($project_pipeline_id, $status, $ownerID)
@@ -7086,7 +7131,7 @@ class dbfuncs
     }
     function checkApp($type, $uuid, $location, $ownerID)
     {
-        $sql = "SELECT id FROM $this->db.app WHERE deleted=0 AND run_log_uuid = '$uuid' AND ownerID = '$ownerID' AND location='$location' AND type = '$type' ";
+        $sql = "SELECT id FROM $this->db.app WHERE deleted=0 AND run_log_uuid = '$uuid' AND owner_id = '$ownerID' AND location='$location' AND type = '$type' ";
         return self::queryTable($sql);
     }
     function checkProPipeInput($project_id, $input_id, $pipeline_id, $project_pipeline_id)
@@ -8220,117 +8265,38 @@ class dbfuncs
         }
     }
 
-    function callApp($type, $uuid, $text, $dir, $filename, $app_id, $pUUID, $ownerID)
+    function callApp($uuid, $text, $dir, $filename, $container_id, $pUUID, $ownerID)
     {
-        //travis fix
-        if (!headers_sent()) {
-            ob_start();
-            // send $data to user
-            $appData = $this->getContainers($app_id, "", $ownerID);
-            $appData = json_decode($appData, true);
-            $app_name = $appData[0]["name"];
-            $image_name = $appData[0]["image_name"];
-            $container_type = $appData[0]["type"];
-            error_log(print_r($appData, TRUE));
-            error_log(print_r($image_name, TRUE));
-            error_log(print_r($type, TRUE));
+        $ret = array();
+        $appData = $this->getContainers($container_id, "", $ownerID);
+        $appData = json_decode($appData, true);
+        $app_name = $appData[0]["name"];
+        $image_name = $appData[0]["image_name"];
+        $container_type = $appData[0]["type"];
 
-            $runDir = realpath("{$this->run_path}/$uuid/pubweb");
-            $mountedPath = "/Users/onuryukselen/projects";
-            $runDirParentMachine = preg_replace('/^\/mac/', $mountedPath, $runDir);
-            $targetFile = "$runDirParentMachine/$dir/{$filename}";
-            error_log($runDirParentMachine);
-            $targetDir = "{$this->run_path}/$uuid/pubweb/$dir/.app";
-            $errorCheck = false;
-            $errorText = "";
-            if (!file_exists($targetDir)) {
-                mkdir($targetDir, 0777, true);
-            }
-            $format = "";
-            $type = "rmdtext";
-
-            $log = "{$targetDir}/{$filename}.log{$pUUID}";
-            $response = "{$targetDir}/{$filename}.curl{$pUUID}";
-            $file = "{$targetDir}/{$filename}.{$pUUID}";
-            $err = "{$targetDir}/{$filename}.err{$pUUID}";
-            $cmd = "";
-            if ($container_type == "docker" && !empty($image_name)) {
-                //docker run -d --privileged --rm -p 8888:8888  -v /Users/onuryukselen/projects/biocore/DolphinNext/github/dolphinnext/public/tmp/pub/1N1WP05kAZdaNrEGNtRs6xAXnCoJg5/pubweb:/home/jovyan/work  -u root jupyter:1.0 
-                $cmd = "docker run --name {$pUUID} -d --privileged -e DNEXT_APP_ID='{$pUUID}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name}  > $log 2>&1 &";
-                error_log($cmd);
-            }
-            $pid = exec($cmd);
-            $data = json_encode($pUUID);
-            if (!headers_sent()) {
-                header('Cache-Control: no-cache, must-revalidate');
-                header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-                header('Content-type: application/json');
-                echo $data;
-            } else {
-                echo $data;
-            }
-            //function returned at this point for user
-            $size = ob_get_length();
-            header("Content-Encoding: none");
-            header("Content-Length: {$size}");
-            header("Connection: close");
-            ob_end_flush();
-            ob_flush();
-            flush();
+        $runDir = realpath("{$this->run_path}/$uuid/pubweb");
+        $mountedPath = "/Users/onuryukselen/projects";
+        $runDirParentMachine = preg_replace('/^\/mac/', $mountedPath, $runDir);
+        $targetDir = "{$this->run_path}/$uuid/pubweb/$dir/.app";
+        if (!file_exists($targetDir)) {
+            mkdir($targetDir, 0777, true);
         }
-        //server side keeps working
-        if (!empty($pUUID)) {
-            for ($i = 0; $i < 100; $i++) {
-                sleep(1);
-                $resText = $this->readFile($response);
-                if (!empty($resText)) {
-                    unlink($response);
-                    break;
-                }
-                if ($i < 5) {
-                    sleep(1);
-                } else {
-                    sleep(4);
-                }
-            }
-            $ret = "";
-            if (!empty($resText)) {
-                $lines = explode("\n", $resText);
-                foreach ($lines as $lin) :
-                    if ($type == "rmdtext" && preg_match("/.*or http/", $lin, $matches)) {
-                        error_log(print_r($lin, TRUE));
-                        error_log(print_r($matches, TRUE));
-
-                        $ret = OCPU_URL . $lin;
-                        break;
-                    }
-                endforeach;
-
-                if (empty($ret)) {
-                    $errorCheck = true;
-                    $errorText = $resText;
-                }
-                // if (!empty($ret)) {
-                //     if (file_exists($file)) {
-                //         unlink($file);
-                //     }
-                //     if (file_exists($err)) {
-                //         unlink($err);
-                //     }
-                //     exec("curl '$ret' -o \"{$file}\" > /dev/null 2>&1 &", $res, $exit);
-                // } else {
-                //     $errorCheck = true;
-                // }
-            } else {
-                $errorCheck = true;
-                $errorText = "Timeout error";
-            }
-            if ($errorCheck == true) {
-                $fp = fopen($err, 'w');
-                fwrite($fp, $errorText);
-                fclose($fp);
-            }
+        $log = "{$targetDir}/{$filename}.log{$pUUID}";
+        $response = "{$targetDir}/{$filename}.curl{$pUUID}";
+        $file = "{$targetDir}/{$filename}.{$pUUID}";
+        $err = "{$targetDir}/{$filename}.err{$pUUID}";
+        $cmd = "";
+        if ($container_type == "docker" && !empty($image_name)) {
+            $container_name = "{$pUUID}_{$ownerID}";
+            //docker run -d --privileged --rm -p 8888:8888  -v /Users/onuryukselen/projects/biocore/DolphinNext/github/dolphinnext/public/tmp/pub/1N1WP05kAZdaNrEGNtRs6xAXnCoJg5/pubweb:/home/jovyan/work  -u root jupyter:1.0 
+            $cmd = "docker run --name {$container_name} -d --privileged -e DNEXT_APP_ID='{$pUUID}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name}  > $log 2>&1 &";
+            error_log($cmd);
         }
+        $ret = $this->execute_cmd_logfile($cmd, $ret, "container_cmd_log", "container_cmd", "$log", "a");
+
+        // $pid = exec($cmd);
+        $ret["pid"] = $pUUID;
+        return json_encode($pUUID);
     }
 
     function getUUIDAPI($data, $type, $id)
