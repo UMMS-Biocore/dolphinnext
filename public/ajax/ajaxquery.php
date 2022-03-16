@@ -155,13 +155,25 @@ if ($p == "saveRun") {
                 endforeach;
                 if ($push == true) {
                     $fileList = array_values((array)json_decode($db->getFileList($uuid, "$path/$name", "onlyfile")));
+                    //If no callback is supplied to array_filter, all empty entries of array will be removed
                     $fileList = array_filter($fileList);
+
                     if (!empty($fileList)) {
                         $out["fileList"] = $fileList;
                         //split each view method into new array
                         $savedID = $out["id"];
+
                         foreach ($pubWebAr as $eachPubWeb) :
                             $out["pubWeb"] = $eachPubWeb;
+                            if ($eachPubWeb == "debrowser" && preg_grep("/^debrowser_metadata/i", $fileList)) {
+                                // show metadata file at last
+                                $debrowser_metadata_indexes = array_keys(preg_grep("/^debrowser_metadata/i", $fileList));
+                                foreach ($debrowser_metadata_indexes as $debrowser_metadata_index) :
+                                    $moveMeta = $out["fileList"][$debrowser_metadata_index];
+                                    unset($out["fileList"][$debrowser_metadata_index]);
+                                    $out["fileList"][] =  $moveMeta;
+                                endforeach;
+                            }
                             $out["id"] = $savedID . "_" . $eachPubWeb;
                             if (strtolower($name) == "summary"  || strtolower($name) == "multiqc" || strtolower($name) == "fastqc" || strtolower($name) == "report") {
                                 array_unshift($data, $out); //push to the top of the array
