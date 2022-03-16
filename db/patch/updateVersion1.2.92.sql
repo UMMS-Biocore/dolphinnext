@@ -42,11 +42,18 @@ ALTER TABLE `app`
 ADD `run_log_uuid` varchar(100) DEFAULT NULL after `location`;
 
 ALTER TABLE `app`
-ADD `last_pid` varchar(50) DEFAULT NULL after `location`;
+ADD `app_uid` varchar(50) DEFAULT NULL after `location`;
 
 ALTER TABLE `app`
 ADD `dir` varchar(250) DEFAULT NULL after `location`,
 ADD `filename` varchar(150) DEFAULT NULL after `location`;
+
+ALTER TABLE `app`
+ADD `port` varchar(11) DEFAULT NULL after `location`,
+ADD `pid` varchar(50) DEFAULT NULL after `location`;
+
+ALTER TABLE `app`
+ADD `time` int(6) DEFAULT NULL after `cpu`;
 
 
 INSERT INTO `update_db` (`name`, `owner_id`, `date_created`, `date_modified`, `last_modified_user`) VALUES 

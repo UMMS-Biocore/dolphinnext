@@ -31,6 +31,7 @@ class dbfuncs
     private $DEFAULT_RUN_ENVIRONMENT = DEFAULT_RUN_ENVIRONMENT;
     private $INITIAL_RUN_DOCKER = INITIAL_RUN_DOCKER;
     private $INITIAL_RUN_SINGULARITY = INITIAL_RUN_SINGULARITY;
+    private $MOUNTED_VOLUME = MOUNTED_VOLUME;
 
     function __construct()
     {
@@ -111,6 +112,12 @@ class dbfuncs
     function writeLog($uuid, $text, $mode, $filename)
     {
         $file = fopen("{$this->run_path}/$uuid/run/$filename", $mode);
+        fwrite($file, $text . "\n");
+        fclose($file);
+    }
+    function writeFile($filepath, $text, $mode)
+    {
+        $file = fopen($filepath, $mode);
         fwrite($file, $text . "\n");
         fclose($file);
     }
@@ -3498,29 +3505,89 @@ class dbfuncs
         }
     }
 
+    function terminateApp($app_id, $ownerID)
+    {
+        $ret = array();
+        $appData = $this->getApps($app_id, "", $ownerID);
+        $appData = json_decode($appData, true);
+
+        $uuid = $appData[0]["run_log_uuid"];
+        $dir = $appData[0]["dir"];
+        $filename = $appData[0]["filename"];
+        $pUUID = $appData[0]["app_uid"];
+        $pid = $appData[0]["pid"];
+        error_log($pid);
+
+        $targetDir = "{$this->run_path}/{$uuid}/pubweb/{$dir}/.app";
+        if (!file_exists($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+        $log = "{$targetDir}/{$filename}.log{$pUUID}";
+        $container_name = "{$pUUID}_{$ownerID}";
+
+        $process_kill_cmd = "kill {$pid} >> {$log} 2>&1 &";
+        $docker_kill_cmd = "docker kill {$container_name} >> {$log} 2>&1 && echo 'INFO: App successfully terminated.' >> {$log} 2>&1 & ";
+
+        shell_exec($process_kill_cmd);
+        shell_exec($docker_kill_cmd);
+        return json_encode($ret);
+    }
+
     function checkUpdateAppStatus($app_id, $ownerID)
     {
         $ret = array();
-
         $appData = $this->getApps($app_id, "", $ownerID);
         $appData = json_decode($appData, true);
         $run_log_uuid = $appData[0]["run_log_uuid"];
-        $last_pid = $appData[0]["last_pid"];
+        $app_uid = $appData[0]["app_uid"];
         $filename = $appData[0]["filename"];
         $oldStatus = $appData[0]["status"];
         $newStatus = "";
         $ret["status"] = $oldStatus;
         $dir = $appData[0]["dir"];
-        $appLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.app/{$filename}.log{$last_pid}", $ownerID));
-        $ret["log"] = $appLog;
-        if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $appLog) || preg_match("/command not found/i", $appLog)) {
-            $newStatus = "Error";
+        $appLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.app/{$filename}.log{$app_uid}", $ownerID));
+        $jupyterServerLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/.{$app_uid}_jupyter_server.log", $ownerID));
+        $startupLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/.{$app_uid}_startup.log", $ownerID));
+        $startupScript = "pubweb/.{$app_uid}_startup.ipynb";
+        $startupScriptExists = false;
+        // startupLog:
+        // jupyter nbconvert --to notebook --execute /home/jovyan/work/.${DNEXT_APP_ID}_startup.ipynb  >  /home/jovyan/work/.${DNEXT_APP_ID}_startup.log 2>&1
+        if (file_exists($startupScript)) {
+            $startupScriptExists = true;
         }
+
+        error_log($startupLog);
+        $ret["log"] = $appLog . "\n" . $jupyterServerLog . "\n" . $startupLog;
+
+        if (preg_match("/No such container/i", $appLog) || preg_match("/App successfully terminated/i", $appLog)) {
+            $newStatus = "terminated";
+        } else if (!$startupScriptExists && !empty($appLog) && preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog)) {
+            preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog, $match);
+            $ret["server_url"] = $match[1];
+            $newStatus = "running";
+        } else if ($startupScriptExists && !empty($startupLog) && preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $startupLog) && !empty($appLog) && preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog)) {
+            // first get the jupyter port
+            preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog, $match);
+            $jupyterServer  = $match[1];
+            error_log($jupyterServer);
+            // then get startup app port
+            preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $startupLog, $match_startup);
+            $startupServer  = $match_startup[1];
+            $startupServerPort = $startupServer;
+            error_log($startupServer);
+            $ret["server_url"] = "{$jupyterServer}/proxy/{$startupServerPort}/";
+            $newStatus = "running";
+        } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $appLog) || preg_match("/command not found/i", $appLog) || preg_match("/Got permission denied while trying to connect/i", $appLog)) {
+            $newStatus = "error";
+        }
+
+
+
         if (!empty($newStatus)) {
             $ret["status"] = $newStatus;
             $this->updateAppStatus($app_id, $newStatus, $ownerID);
         }
-        return $ret;
+        return json_encode($ret);
     }
 
 
@@ -5101,16 +5168,22 @@ class dbfuncs
                   $where";
         return  self::queryTable($sql);
     }
-    function insertApp($status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID)
+    function insertApp($status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $time, $pUUID, $ownerID)
     {
-        $sql = "INSERT INTO $this->db.app(status, type, run_log_uuid, location, dir, filename, container_id, memory, cpu, last_pid, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$status', '$type', '$uuid', '$location', '$dir', '$filename', '$container_id', '$memory', '$cpu', '$pUUID', '$ownerID', now(), now(), '$ownerID', 3)";
+        $sql = "INSERT INTO $this->db.app(status, type, run_log_uuid, location, dir, filename, container_id, memory, cpu, time, app_uid, owner_id, date_created, date_modified, last_modified_user, perms) VALUES ('$status', '$type', '$uuid', '$location', '$dir', '$filename', '$container_id', '$memory', '$cpu', '$time', '$pUUID', '$ownerID', now(), now(), '$ownerID', 3)";
         return self::insTable($sql);
     }
-    function updateApp($id, $status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID)
+    function updateApp($id, $status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $time, $pUUID, $ownerID)
     {
-        $sql = "UPDATE $this->db.app SET status= '$status', type= '$type', run_log_uuid= '$uuid', location= '$location', dir='$dir', filename='$filename', container_id='$container_id', memory='$memory', cpu='$cpu', last_pid='$pUUID', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
+        $sql = "UPDATE $this->db.app SET status= '$status', type= '$type', run_log_uuid= '$uuid', location= '$location', dir='$dir', filename='$filename', container_id='$container_id', memory='$memory', cpu='$cpu', time='$time', app_uid='$pUUID', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
+    function updateAppPid($id, $pid, $ownerID)
+    {
+        $sql = "UPDATE $this->db.app SET pid= '$pid', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
+        return self::runSQL($sql);
+    }
+
     //    ----------- Projects   ---------
     function getProjects($id, $type, $ownerID)
     {
@@ -7131,7 +7204,7 @@ class dbfuncs
     }
     function checkApp($type, $uuid, $location, $ownerID)
     {
-        $sql = "SELECT id FROM $this->db.app WHERE deleted=0 AND run_log_uuid = '$uuid' AND owner_id = '$ownerID' AND location='$location' AND type = '$type' ";
+        $sql = "SELECT id, status FROM $this->db.app WHERE deleted=0 AND run_log_uuid = '$uuid' AND owner_id = '$ownerID' AND location='$location' AND type = '$type' ";
         return self::queryTable($sql);
     }
     function checkProPipeInput($project_id, $input_id, $pipeline_id, $project_pipeline_id)
@@ -8138,6 +8211,7 @@ class dbfuncs
         $targetJson = "{$targetDir}/.{$filename}";
         $tsv = file_get_contents($targetFile);
         $array = $this->tsvCsvToJson($tsv);
+        ini_set('memory_limit', '3000M');
         file_put_contents($targetJson, json_encode($array));
         $ret = array();
         $ret["count_file"] = "$dir/.{$filename}";
@@ -8265,9 +8339,10 @@ class dbfuncs
         }
     }
 
-    function callApp($uuid, $text, $dir, $filename, $container_id, $pUUID, $ownerID)
+    function callApp($app_id, $uuid, $text, $dir, $filename, $container_id, $pUUID, $time, $ownerID)
     {
         $ret = array();
+        $ret["app_id"] = $app_id;
         $appData = $this->getContainers($container_id, "", $ownerID);
         $appData = json_decode($appData, true);
         $app_name = $appData[0]["name"];
@@ -8275,29 +8350,47 @@ class dbfuncs
         $container_type = $appData[0]["type"];
 
         $runDir = realpath("{$this->run_path}/$uuid/pubweb");
-        $mountedPath = "/Users/onuryukselen/projects";
-        $runDirParentMachine = preg_replace('/^\/mac/', $mountedPath, $runDir);
+        $mountedPath = $this->MOUNTED_VOLUME;
+        $runDirParentMachine = preg_replace('/^\/export/', $mountedPath, $runDir);
         $targetDir = "{$this->run_path}/$uuid/pubweb/$dir/.app";
         if (!file_exists($targetDir)) {
             mkdir($targetDir, 0777, true);
         }
+
+        // Startup command
+        // jupyter nbconvert --to notebook --execute /home/jovyan/work/.${DNEXT_APP_ID}_startup.ipynb  >  /home/jovyan/work/.${DNEXT_APP_ID}_startup.log 2>&1
+        // if filename ends with ipynb then copy file to $runDir/.${pUUID}_startup.ipynb
+        $extension = substr(strrchr($filename, '.'), 1);
+        if ($extension == "ipynb" && $filename == "startup.ipynb") {
+            $startup_file = "{$runDir}/.${pUUID}_startup.ipynb";
+            $this->writeFile($startup_file, $text, "w");
+        }
+
+        // docker command
         $log = "{$targetDir}/{$filename}.log{$pUUID}";
-        $response = "{$targetDir}/{$filename}.curl{$pUUID}";
-        $file = "{$targetDir}/{$filename}.{$pUUID}";
-        $err = "{$targetDir}/{$filename}.err{$pUUID}";
         $cmd = "";
+        settype($time, 'integer');
+        $time_in_sec = $time * 60;
         if ($container_type == "docker" && !empty($image_name)) {
             $container_name = "{$pUUID}_{$ownerID}";
             //docker run -d --privileged --rm -p 8888:8888  -v /Users/onuryukselen/projects/biocore/DolphinNext/github/dolphinnext/public/tmp/pub/1N1WP05kAZdaNrEGNtRs6xAXnCoJg5/pubweb:/home/jovyan/work  -u root jupyter:1.0 
-            $cmd = "docker run --name {$container_name} -d --privileged -e DNEXT_APP_ID='{$pUUID}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name}  > $log 2>&1 &";
-            error_log($cmd);
+            // $cmd = "docker stop -t {$time_in_sec} $(docker run --stop-signal 2 --name {$container_name} -d --privileged -e DNEXT_APP_ID='{$pUUID}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name})  >> {$log} 2>&1 & echo $! &";
+            $cmd = "docker run --name {$container_name} -d --privileged -e DNEXT_APP_ID='{$pUUID}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name}  >> {$log} 2>&1 & echo $! &";
         }
-        $ret = $this->execute_cmd_logfile($cmd, $ret, "container_cmd_log", "container_cmd", "$log", "a");
-
-        // $pid = exec($cmd);
-        $ret["pid"] = $pUUID;
-        return json_encode($pUUID);
+        $this->writeFile($log, $cmd, "w");
+        $pid = shell_exec($cmd);
+        $pid = trim($pid);
+        error_log($pid);
+        $this->writeFile($log, $pid, "a");
+        if (!empty($pid)) {
+            $this->updateAppPid($app_id, $pid, $ownerID);
+        } else {
+            $ret["message"] = "App PID not found.";
+        }
+        $ret["uid"] = $pUUID;
+        return $ret;
     }
+
 
     function getUUIDAPI($data, $type, $id)
     {

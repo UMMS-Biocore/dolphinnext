@@ -580,7 +580,7 @@ $DMETA_LABEL = DMETA_LABEL;
                     </div>
                 </div>
                 <div class="col-md-6" id="permsDiv">
-                    <div class="form-group">
+                    <div class="form-group" style="margin-bottom: 5px;">
                         <label>Permissions to View</label>
                         <select id="permsRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="perms">
                             <option value="3" selected>Only me </option>
@@ -590,12 +590,16 @@ $DMETA_LABEL = DMETA_LABEL;
                     </div>
                 </div>
                 <div class="col-md-6" id="groupsDiv">
-                    <div class="form-group">
+                    <div class="form-group" style="margin-bottom: 5px;">
                         <label>Group Selection </label>
                         <select id="groupSelRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="group_id">
                             <option value="" selected>Choose group </option>
                         </select>
                     </div>
+                </div>
+                <div class="col-sm-12">
+                    <span class="small">You can share your run with a specific group (created in profile-> groups tab) by choosing "Only my group" and selecting the group name. The group members will see the run on their run status page. Alternatively, you can set the Permissions to View to "Everyone". This way, only users that know the run link will see it. The selected run will not show up on their run status page. Please click the save icon at the top after changing your permissions.
+                    </span>
                 </div>
                 <div id="releaseDivParent">
                     <div id="releaseDiv" style="margin-top:5px;" class="col-md-12">

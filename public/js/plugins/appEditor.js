@@ -4,10 +4,12 @@
 
 (function($) {
     $.fn.appEditor = function(options) {
+        var appType = "report";
         var settings = $.extend({
             // default values.
             height: "500px",
-            heightIconBar: "35px"
+            heightIconBar: "35px",
+            autoScrollLog: true
         }, options);
         var elems = $(this);
         elems.css("width", "100%")
@@ -16,15 +18,16 @@
         var getEditorIconDiv = function() {
             var appeditorsaveas = "";
             var appeditorsave = "";
-            var appeditorsett = "";
+            var appeditorplay = "";
             var appeditorlog = "";
             if (settings.ajax.editable) {
-                appeditorsett = `<li role="presentation"><a class="appeditorsett-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Launch App"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>`;
+                appeditorplay = `<li role="presentation"><a class="appeditorplay-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Launch App"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>`;
+                appeditorstop = `<li role="presentation"><a style="display:none;" class="appeditorstop-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Terminate App"><i style="font-size: 18px;" class="fa fa-stop"></i></a></li>`;
                 appeditorsaveas = `<li role="presentation"><a class="appeditorsaveas-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As"><span class="glyphicon-stack"><i class="fa fa-pencil glyphicon-stack-3x"></i><i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i></span></a></li>`;
                 appeditorsave = `<li role="presentation"><a class="appeditorsave-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>`;
                 appeditorlog = `<li role="presentation"><a class="appeditorlog-${elemsID}" data-toggle="tooltip" data-placement="bottom" data-original-title="App Logs"><i style="font-size: 18px;" class="fa fa-file-text-o"></i></a></li>`;
             }
-            return `<ul style="float:inherit" class="nav nav-pills appeditor">` + appeditorsaveas + appeditorsave + appeditorlog + appeditorsett + `</ul>`
+            return `<ul style="float:inherit" class="nav nav-pills appeditor">` + appeditorsaveas + appeditorsave + appeditorlog + appeditorplay + appeditorstop + `</ul>`
         }
         var getReportIconDiv = function() {
             return `<ul style="float:inherit"  class="nav nav-pills appeditor">
@@ -109,6 +112,19 @@
                                 <input class="form-control" type="number" name="cpu" min="1" max="10" value="1"></input>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <div class="col-sm-5 control-label"><label>Time</label></div>
+                            <div class="col-sm-7">
+                                <select class="form-control" name="time">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60">1 hour</option>
+                                    <option value="120">2 hours</option>
+                                    <option value="180">3 hours</option>
+                                    <option value="300">5 hours</option>
+                                    <option value="600">10 hours</option>
+                                </select>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -183,6 +199,12 @@
             var n = 0;
             var bar = $("#" + elemsID + '-reportProgress');
             var maxWidthPx = bar.parent().width();
+            if (value == "stop") {
+                bar.width(0)
+                if (window[elemsID + '_progress']) clearInterval(window[elemsID + '_progress']);
+                window[elemsID + '_progress'] = null;
+                return;
+            }
             if (value) {
                 width = value;
                 if (width == 100) {
@@ -302,6 +324,7 @@
                     console.log(jqXHR.status)
                     console.log(exception)
                     updateLogText("Error occurred.")
+                    showAppIcon("start");
                     progress(100)
                 }
             });
@@ -310,8 +333,9 @@
 
         var callback = function(orgPath) {
             if (orgPath) {
-                updateLogText("Done.", "clean")
+                updateLogText("App is Running..")
                 progress(100)
+                showAppIcon("stop");
                 var reportId = elemsID + "-report";
                 var iframe = $("#" + reportId + "> iframe")
 
@@ -404,6 +428,24 @@
                 }
             }
         }
+        const showAppIcon = (type) => {
+            if (type == "start") {
+                $(`.appeditorplay-${elemsID}`).css("display", "block")
+                $(`.appeditorstop-${elemsID}`).css("display", "none")
+            } else if (type == "stop") {
+                $(`.appeditorplay-${elemsID}`).css("display", "none")
+                $(`.appeditorstop-${elemsID}`).css("display", "block")
+            }
+        }
+
+        function autoScrollLogArea(settings) {
+            if (settings.autoScrollLog) {
+                if (document.getElementById(`appInfoText-${elemsID}`)) {
+                    document.getElementById(`appInfoText-${elemsID}`).scrollTop =
+                        document.getElementById(`appInfoText-${elemsID}`).scrollHeight;
+                }
+            }
+        }
 
         var eventHandler = function(settings) {
             var editorId = elemsID + "-editor";
@@ -433,13 +475,32 @@
                         saveRmd(editorId, "saveas")
                     }
                 });
-                $(`a.appeditorsett-${elemsID}`).on('click', function(event) {
-                    $(`.appeditorlaunch-${elemsID}`).data("elemsID", elemsID)
+                $(`a.appeditorplay-${elemsID}`).on('click', function(event) {
                     $(`#appSett-${elemsID}`).modal("show");
                 });
                 $(`a.appeditorlog-${elemsID}`).on('click', function(event) {
                     $(`#appInfo-${elemsID}`).modal("show");
                 });
+                $(`#appInfoText-${elemsID}`).on('click', function(event) {
+                    settings.autoScrollLog = false;
+                });
+                $(`a.appeditorstop-${elemsID}`).on('click', async function(event) {
+                    updateLogText("Terminating..");
+                    var data = await doAjax({
+                        p: "terminateApp",
+                        dir: settings.ajax.dir,
+                        uuid: settings.ajax.uuid,
+                        type: appType,
+                        location: elemsID
+                    });
+                    getAppStatus(settings, "terminated")
+
+                });
+
+
+                $(document).on("shown.bs.modal", `#appInfo-${elemsID}`, function(e) {
+                    autoScrollLogArea(settings)
+                })
 
 
                 $(`a.appeditorfull-${elemsID}`).on('click', function(event) {
@@ -535,83 +596,87 @@
             return $.get(url);
         }
 
-        var getUrl = function(settings, type, callback, pid) {
-            if (window[elemsID + type]) {
+        var getAppStatus = function(settings, callback) {
+            console.log(window[elemsID + appType])
+            if (window[elemsID + appType]) {
                 return; // Don't allow click if already running.
             }
-            var format = ""
-            var serverLogPath = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + `.${pid}_jupyter_server.log`
-            var containerLogPath = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.app/" + settings.ajax.filename + ".log" + pid
-            var containerErrPath = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.app/" + settings.ajax.filename + ".err" + pid
-            window[elemsID + type] = setInterval(function() {
-                var checkExistUrl = checkUrl(containerLogPath)
-                console.log(`checkExistUrl: ${containerLogPath} ${checkExistUrl}`)
-                if (!checkExistUrl) {
-                    var checkExistError = checkUrl(containerErrPath)
-                    if (checkExistError) {
-                        getUrlContent(containerErrPath).success(function(data) {
-                            if (data) {
-                                if (!$(`#appInfo-${elemsID}`).hasClass('in')) {
-                                    $(`#appInfoText-${elemsID}`).text(data)
-                                    $(`#appInfo-${elemsID}`).modal("show");
-                                }
-                            }
-
-                        });
-                        updateLogText("Error occurred.")
-                        progress(100)
-                        if (window[elemsID + type]) {
-                            clearInterval(window[elemsID + type]);
-                            window[elemsID + type] = null;
-                        }
-                    }
-                    return ""
-                } else {
-                    var checkServerURL = checkUrl(serverLogPath)
-                    if (checkServerURL) {
-                        getUrlContent(serverLogPath).success(function(data) {
-                            if (data) {
-                                window.wdata = data
-                                console.log(window.wdata)
-                                var urlRegex = /(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/;
-                                if (data.match(urlRegex) && data.match(urlRegex)[1]) {
-                                    var serverURL = data.match(urlRegex)[1];
-                                    console.log(serverURL)
-                                    if (window[elemsID + type]) {
-                                        clearInterval(window[elemsID + type]);
-                                        window[elemsID + type] = null;
-                                        return callback(serverURL)
-                                    }
-                                }
+            window[elemsID + appType] = setInterval(async function() {
 
 
-
-                            }
-
-                        })
-
-                    }
-
-
+                var statusData = await doAjax({
+                    p: "checkUpdateAppStatus",
+                    uuid: settings.ajax.uuid,
+                    type: appType,
+                    location: elemsID
+                });
+                updateLogText("");
+                console.log(statusData)
+                if (statusData.log) {
+                    $(`#appInfoText-${elemsID}`).val(statusData.log)
+                    autoScrollLogArea(settings)
                 }
-            }, 2000);
+
+
+                if (statusData.status == "error") {
+                    if (callback !== "terminated") {
+                        clearInterval(window[elemsID + appType]);
+                        window[elemsID + appType] = null;
+                    }
+                    updateLogText("Error occurred.")
+                    progress(100);
+                    showAppIcon("start");
+                    // return callback(serverURL)
+                } else if (statusData.status == "running" && statusData.server_url) {
+                    if (callback !== "terminated") {
+                        clearInterval(window[elemsID + appType]);
+                        window[elemsID + appType] = null;
+                    }
+                    progress(100);
+                    showAppIcon("stop");
+                    updateLogText("Running..");
+                    if (callback && typeof callback === 'function') return callback(statusData.server_url);
+                    // app is not started yet
+                } else if (statusData.status == "initiated") {
+                    showAppIcon("stop");
+                    progress()
+                    updateLogText("Preparing..");
+                    // app is not started yet
+                } else if (!statusData || !statusData.status) {
+                    if (callback !== "terminated") {
+                        clearInterval(window[elemsID + appType]);
+                        window[elemsID + appType] = null;
+                    }
+                    updateLogText("Ready to Launch..");
+                    showAppIcon("start");
+                    progress("stop")
+                } else if (statusData.status == "terminated") {
+                    clearInterval(window[elemsID + appType]);
+                    window[elemsID + appType] = null;
+                    updateLogText("Terminated.");
+                    showAppIcon("start");
+                    progress("stop")
+                }
+
+            }, 5000);
 
         }
-        var initialUrlCheck = function(settings, type) {
+        var initialUrlCheck = function(settings, appType) {
             var orgPath = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.app/" + settings.ajax.filename
             var checkExistUrl = checkUrl(orgPath)
             if (checkExistUrl) {
                 var tmpPath = ""
                 var pid = ""
-                callback(settings, tmpPath, orgPath, pid, type)
+                callback(settings, tmpPath, orgPath, pid, appType)
             }
             return checkExistUrl
         }
 
-        var callData = function(editText, settings, type, callback) {
-            if (window[elemsID + type]) {
+        var callData = function(editText, settings, appType, callback) {
+            if (window[elemsID + appType]) {
                 return; // Don't allow click if already running.
             }
+            showAppIcon("stop");
             progress()
             updateLogText("Preparing..")
             var editTextSend = encodeURIComponent(JSON.stringify(editText));
@@ -622,7 +687,7 @@
             [formObj, stop] = createFormObj($(`#appSett-${elemsID}`).find("input, select"), []);
             formObj.p = "callApp";
             formObj.location = elemsID;
-            formObj.type = type;
+            formObj.type = appType;
             formObj.text = editTextSend;
             formObj.uuid = settings.ajax.uuid;
             formObj.dir = settings.ajax.dir;
@@ -637,14 +702,23 @@
                 data: formObj,
                 async: false,
                 cache: false,
-                success: function(results) {
-                    console.log(results)
-                    var pid = results;
-                    if (pid) {
-                        getUrl(settings, type, callback, pid)
+                success: function(res) {
+                    console.log(res)
+                    if (res && res.app_id) {
+                        getAppStatus(settings, callback)
+                    } else if (res && res.message) {
+                        //The app is already running. 
+                        updateLogText(res.message)
+                        progress(100)
+                        showAppIcon("stop");
+                    } else {
+                        updateLogText("Error occurred.")
+                        progress(100)
+                        showAppIcon("start");
                     }
                 },
                 error: function(jqXHR, exception) {
+                    showAppIcon("start");
                     console.log("#Error:")
                     console.log(jqXHR.status)
                     console.log(exception)
@@ -657,10 +731,10 @@
 
         }
         elems.append(getDiv(settings, ""));
-        // var initialFileCheck = initialUrlCheck(settings, "rmdtext")
-        // if (!initialFileCheck) {
-        //     callData(settings.ajax.text, settings, "report", callback);
-        // }
+        //*************** */
+        updateLogText("Checking App Status..");
+        progress()
+        getAppStatus(settings, callback)
         createEditor(settings)
         createModal()
         eventHandler(settings);

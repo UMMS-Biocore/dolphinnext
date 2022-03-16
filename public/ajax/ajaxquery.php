@@ -1748,6 +1748,7 @@ if ($p == "publishGithub") {
     $container_id = $_REQUEST['container_id'];
     $memory = $_REQUEST['memory'];
     $cpu = $_REQUEST['cpu'];
+    $time = $_REQUEST['time'];
     $text = urldecode($_REQUEST['text']);
     $pUUID = uniqid();
     //available app status: initiated, terminated, running
@@ -1756,21 +1757,20 @@ if ($p == "publishGithub") {
     $checkApp = json_decode($db->checkApp($type, $uuid, $location, $ownerID), true);
     //insert into file_project table
     if (!isset($checkApp[0])) {
-        $insertApp = $db->insertApp($status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID);
-        $data = $db->callApp($uuid, $text, $dir, $filename, $container_id, $pUUID, $ownerID);
+        $insertApp = $db->insertApp($status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $time, $pUUID, $ownerID);
+        $app_id = json_decode($insertApp, true)["id"];
+        $ret = $db->callApp($app_id, $uuid, $text, $dir, $filename, $container_id, $pUUID, $time, $ownerID);
     } else {
-        $id = $checkApp[0]["id"];
+        $app_id = $checkApp[0]["id"];
         $old_status = $checkApp[0]["status"];
-        error_log(print_r($checkApp[0], TRUE));
-        error_log(print_r($id, TRUE));
-        if ($old_status == "terminated" || empty($old_status)) {
-            $updateApp = $db->updateApp($id, $status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $pUUID, $ownerID);
-            $data = $db->callApp($uuid, $text, $dir, $filename, $container_id, $pUUID, $ownerID);
+        if ($old_status == "terminated" || $old_status == "error" || empty($old_status)) {
+            $updateApp = $db->updateApp($app_id, $status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $time, $pUUID, $ownerID);
+            $ret = $db->callApp($app_id, $uuid, $text, $dir, $filename, $container_id, $pUUID, $time, $ownerID);
         } else {
-            $ret["message"] = "The app is still running. Please terminate your app and try again.";
-            $data = json_encode($ret);
+            $ret["message"] = "The app is already running. Please terminate your app and try again.";
         }
     }
+    $data = json_encode($ret);
 } else if ($p == "callRmarkdown") {
     $uuid = $_REQUEST['uuid'];
     $dir = $_REQUEST['dir'];
@@ -1839,7 +1839,25 @@ if ($p == "publishGithub") {
 } else if ($p == "saveTestGroup") {
     $data = $db->saveTestGroup($ownerID);
 } else if ($p == "checkUpdateAppStatus") {
-    $data = $db->checkUpdateAppStatus($app_id, $ownerID);
+    $data = json_encode(array());
+    $uuid = $_REQUEST['uuid'];
+    $location = $_REQUEST['location'];
+    $type = $_REQUEST['type'];
+    $checkApp = json_decode($db->checkApp($type, $uuid, $location, $ownerID), true);
+    if (!empty($checkApp[0])) {
+        $app_id = $checkApp[0]["id"];
+        $data = $db->checkUpdateAppStatus($app_id, $ownerID);
+    }
+} else if ($p == "terminateApp") {
+    $data = json_encode(array());
+    $uuid = $_REQUEST['uuid'];
+    $location = $_REQUEST['location'];
+    $type = $_REQUEST['type'];
+    $checkApp = json_decode($db->checkApp($type, $uuid, $location, $ownerID), true);
+    if (!empty($checkApp[0])) {
+        $app_id = $checkApp[0]["id"];
+        $data = $db->terminateApp($app_id, $ownerID);
+    }
 } else if ($p == "saveUserGroup") {
     $u_id = $_REQUEST['u_id'];
     $g_id = $_REQUEST['g_id'];
