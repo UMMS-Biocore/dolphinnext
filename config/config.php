@@ -46,7 +46,7 @@ if (!empty($secConf)) {
 
 
     define('TIMEZONE', $TIMEZONE);
-    define('MOUNTED_VOLUME', $secConf['MOUNTED_VOLUME']);
+    define('MOUNTED_VOLUME', $MOUNTED_VOLUME);
     define('RUNPATH', $secConf['RUNPATH']);
     define('TEMPPATH', $secConf['TEMPPATH']);
     define('API_URL', $secConf['API_URL']);
