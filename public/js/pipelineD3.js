@@ -3,7 +3,7 @@
  * @param candid The string to search for
  * @returns Returns the index of the first match or -1 if not found
  */
-Array.prototype.searchFor = function (candid) {
+Array.prototype.searchFor = function(candid) {
     for (var i = 0; i < this.length; i++)
         if (this[i].indexOf(candid) > -1)
             return true;
@@ -13,7 +13,7 @@ Array.prototype.searchFor = function (candid) {
 function createPiGnumList() {
     //get available pipeline Module list
     piGnumList = [];
-    $("#subPipelinePanelTitle > div").each(function () {
+    $("#subPipelinePanelTitle > div").each(function() {
         if ($(this).attr('id').match(/proPanelDiv-(.*)/)) {
             piGnumList.push($(this).attr('id').match(/proPanelDiv-(.*)/)[1]);
         }
@@ -21,7 +21,7 @@ function createPiGnumList() {
 }
 
 //adjust container size based on window size
-window.onresize = function (event) {
+window.onresize = function(event) {
     createPiGnumList();
     var Maint = d3.transform(d3.select('#' + "mainG").attr("transform"));
     var Mainx = Maint.translate[0]
@@ -59,7 +59,7 @@ function allowDrop(event) {
 
 
 function drop(event) {
-    if (!window.pipeObj){
+    if (!window.pipeObj) {
         window.pipeObj = {};
     }
     event.preventDefault();
@@ -105,8 +105,9 @@ function drop(event) {
 }
 
 refreshDataset();
-function refreshDataset(){
-    parametersData = getValues({ p: "getAllParameters" }) 
+
+function refreshDataset() {
+    parametersData = getValues({ p: "getAllParameters" })
 }
 
 
@@ -167,14 +168,14 @@ function createSVG() {
 function startzoom() {
     d3.select("#container").call(zoom)
 }
-$('#editorPipeHeader').keyup(function () {
+$('#editorPipeHeader').keyup(function() {
     autosave();
 });
-$('#pipelineFiles').keyup(function () {
+$('#pipelineFiles').keyup(function() {
     autosave();
 });
 
-$('#editorPipeFooter').keyup(function () {
+$('#editorPipeFooter').keyup(function() {
     autosave();
 });
 
@@ -185,23 +186,23 @@ $('#editorPipeFooter').keyup(function () {
 //$('#groupSelPipe').change(function () {
 //    autosaveDetails();
 //});
-$('#pin').click(function () {
+$('#pin').click(function() {
     autosaveDetails();
 });
 
-$('#publicly_searchable').change(function () {
+$('#publicly_searchable').change(function() {
     autosaveDetails();
 });
-$("#pipeline-title").keyup(function () { //Click outside of the field or enter
+$("#pipeline-title").keyup(function() { //Click outside of the field or enter
     autosave();
 });
 
-function changeAutoSaveText(text){
+function changeAutoSaveText(text) {
     $('#autosave').text(text);
-    setTimeout(  function () { 
+    setTimeout(function() {
         var curr = $('#autosave').text();
-        if (curr !== "Saving..."){
-            $('#autosave').text("") 
+        if (curr !== "Saving...") {
+            $('#autosave').text("")
         }
     }, 5000);
 }
@@ -219,7 +220,7 @@ function autosave() {
         if (pipName !== '' && pipGroup != '') {
             $('#autosave').text('Saving...');
             if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(function () { save("default") }, 2000);
+            timeoutId = setTimeout(function() { save("default") }, 2000);
         }
     }
 }
@@ -232,7 +233,7 @@ function autosaveDetails() {
         if (pipName !== '' && pipGroup != '' && id) {
             $('#autosave').text('Saving...');
             if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(function () { saveDetails() }, 1300);
+            timeoutId = setTimeout(function() { saveDetails() }, 1300);
         }
     }
 }
@@ -278,7 +279,7 @@ function openSubPipeline(piID, pObj) {
     }
     var processHeader = '<div class="panel-heading collapsible collapseIconDiv" data-toggle="collapse" href="#collapse-' + MainGNum + '"><h4 class="panel-title">' + pipeName + '<i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a style="font-size:15px; padding-left:10px;" class="fa collapseIcon fa-plus-square-o"></a></i></h4></div>';
     var processBodyInt = '<div  id="collapse-' + MainGNum + '" class="panel-collapse collapse"><div style="height:500px; padding:0px;" id="container' + MainGNum + '" class="panel-body">'
-    //create Pipeline Module Panel
+        //create Pipeline Module Panel
     $('#subPipelinePanelTitle').append('<div id="proPanelDiv-' + MainGNum + '" pipeid="' + piID + '" ' + hideModuleText + '><div id="proPanel-' + MainGNum + '" class="panel panel-default" style="margin-bottom:3px;">' + processHeader + processBodyInt + '</div></div></div></div>')
     pObj.svg = d3.select("#container" + MainGNum).append("svg")
         .attr("id", "svg" + MainGNum)
@@ -384,7 +385,7 @@ function openPipeline(id) {
                 name = cleanProcessName(nodes[key][3])
                 var processModules = nodes[key][4];
                 gNum = parseInt(key.split("-")[1])
-                //for pipeline circles
+                    //for pipeline circles
                 if (pId.match(/p(.*)/)) {
                     var piID = pId.match(/p(.*)/)[1];
                     var newMainGnum = "pObj" + gNum;
@@ -418,10 +419,10 @@ function openPipeline(id) {
 d3.select("#container").style("background-image", "url(css/workplace_image.png)").style("background-repeat", "repeat").on("keydown", cancel).on("mousedown", cancel)
 
 var zoom = d3.behavior.zoom()
-.translate([0, 0])
-.scale(1)
-.scaleExtent([0.15, 2])
-.on("zoom", zoomed);
+    .translate([0, 0])
+    .scale(1)
+    .scaleExtent([0.15, 2])
+    .on("zoom", zoomed);
 
 createSVG()
 
@@ -430,7 +431,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pObj, oldGnum) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, pObj, oldGnum) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -530,6 +531,9 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
     if (pubDmeta != null) {
         $("#text" + MainGNum + "-" + useGnum).data('pubDmeta', pubDmeta)
     }
+    if (pubWebApp != null) {
+        $("#text" + MainGNum + "-" + useGnum).data('pubWebApp', pubWebApp)
+    }
     if (pubWeb) {
         $("#text" + MainGNum + "-" + useGnum).attr('pubWeb', pubWeb)
     }
@@ -546,7 +550,7 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
             .attr("y", 5)
             .text('\uf040')
             .on("mousedown", rename)
-        //gnum(written in id): unique,
+            //gnum(written in id): unique,
         pObj.g.append("text")
             .attr("id", "del" + MainGNum + "-" + useGnum)
             .attr('font-family', "FontAwesome, sans-serif")
@@ -573,7 +577,7 @@ function insertProRowTable(process_id, procName, procDesc, procRev) {
 
 //--Pipeline details table --
 function addProPipeTab(id) {
-    if (window.pipeObj["process_" + id]){
+    if (window.pipeObj["process_" + id]) {
         var procData = JSON.parse(window.pipeObj["process_" + id]);
     } else {
         var procData = getValues({ p: "getProcessData", "process_id": id });
@@ -614,6 +618,7 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
     var showSett = null;
     var inDescOpt = null;
     var pubDmeta = null;
+    var pubWebApp = null;
     //var process_id = processData[index].id;
     //for input parameters:  
     if (processDat === "inputparam@inPro") {
@@ -630,7 +635,7 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
         var classtoparam = classtoparam || "connect_to_input output"
         var init = "o"
         var pColor = "orange"
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, window, oldGnum)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, window, oldGnum)
         processList[("g-" + useGnum)] = name
         processListNoOutput[("g-" + useGnum)] = name
         if (!oldGnum) gNum = gNum + 1
@@ -650,7 +655,7 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
         var classtoparam = classtoparam || "connect_to_output input"
         var init = "i"
         var pColor = "green"
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, window, oldGnum)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, window, oldGnum)
 
         processList[("g-" + useGnum)] = name
         if (!oldGnum) gNum = gNum + 1
@@ -670,31 +675,31 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
         })
 
         var outputs = getValues({
-            p: "getOutputsPP",
-            "process_id": process_id
-        })
-        //gnum uniqe, id same id (Written in class) in same type process
+                p: "getOutputsPP",
+                "process_id": process_id
+            })
+            //gnum uniqe, id same id (Written in class) in same type process
         g = d3.select("#mainG").append("g")
             .attr("id", "g-" + useGnum)
             .attr("class", "g-" + id)
             .attr("transform", "translate(" + (-30 + x + r + ior) / z + "," + (-10 + y + r + ior) / z + ")")
 
-            .on("mouseover", mouseOverG)
+        .on("mouseover", mouseOverG)
             .on("mouseout", mouseOutG)
-        //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
+            //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
         g.append("circle").attr("id", "bc-" + useGnum)
             .attr("class", "bc-" + id)
             .attr("type", "bc")
             .attr("cx", cx)
             .attr("cy", cy)
             .attr("r", r + ior)
-        //  .attr('fill-opacity', 0.6)
+            //  .attr('fill-opacity', 0.6)
             .attr("fill", "red")
             .transition()
             .delay(500)
             .duration(3000)
             .attr("fill", "#E0E0E0")
-        //gnum(written in id): uniqe, id(Written in class): same id in same type process, sc(written in type): same at all bc
+            //gnum(written in id): uniqe, id(Written in class): same id in same type process, sc(written in type): same at all bc
         g.append("circle")
             .datum([{
                 cx: 0,
@@ -709,7 +714,7 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
             .on("mouseover", scMouseOver)
             .on("mouseout", scMouseOut)
             .call(drag)
-        //gnum(written in id): uniqe,
+            //gnum(written in id): uniqe,
         g.append("text").attr("id", "text-" + useGnum)
             .datum([{
                 cx: 0,
@@ -834,7 +839,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
         .attr("transform", "translate(" + x + "," + y + ")")
         .on("mouseover", mouseOverG)
         .on("mouseout", mouseOutG)
-    //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
+        //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
     pObjOrigin.g.append("circle").attr("id", "bc" + MainGNum + "-" + useGnum)
         .attr("class", "bc" + MainGNum + "-" + id)
         .attr("type", "bc")
@@ -846,7 +851,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
         .delay(500)
         .duration(3000)
         .attr("fill", "#cdcff7")
-    //gnum(written in id): uniqe, id(Written in class): same id in same type process, sc(written in type): same at all bc
+        //gnum(written in id): uniqe, id(Written in class): same id in same type process, sc(written in type): same at all bc
     pObjOrigin.g.append("circle")
         .datum([{
             cx: 0,
@@ -861,7 +866,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
         .on("mouseover", scMouseOver)
         .on("mouseout", scMouseOut)
         .call(drag)
-    //gnum(written in id): uniqe,
+        //gnum(written in id): uniqe,
     pObjOrigin.g.append("text").attr("id", "text" + MainGNum + "-" + useGnum)
         .datum([{
             cx: 0,
@@ -930,8 +935,8 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
         if (Object.keys(pObjSub.sData).length > 0) {
             //--Pipeline details table add process--
             pObjSub.nodesOrg = pObjSub.sData[0].nodes
-            if (pObjSub.nodesOrg){
-                if (IsJsonString(pObjSub.nodesOrg.replace(/'/gi, "\""))){
+            if (pObjSub.nodesOrg) {
+                if (IsJsonString(pObjSub.nodesOrg.replace(/'/gi, "\""))) {
                     pObjSub.nodesOrg = JSON.parse(pObjSub.nodesOrg.replace(/'/gi, "\""));
                     for (var key in pObjSub.nodesOrg) {
                         var proId = pObjSub.nodesOrg[key][2];
@@ -969,7 +974,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
                     //merge inNodes to one if they connected to same input param
                     //I / O id naming: [0] i = input, o = output - [1] process database ID - [2] The number of I / O of the selected process - [3] Parameter database ID - [4] uniqe number
                     var c = 0;
-                    $.each(pObjSub.inNodes, function (k) {
+                    $.each(pObjSub.inNodes, function(k) {
                         if (pObjSub.inNodes[k].length === 1) {
                             var proId = pObjSub.inNodes[k][0].split("-")[1];
                             var parId = pObjSub.inNodes[k][0].split("-")[3];
@@ -1064,7 +1069,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
 
 function findType(id) {
     var parameter = [];
-    var parameter = parametersData.filter(function (el) { return el.id == id });
+    var parameter = parametersData.filter(function(el) { return el.id == id });
     if (parameter && parameter != '') {
         return parameter[0].file_type
     } else {
@@ -1121,12 +1126,12 @@ function mouseOutG() {
 }
 
 var drag = d3.behavior.drag()
-.origin(function (d) {
-    return d;
-})
-.on("dragstart", dragstarted)
-.on("drag", dragged)
-.on("dragend", dragended);
+    .origin(function(d) {
+        return d;
+    })
+    .on("dragstart", dragstarted)
+    .on("drag", dragged)
+    .on("dragend", dragended);
 
 function dragstarted(d) {
 
@@ -1224,7 +1229,7 @@ function scMouseOut() {
 }
 
 //--delete pipeline module object and SVG panel
-function removePipelineModuleObjSVGpanel(deleteID){
+function removePipelineModuleObjSVGpanel(deleteID) {
     var g = document.getElementById(deleteID).parentElement.id //g-5
     var pipeModule = document.getElementById(deleteID).parentElement;
     if (pipeModule.className.baseVal.match(/g-p.*/)) {
@@ -1234,7 +1239,7 @@ function removePipelineModuleObjSVGpanel(deleteID){
         delete window["pObj" + gNumModule];
         //delete all subModules
         createPiGnumList()
-        $.each(piGnumList, function (el) {
+        $.each(piGnumList, function(el) {
             if (piGnumList[el].indexOf(gNumModule + "_") === 0) {
                 delete window["pObj" + piGnumList[el]];
                 $("#proPanelDiv-" + piGnumList[el]).remove();
@@ -1253,7 +1258,7 @@ function removePipelineModuleObjSVGpanel(deleteID){
 }
 
 
-function removePipelineDetails(g){
+function removePipelineDetails(g) {
     var gNum = g.split('-')[1];
     var proClass = $('#' + g).attr('class') //
     var proID = $('#' + g).attr('class').split('-')[1] //
@@ -1300,15 +1305,15 @@ function removeLines(g) {
 
 
 var tooltip = d3.select("body")
-.append("div").attr("class", "tooltip-svg")
-.style("position", "absolute")
-.style("max-width", "400px")
-.style("max-height", "100px")
-.style("opacity", .75)
-.style("z-index", "10")
-.style("visibility", "hidden")
-.text("Something")
-.style("color", "black");
+    .append("div").attr("class", "tooltip-svg")
+    .style("position", "absolute")
+    .style("max-width", "400px")
+    .style("max-height", "100px")
+    .style("opacity", .75)
+    .style("z-index", "10")
+    .style("visibility", "hidden")
+    .text("Something")
+    .style("color", "black");
 
 //basic tooltip for icons
 basicTooltip = d3.select("body")
@@ -1356,7 +1361,7 @@ function IOmouseOver() {
         candParam = searchedTypeParam(className[1]);
         parentg = d3.select("#" + this.id).attr("parentG")
         givenNamePP = document.getElementById(this.id).getAttribute("name")
-        // for pipeline modules:
+            // for pipeline modules:
         var ccID = $("#" + this.id).attr("ccID");
         var processTag = "";
         if (ccID) {
@@ -1403,7 +1408,7 @@ function IOmouseOver() {
             //after first connection of inputparam
             d3.selectAll("." + className[0]).filter("." + cand).attr("status", "candidate")
             var paraID = document.getElementById(this.id).id.split("-")[3]
-            var paraData = parametersData.filter(function (el) {
+            var paraData = parametersData.filter(function(el) {
                 return el.id == paraID
             })
             var paraFileType = paraData[0].file_type
@@ -1413,7 +1418,7 @@ function IOmouseOver() {
             //Since outputparam is connected, it is not allowed to connect more parameters
             //              d3.selectAll("." + className[0]).filter("." + cand).attr("status", "candidate")
             var paraID = document.getElementById(this.id).id.split("-")[3]
-            var paraData = parametersData.filter(function (el) {
+            var paraData = parametersData.filter(function(el) {
                 return el.id == paraID
             })
             var paraFileType = paraData[0].file_type
@@ -1425,7 +1430,7 @@ function IOmouseOver() {
 
             var givenNamePP = document.getElementById(this.id).getAttribute("name")
             var paraID = document.getElementById(this.id).id.split("-")[3]
-            var paraData = parametersData.filter(function (el) {
+            var paraData = parametersData.filter(function(el) {
                 return el.id == paraID
             })
             var paraFileType = paraData[0].file_type
@@ -1558,9 +1563,9 @@ function showOptions() {
     d3.selectAll("circle[status ='posCandidate']").attr("r", ior * 1.4).style("stroke", "#ff9999").style("stroke-width", 4).style("stroke-opacity", .5)
 }
 var link = d3.svg.diagonal()
-.projection(function (d) {
-    return [d.y, d.x];
-});
+    .projection(function(d) {
+        return [d.y, d.x];
+    });
 
 function showEdges() {
     d3.selectAll("line[status = 'standard']").style("stroke", "#B0B0B0").style("stroke-width", 4).attr("opacity", 1);
@@ -1645,7 +1650,7 @@ function createEdges(first, second, pObj) {
         if (newID) {
             second = newID.replace(prefix, "")
         }
-    } 
+    }
 
     if (document.getElementById(prefix + second) && document.getElementById(prefix + first)) {
         addCandidates2DictForLoad(first, pObj);
@@ -1670,15 +1675,15 @@ function createEdges(first, second, pObj) {
             //update the class of inputparam based on selected second circle
             pObj.secClassName = updateSecClassName(prefix + second, pObj.inputParamLocF)
             d3.selectAll("#" + prefix + first).attr("class", pObj.secClassName)
-            //update the parameter of the inputparam based on selected second circle
+                //update the parameter of the inputparam based on selected second circle
             var firGnum = document.getElementById(prefix + first).id.split("-")[4] //first g-number
             var firPI = document.getElementById(prefix + first).id.split("-")[3] //first parameter id
             var secGnum = document.getElementById(prefix + second).id.split("-")[4] //first g-number
             pObj.secPI = document.getElementById(prefix + second).id.split("-")[3] //second parameter id
             var secProI = document.getElementById(prefix + second).id.split("-")[1] //second process id
-            if (firPI == "inPara" || firPI == "outPara" ){
+            if (firPI == "inPara" || firPI == "outPara") {
                 pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)/
-                pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5') 
+                pObj.secID = first.replace(pObj.patt, '$1-$2-$3-' + pObj.secPI + '-$5')
                 d3.selectAll("#" + prefix + first).attr("id", prefix + pObj.secID)
             } else {
                 //don't update input/output param id after first connection
@@ -1695,7 +1700,7 @@ function createEdges(first, second, pObj) {
                 rowType = 'output';
             }
             var paramGivenName = document.getElementById('text' + MainGNum + "-" + firGnum).getAttribute("name");
-            var paraData = parametersData.filter(function (el) { return el.id == pObj.secPI });
+            var paraData = parametersData.filter(function(el) { return el.id == pObj.secPI });
             //        var procData = processData.filter(function (el) { return el.id == secProI });
             var paraFileType = "";
             var paraQualifier = "";
@@ -1770,7 +1775,7 @@ function createEdges(first, second, pObj) {
 
         pObj.edges.push(prefix + pObj.fClick + "_" + prefix + pObj.sClick);
     } else {
-        console.log("EDGE FAILED: prefix: ",prefix +" MainGNum: "+ MainGNum + "Edge: " + first + "_" +second)
+        console.log("EDGE FAILED: prefix: ", prefix + " MainGNum: " + MainGNum + "Edge: " + first + "_" + second)
     }
 }
 
@@ -1807,7 +1812,7 @@ function removeEdge(delID) {
     //input/output param has no edge any more
     if (!edges.searchFor(firstParamId)) {
         d3.selectAll("#" + firstParamId).attr("connect", 'single')
-        //remove row from pipeline details table
+            //remove row from pipeline details table
         if (paramType === 'inPro') {
             $('#inputTa-' + delGnum).remove() //gNum
             resetOriginal(paramType, firstParamId); //
@@ -1851,6 +1856,7 @@ function rename() {
     renameTextShowSett = d3.select("#" + this.id).attr('showSett');
     renameTextInDesc = $("#" + this.id).data('inDescOpt');
     renameTextPubDmeta = $("#" + this.id).data('pubDmeta');
+    renameTextPubWebApp = $("#" + this.id).data('pubWebApp');
     renameTextPubWeb = d3.select("#" + this.id).attr('pubWeb');
     body = document.body;
     bodyW = body.offsetWidth;
@@ -1863,7 +1869,7 @@ function changeName() {
     newName = document.getElementById("mRenName").value;
     newName = cleanProcessName(newName);
     d3.select("#" + renameTextID).attr('name', newName)
-    //save renamed pipeline circle name
+        //save renamed pipeline circle name
     var pipeModule = document.getElementById(renameTextID).parentElement;
     var pipeModulePipeId = pipeModule.className.baseVal;
     if (pipeModulePipeId.match(/g-p(.*)/) && pipeModule.id.match(/g-(.*)/)) {
@@ -1963,7 +1969,7 @@ function refreshCreatorData(pipeline_id) {
         url: "ajax/ajaxquery.php",
         data: getPipelineD,
         async: true,
-        success: function (s) {
+        success: function(s) {
             $('#creatorInfoPip').css('display', "block");
             if (s[0]) {
                 $('#ownUserNamePip').text(s[0].username);
@@ -1971,22 +1977,22 @@ function refreshCreatorData(pipeline_id) {
                 $('.lasteditedPip').text(s[0].date_modified);
             }
         },
-        error: function (errorThrown) {
+        error: function(errorThrown) {
             alert("Error: " + errorThrown);
         }
     });
 }
 
 
-function warnUserSave(res){
-    if (res){
-        if ($.isArray(res)){
+function warnUserSave(res) {
+    if (res) {
+        if ($.isArray(res)) {
             var infoModalText = res.join("</br>");
-            if (infoModalText){
-                showInfoModal("#infoMod", "#infoModText", "Permission of the following components of the pipeline couldn't be changed:</br></br>"+infoModalText)
+            if (infoModalText) {
+                showInfoModal("#infoMod", "#infoModText", "Permission of the following components of the pipeline couldn't be changed:</br></br>" + infoModalText)
             }
         }
-    } 
+    }
 }
 
 //Revision is not required for advanced options, description
@@ -2021,8 +2027,8 @@ function saveDetails(sucFunc) {
             release_date: release_date
         };
 
-        getValuesAsync(data, function (s) {
-            if (s){
+        getValuesAsync(data, function(s) {
+            if (s) {
                 if (oldPipeGroupId != pipGroup) {
                     modifyPipelineSideBar(pipGroup, id, sName, "move")
                 }
@@ -2066,7 +2072,7 @@ function checkNameUnique(processList) {
     [duplicates, duplicatesSoFar] = hasDuplicates(processListArray);
     if (duplicates === true) {
         var warnUserText = "Process and input parameter names should be unique in pipeline. Please modify following names: ";
-        $.each(duplicatesSoFar, function (element) {
+        $.each(duplicatesSoFar, function(element) {
             if (element !== 0) {
                 warnUserText = warnUserText + ", ";
             }
@@ -2100,16 +2106,16 @@ function cleanRedBorder(borderId, checkValue) {
     }
 }
 //clean border in case value is entered
-$('#pipeGroupAll').change(function () {
+$('#pipeGroupAll').change(function() {
     var checkVal = $('#pipeGroupAll').val();
     cleanRedBorder($("#pipeGroupAll").next().children()[0], checkVal)
 });
-$('#pipeline-title').change(function () {
+$('#pipeline-title').change(function() {
     var checkVal = $('#pipeline-title').val();
     cleanRedBorder('#pipeline-title', checkVal)
 });
 
-function getAllPipelineID(){
+function getAllPipelineID() {
     var pipelineListDb = [];
     for (var p = 0; p < piGnumList.length; p++) {
         var pipeID = window["pObj" + piGnumList[p]].piID;
@@ -2120,13 +2126,13 @@ function getAllPipelineID(){
     return pipelineListDb;
 }
 
-function getAllProcessID(){
+function getAllProcessID() {
     var processListDb = [];
-    var addIds2processList = function (processListPipeMod){
+    var addIds2processList = function(processListPipeMod) {
         if (processListPipeMod) {
             for (var key in processListPipeMod) {
                 var gClass = document.getElementById(key).className.baseVal
-                if (gClass){
+                if (gClass) {
                     var prosessID = gClass.split("-")[1];
                     if (!processListDb.includes(prosessID)) {
                         processListDb.push(prosessID);
@@ -2151,6 +2157,7 @@ function createSaveNodes() {
     pipelineListDb = getAllPipelineID();
     pubWebDirListDb = [];
     pubDmetaDirListDb = [];
+    pubWebAppDirListDb = [];
     var mainPipeEdgesList = edges.slice();
     //replace process nodes with ccID's for main pipeline edge list
     var mainPipeEdges = checkCopyId(mainPipeEdgesList);
@@ -2173,6 +2180,7 @@ function createSaveNodes() {
         var showSett = $("#text-" + gNum).attr("showSett");
         var inDescOpt = $("#text-" + gNum).data("inDescOpt");
         var pubDmeta = $("#text-" + gNum).data("pubDmeta");
+        var pubWebApp = $("#text-" + gNum).data("pubWebApp");
         var pubWeb = $("#text-" + gNum).attr("pubWeb");
         var processModule = {};
         if (defVal) {
@@ -2190,6 +2198,9 @@ function createSaveNodes() {
         if (pubDmeta != undefined) {
             processModule["pubDmeta"] = pubDmeta;
         }
+        if (pubWebApp != undefined) {
+            processModule["pubWebApp"] = pubWebApp;
+        }
         if (pubWeb) {
             processModule["pubWeb"] = pubWeb;
         }
@@ -2197,6 +2208,10 @@ function createSaveNodes() {
         saveNodes[key] = [x, y, prosessID, processName, processModule]
         if (prosessID.match(/^outPro$/) && processModule.pubWeb) {
             pubWebDirListDb.push(processName);
+        }
+        console.log(processModule)
+        if (prosessID.match(/^outPro$/) && processModule.pubWebApp && processModule.pubWebApp.app) {
+            pubWebAppDirListDb.push(processModule.pubWebApp.app);
         }
         if (prosessID.match(/^outPro$/) && processModule.pubDmeta) {
             var outCircleID = $("#container").find("circle[parentG =" + key + "]").attr("id");
@@ -2210,7 +2225,7 @@ function createSaveNodes() {
                     if (pattern.match(/file\((.*)\)/)) {
                         pattern = pattern.match(/file\((.*)\)/i)[1];
                     }
-                    pubDmetaDirListDb.push({dir:processName, pattern:pattern});
+                    pubDmetaDirListDb.push({ dir: processName, pattern: pattern });
                     break;
                 }
             }
@@ -2219,11 +2234,10 @@ function createSaveNodes() {
     // sort saveNodes
     const sortAlphaNum = (a, b) => a.localeCompare(b, 'en', { numeric: true })
     saveNodes = Object.keys(saveNodes).sort(sortAlphaNum).reduce(
-        (obj, key) => { 
-            obj[key] = saveNodes[key]; 
+        (obj, key) => {
+            obj[key] = saveNodes[key];
             return obj;
-        }, 
-        {}
+        }, {}
     );
 }
 
@@ -2231,14 +2245,14 @@ function createSaveNodes() {
 //Save pipeline
 function save(type) {
     saveMainG = {}
-    //check if process and parameter names are unique in pipeline
+        //check if process and parameter names are unique in pipeline
     checkNameUnique(processListNoOutput);
     createSaveNodes();
     Maint = d3.transform(d3.select('#' + "mainG").attr("transform")),
         Mainx = Maint.translate[0]
     Mainy = Maint.translate[1]
     Mainz = Maint.scale[0]
-    //$("#container").width(); //not working for inactive tab
+        //$("#container").width(); //not working for inactive tab
     var svgW = $("#pipeTabDiv").width() - 32; //container div is 32px smaller than pipeTabDiv
     var svgH = $("#container").height();
     sName = document.getElementById("pipeline-title").value;
@@ -2260,6 +2274,7 @@ function save(type) {
     var script_pipe_footer = getScriptEditor('editorPipeFooter');
     var script_pipe_config = combineTextEditor('pipelineFiles')
     pipeline_group_id = $('#pipeGroupAll').val();
+    pubWebAppDirListDb = pubWebAppDirListDb.filter((x, i, a) => a.indexOf(x) == i)
     var pipeGroupWarn = false;
     if (!pipeline_group_id || pipeline_group_id == "") {
         pipeGroupWarn = true;
@@ -2315,9 +2330,13 @@ function save(type) {
         "pipeline_list": pipelineListDb.toString()
     }, {
         "publish_web_dir": pubWebDirListDb.toString()
-    },{
+    }, {
+        "app_list": pubWebAppDirListDb.toString()
+    }, {
         "publish_dmeta_dir": encodeURIComponent(JSON.stringify(pubDmetaDirListDb))
     }];
+
+
 
     //A. Add new pipeline
     if (sName && id === "" && !pipeGroupWarn) {
@@ -2333,10 +2352,10 @@ function save(type) {
         pipeline_id = ret.id;
         $("#pipeline-title").attr('pipelineid', pipeline_id);
         modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, "insert")
-        //keep record for last group_id
+            //keep record for last group_id
         $('#pipeGroupAll').attr("pipe_group_id", pipeline_group_id);
         if (dupliPipe === true) {
-            setTimeout(function () { window.location.replace("index.php?np=1&id=" + pipeline_id); }, 0);
+            setTimeout(function() { window.location.replace("index.php?np=1&id=" + pipeline_id); }, 0);
             dupliPipe = false;
         }
         changeAutoSaveText('All changes saved');
@@ -2371,9 +2390,9 @@ function save(type) {
         } else {
             // ConfirmYesNo pipeline modal 
             $('#confirmRevision').off();
-            $('#confirmRevision').on('show.bs.modal', function (event) {
+            $('#confirmRevision').on('show.bs.modal', function(event) {
                 $(this).find('form').trigger('reset');
-                if (type == "rev"){
+                if (type == "rev") {
                     $('#saveOnExist').css('display', 'none');
                     $('#confirmYesNoText').html("Please enter the revision comment to create new revision.</br>");
                 } else {
@@ -2383,19 +2402,19 @@ function save(type) {
                         if (usRole == "admin" && numOfProjectPublic > 0) {
                             $('#saveOnExist').attr('class', 'btn btn-danger');
                         }
-                    }  
+                    }
                 }
             });
-            $('#confirmRevision').on('hide.bs.modal', function (event) {
+            $('#confirmRevision').on('hide.bs.modal', function(event) {
                 $('#saveOnExist').css('display', 'none');
                 $('#saveOnExist').attr('class', 'btn btn-warning');
             });
 
-            $('#confirmRevision').on('click', '.cancelRev', function (event) {
+            $('#confirmRevision').on('click', '.cancelRev', function(event) {
                 changeAutoSaveText('Changes not saved!');
                 toogleAutosave = false;
             });
-            $('#confirmRevision').on('click', '#saveOnExist', function (event) {
+            $('#confirmRevision').on('click', '#saveOnExist', function(event) {
                 sl = JSON.stringify(savedList);
                 var ret = getValues({ p: "saveAllPipeline", dat: sl });
 
@@ -2420,7 +2439,7 @@ function save(type) {
             });
 
 
-            $('#confirmRevision').on('click', '#saveRev', function (event) {
+            $('#confirmRevision').on('click', '#saveRev', function(event) {
                 var confirmformValues = $('#confirmRevision').find('input');
                 var revCommentData = confirmformValues.serializeArray();
                 var revComment = revCommentData[0].value;
@@ -2429,7 +2448,7 @@ function save(type) {
                     var pipeline_gid = getValues({ p: "getPipeline_gid", "pipeline_id": id })[0].pipeline_gid;
                     var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid });
                     console.log(maxPipRev_id)
-                    if (maxPipRev_id[0]){
+                    if (maxPipRev_id[0]) {
                         var newPipRev_id = parseInt(maxPipRev_id[0].rev_id) + 1;
                         var pipeline_uuid = getValues({ p: "getPipeline_uuid", "pipeline_id": id })[0].pipeline_uuid;
                         savedList[1].id = ''
@@ -2443,7 +2462,7 @@ function save(type) {
                         $('#confirmRevision').modal('hide');
                         changeAutoSaveText('Changes saved on new revision');
 
-                        setTimeout(function () { window.location.replace("index.php?np=1&id=" + ret.id); }, 700);
+                        setTimeout(function() { window.location.replace("index.php?np=1&id=" + ret.id); }, 700);
                     }
 
                 }
@@ -2461,7 +2480,7 @@ function modifyPipelineSideBar(pipeline_group_id, pipeline_id, sName, type) {
     }
     var group_id = $('#groupSelPipe').val();
     var perms = $('#permsPipe').val();
-    $('#pipeGr-' + pipeline_group_id).append('<li  p="'+perms+'" g="'+group_id+'" pin="false" admin="0"><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" origin="'+sName+'" draggable="false" ondragstart="dragStart(event)" ondrag="dragging(event)" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
+    $('#pipeGr-' + pipeline_group_id).append('<li  p="' + perms + '" g="' + group_id + '" pin="false" admin="0"><a href="index.php?np=1&id=' + pipeline_id + '" class="pipelineItems" origin="' + sName + '" draggable="false" ondragstart="dragStart(event)" ondrag="dragging(event)" id="pipeline-' + pipeline_id + '"><i class="fa fa-angle-double-right"></i>' + truncateName(sName, 'sidebarMenu') + '</a></li>');
 }
 
 function modifyPipelineParentSideBar(name, groupID) {
@@ -2470,7 +2489,7 @@ function modifyPipelineParentSideBar(name, groupID) {
         //case insensitive search 
         return $(this).attr('origin').toLowerCase() == name.toLowerCase();
     });
-    checkSideBar.closest("li").css("display","block")
+    checkSideBar.closest("li").css("display", "block")
     if (checkSideBar.length === 0) {
         $('#processSideHeader').before('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-spinner"></i> <span class="pipelineParent" origin="' + name + '">' + truncateName(name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="pipeGr-' + groupID + '" class="treeview-menu"></ul></li>');
     } else {
@@ -2484,7 +2503,7 @@ function modifyProcessParentSideBar(name, groupID) {
         //case insensitive search 
         return $(this).attr('origin').toLowerCase() == name.toLowerCase();
     });
-    checkGroupExist.closest("li").css("display","block")
+    checkGroupExist.closest("li").css("display", "block")
     if (checkGroupExist.length === 0) {
         //insert
         $('#autocompletes1').append('<li class="treeview"><a href="" draggable="false"><i  class="fa fa-circle-o"></i> <span class="processParent" origin="' + name + '">' + truncateName(name, 'sidebarMenu') + '</span><i class="fa fa-angle-left pull-right"></i></a><ul id="side-' + groupID + '" class="treeview-menu"></ul></li>');
@@ -2517,6 +2536,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var inDescOpt = null;
     var pubDmeta = null;
     var pubWeb = null;
+    var pubWebApp = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
             defVal = processModules.defVal;
@@ -2532,6 +2552,9 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         }
         if (processModules.pubDmeta != undefined) {
             pubDmeta = processModules.pubDmeta;
+        }
+        if (processModules.pubWebApp != undefined) {
+            pubWebApp = processModules.pubWebApp;
         }
         if (processModules.pubWeb) {
             pubWeb = processModules.pubWeb;
@@ -2549,7 +2572,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         var pName = "inputparam"
         var init = "o"
         var pColor = "orange"
-        //(B)if edges are formed parameter_id data comes from biocorepipesave table "edges" column
+            //(B)if edges are formed parameter_id data comes from biocorepipesave table "edges" column
         pObj.edgeIn = pObj.sData[0].edges
         pObj.edgeInP = JSON.parse(pObj.edgeIn.replace(/'/gi, "\""))["edges"] //i-10-0-9-1_o-inPro-1-9-0
 
@@ -2562,13 +2585,13 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             if (pObj.edgeFirstGnum === String(pObj.gNum) && pObj.edgeFirstPId === "inPro") {
                 paramId = pObj.edgeSecondParID //if edge is found
                 classtoparam = findType(paramId) + " output"
-                pName = parametersData.filter(function (el) {
+                pName = parametersData.filter(function(el) {
                     return el.id == paramId
                 })[0].name
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.processListNoOutput[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
@@ -2577,13 +2600,13 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         ipR = 70 / 2
         ipIor = ipR / 3
         var kind = "output"
-        //(A)if edges are not formed parameter_id data comes from default: process_parameter table "name" column
+            //(A)if edges are not formed parameter_id data comes from default: process_parameter table "name" column
         var paramId = "outPara" //default
         var classtoparam = "connect_to_output input"
         var pName = "outputparam"
         var init = "i"
         var pColor = "green"
-        //(B)if edges are formed parameter_id data comes from biocorepipesave table "edges" column
+            //(B)if edges are formed parameter_id data comes from biocorepipesave table "edges" column
         pObj.edgeOut = pObj.sData[0].edges
         pObj.edgeOutP = JSON.parse(pObj.edgeOut.replace(/'/gi, "\""))["edges"] //i-10-0-9-1_o-inPro-1-9-0
 
@@ -2596,19 +2619,19 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             if (pObj.edgeFirstGnum === String(pObj.gNum) && pObj.edgeFirstPId === "outPro") {
                 paramId = pObj.edgeSecondParID //if edge is found
                 classtoparam = findType(paramId) + " input"
-                pName = parametersData.filter(function (el) {
+                pName = parametersData.filter(function(el) {
                     return el.id == paramId
                 })[0].name
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 
     } else {
         addProPipeTab(id)
-        //--Pipeline details table ends---
+            //--Pipeline details table ends---
         pObj.inputs = JSON.parse(window.pipeObj["pro_para_inputs_" + id]);
         pObj.outputs = JSON.parse(window.pipeObj["pro_para_outputs_" + id]);
         //gnum uniqe, id same id (Written in class) in same type process
@@ -2618,7 +2641,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             .attr("transform", "translate(" + (sDataX) + "," + (sDataY) + ")")
             .on("mouseover", mouseOverG)
             .on("mouseout", mouseOutG)
-        //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
+            //gnum(written in id): uniqe, id(Written in class): same id in same type process, bc(written in type): same at all bc
         pObj.g.append("circle").attr("id", "bc" + MainGNum + "-" + pObj.gNum)
             .attr("class", "bc" + MainGNum + "-" + id)
             .attr("type", "bc")
@@ -2631,7 +2654,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             .delay(500)
             .duration(3000)
             .attr("fill", "#E0E0E0")
-        //gnum(written in id): uniqe, id(Written in class): same id in same type process, sc(written in type): same at all bc
+            //gnum(written in id): uniqe, id(Written in class): same id in same type process, sc(written in type): same at all bc
         pObj.g.append("circle")
             .datum([{
                 cx: 0,
@@ -2646,7 +2669,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             .on("mouseover", scMouseOver)
             .on("mouseout", scMouseOut)
             .call(drag)
-        //gnum(written in id): uniqe,
+            //gnum(written in id): uniqe,
         pObj.g.append("text").attr("id", "text" + MainGNum + "-" + pObj.gNum)
             .datum([{
                 cx: 0,
@@ -2673,7 +2696,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 .attr("y", 15)
                 .text('\uf040')
                 .on("mousedown", rename)
-            //gnum(written in id): uniqe,
+                //gnum(written in id): uniqe,
             pObj.g.append("text")
                 .attr("id", "del" + MainGNum + "-" + pObj.gNum)
                 .attr('font-family', "FontAwesome, sans-serif")
@@ -2695,7 +2718,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
             .text('\uf013')
             .style("opacity", 0.2)
             .on("mousedown", getInfo)
-        // I/O id naming:[0]i = input,o = output -[1]process database ID -[2]The number of I/O of the selected process -[3]Parameter database ID- [4]uniqe number
+            // I/O id naming:[0]i = input,o = output -[1]process database ID -[2]The number of I/O of the selected process -[3]Parameter database ID- [4]uniqe number
         for (var k = 0; k < pObj.inputs.length; k++) {
             d3.select("#g" + MainGNum + "-" + pObj.gNum).append("circle")
                 .attr("id", prefix + "i-" + (id) + "-" + k + "-" + pObj.inputs[k].parameter_id + "-" + pObj.gNum)

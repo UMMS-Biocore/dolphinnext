@@ -1,3 +1,12 @@
+16.03.2021 Version 1.2.93
+Report page rendering improved for various file types.
+DEBrowser metadata support upgraded.
+Channel creation method upgraded for optional inputs.
+
+23.02.2021 Version 1.2.92
+Profile Variables removed from nf file and added to initial run config.
+Rmarkdown rendering bug fixed.
+
 23.02.2021 Version 1.2.91
 project_pipeline and run_log tables updated to store bigger data.
 

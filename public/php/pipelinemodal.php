@@ -2,7 +2,6 @@
     .nodisp {
         display: block
     }
-
 </style>
 
 <!-- selectPipelineModal -->
@@ -380,10 +379,10 @@
                                     <div id="testOptProDiv">
                                         <div id="testOptPro" class="row">
                                             <div class="form-horizontal" style="margin-top:15px;">
-                                                <div class="col-sm-9" >
+                                                <div class="col-sm-9">
                                                     <label>Log</label>
                                                 </div>
-                                                <div class="col-sm-3" id="pipeRunStatDiv" style="padding-bottom: 5px;">                                                    
+                                                <div class="col-sm-3" id="pipeRunStatDiv" style="padding-bottom: 5px;">
                                                     <div id="errorProPipe" style="display:none; float: right;" class="btn-group">
                                                         <button class="btn btn-danger" type="button" id="errorProPipeBut">Run Error</button>
                                                         <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
@@ -452,10 +451,10 @@
                                                         <button class="btn btn-success testscript" type="button" id="runProPipeBut"><i class="fa fa-play " style=""></i> Test</button>
                                                     </div>
                                                     <button class="btn btn-warning" type="submit" id="statusProPipe" style="display:none; float: right; vertical-align:middle;" data-original-title="Waiting for input parameters, output directory and selection of active environment" data-placement="bottom" data-toggle="tooltip">Waiting</button>
-                                                    <button style="float:right; margin-right: 5px;" id="saveProcessTest" class="btn btn-default saveprocess" type="button" id="saveProcessTest"><i class="fa fa-save " ></i></button>
-                                                    
+                                                    <button style="float:right; margin-right: 5px;" id="saveProcessTest" class="btn btn-default saveprocess" type="button" id="saveProcessTest"><i class="fa fa-save "></i></button>
+
                                                 </div>
-                                                <div class="col-sm-12" >
+                                                <div class="col-sm-12">
                                                     <textarea readonly id="testrunLogArea" rows="10" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea>
                                                 </div>
                                                 <div class="col-md-12">
@@ -524,8 +523,8 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            
-                                          
+
+
                                         </div>
                                     </div>
                                 </div>
@@ -970,6 +969,15 @@
                                 <option value="debrowser">DEBrowser</option>
                                 <option value="pdf">PDF Reader</option>
                                 <option value="rdata">RData</option>
+                                <option value="apps">Apps</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <div id="pubWebAppDiv" class="form-group">
+                        <div class="col-sm-5 control-label">App Name</div>
+                        <div class="col-sm-7">
+                            <select class="form-control" id="pubWebApp" name="pubWebApp">
                             </select>
                         </div>
                     </div>
@@ -993,7 +1001,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div  id="pubDmetaFeatureDiv"  class="form-group">
+                            <div id="pubDmetaFeatureDiv" class="form-group">
                                 <div class="col-sm-5 control-label">
                                     Location of the Features <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the location of features in the published file."><i class='glyphicon glyphicon-info-sign'></i></a></span>
                                 </div>
@@ -1005,7 +1013,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div  class="form-group">
+                            <div class="form-group">
                                 <div class="col-sm-5 control-label">
                                     Target Collection <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose the target collection in Dmeta server."><i class='glyphicon glyphicon-info-sign'></i></a></span>
                                 </div>
@@ -1127,22 +1135,22 @@
             <div class="modal-body">
                 <span id="confirmYesNoText">Text</span>
                 </br>
-            <form class="form-horizontal">
-                <div class="form-group">
-                    <label for="mRevComment" class="col-sm-2 control-label">Comment</label>
-                    <div class="col-sm-4">
-                        <input type="text" maxlength="20" class="form-control" id="mRevComment" name="rev_comment">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="mRevComment" class="col-sm-2 control-label">Comment</label>
+                        <div class="col-sm-4">
+                            <input type="text" maxlength="20" class="form-control" id="mRevComment" name="rev_comment">
+                        </div>
                     </div>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-default cancelRev" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-warning" style="display:none;" id="saveOnExist">Overwrite</button>
-            <button type="button" class="btn btn-primary" id="saveRev">Save As New Revision</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default cancelRev" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" style="display:none;" id="saveOnExist">Overwrite</button>
+                <button type="button" class="btn btn-primary" id="saveRev">Save As New Revision</button>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 
@@ -1156,12 +1164,12 @@
             <div class="modal-body">
                 <span id="warnDelText">Text</span>
                 </br>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 <div id="releaseModal" class="modal fade" tabindex="-1" role="dialog" data-keyboard="false">
@@ -1172,8 +1180,8 @@
                 <h4 class="modal-title">Release Date</h4>
             </div>
             <div class="modal-body">
-                <p id="releaseModalText" >Text</p>
-                <label class="col-md-3" style="padding-top:5px;" >Release Date:</label>
+                <p id="releaseModalText">Text</p>
+                <label class="col-md-3" style="padding-top:5px;">Release Date:</label>
                 <div id="relDateDiv" class="col-md-6 input-group date">
                     <input id="relDateInput" type="text" class="form-control">
                     <div class="input-group-addon">
@@ -1200,13 +1208,13 @@
             <div class="modal-body">
                 <p style="height:500px; overflow:scroll;" id="warnUserText">Text</p>
                 </br>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-danger" data-dismiss="modal" id="saveOnExistImport">Overwrite</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" id="saveOnExistImport">Overwrite</button>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 <!--Run Modal-->
