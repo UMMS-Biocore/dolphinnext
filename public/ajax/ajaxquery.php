@@ -170,7 +170,7 @@ if ($p == "saveRun") {
                                 $debrowser_metadata_indexes = array_keys(preg_grep("/^debrowser_metadata/i", $fileList));
                                 foreach ($debrowser_metadata_indexes as $debrowser_metadata_index) :
                                     $moveMeta = $out["fileList"][$debrowser_metadata_index];
-                                    unset($out["fileList"][$debrowser_metadata_index]);
+                                    array_splice($out["fileList"], $debrowser_metadata_index, 1);
                                     $out["fileList"][] =  $moveMeta;
                                 endforeach;
                             }

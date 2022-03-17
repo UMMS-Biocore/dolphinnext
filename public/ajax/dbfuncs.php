@@ -3546,17 +3546,14 @@ class dbfuncs
         $ret["status"] = $oldStatus;
         $dir = $appData[0]["dir"];
         $appLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.app/{$filename}.log{$app_uid}", $ownerID));
-        $jupyterServerLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/.{$app_uid}_jupyter_server.log", $ownerID));
-        $startupLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/.{$app_uid}_startup.log", $ownerID));
-        $startupScript = "pubweb/.{$app_uid}_startup.ipynb";
+        $jupyterServerLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/.app/{$app_uid}_jupyter_server.log", $ownerID));
+        $startupLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/.app/{$app_uid}_startup_stderr.txt", $ownerID));
+        $startupScript = "{$this->run_path}/{$run_log_uuid}/pubweb/.app/{$app_uid}_startup.ipynb";
         $startupScriptExists = false;
         // startupLog:
-        // jupyter nbconvert --to notebook --execute /home/jovyan/work/.${DNEXT_APP_ID}_startup.ipynb  >  /home/jovyan/work/.${DNEXT_APP_ID}_startup.log 2>&1
         if (file_exists($startupScript)) {
             $startupScriptExists = true;
         }
-
-        error_log($startupLog);
         $ret["log"] = $appLog . "\n" . $jupyterServerLog . "\n" . $startupLog;
 
         if (preg_match("/No such container/i", $appLog) || preg_match("/App successfully terminated/i", $appLog)) {
@@ -3568,14 +3565,14 @@ class dbfuncs
         } else if ($startupScriptExists && !empty($startupLog) && preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $startupLog) && !empty($appLog) && preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog)) {
             // first get the jupyter port
             preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog, $match);
-            $jupyterServer  = $match[1];
-            error_log($jupyterServer);
+            $jupyterServer  = trim($match[1]);
+            $ret["server_url"] = $jupyterServer;
+            $jupyterServerPort = parse_url($jupyterServer, PHP_URL_PORT);
             // then get startup app port
             preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $startupLog, $match_startup);
-            $startupServer  = $match_startup[1];
-            $startupServerPort = $startupServer;
-            error_log($startupServer);
-            $ret["server_url"] = "{$jupyterServer}/proxy/{$startupServerPort}/";
+            $startupServer  = trim($match_startup[1]);
+            $startupServerPort = parse_url($startupServer, PHP_URL_PORT);
+            $ret["startup_server_url"] = "http://127.0.0.1:{$jupyterServerPort}/proxy/{$startupServerPort}/";
             $newStatus = "running";
         } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $appLog) || preg_match("/command not found/i", $appLog) || preg_match("/Got permission denied while trying to connect/i", $appLog)) {
             $newStatus = "error";
@@ -8342,6 +8339,7 @@ class dbfuncs
     function callApp($app_id, $uuid, $text, $dir, $filename, $container_id, $pUUID, $time, $ownerID)
     {
         $ret = array();
+        $text = urldecode($text);
         $ret["app_id"] = $app_id;
         $appData = $this->getContainers($container_id, "", $ownerID);
         $appData = json_decode($appData, true);
@@ -8356,13 +8354,16 @@ class dbfuncs
         if (!file_exists($targetDir)) {
             mkdir($targetDir, 0777, true);
         }
+        if (!file_exists("$runDir/.app")) {
+            mkdir("$runDir/.app", 0777, true);
+        }
 
         // Startup command
-        // jupyter nbconvert --to notebook --execute /home/jovyan/work/.${DNEXT_APP_ID}_startup.ipynb  >  /home/jovyan/work/.${DNEXT_APP_ID}_startup.log 2>&1
         // if filename ends with ipynb then copy file to $runDir/.${pUUID}_startup.ipynb
         $extension = substr(strrchr($filename, '.'), 1);
         if ($extension == "ipynb" && $filename == "startup.ipynb") {
-            $startup_file = "{$runDir}/.${pUUID}_startup.ipynb";
+
+            $startup_file = "{$runDir}/.app/${pUUID}_startup.ipynb";
             $this->writeFile($startup_file, $text, "w");
         }
 
@@ -8374,8 +8375,7 @@ class dbfuncs
         if ($container_type == "docker" && !empty($image_name)) {
             $container_name = "{$pUUID}_{$ownerID}";
             //docker run -d --privileged --rm -p 8888:8888  -v /Users/onuryukselen/projects/biocore/DolphinNext/github/dolphinnext/public/tmp/pub/1N1WP05kAZdaNrEGNtRs6xAXnCoJg5/pubweb:/home/jovyan/work  -u root jupyter:1.0 
-            // $cmd = "docker stop -t {$time_in_sec} $(docker run --stop-signal 2 --name {$container_name} -d --privileged -e DNEXT_APP_ID='{$pUUID}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name})  >> {$log} 2>&1 & echo $! &";
-            $cmd = "docker run --name {$container_name} -d --privileged -e DNEXT_APP_ID='{$pUUID}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name}  >> {$log} 2>&1 & echo $! &";
+            $cmd = "docker run --name {$container_name} -d --privileged -e DNEXT_APP_ID='{$pUUID}' -e DNEXT_RUN_TIME='{$time_in_sec}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name}  >> {$log} 2>&1 & echo $! &";
         }
         $this->writeFile($log, $cmd, "w");
         $pid = shell_exec($cmd);

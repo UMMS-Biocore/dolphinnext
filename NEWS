@@ -1,3 +1,7 @@
+17.03.2021 Version 1.2.94
+Minor fix for debrowser report loading.
+App support improved for startup scripts. 
+
 16.03.2021 Version 1.2.93
 Report page rendering improved for various file types.
 DEBrowser metadata support upgraded.

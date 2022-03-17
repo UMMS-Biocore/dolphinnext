@@ -331,7 +331,7 @@
             return ret
         }
 
-        var callback = function(orgPath) {
+        var callback = function(orgPath, startup_server_url) {
             if (orgPath) {
                 updateLogText("App is Running..")
                 progress(100)
@@ -341,9 +341,16 @@
 
                 if (orgPath.includes("localhost") || orgPath.includes("127.0.0.1")) {
                     // iframe.attr("src", orgPath)
-                    window.open(orgPath, "myWindow", 'width=1000,height=800')
-                        // var w = window.open();
-                        // w.location = orgPath;
+                    // window.open(orgPath, "myWindow", 'width=1000,height=800')
+                    var w = window.open();
+                    w.location = orgPath;
+                    if (startup_server_url) {
+                        setTimeout(function() {
+                            var w = window.open();
+                            w.location = startup_server_url;
+                        }, 5000);
+
+                    }
                 } else {
                     if (iframe && iframe.attr("src")) {
                         iframe[0].contentWindow.location.reload(true)
@@ -635,7 +642,7 @@
                     progress(100);
                     showAppIcon("stop");
                     updateLogText("Running..");
-                    if (callback && typeof callback === 'function') return callback(statusData.server_url);
+                    if (callback && typeof callback === 'function') return callback(statusData.server_url, statusData.startup_server_url);
                     // app is not started yet
                 } else if (statusData.status == "initiated") {
                     showAppIcon("stop");
@@ -661,16 +668,6 @@
             }, 5000);
 
         }
-        var initialUrlCheck = function(settings, appType) {
-            var orgPath = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.app/" + settings.ajax.filename
-            var checkExistUrl = checkUrl(orgPath)
-            if (checkExistUrl) {
-                var tmpPath = ""
-                var pid = ""
-                callback(settings, tmpPath, orgPath, pid, appType)
-            }
-            return checkExistUrl
-        }
 
         var callData = function(editText, settings, appType, callback) {
             if (window[elemsID + appType]) {
@@ -679,7 +676,7 @@
             showAppIcon("stop");
             progress()
             updateLogText("Preparing..")
-            var editTextSend = encodeURIComponent(JSON.stringify(editText));
+            var editTextSend = encodeURIComponent(editText);
             var container_id = $(`#pubWebApp-${elemsID}`).val()
 
             var formObj = {};
