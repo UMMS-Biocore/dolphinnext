@@ -3566,11 +3566,17 @@ class dbfuncs
             // first get the jupyter port
             preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog, $match);
             $jupyterServer  = trim($match[1]);
-            $ret["server_url"] = $jupyterServer;
+            $ret["server_url"] = $match[1];
+            error_log($jupyterServer);
+            // $ret["server_url"] = $jupyterServer;
             $jupyterServerPort = parse_url($jupyterServer, PHP_URL_PORT);
+            error_log($jupyterServerPort);
+
             // then get startup app port
             preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $startupLog, $match_startup);
             $startupServer  = trim($match_startup[1]);
+            error_log($startupServer);
+
             $startupServerPort = parse_url($startupServer, PHP_URL_PORT);
             $ret["startup_server_url"] = "http://127.0.0.1:{$jupyterServerPort}/proxy/{$startupServerPort}/";
             $newStatus = "running";

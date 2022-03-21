@@ -3123,10 +3123,13 @@ function clickUseDefault(rowID) {
 //      style:[{ multicol:[[var1, var2, var3], [var5, var6],
 //              array:[[var1, var2], [var4]]
 //              condi:[{var1:"yes", var2}, {var1:"no", var3, var4}]
-//              }]
+//              },
+//      pipeline_default:[{ varName:"palindrome_clip_threshold",
+//              defaultVal:"defaultVal",
+//              process:"Adapter_Trimmer_Quality_Module.Adapter_Removal"}
 //     }
 function parseProPipePanelScript(script) {
-    var panelObj = { schema: [], style: [] };
+    var panelObj = { schema: [], style: [], pipeline_default: [] };
     var lines = script.split("\n");
     for (var i = 0; i < lines.length; i++) {
         var varName = null;
@@ -3141,15 +3144,30 @@ function parseProPipePanelScript(script) {
         var optional = null;
         var file = null;
         var singleFile = null;
+        var defparams = null;
         var arr = null;
         var cond = null;
         var title = null;
-        if (lines[i].split("//*").length > 1) {
-            var varPart = lines[i].split("//*")[0];
-            var regPart = lines[i].split("//*")[1];
-        } else {
-            var regPart = lines[i].split("//*")[0];
+        var varPart = null;
+        var regPart = null;
+        if (lines[i].includes("//*")) {
+            if (lines[i].split("//*").length > 1) {
+                varPart = lines[i].split("//*")[0];
+                regPart = lines[i].split("//*")[1];
+                var trimmedVarPart = $.trim(varPart);
+                // line is commented out
+                if (trimmedVarPart && trimmedVarPart.indexOf("//") === 0) {
+                    varPart = null;
+                    regPart = null;
+                }
+            } else {
+                regPart = lines[i].split("//*")[0];
+            }
+        } else if (lines[i].includes("defparams.")) {
+            varPart = lines[i];
+            defparams = true;
         }
+
         if (varPart) {
             [varName, defaultVal] = parseVarPart(varPart);
         }
@@ -3180,6 +3198,19 @@ function parseProPipePanelScript(script) {
                 condi: cond,
             });
         }
+        if (defparams) {
+            // varName: defparams.Adapter_Trimmer_Quality_Module.Adapter_Removal.palindrome_clip_threshold
+            // allParam: Adapter_Trimmer_Quality_Module.Adapter_Removal.palindrome_clip_threshold or palindrome_clip_threshold
+            var allParam = varName.split("defparams.")[1];
+            var splitedParams = allParam.split(".")
+            let lastVarName = splitedParams.pop();
+            var processName = splitedParams.join("_")
+            panelObj.pipeline_default.push({
+                varName: lastVarName,
+                defaultVal: defaultVal,
+                processName: processName
+            });
+        }
     }
     return panelObj;
 }
@@ -3192,6 +3223,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
     var onlyProcessName = name;
     var processOrgName = "";
     var separator = "";
+    var panelObj = {}
     if (pObj != window) {
         MainGNum = pObj.MainGNum;
         onlyModuleName = pObj.lastPipeName;
@@ -3209,7 +3241,21 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
     if (script) {
         //check if parameter comment is exist: //*
         if (script.match(/\/\/\*/)) {
-            var panelObj = parseProPipePanelScript(script);
+            panelObj = parseProPipePanelScript(script);
+            // if window.pipeline_panelObj is set then check pipeline defaults to replace process defaults
+            if (window.pipeline_panelObj && window.pipeline_panelObj.pipeline_default) {
+                var pipeline_default = window.pipeline_panelObj.pipeline_default
+                for (var i = 0; i < panelObj.schema.length; i++) {
+                    var varName = panelObj.schema[i].varName;
+                    for (var p = 0; p < pipeline_default.length; p++) {
+                        var processNameForPipelineDefault = onlyProcessName
+                        if (onlyModuleName) processNameForPipelineDefault = `${onlyModuleName}_${onlyProcessName}`;
+                        if (pipeline_default[p].varName == varName && processNameForPipelineDefault == pipeline_default[p].processName) {
+                            panelObj.schema[i].defaultVal = pipeline_default[p].defaultVal
+                        }
+                    }
+                }
+            }
             //create processHeader
             var headerLabel =
                 createLabel(onlyModuleName) + separator + createLabel(onlyProcessName);
@@ -3320,6 +3366,43 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                     }
                 }
             }
+            if (condi) {
+                for (var a = 0; a < condi.length; a++) {
+                    //if contains multiple options: (rRNA|ercc|miRNA|tRNA|piRNA|snRNA|rmsk)
+                    $.each(condi[a], function(el) {
+                        for (var k = 0; k < condi[a][el].length; k++) {
+                            var selCond = condi[a][el][k];
+                            var varN = "";
+                            var restN = "";
+                            if (selCond.match(/\|/) && selCond.match(/\=/)) {
+                                [varN, restN] = parseVarPart(selCond);
+                                restN = restN.replace("(", "");
+                                restN = restN.replace(")", "");
+                                var allOpt = restN.split("|");
+                                for (var n = 0; n < allOpt.length; n++) {
+                                    var newData = condi[a][el].slice();
+                                    newData[k] = varN + "=" + allOpt[n];
+                                    condi[a].push(newData);
+                                }
+                            }
+                        }
+                    });
+                }
+                for (var k = 0; k < condi.length; k++) {
+                    for (var i = 0; i < panelObj.schema.length; i++) {
+                        varName = panelObj.schema[i].varName;
+                        type = panelObj.schema[i].type;
+                        var each_condi = condi[k];
+                        addProcessPanelCondi(
+                            prefix + gNum,
+                            name,
+                            varName,
+                            type,
+                            each_condi
+                        );
+                    }
+                }
+            }
             if (array) {
                 //if defVal is array than insert array rows and fill them
                 for (var a = 0; a < array.length; a++) {
@@ -3394,43 +3477,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                     }
                 }
             }
-            if (condi) {
-                for (var a = 0; a < condi.length; a++) {
-                    //if contains multiple options: (rRNA|ercc|miRNA|tRNA|piRNA|snRNA|rmsk)
-                    $.each(condi[a], function(el) {
-                        for (var k = 0; k < condi[a][el].length; k++) {
-                            var selCond = condi[a][el][k];
-                            var varN = "";
-                            var restN = "";
-                            if (selCond.match(/\|/) && selCond.match(/\=/)) {
-                                [varN, restN] = parseVarPart(selCond);
-                                restN = restN.replace("(", "");
-                                restN = restN.replace(")", "");
-                                var allOpt = restN.split("|");
-                                for (var n = 0; n < allOpt.length; n++) {
-                                    var newData = condi[a][el].slice();
-                                    newData[k] = varN + "=" + allOpt[n];
-                                    condi[a].push(newData);
-                                }
-                            }
-                        }
-                    });
-                }
-                for (var k = 0; k < condi.length; k++) {
-                    for (var i = 0; i < panelObj.schema.length; i++) {
-                        varName = panelObj.schema[i].varName;
-                        type = panelObj.schema[i].type;
-                        var each_condi = condi[k];
-                        addProcessPanelCondi(
-                            prefix + gNum,
-                            name,
-                            varName,
-                            type,
-                            each_condi
-                        );
-                    }
-                }
-            }
+
             if (displayProDiv === true) {
                 $('[data-toggle="tooltip"]').tooltip();
                 $("#proPanelDiv-" + prefix + gNum).css("display", "inline");
@@ -3438,6 +3485,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
             }
         }
     }
+    return panelObj
 }
 
 function getRowTable(
@@ -4570,8 +4618,7 @@ function showhideOnEnv(profileData) {
             showHideColumnRunSett([1, 4, 5], "show");
             showHideColumnRunSett([1, 4], "hide");
         } else if (executor_job === "awsbatch") {
-            showHideColumnRunSett([1, 5], "show");
-            showHideColumnRunSett([4], "hide");
+            showHideColumnRunSett([1, 4, 5], "show");
         } else if (executor_job === "local") {
             showHideColumnRunSett([1, 4, 5], "hide");
         } else {
@@ -5331,7 +5378,7 @@ function loadPipelineDetails(pipeline_id, pipeData) {
                 //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
                 //##insertInputRowParams will add inputs rows and fill according to propipeinputs within insertProPipePanel
                 var processData = "";
-                insertProPipePanel(
+                window.pipeline_panelObj = insertProPipePanel(
                     script_pipe_header_config,
                     "pipe",
                     "Pipeline",
@@ -15575,4 +15622,4 @@ $(document).ready(async function() {
         if ($runscope.beforeunload) return true;
         else e = null;
     });
-});
+})
