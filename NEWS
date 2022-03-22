@@ -1,3 +1,6 @@
+21.03.2021 Version 1.2.95
+Pipeline defaults feature added (defparams) to overwrite default values of the processes.
+
 17.03.2021 Version 1.2.94
 Minor fix for debrowser report loading.
 App support improved for startup scripts. 

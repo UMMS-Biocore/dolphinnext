@@ -4,11 +4,11 @@ window.googObj.filename = "";
 Dropzone.options.mgoogkeyform = {
     paramName: "goog", // The name that will be used to transfer the file
     maxFilesize: 1, // MB
-    maxFiles:1,
+    maxFiles: 1,
     createImageThumbnails: false,
     dictDefaultMessage: 'Drop JSON file here or <button type="button" class="btn btn-default" >Select File </button>',
-    accept: function (file, done) {
-        window.googObj.filename= file.name
+    accept: function(file, done) {
+        window.googObj.filename = file.name
         done();
         $('#key_name_span').text(file.name)
     },
@@ -18,7 +18,7 @@ Dropzone.options.mgoogkeyform = {
             this.addFile(file);
         });
     }
-};  
+};
 
 function generateKeys() {
     var genKeys = getValues({ p: "generateKeys" });
@@ -43,45 +43,45 @@ function getProfTableOptions(type) {
     var editHref = "";
     var delClass = "";
     var delHref = "";
-    if (type == "amazon"){
+    if (type == "amazon") {
         editClass = "editAmzKeys";
         editHref = "#amzKeyModal";
         delClass = "deleteAmzKeys";
         delHref = "#confirmDelAmzModal";
-    } else if (type == "github"){
+    } else if (type == "github") {
         editClass = "editGithub";
         editHref = "#githubModal";
         delClass = "deleteGithub";
         delHref = "#confirmDelModal";
-    } else if (type == "ssh"){
+    } else if (type == "ssh") {
         editClass = "editSSHKeys";
         editHref = "#sshKeyModal";
         delClass = "deleteSSHKeys";
         delHref = "#confirmDelModal";
-    } else if (type == "google"){
+    } else if (type == "google") {
         editClass = "editGoogleKeys";
         editHref = "#googleKeysModal";
         delClass = "deleteGoogleKeys";
         delHref = "#confirmDelModal";
     }
-    var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href='+editHref+' data-toggle="modal" class="'+editClass+'">Edit</a></li><li><a href="'+delHref+'" data-toggle="modal" class="'+delClass+'">Delete</a></li></ul></div>';
+    var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href=' + editHref + ' data-toggle="modal" class="' + editClass + '">Edit</a></li><li><a href="' + delHref + '" data-toggle="modal" class="' + delClass + '">Delete</a></li></ul></div>';
     return button;
 }
 
-function prepareGoogModal(data){
+function prepareGoogModal(data) {
     console.log(data)
-    if (data.key_name){
-        $('#key_name_div').css("display","block");
-        $('#key_import_div').css("display","none");
+    if (data.key_name) {
+        $('#key_name_div').css("display", "block");
+        $('#key_import_div').css("display", "none");
         $('#key_name_span').text(data.key_name)
     } else {
-        $('#key_name_div').css("display","none");
-        $('#key_import_div').css("display","block");
+        $('#key_name_div').css("display", "none");
+        $('#key_import_div').css("display", "block");
         $('#key_name_span').text("")
     }
 }
 
-$(document).ready(function () {
+$(document).ready(function() {
     var profileTable = $('#profilesTable').DataTable({
         sScrollX: "100%",
         "ajax": {
@@ -93,20 +93,20 @@ $(document).ready(function () {
             "data": "name"
         }, {
             "data": null,
-            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+            "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
                 if (oData.hostname != undefined) {
                     $(nTd).html("Host");
-                } else if (oData.shared_storage_mnt != undefined){
+                } else if (oData.shared_storage_mnt != undefined) {
                     $(nTd).html("Amazon");
-                } else if (oData.google_cre_id != undefined){
+                } else if (oData.google_cre_id != undefined) {
                     $(nTd).html("Google");
                 }
             }
         }, {
             "data": null,
-            "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+            "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
                 var next_path = "";
-                if (oData.next_path){
+                if (oData.next_path) {
                     next_path = "Nextflow Path:" + oData.next_path + "<br/>";
                 }
                 if (oData.hostname != undefined) {
@@ -118,17 +118,19 @@ $(document).ready(function () {
         }, {
             data: null,
             className: "center",
-            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+            fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                 if (oData.hostname != undefined) {
                     $(nTd).html(getProfileButton('cluster'));
-                } else if (oData.shared_storage_mnt != undefined){
+                } else if (oData.shared_storage_mnt != undefined) {
                     $(nTd).html(getProfileButton('amazon'));
-                } else if (oData.google_cre_id != undefined){
+                } else if (oData.google_cre_id != undefined) {
                     $(nTd).html(getProfileButton('google'));
                 }
             }
         }],
-        'order': [[2, 'desc']]
+        'order': [
+            [2, 'desc']
+        ]
     });
 
 
@@ -143,12 +145,12 @@ $(document).ready(function () {
             "data": "username"
         }, {
             "data": "email"
-        },{
+        }, {
             "data": "date_modified"
         }, {
             data: null,
             className: "center",
-            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+            fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getProfTableOptions("github"));
             }
         }]
@@ -162,7 +164,7 @@ $(document).ready(function () {
             button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="profileedit" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="profileremove" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>&nbsp;<button type="button" class="btn btn-primary btn-sm" title="start/stop" id="amzStartStop" data-toggle="modal" data-target="#amazonModal">Start/Stop</button> &nbsp;</div>';
         } else if (type === "cluster" || type === "local") {
             button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="profileedit" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="profileremove" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>';
-        } else if (type === "google" ) {
+        } else if (type === "google") {
             button = '<div style="display: inline-flex"><button type="button" class="btn btn-primary btn-sm" title="Edit" id="profileedit" data-toggle="modal" data-target="#profilemodal">Edit</button> &nbsp; <button type="button" class="btn btn-primary btn-sm" title="Remove" id="profileremove" data-toggle="modal" data-target="#confirmDelProModal">Remove</button>&nbsp;<button type="button" class="btn btn-primary btn-sm" title="start/stop" id="googStartStop" data-toggle="modal" data-target="#googleModal">Start/Stop</button> &nbsp;</div>';
         }
         return button;
@@ -175,7 +177,7 @@ $(document).ready(function () {
 
     function loadOptions(type) {
         if (type === "ssh") {
-            var data = getValues({ p: "getSSH", type:"hidden" });
+            var data = getValues({ p: "getSSH", type: "hidden" });
             for (var i = 0; i < data.length; i++) {
                 var param = data[i];
                 var optionGroup = new Option(param.name, param.id);
@@ -212,19 +214,19 @@ $(document).ready(function () {
                 "data": "name"
             }, {
                 "data": null,
-                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
                     if (oData.hostname != undefined) {
                         $(nTd).html("Host");
-                    } else if (oData.shared_storage_mnt != undefined){
+                    } else if (oData.shared_storage_mnt != undefined) {
                         $(nTd).html("Amazon");
-                    } else if (oData.google_cre_id != undefined){
+                    } else if (oData.google_cre_id != undefined) {
                         $(nTd).html("Google");
                     }
 
                 }
             }, {
                 "data": null,
-                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
                     if (oData.hostname != undefined) {
                         $(nTd).html("Nextflow Path:" + oData.next_path + "<br/>Executor:" + oData.executor + "<br/>Connection:" + oData.username + "@" + oData.hostname);
                     } else {
@@ -234,7 +236,7 @@ $(document).ready(function () {
             }, {
                 data: null,
                 className: "center",
-                fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                     $(nTd).html(getPublicProfileButton());
                 }
             }]
@@ -243,7 +245,7 @@ $(document).ready(function () {
 
     function selectizeProfileName() {
         var renderMenuGroup = {
-            option: function (data, escape) {
+            option: function(data, escape) {
                 if (data.hostname !== undefined) {
                     return '<div class="option">' +
                         '<span class="title"><i>' + escape(data.name) + ' (Public Profile) </i></span>' +
@@ -260,7 +262,7 @@ $(document).ready(function () {
                         '</div>';
                 }
             },
-            item: function (data, escape) {
+            item: function(data, escape) {
                 return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.name) + '</div>';
             }
         };
@@ -274,12 +276,12 @@ $(document).ready(function () {
             if (allMenuGroup[i].hostname != undefined) {
                 proType = "cluster";
             }
-            if (proType === "cluster"){
+            if (proType === "cluster") {
                 allMenuGroup[i].amazon_cre_id2 = allMenuGroup[i].amazon_cre_id
                 allMenuGroup[i].def_workdir2 = allMenuGroup[i].def_workdir
                 allMenuGroup[i].def_publishdir2 = allMenuGroup[i].def_publishdir
             }
-            
+
         }
         $('#mEnvName').selectize({
             valueField: 'id',
@@ -287,14 +289,14 @@ $(document).ready(function () {
             createOnBlur: true,
             options: allMenuGroup,
             render: renderMenuGroup,
-            create: function (input, callback) {
+            create: function(input, callback) {
                 callback({ id: input, name: input });
             }
         });
     }
 
-    $(function () {
-        $(document).on('change', '#mEnvName', function () {
+    $(function() {
+        $(document).on('change', '#mEnvName', function() {
             var valueID = $('#mEnvName')[0].selectize.getValue();
             var options = $('#mEnvName')[0].selectize.options
             var cpOptions = $.extend(true, {}, options);
@@ -303,9 +305,9 @@ $(document).ready(function () {
                     delete cpOptions[valueID]["id"]; //to prevent profile update
                     if (cpOptions[valueID].hostname != undefined) {
                         $('#chooseEnv').val('cluster').trigger('change');
-                    } else if (cpOptions[valueID].shared_storage_mnt != undefined){
+                    } else if (cpOptions[valueID].shared_storage_mnt != undefined) {
                         $('#chooseEnv').val('amazon').trigger('change');
-                    } else if (cpOptions[valueID].google_cre_id != undefined){
+                    } else if (cpOptions[valueID].google_cre_id != undefined) {
                         $('#chooseEnv').val('google').trigger('change');
                     }
                     console.log(cpOptions[valueID])
@@ -317,7 +319,7 @@ $(document).ready(function () {
         })
     });
 
-    $('#profilemodal').on('show.bs.modal', function (event) {
+    $('#profilemodal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
         selectizeProfileName();
@@ -351,17 +353,17 @@ $(document).ready(function () {
             var proType = "";
             if (rowData.hostname != undefined) {
                 proType = "cluster";
-            } else if (rowData.shared_storage_mnt != undefined){
+            } else if (rowData.shared_storage_mnt != undefined) {
                 proType = "amazon";
-            } else if (rowData.google_cre_id != undefined){
+            } else if (rowData.google_cre_id != undefined) {
                 proType = "google";
             }
 
             var proId = rowData.id;
             if (proType === "cluster") {
                 var data = getValues({ p: "getProfileCluster", id: proId });
-                data[0].variable=decodeHtml(data[0].variable)
-                data[0].bash_variable=decodeHtml(data[0].bash_variable)
+                data[0].variable = decodeHtml(data[0].variable)
+                data[0].bash_variable = decodeHtml(data[0].bash_variable)
                 $('#chooseEnv').val('cluster').trigger('change');
                 data[0].amazon_cre_id2 = data[0].amazon_cre_id
                 data[0].def_workdir2 = data[0].def_workdir
@@ -370,27 +372,27 @@ $(document).ready(function () {
                 $('#mExec').trigger('change');
             } else if (proType === "amazon") {
                 var data = getValues({ p: "getProfileCloud", cloud: "amazon", id: proId });
-                data[0].variable =decodeHtml(data[0].variable)
-                data[0].bash_variable =decodeHtml(data[0].bash_variable)
+                data[0].variable = decodeHtml(data[0].variable)
+                data[0].bash_variable = decodeHtml(data[0].bash_variable)
                 $('#chooseEnv').val('amazon').trigger('change');
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             } else if (proType === "google") {
                 var data = getValues({ p: "getProfileCloud", cloud: "google", id: proId });
-                data[0].variable =decodeHtml(data[0].variable)
-                data[0].bash_variable =decodeHtml(data[0].bash_variable)
+                data[0].variable = decodeHtml(data[0].variable)
+                data[0].bash_variable = decodeHtml(data[0].bash_variable)
                 $('#chooseEnv').val('google').trigger('change');
                 fillFormByName('#profilemodal', 'input, select, textarea', data[0]);
                 $('#mExec').trigger('change');
             }
             console.log(data)
-            if (data[0].perms){
-                if (data[0].perms == "3"){
+            if (data[0].perms) {
+                if (data[0].perms == "3") {
                     $('#shareRunEnv').prop('checked', false);
-                } else if (data[0].perms == "15"){
+                } else if (data[0].perms == "15") {
                     $('#shareRunEnv').prop('checked', true);
                 }
-            } 
+            }
             if (!$('#mAddEnvTitle').html().match(/Public/)) {
                 $("#mEnvName")[0].selectize.addOption({
                     id: rowData.name,
@@ -417,45 +419,45 @@ $(document).ready(function () {
         }
     }
 
-    $(function () {
-        $(document).on('change', '#chooseEnv', function () {
+    $(function() {
+        $(document).on('change', '#chooseEnv', function() {
             var selEnvType = $('#chooseEnv option:selected').val();
             var title = $('#mAddEnvTitle').html();
             var noneList = [];
             var blockList = [];
 
             if (selEnvType === "cluster" && !title.match(/Public/)) {
-                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2","mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv", "mDefPublishDirDiv2"];
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvSSHKeyDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv", "mBashVarDiv", "shareRunEnvDiv"];
             } else if (selEnvType === "amazon" && !title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mEnvAmzKeyDiv2", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvAmzKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "mBashVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "shareRunEnvDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "cluster" && title.match(/Public/)) {
-                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvUsernameDiv", "mEnvSSHKeyDiv","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
-                var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv","mBashVarDiv"];
+                var noneList = ["mEnvAmzDefRegDiv", "mEnvAmzAccKeyDiv", "mEnvAmzSucKeyDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mPriKeyAmzDiv", "mPubKeyDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvUsernameDiv", "mEnvSSHKeyDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
+                var blockList = ["mExecDiv", , "mEnvHostnameDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "mEnvVarDiv", "mBashVarDiv"];
             } else if (selEnvType === "amazon" && title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2","shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv2","mDefPublishDirDiv2"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "google" && !title.match(/Public/)) {
                 var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
-                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv",  "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "mBashVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
+                var blockList = ["mExecDiv", "mEnvSSHKeyDiv", "mEnvPortDiv", "mEnvSinguCacheDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "mEnvVarDiv", "mBashVarDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             } else if (selEnvType === "google" && title.match(/Public/)) {
-                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv","mEnvAmzKeyDiv2", "shareRunEnvDiv", "mSharedStorageMountDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSubnetIdDiv","mEnvGoogKeyDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
+                var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mPriKeyCluDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "shareRunEnvDiv", "mSharedStorageMountDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSubnetIdDiv", "mEnvGoogKeyDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv2"];
                 var blockList = ["mExecDiv", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefPublishDirDiv"];
             }
 
-            $.each(noneList, function (element) {
+            $.each(noneList, function(element) {
                 $('#' + noneList[element]).css('display', 'none');
             });
-            $.each(blockList, function (element) {
+            $.each(blockList, function(element) {
                 $('#' + blockList[element]).css('display', 'block');
             });
             $('#mExec').trigger('change');
 
         })
     });
-    $(function () {
-        $(document).on('change', '#mExec', function () {
+    $(function() {
+        $(document).on('change', '#mExec', function() {
             var mExecType = $('#mExec option:selected').val();
             $('#mExecJob').removeAttr('disabled');
             if (mExecType === "local") {
@@ -470,18 +472,18 @@ $(document).ready(function () {
                 $('#execNextDiv').css('display', 'block');
                 $('#mExecJobDiv').css('display', 'block');
             }
-            if (mExecType === "slurm"){
+            if (mExecType === "slurm") {
                 $('#execJobQueue').text('Partition');
                 $('#execNextQueue').text('Partition');
-            }else {
+            } else {
                 $('#execJobQueue').text('Queue');
                 $('#execNextQueue').text('Queue');
             }
         })
     });
 
-    $(function () {
-        $(document).on('change', '#mExecJob', function () {
+    $(function() {
+        $(document).on('change', '#mExecJob', function() {
             var mExecJobType = $('#mExecJob option:selected').val();
             $('#mEnvAmzKeyDiv2').css('display', 'none');
             $('#mDefWorkDirDiv2').css('display', 'none');
@@ -490,10 +492,9 @@ $(document).ready(function () {
                 showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
                 showHideColumnProfile('#execJobSetTable', [1, 4], 'hide');
             } else if (mExecJobType === "awsbatch") {
-                showHideColumnProfile('#execJobSetTable', [1, 5], 'show');
-                showHideColumnProfile('#execJobSetTable', [4], 'hide');
+                showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
                 var selEnvType = $('#chooseEnv option:selected').val();
-                if (selEnvType == "cluster"){
+                if (selEnvType == "cluster") {
                     $('#mEnvAmzKeyDiv2').css('display', 'block');
                     $('#mDefWorkDirDiv2').css('display', 'block');
                     $('#mDefPublishDirDiv2').css('display', 'block');
@@ -503,18 +504,18 @@ $(document).ready(function () {
             } else {
                 showHideColumnProfile('#execJobSetTable', [1, 4, 5], 'show');
             }
-            if (mExecJobType === "slurm"){
+            if (mExecJobType === "slurm") {
                 $('#execJobQueue').text('Partition');
-            }else {
+            } else {
                 $('#execJobQueue').text('Queue');
             }
             $('#execJobSetDiv').css('display', 'block');
         })
     });
 
-    $('#profilemodal').on('hide.bs.modal', function (event) {
-        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv","mDefWorkDirDiv2", "mDefPublishDirDiv","mDefPublishDirDiv2"];
-        $.each(noneList, function (element) {
+    $('#profilemodal').on('hide.bs.modal', function(event) {
+        var noneList = ["mEnvUsernameDiv", "mEnvHostnameDiv", "mEnvSSHKeyDiv", "mEnvAmzKeyDiv", "mEnvAmzKeyDiv2", "mEnvInsTypeDiv", "mEnvImageIdDiv", "mExecDiv", "mEnvNextPathDiv", "mEnvCmdDiv", "execNextDiv", "mExecJobDiv", "execJobSetDiv", "mSubnetIdDiv", "mSecurityGroupDiv", "mSharedStorageIdDiv", "mSharedStorageMountDiv", "mEnvSinguCacheDiv", "mEnvPortDiv", "mEnvVarDiv", "mBashVarDiv", "shareRunEnvDiv", "mEnvGoogKeyDiv", "mEnvZoneDiv", "mDefWorkDirDiv", "mDefWorkDirDiv2", "mDefPublishDirDiv", "mDefPublishDirDiv2"];
+        $.each(noneList, function(element) {
             $('#' + noneList[element]).css('display', 'none');
         });
         $('#chooseEnv').removeAttr('disabled');
@@ -527,7 +528,7 @@ $(document).ready(function () {
         cleanHasErrorClass("#profilemodal")
     });
 
-    $('#profilemodal').on('click', '#saveEnv', function (event) {
+    $('#profilemodal').on('click', '#saveEnv', function(event) {
         event.preventDefault();
         $('#chooseEnv').removeAttr('disabled');
         $('#mExecJob').removeAttr('disabled');
@@ -538,7 +539,7 @@ $(document).ready(function () {
         var title = $('#mAddEnvTitle').html();
         var clickedRow = $('#saveEnv').data('clickedrow');
         var selEnvType = $('#chooseEnv option:selected').val();
-        if (selEnvType == "google"){
+        if (selEnvType == "google") {
             [formObj, stop] = createFormObj(formValues, ["name", "def_workdir", "def_publishdir", "mEnvZone", "mEnvImageId", "mEnvInsType"]);
         } else {
             [formObj, stop] = createFormObj(formValues, ["name"]);
@@ -549,7 +550,7 @@ $(document).ready(function () {
                 formObj.name = $("#mEnvName")[0].selectize.options[nameID].name;
             }
         }
-        if ($('#shareRunEnv').is(":checked")){
+        if ($('#shareRunEnv').is(":checked")) {
             formObj.perms = "15";
         } else {
             formObj.perms = "3";
@@ -565,9 +566,6 @@ $(document).ready(function () {
             formObj.job_queue = "";
             formObj.job_time = "";
         }
-        if (formObj.executor_job == "awsbatch") {
-            formObj.job_time = "";
-        }
         if (formObj.executor_job == "local") {
             formObj.job_queue = "";
             formObj.job_time = "";
@@ -578,7 +576,7 @@ $(document).ready(function () {
             formObj.next_time = "";
             formObj.next_clu_opt = "";
         }
-        if (formObj.executor_job == "awsbatch" && selEnvType == "cluster"){
+        if (formObj.executor_job == "awsbatch" && selEnvType == "cluster") {
             formObj.amazon_cre_id = formObj.amazon_cre_id2;
             formObj.def_workdir = formObj.def_workdir2;
             formObj.def_publishdir = formObj.def_publishdir2;
@@ -601,12 +599,12 @@ $(document).ready(function () {
                 url: "ajax/ajaxquery.php",
                 data: formObj,
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     if (savetype.length) { //edit
                         var proId = savetype
-                        } else {
-                            var proId = s.id;
-                        }
+                    } else {
+                        var proId = s.id;
+                    }
                     if (selEnvType === "cluster") {
                         var newProfileData = getValues({ p: "getProfileCluster", id: proId });
                     } else if (selEnvType === "amazon") {
@@ -623,13 +621,13 @@ $(document).ready(function () {
                                 if (selEnvType === "amazon" || selEnvType === "google") {
                                     checkCloudProfiles("notimer", selEnvType);
                                     checkCloudTimer(s.id, 40000, selEnvType);
-                                } 
+                                }
                             }
                         }
                     }
                     $('#profilemodal').modal('hide');
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
@@ -638,7 +636,7 @@ $(document).ready(function () {
 
 
     // confirm Delete ssh modal 
-    $('#confirmDelProModal').on('show.bs.modal', function (event) {
+    $('#confirmDelProModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         var clickedRow = button.closest('tr');
         if (button.attr('id') === 'profileremove') {
@@ -653,7 +651,7 @@ $(document).ready(function () {
 
     });
 
-    $('#confirmDelProModal').on('click', '.deleteProfile', function (event) {
+    $('#confirmDelProModal').on('click', '.deleteProfile', function(event) {
         var clickedRow = $('#mDelProBtn').data('clickedRow');
         var title = $('#confirmDelProModalText').html();
         if (title.match(/public/)) {
@@ -664,9 +662,9 @@ $(document).ready(function () {
         var proType = "";
         if (rowData.hostname != undefined) {
             proType = "cluster";
-        } else if (rowData.shared_storage_mnt != undefined){
+        } else if (rowData.shared_storage_mnt != undefined) {
             proType = "amazon";
-        } else if (rowData.google_cre_id != undefined){
+        } else if (rowData.google_cre_id != undefined) {
             proType = "google";
         }
         var proId = rowData.id;
@@ -690,29 +688,29 @@ $(document).ready(function () {
                     url: "ajax/ajaxquery.php",
                     data: data,
                     async: true,
-                    success: function (s) {
+                    success: function(s) {
                         if (title.match(/public/)) {
                             publicProfileTable.row(clickedRow).remove().draw();
                         } else {
                             profileTable.row(clickedRow).remove().draw();
                         }
                         // check the amazon profiles
-                        var intervalName = 'interval_'+proType+'Status_' + proId;
+                        var intervalName = 'interval_' + proType + 'Status_' + proId;
                         if (proType === "amazon") {
                             clearInterval(window[intervalName]);
-                            var proAmzData = getValues({ p: "getProfileCloud", cloud:proType });
+                            var proAmzData = getValues({ p: "getProfileCloud", cloud: proType });
                             if (proAmzData.length < 1) {
                                 $('#manageAmz').css('display', 'none');
                             }
                         } else if (proType === "google") {
                             clearInterval(window[intervalName]);
-                            var proGoogData = getValues({ p: "getProfileCloud", cloud:proType  });
+                            var proGoogData = getValues({ p: "getProfileCloud", cloud: proType });
                             if (proGoogData.length < 1) {
                                 $('#manageGoog').css('display', 'none');
                             }
                         }
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         alert("Error: " + errorThrown);
                     }
                 });
@@ -720,7 +718,7 @@ $(document).ready(function () {
             //B. If it is not allowed to delete
             else if (warnUser === true) {
                 $('#warnDelete').off();
-                $('#warnDelete').on('show.bs.modal', function (event) {
+                $('#warnDelete').on('show.bs.modal', function(event) {
                     $('#warnDelText').html(warnText);
                 });
                 $('#warnDelete').modal('show');
@@ -734,19 +732,19 @@ $(document).ready(function () {
     function getGroupTableOptions(owner_id, u_id) {
         if (owner_id === u_id) {
             //if user is the owner of the group
-            var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#joinmodal" data-toggle="modal" class="viewGroupMembers">View Group Members</a></li><li class="divider"></li><li><a href="#joinmodal" data-toggle="modal" class="addUsers">Edit Group Members</a></li><li class="divider"></li><li><a href="#groupmodal" data-toggle="modal" class="editGroup">Edit Group Name</a></li><li><a href="#confirmDelModal" data-toggle="modal" class="deleteGroup">Delete Group</a></li></ul></div>'; 
+            var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#joinmodal" data-toggle="modal" class="viewGroupMembers">View Group Members</a></li><li class="divider"></li><li><a href="#joinmodal" data-toggle="modal" class="addUsers">Edit Group Members</a></li><li class="divider"></li><li><a href="#groupmodal" data-toggle="modal" class="editGroup">Edit Group Name</a></li><li><a href="#confirmDelModal" data-toggle="modal" class="deleteGroup">Delete Group</a></li></ul></div>';
         } else {
             var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#joinmodal" data-toggle="modal" class="viewGroupMembers">View Group Members</a></li></ul></div>';
         }
         return button;
     }
 
-    function getGroupMemberTableOptions(owner_id, u_id, member_id){
+    function getGroupMemberTableOptions(owner_id, u_id, member_id) {
         var button = "";
         if (owner_id === u_id && u_id != member_id) {
             //if user is the owner of the group
             var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu"><li><a href="#confirmDelModal" class="removeUserFromGroup" data-toggle="modal">Remove User from Group</a></li></ul></div>';
-        } 
+        }
         return button;
     }
 
@@ -758,7 +756,7 @@ $(document).ready(function () {
         },
         "columns": [{
             "data": "id"
-        },{
+        }, {
             "data": "name"
         }, {
             "data": "username"
@@ -767,13 +765,13 @@ $(document).ready(function () {
         }, {
             data: null,
             className: "center",
-            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+            fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getGroupTableOptions(oData.owner_id, oData.u_id));
             }
         }]
     });
 
-    $('#groupmodal').on('show.bs.modal', function (event) {
+    $('#groupmodal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
         if (button.attr('id') === 'addgroup') {
@@ -790,14 +788,14 @@ $(document).ready(function () {
         }
     });
 
-    $('#groupmodal').on('click', '#savegroup', function (event) {
+    $('#groupmodal').on('click', '#savegroup', function(event) {
         event.preventDefault();
         var formValues = $('#groupmodal').find('input, select');
         var requiredFields = ["name"];
         var formObj = {};
         var stop = "";
         [formObj, stop] = createFormObj(formValues, requiredFields)
-        if (stop === false){
+        if (stop === false) {
             var savetype = $('#mGroupID').val();
             formObj.p = "saveGroup";
             $.ajax({
@@ -805,11 +803,11 @@ $(document).ready(function () {
                 url: "ajax/ajaxquery.php",
                 data: formObj,
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     groupTable.ajax.reload(null, false);
                     $('#groupmodal').modal('hide');
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
@@ -819,22 +817,22 @@ $(document).ready(function () {
 
 
 
-    $('#joinmodal').on('hide.bs.modal', function (event) {
+    $('#joinmodal').on('hide.bs.modal', function(event) {
         $('#groupmembertabledata').removeData('rowData');
         var groupMemberTable = $('#groupmembertable').DataTable();
         groupMemberTable.destroy()
     });
-    $('#joinmodal').on('show.bs.modal', function (event) {
+    $('#joinmodal').on('show.bs.modal', function(event) {
         $(this).find('form').trigger('reset');
         var button = $(event.relatedTarget);
         var clickedRow = button.closest('tr');
         var rowData = groupTable.row(clickedRow).data();
         $('#groupmembertabledata').data('rowData', rowData);
-        if ( ! $.fn.DataTable.isDataTable( '#groupmembertable' ) ) {
+        if (!$.fn.DataTable.isDataTable('#groupmembertable')) {
             var groupMemberTable = $('#groupmembertable').DataTable({
                 "ajax": {
                     url: "ajax/ajaxquery.php",
-                    data: { "p": "viewGroupMembers", g_id: rowData.id},
+                    data: { "p": "viewGroupMembers", g_id: rowData.id },
                     "dataSrc": ""
                 },
                 "columns": [{
@@ -846,7 +844,7 @@ $(document).ready(function () {
                 }, {
                     data: null,
                     className: "center",
-                    fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                    fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                         $(nTd).html(getGroupMemberTableOptions(rowData.owner_id, rowData.u_id, oData.id));
                     }
                 }]
@@ -855,21 +853,21 @@ $(document).ready(function () {
 
         if (button.attr('class') === 'viewGroupMembers') {
             $('#joinmodallabel').html('View Group Members');
-            $('#joinmodaladd').css("display","none");
+            $('#joinmodaladd').css("display", "none");
 
         } else if (button.attr('class') === 'addUsers') {
             $('#joinmodallabel').html('List of All Users');
-            $('#joinmodaladd').css("display","block");
+            $('#joinmodaladd').css("display", "block");
 
 
         }
     });
 
-    $('#joinmodal').on('click', '#joinmodal_adduser', function (e) {
+    $('#joinmodal').on('click', '#joinmodal_adduser', function(e) {
         var email = $("#joinmodal_email").val();
         var g_data = $('#groupmembertabledata').data('rowData');
         var g_id = g_data.id
-        if (g_id && email && email.includes("@")){
+        if (g_id && email && email.includes("@")) {
             $.ajax({
                 type: "GET",
                 url: "ajax/ajaxquery.php",
@@ -879,17 +877,17 @@ $(document).ready(function () {
                     p: "saveGroupMemberByEmail"
                 },
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     // insert success
-                    if (s.id){
+                    if (s.id) {
                         //update group members table
                         var groupMemberTable = $('#groupmembertable').DataTable();
-                        groupMemberTable.ajax.reload(null,false);
-                    } else if (s.error){
-                        showInfoModal("#infoMod","#infoModText", s.error)
+                        groupMemberTable.ajax.reload(null, false);
+                    } else if (s.error) {
+                        showInfoModal("#infoMod", "#infoModText", s.error)
                     }
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
@@ -903,40 +901,40 @@ $(document).ready(function () {
 
     //------------   ssh keys section-------------
     //not allow to click both option
-    $('#userKeyDiv').on('show.bs.collapse', function () {
+    $('#userKeyDiv').on('show.bs.collapse', function() {
         if ($('#ourKeyCheck').is(":checked") && $('#userKeyCheck').is(":checked")) {
             $('#ourKeyCheck').trigger("click");
         }
         $('#userKeyCheck').attr('onclick', "return false;");
     });
-    $('#ourKeyDiv').on('show.bs.collapse', function () {
+    $('#ourKeyDiv').on('show.bs.collapse', function() {
         if ($('#ourKeyCheck').is(":checked") && $('#userKeyCheck').is(":checked")) {
             $('#userKeyCheck').trigger("click");
         }
         $('#ourKeyCheck').attr('onclick', "return false;");
     });
-    $('#userKeyDiv').on('shown.bs.collapse', function () {
+    $('#userKeyDiv').on('shown.bs.collapse', function() {
         if ($('#ourKeyCheck').is(":checked") && $('#userKeyCheck').is(":checked")) {
             $('#ourKeyCheck').trigger("click");
         }
         $('#userKeyCheck').removeAttr('onclick');
     });
-    $('#ourKeyDiv').on('shown.bs.collapse', function () {
+    $('#ourKeyDiv').on('shown.bs.collapse', function() {
         if ($('#ourKeyCheck').is(":checked") && $('#userKeyCheck').is(":checked")) {
             $('#userKeyCheck').trigger("click");
         }
         $('#ourKeyCheck').removeAttr('onclick');
     });
-    $('#ourKeyDiv').on('hide.bs.collapse', function () {
+    $('#ourKeyDiv').on('hide.bs.collapse', function() {
         $('#ourKeyCheck').attr('onclick', "return false;");
     });
-    $('#userKeyDiv').on('hide.bs.collapse', function () {
+    $('#userKeyDiv').on('hide.bs.collapse', function() {
         $('#userKeyCheck').attr('onclick', "return false;");
     });
-    $('#userKeyDiv').on('hidden.bs.collapse', function () {
+    $('#userKeyDiv').on('hidden.bs.collapse', function() {
         $('#userKeyCheck').removeAttr('onclick');
     });
-    $('#ourKeyDiv').on('hidden.bs.collapse', function () {
+    $('#ourKeyDiv').on('hidden.bs.collapse', function() {
         $('#ourKeyCheck').removeAttr('onclick');
     });
 
@@ -955,14 +953,14 @@ $(document).ready(function () {
         }, {
             data: null,
             className: "center",
-            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+            fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getProfTableOptions("ssh"));
             }
         }]
     });
 
     // confirm Delete modal 
-    $('#confirmDelModal').on('show.bs.modal', function (event) {
+    $('#confirmDelModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         var clickedRow = button.closest('tr');
         $('#confirmDelModalDelBtn').data('clickedrow', clickedRow);
@@ -972,7 +970,7 @@ $(document).ready(function () {
             $('#confirmDelModalDelBtn').attr('remove_id', remove_id);
             $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary deleteSSHKeys');
             $('#confirmDelModalText').html('Are you sure you want to delete?');
-        } else if (button.attr('class') === 'delUser'){
+        } else if (button.attr('class') === 'delUser') {
             var AdmUserTable = $('#AdminUserTable').DataTable();
             var rowData = AdmUserTable.row(clickedRow).data();
             var remove_id = rowData.id;
@@ -980,7 +978,7 @@ $(document).ready(function () {
             var email = rowData.email;
             var name = rowData.name;
             $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary delUser');
-            $('#confirmDelModalText').html('Are you sure you want to delete following user?</br></br>Name: '+name+'</br>E-mail: '+email);
+            $('#confirmDelModalText').html('Are you sure you want to delete following user?</br></br>Name: ' + name + '</br>E-mail: ' + email);
         } else if (button.attr('class') === 'deleteGithub') {
             var rowData = githubTable.row(clickedRow).data();
             var remove_id = rowData.id;
@@ -1005,22 +1003,22 @@ $(document).ready(function () {
             var name = rowData.name;
             $('#confirmDelModalDelBtn').attr('remove_id', rowData.id);
             $('#confirmDelModalDelBtn').data('clickedrow', clickedRow);
-            $('#confirmDelModalText').html('Are you sure you want to remove following user from the group?</br></br>Name: '+name+'</br>E-mail: '+email);
+            $('#confirmDelModalText').html('Are you sure you want to remove following user from the group?</br></br>Name: ' + name + '</br>E-mail: ' + email);
         } else if (button.attr('class') === 'deleteGroup') {
             $('#confirmDelModalDelBtn').attr('class', 'btn btn-primary deleteGroup');
             var rowData = groupTable.row(clickedRow).data();
             $('#confirmDelModalDelBtn').attr('remove_id', rowData.id);
             $('#confirmDelModalDelBtn').data('clickedrow', clickedRow);
-            $('#confirmDelModalText').html('Are you sure you want to delete group "'+rowData.name+'"?');
+            $('#confirmDelModalText').html('Are you sure you want to delete group "' + rowData.name + '"?');
         }
     });
 
-    $('#confirmDelModal').on('click', '.delGoogKeyIcon', function (event) {
+    $('#confirmDelModal').on('click', '.delGoogKeyIcon', function(event) {
         prepareGoogModal({})
         $('#confirmDelModal').modal('hide');
     });
 
-    $('#confirmDelModal').on('click', '.deleteGroup', function (event) {
+    $('#confirmDelModal').on('click', '.deleteGroup', function(event) {
         var g_id = $('#confirmDelModalDelBtn').attr('remove_id');
         var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         $.ajax({
@@ -1031,23 +1029,23 @@ $(document).ready(function () {
                 p: "removeGroup"
             },
             async: true,
-            success: function (s) {
+            success: function(s) {
                 console.log(s)
-                if (s.error){
-                    showInfoModal("#infoMod","#infoModText", s.error)
+                if (s.error) {
+                    showInfoModal("#infoMod", "#infoModText", s.error)
                 } else {
                     groupTable.ajax.reload(null, false);
                     $('#confirmDelModal').modal('hide');
                 }
             },
-            error: function (errorThrown) {
+            error: function(errorThrown) {
                 alert("Error: " + errorThrown);
             }
         });
     });
 
 
-    $('#confirmDelModal').on('click', '.removeUserFromGroup', function (event) {
+    $('#confirmDelModal').on('click', '.removeUserFromGroup', function(event) {
         var user_id = $('#confirmDelModalDelBtn').attr('remove_id');
         var g_data = $('#groupmembertabledata').data('rowData');
         var g_id = g_data.id
@@ -1062,9 +1060,9 @@ $(document).ready(function () {
                     p: "removeUserFromGroup"
                 },
                 async: true,
-                success: function (s) {
-                    if (s.error){
-                        showInfoModal("#infoMod","#infoModText", s.error)
+                success: function(s) {
+                    if (s.error) {
+                        showInfoModal("#infoMod", "#infoModText", s.error)
                     } else {
                         var groupMemberTable = $('#groupmembertable').DataTable();
                         groupMemberTable.ajax.reload(null, false);
@@ -1072,14 +1070,14 @@ $(document).ready(function () {
                     }
 
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
         }
     });
 
-    $('#confirmDelModal').on('click', '.deleteGoogleKeys', function (event) {
+    $('#confirmDelModal').on('click', '.deleteGoogleKeys', function(event) {
         var remove_id = $('#confirmDelModalDelBtn').attr('remove_id');
         var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (remove_id !== '') {
@@ -1091,19 +1089,19 @@ $(document).ready(function () {
                     p: "removeGoogle"
                 },
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     var googleTab = $('#googleKeyTable').DataTable()
                     googleTab.row(clickedRow).remove().draw();
                     $('#confirmDelModal').modal('hide');
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
         }
     });
 
-    $('#confirmDelModal').on('click', '.deleteGithub', function (event) {
+    $('#confirmDelModal').on('click', '.deleteGithub', function(event) {
         var remove_id = $('#confirmDelModalDelBtn').attr('remove_id');
         var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (remove_id !== '') {
@@ -1115,18 +1113,18 @@ $(document).ready(function () {
                     p: "removeGithub"
                 },
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     githubTable.row(clickedRow).remove().draw();
                     $('#confirmDelModal').modal('hide');
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
         }
     });
 
-    $('#confirmDelModal').on('click', '.deleteSSHKeys', function (event) {
+    $('#confirmDelModal').on('click', '.deleteSSHKeys', function(event) {
         var remove_id = $('#confirmDelModalDelBtn').attr('remove_id');
         var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (remove_id !== '') {
@@ -1143,10 +1141,10 @@ $(document).ready(function () {
                         p: "removeSSH"
                     },
                     async: true,
-                    success: function (s) {
+                    success: function(s) {
                         sshTable.row(clickedRow).remove().draw();
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         alert("Error: " + errorThrown);
                     }
                 });
@@ -1154,7 +1152,7 @@ $(document).ready(function () {
             //B. If it is not allowed to delete
             else if (warnUser === true) {
                 $('#warnDelete').off();
-                $('#warnDelete').on('show.bs.modal', function (event) {
+                $('#warnDelete').on('show.bs.modal', function(event) {
                     $('#warnDelText').html(warnText);
                 });
                 $('#warnDelete').modal('show');
@@ -1163,7 +1161,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#confirmDelModal').on('click', '.delUser', function (event) {
+    $('#confirmDelModal').on('click', '.delUser', function(event) {
         var remove_id = $('#confirmDelModalDelBtn').attr('remove_id');
         var clickedRow = $('#confirmDelModalDelBtn').data('clickedrow');
         if (remove_id) {
@@ -1175,11 +1173,11 @@ $(document).ready(function () {
                     p: "removeUser"
                 },
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     var AdmUserTable = $('#AdminUserTable').DataTable();
                     AdmUserTable.row(clickedRow).remove().draw();
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
@@ -1187,7 +1185,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#sshKeyModal').on('hide.bs.modal', function (event) {
+    $('#sshKeyModal').on('hide.bs.modal', function(event) {
         $('#ourKeyCheck').prop('disabled', false);
         $('#userKeyCheck').prop('disabled', false);
         $('#createKeysDiv').css('display', 'inline');
@@ -1203,7 +1201,7 @@ $(document).ready(function () {
 
 
 
-    $('#sshKeyModal').on('show.bs.modal', function (event) {
+    $('#sshKeyModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
         if (button.attr('id') === 'addSSHKey') {
@@ -1217,7 +1215,7 @@ $(document).ready(function () {
             var data = getValues({ p: "getSSH", id: rowData.id })[0];
             $(formValues[0]).val(rowData.id);
             $(formValues[1]).val(rowData.name);
-            if (rowData.hide == "true"){
+            if (rowData.hide == "true") {
                 $('#hideKeys').prop('checked', true);
             } else {
                 $('#hideKeys').prop('checked', false);
@@ -1243,7 +1241,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#sshKeyModal').on('click', '#savesshkey', function (event) {
+    $('#sshKeyModal').on('click', '#savesshkey', function(event) {
         event.preventDefault();
         var data = [];
         var sshName = $('#mSSHName').val();
@@ -1273,7 +1271,7 @@ $(document).ready(function () {
                     url: "ajax/ajaxquery.php",
                     data: data,
                     async: true,
-                    success: function (s) {
+                    success: function(s) {
                         if (savetype.length) { //edit
                             var clickedRow = $('#savesshkey').data('clickedrow');
                             var getsshData = [];
@@ -1284,14 +1282,14 @@ $(document).ready(function () {
                                 url: "ajax/ajaxquery.php",
                                 data: getsshData,
                                 async: true,
-                                success: function (sc) {
+                                success: function(sc) {
                                     var newData = getValues({ p: "getSSH", id: savetype })
-                                    if (newData[0]){
+                                    if (newData[0]) {
                                         sshTable.row(clickedRow).remove().draw();
-                                        sshTable.row.add(newData[0]).draw(); 
+                                        sshTable.row.add(newData[0]).draw();
                                     }
                                 },
-                                error: function (errorThrown) {
+                                error: function(errorThrown) {
                                     alert("Error: " + errorThrown);
                                 }
                             });
@@ -1305,13 +1303,13 @@ $(document).ready(function () {
                                 url: "ajax/ajaxquery.php",
                                 data: getSSHData,
                                 async: true,
-                                success: function (sc) {
+                                success: function(sc) {
                                     var newData = getValues({ p: "getSSH", id: sc[0].id })
-                                    if (newData[0]){
+                                    if (newData[0]) {
                                         sshTable.row.add(newData[0]).draw();
                                     }
                                 },
-                                error: function (errorThrown) {
+                                error: function(errorThrown) {
                                     alert("Error: " + errorThrown);
                                 }
                             });
@@ -1319,7 +1317,7 @@ $(document).ready(function () {
                         $('#sshKeyModal').modal('hide');
 
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         alert("Error: " + errorThrown);
                     }
                 });
@@ -1344,14 +1342,14 @@ $(document).ready(function () {
         }, {
             data: null,
             className: "center",
-            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+            fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getProfTableOptions("amazon"));
             }
         }]
     });
     //
     // confirm Delete amz modal 
-    $('#confirmDelAmzModal').on('show.bs.modal', function (event) {
+    $('#confirmDelAmzModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         var clickedRow = button.closest('tr');
         var rowData = amzTable.row(clickedRow).data();
@@ -1365,7 +1363,7 @@ $(document).ready(function () {
     });
 
 
-    $('#confirmDelAmzModal').on('click', '.deleteAmzKeys', function (event) {
+    $('#confirmDelAmzModal').on('click', '.deleteAmzKeys', function(event) {
         var remove_id = $('#mDelAmzBtn').attr('remove_id');
         var clickedRow = $('#mDelAmzBtn').data('clickedrow');
         if (remove_id !== '') {
@@ -1383,10 +1381,10 @@ $(document).ready(function () {
                         p: "removeAmz"
                     },
                     async: true,
-                    success: function (s) {
+                    success: function(s) {
                         amzTable.row(clickedRow).remove().draw();
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         alert("Error: " + errorThrown);
                     }
                 });
@@ -1394,7 +1392,7 @@ $(document).ready(function () {
             //B. If it is not allowed to delete
             else if (warnUser === true) {
                 $('#warnDelete').off();
-                $('#warnDelete').on('show.bs.modal', function (event) {
+                $('#warnDelete').on('show.bs.modal', function(event) {
                     $('#warnDelText').html(warnText);
                 });
                 $('#warnDelete').modal('show');
@@ -1403,7 +1401,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#amzKeyModal').on('show.bs.modal', function (event) {
+    $('#amzKeyModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
         if (button.attr('id') === 'addAmazonKey') {
@@ -1423,7 +1421,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#amzKeyModal').on('click', '#saveamzkey', function (event) {
+    $('#amzKeyModal').on('click', '#saveamzkey', function(event) {
         event.preventDefault();
         var data = [];
         var amzName = $('#mAmzName').val();
@@ -1443,7 +1441,7 @@ $(document).ready(function () {
                 url: "ajax/ajaxquery.php",
                 data: data,
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     if (savetype.length) { //edit
                         var clickedRow = $('#saveamzkey').data('clickedrow');
                         var getAmzData = [];
@@ -1454,7 +1452,7 @@ $(document).ready(function () {
                             url: "ajax/ajaxquery.php",
                             data: getAmzData,
                             async: true,
-                            success: function (sc) {
+                            success: function(sc) {
                                 var rowData = {};
                                 var keys = amzTable.settings().init().columns;
                                 for (var i = 0; i < keys.length; i++) {
@@ -1466,7 +1464,7 @@ $(document).ready(function () {
                                 amzTable.row.add(rowData).draw();
 
                             },
-                            error: function (errorThrown) {
+                            error: function(errorThrown) {
                                 alert("Error: " + errorThrown);
                             }
                         });
@@ -1480,7 +1478,7 @@ $(document).ready(function () {
                             url: "ajax/ajaxquery.php",
                             data: getAmzData,
                             async: true,
-                            success: function (sc) {
+                            success: function(sc) {
                                 var addData = {};
                                 var keys = amzTable.settings().init().columns;
                                 for (var i = 0; i < keys.length; i++) {
@@ -1490,7 +1488,7 @@ $(document).ready(function () {
                                 addData.id = sc[0].id;
                                 amzTable.row.add(addData).draw();
                             },
-                            error: function (errorThrown) {
+                            error: function(errorThrown) {
                                 alert("Error: " + errorThrown);
                             }
                         });
@@ -1498,7 +1496,7 @@ $(document).ready(function () {
                     $('#amzKeyModal').modal('hide');
 
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
@@ -1521,7 +1519,7 @@ $(document).ready(function () {
         }, {
             data: null,
             className: "center",
-            fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+            fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                 $(nTd).html(getProfTableOptions("google"));
             }
         }]
@@ -1530,7 +1528,7 @@ $(document).ready(function () {
 
 
 
-    $('#googleKeysModal').on('show.bs.modal', function (event) {
+    $('#googleKeysModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         window.googObj = {};
         window.googObj.filename = ""
@@ -1552,11 +1550,11 @@ $(document).ready(function () {
         }
     });
 
-    $('#googleKeysModal').on('hide.bs.modal', function (event) {
+    $('#googleKeysModal').on('hide.bs.modal', function(event) {
         cleanHasErrorClass("#googleKeysModal")
     });
 
-    $('#googleKeysModal').on('click', '#saveGoogle', function (event) {
+    $('#googleKeysModal').on('click', '#saveGoogle', function(event) {
         event.preventDefault();
         var formValues = $('#googleKeysModal').find('input, select');
         var requiredFields = ["name", "project_id"];
@@ -1574,7 +1572,7 @@ $(document).ready(function () {
                 url: "ajax/ajaxquery.php",
                 data: formObj,
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     if (savetype.length) { //edit
                         var newData = getValues({ p: "getGoogle", id: savetype })
                         if (newData[0]) {
@@ -1587,14 +1585,14 @@ $(document).ready(function () {
                             googleTable.row.add(newData[0]).draw();
                         }
                     }
-                    if (s.error){
-                        showInfoModal("#infoMod","#infoModText", s.error)
+                    if (s.error) {
+                        showInfoModal("#infoMod", "#infoModText", s.error)
                     } else {
                         $('#googleKeysModal').modal('hide');
                     }
 
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
@@ -1620,13 +1618,13 @@ $(document).ready(function () {
         }
         var groupBut = '<li><a href="#adminAddGroupModal" data-toggle="modal">Assign to group</a></li>';
         var calculateUserUsage = '<li><a class="calculateUserUsage">Calculate User Usage</a></li>';
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + groupBut +calculateUserUsage+'<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + groupBut + calculateUserUsage + '<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
         return button;
 
     }
     //change password----
 
-    $("#password1, #password2").keyup(function () {
+    $("#password1, #password2").keyup(function() {
         var vis8char = $("#8charDiv").css("display")
         var visMatch = $("#pwmatchDiv").css("display")
         if (vis8char == "none" && $("#password1").val().length > 0) {
@@ -1661,7 +1659,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#passwordForm').on('click', '#changePassBtn', function (event) {
+    $('#passwordForm').on('click', '#changePassBtn', function(event) {
         event.preventDefault();
         var formValues = $('#passwordForm').find('input');
         var requiredFields = ["password0", "password1", "password2"];
@@ -1676,7 +1674,7 @@ $(document).ready(function () {
                     url: "ajax/ajaxquery.php",
                     data: formObj,
                     async: true,
-                    success: function (s) {
+                    success: function(s) {
                         if (s.password0 || s.password1) { //error
                             if (s.password0) {
                                 toogleErrorUser('#passwordForm', "password0", "insert", s.password0)
@@ -1695,7 +1693,7 @@ $(document).ready(function () {
                             $("#changePassBtn").attr("class", "col-xs-12 btn btn-success btn-load");
                             $("#changePassBtn").attr("disabled", "disabled");
 
-                            setTimeout(function () {
+                            setTimeout(function() {
                                 $("#passwordForm").trigger('reset');
                                 $("#8charDiv").css("display", "none")
                                 $("#pwmatchDiv").css("display", "none")
@@ -1705,7 +1703,7 @@ $(document).ready(function () {
                             }, 3000);
                         }
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         alert("Error: " + errorThrown);
                     }
                 });
@@ -1735,7 +1733,7 @@ $(document).ready(function () {
             },
             "columns": [{
                 "data": "id"
-            },{
+            }, {
                 "data": "name"
             }, {
                 "data": "username"
@@ -1745,11 +1743,11 @@ $(document).ready(function () {
                 "data": "institute"
             }, {
                 "data": "disk_usage",
-                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
                     var sizeInMB = 0;
                     if (oData.disk_usage) {
                         sizeInMB = (oData.disk_usage / (1024)).toFixed(2);
-                        if (sizeInMB == 0.00){
+                        if (sizeInMB == 0.00) {
                             sizeInMB = 0;
                         }
                     } else {
@@ -1761,7 +1759,7 @@ $(document).ready(function () {
                 "data": "role"
             }, {
                 "data": "active",
-                "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
                     if (oData.active && oData.active == 1) {
                         $(nTd).html("true");
                     } else {
@@ -1773,14 +1771,16 @@ $(document).ready(function () {
             }, {
                 data: null,
                 className: "center",
-                fnCreatedCell: function (nTd, sData, oData, iRow, iCol) {
+                fnCreatedCell: function(nTd, sData, oData, iRow, iCol) {
                     $(nTd).html(getAdminUserTableOptions(oData.active, oData.role));
                 }
             }],
-            'order': [[8, 'desc']]
+            'order': [
+                [8, 'desc']
+            ]
         });
 
-        $('#AdminUserTable').on('click', '.impersonUser', function (event) {
+        $('#AdminUserTable').on('click', '.impersonUser', function(event) {
             var clickedRow = $(this).closest('tr');
             var rowData = AdmUserTable.row(clickedRow).data();
             var userId = rowData.id
@@ -1793,18 +1793,18 @@ $(document).ready(function () {
                     data: userData,
                     url: "ajax/ajaxquery.php",
                     async: false,
-                    success: function (msg) {
+                    success: function(msg) {
                         var logInSuccess = true;
                         window.location.reload('true');
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         alert("Error: " + errorThrown);
                     }
                 });
             }
         });
 
-        $('#AdminUserTable').on('click', '.calculateUserUsage', function (event) {
+        $('#AdminUserTable').on('click', '.calculateUserUsage', function(event) {
             var clickedRow = $(this).closest('tr');
             var rowData = AdmUserTable.row(clickedRow).data();
             var userId = rowData.id;
@@ -1813,21 +1813,21 @@ $(document).ready(function () {
                 showLoadingDiv("AdminUserTable")
                 $.ajax({
                     type: "POST",
-                    data: {"p":"saveRunLogSizeUser", userid:userId},
+                    data: { "p": "saveRunLogSizeUser", userid: userId },
                     url: "ajax/ajaxquery.php",
-                    success: function (sc) {
+                    success: function(sc) {
                         hideLoadingDiv("AdminUserTable")
                         toastr.info("User Usage calculated.")
                         AdmUserTable.ajax.reload(null, false);
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         toastr.info("Error Occured.")
                     }
                 });
             }
         });
 
-        $('#AdminUserTable').on('click', '.changeActiveUser, .changeRoleUser', function (event) {
+        $('#AdminUserTable').on('click', '.changeActiveUser, .changeRoleUser', function(event) {
             var type = $(this).attr('name'); //activateSendUser or activate or deactivate
             var p = $(this).attr('class');
             var clickedRow = $(this).closest('tr');
@@ -1843,14 +1843,14 @@ $(document).ready(function () {
                     data: userData,
                     url: "ajax/ajaxquery.php",
                     async: false,
-                    success: function (sc) {
+                    success: function(sc) {
                         var newUserData = getValues({ p: "getUserById", id: userId })
                         if (newUserData[0]) {
                             AdmUserTable.row(clickedRow).remove().draw();
                             AdmUserTable.row.add(newUserData[0]).draw();
                         }
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         alert("Error: " + errorThrown);
                     }
                 });
@@ -1858,7 +1858,7 @@ $(document).ready(function () {
         });
 
         //       ---USER MODAL
-        $('#userModal').on('show.bs.modal', function (event) {
+        $('#userModal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget);
             $(this).find('form').trigger('reset');
             if (button.attr('id') === 'addUser') {
@@ -1872,11 +1872,11 @@ $(document).ready(function () {
             }
         });
 
-        $('#userModal').on('hide.bs.modal', function (event) {
+        $('#userModal').on('hide.bs.modal', function(event) {
             cleanHasErrorClass("#userModal")
         });
 
-        $('#userModal').on('click', '#savemUser', function (event) {
+        $('#userModal').on('click', '#savemUser', function(event) {
             event.preventDefault();
             var formValues = $('#userModal').find('input, select');
             var requiredFields = ["name", "username", "email", "institute", "logintype"];
@@ -1892,7 +1892,7 @@ $(document).ready(function () {
                     url: "ajax/ajaxquery.php",
                     data: formObj,
                     async: true,
-                    success: function (s) {
+                    success: function(s) {
                         if (s.email || s.username) { //exist in database
                             if (s.email) {
                                 toogleErrorUser('#userModal', "email", "insert", s.email)
@@ -1922,7 +1922,7 @@ $(document).ready(function () {
                             $('#userModal').modal('hide');
                         }
                     },
-                    error: function (errorThrown) {
+                    error: function(errorThrown) {
                         alert("Error: " + errorThrown);
                     }
                 });
@@ -1931,23 +1931,23 @@ $(document).ready(function () {
         //---user modal ends---
 
         //  ---Admin Add Group Modal start ---- 
-        $('#adminAddGroupModal').on('show.bs.modal', function (event) {
+        $('#adminAddGroupModal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget);
             $(this).find('form').trigger('reset');
             var clickedRow = button.closest('tr');
             var rowData = AdmUserTable.row(clickedRow).data();
-            $('#adminAddGroupUserInfo').html('Name: '+rowData.name+'</br>Username: '+rowData.username+'</br>E-mail: '+rowData.email);
+            $('#adminAddGroupUserInfo').html('Name: ' + rowData.name + '</br>Username: ' + rowData.username + '</br>E-mail: ' + rowData.email);
             $('#adminAddGroupSave').data('clickedrow', clickedRow);
-            if (rowData.id){
-                var allGroups = getValues({ p: "getAllAvailableGroups", user_id:rowData.id  });
+            if (rowData.id) {
+                var allGroups = getValues({ p: "getAllAvailableGroups", user_id: rowData.id });
                 fillDropdownArrObj(allGroups, "id", "name", "#adminAddGroupNewGroup", true, '<option value="" selected>Choose New Group </option>');
             }
         });
 
-        $('#adminAddGroupModal').on('hide.bs.modal', function (event) {
+        $('#adminAddGroupModal').on('hide.bs.modal', function(event) {
             cleanHasErrorClass("#adminAddGroupModal")
         });
-        $('#adminAddGroupModal').on('click', '#adminAddGroupSave', function (event) {
+        $('#adminAddGroupModal').on('click', '#adminAddGroupSave', function(event) {
             event.preventDefault();
             var formValues = $('#adminAddGroupModal').find('select');
             var requiredFields = ["group_id"];
@@ -1957,8 +1957,8 @@ $(document).ready(function () {
             [formObj, stop] = createFormObj(formValues, requiredFields)
             if (stop === false) {
                 var rowData = AdmUserTable.row(clickedRow).data();
-                var user_id = rowData.id 
-                if (user_id && formObj.group_id){
+                var user_id = rowData.id
+                if (user_id && formObj.group_id) {
                     var joinGro = getValues({ p: "saveUserGroup", u_id: user_id, g_id: formObj.group_id });
                     if (joinGro) {
                         $('#adminAddGroupModal').modal('hide');
@@ -1972,7 +1972,7 @@ $(document).ready(function () {
 
 
     //---github section starts---
-    $('#githubModal').on('show.bs.modal', function (event) {
+    $('#githubModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
         if (button.attr('id') === 'addGithub') {
@@ -1988,11 +1988,11 @@ $(document).ready(function () {
         }
     });
 
-    $('#githubModal').on('hide.bs.modal', function (event) {
+    $('#githubModal').on('hide.bs.modal', function(event) {
         cleanHasErrorClass("#githubModal")
     });
 
-    $('#githubModal').on('click', '#saveGithub', function (event) {
+    $('#githubModal').on('click', '#saveGithub', function(event) {
         event.preventDefault();
         var formValues = $('#githubModal').find('input, select');
         var requiredFields = ["username", "email", "token"];
@@ -2008,7 +2008,7 @@ $(document).ready(function () {
                 url: "ajax/ajaxquery.php",
                 data: formObj,
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     if (savetype.length) { //edit
                         var newGitData = getValues({ p: "getGithub", id: savetype })
                         if (newGitData[0]) {
@@ -2023,7 +2023,7 @@ $(document).ready(function () {
                     }
                     $('#githubModal').modal('hide');
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
