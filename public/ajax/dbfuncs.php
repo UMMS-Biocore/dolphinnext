@@ -5190,10 +5190,14 @@ class dbfuncs
     //    ----------- Projects   ---------
     function getProjects($id, $type, $ownerID)
     {
+        $join = " LEFT JOIN $this->db.user_group ug ON p.group_id=ug.g_id ";
+
         if ($type == "user") {
             $where = " where u.deleted=0 AND p.deleted=0 AND p.owner_id = '$ownerID'";
         } else if ($type == "shared") {
-            $where = " where u.deleted=0 AND p.deleted=0 AND p.owner_id <> '$ownerID' AND (p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
+            $join = "INNER JOIN $this->db.project_pipeline pp ON pp.project_id = p.id 
+                     LEFT JOIN $this->db.user_group ug ON pp.group_id=ug.g_id";
+            $where = " where u.deleted=0 AND p.deleted=0 AND p.owner_id <> '$ownerID' AND (ug.u_id ='$ownerID' and pp.perms = 15) ";
         } else {
             $where = " where u.deleted=0 AND p.deleted=0 AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
             if ($id != "") {
@@ -5203,7 +5207,7 @@ class dbfuncs
         $sql = "SELECT DISTINCT p.owner_id, p.perms, p.group_id, p.id, p.name, p.summary, p.date_created, u.username, p.date_modified, IF(p.owner_id='$ownerID',1,0) as own, u.deleted
                   FROM $this->db.project p
                   INNER JOIN $this->db.users u ON p.owner_id = u.id
-                  LEFT JOIN $this->db.user_group ug ON p.group_id=ug.g_id
+                  $join 
                   $where";
         return self::queryTable($sql);
     }
@@ -5842,10 +5846,12 @@ class dbfuncs
                 $checkdir = "/" . $blocks[1] . "/" . $blocks[2];
                 list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
                 if (!empty($cluDataArr[0])) {
-                    $ssh_id = $cluDataArr[0]["ssh_id"];
-                    $perms = $cluDataArr[0]["perms"];
-                    $auto_workdir = $cluDataArr[0]["auto_workdir"];
-                    $ssh_own_id = $cluDataArr[0]["owner_id"];
+                    $ssh_id = !empty($cluDataArr[0]["ssh_id"]) ? $cluDataArr[0]["ssh_id"] : "";
+                    $ssh_own_id = !empty($cluDataArr[0]["owner_id"]) ? $cluDataArr[0]["owner_id"] : "";
+                    if (empty($ssh_id) || empty($ssh_own_id)) {
+                        $log["ret"] = "Query failed! Please check your query, connection profile or internet connection";
+                        return json_encode($log);
+                    }
                     $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
                     if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
                     $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"df -hP \\$(readlink -f $checkdir)\" 2>&1 &";
