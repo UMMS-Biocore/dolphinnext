@@ -1,3 +1,6 @@
+23.03.2021 Version 1.2.96
+Bug fixed in the shared projects table.
+
 21.03.2021 Version 1.2.95
 Pipeline defaults feature added (defparams) to overwrite default values of the processes.
 

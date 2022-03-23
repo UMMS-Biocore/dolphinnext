@@ -5377,6 +5377,7 @@ function loadPipelineDetails(pipeline_id, pipeData) {
                 pipeGnum = 0;
                 //check if params.VARNAME is defined in the autofill section of pipeline header. Then return all VARNAMES to define as system inputs
                 //##insertInputRowParams will add inputs rows and fill according to propipeinputs within insertProPipePanel
+                // window.pipeline_panelObj parsed and prepared before process settings loaded in open pipeline
                 var processData = "";
                 window.pipeline_panelObj = insertProPipePanel(
                     script_pipe_header_config,
