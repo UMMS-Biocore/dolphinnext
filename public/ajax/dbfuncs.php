@@ -5190,9 +5190,13 @@ class dbfuncs
     //    ----------- Projects   ---------
     function getProjects($id, $type, $ownerID)
     {
+        $join = " LEFT JOIN $this->db.user_group ug ON p.group_id=ug.g_id ";
+
         if ($type == "user") {
             $where = " where u.deleted=0 AND p.deleted=0 AND p.owner_id = '$ownerID'";
         } else if ($type == "shared") {
+            $join = "INNER JOIN $this->db.project_pipeline pp ON pp.project_id = p.id 
+                     LEFT JOIN $this->db.user_group ug ON pp.group_id=ug.g_id";
             $where = " where u.deleted=0 AND p.deleted=0 AND p.owner_id <> '$ownerID' AND (ug.u_id ='$ownerID' and pp.perms = 15) ";
         } else {
             $where = " where u.deleted=0 AND p.deleted=0 AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
@@ -5203,8 +5207,7 @@ class dbfuncs
         $sql = "SELECT DISTINCT p.owner_id, p.perms, p.group_id, p.id, p.name, p.summary, p.date_created, u.username, p.date_modified, IF(p.owner_id='$ownerID',1,0) as own, u.deleted
                   FROM $this->db.project p
                   INNER JOIN $this->db.users u ON p.owner_id = u.id
-                  INNER JOIN $this->db.project_pipeline pp ON pp.project_id = p.id 
-                  LEFT JOIN $this->db.user_group ug ON pp.group_id=ug.g_id
+                  $join 
                   $where";
         return self::queryTable($sql);
     }
