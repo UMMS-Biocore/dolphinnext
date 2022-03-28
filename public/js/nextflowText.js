@@ -623,7 +623,18 @@ function getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, s
         if (inputParMate) {
             channelFormat = "f3";
             chnObj = addFormat2chnObj(chnObj, channelFormat, chnName);
-            secPartTemp = "if (params." + inputParamName + "){\nChannel\n\t.fromFilePairs( params." + inputParamName + " , size: params.mate == \"single\" ? 1 : params.mate == \"pair\" ? 2 : params.mate == \"triple\" ? 3 : params.mate == \"quadruple\" ? 4 : -1 )\n\t.ifEmpty { error \"Cannot find any " + secParName + " matching: ${params." + inputParamName + "}\" }\n\t" + getChannelSetInto(chnObj[channelFormat]) + "\n } else {  " + chnObj[channelFormat] + " = Channel.empty()}\n\n";
+            var emptyChannelText = "";
+            var emptyChannels = chnObj[channelFormat]
+            emptyChannelText = `\t${emptyChannels} = Channel.empty()\n`;
+            if (emptyChannels.includes(";")) {
+                emptyChannelText = ""
+                var emptyChannelsAr = emptyChannels.split(";")
+                for (var e = 0; e < emptyChannelsAr.length; e++) {
+                    emptyChannelText += `\t${emptyChannelsAr[e]} = Channel.empty()\n`;
+                }
+            }
+
+            secPartTemp = "if (params." + inputParamName + "){\nChannel\n\t.fromFilePairs( params." + inputParamName + " , size: params.mate == \"single\" ? 1 : params.mate == \"pair\" ? 2 : params.mate == \"triple\" ? 3 : params.mate == \"quadruple\" ? 4 : -1 )\n\t.ifEmpty { error \"Cannot find any " + secParName + " matching: ${params." + inputParamName + "}\" }\n\t" + getChannelSetInto(chnObj[channelFormat]) + "\n } else {  \n" + emptyChannelText + " }\n\n";
             //if mate not defined in process use fromPath
         } else {
             //if val(name), file(read) format -> turn into set input

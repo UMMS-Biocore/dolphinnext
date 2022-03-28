@@ -2293,6 +2293,9 @@ class dbfuncs
         for ($i = 0; $i < $input_count; $i++) {
             $num = $i + 1;
             $inputParamName = "input{$num}";
+            if ($inputs[$i]["parameter_name"] == "mate") {
+                $inputParamName = "mate";
+            }
             $channelName = "channel{$num}";
             $test = urldecode($inputs[$i]["test"]);
             $inChn_firstPart .= "params.{$inputParamName} = \"{$test}\" \n";
@@ -5565,6 +5568,15 @@ class dbfuncs
         fclose($file);
         return json_encode($res);
     }
+    function checkFileExist($location, $uuid, $ownerID)
+    {
+        $ret = 0;
+        error_log("{$this->run_path}/$uuid/$location");
+        if (file_exists("{$this->run_path}/$uuid/$location")) {
+            $ret = 1;
+        }
+        return $ret;
+    }
     function deleteFile($uuid, $filename, $ownerID)
     {
         $file = "{$this->run_path}/$uuid/$filename";
@@ -8203,8 +8215,8 @@ class dbfuncs
             $obj = new stdClass();
             $currentline = explode($sep, $lines[$i]);
             for ($j = 0; $j < count($header); $j++) {
-                $name = $header[$j];
-                $obj->$name = $currentline[$j];
+                $name = trim($header[$j]);
+                $obj->$name = trim($currentline[$j]);
             }
             $data[] = $obj;
         }

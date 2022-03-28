@@ -2637,6 +2637,13 @@ $(document).ready(function() {
 
     // test script
     $('#addProcessModal').on('click', '.testscript', function(event) {
+        const callback = function() {
+            testScriptModal()
+        }
+        const saveButton = $("#saveProcessTest")
+        saveProcessModal(saveButton, callback);
+    })
+    const testScriptModal = () => {
         event.preventDefault()
         var process_id = $('#mIdPro').val();
         var pipeline_id = $('#pipeline-title').attr('pipelineid');
@@ -2712,13 +2719,20 @@ $(document).ready(function() {
         } else {
             showInfoModal("#infoMod", "#infoModText", result.message)
         }
+    }
+
+    $('#addProcessModal').on('click', '.saveprocess', function(event) {
+        event.preventDefault();
+        var saveButton = $(this);
+        var callback = "";
+        saveProcessModal(saveButton, callback)
     })
 
 
     // Add process modal to database
-    $('#addProcessModal').on('click', '.saveprocess', function(event) {
-        var clickedButID = $(this).attr("id"); //saveprocess, createRevision, createRevisionBut
-        event.preventDefault();
+    const saveProcessModal = function(saveButton, callback) {
+        //clickedButID = saveprocess, createRevision, createRevisionBut, saveProcessTest
+        var clickedButID = saveButton.attr("id");
         var savetype = $('#mIdPro').val();
         $('#permsPro').removeAttr('disabled');
         var perms = $('#permsPro').val();
@@ -2788,10 +2802,14 @@ $(document).ready(function() {
                         var startPoint = 5; //first object in data array where inputparameters starts.
                         addProParatoDB(data, startPoint, process_id, perms, group);
                         refreshDataset();
+
                         if (clickedButID !== "saveProcessTest") {
                             $('#addProcessModal').modal('hide');
                         } else {
                             toastr.success("Changes saved.");
+                        }
+                        if (callback && typeof callback === "function") {
+                            callback();
                         }
                     },
                     error: function(errorThrown) {
@@ -2890,6 +2908,9 @@ $(document).ready(function() {
                                 $('#addProcessModal').modal('hide');
                             } else {
                                 toastr.success("Changes saved.");
+                            }
+                            if (callback && typeof callback === "function") {
+                                callback();
                             }
                         },
                         error: function(errorThrown) {
@@ -2994,6 +3015,9 @@ $(document).ready(function() {
                                 } else {
                                     toastr.success("Changes saved.");
                                 }
+                                if (callback && typeof callback === "function") {
+                                    callback();
+                                }
                             },
                             error: function(errorThrown) {
                                 toastr.error("Error occured.");
@@ -3074,6 +3098,9 @@ $(document).ready(function() {
                                     var startPoint = 6; //first object in data array where inputparameters starts.
                                     addProParatoDBbyRev(data, startPoint, newProcess_id, "3", group);
                                     refreshDataset();
+                                    if (callback && typeof callback === "function") {
+                                        callback();
+                                    }
                                     $('#addProcessModal').modal('hide');
                                 },
                                 error: function(errorThrown) {
@@ -3088,7 +3115,7 @@ $(document).ready(function() {
             }
         }
         // B) Edit Process Ends----
-    });
+    };
     //insert dropdown, textbox and 'remove button' for each parameters
     $(function() {
         $(document).on('change', '.mParChange', function() {

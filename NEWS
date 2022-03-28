@@ -1,3 +1,11 @@
+28.03.2021 Version 1.2.97
+Channel creation method fixed for multiple optional inputs.
+Rmarkdown module updated to prevent writing on original pipeline file. 
+Process test bug fixed for initial execution.
+Process test run triggers saving process. 
+Paired channel creation error fixed for process tests.
+
+
 23.03.2021 Version 1.2.96
 Bug fixed in the shared projects table.
 

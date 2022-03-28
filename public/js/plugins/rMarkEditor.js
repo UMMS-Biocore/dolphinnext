@@ -2,8 +2,8 @@
 // --rMarkEditor jquery plugin --
 //################################
 
-(function ($) {
-    $.fn.rMarkEditor = function (options) {
+(function($) {
+    $.fn.rMarkEditor = function(options) {
         var settings = $.extend({
             // default values.
             height: "500px",
@@ -13,20 +13,20 @@
         elems.css("width", "100%")
         elems.css("height", "100%")
         var elemsID = $(this).attr("id");
-        var getEditorIconDiv = function () {
+        var getEditorIconDiv = function() {
             var rmarkeditorrun = "";
             var rmarkeditorsaveas = "";
             var rmarkeditorsave = "";
-            var rmarkeditorsett ="";
-            if (settings.ajax.editable){
+            var rmarkeditorsett = "";
+            if (settings.ajax.editable) {
                 rmarkeditorrun = `<li role="presentation"><a class="rmarkeditorrun" data-toggle="tooltip" data-placement="bottom" data-original-title="Run Script"><i style="font-size: 18px;" class="fa fa-play"></i></a></li>`;
                 rmarkeditorsaveas = `<li role="presentation"><a class="rmarkeditorsaveas" data-toggle="tooltip" data-placement="bottom" data-original-title="Save As"><span class="glyphicon-stack"><i class="fa fa-pencil glyphicon-stack-3x"></i><i style="font-size: 18px;" class="fa fa-save glyphicon-stack-1x"></i></span></a></li>`;
                 rmarkeditorsave = `<li role="presentation"><a class="rmarkeditorsave" data-toggle="tooltip" data-placement="bottom" data-original-title="Save"><i style="font-size: 18px;" class="fa fa-save"></i></a></li>`;
-                rmarkeditorsett = `<li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>`; 
+                rmarkeditorsett = `<li role="presentation"><a class="rmarkeditorsett" data-toggle="tooltip" data-placement="bottom" data-original-title="Settings"><i style="font-size: 18px;" class="fa fa-gear"></i></a></li>`;
             }
-            return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">`+rmarkeditorrun+rmarkeditorsaveas+rmarkeditorsave+rmarkeditorsett+`</ul>`
+            return `<ul style="float:inherit" class="nav nav-pills rmarkeditor">` + rmarkeditorrun + rmarkeditorsaveas + rmarkeditorsave + rmarkeditorsett + `</ul>`
         }
-        var getReportIconDiv = function () {
+        var getReportIconDiv = function() {
             return `<ul style="float:inherit"  class="nav nav-pills rmarkeditor">
 <li role="presentation"><a class="rmarkeditorlink" data-toggle="tooltip" data-placement="bottom" data-original-title="Open Report in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>
 <li role="presentation"><a class="rmarkeditorfull" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>
@@ -49,6 +49,7 @@
 <h4 class="modal-title">Save</h4>
 </div>
 <div class="modal-body">
+<p id="rMarkRenameText"></p>
 <form style="padding-right:10px;" class="form-horizontal">
 <div class="form-group">
 <label class="col-sm-3 control-label">File Name</label>
@@ -121,7 +122,7 @@
 </div>`;
 
 
-        var getDiv = function (settings, outputHtml) {
+        var getDiv = function(settings, outputHtml) {
             var id = "rMarkEditor"
             if (!outputHtml || outputHtml == null) {
                 outputHtml = ""
@@ -136,7 +137,7 @@
             var reportDiv = '<div id="' + elemsID + '-report" style="float:left; height:' + settings.height + '; width:' + settings.reportWidth + ';"><iframe style="width:100%; height:100%"' + outputHtml + '></iframe></div>';
             return reporticonBar + editoriconBar + editorDiv + reportDiv
         }
-        var createEditor = function (settings) {
+        var createEditor = function(settings) {
             var editorId = elemsID + "-editor";
             window[editorId] = ace.edit(editorId);
             window[editorId].setTheme("ace/theme/" + settings.theme);
@@ -145,7 +146,7 @@
             window[editorId].$blockScrolling = Infinity;
             window[editorId].setValue(settings.ajax.text);
         }
-        var createModal = function () {
+        var createModal = function() {
             if (document.getElementById("rMarkSett") === null) {
                 $('body').append(settingsModal);
             }
@@ -157,7 +158,7 @@
             }
         }
 
-        var progress = function (value) {
+        var progress = function(value) {
             var width; //percent
             var rate = 5;
             var n = 0;
@@ -166,7 +167,7 @@
             if (value) {
                 width = value;
                 if (width == 100) {
-                    setTimeout(function () { bar.width(0) }, 300);
+                    setTimeout(function() { bar.width(0) }, 300);
                 }
                 frame()
             } else {
@@ -198,7 +199,7 @@
 
 
 
-        var getFileName = function () {
+        var getFileName = function() {
             var res = { filename: "", rest: "" };
             var filePath = elems.attr("filePath")
             var split = filePath.split("/")
@@ -206,7 +207,7 @@
             res.rest = split.slice(0, -1).join('/');
             return res
         }
-        var saveCommand = function (editorId, filename) {
+        var saveCommand = function(editorId, filename) {
             var obj = getFileName();
             var newPath = obj.rest + "/" + filename
             var text = window[editorId].getValue();
@@ -216,23 +217,40 @@
             return saveData
         }
 
-        var saveRmd = function (editorId, type) {
+        var saveRmd = async function(editorId, type) {
             var obj = getFileName();
-            var newPath = obj.rest + "/" + obj.filename
+            var run_log_uuid = $("#runVerLog").val();
+            var unlockedFile = "pubweb/" + obj.rest + "/." + obj.filename + ".UNLOCKED";
+            // allow save on existing when checkUnlockedFile === 1
+            var checkUnlockedFile = await doAjax({
+                p: "checkFileExist",
+                location: unlockedFile,
+                uuid: run_log_uuid
+            });
+
             //check if readonly
-            if (elems.attr("read_only") || type == "saveas") {
+            if (type == "saveas") {
                 //ask new name  
+                $("#rMarkRenameText").text("");
                 $("#rMarkRename").attr("filename", obj.filename)
                 $("#rMarkRename").modal("show");
-            } else {
-                var saveData = saveCommand(editorId, obj.filename)
-                if (saveData) {
-                    updateLogText("All changes saved.", "clean")
+            } else if (type == "save") {
+                if (checkUnlockedFile === 1) {
+                    var saveData = saveCommand(editorId, obj.filename)
+                    if (saveData) {
+                        updateLogText("All changes saved.", "clean")
+                    }
+                } else {
+                    //ask new name  for saveas
+                    $("#rMarkRenameText").text("Modification on the original file is not allowed. Please enter a new name to save your changes into a new file.")
+                    $("#rMarkRename").attr("filename", obj.filename)
+                    $("#rMarkRename").modal("show");
                 }
+
             }
         }
 
-        var openBlankPage = function (editorId) {
+        var openBlankPage = function(editorId) {
             var obj = getFileName();
             var newPath = obj.rest + "/" + obj.filename
             var url = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.tmp/" + settings.ajax.filename + ".html"
@@ -240,7 +258,7 @@
             w.location = url;
         }
 
-        var toogleFullSize = function (editorId, type) {
+        var toogleFullSize = function(editorId, type) {
             if (type == "expand") {
                 var featList = ["z-index", "height", "position", "top", "left", "background"]
                 var newValue = ["1049", "100%", "fixed", "0", "0", "white"]
@@ -261,12 +279,12 @@
                 window[elemsID + '-editor'].resize();
             }
             //apply css obj
-            $.each(newCSS, function (el) {
+            $.each(newCSS, function(el) {
                 elems.css(el, newCSS[el])
             });
         }
 
-        var ajaxRq = function (settings, data) {
+        var ajaxRq = function(settings, data) {
             var ret = null;
             $.ajax({
                 type: "POST",
@@ -274,10 +292,10 @@
                 data: data,
                 async: false,
                 cache: false,
-                success: function (results) {
+                success: function(results) {
                     ret = results;
                 },
-                error: function (jqXHR, exception) {
+                error: function(jqXHR, exception) {
                     console.log("#Error:")
                     console.log(jqXHR.status)
                     console.log(exception)
@@ -288,7 +306,7 @@
             return ret
         }
 
-        var callback = function (settings, tmpPath, orgPath, pid, type) {
+        var callback = function(settings, tmpPath, orgPath, pid, type) {
             if (tmpPath && orgPath) {
                 //move tmp path to original path
                 var format = ""
@@ -359,7 +377,7 @@
             }
         }
 
-        var downloadText = function (text, filename) {
+        var downloadText = function(text, filename) {
             var element = document.createElement('a');
             element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
             element.setAttribute('download', filename);
@@ -369,40 +387,40 @@
             document.body.removeChild(element);
         }
 
-        var downpdf = function (editorId) {
+        var downpdf = function(editorId) {
             var text = window[editorId].getValue();
             callData(text, settings, "rmdpdf", callback);
         }
 
-        var downRmd = function (editorId) {
+        var downRmd = function(editorId) {
             var text = window[editorId].getValue();
             var filename = elems.attr("filename")
             downloadText(text, filename)
         }
 
-        var update = function (editorId) {
+        var update = function(editorId) {
             var text = window[editorId].getValue();
             callData(text, settings, "rmdtext", callback);
         }
         var timeoutId = 0;
-        var autoUpdate = function (editorId) {
+        var autoUpdate = function(editorId) {
             if (timeoutId) clearTimeout(timeoutId);
-            timeoutId = setTimeout(function () { update(editorId) }, 2000);
+            timeoutId = setTimeout(function() { update(editorId) }, 2000);
         }
 
-        var checkAutoUpdateOut = function (editorId) {
+        var checkAutoUpdateOut = function(editorId) {
             if ($('input.aUpdateOut').is(":checked")) {
-                $('#' + editorId).keyup(function () {
+                $('#' + editorId).keyup(function() {
                     autoUpdate(editorId);
                 });
             } else {
                 $('#' + editorId).off("keyup");
             }
         }
-        var checkAutoSave = function (editorId) {
+        var checkAutoSave = function(editorId) {
             if ($('input.aSave').is(":checked")) {
-                window['interval_aSave_' + editorId] = setInterval(function () {
-                    saveRmd(editorId, "autosave");
+                window['interval_aSave_' + editorId] = setInterval(async function() {
+                    await saveRmd(editorId, "save");
                 }, 30000);
             } else {
                 if (window['interval_aSave_' + editorId]) {
@@ -411,57 +429,57 @@
             }
         }
 
-        var eventHandler = function (settings) {
+        var eventHandler = function(settings) {
             var editorId = elemsID + "-editor";
 
-            $(function () {
+            $(function() {
                 $('[data-toggle="tooltip"]').tooltip();
             });
-            $(function () {
-                $('a.rmarkeditorrun').on('click', function (event) {
+            $(function() {
+                $('a.rmarkeditorrun').on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         update(editorId);
                     }
                 });
-                $('a.rmarkreportdownpdf').on('click', function (event) {
+                $('a.rmarkreportdownpdf').on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         event.preventDefault();
                         downpdf(editorId);
                     }
                 });
-                $('a.rmarkeditordownrmd').on('click', function (event) {
+                $('a.rmarkeditordownrmd').on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         event.preventDefault();
                         downRmd(editorId);
                     }
                 });
             });
-            $(function () {
+            $(function() {
                 //check current status on first creation
                 checkAutoUpdateOut(editorId)
-                $(document).on('change', 'input.aUpdateOut', function (event) {
+                $(document).on('change', 'input.aUpdateOut', function(event) {
                     checkAutoUpdateOut(editorId)
                 });
                 checkAutoSave(editorId)
-                $(document).on('change', 'input.aSave', function (event) {
+                $(document).on('change', 'input.aSave', function(event) {
                     checkAutoSave(editorId)
                 });
             });
-            $(function () {
-                $('a.rmarkeditorsave').on('click', function (event) {
+            $(function() {
+                $('a.rmarkeditorsave').on('click', async function(event) {
                     if ($(this).parents("#" + elemsID).length) {
-                        saveRmd(editorId, "save")
+                        await saveRmd(editorId, "save")
                     }
                 });
-                $('a.rmarkeditorsaveas').on('click', function (event) {
+                $('a.rmarkeditorsaveas').on('click', async function(event) {
                     if ($(this).parents("#" + elemsID).length) {
-                        saveRmd(editorId, "saveas")
+                        await saveRmd(editorId, "saveas")
                     }
                 });
-                $('a.rmarkeditorsett').on('click', function (event) {
+                $('a.rmarkeditorsett').on('click', function(event) {
                     $("#rMarkSett").modal("show");
                 });
-                $('a.rmarkeditorfull').on('click', function (event) {
+                $('a.rmarkeditorfull').on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         var iconClass = $(this).children().attr("class");
                         if (iconClass == "fa fa-expand") {
@@ -473,7 +491,7 @@
                         }
                     }
                 });
-                $('a.rmarkeditorlink').on('click', function (event) {
+                $('a.rmarkeditorlink').on('click', function(event) {
                     if ($(this).parents("#" + elemsID).length) {
                         openBlankPage(editorId)
                     }
@@ -481,8 +499,8 @@
 
 
             });
-            $(function () {
-                $('#rMarkRename').on('show.bs.modal', function (event) {
+            $(function() {
+                $('#rMarkRename').on('show.bs.modal', function(event) {
                     var divOldName = elems.attr("filename")
                     var modalOldName = $("#rMarkRename").attr("filename")
                     if (divOldName === modalOldName) {
@@ -491,24 +509,38 @@
                         }
                     }
                 });
-                $("#rMarkRename").on('click', '.save', function (event) {
+                $("#rMarkRename").on('click', '.save', async function(event) {
                     var divOldName = elems.attr("filename")
                     var divOldDir = elems.attr("dir")
-                    var modalOldName = $("#rMarkRename").attr("filename")
+                    var modalOldName = $("#rMarkRename").attr("filename");
+                    var run_log_uuid = $("#runVerLog").val();
+
                     if (divOldName === modalOldName) {
                         if ($('#rMarkRename').find("input.rmarkfilename")) {
+                            var obj = getFileName();
                             var newName = $($('#rMarkRename').find("input.rmarkfilename")[0]).val();
-                            var saveData = saveCommand(editorId, newName)
+                            var targetFile = "pubweb/" + obj.rest + "/" + newName;
+                            // 1. check if file already exist -> give another warning.
+                            var checkFile = await doAjax({
+                                p: "checkFileExist",
+                                location: targetFile,
+                                uuid: run_log_uuid
+                            });
+                            if (checkFile === 1) {
+                                $("#rMarkInfoText").text(`The file ${newName} already exists. Please enter a new filename.`)
+                                $("#rMarkInfo").modal("show");
+                                return;
+                            }
+                            //2. allow saving file 
+                            // first create unlocked file
+                            var unlockedFile = "pubweb/" + obj.rest + "/." + newName + ".UNLOCKED";
+                            var saveData = getValues({ p: "saveFileContent", text: "", uuid: run_log_uuid, filename: unlockedFile });
+                            var saveData = saveCommand(editorId, newName);
                             // remove "-editor" + divOldName.length
-                            var dynamicRowID = editorId.substring(0, editorId.length - (1+ "-editor".length + divOldName.length));
-                            console.log(editorId)
-                            console.log(newName)
-                            console.log(divOldName)
-                            console.log(divOldDir)
-                            console.log(dynamicRowID)
+                            var dynamicRowID = editorId.substring(0, editorId.length - (1 + "-editor".length + divOldName.length));
                             // editor id: g-161_rmarkdown_1_rmd-editor
                             // g-161_rmarkdown
-                            $("#reportRows").dynamicRows("fnRefresh", {type:"columnsBody", id:dynamicRowID})
+                            $("#reportRows").dynamicRows("fnRefresh", { type: "columnsBody", id: dynamicRowID })
                             var newFilepath = divOldDir + newName;
                             var allfiles = elems.closest("div.panel-body").find("a[filepath]")
                             for (var i = 0; i < allfiles.length; i++) {
@@ -527,27 +559,27 @@
         }
 
 
-        var checkUrl = function (url) {
+        var checkUrl = function(url) {
             var ret = null;
             $.ajax({
                 url: url,
                 type: 'GET',
                 async: false,
                 cache: false,
-                error: function () {
+                error: function() {
                     ret = false;
                 },
-                success: function () {
+                success: function() {
                     ret = true;
                 }
             });
             return ret;
         }
 
-        var updateLogText = function (text, type) {
+        var updateLogText = function(text, type) {
             $("#" + elemsID + '-log').text(text);
             if (type == "clean") {
-                setTimeout(function () {
+                setTimeout(function() {
                     if ($("#" + elemsID + '-log').text() == text) {
                         $("#" + elemsID + '-log').text("");
                     }
@@ -555,11 +587,11 @@
             }
         }
 
-        var getUrlContent = function (url) {
+        var getUrlContent = function(url) {
             return $.get(url);
         }
 
-        var getUrl = function (settings, type, callback, pid) {
+        var getUrl = function(settings, type, callback, pid) {
             if (window[elemsID + type]) {
                 return; // Don't allow click if already running.
             }
@@ -571,12 +603,12 @@
             }
             var orgPath = settings.ajax.pubWebPath + "/" + settings.ajax.uuid + "/pubweb/" + settings.ajax.dir + "/.tmp/" + settings.ajax.filename + format
             var tmpPath = orgPath + pid
-            window[elemsID + type] = setInterval(function () {
+            window[elemsID + type] = setInterval(function() {
                 var checkExistUrl = checkUrl(tmpPath)
                 if (!checkExistUrl) {
                     var checkExistError = checkUrl(orgPath + ".err" + pid)
                     if (checkExistError) {
-                        getUrlContent(orgPath + ".err" + pid).success(function (data) {
+                        getUrlContent(orgPath + ".err" + pid).success(function(data) {
                             if (data) {
                                 if (!$('#myModal').hasClass('in')) {
                                     $("#rMarkInfoText").text(data)
@@ -603,7 +635,7 @@
             }, 2000);
 
         }
-        var initialUrlCheck = function (settings, type) {
+        var initialUrlCheck = function(settings, type) {
             var format = ""
             if (type == "rmdtext") {
                 format = ".html"
@@ -620,7 +652,7 @@
             return checkExistUrl
         }
 
-        var callData = function (editText, settings, type, callback) {
+        var callData = function(editText, settings, type, callback) {
             if (window[elemsID + type]) {
                 return; // Don't allow click if already running.
             }
@@ -641,13 +673,13 @@
                 },
                 async: false,
                 cache: false,
-                success: function (results) {
+                success: function(results) {
                     ret = results;
                     if (ret) {
                         getUrl(settings, type, callback, ret)
                     }
                 },
-                error: function (jqXHR, exception) {
+                error: function(jqXHR, exception) {
                     console.log("#Error:")
                     console.log(jqXHR.status)
                     console.log(exception)
