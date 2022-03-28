@@ -1795,6 +1795,10 @@ if ($p == "publishGithub") {
     $dir = $_REQUEST['dir'];
     $filename = $_REQUEST['filename'];
     $data = $db->callDebrowser($uuid, $dir, $filename);
+} else if ($p == "checkFileExist") {
+    $location = $_REQUEST['location'];
+    $uuid = $_REQUEST['uuid'];
+    $data = $db->checkFileExist($location, $uuid, $ownerID);
 } else if ($p == "moveFile") {
     $from = $_REQUEST['from'];
     $to = $_REQUEST['to'];
