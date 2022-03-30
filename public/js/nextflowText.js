@@ -1061,21 +1061,27 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                 var fNode = "";
                 var sNode = "";
                 [fNode, sNode] = splitEdges(allEdges[e]);
+                var node1 = "";
+                var node2 = "";
                 //output node clicked first
                 if (fNode.indexOf('o') > -1) {
-                    var inputIdSplit = fNode.split("-")
-                    var filteredParamData = parametersData.filter(function(el) { return el.id == inputIdSplit[3] })[0];
-                    var genParName = filteredParamData.name;
-                    var qualNode = filteredParamData.qualifier;
-                    var channelName = gFormat(document.getElementById(fNode).getAttribute("parentG")) + "_" + genParName + "_" + gFormat(document.getElementById(sNode).getAttribute("parentG"));
+                    node1 = fNode;
+                    node2 = sNode;
                 } else {
-                    var inputIdSplit = sNode.split("-");
-                    var filteredParamData = parametersData.filter(function(el) { return el.id == inputIdSplit[3] })[0];
-                    var genParName = filteredParamData.name;
-                    var qualNode = filteredParamData.qualifier;
-                    var channelName = gFormat(document.getElementById(sNode).getAttribute("parentG")) + "_" + genParName + "_" + gFormat(document.getElementById(fNode).getAttribute("parentG"));
-
+                    node1 = sNode;
+                    node2 = fNode;
                 }
+                // find connected process of the input and find oIndex of the output process. 
+                // oIndex prevents duplicate channel error
+                var connectedOGnum = document.getElementById(node1).getAttribute("parentG");
+                var connectedOList = d3.select("#" + connectedOGnum).selectAll("circle[kind ='output']")[0]
+                var oIndex = connectedOList.findIndex(x => $(x).attr("id") === node1);
+                if (oIndex === -1) oIndex = ""
+                var inputIdSplit = node1.split("-")
+                var filteredParamData = parametersData.filter(function(el) { return el.id == inputIdSplit[3] })[0];
+                var genParName = filteredParamData.name;
+                var channelName = gFormat(document.getElementById(node1).getAttribute("parentG")) + "_" + genParName + oIndex + "_" + gFormat(document.getElementById(node2).getAttribute("parentG"));
+
                 whenInLib = addChannelName(whenCond, whenInLib, file_type, channelName, param_name, qual)
                 if (inputOptional == "true") {
                     optionalInAr.push(channelName)
@@ -1118,8 +1124,9 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         }
         genParName = parametersData.filter(function(el) {
             return el.id == outputIdSplit[3]
-        })[0].name
-        channelName = gFormat(document.getElementById(Oid).getAttribute("parentG")) + "_" + genParName;
+        })[0].name;
+        // +o prevents duplicate channel name error
+        channelName = gFormat(document.getElementById(Oid).getAttribute("parentG")) + "_" + genParName + o;
         var channelNameAll = "";
         for (var c = 0; c < allEdges.length; c++) {
             if (allEdges[c].indexOf(Oid) == 0) {
