@@ -1,3 +1,7 @@
+29.03.2021 Version 1.3.00
+Single file upload error fixed for filenames that have spaces. 
+Duplicate channel error fixed in nextflow.nf file.
+
 29.03.2021 Version 1.2.99
 Process test button removed if user not the owner of the process.
 Process saving removed from process test button.

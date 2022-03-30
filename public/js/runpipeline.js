@@ -10086,6 +10086,10 @@ $(document).ready(async function() {
         window.uploadSingleFile = {};
         window.uploadSingleFile.filename = "";
         Dropzone.options.uploadSingleFile = {
+            renameFile: function(file) {
+                let newName = file.name.replace(/\s/g, '_')
+                return newName;
+            },
             paramName: "single_file", // The name that will be used to transfer the file
             maxFilesize: 200, // MB
             maxFiles: 1,
@@ -10125,7 +10129,8 @@ $(document).ready(async function() {
             success: function(file, response) {
                 var target_dir = $("#rOut_dir").val()
                 target_dir = target_dir.replace(/\/$/, '');
-                var target_file = `${target_dir}/run${project_pipeline_id}/upload/${file.name}`
+                let newName = file.name.replace(/\s/g, '_')
+                var target_file = `${target_dir}/run${project_pipeline_id}/upload/${newName}`
                 $("#singleFilePath").val(target_file)
                 return file.previewElement.classList.add("dz-success");
             }
