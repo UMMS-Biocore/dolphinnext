@@ -8806,8 +8806,10 @@ function toogleRunInputs(type) {
     $("#advancedTab :input").prop("disabled", bool);
     $(".ui-dialog :input")
         .not(".ui-dialog-buttonpane :input")
+        .not(".ui-dialog-titlebar-close")
         .prop("disabled", bool);
 }
+
 
 $(function() {
     function reloadReportRows() {

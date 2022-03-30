@@ -518,7 +518,7 @@
                     if (divOldName === modalOldName) {
                         if ($('#rMarkRename').find("input.rmarkfilename")) {
                             var obj = getFileName();
-                            var newName = $($('#rMarkRename').find("input.rmarkfilename")[0]).val();
+                            var newName = $.trim($($('#rMarkRename').find("input.rmarkfilename")[0]).val());
                             var targetFile = "pubweb/" + obj.rest + "/" + newName;
                             // 1. check if file already exist -> give another warning.
                             var checkFile = await doAjax({

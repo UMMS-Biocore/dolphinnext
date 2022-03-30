@@ -1,8 +1,11 @@
 <?php
 if (!isset($_SESSION) || !is_array($_SESSION)) session_start();
 $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
-if ($ownerID != ''){$login = 1;} 
-else { $login = 0;}
+if ($ownerID != '') {
+    $login = 1;
+} else {
+    $login = 0;
+}
 session_write_close();
 ?>
 
@@ -12,32 +15,34 @@ session_write_close();
         <div class="row" style="margin-left:0px; margin-right:0px;">
             <div id="pipeGroupFloatLeft" style="float:left;">
                 <i class="fa fa-spinner " style="margin-left:0px; margin-right:0px;"></i> Pipeline:
-                <input class="box-dynamic width-dynamic" type="text" pipelineid="<?php if ($id != "0") {echo $id;}?>" name="pipelineTitle" autocomplete="off" placeholder="Enter Pipeline Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="pipeline-title"><span class="width-dynamic" style="display:none"></span></input>
+                <input class="box-dynamic width-dynamic" type="text" pipelineid="<?php if ($id != "0") {
+                                                                                        echo $id;
+                                                                                    } ?>" name="pipelineTitle" autocomplete="off" placeholder="Enter Pipeline Name" style="margin-left:0px; font-size: large; font-style:italic; align-self:center; max-width: 500px;" title="Rename" data-placement="bottom" data-toggle="tooltip" num="" id="pipeline-title"><span class="width-dynamic" style="display:none"></span></input>
 
                 <button type="submit" id="savePipeline" class="btn" data-backdrop="false" onclick="save(&#34;default&#34;)" style="background:none; margin:0px; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Save Pipeline"><i class="fa fa-save" style="font-size: 17px;"></i></a></button>
 
                 <button type="button" id="newRevPipeline" class="btn" data-backdrop="false" onclick="save(&#34;rev&#34;)" style="background:none; margin:0px; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Create Revision"><i class="glyphicon glyphicon-open-file" style="font-size: 16px; padding-top:3px;"></i></a></button>
-                <?php  
-                if ($login == 1 ){
-                  echo '<button type="button" id="dupPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;"> <a data-toggle="tooltip" data-placement="bottom" data-original-title="Duplicate Pipeline"> <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
+                <?php
+                if ($login == 1) {
+                    echo '<button type="button" id="dupPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;"> <a data-toggle="tooltip" data-placement="bottom" data-original-title="Duplicate Pipeline"> <i class="fa fa-copy" style="font-size: 16px;"></i></a></button>
                   <button type="button" id="downPipeline" class="btn" name="button" data-backdrop="false" style="background:none;  margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Download Pipeline">
-                        <i class="glyphicon glyphicon-save"></i></a></button>';  
+                        <i class="glyphicon glyphicon-save"></i></a></button>';
                 }
                 ?>
-                
+
                 <button type="button" id="importPipeline" class="btn" name="button" data-toggle="modal" data-target="#importModal" data-backdrop="false" style="background:none;  display:none; margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Import Pipeline"><i class="glyphicon glyphicon-import"></i></a></button>
                 <button type="button" id="exportPipeline" class="btn" name="button" onclick="download(exportPipeline(),&quot;exportPipe&quot;)" data-backdrop="false" style="background:none;  margin:0px; padding:0px; display:none;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Export Pipeline"><i class="glyphicon glyphicon-export"></i></a></button>
-                <?php  
-                if ($login == 1 ){
-                echo '<button type="button" id="savePDF" class="btn" name="button" data-backdrop="false" style="background:none;  margin:0px; padding:0px; padding-bottom:2px;">
-                    <a href="#" download data-toggle="tooltip" data-placement="bottom" data-original-title="Download Workflow as PDF" onclick="return downloadPdf()">
-                        <i class="fa fa-file-pdf-o"></i>
-                    </a>
-                </button>';
-                }
+                <?php
+                // if ($login == 1 ){
+                // echo '<button type="button" id="savePDF" class="btn" name="button" data-backdrop="false" style="background:none;  margin:0px; padding:0px; padding-bottom:2px;">
+                //     <a href="#" download data-toggle="tooltip" data-placement="bottom" data-original-title="Download Workflow as PDF" onclick="return downloadPdf()">
+                //         <i class="fa fa-file-pdf-o"></i>
+                //     </a>
+                // </button>';
+                // }
                 ?>
                 <button type="button" id="gitConsoleBtn" class="btn" name="button" data-backdrop="false" style="background:none; margin:0px; padding:0px; padding-bottom:2px;" data-toggle="modal" data-target="#gitConsoleModal">
                     <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Git Console"><span><i class="fa fa-git"></i></span></a>
@@ -58,8 +63,8 @@ session_write_close();
                     <button type="button" class="btn btn-default btn-sm" style="background-color:white; font-size:11px; padding:8px; padding-left:10px; padding-right:10px; margin-bottom:3px;" id="pipeGroupDel" data-toggle="modal" data-target="#pipeDelGroupModal" data-backdrop="false"><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Delete Pipeline Menu Group"><span><i class="fa fa-trash-o"></i></span></a></button>
                 </div>
             </div>
-            <?php  
-                if ($login == 1 ){
+            <?php
+            if ($login == 1) {
                 echo '<div id="pipeRunDiv" style="float:right; margin-right:5px;" class="btn-group">
                 <button class="btn btn-success" type="button" id="pipeRun" data-toggle="modal" href="#mRun" style="vertical-align:middle;">Run</button>
                 <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
@@ -71,7 +76,7 @@ session_write_close();
                     <li><a href="#mExistRun" data-toggle="modal">Existing Runs</a></li>
                 </ul>
             </div>';
-                }
+            }
             ?>
             <div id="pipeRevSpan" style="margin-right:5px; width:115px; float:right;">
                 <select id="pipeRev" class="fbtn btn-default form-control mPipeChange" prev="-1" name="pipeline_rev_id"></select>
@@ -273,7 +278,7 @@ session_write_close();
                         <span id="releaseValFinal"></span>
                         <span>
                             <a id="getTokenLink" style="display:none;" token="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="Get Link <br> Only people who have the link can access the pipeline until release date"><i style="font-size: 15px;" class="fa fa-chain"></i></a>
-                            <div id="showTokenLink" style="display:none;"  class="col-md-6 input-group">
+                            <div id="showTokenLink" style="display:none;" class="col-md-6 input-group">
                                 <input readonly id="tokenInput" type="text" class="form-control">
                                 <div id="copyToken" class="input-group-addon">
                                     <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Copy Link to Clipboard"><span><i class="glyphicon glyphicon-copy"></i></span></a>
