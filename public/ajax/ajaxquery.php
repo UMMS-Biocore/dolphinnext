@@ -1736,10 +1736,20 @@ if ($p == "publishGithub") {
         header("HTTP/1.0 400 User session ended");
         exit;
     }
+
     if (!empty($id)) {
-        $db->updateAllProcessGroupByGid($process_gid, $process_group_id, $ownerID);
-        $db->updateAllProcessNameByGid($process_gid, $name, $ownerID);
-        $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
+        //don't allow to update if user not own the process.
+        $permCheck = 1;
+        $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.process WHERE id='$id'");
+        if ($userRole != "admin") {
+            $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+        }
+
+        if (!empty($permCheck)) {
+            $db->updateAllProcessGroupByGid($process_gid, $process_group_id, $ownerID);
+            $db->updateAllProcessNameByGid($process_gid, $name, $ownerID);
+            $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
+        }
     } else {
         $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
         $idArray = json_decode($data, true);

@@ -609,40 +609,41 @@ class dbfuncs
         } else {
             $dolphin_path_real_coll = $dolphin_path_real;
         }
-
-        $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
         $next_inputs = "";
-        if (!empty($allinputs)) {
-            $next_inputs = "params {\n";
-            foreach ($allinputs as $inputitem) :
-                $inputName = $inputitem->{'name'};
-                $collection_id = $inputitem->{'collection_id'};
-                if (!empty($collection_id)) {
-                    $inputsPath = "$dolphin_path_real_coll/inputs/$collection_id";
-                    $allfiles = json_decode($this->getCollectionFiles($collection_id, $ownerID));
-                    $reg = "*";
-                    if (count($allfiles) == 1) {
-                        $reg = $allfiles[0]->{'name'};
+        if (!empty($project_pipeline_id)) {
+            $allinputs = json_decode($this->getProjectPipelineInputs($project_pipeline_id, $ownerID));
+            if (!empty($allinputs)) {
+                $next_inputs = "params {\n";
+                foreach ($allinputs as $inputitem) :
+                    $inputName = $inputitem->{'name'};
+                    $collection_id = $inputitem->{'collection_id'};
+                    if (!empty($collection_id)) {
+                        $inputsPath = "$dolphin_path_real_coll/inputs/$collection_id";
+                        $allfiles = json_decode($this->getCollectionFiles($collection_id, $ownerID));
+                        $reg = "*";
+                        if (count($allfiles) == 1) {
+                            $reg = $allfiles[0]->{'name'};
+                        }
+                        $file_type = $allfiles[0]->{'file_type'};
+                        $collection_type = $allfiles[0]->{'collection_type'};
+                        if ($collection_type == "single") {
+                            $inputName = "$inputsPath/$reg.$file_type";
+                        } else if ($collection_type == "pair") {
+                            $inputName = "$inputsPath/$reg.{R1,R2}.$file_type";
+                        } else if ($collection_type == "triple") {
+                            $inputName = "$inputsPath/$reg.{R1,R2,R3}.$file_type";
+                        } else if ($collection_type == "quadruple") {
+                            $inputName = "$inputsPath/$reg.{R1,R2,R3,R4}.$file_type";
+                        }
                     }
-                    $file_type = $allfiles[0]->{'file_type'};
-                    $collection_type = $allfiles[0]->{'collection_type'};
-                    if ($collection_type == "single") {
-                        $inputName = "$inputsPath/$reg.$file_type";
-                    } else if ($collection_type == "pair") {
-                        $inputName = "$inputsPath/$reg.{R1,R2}.$file_type";
-                    } else if ($collection_type == "triple") {
-                        $inputName = "$inputsPath/$reg.{R1,R2,R3}.$file_type";
-                    } else if ($collection_type == "quadruple") {
-                        $inputName = "$inputsPath/$reg.{R1,R2,R3,R4}.$file_type";
+                    //if profile variable not defined in the profile then use run_work directory (eg. ${params.DOWNDIR}) 
+                    if (preg_match('/\$\{.*\}/U', $inputName)) {
+                        $inputName = preg_replace('/\$\{.*\}/U', "$dolphin_path_real/downloads", $inputName);
                     }
-                }
-                //if profile variable not defined in the profile then use run_work directory (eg. ${params.DOWNDIR}) 
-                if (preg_match('/\$\{.*\}/U', $inputName)) {
-                    $inputName = preg_replace('/\$\{.*\}/U', "$dolphin_path_real/downloads", $inputName);
-                }
-                $next_inputs .= "  " . $inputitem->{'given_name'} . " = '" . $inputName . "'\n";
-            endforeach;
-            $next_inputs .= "}\n";
+                    $next_inputs .= "  " . $inputitem->{'given_name'} . " = '" . $inputName . "'\n";
+                endforeach;
+                $next_inputs .= "}\n";
+            }
         }
         return $next_inputs;
     }
@@ -2200,13 +2201,17 @@ class dbfuncs
     function getInputParamContent($input, $inputParamName, $channelName, $mateExist)
     {
         $qualifier = $input["qualifier"];
-        $test = urldecode($input["test"]);
+        $test = trim(urldecode($input["test"]));
+        $firstChar = substr($test, 0, 1);
         $parameter_name = $input["parameter_name"];
         $input_name =  urldecode($input["name"]);
         $channelFormat = "";
         $secPartTemp = "";
         //check if input has glob(*,?{,}) characters -> use in the file section
         $checkRegex = false;
+
+
+
         if (preg_match('/(\{|\*|\?|\})/', $test)) $checkRegex = true;
         if ($qualifier === "file") {
             if ($checkRegex === false) {
@@ -2233,6 +2238,15 @@ class dbfuncs
                     $channelFormat = "f5";
                     $secPartTemp = "Channel.fromPath(params.{$inputParamName}, type: 'any').toSortedList().set{{$channelName}}\n";
                 }
+            }
+            if ($firstChar == "[") {
+                // check if any file path defined as test value
+                // params.input2 = [["file1", "contr", ["/home/c_rep1.1.fastq","/home/c_rep1.2.fastq"]]]
+                // Channel.from(params.input2).map{ row-> tuple(row[0], row[1], tuple(file(row[2][0]), file(row[2][1])) ) }.set{channel2}
+                // params.input2 = [["file1", "contr", "/home/c_rep1.2.fastq"]]
+                // Channel.from(params.input2).map{ row-> tuple(row[0], row[1], file(row[2]))}.set{channel2}
+                // Channel.from(params.input2).map{ row->  prepChannel(row) }.set{channel2}
+                $secPartTemp = "Channel.from(params.{$inputParamName}).map{ row-> prepChannel(row) }.set{{$channelName}}\n";
             }
         } else if ($qualifier === "val") {
             $channelFormat = "f6";
@@ -2279,6 +2293,19 @@ class dbfuncs
             $nextflow .= urldecode($pipe_header) . "\n\n";
         }
         // method: file-fromPath(''), value-(), set-of([1, 'alpha'], [2, 'beta']), each-[5,10]
+        $nextflow .= 'def prepChannel(row){
+            def ret = []
+            for(i in 0..row.size-1) {
+              if (row[i] instanceof String && (row[i].trim().substring(0, 1) == "/" || row[i].trim().substring(0, 3) == "s3:")){
+                  ret[i]= file(row[i])
+              } else if (row[i] instanceof List) {
+                  ret[i]= prepChannel(row[i])
+              } else {
+                  ret[i]= row[i]
+              }
+            }
+            return tuple(ret)
+          }' . "\n\n";
 
         //Input parameters and channels
         $inChn_firstPart = "";
@@ -2297,8 +2324,13 @@ class dbfuncs
                 $inputParamName = "mate";
             }
             $channelName = "channel{$num}";
-            $test = urldecode($inputs[$i]["test"]);
-            $inChn_firstPart .= "params.{$inputParamName} = \"{$test}\" \n";
+            $test = trim(urldecode($inputs[$i]["test"]));
+            $firstChar = substr($test, 0, 1);
+            if ($firstChar == "[") {
+                $inChn_firstPart .= "params.{$inputParamName} = [{$test}] \n";
+            } else {
+                $inChn_firstPart .= "params.{$inputParamName} = \"{$test}\" \n";
+            }
             $inChn_secondPart .= $this->getInputParamContent($inputs[$i], $inputParamName, $channelName, $mateExist);
         }
         $nextflow .= $inChn_firstPart . $inChn_secondPart . "\n";

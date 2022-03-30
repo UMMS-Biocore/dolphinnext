@@ -1,3 +1,11 @@
+29.03.2021 Version 1.2.99
+Process test button removed if user not the owner of the process.
+Process saving removed from process test button.
+Process test improved for qualifier set. Multiple values are supported within an array.
+
+28.03.2021 Version 1.2.98
+Minor bug fixed for nextflow.config file creation in the process test.
+
 28.03.2021 Version 1.2.97
 Channel creation method fixed for multiple optional inputs.
 Rmarkdown module updated to prevent writing on original pipeline file. 

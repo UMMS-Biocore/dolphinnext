@@ -458,7 +458,7 @@
                                                     <textarea readonly id="testrunLogArea" rows="10" style="overflow-y: scroll; min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea>
                                                 </div>
                                                 <div class="col-md-12">
-                                                    <div class="col-md-6" style="padding-left:0px;">
+                                                    <div class="col-md-6" style="padding-left:0px;" id="runEnvDiv">
                                                         <label>Run Environment </label>
                                                         <select id="test_env" style="width: 100%;" class="fbtn btn-default form-control" name="test_env">
                                                             <option value="" disabled selected>Choose environment </option>

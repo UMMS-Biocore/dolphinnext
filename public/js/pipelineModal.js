@@ -564,6 +564,13 @@ function loadSelectedProcess(selProcessId) {
         $('#createRevisionBut').css('display', "none");
         disableProModal(selProcessId);
     }
+    if (processOwn === "1") {
+        $('#pipeRunStatDiv').css('display', "inline");
+        $('#runEnvDiv').css('display', "inline");
+    } else {
+        $('#pipeRunStatDiv').css('display', "none");
+        $('#runEnvDiv').css('display', "none");
+    }
     return [showProcess.perms, processOwn];
 };
 
@@ -1242,7 +1249,7 @@ function disableProModal(selProcessId) {
     $('#createRevision').css('display', "none");
     $('#createRevisionBut').css('display', "none");
     $('#deleteRevision').css('display', "none");
-    $('#pipeRunStatDiv').css('display', "none");
+
 
 };
 
@@ -1528,29 +1535,29 @@ function getScriptEditor(editorId) {
 }
 
 
-setTimeout(function() { AddNamespace() }, 1000);
+// setTimeout(function() { AddNamespace() }, 1000);
 
-// to export d3 to pdf this is required
-function AddNamespace() {
-    var svg = jQuery('#container svg');
-    svg.attr("xmlns", "http://www.w3.org/2000/svg");
-}
+// // to export d3 to pdf this is required
+// function AddNamespace() {
+//     var svg = jQuery('#container svg');
+//     svg.attr("xmlns", "http://www.w3.org/2000/svg");
+// }
 // to export d3 to pdf
-function downloadPdf() {
-    var svg = jQuery('#container svg');
-    var svgWidth = parseInt(svg.width() * 0.264583333) + 30;
-    var svgHeight = parseInt(svg.height() * 0.264583333);
-    if (svgWidth < 160) {
-        svgWidth = 160;
-    }
-    if (svgHeight < 160) {
-        svgHeight = 160;
-    }
-    svgWidth = svgWidth.toString() + "mm";
-    svgHeight = svgHeight.toString() + "mm";
-    var filename = $('#pipeline-title').val()
-    return xepOnline.Formatter.Format('container', { filename: filename, pageWidth: svgWidth, pageHeight: svgHeight });
-}
+// function downloadPdf() {
+//     var svg = jQuery('#container svg');
+//     var svgWidth = parseInt(svg.width() * 0.264583333) + 30;
+//     var svgHeight = parseInt(svg.height() * 0.264583333);
+//     if (svgWidth < 160) {
+//         svgWidth = 160;
+//     }
+//     if (svgHeight < 160) {
+//         svgHeight = 160;
+//     }
+//     svgWidth = svgWidth.toString() + "mm";
+//     svgHeight = svgHeight.toString() + "mm";
+//     var filename = $('#pipeline-title').val()
+//     return xepOnline.Formatter.Format('container', { filename: filename, pageWidth: svgWidth, pageHeight: svgHeight });
+// }
 
 //export pipeline as .dn format
 function exportPipeline() {
@@ -1780,6 +1787,7 @@ async function terminateProjectPipe() {
             executor: executor,
         });
         console.log(terminateRun);
+        //
 
         var setStatus = await doAjax({
             p: "updateProcessRunStatus",
@@ -2637,14 +2645,40 @@ $(document).ready(function() {
 
     // test script
     $('#addProcessModal').on('click', '.testscript', function(event) {
+        event.preventDefault()
+        var selProcessId = $('#mIdPro').val();
+        var prodata = $('#addProcessModal').data("prodata")
+            // process already exists
+        if (prodata && selProcessId) {
+            var oldData = getValues({
+                p: "getProcessData",
+                "process_id": selProcessId
+            })[0];
+            var new_test_env = $("#test_env").val()
+            var new_test_work_dir = $("#test_work_dir").val()
+            if (new_test_env === oldData.test_env && new_test_work_dir === oldData.test_work_dir) {
+                testScriptModal()
+                return;
+            }
+        }
+
+
         const callback = function() {
+            var selProcessId = $('#mIdPro').val();
+            var processData = getValues({
+                p: "getProcessData",
+                "process_id": selProcessId
+            })[0];
+            $('#addProcessModal').removeData("prodata");
+            $('#addProcessModal').data("prodata", processData);
             testScriptModal()
+
         }
         const saveButton = $("#saveProcessTest")
         saveProcessModal(saveButton, callback);
+
     })
     const testScriptModal = () => {
-        event.preventDefault()
         var process_id = $('#mIdPro').val();
         var pipeline_id = $('#pipeline-title').attr('pipelineid');
         // data to send
@@ -2797,6 +2831,7 @@ $(document).ready(function() {
                     async: true,
                     success: function(s) {
                         var process_id = s.id;
+                        $('#mIdPro').val(process_id);
                         //add process link into sidebar menu
                         insertSidebarProcess("#side-" + proGroId, proName + '@' + process_id, proName);
                         var startPoint = 5; //first object in data array where inputparameters starts.
