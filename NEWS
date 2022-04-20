@@ -1,3 +1,8 @@
+20.04.2021 Version 1.3.01
+Input declarations belonging to headers/configs of modules will not be parsed.
+New DNEXT variables (DNEXT_PUBLISH_DIR, DNEXT_LAB, DNEXT_USERNAME, DNEXT_EMAIL) added for replacement. 
+New pipeline files (beforerun.sh and afterrun.sh) are supported.
+
 29.03.2021 Version 1.3.00
 Single file upload error fixed for filenames that have spaces. 
 Duplicate channel error fixed in nextflow.nf file.

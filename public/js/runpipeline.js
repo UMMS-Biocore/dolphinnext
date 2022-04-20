@@ -362,17 +362,16 @@ async function openSubPipeline(piID, pObj) {
     pObj.processList = {};
     pObj.processListMain = {};
     pObj.edges = [];
-    //check if params.VARNAME is defined in the autofill section of pipeline header or pipeline config. Then return all VARNAMES to define as system inputs
     var processData = "";
-    insertProPipePanel(
-        decodeHtml(sData.script_pipe_config) +
-        "\n" +
-        decodeHtml(sData.script_pipe_header),
-        "pipe",
-        "Pipeline",
-        window,
-        processData
-    );
+    // insertProPipePanel(
+    //     decodeHtml(sData.script_pipe_config) +
+    //     "\n" +
+    //     decodeHtml(sData.script_pipe_header),
+    //     "pipe",
+    //     "Pipeline",
+    //     window,
+    //     processData
+    // );
     var hideModule = false;
     if (
         $("#subPipelinePanelTitle").find("div[pipeid*=" + piID + "]").length > 0

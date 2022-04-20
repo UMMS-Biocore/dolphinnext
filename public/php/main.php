@@ -95,6 +95,12 @@ folder instead of downloading all of them to reduce the load. -->
     <!--        <link rel="shortcut icon" href="#">-->
     <link rel="icon" type="image/png" href="images/favicon.ico" />
     <style>
+        /* Prevents page navigation on scroll*/
+        html,
+        body {
+            overscroll-behavior-x: none;
+        }
+
         /* strikethrough css deleted rows in Datatables */
         tr.strikeline-row {
             color: gray;

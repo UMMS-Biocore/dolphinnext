@@ -766,7 +766,7 @@ class dbfuncs
         return array($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port);
     }
 
-    function getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job)
+    function getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job, $run_path_real)
     {
         $interdel = $proPipeAll[0]->{'interdel'};
         $interdelCmd = "";
@@ -782,9 +782,15 @@ class dbfuncs
                 $interdelCmd = "rm -rf $nxf_work";
             }
         }
+        $afterRun = "";
+        if (file_exists($run_path_real . "/afterrun.sh")) {
+            $afterRun = "bash $dolphin_path_real/afterrun.sh >> $dolphin_path_real/log.txt";
+        }
+
+
         // ### combine post-run cmd
         // should start with && and end without &&
-        $arr = array($interdelCmd);
+        $arr = array($interdelCmd, $afterRun);
         $postCmd = "";
         for ($i = 0; $i < count($arr); $i++) {
             if (!empty($arr[$i])) {
@@ -813,7 +819,7 @@ class dbfuncs
         return $postCmd . $failCmd;
     }
 
-    function getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd)
+    function getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real)
     {
         $profile_def = "";
         if ($profileType == "amazon" || $profileType == "google") {
@@ -827,10 +833,15 @@ class dbfuncs
         $nextANSILog = "export NXF_ANSI_LOG=false";
         // set NXF_SINGULARITY_CACHEDIR as $HOME/.dolphinnext/singularity, if it is not defined.
         $singu_cachedir = 'NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$HOME/.dolphinnext/singularity}" && export NXF_SINGULARITY_CACHEDIR=$NXF_SINGULARITY_CACHEDIR';
+        $beforeRun = '';
+        if (file_exists($run_path_real . "/beforerun.sh")) {
+            $beforeRun = "bash $dolphin_path_real/beforerun.sh >> $dolphin_path_real/log.txt";
+        }
+
         // combine pre-run cmd
         // should start without && and end with &&
 
-        $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd, $initImageCmd, $downCacheCmd);
+        $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd, $initImageCmd, $downCacheCmd, $beforeRun);
         $preCmd = "";
         for ($i = 0; $i < count($arr); $i++) {
             if (!empty($arr[$i]) && !empty($preCmd)) {
@@ -885,6 +896,13 @@ class dbfuncs
         $name = str_replace("'", "_", $name);
         $name = str_replace('"', "_", $name);
         $name = substr($name, 0, $limit);
+        return $name;
+    }
+    function escapeRegex($name)
+    {
+        $name = str_replace("/", "\/", $name);
+        $name = str_replace('"', '\"', $name);
+        $name = str_replace("'", "\'", $name);
         return $name;
     }
 
@@ -986,7 +1004,7 @@ class dbfuncs
     }
 
     //get all nextflow executor text
-    function getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu, $next_time, $next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, $logName, $initialRunParams, $postCmd, $preCmd, $ownerID)
+    function getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu, $next_time, $next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, $logName, $initialRunParams, $postCmd, $preCmd, $run_path_real, $ownerID)
     {
         $cleanReportCmd = "";
         $replaceInitialRunCode = "";
@@ -1027,11 +1045,13 @@ class dbfuncs
             if ($executor_job == "awsbatch") {
                 $nxf_work_init = "-w $dolphin_publish_real/initialrun/work";
             }
-            $replaceInitialRunCode = "cp $dolphin_path_real/initialrun.nf $dolphin_path_real/initialrun/nextflow.nf 2> /dev/null || true &&";
+            if (file_exists($run_path_real . "/initialrun.nf")) {
+                $replaceInitialRunCode = "cp $dolphin_path_real/initialrun.nf $dolphin_path_real/initialrun/nextflow.nf &&";
+            }
 
             $initialRunCmd = "$replaceInitialRunCode cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $nxf_work_init $igniteCmd $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
         }
-        $mainNextCmd = "$preCmd $cleanReportCmd $initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $nxf_work $igniteCmd $runType $reportOptions > $dolphin_path_real/$logName $postCmd";
+        $mainNextCmd = "$preCmd $cleanReportCmd $initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $nxf_work $igniteCmd $runType $reportOptions >> $dolphin_path_real/$logName $postCmd";
 
         //for lsf "bsub -q short -n 1  -W 100 -R rusage[mem=32024]";
         if ($executor == "local") {
@@ -1808,6 +1828,27 @@ class dbfuncs
         return $configText;
     }
 
+    //{{DNEXT_PUBLISH_DIR}} {{DNEXT_LAB}}
+    function replaceDnextVariables($dir, $proPipeAll, $ownerID)
+    {
+        $DNEXT_PUBLISH_DIR = $this->getReportDir($proPipeAll);
+        $userData = json_decode($this->getUserById($ownerID))[0];
+        $username = $userData->{'username'};
+        $email = $userData->{'email'};
+        $lab = $userData->{'lab'};
+        $allvars = array();
+        $allvars["DNEXT_PUBLISH_DIR"] =  $this->escapeRegex($DNEXT_PUBLISH_DIR);
+        $allvars["DNEXT_LAB"] = $this->escapeRegex($lab);
+        $allvars["DNEXT_USERNAME"] = $this->escapeRegex($username);
+        $allvars["DNEXT_EMAIL"] = $this->escapeRegex($email);
+        foreach ($allvars as $var => $newVal) :
+            if (!empty($var) && !empty($newVal)) {
+                $cmd = "cd $dir && grep -rl \"{{{$var}}}\" . | xargs sed -i 's/{{{$var}}}/$newVal/g'";
+                shell_exec($cmd);
+            }
+        endforeach;
+    }
+
     //nextflow config tag and label separated: \n//~@:~\n@~:"filename"\n//~@:~\ntext
     //Use createMultiConfig function to parse and save into run folder
     function createMultiConfig($dir, $allConf)
@@ -2000,6 +2041,10 @@ class dbfuncs
         }
         //separate nextflow config (by using @config tag).
         $this->createMultiConfig("{$this->run_path}/$uuid/run", $mainConfigText);
+
+        // replace DNEXT global variables
+        $this->replaceDnextVariables("{$this->run_path}/$uuid/run", $proPipeAll, $ownerID);
+
         //create clean serverlog.txt 
         $this->writeLog($uuid, '', 'w', 'serverlog.txt');
         $run_path_real = "{$this->run_path}/$uuid/run";
@@ -2018,15 +2063,15 @@ class dbfuncs
         list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port) = $this->getNextConnectExec($profileId, $ownerID, $profileType);
         //get cmd before run
         $downCacheCmd = $this->getDownCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType);
-        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd);
+        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real);
         $next_path_real = $this->getNextPathReal($next_path); //eg. /project/umw_biocore/bin
-        $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job);
+        $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job, $run_path_real);
 
 
         //get command for renaming previous log file
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
         $createUUID = $this->createUUIDCmd($dolphin_path_real, $uuid);
-        $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu, $next_time, $next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $preCmd, $ownerID);
+        $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu, $next_time, $next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $preCmd, $run_path_real, $ownerID);
         $amzCmd = "";
         //temporarily copy s3/gs config file into initialrun folder 
         if (!empty($getCloudConfigFileDir)) {
@@ -2076,6 +2121,9 @@ class dbfuncs
         $this->createCopyReadmeMD($attempt, $uuid, $project_pipeline_id);
         //separate nextflow config (by using @config tag).
         $this->createMultiConfig("{$this->run_path}/$uuid/run", $mainConfigText);
+        // replace DNEXT global variables
+        $this->replaceDnextVariables("{$this->run_path}/$uuid/run", $proPipeAll, $ownerID);
+
         //create clean serverlog.txt 
         $this->writeLog($uuid, '', 'w', 'serverlog.txt');
         $run_path_real = "{$this->run_path}/$uuid/run";
@@ -2098,15 +2146,15 @@ class dbfuncs
         list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port) = $this->getNextConnectExec($profileId, $ownerID, $profileType);
         //get cmd before run
         $downCacheCmd = $this->getDownCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType);
-        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd);
+        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real);
         $next_path_real = $this->getNextPathReal($next_path); //eg. /project/umw_biocore/bin
-        $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job);
+        $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job, $run_path_real);
 
 
         //get command for renaming previous log file
         $renameLog = $this->getRenameCmd($dolphin_path_real, $attempt);
         $createUUID = $this->createUUIDCmd($dolphin_path_real, $uuid);
-        $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu, $next_time, $next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $preCmd, $ownerID);
+        $exec_next_all = $this->getExecNextAll($proPipeAll, $executor, $dolphin_path_real, $dolphin_publish_real, $next_path_real, $next_queue, $next_cpu, $next_time, $next_memory, $jobname, $executor_job, $reportOptions, $next_clu_opt, $runType, $profileId, $profileType, "log.txt", $initialRunParams, $postCmd, $preCmd, $run_path_real, $ownerID);
         $amzCmd = "";
         //temporarily copy s3/gs config file into initialrun folder 
         if (!empty($getCloudConfigFileDir)) {
