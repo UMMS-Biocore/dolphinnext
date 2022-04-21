@@ -52,6 +52,7 @@ class dbfuncs
     //    }
     function runSQL($sql)
     {
+        ini_set('max_execution_time', '300');
         $link = new mysqli($this->dbhost, $this->dbuser, $this->dbpass, $this->db);
         // check connection
         if (mysqli_connect_errno()) {
@@ -1843,7 +1844,7 @@ class dbfuncs
         $allvars["DNEXT_EMAIL"] = $this->escapeRegex($email);
         foreach ($allvars as $var => $newVal) :
             if (!empty($var) && !empty($newVal)) {
-                $cmd = "cd $dir && grep -rl \"{{{$var}}}\" . | xargs sed -i 's/{{{$var}}}/$newVal/g'";
+                $cmd = "cd $dir && grep -rl \"{{{$var}}}\" . | xargs sed -i 's/{{{$var}}}/$newVal/g' 2> /dev/null";
                 shell_exec($cmd);
             }
         endforeach;
@@ -3825,6 +3826,9 @@ class dbfuncs
                             $newRunStatus = "NextRun";
                         }
                         //Nextflow log file exist but /N E X T F L O W/ not printed yet
+                    } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $nextflowLog) || preg_match("/command not found/i", $nextflowLog)) {
+                        $newRunStatus = "Error";
+                        // otherwise parse nextflow file to get status
                     } else {
                         $newRunStatus = "Waiting";
                     }
@@ -6855,6 +6859,7 @@ class dbfuncs
 
     function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt)
     {
+        ini_set('memory_limit', '900M');
         $newProPipeId = null;
         if ($type == "dmeta") {
             $userRole = $this->getUserRoleVal($ownerID);
