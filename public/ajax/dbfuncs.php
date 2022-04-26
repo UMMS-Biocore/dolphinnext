@@ -6857,9 +6857,10 @@ class dbfuncs
         return $input_id;
     }
 
-    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt)
+    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt, $project_id, $description)
     {
         ini_set('memory_limit', '900M');
+        $description = !empty($description) ?  addslashes(htmlspecialchars(urldecode($description), ENT_QUOTES)) : "";
         $newProPipeId = null;
         if ($type == "dmeta") {
             $userRole = $this->getUserRoleVal($ownerID);
@@ -6868,8 +6869,12 @@ class dbfuncs
             if (!empty($proPipeAll[0])) {
                 $run_env = !empty($run_env) ? "'$run_env'" : "profile";
                 $work_dir = !empty($work_dir) ? "'$work_dir'" : "output_dir";
+                $project_id = !empty($project_id) ? "'$project_id'" : "project_id";
+                $summary = !empty($description) ? "'$description'" : "summary";
+
+
                 $sql = "INSERT INTO $this->db.project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta)
-                    SELECT '$run_name', project_id, pipeline_id, summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, '$process_opt', onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
+                    SELECT '$run_name', $project_id, pipeline_id, $summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, '$process_opt', onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
                     FROM $this->db.project_pipeline
                     WHERE id='$old_run_id'";
                 $proPipe = self::insTable($sql);
