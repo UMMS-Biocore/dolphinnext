@@ -358,6 +358,7 @@ async function openSubPipeline(piID, pObj) {
     var sData = pObj.sData[0];
     var MainGNum = pObj.MainGNum;
     var lastGnum = pObj.lastGnum;
+    var mergedPipeName = pObj.lastPipeName;
     var prefix = "p" + MainGNum;
     pObj.processList = {};
     pObj.processListMain = {};
@@ -458,7 +459,13 @@ async function openSubPipeline(piID, pObj) {
                         window[newMainGnum].sData = [
                             window.pipeObj["pipeline_module_" + newPiID],
                         ];
+                        if (mergedPipeName) {
+                            mergedPipeName = mergedPipeName + "_" + pObj.name
+                        } else {
+                            mergedPipeName = pObj.name
+                        }
                         window[newMainGnum].lastPipeName = pObj.name;
+                        window[newMainGnum].mergedPipeName = mergedPipeName;
                         // create new SVG workplace inside panel, if not added before
                         await openSubPipeline(newPiID, window[newMainGnum]);
                         // add pipeline circle to main workplace
@@ -522,6 +529,7 @@ async function openPipeline(id) {
                         window.pipeObj["pipeline_module_" + piID],
                     ];
                     window[newMainGnum].lastPipeName = name;
+                    window[newMainGnum].mergedPipeName = name;
                     // create new SVG workplace inside panel, if not added before
                     await openSubPipeline(piID, window[newMainGnum]);
                     // add pipeline circle to main workplace
@@ -3225,7 +3233,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
     var panelObj = {}
     if (pObj != window) {
         MainGNum = pObj.MainGNum;
-        onlyModuleName = pObj.lastPipeName;
+        onlyModuleName = pObj.mergedPipeName;
         onlyProcessName = pObj.name;
         separator = ": ";
         prefix = MainGNum + "_";
@@ -3610,26 +3618,6 @@ function addProPipeTab(process_id, gNum, procName, pObj) {
     $("#processTable > tbody:last-child").append(proRow);
 }
 
-//function getMergedProcessList() {
-//    var proList = $.extend(true, {}, window.processList);
-//    for (var p = 0; p < piGnumList.length; p++) {
-//var piGnum = piGnumList[p];
-//var piGnums = piGnum.split("_")
-//var lastpipeName = "";
-//for (var k = 0; k < piGnums.length; k++) {
-//    var selectedGnums = piGnums.slice(0, k+1);
-//    var mergedGnum = selectedGnums.join("_")
-//    if (lastpipeName) lastpipeName += "_"
-//    lastpipeName += window["pObj" + mergedGnum].lastPipeName;
-//}
-//        var proListPipe = $.extend(true, {}, window["pObj" + piGnum].processList);
-//        for (var key in proListPipe) {
-//            proListPipe[key] = lastpipeName + "_" + proListPipe[key]
-//        }
-//        proList = $.extend({}, proList, proListPipe);
-//    }
-//    return proList
-//}
 
 function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
     var id = piID;
