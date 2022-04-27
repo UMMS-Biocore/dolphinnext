@@ -833,7 +833,7 @@ function parseRegPartAutofill(regPart) {
     return [url, urlzip, checkPath];
 }
 
-//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file @single_file
+//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file @single_file @hidden
 //parse style categories: @multicolumn, @array, @condition
 function parseRegPart(regPart) {
     var type = null;
@@ -848,6 +848,7 @@ function parseRegPart(regPart) {
     var optional = null;
     var file = null;
     var singleFile = null;
+    var hidden = null;
     var arr = null;
     var cond = null;
     if (regPart.match(/@/)) {
@@ -858,6 +859,7 @@ function parseRegPart(regPart) {
             var optionalCheck = regSplit[i].match(/^optional/i);
             var fileCheck = regSplit[i].match(/^file/i);
             var singleFileCheck = regSplit[i].match(/^single_file/i);
+            var hiddenCheck = regSplit[i].match(/^hidden/i);
             // check if @autofill tag is defined //* @autofill:{var1="yes", "filling_text"}
             // for multiple options @autofill:{var1=("yes","no"), "filling_text"}
             // for dynamic filling @autofill:{var1=("yes","no"), _build+"filling_text"}
@@ -901,15 +903,10 @@ function parseRegPart(regPart) {
             if (typeCheck) {
                 type = typeCheck[0].toLowerCase();
             }
-            if (optionalCheck) {
-                optional = true;
-            }
-            if (fileCheck) {
-                file = true;
-            }
-            if (singleFileCheck) {
-                singleFile = true;
-            }
+            if (optionalCheck) optional = true;
+            if (fileCheck) file = true;
+            if (singleFileCheck) singleFile = true;
+            if (hiddenCheck) hidden = true;
 
             // find description
             var descCheck = regSplit[i].match(
@@ -1006,7 +1003,8 @@ function parseRegPart(regPart) {
         showsett,
         optional,
         file,
-        singleFile
+        singleFile,
+        hidden
     ];
 }
 
@@ -1076,19 +1074,7 @@ function findDefaultArr(optArr) {
 }
 
 //insert form fields into panels of process options
-function addProcessPanelRow(
-    gNum,
-    name,
-    varName,
-    defaultVal,
-    type,
-    desc,
-    opt,
-    tool,
-    multicol,
-    array,
-    title
-) {
+function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title, hidden) {
     if ($.isArray(defaultVal)) {
         defaultVal = "";
     }
@@ -1099,6 +1085,7 @@ function addProcessPanelRow(
         });
     if (!checkInsert.length) {
         var hiddenOpt = null; // if conditional dropdown options are defined
+        var hiddenText = null; // if conditional dropdown options are defined
         var allOpt = null; // if conditional dropdown options are defined
         var optArr = []; // for dropdown options
         var arrayCheck = false; //is it belong to array
@@ -1182,9 +1169,13 @@ function addProcessPanelRow(
                 desc +
                 "</p>";
         }
+        if (hidden) {
+            hiddenText = "display:none; "
+        }
+
         var processParamDiv =
             '<div  class="form-group" style="' +
-            clearFix +
+            hiddenText + clearFix +
             "float:left; padding:5px; width:" +
             columnPercent +
             '%;" >';
@@ -1301,6 +1292,9 @@ function addProcessPanelRow(
             processParamDiv +=
                 label + inputDiv + optionDiv + "</select>" + descText + "</div>";
         }
+
+
+
 
         if (arrayCheck === false) {
             $("#addProcessRow-" + gNum).append(processParamDiv);
@@ -1697,6 +1691,23 @@ showHideSett = function(rowId) {
     }
 };
 
+function hideHiddenProcessOptions() {
+    var showSettingInputsAr = $("#inputsTable > tbody > tr[show_setting]");
+    if (showSettingInputsAr.length > 0) {
+        for (var i = 0; i < showSettingInputsAr.length; i++) {
+            var tooltip = "Settings";
+            var insertButton = false;
+            var rowId = $(showSettingInputsAr[i]).attr("id");
+            var givenName = $(showSettingInputsAr[i])
+                .find("td[given_name]")
+                .attr("given_name");
+            var dropdownID = $(showSettingInputsAr[i])
+                .find(".firstsec > select")
+                .attr("id");
+        }
+    }
+}
+
 function hideProcessOptionsAsIcons() {
     // allows click events when new modal opens after ui dialog
     $.widget("ui.dialog", $.ui.dialog, {
@@ -1707,7 +1718,7 @@ function hideProcessOptionsAsIcons() {
     var showSettingInputsAr = $("#inputsTable > tbody > tr[show_setting]");
     if (showSettingInputsAr.length > 0) {
         for (var i = 0; i < showSettingInputsAr.length; i++) {
-            var tooltip = "Edit";
+            var tooltip = "Settings";
             var insertButton = false;
             var rowId = $(showSettingInputsAr[i]).attr("id");
             var givenName = $(showSettingInputsAr[i])
@@ -1804,12 +1815,12 @@ function hideProcessOptionsAsIcons() {
                         .removeClass("collapse")
                         .appendTo(`#${wrapperID}-${modulename}`);
 
-                    tooltip = "Edit: " + processname;
+                    tooltip = "Settings: " + processname;
                     if (
                         show_settingArr.length > 1 ||
                         show_settingProcessPanel.length > 1
                     ) {
-                        tooltip = "Edit: " + label;
+                        tooltip = "Settings: " + label;
                     }
 
                     if (processorgname == show_setting || allname == show_setting) {
@@ -3151,6 +3162,7 @@ function parseProPipePanelScript(script) {
         var optional = null;
         var file = null;
         var singleFile = null;
+        var hidden = null;
         var defparams = null;
         var arr = null;
         var cond = null;
@@ -3179,7 +3191,7 @@ function parseProPipePanelScript(script) {
             [varName, defaultVal] = parseVarPart(varPart);
         }
         if (regPart) {
-            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file, singleFile] =
+            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file, singleFile, hidden] =
             parseRegPart(regPart);
         }
         if (type && varName) {
@@ -3195,7 +3207,8 @@ function parseProPipePanelScript(script) {
                 showsett: showsett,
                 optional: optional,
                 file: file,
-                singleFile: singleFile
+                singleFile: singleFile,
+                hidden: hidden
             });
         }
         if (multiCol || arr || cond) {
@@ -3327,6 +3340,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                 var optional = panelObj.schema[i].optional;
                 var file = panelObj.schema[i].file;
                 var singleFile = panelObj.schema[i].singleFile;
+                var hidden = panelObj.schema[i].hidden;
                 if (type && varName) {
                     // if variable start with "params." then insert into inputs table
                     if (varName.match(/params\./)) {
@@ -3346,7 +3360,8 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                             singleFile
                         );
                     } else {
-                        displayProDiv = true;
+                        // if any of the form is not hidden then keep the proPanelDiv
+                        if (!hidden) displayProDiv = true;
                         addProcessPanelRow(
                             prefix + gNum,
                             name,
@@ -3358,7 +3373,8 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                             tool,
                             multicol,
                             array,
-                            title
+                            title,
+                            hidden
                         );
                     }
                     if (autoform) {
