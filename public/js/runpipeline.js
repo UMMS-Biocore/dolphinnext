@@ -1085,7 +1085,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         });
     if (!checkInsert.length) {
         var hiddenOpt = null; // if conditional dropdown options are defined
-        var hiddenText = null; // if conditional dropdown options are defined
+        var hiddenText = ""; // if conditional dropdown options are defined
         var allOpt = null; // if conditional dropdown options are defined
         var optArr = []; // for dropdown options
         var arrayCheck = false; //is it belong to array
