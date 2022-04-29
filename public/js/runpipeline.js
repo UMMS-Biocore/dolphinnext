@@ -1085,7 +1085,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         });
     if (!checkInsert.length) {
         var hiddenOpt = null; // if conditional dropdown options are defined
-        var hiddenText = ""; // if conditional dropdown options are defined
+        var hiddenText = "";
         var allOpt = null; // if conditional dropdown options are defined
         var optArr = []; // for dropdown options
         var arrayCheck = false; //is it belong to array
@@ -1754,7 +1754,7 @@ function hideProcessOptionsAsIcons() {
                         var checkOptional = checkVarName.attr("optional")
                         var optionalText = ""
                         if (checkOptional) optionalText = ' (Optional)'
-                        var panelContent = `<table style="margin-bottom:10px; margin-left:10px;" class="table"><thead>
+                        var panelContent = `<table style="margin-bottom:10px;" class="table"><thead>
 <tr>
 <th style="display:none; width:30%;" scope="col">Given Name</th>
 <th style="display:none;" scope="col">Identifier</th>
