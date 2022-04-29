@@ -1406,7 +1406,7 @@ class dbfuncs
         return $configText;
     }
 
-    function getMainTestRunConfig($proPipeAll, $configText, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID)
+    function getMainTestRunConfig($proPipeAll, $configText, $project_pipeline_id, $profileId, $profileType, $proVarObj, $code, $ownerID)
     {
         $containerConfig = $this->getContainerConfig($proPipeAll, $profileType, $profileId, "main", $ownerID);
         $containerRunOpt = $this->getContainerRunOpt($proPipeAll, $profileType, $profileId, "main", $ownerID);
@@ -1431,6 +1431,11 @@ class dbfuncs
         $configText .= "\n// Run Parameters:\n\n" . $mainRunParams;
         //get main run local variable parameters:
         $configText = $this->getProcessParams(json_decode($proVarObj), $configText);
+        $configText .= "\n// Test Parameters:\n\n";
+        $test_params = $code["test_params"];
+        if (!empty($test_params)) {
+            $configText .= urldecode($test_params) . "\n\n";
+        }
         return $configText;
     }
 
@@ -2513,7 +2518,7 @@ class dbfuncs
         $runType = "newrun";
         $runConfig = $this->getMainRunOpt($proPipeAll, $profileId, $profileType, $ownerID);
         $bashConfigText = $this->getBashVariables($profileId, $profileType, $ownerID);
-        $mainConfigText = $this->getMainTestRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $ownerID);
+        $mainConfigText = $this->getMainTestRunConfig($proPipeAll, $runConfig, $project_pipeline_id, $profileId, $profileType, $proVarObj, $code, $ownerID);
         //create file and folders
         list($targz_file, $dolphin_path_real, $runCmdAll) = $this->initTestRun($proPipeAll, $project_pipeline_id, $initialConfigText, $mainConfigText, $nextText, $profileType, $profileId, $uuid, $initialRunParams, $getCloudConfigFileDir, $bashConfigText, $attempt, $runType, $ownerID);
         //run the script in remote machine
