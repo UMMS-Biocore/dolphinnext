@@ -1,7 +1,7 @@
 <?php
 error_reporting(E_ERROR);
 error_reporting(E_ALL);
-ini_set('report_errors','on');
+ini_set('report_errors', 'on');
 session_start();
 $_SESSION['LAST_ACTIVITY'] = time();
 session_write_close();

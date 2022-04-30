@@ -1,9 +1,9 @@
 //global data libraries
 window.ajaxData = {};
 
-function initCloudData(cloud){
-    window[cloud+"Data"] = {};
-    window[cloud+"Data"].stop = false;
+function initCloudData(cloud) {
+    window[cloud + "Data"] = {};
+    window[cloud + "Data"].stop = false;
 }
 
 initCloudData("amazon");
@@ -17,9 +17,9 @@ function callusRole() {
         if (userRole[0].role !== null) {
             if (userRole[0].role === "admin") {
                 usRole = "admin";
-            } 
-        } 
-    } 
+            }
+        }
+    }
     return usRole;
 }
 
@@ -28,7 +28,7 @@ usRole = callusRole();
 
 //initialize all tooltips on a page (eg.$('#mFileTypeTool').tooltip("show"))
 //to activate dynamically added tooltips, run the command below
-$(function () {
+$(function() {
     $('[data-toggle="tooltip"]').tooltip();
 });
 
@@ -52,12 +52,12 @@ toastr.options = {
 
 
 // alternative of serializeArray function since it doesn't work when inputs are disabled.
-function serializeDisabledArray(arr){
+function serializeDisabledArray(arr) {
     var ret = [];
-    $.each(arr, function (i) {
+    $.each(arr, function(i) {
         var obj = {};
         obj["name"] = arr[i].name;
-        obj["value"] = $(arr[i]).val(); 
+        obj["value"] = $(arr[i]).val();
         ret.push(obj);
     });
     return ret;
@@ -78,13 +78,8 @@ function IsJsonString(str) {
 }
 
 //formatSizeUnits(4000*1024)  // beacuse 4000 KB to convert MB 
-function formatSizeUnits(bytes){
-    if      (bytes>=1073741824) {bytes=(bytes/1073741824).toFixed(2)+' GB';}
-    else if (bytes>=1048576)    {bytes=(bytes/1048576).toFixed(2)+' MB';}
-    else if (bytes>=1024)       {bytes=(bytes/1024).toFixed(2)+' KB';}
-    else if (bytes>1)           {bytes=bytes+' bytes';}
-    else if (bytes==1)          {bytes=bytes+' byte';}
-    else                        {bytes='0 byte';}
+function formatSizeUnits(bytes) {
+    if (bytes >= 1073741824) { bytes = (bytes / 1073741824).toFixed(2) + ' GB'; } else if (bytes >= 1048576) { bytes = (bytes / 1048576).toFixed(2) + ' MB'; } else if (bytes >= 1024) { bytes = (bytes / 1024).toFixed(2) + ' KB'; } else if (bytes > 1) { bytes = bytes + ' bytes'; } else if (bytes == 1) { bytes = bytes + ' byte'; } else { bytes = '0 byte'; }
     return bytes;
 }
 
@@ -127,7 +122,7 @@ function filterObjVal(obj, filter) {
 
 //sort array of object by key
 function sortByKey(array, key) {
-    return array.sort(function (a, b) {
+    return array.sort(function(a, b) {
         var x = a[key];
         var y = b[key];
         return ((x < y) ? -1 : ((x > y) ? 1 : 0));
@@ -152,7 +147,7 @@ function fillDropdownArrObj(arr, val, name, dropdownId, clean, first) {
     if (clean === true) {
         $(dropdownId).empty();
     }
-    if (first){
+    if (first) {
         $(dropdownId).append(first);
     }
     for (var i = 0; i < arr.length; i++) {
@@ -162,11 +157,11 @@ function fillDropdownArrObj(arr, val, name, dropdownId, clean, first) {
     }
 }
 
-function combineLinuxCmd(cmdAr){
+function combineLinuxCmd(cmdAr) {
     var ret = ""
     for (var i = 0; i < cmdAr.length; i++) {
         var cmd = cmdAr[i];
-        if (cmd && ret){
+        if (cmd && ret) {
             ret += " && ";
         }
         ret += cmd;
@@ -180,12 +175,13 @@ function showLoadingDiv(parentId) {
     $("#" + parentId).addClass("loader-spin-parent")
     $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon" style=" position: absolute; top: 0; right: 0; bottom: 0; left: 0;" src="css/loader.gif" alt="Loading..." /></div>');
 }
+
 function showLoadingDivText(parentId, text) {
-    if ($("#loading-badge-" + parentId).length){
+    if ($("#loading-badge-" + parentId).length) {
         $("#loading-badge-" + parentId).text(text)
     } else {
         $("#" + parentId).addClass("loader-spin-parent")
-        $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /><p class="text-center"><span style:"margin-left:9px;" id="loading-badge-'+parentId+'" class="badge align-middle">'+text+'</span></p></div>');
+        $("#" + parentId).append('<div class="loader-spin-iconDiv" id="loading-image-' + parentId + '"><img class="loader-spin-icon"  src="css/loader.gif" alt="Loading..." /><p class="text-center"><span style:"margin-left:9px;" id="loading-badge-' + parentId + '" class="badge align-middle">' + text + '</span></p></div>');
     }
     return $("#" + parentId)
 }
@@ -198,17 +194,17 @@ function hideLoadingDiv(parentId) {
 //eg showInfoModal('#warnDelete','#warnDeleteText', text)
 function showInfoModal(modalId, textID, text) {
     //true if modal is open
-    if (($(modalId).data('bs.modal') || {}).isShown ){
+    if (($(modalId).data('bs.modal') || {}).isShown) {
         var oldText = $(textID).html();
-        var newText = oldText + "<br/><br/>" +text;
+        var newText = oldText + "<br/><br/>" + text;
         $(textID).html(newText);
     } else {
         $(modalId).off();
-        $(modalId).on('show.bs.modal', function (event) {
+        $(modalId).on('show.bs.modal', function(event) {
             $(this).find('form').trigger('reset');
             $(textID).html(text);
         });
-        $(modalId).modal('show'); 
+        $(modalId).modal('show');
     }
 }
 
@@ -221,29 +217,29 @@ function showConfirmDeleteModal(text, savedData, execFunc, buttonText) {
     var clickid = "#confirmDeleteModalDelBtn";
     var btnText = buttonText || "Delete";
     $(clickid).text(btnText)
-    //true if modal is open
-    if (($(modalId).data('bs.modal') || {}).isShown ){
+        //true if modal is open
+    if (($(modalId).data('bs.modal') || {}).isShown) {
         $(textID).html(text);
         $(clickid).removeData("data");
-        $(clickid).data("data",savedData);
-        $(modalId).on('click', clickid, async function (event) {
+        $(clickid).data("data", savedData);
+        $(modalId).on('click', clickid, async function(event) {
             var savedData = $(clickid).data("data")
             await execFunc(savedData)
         });
     } else {
         $(modalId).off();
         $(clickid).removeData("data")
-        $(modalId).on('show.bs.modal', function (event) {
+        $(modalId).on('show.bs.modal', function(event) {
             $(this).find('form').trigger('reset');
             $(textID).html(text);
-            $(clickid).data("data",savedData)
+            $(clickid).data("data", savedData)
         });
-        $(modalId).on('click', clickid, async function (event) {
+        $(modalId).on('click', clickid, async function(event) {
             var savedData = $(clickid).data("data")
             await execFunc(savedData)
-            $(modalId).modal('hide'); 
+            $(modalId).modal('hide');
         });
-        $(modalId).modal('show'); 
+        $(modalId).modal('show');
     }
 }
 
@@ -267,16 +263,24 @@ function removeDoubleQuote(script) {
 }
 
 
-//refreshSession every 10 minutes
-window.setInterval( function() {
-    $.ajax({
-        cache: false,
-        type: "GET",
-        url: "ajax/refreshSession.php",
-        success: function(data) {
-        }
-    });
-}, 600000 );
+
+
+
+// Creates a Web Worker
+var worker = new Worker("js/worker.js");
+// Posts a message to the Web Worker
+//refreshSession every 10 minutes 600000
+window.setInterval(function() {
+    worker.postMessage(0);
+}, 600000);
+// Triggered by postMessage in the Web Worker
+// worker.onmessage = function(evt) {
+//     // evt.data is the values from the Web Worker
+// };
+// If the Web Worker throws an error
+worker.onerror = function(evt) {
+    console.log("refreshSession error");
+};
 
 
 
@@ -285,14 +289,14 @@ checkCloudProfiles("timer", "google");
 
 //to start timer, enter "timer" as input
 function checkCloudProfiles(timer, cloud) {
-    if (cloud == "amazon"){
+    if (cloud == "amazon") {
         var icon = '#manageAmz';
         var amountIcon = '#amzAmount';
-    } else if (cloud == "google"){
+    } else if (cloud == "google") {
         var icon = '#manageGoog';
         var amountIcon = '#googAmount';
     }
-    getValuesAsync({p: "getProfileCloud", cloud:cloud}, function (proData) {
+    getValuesAsync({ p: "getProfileCloud", cloud: cloud }, function(proData) {
         if (proData) {
             if (proData.length > 0) {
                 $(icon).css('display', 'inline');
@@ -306,8 +310,8 @@ function checkCloudProfiles(timer, cloud) {
                         checkCloudTimer(proData[k].id, 60000, cloud);
                     }
                     window.modalRec = {};
-                    window.modalRec[cloud+'last_status_log_' + proData[k].id] = "";
-                    window.modalRec[cloud+'last_status_' + proData[k].id] = proData[k].status;
+                    window.modalRec[cloud + 'last_status_log_' + proData[k].id] = "";
+                    window.modalRec[cloud + 'last_status_' + proData[k].id] = proData[k].status;
                 }
                 if (countActive > 0) {
                     $(amountIcon).css('display', 'inline');
@@ -325,11 +329,11 @@ function checkCloudProfiles(timer, cloud) {
 
 //interval will decide the check period: default: 20 sec. for termination 5 sec
 function checkCloudTimer(proId, interval, cloud) {
-    var intervalName = 'interval_'+cloud+'Status_' + proId;
-    window[intervalName] = setInterval(function () {
+    var intervalName = 'interval_' + cloud + 'Status_' + proId;
+    window[intervalName] = setInterval(function() {
         //run CloudCheck command which creates log file in apprx. 3 seconds. 
         getValues({ p: "runCloudCheck", cloud: cloud, profileId: proId });
-        setTimeout(function () { checkCloudStatus(proId, cloud); }, 5000);
+        setTimeout(function() { checkCloudStatus(proId, cloud); }, 5000);
     }, interval);
 }
 
@@ -338,73 +342,73 @@ function checkCloudTimer(proId, interval, cloud) {
 retryTimer = 5000;
 //read CloudCheck log file
 function checkCloudStatus(proId, cloud) {
-    var intervalName = 'interval_'+cloud+'Status_' + proId;
-    var checkCloudStatusLog = getValues({ p: "checkCloudStatus", cloud:cloud , profileId: proId });
+    var intervalName = 'interval_' + cloud + 'Status_' + proId;
+    var checkCloudStatusLog = getValues({ p: "checkCloudStatus", cloud: cloud, profileId: proId });
     console.log(checkCloudStatusLog)
     var logStart = "";
     var logCloudList = "";
-    if (checkCloudStatusLog.logStart){
-        logStart = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" cloud='+cloud+' data="cloudLogStart" id="'+cloud+'LogStart-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Log"><span><i class="fa fa-file-text-o"></i></span></a></button>'
+    if (checkCloudStatusLog.logStart) {
+        logStart = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" cloud=' + cloud + ' data="cloudLogStart" id="' + cloud + 'LogStart-' + proId + '" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Log"><span><i class="fa fa-file-text-o"></i></span></a></button>'
     }
-    if (checkCloudStatusLog.logCloudList){
-        logCloudList = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" cloud='+cloud+' data="cloudListLog" id="'+cloud+'CloudListLog-'+proId+'" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Cloud List"><span><i class="fa fa-file-text-o"></i></span></a></button>'
+    if (checkCloudStatusLog.logCloudList) {
+        logCloudList = '<button type="button" class="btn btn-sm" style=" margin:2px; background-color: rgb(59, 140, 188);" cloud=' + cloud + ' data="cloudListLog" id="' + cloud + 'CloudListLog-' + proId + '" ><a data-toggle="tooltip" data-placement="bottom" data-original-title="Cloud List"><span><i class="fa fa-file-text-o"></i></span></a></button>'
     }
 
 
-    if (window[cloud+"Data"].stop && checkCloudStatusLog.status !== "terminated") {
-        window.modalRec[cloud+'last_status_log_' + proId] = "Waiting for termination..";
+    if (window[cloud + "Data"].stop && checkCloudStatusLog.status !== "terminated") {
+        window.modalRec[cloud + 'last_status_log_' + proId] = "Waiting for termination..";
         $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..' + "<p>" + logStart + logCloudList + "</p>");
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Start').css('display', 'none');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'inline');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').removeAttr('disabled');
         clearInterval(window[intervalName]);
         checkCloudTimer(proId, 5500, cloud);
     } else if (checkCloudStatusLog.status === "waiting") {
-        window.modalRec[cloud+'last_status_log_' + proId] = "Waiting for reply..";
+        window.modalRec[cloud + 'last_status_log_' + proId] = "Waiting for reply..";
         $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..' + "<p>" + logStart + logCloudList + "</p>");
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').attr('disabled', 'disabled');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Start').css('display', 'none');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'inline');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').attr('disabled', 'disabled');
         clearInterval(window[intervalName]);
         checkCloudTimer(proId, 20000, cloud);
     } else if (checkCloudStatusLog.status === "initiated") {
-        window.modalRec[cloud+'last_status_log_' + proId] = "Initializing..";
-        window.modalRec[cloud+'last_status_' + proId] = checkCloudStatusLog.status;
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        window.modalRec[cloud + 'last_status_log_' + proId] = "Initializing..";
+        window.modalRec[cloud + 'last_status_' + proId] = checkCloudStatusLog.status;
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Start').css('display', 'none');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'inline');
         $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-half"></i> Initializing..' + "<p>" + logStart + logCloudList + "</p>");
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').removeAttr('disabled');
         clearInterval(window[intervalName]);
         checkCloudTimer(proId, 20000, cloud);
     } else if (checkCloudStatusLog.status === "retry") { //could not read the log file
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'none');
-        var tempLog = window.modalRec[cloud+'last_status_log_' + proId]
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Start').css('display', 'none');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'none');
+        var tempLog = window.modalRec[cloud + 'last_status_log_' + proId]
         if (tempLog) {
             $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-half"></i> ' + tempLog + "<p>" + logStart + logCloudList + "</p>");
         } else {
-            $('#status-'+ cloud + proId).html('<i class="fa fa-hourglass-half"></i> ' + "<p>" + logStart + logCloudList + "</p>");
+            $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-half"></i> ' + "<p>" + logStart + logCloudList + "</p>");
         }
         clearInterval(window[intervalName]);
         checkCloudTimer(proId, retryTimer, cloud);
         if (retryTimer <= 19000) {
             retryTimer += 1000;
         }
-        var lastStat = window.modalRec[cloud+'last_status_' + proId];
+        var lastStat = window.modalRec[cloud + 'last_status_' + proId];
         if (lastStat === "running" || lastStat === "initiated") {
-            $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
-            $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
+            $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'inline');
+            $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').removeAttr('disabled');
         }
 
 
     } else if (checkCloudStatusLog.status === "running") {
-        window.modalRec[cloud+'last_status_' + proId] = checkCloudStatusLog.status;
+        window.modalRec[cloud + 'last_status_' + proId] = checkCloudStatusLog.status;
         //check if run env. in run page is amazon and status is not running (then activate loadRunOptions()
         var chooseEnv = $('#chooseEnv').find(":selected").val();
         if (chooseEnv) {
             var status = $('#chooseEnv').find(":selected").attr("status");
             if (status) {
-                if (chooseEnv === cloud+"-" + proId && status !== "running") {
+                if (chooseEnv === cloud + "-" + proId && status !== "running") {
                     loadRunOptions("silent"); //used from runpipeline.js
                 }
             }
@@ -414,33 +418,33 @@ function checkCloudStatus(proId, cloud) {
         } else {
             var sshText = "";
         }
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Start').css('display', 'none');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'inline');
         $('#status-' + cloud + proId).html('Running <br/>' + sshText + "<p>" + logStart + logCloudList + "</p>");
-        window.modalRec[cloud+'last_status_log_' + proId] = 'Running <br/>' + sshText;
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
+        window.modalRec[cloud + 'last_status_log_' + proId] = 'Running <br/>' + sshText;
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').removeAttr('disabled');
 
     } else if (checkCloudStatusLog.status === "inactive") {
         clearInterval(window[intervalName]);
         $('#status-' + cloud + proId).text('Inactive');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').attr('disabled', 'disabled');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'inline');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').attr('disabled', 'disabled');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Start').css('display', 'inline');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'inline');
     } else if (checkCloudStatusLog.status === "terminated") {
         var chooseEnv = $('#chooseEnv').find(":selected").val();
         if (chooseEnv) {
             var status = $('#chooseEnv').find(":selected").attr("status");
             if (status) {
-                if (chooseEnv === cloud+"-" + proId && status !== "terminated") {
+                if (chooseEnv === cloud + "-" + proId && status !== "terminated") {
                     loadRunOptions("silent"); //used from runpipeline.js
                 }
             }
         }
 
-        window[cloud+"Data"].stop = false;
+        window[cloud + "Data"].stop = false;
         clearInterval(window[intervalName]);
-        window.modalRec[cloud+'last_status_log_' + proId] = "";
-        window.modalRec[cloud+'last_status_' + proId] = checkCloudStatusLog.status;
+        window.modalRec[cloud + 'last_status_log_' + proId] = "";
+        window.modalRec[cloud + 'last_status_' + proId] = checkCloudStatusLog.status;
         var errorText = "";
         if (checkCloudStatusLog.logCloudList) {
             var logText = checkCloudStatusLog.logCloudList;
@@ -454,91 +458,91 @@ function checkCloudStatus(proId, cloud) {
                     errorText = "(" + logText + ")";
                 }
             }
-        } 
+        }
         if (errorText === "" && checkCloudStatusLog.logStart) {
             var logTextStart = checkCloudStatusLog.logStart;
             //WARN: One or more errors have been detected parsing EC2 prices
-            if ((logTextStart.match(/ERROR/) && !logTextStart.match(/WARN: One or more errors/i)) || logTextStart.match(/denied/i) || logTextStart.match(/invalid/i)|| logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
+            if ((logTextStart.match(/ERROR/) && !logTextStart.match(/WARN: One or more errors/i)) || logTextStart.match(/denied/i) || logTextStart.match(/invalid/i) || logTextStart.match(/missing/i) || logTextStart.match(/couldn't/i) || logTextStart.match(/help/i) || logTextStart.match(/wrong/i))
                 errorText = "(" + logTextStart + ")";
         }
-        $('#status-' + cloud + proId).html('Terminated <br/>' + errorText );
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'inline');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').attr('disabled', 'disabled');
+        $('#status-' + cloud + proId).html('Terminated <br/>' + errorText);
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Start').css('display', 'inline');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'inline');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').attr('disabled', 'disabled');
     } else {
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').css('display', 'inline');
-        $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').removeAttr('disabled');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').css('display', 'inline');
+        $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').removeAttr('disabled');
     }
     $('[data-toggle="tooltip"]').tooltip();
-    if (checkCloudStatusLog.logStart){
-        $('#'+cloud+'LogStart-'+proId).data("logData", checkCloudStatusLog.logStart)
+    if (checkCloudStatusLog.logStart) {
+        $('#' + cloud + 'LogStart-' + proId).data("logData", checkCloudStatusLog.logStart)
     }
-    if (checkCloudStatusLog.logCloudList){
-        $('#'+cloud+'CloudListLog-'+proId).data("logData", checkCloudStatusLog.logCloudList)
+    if (checkCloudStatusLog.logCloudList) {
+        $('#' + cloud + 'CloudListLog-' + proId).data("logData", checkCloudStatusLog.logCloudList)
     }
 
     // update active number:
     checkCloudProfiles("notimer", cloud);
     // set autoshutdown counter
-    var proData = getValues({ p: "getProfileCloud", cloud:cloud, id:proId });
+    var proData = getValues({ p: "getProfileCloud", cloud: cloud, id: proId });
     var autoshutdown_check = proData[0].autoshutdown_check;
     var autoshutdown_active = proData[0].autoshutdown_active;
     var autoshutdown_date = proData[0].autoshutdown_date;
     var pro_status = proData[0].status;
 
-    if (autoshutdown_check == "true" && autoshutdown_active == "true" && autoshutdown_date && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")){
-        if (!window[cloud+'countdown_' + proId]){
-            window[cloud+'elapsed_' + proId]  = 0;
-            window[cloud+'countdown_' + proId] = setInterval(function () {
-                window[cloud+'elapsed_' + proId] ++;
-                var remaining = autoshutdown_date-window[cloud+'elapsed_' + proId];
-                var autoshutdown_check = $('#'+cloud+'autoshutdown-' + proId).is(":checked").toString();
-                if (autoshutdown_check == "true"){
+    if (autoshutdown_check == "true" && autoshutdown_active == "true" && autoshutdown_date && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")) {
+        if (!window[cloud + 'countdown_' + proId]) {
+            window[cloud + 'elapsed_' + proId] = 0;
+            window[cloud + 'countdown_' + proId] = setInterval(function() {
+                window[cloud + 'elapsed_' + proId]++;
+                var remaining = autoshutdown_date - window[cloud + 'elapsed_' + proId];
+                var autoshutdown_check = $('#' + cloud + 'autoshutdown-' + proId).is(":checked").toString();
+                if (autoshutdown_check == "true") {
                     if (remaining < 1) {
-                        clearInterval(window[cloud+'countdown_' + proId]);
-                        window[cloud+'countdown_' + proId] = null;
-                        window[cloud+'elapsed_' + proId] = 0;
+                        clearInterval(window[cloud + 'countdown_' + proId]);
+                        window[cloud + 'countdown_' + proId] = null;
+                        window[cloud + 'elapsed_' + proId] = 0;
                         stopCloudByAjax(proId, cloud)
-                        $('#'+cloud+'shutdownLog-'+proId).text("");
-                        $('#'+cloud+'shutdownTimer-' + proId).text("Shutdown Triggered")
+                        $('#' + cloud + 'shutdownLog-' + proId).text("");
+                        $('#' + cloud + 'shutdownTimer-' + proId).text("Shutdown Triggered")
                     } else {
-                        $('#'+cloud+'shutdownTimer-' + proId).text(remaining+" sec.")
+                        $('#' + cloud + 'shutdownTimer-' + proId).text(remaining + " sec.")
                     }
                 } else {
-                    $('#'+cloud+'shutdownTimer-' + proId).text("");
-                    clearInterval(window[cloud+'countdown_' + proId]);
-                    window[cloud+'countdown_' + proId] = null;
-                    window[cloud+'elapsed_' + proId] = 0;
+                    $('#' + cloud + 'shutdownTimer-' + proId).text("");
+                    clearInterval(window[cloud + 'countdown_' + proId]);
+                    window[cloud + 'countdown_' + proId] = null;
+                    window[cloud + 'elapsed_' + proId] = 0;
                 }
-            }, 1000); 
+            }, 1000);
         }
     }
 
 }
 
-function stopCloudByAjax(proId, cloud){
-    var intervalName = 'interval_'+cloud+'Status_' + proId;
+function stopCloudByAjax(proId, cloud) {
+    var intervalName = 'interval_' + cloud + 'Status_' + proId;
     $.ajax({
         type: "POST",
         url: "ajax/ajaxquery.php",
         data: { "id": proId, cloud: cloud, "p": "stopProCloud" },
         async: true,
-        success: function (s) {
+        success: function(s) {
             if (s.stop_cloud) {
-                window[cloud+"Data"].stop = true;
-                $('#status-'+ cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
+                window[cloud + "Data"].stop = true;
+                $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for termination..');
                 //clear previous interval and set new one(with faster check interval).
                 clearInterval(window[intervalName]);
-                setTimeout(function () { checkCloudTimer(proId, 5500, cloud); }, 1000);
+                setTimeout(function() { checkCloudTimer(proId, 5500, cloud); }, 1000);
             }
         }
     });
 }
 
 function updCloudActive(proId, proData, cloud) {
-    if (!proData){
-        proData = getValues({ p: "getProfileCloud", cloud: cloud, id:proId });
-        if (proData){
+    if (!proData) {
+        proData = getValues({ p: "getProfileCloud", cloud: cloud, id: proId });
+        if (proData) {
             proData = proData[0];
         }
     }
@@ -546,14 +550,14 @@ function updCloudActive(proId, proData, cloud) {
     var autoshutdown_active = proData.autoshutdown_active;
     var autoshutdown_date = proData.autoshutdown_date;
     var pro_status = proData.status;
-    if (autoshutdown_check == null){ autoshutdown_check = ""; }
-    if (autoshutdown_active == null){ autoshutdown_active = ""; }
-    if (autoshutdown_date == null){ autoshutdown_date = ""; }
+    if (autoshutdown_check == null) { autoshutdown_check = ""; }
+    if (autoshutdown_active == null) { autoshutdown_active = ""; }
+    if (autoshutdown_date == null) { autoshutdown_date = ""; }
     var activeTxt = "";
 
-    if (autoshutdown_check == "true" && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")){
-        if (autoshutdown_active == "true"){
-            if (autoshutdown_date !== ""){
+    if (autoshutdown_check == "true" && (pro_status == "running" || pro_status == "waiting" || pro_status == "initiated" || pro_status == "retry")) {
+        if (autoshutdown_active == "true") {
+            if (autoshutdown_date !== "") {
                 activeTxt = "Countdown for shutdown: ";
             } else {
                 activeTxt = "Activated - Waiting for the termination of active run";
@@ -562,31 +566,31 @@ function updCloudActive(proId, proData, cloud) {
             activeTxt = "Idle - Waiting for the initial run";
         }
     }
-    $('#'+cloud+'shutdownLog-'+proId).text(activeTxt);
+    $('#' + cloud + 'shutdownLog-' + proId).text(activeTxt);
 }
 
 //mode: edit/add , type: runenv
-function getWizardLi(name, mode, type, href, wid){
-    return '<li><a class="col-sm-11" wid="'+wid+'" mode="'+mode+'"  type="'+type+'"  data-toggle="modal" href="'+href+'"><i class="fa fa-user text-yellow"></i> '+name+'</a><a class="col-sm-1 delete_wizard" style="position:static" data-toggle="tooltip" data-placement="bottom" title="Delete"><i style="padding:5px;" class="fa fa-trash pull-right"></i></a></li>';
+function getWizardLi(name, mode, type, href, wid) {
+    return '<li><a class="col-sm-11" wid="' + wid + '" mode="' + mode + '"  type="' + type + '"  data-toggle="modal" href="' + href + '"><i class="fa fa-user text-yellow"></i> ' + name + '</a><a class="col-sm-1 delete_wizard" style="position:static" data-toggle="tooltip" data-placement="bottom" title="Delete"><i style="padding:5px;" class="fa fa-trash pull-right"></i></a></li>';
 }
 
-function loadOngoingWizard (type){
+function loadOngoingWizard(type) {
     type = type || ""; //default ""
     //check if #manageProfileWizard is exist
     if ($('#manageProfileWizard').length > 0) {
         $.ajax({
             type: "POST",
             url: "ajax/ajaxquery.php",
-            data: {p: "getWizard", type:"all"},
+            data: { p: "getWizard", type: "all" },
             async: true,
             cache: false,
-            success: function (data) {
+            success: function(data) {
                 var countActive = 0;
                 $("#ongoingwizard").empty();
-                if(data){
+                if (data) {
                     for (var k = 0; k < data.length; k++) {
-                        if(data[k]){
-                            if(data[k].id && data[k].name && data[k].status == "active" && data[k].deleted === "0"){
+                        if (data[k]) {
+                            if (data[k].id && data[k].name && data[k].status == "active" && data[k].deleted === "0") {
                                 countActive++
                                 $("#ongoingwizard").append(getWizardLi(data[k].name, "edit", "runenv", "#profilewizardmodal", data[k].id));
                             }
@@ -602,7 +606,7 @@ function loadOngoingWizard (type){
                     $('#savedWizardHeader').css('display', 'none');
                     $('#wizAmount').text(countActive);
                     $('#wizAmount').css('display', 'none');
-                    if (type == "onload"){
+                    if (type == "onload") {
                         // check if user has seen any wizard before
                         if (data.length < 1) {
                             //check if user has any run environment. if not-> show wizard
@@ -616,82 +620,82 @@ function loadOngoingWizard (type){
                     }
                 }
             },
-            error: function (jqXHR, exception) {
+            error: function(jqXHR, exception) {
                 console.log("#Error:")
                 console.log(jqXHR.status)
                 console.log(exception)
             }
         });
     }
-}   
+}
 
 
 
 function addCloudRow(cloud, id, name, executor, instance_type, image_id, subnet_id, autoshutdown_check, autoshutdown_active, autoshutdown_date, status, proData) {
-    if (autoshutdown_check == null){ autoshutdown_check = ""; }
+    if (autoshutdown_check == null) { autoshutdown_check = ""; }
     var checked = "";
-    if (autoshutdown_check == "true"){
+    if (autoshutdown_check == "true") {
         checked = "checked";
     }
 
-    var checkBox = '<input id="'+cloud+'autoshutdown-' + id + '" cloud="'+cloud+'" class="autoShutCheck" type="checkbox"  name="autoshutdown_check" '+checked+'><p id="'+cloud+'shutdownLog-' + id + '"></p><p id="'+cloud+'shutdownTimer-' + id + '"></p>';
+    var checkBox = '<input id="' + cloud + 'autoshutdown-' + id + '" cloud="' + cloud + '" class="autoShutCheck" type="checkbox"  name="autoshutdown_check" ' + checked + '><p id="' + cloud + 'shutdownLog-' + id + '"></p><p id="' + cloud + 'shutdownTimer-' + id + '"></p>';
 
-    $('#'+cloud+'Table > tbody').append('<tr id="'+cloud+'-' + id + '"> <td>' + name + '</td><td>Instance_type: ' + instance_type + '<br>  Image id: ' + image_id + '<br>  Executor: ' + executor + '<br>  </td><td>'+checkBox+'</td><td id="status-'+ cloud + id + '"><i class="fa fa-hourglass-half"></i></td><td>' + getButtonsDef(cloud, 'Start') + getButtonsDef(cloud, 'Stop') + '</td></tr>');
+    $('#' + cloud + 'Table > tbody').append('<tr id="' + cloud + '-' + id + '"> <td>' + name + '</td><td>Instance_type: ' + instance_type + '<br>  Image id: ' + image_id + '<br>  Executor: ' + executor + '<br>  </td><td>' + checkBox + '</td><td id="status-' + cloud + id + '"><i class="fa fa-hourglass-half"></i></td><td>' + getButtonsDef(cloud, 'Start') + getButtonsDef(cloud, 'Stop') + '</td></tr>');
     updCloudActive(id, proData, cloud)
 
 }
 
-function initCloudConsole(cloud){
-    $('#'+cloud+'Modal').on('show.bs.modal', function (event) {
+function initCloudConsole(cloud) {
+    $('#' + cloud + 'Modal').on('show.bs.modal', function(event) {
         $(this).find('form').trigger('reset');
-        var proData = getValues({ p: "getProfileCloud", cloud:cloud});
-        $('#'+cloud+'Table > tbody').empty();
-        $.each(proData, function (el) {
+        var proData = getValues({ p: "getProfileCloud", cloud: cloud });
+        $('#' + cloud + 'Table > tbody').empty();
+        $.each(proData, function(el) {
             addCloudRow(cloud, proData[el].id, proData[el].name, proData[el].executor, proData[el].instance_type, proData[el].image_id, proData[el].subnet_id, proData[el].autoshutdown_check, proData[el].autoshutdown_active, proData[el].autoshutdown_date, proData[el].status, proData[el]);
             checkCloudStatus(proData[el].id, cloud);
         });
     });
 
-    $('#'+cloud+'Modal').on('hide.bs.modal', function (event) {
-        $('#'+cloud+'Table td ').remove();
+    $('#' + cloud + 'Modal').on('hide.bs.modal', function(event) {
+        $('#' + cloud + 'Table td ').remove();
         checkCloudProfiles("notimer", cloud);
     });
 
-    $('#'+cloud+'Modal').on('click', '#'+cloud+'Start', function (e) {
+    $('#' + cloud + 'Modal').on('click', '#' + cloud + 'Start', function(e) {
         e.preventDefault();
         var clickedRowId = $(this).closest('tr').attr('id'); //local-20
         var patt = /(.*)-(.*)/;
         var proId = clickedRowId.replace(patt, '$2');
-        if (window[cloud+'countdown_' + proId]){
-            window[cloud+'countdown_' + proId] = null;
+        if (window[cloud + 'countdown_' + proId]) {
+            window[cloud + 'countdown_' + proId] = null;
         }
         //enter cloud details modal
-        $('#add'+cloud+'NodeModal').off();
-        $('#add'+cloud+'NodeModal').on('show.bs.modal', function (event) {
+        $('#add' + cloud + 'NodeModal').off();
+        $('#add' + cloud + 'NodeModal').on('show.bs.modal', function(event) {
             $(this).find('form').trigger('reset');
-            if ($('#'+cloud+'autoshutdown-'+proId).is(":checked").toString() == "true"){
-                $('#'+cloud+'autoshut_check').prop('checked', true)
+            if ($('#' + cloud + 'autoshutdown-' + proId).is(":checked").toString() == "true") {
+                $('#' + cloud + 'autoshut_check').prop('checked', true)
             }
         });
-        $('#add'+cloud+'NodeModal').on('hide.bs.modal', function (event) {
-            $('#'+cloud+'autoscaleDiv').attr('class', 'collapse');
+        $('#add' + cloud + 'NodeModal').on('hide.bs.modal', function(event) {
+            $('#' + cloud + 'autoscaleDiv').attr('class', 'collapse');
         });
-        $('#add'+cloud+'NodeModal').on('click', '#'+cloud+'Activate', function (event) {
+        $('#add' + cloud + 'NodeModal').on('click', '#' + cloud + 'Activate', function(event) {
             event.preventDefault();
             var data = {};
-            var numNodes = $('#'+cloud+'numNodes').val();
-            var autoshutdown_check = $('#'+cloud+'autoshut_check').is(":checked").toString();
+            var numNodes = $('#' + cloud + 'numNodes').val();
+            var autoshutdown_check = $('#' + cloud + 'autoshut_check').is(":checked").toString();
 
-            $('#'+cloud+'shutdownLog-'+proId).empty();
-            $('#'+cloud+'shutdownTimer-'+proId).empty();
-            if (autoshutdown_check == "true"){
-                $('#'+cloud+'autoshutdown-'+proId).prop('checked', true);
+            $('#' + cloud + 'shutdownLog-' + proId).empty();
+            $('#' + cloud + 'shutdownTimer-' + proId).empty();
+            if (autoshutdown_check == "true") {
+                $('#' + cloud + 'autoshutdown-' + proId).prop('checked', true);
                 updCloudActive(proId, "", cloud)
             } else {
-                $('#'+cloud+'autoshutdown-'+proId).prop('checked', false);
+                $('#' + cloud + 'autoshutdown-' + proId).prop('checked', false);
             }
-            var autoscale_check = $('#'+cloud+'autoscale_check').is(":checked").toString();
-            var autoscale_maxIns = $('#'+cloud+'autoscale_maxIns').val();
+            var autoscale_check = $('#' + cloud + 'autoscale_check').is(":checked").toString();
+            var autoscale_maxIns = $('#' + cloud + 'autoscale_maxIns').val();
             if (numNodes !== '') {
                 data = {
                     "id": proId,
@@ -707,14 +711,14 @@ function initCloudConsole(cloud){
                     url: "ajax/ajaxquery.php",
                     data: data,
                     async: true,
-                    success: function (s) {
+                    success: function(s) {
                         if (s.start_cloud) {
                             // check the amazon profiles activity each minute.
                             $('#status-' + cloud + proId).html('<i class="fa fa-hourglass-1"></i> Waiting for reply..');
-                            $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Start').css('display', 'none');
-                            $('#'+cloud+'Table > tbody > #'+cloud+'-' + proId + ' > > #'+cloud+'Stop').attr('disabled', 'disabled');
-                            $('#add'+cloud+'NodeModal').modal('hide');
-                            var intervalName = 'interval_'+cloud+'Status_' + proId;
+                            $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Start').css('display', 'none');
+                            $('#' + cloud + 'Table > tbody > #' + cloud + '-' + proId + ' > > #' + cloud + 'Stop').attr('disabled', 'disabled');
+                            $('#add' + cloud + 'NodeModal').modal('hide');
+                            var intervalName = 'interval_' + cloud + 'Status_' + proId;
                             clearInterval(window[intervalName]);
                             checkCloudTimer(proId, 20000, cloud);
                         }
@@ -722,87 +726,87 @@ function initCloudConsole(cloud){
                 });
             }
         });
-        $('#add'+cloud+'NodeModal').modal('show');
+        $('#add' + cloud + 'NodeModal').modal('show');
     });
 
-    $('#'+cloud+'Modal').on('click', '#'+cloud+'Stop', function (e) {
+    $('#' + cloud + 'Modal').on('click', '#' + cloud + 'Stop', function(e) {
         e.preventDefault();
         var clickedRowId = $(this).closest('tr').attr('id'); //local-20
         var patt = /(.*)-(.*)/;
         var proId = clickedRowId.replace(patt, '$2');
-        stopCloudByAjax(proId,cloud);
-        if (window[cloud+'countdown_' + proId]){
-            clearInterval(window[cloud+'countdown_' + proId]);
+        stopCloudByAjax(proId, cloud);
+        if (window[cloud + 'countdown_' + proId]) {
+            clearInterval(window[cloud + 'countdown_' + proId]);
         }
-        $('#'+cloud+'shutdownTimer-' + proId).text("");
-        window[cloud+'elapsed_' + proId] = 0;
-        $('#'+cloud+'shutdownLog-'+proId).empty();
-        $('#'+cloud+'shutdownTimer-'+proId).empty();
+        $('#' + cloud + 'shutdownTimer-' + proId).text("");
+        window[cloud + 'elapsed_' + proId] = 0;
+        $('#' + cloud + 'shutdownLog-' + proId).empty();
+        $('#' + cloud + 'shutdownTimer-' + proId).empty();
     });
 
 }
 
 
-var disableDoubleClickCollapse = function(id1check, id1div, id2check,id2div, baseid){
+var disableDoubleClickCollapse = function(id1check, id1div, id2check, id2div, baseid) {
     //not allow to click both option
-    $('#'+baseid).on('show.bs.collapse', '#'+id1div, function () {
-        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
-            $('#'+id2check).trigger("click");
+    $('#' + baseid).on('show.bs.collapse', '#' + id1div, function() {
+        if ($('#' + id2check).is(":checked") && $('#' + id1check).is(":checked")) {
+            $('#' + id2check).trigger("click");
         }
-        $('#'+id1check).attr('onclick', "return false;");
+        $('#' + id1check).attr('onclick', "return false;");
     });
-    $('#'+baseid).on('show.bs.collapse', '#'+id2div, function () {
-        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
-            $('#'+id1check).trigger("click");
+    $('#' + baseid).on('show.bs.collapse', '#' + id2div, function() {
+        if ($('#' + id2check).is(":checked") && $('#' + id1check).is(":checked")) {
+            $('#' + id1check).trigger("click");
         }
-        $('#'+id2check).attr('onclick', "return false;");
+        $('#' + id2check).attr('onclick', "return false;");
     });
-    $('#'+baseid).on('shown.bs.collapse', '#'+id1div, function () {
-        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
-            $('#'+id2check).trigger("click");
+    $('#' + baseid).on('shown.bs.collapse', '#' + id1div, function() {
+        if ($('#' + id2check).is(":checked") && $('#' + id1check).is(":checked")) {
+            $('#' + id2check).trigger("click");
         }
-        $('#'+id1check).removeAttr('onclick');
+        $('#' + id1check).removeAttr('onclick');
     });
-    $('#'+baseid).on('shown.bs.collapse', '#'+id2div, function () {
-        if ($('#'+id2check).is(":checked") && $('#'+id1check).is(":checked")) {
-            $('#'+id1check).trigger("click");
+    $('#' + baseid).on('shown.bs.collapse', '#' + id2div, function() {
+        if ($('#' + id2check).is(":checked") && $('#' + id1check).is(":checked")) {
+            $('#' + id1check).trigger("click");
         }
-        $('#'+id2check).removeAttr('onclick');
+        $('#' + id2check).removeAttr('onclick');
     });
 
-    $('#'+baseid).on('hide.bs.collapse', '#'+id2div, function () {
-        $('#'+id2check).attr('onclick', "return false;");
+    $('#' + baseid).on('hide.bs.collapse', '#' + id2div, function() {
+        $('#' + id2check).attr('onclick', "return false;");
     });
-    $('#'+baseid).on('hide.bs.collapse', '#'+id1div, function () {
-        $('#'+id1check).attr('onclick', "return false;");
+    $('#' + baseid).on('hide.bs.collapse', '#' + id1div, function() {
+        $('#' + id1check).attr('onclick', "return false;");
     });
-    $('#'+baseid).on('hidden.bs.collapse', '#'+id1div, function () {
-        $('#'+id1check).removeAttr('onclick');
+    $('#' + baseid).on('hidden.bs.collapse', '#' + id1div, function() {
+        $('#' + id1check).removeAttr('onclick');
     });
-    $('#'+baseid).on('hidden.bs.collapse', '#'+id2div, function () {
-        $('#'+id2check).removeAttr('onclick');
+    $('#' + baseid).on('hidden.bs.collapse', '#' + id2div, function() {
+        $('#' + id2check).removeAttr('onclick');
     });
 }
 
 
-function updateMarkdown (text, targetDiv){
+function updateMarkdown(text, targetDiv) {
     var target = document.getElementById(targetDiv)
-    // bootstrap requires "table" class to properly visualize it. Added with classMap and bindings
+        // bootstrap requires "table" class to properly visualize it. Added with classMap and bindings
     var classMap = {
         table: 'table table-bordered table-striped',
     }
     var bindings = Object.keys(classMap)
-    .map(key => ({
-        type: 'output',
-        regex: new RegExp(`<${key}(.*)>`, 'g'),
-        replace: `<${key} style="width: auto;" class="${classMap[key]}" $1>`
-    }));
-    var converter = new showdown.Converter({noHeaderId: true, tables: true ,extensions: [bindings]});
+        .map(key => ({
+            type: 'output',
+            regex: new RegExp(`<${key}(.*)>`, 'g'),
+            replace: `<${key} style="width: auto;" class="${classMap[key]}" $1>`
+        }));
+    var converter = new showdown.Converter({ noHeaderId: true, tables: true, extensions: [bindings] });
     var html = converter.makeHtml(text);
     target.innerHTML = html;
 }
 
-function getCurrDate(){
+function getCurrDate() {
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
     var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
@@ -811,12 +815,12 @@ function getCurrDate(){
     return today;
 }
 
-function toogleReleaseDiv(selPerm, own){
+function toogleReleaseDiv(selPerm, own) {
     selPerm = parseInt(selPerm);
-    if (selPerm >= 43){
+    if (selPerm >= 43) {
         $("#releaseDiv").css("display", "block")
         var releaseVal = $('#releaseVal').attr("date");
-        if (!releaseVal && own === "1"){
+        if (!releaseVal && own === "1") {
             $('#releaseLabel').text("Release Date:");
         }
     } else {
@@ -884,93 +888,93 @@ if (document.getElementById("after-sso-close")) {
 
 
 
-$(document).ready(function () {
+$(document).ready(function() {
     initCloudConsole("amazon");
     initCloudConsole("google");
 
     // example link 'UID: <a class="showHideSpan" data-toggle="tooltip" data-placement="bottom" data-original-title="Show/Hide Unique Run ID"><span  short="'+shortUID+'" long="'+run_log_uuid+'" last="short">'+shortUID+'<span></a>';
-    $(document).on('click', '.showHideSpan', function (event) {
+    $(document).on('click', '.showHideSpan', function(event) {
         var short = $(this).find("span").attr("short");
         var long = $(this).find("span").attr("long");
         var last = $(this).find("span").attr("last");
-        if (last == "short"){
+        if (last == "short") {
             $(this).find("span").text(long)
             $(this).find("span").attr("last", "long");
-        } else if (last == "long"){
+        } else if (last == "long") {
             $(this).find("span").text(short);
             $(this).find("span").attr("last", "short");
         }
     });
 
 
-    $(function () {
-        $(document).on('change', '.autoShutCheck', function (event) {
+    $(function() {
+        $(document).on('change', '.autoShutCheck', function(event) {
             var cloud = $(this).attr("cloud");
             var autoShutCheck = $(this).is(":checked").toString();
             var profileId = $(this).attr("id").split("-")[1];
-            var proData = getValuesErr({ p: "updateCloudShutdownCheck", cloud:cloud, autoshutdown_check:autoShutCheck, id: profileId });
-            if (autoShutCheck == "false"){
-                $('#'+cloud+'shutdownLog-'+profileId).empty();
-                $('#'+cloud+'shutdownTimer-'+profileId).empty();
+            var proData = getValuesErr({ p: "updateCloudShutdownCheck", cloud: cloud, autoshutdown_check: autoShutCheck, id: profileId });
+            if (autoShutCheck == "false") {
+                $('#' + cloud + 'shutdownLog-' + profileId).empty();
+                $('#' + cloud + 'shutdownTimer-' + profileId).empty();
             } else {
                 updCloudActive(profileId, "", cloud)
                 checkCloudStatus(profileId, cloud);
             }
         });
-        $(document).on('click', 'button[data=cloudLogStart]', function (e) {
+        $(document).on('click', 'button[data=cloudLogStart]', function(e) {
             e.preventDefault();
             var cloud = $(this).attr("cloud");
             var profileId = $(this).attr("id").split("-")[1];
-            var logData = $('#'+cloud+'LogStart-'+profileId).data("logData")
-            if (logData.match(/Downloading nextflow dependencies(.*)Fetching EC2 prices/)){
-                logData = logData.replace(/Downloading nextflow dependencies(.*)Fetching EC2 prices/,'')
+            var logData = $('#' + cloud + 'LogStart-' + profileId).data("logData")
+            if (logData.match(/Downloading nextflow dependencies(.*)Fetching EC2 prices/)) {
+                logData = logData.replace(/Downloading nextflow dependencies(.*)Fetching EC2 prices/, '')
             }
             logData = logData.replace(/\n/g, '<br/>');
-            showInfoModal("#infoMod","#infoModText", logData)
+            showInfoModal("#infoMod", "#infoModText", logData)
         });
-        $(document).on('click', 'button[data=cloudListLog]', function (e) {
+        $(document).on('click', 'button[data=cloudListLog]', function(e) {
             e.preventDefault();
             var profileId = $(this).attr("id").split("-")[1];
             var cloud = $(this).attr("cloud");
-            var logData = $('#'+cloud+'CloudListLog-'+profileId).data("logData")
+            var logData = $('#' + cloud + 'CloudListLog-' + profileId).data("logData")
             logData = logData.replace(/\n/g, '<br/>');
-            showInfoModal("#infoMod","#infoModText", logData)
+            showInfoModal("#infoMod", "#infoModText", logData)
         });
     });
 
 
-    $(function () {
+    $(function() {
         //check latest release and warn admin
-        if (usRole == "admin"){
+        if (usRole == "admin") {
             var currentVersion = $("#dn-version").attr("ver")
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",
-                data: {p: "checkNewRelease", version:currentVersion},
+                data: { p: "checkNewRelease", version: currentVersion },
                 async: true,
                 cache: true,
-                success: function (releaseData) {
+                success: function(releaseData) {
                     if (IsJsonString(releaseData)) {
                         var json = JSON.parse(releaseData)
                         if (json) {
-                            if (json.release_cmd_log){
+                            if (json.release_cmd_log) {
                                 var latestVersion = json.release_cmd_log.tag_name;
                                 var releaseNotes = json.release_cmd_log.body;
-                                if (latestVersion && releaseNotes){
+                                if (latestVersion && releaseNotes) {
                                     var scriptsPath = "scripts";
-                                    if (json.scripts_path){
+                                    if (json.scripts_path) {
                                         scriptsPath = json.scripts_path
                                     }
                                     $("#softUpdBut").css("display", "inline")
-                                    $("#softUptDesc").html("DolphinNext "+latestVersion+ " is now available. You can update your mirror by running following command:");
-                                    $("#softUptCmd").val("cd "+scriptsPath+" && python updateDN.py --version "+latestVersion)
+                                    $("#softUptDesc").html("DolphinNext " + latestVersion + " is now available. You can update your mirror by running following command:");
+                                    $("#softUptCmd").val("cd " + scriptsPath + " && python updateDN.py --version " + latestVersion)
                                     $("#softUptReleaseNotes").val(releaseNotes)
                                 }
                             }
                         }
                     }
                 },
-                error: function (jqXHR, exception) {
+                error: function(jqXHR, exception) {
                     console.log("#Error:")
                     console.log(jqXHR.status)
                     console.log(exception)
@@ -980,16 +984,16 @@ $(document).ready(function () {
 
         }
         //load news on click to version button
-        $(document).on('click', '#dnVersionBut', function (event) {
+        $(document).on('click', '#dnVersionBut', function(event) {
             var checkLoad = $("#versionNotes").attr("readonly")
-            // For some browsers, `attr` is undefined; for others, `attr` is false. Check for both.
+                // For some browsers, `attr` is undefined; for others, `attr` is false. Check for both.
             if (typeof checkLoad === typeof undefined || checkLoad === false) {
                 var changeLogData = getValues({ p: "getChangeLog" });
-                if (changeLogData){
+                if (changeLogData) {
                     $("#versionNotes").val(changeLogData)
-                    $("#versionNotes").attr('readonly','readonly');
+                    $("#versionNotes").attr('readonly', 'readonly');
 
-                } 
+                }
             }
         });
     });
@@ -998,9 +1002,9 @@ $(document).ready(function () {
 
 
     //--------- permission control for process/pipeline/run starts-------
-    $(function () {
+    $(function() {
         var previousOpt;
-        var checkPermissionUpdtFunc = function (obj,perms,group_id,format) {
+        var checkPermissionUpdtFunc = function(obj, perms, group_id, format) {
             var warnUser = false;
             var infoText = '';
             var pipeline_id = obj.pipeline_id;
@@ -1008,12 +1012,12 @@ $(document).ready(function () {
             var project_id = obj.project_id;
             console.log(obj)
             var checkPermissionUpdt;
-            if (format == "pipeline"){
-                checkPermissionUpdt = getValues({ p: "checkPermUpdtPipeline", "pipeline_id": pipeline_id, perms:perms,  group_id:group_id}); 
-            } else if (format == "process"){
-                checkPermissionUpdt = getValues({ p: "checkPermUpdtProcess", "process_id": process_id, perms:perms,  group_id:group_id}); 
-            } else if (format == "run"){
-                checkPermissionUpdt = getValues({ p: "checkPermUpdtRun",  pipeline_id: pipeline_id,  project_id: project_id,  perms:perms,   group_id:group_id}); 
+            if (format == "pipeline") {
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtPipeline", "pipeline_id": pipeline_id, perms: perms, group_id: group_id });
+            } else if (format == "process") {
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtProcess", "process_id": process_id, perms: perms, group_id: group_id });
+            } else if (format == "run") {
+                checkPermissionUpdt = getValues({ p: "checkPermUpdtRun", pipeline_id: pipeline_id, project_id: project_id, perms: perms, group_id: group_id });
             }
             console.log(checkPermissionUpdt)
             var warnAr = $.map(checkPermissionUpdt, function(value, index) {
@@ -1022,16 +1026,16 @@ $(document).ready(function () {
             var numOfErr = warnAr.length;
             if (numOfErr > 0) {
                 warnUser = true;
-                if (format == "pipeline" || format == "process" ){
+                if (format == "pipeline" || format == "process") {
                     infoText += 'It is not allowed to change permission/group of current revision because of the following reason(s): </br></br>'
-                } else if (format == "run"){
+                } else if (format == "run") {
                     infoText += "Permission of the project/pipeline needs to be updated in order to change permission/group of the run. However, it couldn't be done because of the following reason(s): </br></br>"
-                } 
-                $.each(warnAr, function (element) {
-                    infoText += warnAr[element]+"</br>";
+                }
+                $.each(warnAr, function(element) {
+                    infoText += warnAr[element] + "</br>";
                 });
-                if (numOfErr == 1 && warnAr[0]){
-                    if (warnAr[0].match(/project:/i)){
+                if (numOfErr == 1 && warnAr[0]) {
+                    if (warnAr[0].match(/project:/i)) {
                         infoText += "</br>*You might consider moving your run into another project to change its permission/group."
                     }
                 }
@@ -1039,13 +1043,13 @@ $(document).ready(function () {
             return [warnUser, infoText];
         }
 
-        $(document).on('focus', '.permscheck', function () {
+        $(document).on('focus', '.permscheck', function() {
             previousOpt = $(this).children("option:selected");
-        }).on('change', '.permscheck', async function (event) {
+        }).on('change', '.permscheck', async function(event) {
             var dropdownID = this.id;
             var idObj = {};
             console.log(dropdownID)
-            if (dropdownID == "permsPipe" || dropdownID == "groupSelPipe"){
+            if (dropdownID == "permsPipe" || dropdownID == "groupSelPipe") {
                 var selGroup = $("#groupSelPipe").val();
                 var selPerm = $("#permsPipe").val();
                 var pipeline_id = $('#pipeline-title').attr('pipelineid');
@@ -1055,10 +1059,10 @@ $(document).ready(function () {
                     idObj.pipeline_id = pipeline_id;
                     var objData = $.extend(true, {}, idObj);
                     //check if pipeline permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "pipeline");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData, selPerm, selGroup, "pipeline");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
-                        showInfoModal("#infoMod","#infoModText", infoText);
+                        showInfoModal("#infoMod", "#infoModText", infoText);
                     } else {
                         toogleReleaseDiv(selPerm, pipelineOwn)
                         autosaveDetails();
@@ -1067,45 +1071,45 @@ $(document).ready(function () {
                     toogleReleaseDiv(selPerm, pipelineOwn);
                     autosaveDetails();
                 }
-            } else if (dropdownID == "permsRun" || dropdownID == "groupSelRun"){
+            } else if (dropdownID == "permsRun" || dropdownID == "groupSelRun") {
                 var selGroup = $("#groupSelRun").val();
                 var selPerm = $("#permsRun").val();
                 var pipeline_id = $('#pipeline-title').attr('pipeline_id');
                 var project_pipeline_id = $('#pipeline-title').attr('projectpipelineid');
-                var pipeData = await $runscope.getAjaxData("getProjectPipelines", {p:"getProjectPipelines", "id":project_pipeline_id});
+                var pipeData = await $runscope.getAjaxData("getProjectPipelines", { p: "getProjectPipelines", "id": project_pipeline_id });
                 var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
                 var project_id = pipeData[0].project_id;
-                if (pipeline_id && project_id){
+                if (pipeline_id && project_id) {
                     var warnUser = false;
                     var infoText = '';
                     idObj.pipeline_id = pipeline_id
                     idObj.project_id = project_id
                     var objData = $.extend(true, {}, idObj);
                     //check if pipeline permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "run");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData, selPerm, selGroup, "run");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
-                        showInfoModal("#infoMod","#infoModText", infoText);
+                        showInfoModal("#infoMod", "#infoModText", infoText);
                     } else {
                         toogleReleaseDiv(selPerm, projectpipelineOwn);
                     }
                 }
-            } else if (dropdownID == "permsPro" || dropdownID == "groupSelPro"){
+            } else if (dropdownID == "permsPro" || dropdownID == "groupSelPro") {
                 var selGroup = $("#groupSelPro").val();
                 var selPerm = $("#permsPro").val();
                 var process_id = $('#mIdPro').val()
-                if (process_id){
+                if (process_id) {
                     var warnUser = false;
                     var infoText = '';
                     var numOfRuns = '';
                     idObj.process_id = process_id
                     var objData = $.extend(true, {}, idObj);
                     //check if process permission is allowed to change
-                    [warnUser, infoText] = checkPermissionUpdtFunc(objData,selPerm,selGroup, "process");
+                    [warnUser, infoText] = checkPermissionUpdtFunc(objData, selPerm, selGroup, "process");
                     if (warnUser === true) {
                         previousOpt.prop("selected", true);
-                        showInfoModal("#infoMod","#infoModText", infoText);
-                    } 
+                        showInfoModal("#infoMod", "#infoModText", infoText);
+                    }
                 }
             }
             //reasign previousOpt value after change
@@ -1115,23 +1119,23 @@ $(document).ready(function () {
     //---- permission control for process/pipeline/run ends
 
 
-    $(document).on('click', '.tooglehelp', function () {
+    $(document).on('click', '.tooglehelp', function() {
         $("#feedmessage").val("");
     });
-    $("#controlSidebarHelp").on('click', '#sendfeedback', function () {
+    $("#controlSidebarHelp").on('click', '#sendfeedback', function() {
         var message = $("#feedmessage").val();
         var url = window.location.href;
-        if (message){
+        if (message) {
             $.ajax({
                 type: "POST",
                 url: "ajax/ajaxquery.php",
-                data: {message: message, url:url, "p": "savefeedback"},
-                success: function () {
+                data: { message: message, url: url, "p": "savefeedback" },
+                success: function() {
                     $("#feedmessage").val("");
                     toastr.success("Your message has been sent");
                     $("#tooglehelp").click();
                 },
-                error:function () {
+                error: function() {
                     toastr.error("Error occured.");
                 }
 
@@ -1150,7 +1154,7 @@ $("#filterMenu").append('<li><a href="#" data-value="3" tabIndex="-1"><input typ
 $("#filterMenu").append('<li><a href="#" data-value="63" tabIndex="-1"><input type="checkbox"/>&nbsp;Public</a></li>');
 
 
-getValuesAsync({p: "getUserGroups"}, function (allUserGrp) {
+getValuesAsync({ p: "getUserGroups" }, function(allUserGrp) {
     if (allUserGrp && allUserGrp != '') {
         for (var i = 0; i < allUserGrp.length; i++) {
             var param = allUserGrp[i];
@@ -1163,7 +1167,7 @@ getValuesAsync({p: "getUserGroups"}, function (allUserGrp) {
 
 //filter sidebar menu (multiple selection feature)
 var optionsFilter = [];
-$('.filterM a').on('click', function (event) {
+$('.filterM a').on('click', function(event) {
     $('#tags').val("");
     var $target = $(event.currentTarget),
         val = $target.attr('data-value'),
@@ -1171,10 +1175,10 @@ $('.filterM a').on('click', function (event) {
         idx;
     if ((idx = optionsFilter.indexOf(val)) > -1) {
         optionsFilter.splice(idx, 1);
-        setTimeout(function () { $inp.prop('checked', false) }, 0);
+        setTimeout(function() { $inp.prop('checked', false) }, 0);
     } else {
         optionsFilter.push(val);
-        setTimeout(function () { $inp.prop('checked', true) }, 0);
+        setTimeout(function() { $inp.prop('checked', true) }, 0);
     }
     $(event.target).blur();
     //filter based on options array
@@ -1215,12 +1219,12 @@ function filterSideBar(options) {
                 if ($(tagElems2).eq(j).attr('admin')) {
                     if ($(tagElems2).eq(j).attr('admin') === '1') {
                         checkAdmin = $.inArray("admin", selOptArr) >= 0;
-                    } 
+                    }
                 }
                 var checkPublish = $.inArray(checkPubText, selOptArr) >= 0;
                 var checkPerm = $.inArray($(tagElems2).eq(j).attr('p'), selOptArr) >= 0;
                 var checkGroup = $.inArray($(tagElems2).eq(j).attr('g'), group_idArr) >= 0;
-                if (($(tagElems2).eq(j).attr('p') === "15" && checkPerm && checkGroup ) || ($(tagElems2).eq(j).attr('p') === "3" && checkPerm) || ($(tagElems2).eq(j).attr('p') === "63" && checkPerm) || ($(tagElems2).eq(j).attr('p') !== "63" && checkPublish) || checkAdmin) {
+                if (($(tagElems2).eq(j).attr('p') === "15" && checkPerm && checkGroup) || ($(tagElems2).eq(j).attr('p') === "3" && checkPerm) || ($(tagElems2).eq(j).attr('p') === "63" && checkPerm) || ($(tagElems2).eq(j).attr('p') !== "63" && checkPublish) || checkAdmin) {
                     $(tagElems).eq(i).show()
                     $(tagElems2).eq(j).show()
                 }
@@ -1250,7 +1254,7 @@ function filterSideBar(options) {
 }
 
 //SideBar menu Search Function
-$('.main-sidebar').on('keyup', '#tags', function (e) {
+$('.main-sidebar').on('keyup', '#tags', function(e) {
     $('.filterM a >').prop('checked', false);
     var tagElems = $('#autocompletes1').children()
     $(tagElems).hide()
@@ -1259,7 +1263,7 @@ $('.main-sidebar').on('keyup', '#tags', function (e) {
         $(tagElems2).hide()
         $(tagElems).eq(i).closest('li').children('ul.treeview-menu').hide()
         for (var j = 0; j < tagElems2.length; j++) {
-            if (($(tagElems2).eq(j).children().attr("origin"))){
+            if (($(tagElems2).eq(j).children().attr("origin"))) {
                 if (($(tagElems2).eq(j).children().attr("origin").toLowerCase()).indexOf($(this).val().toLowerCase()) > -1) {
                     $(tagElems).eq(i).show()
                     if ($(this).val().toLowerCase() !== "") {
@@ -1342,11 +1346,11 @@ function getDropdownDef(id, attr, optionArr, defText) {
         var firstOpt = "";
     }
     var optText = "";
-    $.each(optionArr, function (el) {
+    $.each(optionArr, function(el) {
         var opt = $.trim(optionArr[el]);
         optText += '<option value="' + opt + '">' + opt + '</option>';
     });
-    var dropdownMenu = '<select style="width:92px; height:30px; margin-right:5px;" class="btn  btn-primary btn-sm"  '+attr+'="'+attr+'" id="' + id + '">' + firstOpt + optText + '</select>';;
+    var dropdownMenu = '<select style="width:92px; height:30px; margin-right:5px;" class="btn  btn-primary btn-sm"  ' + attr + '="' + attr + '" id="' + id + '">' + firstOpt + optText + '</select>';;
     return dropdownMenu;
 }
 
@@ -1366,7 +1370,7 @@ function getIconButton(name, buttons, icon) {
 
 
 //use changeVal to trigger change event after using val()
-$.fn.changeVal = function (v) {
+$.fn.changeVal = function(v) {
     return $(this).val(v).trigger("change");
 }
 
@@ -1375,7 +1379,7 @@ var $inputText = $('input.width-dynamic');
 // Resize based on text if text.length > 0
 // Otherwise resize based on the placeholder
 
-$("input.width-dynamic").on("change", function () {
+$("input.width-dynamic").on("change", function() {
     var namePip = $('input.width-dynamic').val();
     resizeForText.call($inputText, namePip);
 });
@@ -1393,7 +1397,7 @@ function resizeForText(text) {
     }
     $this.css("width", $inputSize);
 }
-$inputText.keypress(function (e) {
+$inputText.keypress(function(e) {
     if (e.which && e.charCode) {
         var c = String.fromCharCode(e.keyCode | e.charCode);
         var $this = $(this);
@@ -1401,18 +1405,18 @@ $inputText.keypress(function (e) {
     }
 });
 // Backspace event only fires for keyup
-$inputText.keyup(function (e) {
+$inputText.keyup(function(e) {
     if (e.keyCode === 8 || e.keyCode === 46) {
         resizeForText.call($(this), $(this).val());
     }
 });
-$inputText.each(function () {
+$inputText.each(function() {
     var $this = $(this);
     resizeForText.call($this, $this.val())
 });
 
 function numberWithCommas(x) {
-    if (typeof x !== 'undefined'){
+    if (typeof x !== 'undefined') {
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     } else {
         return ""
@@ -1431,7 +1435,7 @@ function tsvPercent(tsv) {
         var divider = currentline[1];
         tsvPercent += currentline[0] + "\t" + numberWithCommas(currentline[1]);
         for (var j = 2; j < currentline.length; j++) {
-            if ($.isNumeric(divider) && $.isNumeric(currentline[j] / divider)){
+            if ($.isNumeric(divider) && $.isNumeric(currentline[j] / divider)) {
                 tsvPercent += "\t" + numberWithCommas(currentline[j]) + " (" + parseFloat(Math.round(currentline[j] / divider * 100 * 100) / 100).toFixed(2) + "%)";
             } else {
                 tsvPercent += "\t" + numberWithCommas(currentline[j]);
@@ -1454,12 +1458,12 @@ function tsvCsvDatatablePrep(tsvCsv, fixHeader, sep) {
     var data = result.data;
     var tsvCsv = $.trim(tsvCsv);
     var lines = tsvCsv.split("\n");
-    if (fixHeader){
+    if (fixHeader) {
         lines[0] = lines[0].replace(/\./g, "_");
     }
     var headers = lines[0].split(sep);
     for (var i = 0; i < headers.length; i++) {
-        cols.push({"title": headers[i]});
+        cols.push({ "title": headers[i] });
     }
     for (var i = 1; i < lines.length; i++) {
         var currentline = lines[i].split(sep);
@@ -1504,7 +1508,7 @@ function tsvCsvDatatablePrep(tsvCsv, fixHeader, sep) {
 //    }
 //}
 
-function reportAjaxError(jqXHR, exception, query){
+function reportAjaxError(jqXHR, exception, query) {
     var msg = '';
     if (jqXHR.status === 0) {
         msg = 'Not connect.\n Verify Network.';
@@ -1525,7 +1529,7 @@ function reportAjaxError(jqXHR, exception, query){
     }
     console.log("#Query: ");
     console.log(query);
-    console.log("#Ajax Error: "+msg);
+    console.log("#Ajax Error: " + msg);
 }
 
 async function doAjax(data) {
@@ -1545,7 +1549,7 @@ async function doAjax(data) {
 }
 
 function getValues(data, async) {
-    async = async ||false; //default false
+    async = async || false; //default false
     var result = null;
     $.ajax({
         url: "ajax/ajaxquery.php",
@@ -1553,10 +1557,10 @@ function getValues(data, async) {
         async: async,
         cache: false,
         type: "POST",
-        success: function (data) {
+        success: function(data) {
             result = data;
         },
-        error: function (jqXHR, exception) {
+        error: function(jqXHR, exception) {
             reportAjaxError(jqXHR, exception, data)
         }
     });
@@ -1571,10 +1575,10 @@ function getValuesErr(data, async) {
         async: async,
         cache: false,
         type: "POST",
-        success: function (data) {
+        success: function(data) {
             result = data;
         },
-        error: function (jqXHR, exception) {
+        error: function(jqXHR, exception) {
             reportAjaxError(jqXHR, exception, data)
         }
     });
@@ -1582,16 +1586,16 @@ function getValuesErr(data, async) {
 }
 
 
-function apiCallUrl(url) { 
+function apiCallUrl(url) {
     var result = null;
     $.ajax({
         url: url,
         async: false,
         type: "GET",
-        success: function (data) {
+        success: function(data) {
             result = data;
         },
-        error: function (jqXHR, exception) {
+        error: function(jqXHR, exception) {
             reportAjaxError(jqXHR, exception, url)
         }
     });
@@ -1601,12 +1605,12 @@ function apiCallUrl(url) {
 
 
 
-function xmlStringToJson(xmlString){
-    var expXMLraw = '<document>'+xmlString+'</document>';
+function xmlStringToJson(xmlString) {
+    var expXMLraw = '<document>' + xmlString + '</document>';
     var parser = new DOMParser();
-    var xml = parser.parseFromString(expXMLraw,"text/xml");
+    var xml = parser.parseFromString(expXMLraw, "text/xml");
     var obj = xmlToJson(xml)
-    if (obj.document){
+    if (obj.document) {
         obj = obj.document
     }
     return obj;
@@ -1630,9 +1634,9 @@ function xmlToJson(xml) {
     }
     // do children
     if (xml.hasChildNodes()) {
-        for(var i = 0; i < xml.childNodes.length; i++) {
+        for (var i = 0; i < xml.childNodes.length; i++) {
             var item = xml.childNodes.item(i);
-            var nodeName = item.nodeName.replace('#','');
+            var nodeName = item.nodeName.replace('#', '');
             if (typeof(obj[nodeName]) == "undefined") {
                 obj[nodeName] = xmlToJson(item);
             } else {
@@ -1658,10 +1662,10 @@ function callMarkDownApp(text) {
         async: false,
         cache: false,
         type: "POST",
-        success: function (data) {
+        success: function(data) {
             result = data;
         },
-        error: function (errorThrown) {
+        error: function(errorThrown) {
             alert("Error: " + errorThrown);
         }
     });
@@ -1677,10 +1681,10 @@ function callMarkDownApp(text) {
     return result
 }
 
-var getExtension = function (filename){
+var getExtension = function(filename) {
     var re = /(?:\.([^.]+))?$/;
-    var ext = re.exec(filename)[1];   // "txt"
-    if (!ext){
+    var ext = re.exec(filename)[1]; // "txt"
+    if (!ext) {
         ext = "";
     }
     return ext.toLowerCase();
@@ -1695,11 +1699,11 @@ function getValuesAsync(data, callback) {
         async: true,
         cache: false,
         type: "POST",
-        success: async function (data) {
+        success: async function(data) {
             result = data;
             await callback(result);
         },
-        error: function (errorThrown) {
+        error: function(errorThrown) {
             console.log("AJAX Error occured.", data)
             toastr.error("Error occured.");
         }
@@ -1762,7 +1766,7 @@ function createElement(type, fields, options) {
 }
 
 function cleanProcessName(proName) {
-    if (proName){
+    if (proName) {
         proName = proName.trim();
         proName = proName.replace(/ /g, "_");
         proName = proName.replace(/-/g, "_");
@@ -1779,13 +1783,13 @@ function cleanProcessName(proName) {
         proName = proName.replace(/\./g, "_");
         proName = proName.replace(/\//g, "_");
         proName = proName.replace(/\\/g, "_");
-        proName = proName.replace(/@/g, "_"); 
+        proName = proName.replace(/@/g, "_");
     }
     return proName;
 }
 
 function cleanSpecChar(n) {
-    if (n){
+    if (n) {
         n = n.replace(/-/g, "_")
             .replace(/:/g, "_")
             .replace(/,/g, "_")
@@ -1801,14 +1805,14 @@ function cleanSpecChar(n) {
             .replace(/\./g, "_")
             .replace(/\//g, "_")
             .replace(/\\/g, "_")
-            .replace(/@/g, "_"); 
+            .replace(/@/g, "_");
     }
     return n;
 }
 
 function createLabel(proName) {
     proName = proName.replace(/_/g, " ");
-    proName = proName.replace(/\w\S*/g, function (txt) {
+    proName = proName.replace(/\w\S*/g, function(txt) {
         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
     });
 
@@ -1817,7 +1821,7 @@ function createLabel(proName) {
 
 //use fullsize class to find parent element which is going to be fullscreen
 //assign parent divs width as 100% and don't change within featList at below
-var toogleFullSize = function (iconElem, type) {
+var toogleFullSize = function(iconElem, type) {
     var elems = $(iconElem).closest("div.fullsize")
     if (type == "expand") {
         var featList = ["z-index", "height", "position", "top", "left", "background"]
@@ -1834,7 +1838,7 @@ var toogleFullSize = function (iconElem, type) {
         var newCSS = elems.data("oldCSS");
     }
     //apply css obj
-    $.each(newCSS, function (el) {
+    $.each(newCSS, function(el) {
         elems.css(el, newCSS[el])
     });
     $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
@@ -1890,7 +1894,7 @@ function downloadText(text, filename) {
 
 
 
-$('.collapseIcon').on('click', function (e) {
+$('.collapseIcon').on('click', function(e) {
     var textClass = $(this).attr('class');
     if (textClass.includes('fa-plus-square-o')) {
         $(this).removeClass('fa-plus-square-o');
@@ -1902,7 +1906,7 @@ $('.collapseIcon').on('click', function (e) {
 });
 
 function refreshCollapseIconDiv() {
-    $('.collapseIconDiv').on('click', function (e) {
+    $('.collapseIconDiv').on('click', function(e) {
         var textClassPlus = $(this).find('.fa-plus-square-o')[0];
         var textClassMinus = $(this).find('.fa-minus-square-o')[0];
         if (textClassPlus) {
@@ -1915,7 +1919,7 @@ function refreshCollapseIconDiv() {
             $(textClassMinus).addClass('fa-plus-square-o');
         }
     });
-    $('.collapseIconItem').on('click', function (e) {
+    $('.collapseIconItem').on('click', function(e) {
         var itemClass = $(this).attr("class")
         if (itemClass.match(/fa-plus-square-o/)) {
             $(this).removeClass('fa-plus-square-o');
@@ -1939,29 +1943,29 @@ function getObjectValues(obj) {
 
 //creates ajax object and change color of requiredFields
 function createFormObj(formValues, requiredFields, settings) {
-    var onlyVisible = (settings && settings.onlyVisible) ? true: false;
+    var onlyVisible = (settings && settings.onlyVisible) ? true : false;
     var formObj = {}
     var stop = false;
     for (var i = 0; i < formValues.length; i++) {
         const isSelectized = $(formValues[i]).hasClass('selectized');
-        if ( !isSelectized && onlyVisible && ($(formValues[i]).css('display') == 'none' ||
-                                              $(formValues[i]).closest('.row').css('display') == 'none')) {
+        if (!isSelectized && onlyVisible && ($(formValues[i]).css('display') == 'none' ||
+                $(formValues[i]).closest('.row').css('display') == 'none')) {
             continue;
         }
         var name = $(formValues[i]).attr("name");
         var type = $(formValues[i]).attr("type");
         var val = "";
-        if (type == "radio"){
+        if (type == "radio") {
             for (var k = 0; k < formValues.length; k++) {
-                if ($(formValues[k]).attr("name")){
-                    if ($(formValues[k]).attr("name") == name && $(formValues[k]).is(':checked')){
+                if ($(formValues[k]).attr("name")) {
+                    if ($(formValues[k]).attr("name") == name && $(formValues[k]).is(':checked')) {
                         val = $(formValues[k]).val();
                         break;
-                    }  
+                    }
                 }
             }
-        } else if (type == "checkbox"){
-            if ($(formValues[i]).is(':checked')){
+        } else if (type == "checkbox") {
+            if ($(formValues[i]).is(':checked')) {
                 val = "on";
             }
         } else {
@@ -2022,10 +2026,10 @@ function fillFormByName(formId, find, data) {
         var checkboxCheck = $(formValues[k]).is(':checkbox');
         var keys = Object.keys(data);
         if (data[nameAttr] || data[nameAttr] === "") {
-            if (radioCheck){
+            if (radioCheck) {
                 if (data[nameAttr] == $(formValues[k]).val()) {
                     $(formValues[k]).attr("checked", true);
-                } 
+                }
             } else {
                 console.log(data[nameAttr])
                 if (data[nameAttr] === "on") {
@@ -2041,24 +2045,24 @@ function fillFormByName(formId, find, data) {
 function fillFormById(formId, find, data) {
     var formValues = $(formId).find(find);
     if (formValues[0]) {
-        $.each(formValues, function (st) {
+        $.each(formValues, function(st) {
             $(formValues[st]).val(data);
         });
     }
 }
 
 function fixCollapseMenu(collapseDiv, checkboxId) {
-    $(function () {
-        $(collapseDiv).on('show.bs.collapse', function () {
+    $(function() {
+        $(collapseDiv).on('show.bs.collapse', function() {
             $(checkboxId).attr('onclick', "return false;");
         });
-        $(collapseDiv).on('shown.bs.collapse', function () {
+        $(collapseDiv).on('shown.bs.collapse', function() {
             $(checkboxId).removeAttr('onclick');
         });
-        $(collapseDiv).on('hide.bs.collapse', function () {
+        $(collapseDiv).on('hide.bs.collapse', function() {
             $(checkboxId).attr('onclick', "return false;");
         });
-        $(collapseDiv).on('hidden.bs.collapse', function () {
+        $(collapseDiv).on('hidden.bs.collapse', function() {
             $(checkboxId).removeAttr('onclick');
         });
     });
@@ -2067,7 +2071,7 @@ function fixCollapseMenu(collapseDiv, checkboxId) {
 
 
 //$("#example").multiline('this\n has\n newlines');
-$.fn.multiline = function (text) {
+$.fn.multiline = function(text) {
     this.text(text);
     this.html(this.html().replace(/\n/g, '<br/>'));
     return this;
@@ -2085,7 +2089,7 @@ function escapeHtml(str) {
     if (str === null) {
         return null
     }
-    return str.replace(/[&<>"']/g, function (m) { return map[m]; });
+    return str.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
 function decodeHtml(str) {
@@ -2101,7 +2105,7 @@ function decodeHtml(str) {
     } else if (str === undefined) {
         return ""
     }
-    return str.replace(/&amp;|&lt;|&gt;|&quot;|&#039;/g, function (m) { return map[m]; });
+    return str.replace(/&amp;|&lt;|&gt;|&quot;|&#039;/g, function(m) { return map[m]; });
 }
 
 //globalEventBinders
@@ -2128,8 +2132,8 @@ $(document).on('click', `.multi-value`, function(e) {
 $(document).on('click', `.multi-restore`, function(e) {
     $(this).css('display', 'none');
     const field = $(this)
-    .siblings('.multi-value')
-    .next();
+        .siblings('.multi-value')
+        .next();
     const isSelectized = field.hasClass('selectized');
     const isDataPerms = field.hasClass('data-perms');
     const isCustomized = field.hasClass('customized');
@@ -2142,7 +2146,7 @@ $(document).on('click', `.multi-restore`, function(e) {
         field.next().css('display', 'none');
 });
 
-var removeMultiUpdateModal = (formId) =>{
+var removeMultiUpdateModal = (formId) => {
     $(formId).find(".multi-value-text").remove();
     $(formId).find(".multi-value").remove();
     $(formId).find(".multi-restore").remove();
