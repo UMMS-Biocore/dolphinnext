@@ -4,6 +4,7 @@ $runscope = {
     checkUserWritePermRun: null,
     getProjectPipelines: null,
     beforeunload: "",
+    handsontable: {},
 
     //-------- Functions:
     //Generic function to save ajax data
@@ -833,8 +834,8 @@ function parseRegPartAutofill(regPart) {
     return [url, urlzip, checkPath];
 }
 
-//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file @single_file @hidden
-//parse style categories: @multicolumn, @array, @condition
+//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file @single_file @hidden 
+//parse style categories: @multicolumn, @array, @condition, @spreadsheet
 function parseRegPart(regPart) {
     var type = null;
     var desc = null;
@@ -851,6 +852,7 @@ function parseRegPart(regPart) {
     var hidden = null;
     var arr = null;
     var cond = null;
+    var spreadsheet = null;
     if (regPart.match(/@/)) {
         var regSplit = regPart.split(" @");
         for (var i = 0; i < regSplit.length; i++) {
@@ -888,6 +890,11 @@ function parseRegPart(regPart) {
                     var arrContent = arrayCheck[1];
                     arr = parseBrackets(arrContent, true);
                 }
+            }
+            // check if @spreadsheet tag is defined //* @style @spreadsheet:{var1, var2}, {var4}
+            var spreadsheetCheck = regSplit[i].match(/^spreadsheet:(.*)/i);
+            if (spreadsheetCheck && spreadsheetCheck[1]) {
+                spreadsheet = parseBrackets(spreadsheetCheck[1], true);
             }
             // check if @condition tag is defined //* @style @condition:{var1="yes", var2}, {var1="no", var3, var4}
             var condCheck = regSplit[i].match(/^condition:(.*)/i);
@@ -1004,7 +1011,8 @@ function parseRegPart(regPart) {
         optional,
         file,
         singleFile,
-        hidden
+        hidden,
+        spreadsheet
     ];
 }
 
@@ -1074,7 +1082,7 @@ function findDefaultArr(optArr) {
 }
 
 //insert form fields into panels of process options
-function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title, hidden) {
+function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title, hidden, spreadsheet) {
     if ($.isArray(defaultVal)) {
         defaultVal = "";
     }
@@ -1091,6 +1099,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         var arrayCheck = false; //is it belong to array
         var clearFix = ""; //if its the first element of multicol
         var arrayId = "";
+        var sheetId = "";
         var columnPercent = 100;
         if (title) {
             $("#addProcessRow-" + gNum).append(
@@ -1110,6 +1119,83 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                     clearFix = " clear:both; ";
                 }
             });
+        }
+        // if spreadsheet defined then create spreadsheetdiv 
+        if (spreadsheet) {
+            $.each(spreadsheet, function(el) {
+                    console.log(spreadsheet)
+                    console.log(el)
+                    console.log(spreadsheet[el])
+                    if (spreadsheet[el].indexOf(varName) > -1) {
+                        sheetId = "spreadsheet_" + gNum + "_" + spreadsheet[el].join("_");
+                        $("#addProcessRow-" + gNum).append(
+                            '<div style="float:left;  padding: 5px; width: 100%;"><div class="" id="' + sheetId + '" ></div></div>'
+                        );
+                        var data = [
+                            ["", "Tesla", "Volvo", "Toyota", "Honda"],
+                            ["2017", 10, 11, 12, 13],
+                            ["2018", 20, 11, 14, 13],
+                            ["2019", 30, 15, 12, 13],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""],
+                            ["", "", "", "", ""]
+                        ];
+
+                        var container = document.getElementById(sheetId);
+                        var hot = new Handsontable(container, {
+                            className: 'dnext_spreadsheet',
+                            data: data,
+                            colHeaders: true,
+                            width: '100%',
+                            height: 370,
+                            rowHeaders: true,
+                            stretchH: 'all',
+                            contextMenu: true,
+                            columnSorting: {
+                                indicator: true,
+                                headerAction: true
+                            },
+                            trimWhitespace: false,
+                        });
+                        $runscope.handsontable[sheetId] = hot
+
+
+
+
+                    }
+                })
+                //insert array group div
+
         }
         // if array defined then create arraydiv and remove/add buttons.
         if (array) {
@@ -1150,7 +1236,6 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                         ).attr("onclick", "javascript:appendBeforeDiv(this)");
                     }
                 }
-                //xxxxxxxxx
             });
         }
         if (tool && tool != "") {
@@ -1715,6 +1800,26 @@ function hideProcessOptionsAsIcons() {
             return !!true || this._super(event);
         }
     });
+
+    // prepare handsontable's for  ui-dialog
+    var allpanels = $('#ProcessPanel > div[processorgname]')
+    for (let i = 0; i < allpanels.length; i++) {
+        var collapseIconDiv = $(allpanels[i]).find(".collapseIconDiv").next()
+        var collapseIconDivID = collapseIconDiv.attr("id")
+        collapseIconDiv.collapse("toggle")
+        let spreadsheets = $(`#${collapseIconDivID}`).find("div.dnext_spreadsheet");
+        for (var s = 0; s < spreadsheets.length; s++) {
+            let spreadsheetID = $(spreadsheets[s]).attr("id")
+            if ($runscope.handsontable[spreadsheetID]) {
+                $runscope.handsontable[spreadsheetID].render()
+                $(spreadsheets[s]).css("display", "inline-block")
+            }
+        }
+    }
+
+
+
+
     var showSettingInputsAr = $("#inputsTable > tbody > tr[show_setting]");
     if (showSettingInputsAr.length > 0) {
         for (var i = 0; i < showSettingInputsAr.length; i++) {
@@ -1815,6 +1920,7 @@ function hideProcessOptionsAsIcons() {
                         .removeClass("collapse")
                         .appendTo(`#${wrapperID}-${modulename}`);
 
+
                     tooltip = "Settings: " + processname;
                     if (
                         show_settingArr.length > 1 ||
@@ -1862,7 +1968,6 @@ function hideProcessOptionsAsIcons() {
                             });
                         }
                         //ui-dialog
-
                         $("#" + wrapperID).dialog({
                             title: `Process Settings`,
                             resizable: false,
@@ -3166,6 +3271,7 @@ function parseProPipePanelScript(script) {
         var defparams = null;
         var arr = null;
         var cond = null;
+        var spreadsheet = null;
         var title = null;
         var varPart = null;
         var regPart = null;
@@ -3191,7 +3297,7 @@ function parseProPipePanelScript(script) {
             [varName, defaultVal] = parseVarPart(varPart);
         }
         if (regPart) {
-            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file, singleFile, hidden] =
+            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file, singleFile, hidden, spreadsheet] =
             parseRegPart(regPart);
         }
         if (type && varName) {
@@ -3211,11 +3317,12 @@ function parseProPipePanelScript(script) {
                 hidden: hidden
             });
         }
-        if (multiCol || arr || cond) {
+        if (multiCol || arr || cond || spreadsheet) {
             panelObj.style.push({
                 multicol: multiCol,
                 array: arr,
                 condi: cond,
+                spreadsheet: spreadsheet
             });
         }
         if (defparams) {
@@ -3320,11 +3427,13 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
             var multicol = null;
             var array = null;
             var condi = null;
-            //only one array for each(multicol, array, condi) tag is expected
+            var spreadsheet = null;
+            //only one array for each(multicol, array, condi, spreadsheet) tag is expected
             if (!$.isEmptyObject(panelObj.style[0])) {
                 multicol = panelObj.style[0].multicol;
                 array = panelObj.style[0].array;
                 condi = panelObj.style[0].condi;
+                spreadsheet = panelObj.style[0].spreadsheet;
             }
             var displayProDiv = false;
             for (var i = 0; i < panelObj.schema.length; i++) {
@@ -3374,7 +3483,8 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                             multicol,
                             array,
                             title,
-                            hidden
+                            hidden,
+                            spreadsheet
                         );
                     }
                     if (autoform) {
@@ -3425,6 +3535,9 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                         );
                     }
                 }
+            }
+            if (spreadsheet) {
+                console.log(spreadsheet)
             }
             if (array) {
                 //if defVal is array than insert array rows and fill them
@@ -12902,6 +13015,7 @@ $(document).ready(async function() {
             }
         };
         var sampleTableCallback = async function() {
+            console.log(e)
             $("#projectFileTable").DataTable().rows().deselect();
             $('.nav-tabs a[href="#importedFiles"]').trigger("click");
             $("#detailsOffileDiv").css("display", "none");

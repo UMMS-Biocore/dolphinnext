@@ -91,6 +91,10 @@ folder instead of downloading all of them to reduce the load. -->
     <!-- toastr -->
     <link rel="stylesheet" href="bower_components/toastr/build/toastr.min.css" type="text/css" />
     <link rel="stylesheet" href="bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker3.min.css" type="text/css" />
+    <!-- handsontable 6.2.2 ->public dist -> don't upgrade version -->
+    <link rel="stylesheet" href="bower_components/handsontable-6.2.2/dist/handsontable.full.min.css" type="text/css" />
+
+
     <!-- to fix favicon.ico not found error-->
     <!--        <link rel="shortcut icon" href="#">-->
     <link rel="icon" type="image/png" href="images/favicon.ico" />

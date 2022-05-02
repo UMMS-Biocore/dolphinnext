@@ -151,6 +151,7 @@ function getJS($np, $login, $id)
         $js .= '<script src="' . auto_version("js/projectsDetail.js") . '"></script>';
     } else if ($np == 3 && $login == 1 && !empty($id)) {
         $js .= '<script src="bower_components/d3/d3.v3.min.js" charset="utf-8"></script> 
+                <script src="bower_components/handsontable-6.2.2/dist/handsontable.full.min.js" charset="utf-8"></script> 
                 <script src="' . auto_version("js/pipelineD3core.js") . '"></script>
                 <script src="' . auto_version("js/runpipeline.js") . '"></script>
                 <script src="' . auto_version("js/nextflowText.js") . '"></script>';
