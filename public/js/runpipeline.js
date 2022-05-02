@@ -1097,16 +1097,29 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         var allOpt = null; // if conditional dropdown options are defined
         var optArr = []; // for dropdown options
         var arrayCheck = false; //is it belong to array
+        var spreadsheetCheck = false; //is it belong to spreadsheet
         var clearFix = ""; //if its the first element of multicol
         var arrayId = "";
         var sheetId = "";
         var columnPercent = 100;
+        var descText = "";
+        var descTextVar = "";
         if (title) {
             $("#addProcessRow-" + gNum).append(
                 '<div style="font-size:16px; font-weight:bold; background-color:#F5F5F5; float:left; padding:5px; margin-bottom:8px; width:100%;">' +
                 title +
                 '<div  style="border-bottom:1px solid #d5d5d5;" ></div></div>'
             );
+        }
+        if (desc) {
+            descText =
+                '<p style=" font-style:italic; color:darkslategray; font-weight: 300; font-size:13px">' +
+                desc +
+                "</p>";
+            descTextVar =
+                '<p style=" font-style:italic; color:darkslategray; font-weight: 300; font-size:13px; margin: 0 0 2px;">*' + varName + ": " +
+                desc +
+                "</p>";
         }
         // if multicol defined then calc columnPercent based on amount of element
         if (multicol) {
@@ -1123,58 +1136,17 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         // if spreadsheet defined then create spreadsheetdiv 
         if (spreadsheet) {
             $.each(spreadsheet, function(el) {
-                    console.log(spreadsheet)
-                    console.log(el)
-                    console.log(spreadsheet[el])
-                    if (spreadsheet[el].indexOf(varName) > -1) {
-                        sheetId = "spreadsheet_" + gNum + "_" + spreadsheet[el].join("_");
+                if (spreadsheet[el].indexOf(varName) > -1) {
+                    spreadsheetCheck = true;
+                    sheetId = "spreadsheet_" + gNum + "_" + spreadsheet[el].join("_");
+                    if (!$("#addProcessRow-" + gNum).find("#" + sheetId)[0]) {
                         $("#addProcessRow-" + gNum).append(
-                            '<div style="float:left;  padding: 5px; width: 100%;"><div class="" id="' + sheetId + '" ></div></div>'
+                            '<div style="float:left;  padding: 5px; width: 100%;"><div class="" id="' + sheetId + '" ></div><div class="description" ></div></div>'
                         );
-                        var data = [
-                            ["", "Tesla", "Volvo", "Toyota", "Honda"],
-                            ["2017", 10, 11, 12, 13],
-                            ["2018", 20, 11, 14, 13],
-                            ["2019", 30, 15, 12, 13],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""],
-                            ["", "", "", "", ""]
-                        ];
-
                         var container = document.getElementById(sheetId);
                         var hot = new Handsontable(container, {
                             className: 'dnext_spreadsheet',
-                            data: data,
+                            data: [],
                             colHeaders: true,
                             width: '100%',
                             height: 370,
@@ -1188,15 +1160,15 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                             trimWhitespace: false,
                         });
                         $runscope.handsontable[sheetId] = hot
-
-
-
-
                     }
-                })
-                //insert array group div
-
+                    if (descTextVar) {
+                        var olddescription = $(`#${sheetId}`).next().html()
+                        $(`#${sheetId}`).next().html(olddescription + descTextVar)
+                    }
+                }
+            })
         }
+
         // if array defined then create arraydiv and remove/add buttons.
         if (array) {
             $.each(array, function(el) {
@@ -1246,14 +1218,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         } else {
             var toolText = "";
         }
-        if (!desc) {
-            var descText = "";
-        } else {
-            var descText =
-                '<p style=" font-style:italic; color:darkslategray; font-weight: 300; font-size:13px">' +
-                desc +
-                "</p>";
-        }
+
         if (hidden) {
             hiddenText = "display:none; "
         }
@@ -1379,9 +1344,9 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
         }
 
 
-
-
-        if (arrayCheck === false) {
+        if (spreadsheetCheck === true) {
+            //skip insertion. -> spreadsheet created
+        } else if (arrayCheck === false) {
             $("#addProcessRow-" + gNum).append(processParamDiv);
         } else {
             // if array defined then append each element into that arraydiv.
@@ -1806,8 +1771,10 @@ function hideProcessOptionsAsIcons() {
     for (let i = 0; i < allpanels.length; i++) {
         var collapseIconDiv = $(allpanels[i]).find(".collapseIconDiv").next()
         var collapseIconDivID = collapseIconDiv.attr("id")
-        collapseIconDiv.collapse("toggle")
         let spreadsheets = $(`#${collapseIconDivID}`).find("div.dnext_spreadsheet");
+        if (spreadsheets.length) {
+            collapseIconDiv.collapse("toggle")
+        }
         for (var s = 0; s < spreadsheets.length; s++) {
             let spreadsheetID = $(spreadsheets[s]).attr("id")
             if ($runscope.handsontable[spreadsheetID]) {
@@ -1989,6 +1956,20 @@ function hideProcessOptionsAsIcons() {
                                     .position({ my: 'center', at: 'center', of: window });
                                 $("body").css({ overflow: "hidden" });
                                 $("html").css({ overflow: "hidden" });
+
+                                let spreadsheets = $(event.target).find("div.dnext_spreadsheet");
+                                for (var s = 0; s < spreadsheets.length; s++) {
+                                    let spreadsheetID = $(spreadsheets[s]).attr("id")
+                                    if ($runscope.handsontable[spreadsheetID]) {
+                                        // autoresize fix for handsontable
+                                        if ($(spreadsheets[s]).css("display") == "inline-block") {
+                                            $(spreadsheets[s]).css("display", "block")
+                                            $runscope.handsontable[spreadsheetID].render()
+                                        }
+                                    }
+                                }
+
+
                             },
                             beforeClose: function(event, ui) {
                                 $("html").css({ overflow: "auto" });
@@ -3342,6 +3323,70 @@ function parseProPipePanelScript(script) {
     return panelObj;
 }
 
+function updateSpreadsheet(gNum, insertObj) {
+    sheetId = "spreadsheet_" + gNum + "_" + Object.keys(insertObj).join("_");
+    var table = $runscope.handsontable[sheetId];
+    let colHeaders = Object.keys(insertObj)
+    let newData = []
+    $.each(insertObj, function(el) {
+        console.log(insertObj[el].defaultVal)
+        if (Array.isArray((insertObj[el].defaultVal))) {
+            newData.push(insertObj[el].defaultVal)
+        } else {
+            newData.push([insertObj[el].defaultVal])
+        }
+    });
+    const transpose = matrix => {
+        for (let row = 0; row < matrix.length; row++) {
+            for (let column = 0; column < row; column++) {
+                let temp = matrix[row][column]
+                if (matrix[column][row] !== undefined) {
+                    console.log(matrix[column][row])
+                    matrix[row][column] = matrix[column][row]
+                } else {
+                    matrix[row][column] = ""
+                }
+                if (temp !== undefined) {
+                    console.log(temp)
+                    matrix[column][row] = temp
+                } else {
+                    matrix[column][row] = ""
+                }
+
+            }
+        }
+        return matrix;
+    }
+    newData = transpose(newData);
+    const addEmptyRows = (data, numRows) => {
+        const numOfColumns = data[0].length;
+        if (numOfColumns) {
+            let emptyRow = [];
+            for (let i = 0; i < numOfColumns; i++) {
+                emptyRow.push('');
+            }
+            for (let i = 0; i < numRows; i++) {
+                let copiedList = emptyRow.slice();
+                data.push(copiedList);
+            }
+        }
+        return data;
+    };
+    let finaldata = addEmptyRows(newData, 40)
+
+    // columns = [
+    //     {},
+    //     {
+    //         type: 'dropdown',
+    //         source: ['yellow', 'red', 'orange', 'green', 'blue', 'gray', 'black', 'white']
+    //     }
+    // ];
+
+    table.loadData(finaldata);
+    table.updateSettings({ colHeaders: colHeaders, columns: columns })
+}
+
+
 //--Insert Process and Pipeline Panel (where pipelineOpt processOpt defined)
 function insertProPipePanel(script, gNum, name, pObj, processData) {
     var MainGNum = "";
@@ -3538,6 +3583,20 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
             }
             if (spreadsheet) {
                 console.log(spreadsheet)
+                for (let s = 0; s < spreadsheet.length; s++) {
+                    let insertObj = {};
+                    let sheet = spreadsheet[s]
+                    for (let ss = 0; ss < sheet.length; ss++) {
+                        for (let p = 0; p < panelObj.schema.length; p++) {
+                            let varName = panelObj.schema[p].varName;
+                            if (sheet[ss].indexOf(varName) > -1) {
+                                insertObj[varName] = panelObj.schema[p];
+                            }
+
+                        }
+                    }
+                    updateSpreadsheet(prefix + gNum, insertObj)
+                }
             }
             if (array) {
                 //if defVal is array than insert array rows and fill them
