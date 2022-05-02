@@ -919,13 +919,13 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
     var pairList = [];
     var dummyOutList = [];
     $.each(whenOutLib, function(el) {
-        if (el && !el.endsWith("_val")) {
+        
             if (whenInLib[el]) {
                 pairList.push({ inChl: whenInLib[el], outChl: whenOutLib[el] })
             } else {
                 dummyOutList.push(whenOutLib[el])
             }
-        }
+        
     });
     if (pairList.length > 0) {
         whenText = "if (!(" + $.trim(whenCond) + ")){\n";
