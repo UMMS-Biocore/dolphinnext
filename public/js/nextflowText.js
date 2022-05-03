@@ -341,6 +341,10 @@ function getNewLocalVarLine(line, process_opt, gNum, varName, quoteType, pattern
                     if (fillVal === "" && quoteType === "") {
                         quoteType = '"';
                     }
+                    if (Array.isArray(fillVal)) {
+                        fillVal = JSON.stringify(fillVal);
+                        quoteType = '';
+                    }
                     fillVal = fillVal.replace(/(\r\n|\n|\r)/gm, "\\n");
                     var newLine = line.replace(pattern, tmpParams + ' = ' + quoteType + fillVal + quoteType + ' //*' + '$3');
                     return newLine;
@@ -919,13 +923,11 @@ function getWhenText(whenCond, whenInLib, whenOutLib) {
     var pairList = [];
     var dummyOutList = [];
     $.each(whenOutLib, function(el) {
-        
-            if (whenInLib[el]) {
-                pairList.push({ inChl: whenInLib[el], outChl: whenOutLib[el] })
-            } else {
-                dummyOutList.push(whenOutLib[el])
-            }
-        
+        if (whenInLib[el]) {
+            pairList.push({ inChl: whenInLib[el], outChl: whenOutLib[el] })
+        } else {
+            dummyOutList.push(whenOutLib[el])
+        }
     });
     if (pairList.length > 0) {
         whenText = "if (!(" + $.trim(whenCond) + ")){\n";
