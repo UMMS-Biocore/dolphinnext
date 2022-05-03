@@ -1141,7 +1141,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                     sheetId = "spreadsheet_" + gNum + "_" + spreadsheet[el].join("_");
                     if (!$("#addProcessRow-" + gNum).find("#" + sheetId)[0]) {
                         $("#addProcessRow-" + gNum).append(
-                            '<div style="float:left;  padding: 5px; width: 100%;"><div class="" id="' + sheetId + '" ></div><div class="description" ></div></div>'
+                            '<div style="float:left;  padding: 5px; width: 100%;" class="form-group"><label style="display:none;">' + sheetId + '</label><div class="" gnum="' + gNum + '" id="' + sheetId + '" ></div><div class="description" ></div></div>'
                         );
                         var container = document.getElementById(sheetId);
                         var hot = new Handsontable(container, {
@@ -1163,6 +1163,7 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
                     }
                     if (descTextVar) {
                         var olddescription = $(`#${sheetId}`).next().html()
+                        $(`#${sheetId}`).attr("type", "spreadsheet")
                         $(`#${sheetId}`).next().html(olddescription + descTextVar)
                     }
                 }
@@ -3323,65 +3324,48 @@ function parseProPipePanelScript(script) {
     return panelObj;
 }
 
+const addEmptyRows = (data, numRows) => {
+    const numOfColumns = data[0].length;
+    if (numOfColumns) {
+        let emptyRow = [];
+        for (let i = 0; i < numOfColumns; i++) {
+            emptyRow.push('');
+        }
+        for (let i = 0; i < numRows; i++) {
+            let copiedList = emptyRow.slice();
+            data.push(copiedList);
+        }
+    }
+    return data;
+};
+
 function updateSpreadsheet(gNum, insertObj) {
     sheetId = "spreadsheet_" + gNum + "_" + Object.keys(insertObj).join("_");
     var table = $runscope.handsontable[sheetId];
     let colHeaders = Object.keys(insertObj)
+    let columns = []
+    $.each(insertObj, function(el) {
+        if (Array.isArray((insertObj[el].opt))) {
+            columns.push({ "type": "dropdown", "source": insertObj[el].opt })
+        } else {
+            columns.push({})
+        }
+    });
+
     let newData = []
     $.each(insertObj, function(el) {
-        console.log(insertObj[el].defaultVal)
         if (Array.isArray((insertObj[el].defaultVal))) {
             newData.push(insertObj[el].defaultVal)
         } else {
             newData.push([insertObj[el].defaultVal])
         }
     });
-    const transpose = matrix => {
-        for (let row = 0; row < matrix.length; row++) {
-            for (let column = 0; column < row; column++) {
-                let temp = matrix[row][column]
-                if (matrix[column][row] !== undefined) {
-                    console.log(matrix[column][row])
-                    matrix[row][column] = matrix[column][row]
-                } else {
-                    matrix[row][column] = ""
-                }
-                if (temp !== undefined) {
-                    console.log(temp)
-                    matrix[column][row] = temp
-                } else {
-                    matrix[column][row] = ""
-                }
 
-            }
-        }
-        return matrix;
+    let transpose = (matrix) => {
+        return matrix[0].map((col, i) => matrix.map(row => row[i]));
     }
     newData = transpose(newData);
-    const addEmptyRows = (data, numRows) => {
-        const numOfColumns = data[0].length;
-        if (numOfColumns) {
-            let emptyRow = [];
-            for (let i = 0; i < numOfColumns; i++) {
-                emptyRow.push('');
-            }
-            for (let i = 0; i < numRows; i++) {
-                let copiedList = emptyRow.slice();
-                data.push(copiedList);
-            }
-        }
-        return data;
-    };
     let finaldata = addEmptyRows(newData, 40)
-
-    // columns = [
-    //     {},
-    //     {
-    //         type: 'dropdown',
-    //         source: ['yellow', 'red', 'orange', 'green', 'blue', 'gray', 'black', 'white']
-    //     }
-    // ];
-
     table.loadData(finaldata);
     table.updateSettings({ colHeaders: colHeaders, columns: columns })
 }
@@ -3582,7 +3566,6 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                 }
             }
             if (spreadsheet) {
-                console.log(spreadsheet)
                 for (let s = 0; s < spreadsheet.length; s++) {
                     let insertObj = {};
                     let sheet = spreadsheet[s]
@@ -3595,6 +3578,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
 
                         }
                     }
+                    // insert default values of table 
                     updateSpreadsheet(prefix + gNum, insertObj)
                 }
             }
@@ -7708,6 +7692,62 @@ function formToJson(rawFormData, stringify) {
     }
 }
 
+function saveSpreadsheetProcessOpt(processOptEach, handsontableID) {
+    if (handsontableID && $runscope.handsontable[handsontableID]) {
+        const table = $runscope.handsontable[handsontableID]
+        let rawdata = table.getData()
+            // filter rows that are all empty
+        rawdata = rawdata.filter(function(item) {
+            let ret = false;
+            for (var i = 0; i < rawdata.length; i++) {
+                if (item[i]) { ret = true; }
+            }
+            return ret;
+        });
+        let transpose = (matrix) => {
+            if (!matrix) return [""];
+            if (matrix.length === 0) return [""];
+            return matrix[0].map((col, i) => matrix.map(row => row[i]));
+        }
+        rotatedData = transpose(rawdata);
+        let colHeaders = table.getColHeader();
+        for (var i = 0; i < colHeaders.length; i++) {
+            if (rotatedData[i] === undefined || rotatedData[i] === null) {
+                processOptEach[colHeaders[i]] = ""
+            } else {
+                processOptEach[colHeaders[i]] = rotatedData[i]
+            }
+
+        }
+    }
+    console.log(processOptEach)
+    return processOptEach
+}
+
+function loadSpreadsheetProcessOpt(processOptEach, handsontableID) {
+    let loadCheck = $(`#${handsontableID}`).attr("processOptLoaded")
+        // load table only once
+    if (handsontableID && $runscope.handsontable[handsontableID] && !loadCheck) {
+        $(`#${handsontableID}`).attr("processOptLoaded", "true")
+        const table = $runscope.handsontable[handsontableID]
+        let colHeaders = table.getColHeader();
+        let rawdata = []
+        for (var i = 0; i < colHeaders.length; i++) {
+            if (processOptEach[colHeaders[i]]) {
+                rawdata.push(processOptEach[colHeaders[i]])
+            }
+        }
+
+        let transpose = (matrix) => {
+            return matrix[0].map((col, i) => matrix.map(row => row[i]));
+        }
+        rawdata = transpose(rawdata);
+
+        let finaldata = addEmptyRows(rawdata, 40)
+        table.loadData(finaldata);
+    }
+}
+
 //prepare JSON to save db
 function getProcessOpt() {
     var processOptAll = {};
@@ -7734,7 +7774,7 @@ function getProcessOpt() {
                 }
             }
             var labelDiv = $(formGroupArray[el]).find("label")[0];
-            var inputDiv = $(formGroupArray[el]).find("input,textarea,select")[0];
+            var inputDiv = $(formGroupArray[el]).find("input,textarea,select,div.dnext_spreadsheet")[0];
             var inputDivType = $(inputDiv).attr("type");
             if (labelDiv && inputDiv) {
                 // variable name stored at label
@@ -7743,13 +7783,19 @@ function getProcessOpt() {
                 if (outerDivNum) {
                     label = label + "_ind" + outerDivNum;
                 }
-                //userInput stored at inputDiv. If type of the input is checkbox different method is use to learn whether it is checked
-                if (inputDivType === "checkbox") {
-                    var input = $(inputDiv).is(":checked").toString();
+                if (inputDivType === "spreadsheet") {
+                    var handsontableID = $(inputDiv).attr("id")
+                    processOptEach = saveSpreadsheetProcessOpt(processOptEach, handsontableID)
                 } else {
-                    var input = $.trim($(inputDiv).val());
+                    //userInput stored at inputDiv. If type of the input is checkbox different method is use to learn whether it is checked
+                    if (inputDivType === "checkbox") {
+                        var input = $(inputDiv).is(":checked").toString();
+                    } else {
+                        var input = $.trim($(inputDiv).val());
+                    }
+                    processOptEach[label] = input;
                 }
-                processOptEach[label] = input;
+
             }
         });
         processOptAll[proGnum] = processOptEach;
@@ -7758,17 +7804,23 @@ function getProcessOpt() {
 }
 
 function fillEachProcessOpt(eachProcessOpt, label, inputDiv, inputDivType) {
-    if (eachProcessOpt[label] != null && eachProcessOpt[label] != undefined) {
-        if (inputDivType === "checkbox") {
-            updateCheckBox(inputDiv, eachProcessOpt[label]);
-            $(inputDiv).trigger("change");
-        } else if (inputDivType === "dropdown") {
-            $(inputDiv).val(eachProcessOpt[label]);
-            $(inputDiv).trigger("change");
-        } else {
-            $(inputDiv).val(eachProcessOpt[label]);
+    if (inputDivType === "spreadsheet") {
+        let tableID = $(inputDiv).attr("id")
+        loadSpreadsheetProcessOpt(eachProcessOpt, tableID)
+    } else {
+        if (eachProcessOpt[label] != null && eachProcessOpt[label] != undefined) {
+            if (inputDivType === "checkbox") {
+                updateCheckBox(inputDiv, eachProcessOpt[label]);
+                $(inputDiv).trigger("change");
+            } else if (inputDivType === "dropdown") {
+                $(inputDiv).val(eachProcessOpt[label]);
+                $(inputDiv).trigger("change");
+            } else {
+                $(inputDiv).val(eachProcessOpt[label]);
+            }
         }
     }
+
 }
 
 // add array forms before fill the data
@@ -7864,7 +7916,7 @@ function loadProcessOpt(allProcessOpt) {
             var formGroupArray = formGroup.toArray();
             $.each(formGroupArray, function(elem) {
                 var labelDiv = $(formGroupArray[elem]).find("label")[0];
-                var inputDiv = $(formGroupArray[elem]).find("input,textarea,select")[0];
+                var inputDiv = $(formGroupArray[elem]).find("input,textarea,select,div.dnext_spreadsheet")[0];
                 var inputDivType = $(inputDiv).attr("type");
                 var outerDiv = $(formGroupArray[elem]).parent();
                 var outerDivId = outerDiv.attr("id");
