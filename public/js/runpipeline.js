@@ -3324,8 +3324,8 @@ function parseProPipePanelScript(script) {
     return panelObj;
 }
 
-const addEmptyRows = (data, numRows) => {
-    const numOfColumns = data[0].length;
+const addEmptyRows = (data, numRows, colHeaders) => {
+    const numOfColumns = colHeaders.length;
     if (numOfColumns) {
         let emptyRow = [];
         for (let i = 0; i < numOfColumns; i++) {
@@ -3365,7 +3365,7 @@ function updateSpreadsheet(gNum, insertObj) {
         return matrix[0].map((col, i) => matrix.map(row => row[i]));
     }
     newData = transpose(newData);
-    let finaldata = addEmptyRows(newData, 40)
+    let finaldata = addEmptyRows(newData, 100, colHeaders)
     table.loadData(finaldata);
     table.updateSettings({ colHeaders: colHeaders, columns: columns })
 }
@@ -3572,7 +3572,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                     for (let ss = 0; ss < sheet.length; ss++) {
                         for (let p = 0; p < panelObj.schema.length; p++) {
                             let varName = panelObj.schema[p].varName;
-                            if (sheet[ss].indexOf(varName) > -1) {
+                            if (sheet[ss] === varName) {
                                 insertObj[varName] = panelObj.schema[p];
                             }
 
@@ -7743,7 +7743,7 @@ function loadSpreadsheetProcessOpt(processOptEach, handsontableID) {
         }
         rawdata = transpose(rawdata);
 
-        let finaldata = addEmptyRows(rawdata, 40)
+        let finaldata = addEmptyRows(rawdata, 100, colHeaders)
         table.loadData(finaldata);
     }
 }
