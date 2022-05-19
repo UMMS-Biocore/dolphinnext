@@ -1409,6 +1409,15 @@ $DMETA_LABEL = DMETA_LABEL;
                                 </div>
                                 <div class="form-group patternButs" style="display:none;">
                                     <div class="col-sm-12">
+                                        <div class="col-sm-6">
+                                            <p class="col-sm-6 control-label">Auto-merging Pattern (Optional) <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="A glob pattern to merge files automatically. e.g., for merging reads coming from different lanes L001, L002, L003, etc., you can enter _L00?"><i class="glyphicon glyphicon-info-sign"></i></a></span> </p>
+                                            <div class="col-sm-6">
+                                                <input type="text" class="form-control" id="auto_merge_pattern" name="auto_merge_pattern" value="">
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12">
                                         <div class="col-sm-4"></div>
                                         <div class="col-sm-8">
                                             <span class="pull-right" style="padding-top:7px; padding-left:5px;"><a data-toggle="tooltip" data-placement="bottom" title="In order to merge multiple files, first select the files and then click 'Add Selected Files' button. If you don't need to merge files, you can simply click 'Add All Files' button."><i class='glyphicon glyphicon-info-sign'></i></a></span>

@@ -520,6 +520,13 @@ function checkCloudStatus(proId, cloud) {
 
 }
 
+
+//converts regex to glob like regex
+function glob(pattern) {
+    var re = new RegExp(pattern.replace(/([.+^$[\]\\(){}|\/-])/g, "\\$1").replace(/\*/g, '.*').replace(/\?/g, '.?'));
+    return re;
+}
+
 function stopCloudByAjax(proId, cloud) {
     var intervalName = 'interval_' + cloud + 'Status_' + proId;
     $.ajax({

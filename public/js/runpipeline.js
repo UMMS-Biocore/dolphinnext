@@ -12590,11 +12590,22 @@ $(document).ready(async function() {
 
     // mode->all, selected
     smartSelection = function(mode) {
+
         var collection_type = $("#collection_type").val();
+        var auto_merge_pattern = $.trim($("#auto_merge_pattern").val())
+        var auto_merge_pattern_re = glob(auto_merge_pattern);
+
         if (collection_type == "single") {
             var files_select1 = document.getElementById("singleList").options;
             if (mode == "only") files_select1 = getMultipleSelected(files_select1)
             var regex1 = $("#single_pattern").val();
+            //	use regex to find the values before the pivot
+            if (regex1 === "") {
+                regex1 = ".";
+            }
+            if (auto_merge_pattern !== "") {
+                regex1 = auto_merge_pattern_re;
+            }
         } else {
             var files_select1 = document.getElementById("forwardList").options;
             var files_select2 = document.getElementById("reverseList").options;
@@ -12608,6 +12619,12 @@ $(document).ready(async function() {
             var regex2 = $("#reverse_pattern").val();
             var regex3 = $("#r3_pattern").val();
             var regex4 = $("#r4_pattern").val();
+            if (auto_merge_pattern !== "") {
+                regex1 = auto_merge_pattern_re;
+                regex2 = auto_merge_pattern_re;
+                regex3 = auto_merge_pattern_re;
+                regex4 = auto_merge_pattern_re;
+            }
         }
         while (
             (collection_type == "single" && files_select1.length != 0) ||
@@ -12624,17 +12641,15 @@ $(document).ready(async function() {
                 files_select3.length != 0 &&
                 files_select4.length != 0)
         ) {
+
             var file_string = "";
             //  var file_regex = new RegExp(regex_string);
             if (collection_type == "single") {
-                //	use regex to find the values before the pivot
-                if (regex1 === "") {
-                    regex1 = ".";
-                }
 
                 var regex_string = files_select1[0].value.split(regex1)[0];
                 for (var x = 0; x < files_select1.length; x++) {
                     var prefix = files_select1[x].value.split(regex1)[0];
+
                     if (regex_string === prefix) {
                         file_string += files_select1[x].value + " | ";
                         recordDelList("#singleList", files_select1[x].value, "del");

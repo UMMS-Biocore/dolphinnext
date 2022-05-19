@@ -1096,7 +1096,6 @@ immediately after the control sidebar -->
         <script src="bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js"></script>
         <!-- Selectize 0.12.4.  -->
         <script src="dist/selectize/selectize.js"></script>
-
         <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
         <script>
             $.widget.bridge('uibutton', $.ui.button);
