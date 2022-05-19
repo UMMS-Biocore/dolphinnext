@@ -2347,14 +2347,20 @@ function getJobDataSync(getType) {
 // to execute autofill function, binds event handlers to chooseEnv
 function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
     $("#chooseEnv").bindFirst("change", function() {
+
         var onchangechooseEnvFunc1 = function() {
             if (jsonType == "pipeline") {
-                var [allProSett, profileData] = getJobDataSync("both");
-                // autofill def_publishdir and def_workdir
+                console.log("ww")
+                    // autofill def_publishdir and def_workdir
                 var def_publishdir = "";
                 var def_workdir = "";
                 var project_pipeline_id =
                     $("#pipeline-title").attr("projectpipelineid");
+                // execute this section ony once for each chooseEnv change
+                var [allProSett, profileData] = getJobDataSync("both");
+                showhideOnEnv(profileData);
+                fillForm("#allProcessSettTable", "input", allProSett);
+
                 if (profileData) {
                     if (profileData[0]) {
                         if (profileData[0].def_publishdir) {
@@ -2405,75 +2411,77 @@ function bindEveHandlerChooseEnv(autoFillJSON, jsonType) {
         };
 
         var onchangechooseEnvFunc2 = function() {
-            var fillHostFunc = function(autoFillJSON, type, filledVars) {
-                $.each(autoFillJSON, function(el) {
-                    var conds = autoFillJSON[el].condition;
-                    var states = autoFillJSON[el].statement;
-                    var url = autoFillJSON[el].url;
-                    var urlzip = autoFillJSON[el].urlzip;
-                    var checkPath = autoFillJSON[el].checkPath;
-                    if (
-                        conds &&
-                        states &&
-                        !$.isEmptyObject(conds) &&
-                        !$.isEmptyObject(states)
-                    ) {
-                        //bind eventhandler to #chooseEnv
-                        if (conds.$HOSTNAME) {
-                            var statusCond = checkConds(conds, type);
-                            if (statusCond === true) {
-                                if (type == "default") {
-                                    var not_filled_states = $.extend(true, {}, states);
-                                    var not_filled_url = $.extend(true, {}, url);
-                                    var not_filled_urlzip = $.extend(true, {}, urlzip);
-                                    var not_filled_checkPath = $.extend(true, {}, checkPath);
-                                    $.each(filledVars, function(filled_el) {
-                                        if (filled_el in not_filled_states) {
-                                            delete not_filled_states[filled_el];
-                                        }
-                                        if (filled_el in not_filled_url) {
-                                            delete not_filled_url[filled_el];
-                                        }
-                                        if (filled_el in not_filled_urlzip) {
-                                            delete not_filled_urlzip[filled_el];
-                                        }
-                                        if (filled_el in not_filled_checkPath) {
-                                            delete not_filled_checkPath[filled_el];
-                                        }
-                                        // if one of the following parameter is filled than don't use container info coming from default condition
-                                        if (
-                                            filled_el == "$SINGULARITY_IMAGE" ||
-                                            filled_el == "$DOCKER_IMAGE" ||
-                                            filled_el == "$SINGULARITY_OPTIONS" ||
-                                            filled_el == "$DOCKER_OPTIONS"
-                                        ) {
-                                            delete not_filled_states["$SINGULARITY_IMAGE"];
-                                            delete not_filled_states["$SINGULARITY_OPTIONS"];
-                                            delete not_filled_states["$DOCKER_IMAGE"];
-                                            delete not_filled_states["$DOCKER_OPTIONS"];
-                                        }
-                                    });
-                                    fillStates(
-                                        not_filled_states,
-                                        not_filled_url,
-                                        not_filled_urlzip,
-                                        not_filled_checkPath
-                                    );
-                                } else {
-                                    fillStates(states, url, urlzip, checkPath);
-                                    $.extend(filledVars, states); // Merge states into filledVars
+            if (autoFillJSON !== null && autoFillJSON !== undefined) {
+                var fillHostFunc = function(autoFillJSON, type, filledVars) {
+                    $.each(autoFillJSON, function(el) {
+                        var conds = autoFillJSON[el].condition;
+                        var states = autoFillJSON[el].statement;
+                        var url = autoFillJSON[el].url;
+                        var urlzip = autoFillJSON[el].urlzip;
+                        var checkPath = autoFillJSON[el].checkPath;
+                        if (
+                            conds &&
+                            states &&
+                            !$.isEmptyObject(conds) &&
+                            !$.isEmptyObject(states)
+                        ) {
+                            //bind eventhandler to #chooseEnv
+                            if (conds.$HOSTNAME) {
+                                var statusCond = checkConds(conds, type);
+                                if (statusCond === true) {
+                                    if (type == "default") {
+                                        var not_filled_states = $.extend(true, {}, states);
+                                        var not_filled_url = $.extend(true, {}, url);
+                                        var not_filled_urlzip = $.extend(true, {}, urlzip);
+                                        var not_filled_checkPath = $.extend(true, {}, checkPath);
+                                        $.each(filledVars, function(filled_el) {
+                                            if (filled_el in not_filled_states) {
+                                                delete not_filled_states[filled_el];
+                                            }
+                                            if (filled_el in not_filled_url) {
+                                                delete not_filled_url[filled_el];
+                                            }
+                                            if (filled_el in not_filled_urlzip) {
+                                                delete not_filled_urlzip[filled_el];
+                                            }
+                                            if (filled_el in not_filled_checkPath) {
+                                                delete not_filled_checkPath[filled_el];
+                                            }
+                                            // if one of the following parameter is filled then don't use container info coming from default condition
+                                            if (
+                                                filled_el == "$SINGULARITY_IMAGE" ||
+                                                filled_el == "$DOCKER_IMAGE" ||
+                                                filled_el == "$SINGULARITY_OPTIONS" ||
+                                                filled_el == "$DOCKER_OPTIONS"
+                                            ) {
+                                                delete not_filled_states["$SINGULARITY_IMAGE"];
+                                                delete not_filled_states["$SINGULARITY_OPTIONS"];
+                                                delete not_filled_states["$DOCKER_IMAGE"];
+                                                delete not_filled_states["$DOCKER_OPTIONS"];
+                                            }
+                                        });
+                                        fillStates(
+                                            not_filled_states,
+                                            not_filled_url,
+                                            not_filled_urlzip,
+                                            not_filled_checkPath
+                                        );
+                                    } else {
+                                        fillStates(states, url, urlzip, checkPath);
+                                        $.extend(filledVars, states); // Merge states into filledVars
+                                    }
+                                    autoCheck("fillstates");
                                 }
-                                autoCheck("fillstates");
                             }
                         }
-                    }
-                });
-                return filledVars;
-            };
-            //## position where fillwithDefaults() finalized
-            var filledVars = fillHostFunc(autoFillJSON, "", {});
-            // fill $HOSTNAME ="default" states if not filled before(based on filledVars obj)
-            fillHostFunc(autoFillJSON, "default", filledVars);
+                    });
+                    return filledVars;
+                };
+                //## position where fillwithDefaults() finalized
+                var filledVars = fillHostFunc(autoFillJSON, "", {});
+                // fill $HOSTNAME ="default" states if not filled before(based on filledVars obj)
+                fillHostFunc(autoFillJSON, "default", filledVars);
+            }
         };
 
         var sequentialUpdate = function(callback) {
@@ -5777,8 +5785,9 @@ async function loadProjectPipeline(pipeData) {
     checkShub();
     // bind event handlers for autofill
     setTimeout(async function() {
+        // execute bindEveHandlerChooseEnv even autoFillJSON is not defined to fill default exec settings.
+        bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
         if (autoFillJSON !== null && autoFillJSON !== undefined) {
-            bindEveHandlerChooseEnv(autoFillJSON, "pipeline");
             bindEveHandler(autoFillJSON);
             // if duplicated run has refreshEnv trigger refreshEnv when page loads
             if (pipeData[0].onload) {
@@ -9806,7 +9815,7 @@ $(function() {
                             await loadRunSettings(pipe);
                             var projectpipelineOwn = await $runscope.checkProjectPipelineOwn();
                             if (projectpipelineOwn == "1") {
-                                //                                chooseDefaultRunEnv(pipe)
+                                // chooseDefaultRunEnv(pipe)
                             }
                             await checkReadytoRun();
 
@@ -13088,21 +13097,22 @@ $(document).ready(async function() {
             //reset before autofill feature actived for #runCmd
             changeOnchooseEnv = true;
             $("#runCmd").val("");
-            var [allProSett, profileData] = await getJobData("both");
-            showhideOnEnv(profileData);
+            // this section commented out and moved to bindEveHandlerChooseEnv function
+            // var [allProSett, profileData] = await getJobData("both");
+            // showhideOnEnv(profileData);
+            // fillForm("#allProcessSettTable", "input", allProSett);
             var profileTypeId = $("#chooseEnv").find(":selected").val();
             var patt = /(.*)-(.*)/;
             var proType = profileTypeId.replace(patt, "$1");
             var proId = profileTypeId.replace(patt, "$2");
             proTypeWindow = proType;
             proIdWindow = proId;
-            fillForm("#allProcessSettTable", "input", allProSett);
             selectCloudKey();
             checkShub();
             checkCloudType(profileTypeId);
             await checkReadytoRun();
             updateDiskSpace();
-            //save run in change
+            //save run after change
             await saveRun(false, true);
         });
     });

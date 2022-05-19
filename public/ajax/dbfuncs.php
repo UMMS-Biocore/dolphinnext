@@ -1149,7 +1149,7 @@ class dbfuncs
         // e.g. $processGnum: 177 -> process gnum 177 in main pipeline
         // e.g. $pipelineGnum: 216 -> mainParentPipelineGnum=216
         // e.g. $pipelineGnum: 216_16 -> mainParentPipelineGnum=216 childPipelineGnum=16
-        if (!empty($pipelineGnum)) {
+        if (!empty($pipelineGnum) || $pipelineGnum == "0") {
             $pipelineGnumAr = explode("_", $pipelineGnum);
             $pipelineGnum = $pipelineGnumAr[0];
             $pipelineGnumRestAr = array_shift($pipelineGnumAr);
@@ -1162,6 +1162,7 @@ class dbfuncs
             }
 
             $pipeNodes = $this->getPipelineNodeData($pipeData, $type, $pipeline_id);
+
             if (!empty($pipeNodes)) {
                 foreach ($pipeNodes as $proGnum => $settObj) :
                     if ("g-$pipelineGnum" == $proGnum) {
@@ -7565,17 +7566,17 @@ class dbfuncs
             $data = json_decode($this->checkProjectPublic($id, $userID));
             if (!empty($data[0])) {
                 $ret = 1;
-                $warn .= "Pipeline: $name already used in group/public projects.\n";
+                $warn .= "Pipeline: $name ($id) already used in group/public projects.\n";
             }
         } else if ($table == "process") {
             $checkPipelinePublic = json_decode($this->checkPipelinePublic($id, $userID));
             $checkProjectPipelinePublic = json_decode($this->checkProjectPipelinePublic($id, $userID));
             if (!empty($checkPipelinePublic[0])) {
                 $ret = 1;
-                $warn .= "Process: $name already used in group/public pipelines.\n";
+                $warn .= "Process: $name ($id) already used in group/public pipelines.\n";
             } else if (!empty($checkProjectPipelinePublic[0])) {
                 $ret = 1;
-                $warn .= "Process: $name already used in group/public projects.\n";
+                $warn .= "Process: $name ($id) already used in group/public projects.\n";
             }
         } else if ($table == "project") {
             //$id -> project_id
@@ -7583,7 +7584,7 @@ class dbfuncs
             // if project shared with group, then don't allow to share with another group.
             if (!empty($data[0])) {
                 $ret = 1;
-                $warn .= "Project: $name has group/public runs.\n";
+                $warn .= "Project: $name ($id) has group/public runs.\n";
             }
         }
 
