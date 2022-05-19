@@ -1,3 +1,10 @@
+19.05.2021 Version 1.3.10
+Minor bug fixed in autofilling executor settings.
+Auto-merging feature added while creating collections.
+
+04.05.2021 Version 1.3.09
+Minor bug fixed in Executor Settings configuration in nextflow.config file.
+
 04.05.2021 Version 1.3.08
 Minor update for Spreadsheet view.
 
