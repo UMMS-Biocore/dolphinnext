@@ -945,9 +945,17 @@
                             <input type="text" class="form-control" id="showSettOpt" name="showSettOpt" disabled>
                         </div>
                     </div>
+                    <div id="inlabelDiv" class="form-group">
+                        <div class="col-sm-4 control-label">
+                            <label> <input type="checkbox" id="checkInLabel" name="checkInLabel"> Label <span><a data-toggle="tooltip" data-placement="bottom" placeholder="Optional label" title="Please click the checkbox to define the input label seen on the run page."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                        </div>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="inLabelOpt" name="inLabelOpt" disabled></input>
+                        </div>
+                    </div>
                     <div id="indescDiv" class="form-group">
                         <div class="col-sm-4 control-label">
-                            <label> <input type="checkbox" id="checkInDesc" name="checkInDesc"> Description <span><a data-toggle="tooltip" data-placement="bottom" placeholder="Optional description" title="Please click checkbox to define description of the input which will be seen in the run page. You can use html syntax to create web-links or format the text."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <label> <input type="checkbox" id="checkInDesc" name="checkInDesc"> Description <span><a data-toggle="tooltip" data-placement="bottom" placeholder="Optional description" title="Please click the checkbox to define the input description, which will be seen on the run page. You can use html syntax to create web-links or format the text."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         </div>
                         <div class="col-sm-8">
                             <textarea type="text" class="form-control" id="inDescOpt" name="inDescOpt" disabled></textarea>

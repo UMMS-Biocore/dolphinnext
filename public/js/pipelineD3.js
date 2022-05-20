@@ -294,10 +294,10 @@ function openSubPipeline(piID, pObj) {
     if (sData) {
         pObj.nodes = sData.nodes
         if (pObj.nodes) {
-            if (IsJsonString(pObj.nodes.replace(/'/gi, "\""))) {
-                pObj.nodes = JSON.parse(pObj.nodes.replace(/'/gi, "\""))
+            if (IsJson5String(pObj.nodes)) {
+                pObj.nodes = JSON5.parse(pObj.nodes)
                 pObj.mG = sData.mainG
-                pObj.mG = JSON.parse(pObj.mG.replace(/'/gi, "\""))["mainG"]
+                pObj.mG = JSON5.parse(pObj.mG)["mainG"]
                 translateSVG(pObj.mG, pObj)
                 for (var key in pObj.nodes) {
                     pObj.x = pObj.nodes[key][0]
@@ -324,7 +324,7 @@ function openSubPipeline(piID, pObj) {
                     }
                 }
                 pObj.ed = sData.edges.slice();
-                pObj.ed = JSON.parse(pObj.ed.replace(/'/gi, "\""))["edges"]
+                pObj.ed = JSON5.parse(pObj.ed)["edges"]
                 for (var ee = 0; ee < pObj.ed.length; ee++) {
                     pObj.eds = pObj.ed[ee].split("_")
                     createEdges(pObj.eds[0], pObj.eds[1], pObj)
@@ -374,9 +374,9 @@ function openPipeline(id) {
     if (sData) {
         if (Object.keys(sData).length > 0) {
             nodes = sData[0].nodes
-            nodes = JSON.parse(nodes.replace(/'/gi, "\""))
+            nodes = JSON5.parse(nodes)
             mG = sData[0].mainG
-            mG = JSON.parse(mG.replace(/'/gi, "\""))["mainG"]
+            mG = JSON5.parse(mG)["mainG"]
             translateSVG(mG, window)
             for (var key in nodes) {
                 x = nodes[key][0]
@@ -405,7 +405,7 @@ function openPipeline(id) {
                 }
             }
             ed = sData[0].edges
-            ed = JSON.parse(ed.replace(/'/gi, "\""))["edges"]
+            ed = JSON5.parse(ed)["edges"]
             for (var ee = 0; ee < ed.length; ee++) {
                 eds = ed[ee].split("_")
                 createEdges(eds[0], eds[1], window)
@@ -431,7 +431,7 @@ function zoomed() {
 }
 
 //kind=input/output
-function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, pObj, oldGnum) {
+function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, inLabelOpt, pubDmeta, pubWebApp, pObj, oldGnum) {
     var MainGNum = "";
     var prefix = "";
     if (pObj != window) {
@@ -516,27 +516,15 @@ function drawParam(name, process_id, id, kind, sDataX, sDataY, paramid, pName, c
         .on("mouseover", scMouseOver)
         .on("mouseout", scMouseOut)
         .call(drag)
-    if (defVal) {
-        $("#text" + MainGNum + "-" + useGnum).attr('defVal', defVal)
-    }
-    if (dropDown) {
-        $("#text" + MainGNum + "-" + useGnum).attr('dropDown', dropDown)
-    }
-    if (showSett != null) {
-        $("#text" + MainGNum + "-" + useGnum).attr('showSett', showSett)
-    }
-    if (inDescOpt != null) {
-        $("#text" + MainGNum + "-" + useGnum).data('inDescOpt', inDescOpt)
-    }
-    if (pubDmeta != null) {
-        $("#text" + MainGNum + "-" + useGnum).data('pubDmeta', pubDmeta)
-    }
-    if (pubWebApp != null) {
-        $("#text" + MainGNum + "-" + useGnum).data('pubWebApp', pubWebApp)
-    }
-    if (pubWeb) {
-        $("#text" + MainGNum + "-" + useGnum).attr('pubWeb', pubWeb)
-    }
+    if (defVal) $("#text" + MainGNum + "-" + useGnum).attr('defVal', defVal)
+    if (dropDown) $("#text" + MainGNum + "-" + useGnum).attr('dropDown', dropDown)
+    if (showSett != null) $("#text" + MainGNum + "-" + useGnum).attr('showSett', showSett)
+    if (inDescOpt != null) $("#text" + MainGNum + "-" + useGnum).data('inDescOpt', inDescOpt)
+    if (inLabelOpt != null) $("#text" + MainGNum + "-" + useGnum).data('inLabelOpt', inLabelOpt)
+    if (pubDmeta != null) $("#text" + MainGNum + "-" + useGnum).data('pubDmeta', pubDmeta)
+    if (pubWebApp != null) $("#text" + MainGNum + "-" + useGnum).data('pubWebApp', pubWebApp)
+    if (pubWeb) $("#text" + MainGNum + "-" + useGnum).attr('pubWeb', pubWeb)
+
 
     if (pObj == window) {
         pObj.g.append("text").attr("id", "text" + MainGNum + "-" + useGnum)
@@ -617,6 +605,7 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
     var pubWeb = null;
     var showSett = null;
     var inDescOpt = null;
+    var inLabelOpt = null;
     var pubDmeta = null;
     var pubWebApp = null;
     //var process_id = processData[index].id;
@@ -635,7 +624,7 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
         var classtoparam = classtoparam || "connect_to_input output"
         var init = "o"
         var pColor = "orange"
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, window, oldGnum)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, inLabelOpt, pubDmeta, pubWebApp, window, oldGnum)
         processList[("g-" + useGnum)] = name
         processListNoOutput[("g-" + useGnum)] = name
         if (!oldGnum) gNum = gNum + 1
@@ -655,7 +644,7 @@ function addProcess(processDat, xpos, ypos, oldGnum) {
         var classtoparam = classtoparam || "connect_to_output input"
         var init = "i"
         var pColor = "green"
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, window, oldGnum)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, inLabelOpt, pubDmeta, pubWebApp, window, oldGnum)
 
         processList[("g-" + useGnum)] = name
         if (!oldGnum) gNum = gNum + 1
@@ -936,8 +925,8 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
             //--Pipeline details table add process--
             pObjSub.nodesOrg = pObjSub.sData[0].nodes
             if (pObjSub.nodesOrg) {
-                if (IsJsonString(pObjSub.nodesOrg.replace(/'/gi, "\""))) {
-                    pObjSub.nodesOrg = JSON.parse(pObjSub.nodesOrg.replace(/'/gi, "\""));
+                if (IsJson5String(pObjSub.nodesOrg)) {
+                    pObjSub.nodesOrg = JSON5.parse(pObjSub.nodesOrg);
                     for (var key in pObjSub.nodesOrg) {
                         var proId = pObjSub.nodesOrg[key][2];
                         if (proId != "inPro" && proId != "outPro") {
@@ -945,7 +934,7 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub, oldGnum) {
                         }
                     }
                     pObjSub.edOrg = pObjSub.sData[0].edges;
-                    pObjSub.edOrg = JSON.parse(pObjSub.edOrg.replace(/'/gi, "\""))["edges"]
+                    pObjSub.edOrg = JSON5.parse(pObjSub.edOrg)["edges"]
                     pObjSub.inNodes = {}; //input nodes that are connected to "input parameters"
                     pObjSub.outNodes = []; //output nodes that are connected to "output parameters"
                     for (var ee = 0; ee < pObjSub.edOrg.length; ee++) {
@@ -1855,6 +1844,7 @@ function rename() {
     renameTextDropDown = d3.select("#" + this.id).attr('dropDown');
     renameTextShowSett = d3.select("#" + this.id).attr('showSett');
     renameTextInDesc = $("#" + this.id).data('inDescOpt');
+    renameTextInLabel = $("#" + this.id).data('inLabelOpt');
     renameTextPubDmeta = $("#" + this.id).data('pubDmeta');
     renameTextPubWebApp = $("#" + this.id).data('pubWebApp');
     renameTextPubWeb = d3.select("#" + this.id).attr('pubWeb');
@@ -2179,6 +2169,7 @@ function createSaveNodes() {
         var dropDown = $("#text-" + gNum).attr("dropDown");
         var showSett = $("#text-" + gNum).attr("showSett");
         var inDescOpt = $("#text-" + gNum).data("inDescOpt");
+        var inLabelOpt = $("#text-" + gNum).data("inLabelOpt");
         var pubDmeta = $("#text-" + gNum).data("pubDmeta");
         var pubWebApp = $("#text-" + gNum).data("pubWebApp");
         var pubWeb = $("#text-" + gNum).attr("pubWeb");
@@ -2192,9 +2183,9 @@ function createSaveNodes() {
         if (showSett != undefined) {
             processModule["showSett"] = showSett;
         }
-        if (inDescOpt != undefined) {
-            processModule["inDescOpt"] = inDescOpt;
-        }
+        if (inDescOpt != undefined) processModule["inDescOpt"] = inDescOpt;
+        if (inLabelOpt != undefined) processModule["inLabelOpt"] = inLabelOpt;
+
         if (pubDmeta != undefined) {
             processModule["pubDmeta"] = pubDmeta;
         }
@@ -2209,7 +2200,6 @@ function createSaveNodes() {
         if (prosessID.match(/^outPro$/) && processModule.pubWeb) {
             pubWebDirListDb.push(processName);
         }
-        console.log(processModule)
         if (prosessID.match(/^outPro$/) && processModule.pubWebApp && processModule.pubWebApp.app) {
             pubWebAppDirListDb.push(processModule.pubWebApp.app);
         }
@@ -2534,6 +2524,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
     var dropDown = null;
     var showSett = null;
     var inDescOpt = null;
+    var inLabelOpt = null;
     var pubDmeta = null;
     var pubWeb = null;
     var pubWebApp = null;
@@ -2547,9 +2538,9 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         if (processModules.showSett != undefined) {
             showSett = processModules.showSett;
         }
-        if (processModules.inDescOpt != undefined) {
-            inDescOpt = processModules.inDescOpt;
-        }
+        if (processModules.inDescOpt != undefined) inDescOpt = processModules.inDescOpt;
+        if (processModules.inLabelOpt != undefined) inLabelOpt = processModules.inLabelOpt;
+
         if (processModules.pubDmeta != undefined) {
             pubDmeta = processModules.pubDmeta;
         }
@@ -2574,7 +2565,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         var pColor = "orange"
             //(B)if edges are formed parameter_id data comes from biocorepipesave table "edges" column
         pObj.edgeIn = pObj.sData[0].edges
-        pObj.edgeInP = JSON.parse(pObj.edgeIn.replace(/'/gi, "\""))["edges"] //i-10-0-9-1_o-inPro-1-9-0
+        pObj.edgeInP = JSON5.parse(pObj.edgeIn)["edges"] //i-10-0-9-1_o-inPro-1-9-0
 
         for (var ee = 0; ee < pObj.edgeInP.length; ee++) {
             pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*?)_(.*)-(.*)-(.*)-(.*)-(.*)/
@@ -2591,7 +2582,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, inLabelOpt, pubDmeta, pubWebApp, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.processListNoOutput[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
@@ -2608,7 +2599,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
         var pColor = "green"
             //(B)if edges are formed parameter_id data comes from biocorepipesave table "edges" column
         pObj.edgeOut = pObj.sData[0].edges
-        pObj.edgeOutP = JSON.parse(pObj.edgeOut.replace(/'/gi, "\""))["edges"] //i-10-0-9-1_o-inPro-1-9-0
+        pObj.edgeOutP = JSON5.parse(pObj.edgeOut)["edges"] //i-10-0-9-1_o-inPro-1-9-0
 
         for (var ee = 0; ee < pObj.edgeOutP.length; ee++) {
             pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*?)_(.*)-(.*)-(.*)-(.*)-(.*)/
@@ -2625,7 +2616,7 @@ function loadPipeline(sDataX, sDataY, sDatapId, sDataName, processModules, gN, p
                 break
             }
         }
-        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, pubDmeta, pubWebApp, pObj)
+        drawParam(name, process_id, id, kind, sDataX, sDataY, paramId, pName, classtoparam, init, pColor, defVal, dropDown, pubWeb, showSett, inDescOpt, inLabelOpt, pubDmeta, pubWebApp, pObj)
         pObj.processList[("g" + MainGNum + "-" + pObj.gNum)] = name
         pObj.gNum = pObj.gNum + 1
 

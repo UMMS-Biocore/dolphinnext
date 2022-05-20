@@ -438,10 +438,10 @@ async function openSubPipeline(piID, pObj) {
     if (sData) {
         pObj.nodes = sData.nodes;
         if (pObj.nodes) {
-            if (IsJsonString(pObj.nodes.replace(/'/gi, '"'))) {
-                pObj.nodes = JSON.parse(pObj.nodes.replace(/'/gi, '"'));
+            if (IsJson5String(pObj.nodes)) {
+                pObj.nodes = JSON5.parse(pObj.nodes);
                 pObj.mG = sData.mainG;
-                pObj.mG = JSON.parse(pObj.mG.replace(/'/gi, '"'))["mainG"];
+                pObj.mG = JSON5.parse(pObj.mG)["mainG"];
                 translateSVG(pObj.mG, pObj);
                 for (var key in pObj.nodes) {
                     pObj.x = pObj.nodes[key][0];
@@ -491,7 +491,7 @@ async function openSubPipeline(piID, pObj) {
                     }
                 }
                 pObj.ed = sData.edges.slice();
-                pObj.ed = JSON.parse(pObj.ed.replace(/'/gi, '"'))["edges"];
+                pObj.ed = JSON5.parse(pObj.ed)["edges"];
                 for (var ee = 0; ee < pObj.ed.length; ee++) {
                     pObj.eds = pObj.ed[ee].split("_");
                     createEdges(pObj.eds[0], pObj.eds[1], pObj);
@@ -507,9 +507,9 @@ async function openPipeline(id) {
     if (sData) {
         if (Object.keys(sData).length > 0) {
             nodes = sData[0].nodes;
-            nodes = JSON.parse(nodes.replace(/'/gi, '"'));
+            nodes = JSON5.parse(nodes);
             mG = sData[0].mainG;
-            mG = JSON.parse(mG.replace(/'/gi, '"'))["mainG"];
+            mG = JSON5.parse(mG)["mainG"];
             translateSVG(mG, window);
             for (var key in nodes) {
                 x = nodes[key][0];
@@ -541,7 +541,7 @@ async function openPipeline(id) {
                 }
             }
             ed = sData[0].edges;
-            ed = JSON.parse(ed.replace(/'/gi, '"'))["edges"];
+            ed = JSON5.parse(ed)["edges"];
             for (var ee = 0; ee < ed.length; ee++) {
                 eds = ed[ee].split("_");
                 createEdges(eds[0], eds[1], window);
@@ -590,6 +590,7 @@ function drawParam(
     pubWeb,
     showSett,
     inDescOpt,
+    inLabelOpt,
     pubDmeta,
     pObj
 ) {
@@ -693,9 +694,9 @@ function drawParam(
     if (showSett != null) {
         $("#text" + MainGNum + "-" + pObj.gNum).attr("showSett", showSett);
     }
-    if (inDescOpt != null) {
-        $("#text" + MainGNum + "-" + pObj.gNum).data("inDescOpt", inDescOpt);
-    }
+    if (inDescOpt != null) $("#text" + MainGNum + "-" + pObj.gNum).data("inDescOpt", inDescOpt);
+    if (inLabelOpt != null) $("#text" + MainGNum + "-" + pObj.gNum).data("inLabelOpt", inLabelOpt);
+
     if (pubDmeta != null) {
         $("#text" + MainGNum + "-" + pObj.gNum).data("pubDmeta", pubDmeta);
     }
@@ -834,11 +835,12 @@ function parseRegPartAutofill(regPart) {
     return [url, urlzip, checkPath];
 }
 
-//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file @single_file @hidden 
+//parse main categories: @checkbox, @textbox, @input, @dropdown, @description, @options @title @autofill @show_settings @optional @file @single_file @hidden  @label
 //parse style categories: @multicolumn, @array, @condition, @spreadsheet
 function parseRegPart(regPart) {
     var type = null;
     var desc = null;
+    var label = null;
     var title = null;
     var tool = null;
     var showsett = null;
@@ -924,6 +926,17 @@ function parseRegPart(regPart) {
                     desc = descCheck[1];
                 } else if (descCheck[2]) {
                     desc = descCheck[2];
+                }
+            }
+            // find label
+            var labelCheck = regSplit[i].match(
+                /^label:"(.*)"|^label:'(.*)'/i
+            );
+            if (labelCheck) {
+                if (labelCheck[1]) {
+                    label = labelCheck[1];
+                } else if (labelCheck[2]) {
+                    label = labelCheck[2];
                 }
             }
             // find title
@@ -1012,7 +1025,8 @@ function parseRegPart(regPart) {
         file,
         singleFile,
         hidden,
-        spreadsheet
+        spreadsheet,
+        label
     ];
 }
 
@@ -1082,7 +1096,7 @@ function findDefaultArr(optArr) {
 }
 
 //insert form fields into panels of process options
-function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title, hidden, spreadsheet) {
+function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, tool, multicol, array, title, hidden, spreadsheet, labelText) {
     if ($.isArray(defaultVal)) {
         defaultVal = "";
     }
@@ -1230,8 +1244,10 @@ function addProcessPanelRow(gNum, name, varName, defaultVal, type, desc, opt, to
             "float:left; padding:5px; width:" +
             columnPercent +
             '%;" >';
+        var labelTextFinal = varName;
+        if (labelText) labelTextFinal = labelText;
         var label =
-            '<label style="font-weight:600; word-break:break-all;">' + varName + toolText + " </label>";
+            '<label style="font-weight:600; word-break:break-all;">' + labelTextFinal + toolText + ' </label><span style="display:none;">' + varName + '</span>';
         if (type === "input") {
             var inputDiv =
                 '<input type="text" class="form-control" style="padding:15px;" id="var_' +
@@ -3142,7 +3158,7 @@ function fillInputsTable(getProPipeInputs, rowID, firGnum, paraQualifier) {
 
 //*** if input circle is defined in workflow then insertInputOutputRow function is used to insert row into inputs table based on edges of input parameters.
 //*** if variable start with "params." then  insertInputRowParams function is used to insert rows into inputs table.
-function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett, optional, file, singleFile) {
+function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, name, showsett, optional, file, singleFile, labelText) {
     var dropDownQual = false;
     var paraQualifier = "val";
     if (file) paraQualifier = "file";
@@ -3197,7 +3213,8 @@ function insertInputRowParams(defaultVal, opt, pipeGnum, varName, type, desc, na
         processName,
         selectFileButton,
         show_setting,
-        optional
+        optional,
+        labelText
     );
     // check if parameters added into table before, if not fill table
     insertInRow(inRow, paramGivenName, rowType, "paramsInputs", desc);
@@ -3249,6 +3266,7 @@ function parseProPipePanelScript(script) {
         var defaultVal = null;
         var type = null;
         var desc = null;
+        var label = null;
         var tool = null;
         var opt = null;
         var multiCol = null;
@@ -3287,7 +3305,7 @@ function parseProPipePanelScript(script) {
             [varName, defaultVal] = parseVarPart(varPart);
         }
         if (regPart) {
-            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file, singleFile, hidden, spreadsheet] =
+            [type, desc, tool, opt, multiCol, arr, cond, title, autoform, showsett, optional, file, singleFile, hidden, spreadsheet, label] =
             parseRegPart(regPart);
         }
         if (type && varName) {
@@ -3296,6 +3314,7 @@ function parseProPipePanelScript(script) {
                 defaultVal: defaultVal,
                 type: type,
                 desc: desc,
+                label: label,
                 tool: tool,
                 opt: opt,
                 title: title,
@@ -3478,6 +3497,7 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                 var defaultVal = panelObj.schema[i].defaultVal;
                 var type = panelObj.schema[i].type;
                 var desc = panelObj.schema[i].desc;
+                var label = panelObj.schema[i].label;
                 var tool = panelObj.schema[i].tool;
                 var opt = panelObj.schema[i].opt;
                 var title = panelObj.schema[i].title;
@@ -3503,7 +3523,8 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                             showsett,
                             optional,
                             file,
-                            singleFile
+                            singleFile,
+                            label
                         );
                     } else {
                         // if any of the form is not hidden then keep the proPanelDiv
@@ -3521,7 +3542,8 @@ function insertProPipePanel(script, gNum, name, pObj, processData) {
                             array,
                             title,
                             hidden,
-                            spreadsheet
+                            spreadsheet,
+                            label
                         );
                     }
                     if (autoform) {
@@ -3686,7 +3708,8 @@ function getRowTable(
     processName,
     button,
     show_setting,
-    optional
+    optional,
+    labelText
 ) {
     var trID = 'id="' + rowType + "Ta-" + firGnum + '"';
     var optional_attr = "";
@@ -3702,6 +3725,8 @@ function getRowTable(
     if (paraQualifier == "val") {
         paraFileType = "-";
     }
+    var finalText = paramGivenName + optional_txt;
+    if (labelText) finalText = labelText
     return (
         "<tr " +
         trID +
@@ -3712,7 +3737,7 @@ function getRowTable(
         "-PName-" +
         firGnum +
         '" scope="row">' +
-        paramGivenName + optional_txt +
+        finalText +
         '</td><td style="display:none;">' +
         paraIdentifier +
         '</td><td style="display:none;">' +
@@ -3872,10 +3897,10 @@ function addPipeline(piID, x, y, name, pObjOrigin, pObjSub) {
             //--Pipeline details table add process--
             pObjSub.nodesOrg = pObjSub.sData[0].nodes;
             if (pObjSub.nodesOrg) {
-                if (IsJsonString(pObjSub.nodesOrg.replace(/'/gi, '"'))) {
-                    pObjSub.nodesOrg = JSON.parse(pObjSub.nodesOrg.replace(/'/gi, '"'));
+                if (IsJson5String(pObjSub.nodesOrg)) {
+                    pObjSub.nodesOrg = JSON5.parse(pObjSub.nodesOrg);
                     pObjSub.edOrg = pObjSub.sData[0].edges;
-                    pObjSub.edOrg = JSON.parse(pObjSub.edOrg.replace(/'/gi, '"'))[
+                    pObjSub.edOrg = JSON5.parse(pObjSub.edOrg)[
                         "edges"
                     ];
                     pObjSub.inNodes = {}; //input nodes that are connected to "input parameters"
@@ -4828,10 +4853,11 @@ async function insertInputOutputRow(
     var paramDropDown = $("#text-" + firGnum).attr("dropDown");
     var paramShowSett = $("#text-" + firGnum).attr("showSett");
     var desc = $("#text-" + firGnum).data("inDescOpt");
+    var label = $("#text-" + firGnum).data("inLabelOpt");
     var processName = $("#text-" + secGnum).attr("name");
-    if (desc) {
-        desc = decodeHtml(desc);
-    }
+    if (desc) desc = decodeHtml(desc);
+    if (label) label = decodeHtml(label);
+
     if (paramShowSett != undefined) {
         if (paramShowSett === "") {
             //check ccID for nested pipelines
@@ -4918,7 +4944,8 @@ async function insertInputOutputRow(
                 processName,
                 selectFileButton,
                 show_setting,
-                optional
+                optional,
+                label
             );
             insertInRow(inRow, paramGivenName, rowType, "mainInputs", desc);
             //get project_pipeline_inputs:
@@ -4961,7 +4988,8 @@ async function insertInputOutputRow(
                     processName,
                     outNameEl,
                     show_setting,
-                    optional
+                    optional,
+                    label
                 );
                 $("#" + rowType + "sTable > tbody:last-child").append(inRow);
             }
@@ -5196,6 +5224,7 @@ function loadPipeline(
     var pubWeb = null;
     var showSett = null;
     var inDescOpt = null;
+    var inLabelOpt = null;
     var pubDmeta = null;
     if (processModules != null && processModules != {} && processModules != "") {
         if (processModules.defVal) {
@@ -5207,9 +5236,8 @@ function loadPipeline(
         if (processModules.showSett != undefined) {
             showSett = processModules.showSett;
         }
-        if (processModules.inDescOpt != undefined) {
-            inDescOpt = processModules.inDescOpt;
-        }
+        if (processModules.inDescOpt != undefined) inDescOpt = processModules.inDescOpt;
+        if (processModules.inLabelOpt != undefined) inLabelOpt = processModules.inLabelOpt;
         if (processModules.pubDmeta != undefined) {
             pubDmeta = processModules.pubDmeta;
         }
@@ -5232,7 +5260,7 @@ function loadPipeline(
         var pColor = "orange";
         //(B)if edges are formed parameter_id data comes from biocorepipesave table "edges" column
         pObj.edgeIn = pObj.sData[0].edges;
-        pObj.edgeInP = JSON.parse(pObj.edgeIn.replace(/'/gi, '"'))["edges"]; //i-10-0-9-1_o-inPro-1-9-0
+        pObj.edgeInP = JSON5.parse(pObj.edgeIn)["edges"]; //i-10-0-9-1_o-inPro-1-9-0
 
         for (var ee = 0; ee < pObj.edgeInP.length; ee++) {
             pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)_(.*)-(.*)-(.*)-(.*)-(.*)/;
@@ -5270,6 +5298,7 @@ function loadPipeline(
             pubWeb,
             showSett,
             inDescOpt,
+            inLabelOpt,
             pubDmeta,
             pObj
         );
@@ -5288,7 +5317,7 @@ function loadPipeline(
         var pColor = "green";
         //(B)if edges are formed parameter_id data comes from biocorepipesave table "edges" column
         pObj.edgeOut = pObj.sData[0].edges;
-        pObj.edgeOutP = JSON.parse(pObj.edgeOut.replace(/'/gi, '"'))["edges"]; //i-10-0-9-1_o-inPro-1-9-0
+        pObj.edgeOutP = JSON5.parse(pObj.edgeOut)["edges"]; //i-10-0-9-1_o-inPro-1-9-0
 
         for (var ee = 0; ee < pObj.edgeOutP.length; ee++) {
             pObj.patt = /(.*)-(.*)-(.*)-(.*)-(.*)_(.*)-(.*)-(.*)-(.*)-(.*)/;
@@ -5325,6 +5354,7 @@ function loadPipeline(
             pubWeb,
             showSett,
             inDescOpt,
+            inLabelOpt,
             pubDmeta,
             pObj
         );
@@ -7750,7 +7780,9 @@ function loadSpreadsheetProcessOpt(processOptEach, handsontableID) {
         let transpose = (matrix) => {
             return matrix[0].map((col, i) => matrix.map(row => row[i]));
         }
-        rawdata = transpose(rawdata);
+        if (rawdata[0]) {
+            rawdata = transpose(rawdata);
+        }
 
         let finaldata = addEmptyRows(rawdata, 100, colHeaders)
         table.loadData(finaldata);
@@ -7782,7 +7814,7 @@ function getProcessOpt() {
                     outerDivNum = outerDivId.match(/(.*)_ind(.*)$/)[2];
                 }
             }
-            var labelDiv = $(formGroupArray[el]).find("label")[0];
+            var labelDiv = $(formGroupArray[el]).find("label").next()[0];
             var inputDiv = $(formGroupArray[el]).find("input,textarea,select,div.dnext_spreadsheet")[0];
             var inputDivType = $(inputDiv).attr("type");
             if (labelDiv && inputDiv) {
@@ -7841,7 +7873,7 @@ function addArrForms(allProcessOpt) {
             .find(".form-group")
             .toArray();
         $.each(formGroupArray, function(elem) {
-            var labelDiv = $(formGroupArray[elem]).find("label")[0];
+            var labelDiv = $(formGroupArray[elem]).find("label").next()[0];
             var inputDiv = $(formGroupArray[elem]).find("input,textarea,select")[0];
             var inputDivType = $(inputDiv).attr("type");
             var outerDiv = $(formGroupArray[elem]).parent();
@@ -7924,7 +7956,7 @@ function loadProcessOpt(allProcessOpt) {
             var formGroup = $("#addProcessRow-" + proGnum).find(".form-group");
             var formGroupArray = formGroup.toArray();
             $.each(formGroupArray, function(elem) {
-                var labelDiv = $(formGroupArray[elem]).find("label")[0];
+                var labelDiv = $(formGroupArray[elem]).find("label").next()[0];
                 var inputDiv = $(formGroupArray[elem]).find("input,textarea,select,div.dnext_spreadsheet")[0];
                 var inputDivType = $(inputDiv).attr("type");
                 var outerDiv = $(formGroupArray[elem]).parent();

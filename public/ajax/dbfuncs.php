@@ -832,6 +832,8 @@ class dbfuncs
             $nextVerText = "export NXF_VER=$nextVer";
         }
         $nextANSILog = "export NXF_ANSI_LOG=false";
+        $nextDSL = "export NXF_DEFAULT_DSL=1";
+        //export 
         // set NXF_SINGULARITY_CACHEDIR as $HOME/.dolphinnext/singularity, if it is not defined.
         $singu_cachedir = 'NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$HOME/.dolphinnext/singularity}" && export NXF_SINGULARITY_CACHEDIR=$NXF_SINGULARITY_CACHEDIR';
         $beforeRun = '';
@@ -842,7 +844,7 @@ class dbfuncs
         // combine pre-run cmd
         // should start without && and end with &&
 
-        $arr = array($profile_def, $nextVerText, $nextANSILog, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd, $initImageCmd, $downCacheCmd, $beforeRun);
+        $arr = array($profile_def, $nextVerText, $nextANSILog, $nextDSL, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd, $initImageCmd, $downCacheCmd, $beforeRun);
         $preCmd = "";
         for ($i = 0; $i < count($arr); $i++) {
             if (!empty($arr[$i]) && !empty($preCmd)) {
@@ -1835,15 +1837,19 @@ class dbfuncs
         return $configText;
     }
 
-    //{{DNEXT_PUBLISH_DIR}} {{DNEXT_LAB}}
-    function replaceDnextVariables($dir, $proPipeAll, $ownerID)
+    //{{DNEXT_PUBLISH_DIR}} {{DNEXT_LAB}} {{DNEXT_WEB_RUN_DIR}} {{DNEXT_WEB_REPORT_DIR}}
+    function replaceDnextVariables($dir, $uuid, $proPipeAll, $ownerID)
     {
+        $DNEXT_WEB_REPORT_DIR = "{$this->pubweb_url}/$uuid/pubweb";
+        $DNEXT_WEB_RUN_DIR = "{$this->pubweb_url}/$uuid/run";
         $DNEXT_PUBLISH_DIR = $this->getReportDir($proPipeAll);
         $userData = json_decode($this->getUserById($ownerID))[0];
         $username = $userData->{'username'};
         $email = $userData->{'email'};
         $lab = $userData->{'lab'};
         $allvars = array();
+        $allvars["DNEXT_WEB_REPORT_DIR"] =  $this->escapeRegex($DNEXT_WEB_REPORT_DIR);
+        $allvars["DNEXT_WEB_RUN_DIR"] =  $this->escapeRegex($DNEXT_WEB_RUN_DIR);
         $allvars["DNEXT_PUBLISH_DIR"] =  $this->escapeRegex($DNEXT_PUBLISH_DIR);
         $allvars["DNEXT_LAB"] = $this->escapeRegex($lab);
         $allvars["DNEXT_USERNAME"] = $this->escapeRegex($username);
@@ -2050,7 +2056,7 @@ class dbfuncs
         $this->createMultiConfig("{$this->run_path}/$uuid/run", $mainConfigText);
 
         // replace DNEXT global variables
-        $this->replaceDnextVariables("{$this->run_path}/$uuid/run", $proPipeAll, $ownerID);
+        $this->replaceDnextVariables("{$this->run_path}/$uuid/run", $uuid, $proPipeAll, $ownerID);
 
         //create clean serverlog.txt 
         $this->writeLog($uuid, '', 'w', 'serverlog.txt');
@@ -2129,7 +2135,7 @@ class dbfuncs
         //separate nextflow config (by using @config tag).
         $this->createMultiConfig("{$this->run_path}/$uuid/run", $mainConfigText);
         // replace DNEXT global variables
-        $this->replaceDnextVariables("{$this->run_path}/$uuid/run", $proPipeAll, $ownerID);
+        $this->replaceDnextVariables("{$this->run_path}/$uuid/run", $uuid, $proPipeAll, $ownerID);
 
         //create clean serverlog.txt 
         $this->writeLog($uuid, '', 'w', 'serverlog.txt');
