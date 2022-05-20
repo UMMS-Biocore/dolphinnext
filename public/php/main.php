@@ -1094,6 +1094,8 @@ immediately after the control sidebar -->
         <script src="bower_components/jquery-ui-bootstrap/js/jquery-migrate-3.0.0.js"></script>
         <!-- bootstrap-multiselect-->
         <script src="bower_components/bootstrap-multiselect/dist/js/bootstrap-multiselect.js"></script>
+        <!-- json5 2.2.1-->
+        <script src="bower_components/json5/json5_2.2.1.min.js"></script>
         <!-- Selectize 0.12.4.  -->
         <script src="dist/selectize/selectize.js"></script>
         <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->

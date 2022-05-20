@@ -1580,7 +1580,7 @@ function loadSelectedPipeline(pipeline_id) {
         if (Object.keys(pData).length > 0) {
             $('#selectPipeline').attr("pName", pData[0].name);
             var nodes = pData[0].nodes
-            nodes = JSON.parse(nodes.replace(/'/gi, "\""))
+            nodes = JSON5.parse(nodes)
             $.each(nodes, function(el) {
                 if (nodes[el][2].indexOf("inPro") === -1 && nodes[el][2].indexOf("outPro") === -1) {
                     pDataTable.push({ process_name: nodes[el][3], process_id: nodes[el][2] })
@@ -3629,6 +3629,7 @@ $(document).ready(function() {
     toggleCheckBox('#checkDropDown', '#dropDownOpt');
     toggleCheckBox('#checkShowSett', '#showSettOpt');
     toggleCheckBox('#checkInDesc', '#inDescOpt');
+    toggleCheckBox('#checkInLabel', '#inLabelOpt');
     toggleCheckBox('#checkPubDmeta', '#pubDmetaSettings');
     toggleCheckBox('#checkDefVal', '#defVal');
     toggleCheckBox('#checkPubWeb', '#pubWebOpt');
@@ -3661,8 +3662,10 @@ $(document).ready(function() {
     function fillRenameModal(renameTextDefVal, checkID, inputID) {
         if (renameTextDefVal != null) {
             if (renameTextDefVal !== "") {
-                renameTextDefVal = renameTextDefVal.replace(/'/gi, "");
-                renameTextDefVal = renameTextDefVal.replace(/"/gi, "");
+                if (inputID !== "#inLabelOpt") {
+                    renameTextDefVal = renameTextDefVal.replace(/'/gi, "");
+                    renameTextDefVal = renameTextDefVal.replace(/"/gi, "");
+                }
                 if ($(inputID).data().multiselect) {
                     $(inputID).multiselect('enable')
                     var optAr = []
@@ -3673,6 +3676,8 @@ $(document).ready(function() {
                     if (inputID == "#inDescOpt") {
                         renameTextDefVal = decodeHtml(renameTextDefVal);
                         renameTextDefVal = renameTextDefVal.replace(/<\/br>/g, "\n");
+                    } else if (inputID == "#inLabelOpt") {
+                        renameTextDefVal = decodeHtml(renameTextDefVal);
                     }
                     $(inputID).val(renameTextDefVal)
                 }
@@ -3713,12 +3718,15 @@ $(document).ready(function() {
             value = value.replace(/\n/g, "</br>")
             value = escapeHtml(value);
             $("#" + renameTextID).data(attr, value);
+        } else if (checkValue === "true" && attr == "inLabelOpt") {
+            value = escapeHtml(value);
+            $("#" + renameTextID).data(attr, value);
         } else if (checkValue === "true" && value !== "") {
             value = value.replace(/'/gi, "");
             value = value.replace(/"/gi, "");
             $("#" + renameTextID).attr(attr, value)
         } else {
-            if (attr == "inDescOpt") {
+            if (attr == "inDescOpt" || attr == "inLabelOpt") {
                 $("#" + renameTextID).removeData(attr);
             } else {
                 value = value.replace(/'/gi, "");
@@ -3817,6 +3825,7 @@ $(document).ready(function() {
             $('#dropdownDiv').css("display", "none")
             $('#showSettDiv').css("display", "none")
             $('#indescDiv').css("display", "none")
+            $('#inlabelDiv').css("display", "none")
             $('#pubWebDiv').css("display", "none")
             $('#pubDmetaAllDiv').css("display", "none")
         } else if (renameTextClassType === "input") {
@@ -3824,6 +3833,7 @@ $(document).ready(function() {
             $('#dropdownDiv').css("display", "block")
             $('#showSettDiv').css("display", "block")
             $('#indescDiv').css("display", "block")
+            $('#inlabelDiv').css("display", "block")
             $('#pubWebDiv').css("display", "none")
             $('#pubDmetaAllDiv').css("display", "none")
         } else if (renameTextClassType === "output") {
@@ -3831,6 +3841,7 @@ $(document).ready(function() {
             $('#dropdownDiv').css("display", "none")
             $('#showSettDiv').css("display", "none")
             $('#indescDiv').css("display", "none")
+            $('#inlabelDiv').css("display", "none")
             $('#pubWebDiv').css("display", "block")
             $('#pubDmetaAllDiv').css("display", "block")
             $("#pubDmetaFeatureDiv").css("display", "block")
@@ -3859,6 +3870,7 @@ $(document).ready(function() {
         fillRenameModal(renameTextDropDown, '#checkDropDown', '#dropDownOpt');
         fillRenameModal(renameTextShowSett, '#checkShowSett', '#showSettOpt');
         fillRenameModal(renameTextInDesc, '#checkInDesc', '#inDescOpt');
+        fillRenameModal(renameTextInLabel, '#checkInLabel', '#inLabelOpt');
         fillRenameModal(renameTextPubWeb, '#checkPubWeb', '#pubWebOpt');
         loadValueObj('#checkPubDmeta', renameTextPubDmeta)
         loadValueObj('#pubWebApp', renameTextPubWebApp)
@@ -3883,6 +3895,7 @@ $(document).ready(function() {
         saveValue('#checkPubWeb', '#pubWebOpt', "pubWeb");
         saveValue('#checkShowSett', '#showSettOpt', "showSett");
         saveValue('#checkInDesc', '#inDescOpt', "inDescOpt");
+        saveValue('#checkInLabel', '#inLabelOpt', "inLabelOpt");
         saveValueObj("#checkPubDmeta", "pubDmeta")
         saveValueObj("#pubWebApp", "pubWebApp")
         changeName();

@@ -6,7 +6,7 @@ Dropzone.options.importArea = {
     maxFilesize: 2, // MB
     acceptedFiles: ".dn",
     dictDefaultMessage: 'Drop files here or <button type="button" class="btn btn-default" >Select File </button>',
-    accept: function (file, done) {
+    accept: function(file, done) {
         window.importObj.filename.push(file.name)
         done();
         $('#nextButton').prop("disabled", false);
@@ -14,12 +14,12 @@ Dropzone.options.importArea = {
 };
 
 renderMenuGroup = {
-    option: function (data, escape) {
+    option: function(data, escape) {
         return '<div class="option">' +
             '<span class="title"><i>' + escape(data.group_name) + '</i></span>' +
             '</div>';
     },
-    item: function (data, escape) {
+    item: function(data, escape) {
         return '<div class="item" data-value="' + escape(data.id) + '">' + escape(data.group_name) + '</div>';
     }
 };
@@ -35,12 +35,12 @@ function createSelectize(rowClass, dropdownID) {
         searchField: ['group_name'],
         options: allMenuGroup,
         render: renderMenuGroup,
-        create: function (input, callback) {
+        create: function(input, callback) {
             $.ajax({
                 url: "ajax/ajaxquery.php",
                 data: { p: "save" + rowClass + "Group", group_name: input },
                 type: 'POST',
-                success: function (result) {
+                success: function(result) {
                     if (result) {
                         callback({ id: result.id, group_name: input });
                         refreshSelectize(rowClass, null)
@@ -102,7 +102,7 @@ function activateSelectizeMenuGroup(rowClass, dropdownID, menu_group_name, fileI
             url: "ajax/ajaxquery.php",
             data: { p: "save" + rowClass + "Group", group_name: menu_group_name },
             type: 'POST',
-            success: function (result) {
+            success: function(result) {
                 if (result) {
                     refreshSelectize(rowClass, result.id)
                 }
@@ -116,7 +116,7 @@ function getRowImportTable(rowType, rowClass, fileId, blockID, givenName, menu_g
     var rowID = rowType + fileId + '_' + blockID;
     var dropdownID = "menuGroup_" + rowID;
     var pipeRevDrop = '<select id="' + dropdownID + '" class="fbtn btn-default form-control" defVal="' + menu_group_name + '" name="' + rowClass + '_menu_group"></select>';
-    setTimeout(function () { activateSelectizeMenuGroup(rowClass, dropdownID, menu_group_name, fileId); }, 100);
+    setTimeout(function() { activateSelectizeMenuGroup(rowClass, dropdownID, menu_group_name, fileId); }, 100);
     return '<tr id="' + rowID + '" type="' + rowType + '" fileID="' + fileId + '"><td scope="row">' + givenName + '</td><td>' + pipeRevDrop + '</td><td id="stat_' + rowID + '"><i class="fa fa-spinner fa-spin"></i>  Processing..</td></tr>'
 }
 
@@ -161,7 +161,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
         for (var i = 0; i < importJSON.length; i++) {
             var dbParamId = window.importObj[fileID].dict.parameter[importJSON[i].parameter_id];
             if (dbParamId) {
-                if (dbJSON[i] && dbJSON[i].parameter_id == dbParamId && dbJSON[i].sname == importJSON[i].sname){
+                if (dbJSON[i] && dbJSON[i].parameter_id == dbParamId && dbJSON[i].sname == importJSON[i].sname) {
                     //pro para match found = update this item
                     if (dbJSON[i].id) {
                         window.importObj[fileID].dict.propara[importJSON[i].id] = dbJSON[i].id; //default value ("insert") now being replaced 
@@ -200,7 +200,7 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
         var importJSONcp = $.extend(true, {}, importJSON);
         var dbJSONcp = $.extend(true, {}, dbJSON);
         importJSONcp = prepareCompare(importJSONcp, fileID, "importJSON")
-        dbJSONcp = prepareCompare(dbJSONcp,fileID, "dbJSON")
+        dbJSONcp = prepareCompare(dbJSONcp, fileID, "dbJSON")
         checkObj2 = keyChecker(["nodes", "edges", "mainG"], importJSONcp, dbJSONcp)
         checkObj = keyChecker(["summary", "script_pipe_footer", "script_pipe_header", "script_pipe_config", "name"], importJSON, dbJSON)
         jQuery.extend(checkObj, checkObj2);
@@ -209,18 +209,18 @@ function checkIfEqual(type, importJSON, dbJSON, fileID) {
 }
 
 
-function prepareCompare(obj,fileID, mode){
-    if (mode == "importJSON"){
+function prepareCompare(obj, fileID, mode) {
+    if (mode == "importJSON") {
         //nodes
         obj.nodes = encodeNodes(obj.nodes, fileID)
         obj.nodes = JSON.stringify(obj.nodes)
-        //edges
+            //edges
         obj.edges = encodeEdges(obj.edges, fileID)
         obj.edges = JSON.stringify(obj.edges)
-    } else if (mode == "dbJSON"){
-        obj.nodes = JSON.parse(obj.nodes.replace(/'/gi, "\""))
+    } else if (mode == "dbJSON") {
+        obj.nodes = JSON5.parse(obj.nodes)
         obj.nodes = JSON.stringify(obj.nodes)
-        obj.edges = JSON.parse(obj.edges.replace(/'/gi, "\""))["edges"]
+        obj.edges = JSON5.parse(obj.edges)["edges"]
         obj.edges = JSON.stringify(obj.edges)
     }
 
@@ -231,8 +231,8 @@ function prepareCompare(obj,fileID, mode){
 //second check will be done after import.
 function removeSpecific(obj) {
     //nodes
-    obj.nodes = JSON.parse(obj.nodes.replace(/'/gi, "\""))
-    $.each(obj.nodes, function (el) {
+    obj.nodes = JSON5.parse(obj.nodes)
+    $.each(obj.nodes, function(el) {
         if (obj.nodes[el]) {
             var proPipeID = obj.nodes[el][2];
             if (proPipeID != "outPro" && proPipeID != "inPro") {
@@ -245,9 +245,9 @@ function removeSpecific(obj) {
         }
     });
     obj.nodes = JSON.stringify(obj.nodes)
-    //edges
+        //edges
     var final = []
-    obj.edges = JSON.parse(obj.edges.replace(/'/gi, "\""))["edges"]
+    obj.edges = JSON5.parse(obj.edges)["edges"]
     for (var i = 0; i < obj.edges.length; i++) {
         if (obj.edges[i]) {
             var eds = obj.edges[i].split("_")
@@ -275,8 +275,8 @@ function removeSpecific(obj) {
 function sumObj(obj) {
     var status = true;
     var txt = "";
-    $.each(obj, function (el) {
-        $.each(obj[el], function (e) {
+    $.each(obj, function(el) {
+        $.each(obj[el], function(e) {
             if (obj[el][e] !== true) {
                 status = "warnUser";
                 txt += obj[el][e];
@@ -295,7 +295,7 @@ function createImportReport(obj) {
 
 
 
-$('#importButton').on('click', function (e) {
+$('#importButton').on('click', function(e) {
     e.preventDefault();
     $('#importButton').css("display", "none");
     $('#compButton').css("display", "inline");
@@ -303,12 +303,12 @@ $('#importButton').on('click', function (e) {
     var pipeModList = $("#importModalPart2").find("tr[type='pipeModule']")
     var pipeList = $("#importModalPart2").find("tr[type='pipeline']")
     var pipeRowList = $.merge(pipeModList, pipeList)
-    //first insert missing_parameters
+        //first insert missing_parameters
     var fileList = window.importObj.filename;
     for (var fileID = 0; fileID < fileList.length; fileID++) {
         var missing_parameters = window.importObj[fileID].missing_parameters
         if (missing_parameters) {
-            $.each(missing_parameters, function (el) {
+            $.each(missing_parameters, function(el) {
                 var commandLog = getValues(missing_parameters[el]);
                 if ((commandLog && commandLog.id)) {
                     var newParameterID = commandLog.id;
@@ -326,16 +326,16 @@ $('#importButton').on('click', function (e) {
         for (var fileid = 0; fileid < fileList.length; fileid++) {
             var redundant_propara = window.importObj[fileid].redundant_propara
             if (redundant_propara) {
-                $.each(redundant_propara, function (el) {
+                $.each(redundant_propara, function(el) {
                     $.ajax({
                         type: "POST",
                         url: "ajax/ajaxquery.php",
                         data: redundant_propara[el],
                         async: false,
-                        success: function (s) {
+                        success: function(s) {
                             console.log("Removal of process parameter is successfully completed")
                         },
-                        error: function (errorThrown) {
+                        error: function(errorThrown) {
                             window.importObj["importStatus"] = "stopped";
                             showInfoModal("#infoMod", "#infoModText", "Error: " + errorThrown + "Removal of process parameter (id:" + el + ") was not successful:" + JSON.stringify(redundant_propara[el]))
                         }
@@ -368,12 +368,12 @@ $('#importButton').on('click', function (e) {
             if (warnUser && !window.importObj[parBoxId]["skipWarnUserCheck"]) {
                 window.importObj[parBoxId]["pass"] = false;
                 indexCache = i;
-                $('#warnUserImport').on('show.bs.modal', function (event) {
+                $('#warnUserImport').on('show.bs.modal', function(event) {
                     $(this).find('form').trigger('reset');
                     $("#warnUserText").multiline(warnUser);
 
                 });
-                $('#warnUserImport').on('hide.bs.modal', function (event) {
+                $('#warnUserImport').on('hide.bs.modal', function(event) {
                     var tmpid = $(document.activeElement).attr('id');
                     if (tmpid === "saveOnExistImport") {
                         window.importObj[parBoxId]["skipWarnUserCheck"] = true;
@@ -382,7 +382,7 @@ $('#importButton').on('click', function (e) {
                         $('#compButton').css("display", "none");
                     }
                 });
-                $('#warnUserImport').modal('show').one('hidden.bs.modal', function () {
+                $('#warnUserImport').modal('show').one('hidden.bs.modal', function() {
                     loop(type, list)
                 })
                 return;
@@ -398,7 +398,7 @@ $('#importButton').on('click', function (e) {
                     }
                 }
                 var commandLog = null
-                //insert process/pipeline
+                    //insert process/pipeline
                 var commandLog = getValues(command);
                 if ((commandLog && commandLog.id) || commandID) {
                     var newID = commandLog.id;
@@ -450,13 +450,13 @@ $('#importButton').on('click', function (e) {
             } else if (type == "pipeline" && i == list.length - 1) {
                 indexCache = 0;
                 //strict validation for pipelines
-                validatePipeImportBlock (fileID);
+                validatePipeImportBlock(fileID);
                 loop("pipeline_strict", pipeRowList);
             } else if (type == "pipeline_strict" && i == list.length - 1) {
                 var parBoxId = list[list.length - 1].getAttribute('id');
                 var oldID = window.importObj[parBoxId]["oldPipelineId"];
-                var newID  = window.importObj[fileID].dict[type][oldID]
-                window.importObj[fileID].dict["lastpipeline"]=newID
+                var newID = window.importObj[fileID].dict[type][oldID]
+                window.importObj[fileID].dict["lastpipeline"] = newID
                 window.importObj["importStatus"] = "finalized";
             }
         }
@@ -499,7 +499,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
     } else if (type == "process_parameter_input" || type == "process_parameter_output") {
         for (var i = 0; i < importJSON.length; i++) {
             var oldParameterId = importJSON[i].parameter_id;
-            var parameterCheck = allParameters.filter(function (el) {
+            var parameterCheck = allParameters.filter(function(el) {
                 return (el.file_type == importJSON[i].file_type && el.qualifier == importJSON[i].qualifier && el.name == importJSON[i].name)
             });
             var newParameterId = "";
@@ -522,7 +522,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
             sendJSON[i].sname = encodeURIComponent(importJSON[i].sname);
             sendJSON[i].closure = encodeURIComponent(importJSON[i].closure);
             sendJSON[i].reg_ex = encodeURIComponent(importJSON[i].reg_ex);
-            if (importJSON[i].optional){
+            if (importJSON[i].optional) {
                 sendJSON[i].optional = importJSON[i].optional;
             }
             sendJSON[i].operator = importJSON[i].operator;
@@ -563,7 +563,7 @@ function prepareSendJSON(type, sendJSON, importJSON, allParameters, fileID, rowI
         sendJSON.script_mode_header = importJSON.script_mode_header
         sendJSON.rev_comment = importJSON.rev_comment;
         sendJSON.group_id = ""
-        if (importJSON.publicly_searchable){
+        if (importJSON.publicly_searchable) {
             sendJSON.publicly_searchable = importJSON.publicly_searchable;
         } else {
             sendJSON.publicly_searchable = "false";
@@ -609,7 +609,7 @@ function switchHostSpecific(importItem, dbItem) {
                 }
             }
             importItem = importList.join("//* platform")
-            //in case imported file have no platform tag, add to last part of the text
+                //in case imported file have no platform tag, add to last part of the text
         } else if (importList.length === 1 && dbList.length > 2) {
             for (var i = 0; i < dbList.length; i++) {
                 if (Math.abs(i % 2) == 1) {
@@ -617,7 +617,7 @@ function switchHostSpecific(importItem, dbItem) {
                 }
             }
             importItem = importList.join("//* platform")
-            // in case imported file have platform tag, but db hasn't.
+                // in case imported file have platform tag, but db hasn't.
         } else if (importList.length > 2 && dbList.length === 1) {
             for (var i = 0; i < importList.length; i++) {
                 if (Math.abs(i % 2) == 1) {
@@ -640,7 +640,7 @@ function checkImport(optObj) {
     var proInJSON = optObj.proInJSON
     var proOutJSON = optObj.proOutJSON
     var allParameters = optObj.allParameters
-    //--optional parameters ends--
+        //--optional parameters ends--
     var sendJSONprocess = {};
     var sendJSONpipeline = {};
     var sendJSONproPara = [];
@@ -663,8 +663,8 @@ function checkImport(optObj) {
             uuid: process_uuid,
             rev_uuid: process_rev_uuid
         });
-        console.log("checkUUID",checkUUID)
-        //prepare command to save/update db
+        console.log("checkUUID", checkUUID)
+            //prepare command to save/update db
         sendJSONprocess = prepareSendJSON("process", sendJSONprocess, importJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
         sendJSONproParaIn = prepareSendJSON("process_parameter_input", sendJSONproParaIn, proInJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
         sendJSONproParaOut = prepareSendJSON("process_parameter_output", sendJSONproParaOut, proOutJSON, allParameters, fileId, rowID, decodeElement("process", checkUUID.process_rev_uuid))
@@ -686,7 +686,7 @@ function checkImport(optObj) {
                     checkUUIDpro_para_out = JSON.parse(checkUUID["pro_para_outputs_" + checkUUID_process_id]);
                 }
                 checkObjPro = checkIfEqual("process", importJSON, checkUUID.process_rev_uuid, fileId)
-                //check if process parameters are the same
+                    //check if process parameters are the same
                 if (checkUUIDpro_para_in && proInJSON) {
                     checkObjProParaIn = checkIfEqual("process_parameter_in", proInJSON, checkUUIDpro_para_in, fileId)
                 }
@@ -699,7 +699,7 @@ function checkImport(optObj) {
                 [status, report] = createImportReport(mergedReport)
                 if (status === true) {
                     $("#stat_" + rowID).html('Process is exist <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Process will not be imported, instead existing revision will be used"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
-                    //process
+                        //process
                     window.importObj[rowID]["command"] = null;
                     window.importObj[rowID]["oldProcessId"] = importJSON.id;
                     window.importObj[fileId].dict.process[importJSON.id] = checkUUID_process_id;
@@ -708,7 +708,7 @@ function checkImport(optObj) {
 
                 } else if (status === "warnUser") {
                     $("#stat_" + rowID).html('Conflict is detected <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Conflict has found between the existing and imported processes. Please proceed to view conflict and overwrite existing version"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
-                    //process
+                        //process
                     sendJSONprocess.rev_id = checkUUID.process_rev_uuid.rev_id;
                     sendJSONprocess.process_gid = checkUUID.process_rev_uuid.process_gid;
                     sendJSONprocess.id = checkUUID.process_rev_uuid.id;
@@ -724,7 +724,7 @@ function checkImport(optObj) {
             } else if (checkUUID.process_uuid) {
                 checkUUID.process_uuid = decodeElement("process", checkUUID.process_uuid)
                 $("#stat_" + rowID).html('Process group has found <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Process will be added as a new revision of the process: ' + checkUUID.process_uuid.name + '"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
-                //process
+                    //process
                 sendJSONprocess.rev_id = parseInt(checkUUID.process_uuid.rev_id) + 1;
                 sendJSONprocess.process_gid = checkUUID.process_uuid.process_gid;
                 window.importObj[rowID]["command"] = sendJSONprocess;
@@ -734,7 +734,7 @@ function checkImport(optObj) {
                 //if process_rev_uuid and process_uuid not found then add as new revision and process
             } else {
                 $("#stat_" + rowID).html('Save as new process <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="It will be added as a new process"><i class="glyphicon glyphicon-info-sign" style="font-size:13px;"></i></a></span>')
-                //process
+                    //process
                 sendJSONprocess.process_gid = ""
                 window.importObj[rowID]["command"] = sendJSONprocess;
                 window.importObj[rowID]["oldProcessId"] = importJSON.id;
@@ -832,7 +832,7 @@ function cleanIDColumn(sendJSONproPara) {
 }
 
 
-function validatePipeImportBlock (fileId){
+function validatePipeImportBlock(fileId) {
     var importJSON = window.importObj[fileId].importJSON;
     var checkMainPipe = filterObjKeys(importJSON, /main_pipeline.*/, "obj");
     var checkPipeModule = filterObjKeys(importJSON, /pipeline_module.*/, "obj");
@@ -874,7 +874,7 @@ function getFileBlock(fileId, fileName, importJSON, allParameters) {
             pipeBlock += getRowImportTable("pipeline", "Pipeline", fileId, i, checkMainPipe[i].name, checkMainPipe[i].pipeline_group_name, checkMainPipe[i].pipeline_uuid);
             checkMainPipe[i] = decodeElement("pipeline", checkMainPipe[i])
             optObj = { type: "pipeline", rowType: "pipeline", fileId: fileId, blockID: i, importJSON: checkMainPipe[i] };
-            var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
+            var doCall = function(optObj) { setTimeout(function() { checkImport(optObj); }, 10); }
             doCall(optObj);
         }
     }
@@ -884,7 +884,7 @@ function getFileBlock(fileId, fileName, importJSON, allParameters) {
             pipeModuleBlock += getRowImportTable("pipeModule", "Pipeline", fileId, i, checkPipeModule[i].name, checkPipeModule[i].pipeline_group_name, checkPipeModule[i].pipeline_uuid);
             checkPipeModule[i] = decodeElement("pipeline", checkPipeModule[i])
             optObj = { type: "pipeline", rowType: "pipeModule", fileId: fileId, blockID: i, importJSON: checkPipeModule[i] };
-            var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
+            var doCall = function(optObj) { setTimeout(function() { checkImport(optObj); }, 10); }
             doCall(optObj);
         }
     }
@@ -902,7 +902,7 @@ function getFileBlock(fileId, fileName, importJSON, allParameters) {
             importJSON[checkProcess[i]] = proJSON;
             processBlock += getRowImportTable("process", "Process", fileId, i, proJSON.name, proJSON.process_group_name, proJSON.process_uuid);
             optObj = { type: "process", rowType: "process", fileId: fileId, blockID: i, importJSON: proJSON, proInJSON: proInJSON, proOutJSON: proOutJSON, allParameters: allParameters };
-            var doCall = function (optObj) { setTimeout(function () { checkImport(optObj); }, 10); }
+            var doCall = function(optObj) { setTimeout(function() { checkImport(optObj); }, 10); }
             doCall(optObj);
 
         }
@@ -954,7 +954,7 @@ function convertEdgeIm(id, fileID) {
 
 function encodeEdges(edges, fileID) {
     var final = [];
-    edges = JSON.parse(edges.replace(/'/gi, "\""))["edges"]
+    edges = JSON5.parse(edges)["edges"]
     for (var i = 0; i < edges.length; i++) {
         if (edges[i]) {
             var eds = edges[i].split("_")
@@ -971,8 +971,8 @@ function encodeEdges(edges, fileID) {
 }
 
 function encodeNodes(nodes, fileID) {
-    nodes = JSON.parse(nodes.replace(/'/gi, "\""))
-    $.each(nodes, function (el) {
+    nodes = JSON5.parse(nodes)
+    $.each(nodes, function(el) {
         if (nodes[el]) {
             var proPipeID = nodes[el][2];
             if (proPipeID != "outPro" && proPipeID != "inPro") {
@@ -1032,11 +1032,11 @@ function encodeElement(type, importJSON, fileID) {
         importJSON.script_pipe_config = encodeURIComponent(importJSON.script_pipe_config)
         importJSON.edges = encodeEdges(importJSON.edges, fileID)
         importJSON.nodes = encodeNodes(importJSON.nodes, fileID)
-        importJSON.mainG = JSON.parse(importJSON.mainG.replace(/'/gi, "\""))["mainG"];
+        importJSON.mainG = JSON5.parse(importJSON.mainG)["mainG"];
         importJSON.pipeline_list = encodeProPipeList(importJSON.pipeline_list, fileID, "pipeline")
         importJSON.process_list = encodeProPipeList(importJSON.process_list, fileID, "process")
         var savedList = [];
-        var pipelineColums = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publicly_searchable", "script_pipe_header", "script_pipe_config", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir","publish_dmeta_dir", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
+        var pipelineColums = ["name", "id", "nodes", "mainG", "edges", "summary", "group_id", "perms", "pin", "pin_order", "publicly_searchable", "script_pipe_header", "script_pipe_config", "script_pipe_footer", "script_mode_header", "script_mode_footer", "pipeline_group_id", "process_list", "pipeline_list", "publish_web_dir", "publish_dmeta_dir", "pipeline_gid", "rev_comment", "rev_id", "pipeline_uuid", "pipeline_rev_uuid"];
         for (var i = 0; i < pipelineColums.length; i++) {
             var key = pipelineColums[i];
             var tObj = {};
@@ -1053,7 +1053,7 @@ function encodeElement(type, importJSON, fileID) {
     return importJSON
 }
 
-$('#nextButton').on('click', function (e) {
+$('#nextButton').on('click', function(e) {
     $('#importModalPart1').css("display", "none");
     $('#importModalPart2').css("display", "inline");
     $('#importButton').css("display", "inline");
@@ -1081,7 +1081,7 @@ $('#nextButton').on('click', function (e) {
             }
         }
     }
-    setTimeout(function () { $('[data-toggle="tooltip"]').tooltip(); }, 10);
+    setTimeout(function() { $('[data-toggle="tooltip"]').tooltip(); }, 10);
 
 });
 
@@ -1099,7 +1099,7 @@ function rowUpdateStatus(parBoxId, text, status) {
     $("#stat_" + parBoxId).html(text + icon).css("background-color", color);
 }
 
-$('#importModal').on('show.bs.modal', function (e) {
+$('#importModal').on('show.bs.modal', function(e) {
     $('#importModalPart1').css("display", "inline");
     $('#importModalPart2').css("display", "none");
     $('#nextButton').prop("disabled", true);
@@ -1113,7 +1113,7 @@ $('#importModal').on('show.bs.modal', function (e) {
 });
 
 
-$('#importModal').on('hide.bs.modal', function (e) {
+$('#importModal').on('hide.bs.modal', function(e) {
     //reset pipeline Menu group
     //    loadPipeMenuGroup(true);
     //reset import area
@@ -1128,7 +1128,7 @@ $('#importModal').on('hide.bs.modal', function (e) {
         if (obj) {
             var lastPipeId = obj;
             if (lastPipeId) {
-                setTimeout(function () { window.location.replace("index.php?np=1&id=" + lastPipeId); }, 700);
+                setTimeout(function() { window.location.replace("index.php?np=1&id=" + lastPipeId); }, 700);
             }
         }
 
