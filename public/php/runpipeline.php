@@ -486,7 +486,47 @@ $DMETA_LABEL = DMETA_LABEL;
                 </div>
             </div>
             <div id="advOpt" class="row" style="margin-bottom:2px;">
-                <div class="col-md-12" id="runCmdDiv">
+                <div class="col-md-6" id="permsDiv">
+                    <div class="form-group" style="margin-bottom: 5px;">
+                        <label>Permissions to View</label>
+                        <select id="permsRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="perms">
+                            <option value="3" selected>Only me </option>
+                            <option value="15">Only my group</option>
+                            <option value="63">Everyone</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6" id="groupsDiv">
+                    <div class="form-group" style="margin-bottom: 5px;">
+                        <label>Group Selection </label>
+                        <select id="groupSelRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="group_id">
+                            <option value="" selected>Choose group </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <span class="small">You can share your run with a specific group (created in profile-> groups tab) by choosing "Only my group" and selecting the group name. The group members will see the run on their run status page. Alternatively, you can set the Permissions to View to "Everyone". This way, only users that know the run link will see it. The selected run will not show up on their run status page. Please click the save icon at the top after changing your permissions.
+                    </span>
+                </div>
+                <div id="releaseDivParent">
+                    <div id="releaseDiv" style="margin-top:5px;" class="col-md-12">
+                        <div class="form-group">
+                            <label id="releaseLabel" class="control-label">Release Date:</label>
+                            <a id="setRelease" href="#"><span date="" id="releaseVal">Set a Date</span></a>
+                            <span id="releaseValFinal"></span>
+                            <span>
+                                <a id="getTokenLink" style="display:none;" token="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="Get Link <br> Only people who have the link can access the run until release date"><i style="font-size: 15px;" class="fa fa-chain"></i></a>
+                                <div id="showTokenLink" style="display:none;" class="col-md-6 input-group">
+                                    <input readonly id="tokenInput" type="text" class="form-control">
+                                    <div id="copyToken" class="input-group-addon">
+                                        <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Copy Link to Clipboard"><span><i class="glyphicon glyphicon-copy"></i></span></a>
+                                    </div>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-12" id="runCmdDiv" style="margin-top:10px;">
                     <div class="form-group">
                         <label>Run Command <span><a data-toggle="tooltip" data-placement="bottom" title="You may run the command or commands (by seperating each command with && sign) before the nextflow job starts. (eg. source /etc/bashrc && module load java/1.8.0_31 && module load singularity/singularity-2.4)"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <textarea id="runCmd" rows="1" name="runCmd" placeholder="Enter commands here.." style="min-width: 100%; max-width: 100%; border-color:lightgrey;"></textarea>
@@ -554,12 +594,57 @@ $DMETA_LABEL = DMETA_LABEL;
                     </div>
                 </div>
                 <div class="col-md-12" id="intermeDelDiv">
-                    <div class="form-group">
+                    <div>
                         <label> <input type="checkbox" id="intermeDel" name="interDelete" value="interDel" checked> Delete intermediate files after run</input></label>
                     </div>
                 </div>
+                <div class="col-md-12" id="cronDivHide">
+                    <div>
+                        <label><input type="checkbox" id="cron_check" name="cron_check" data-toggle="collapse" data-target="#cronDiv"> Automated Execution </input> <span><a data-toggle="tooltip" data-placement="bottom" title="You may activate the automated execution feature for periodically submission of this run"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                    </div>
+                    <div id="cronDiv" class="collapse">
+                        <div class="col-md-12" style="margin-top:10px;">
+                            <label class="col-md-2">Run Prefix</label>
+                            <div class="form-group col-md-4">
+                                <input type="text" class="form-control" id="cron_prefix" name="cron_prefix">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="col-md-2" style="margin-top:20px;">Frequency</label>
+                            <div class="form-group col-md-1">
+                                <div class="text-center">Minute(s)</div>
+                                <input value=0 type="number" min="0" class="form-control" id="cron_min" name="cron_min">
+                            </div>
+                            <div class="form-group col-md-1">
+                                <div class="text-center">Hour(s)</div>
+                                <input value=0 type="number" min="0" class="form-control" id="cron_hour" name="cron_hour">
+                            </div>
+                            <div class="form-group col-md-1">
+                                <div class="text-center">Day(s)</div>
+                                <input value=0 type="number" min="0" class="form-control" id="cron_day" name="cron_day">
+                            </div>
+                            <div class="form-group col-md-1">
+                                <div class="text-center">Week(s)</div>
+                                <input value=0 type="number" min="0" class="form-control" id="cron_week" name="cron_week">
+                            </div>
+                            <div class="form-group col-md-1">
+                                <div class="text-center">Month(s)</div>
+                                <input value=0 type="number" min="0" class="form-control" id="cron_month" name="cron_month">
+                            </div>
+                            <div class="form-group col-md-1">
+                                <button style="margin-top:22px;" type="button" class="btn btn-primary" id="setCron">Set</button>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="col-md-2" style="margin-top:20px;">Next Submission</label>
+                            <div class="form-group col-md-5">
+                                <div class="form-control" style="margin-top:12px;" id="cronNextSubDate"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-md-12">
-                    <div class="form-group" style="  margin-bottom:8px;">
+                    <div class="form-group" style="margin-top:20px; margin-bottom:8px;">
                         <label>Report Options</label>
                         <i data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a class="fa fa-plus-square-o collapseIcon" style=" font-size:15px; padding-left:5px; " data-toggle="collapse" data-target="#dispOpt"></a></i>
                     </div>
@@ -577,46 +662,6 @@ $DMETA_LABEL = DMETA_LABEL;
                     </div>
                     <div class="form-group col-md-2">
                         <input type="checkbox" id="withTimeline" checked> Timeline</input>
-                    </div>
-                </div>
-                <div class="col-md-6" id="permsDiv">
-                    <div class="form-group" style="margin-bottom: 5px;">
-                        <label>Permissions to View</label>
-                        <select id="permsRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="perms">
-                            <option value="3" selected>Only me </option>
-                            <option value="15">Only my group</option>
-                            <option value="63">Everyone</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6" id="groupsDiv">
-                    <div class="form-group" style="margin-bottom: 5px;">
-                        <label>Group Selection </label>
-                        <select id="groupSelRun" style="width:100%;" class="fbtn btn-default form-control permscheck" name="group_id">
-                            <option value="" selected>Choose group </option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-sm-12">
-                    <span class="small">You can share your run with a specific group (created in profile-> groups tab) by choosing "Only my group" and selecting the group name. The group members will see the run on their run status page. Alternatively, you can set the Permissions to View to "Everyone". This way, only users that know the run link will see it. The selected run will not show up on their run status page. Please click the save icon at the top after changing your permissions.
-                    </span>
-                </div>
-                <div id="releaseDivParent">
-                    <div id="releaseDiv" style="margin-top:5px;" class="col-md-12">
-                        <div class="form-group">
-                            <label id="releaseLabel" class="control-label">Release Date:</label>
-                            <a id="setRelease" href="#"><span date="" id="releaseVal">Set a Date</span></a>
-                            <span id="releaseValFinal"></span>
-                            <span>
-                                <a id="getTokenLink" style="display:none;" token="" data-toggle="tooltip" data-placement="bottom" data-html="true" title="Get Link <br> Only people who have the link can access the run until release date"><i style="font-size: 15px;" class="fa fa-chain"></i></a>
-                                <div id="showTokenLink" style="display:none;" class="col-md-6 input-group">
-                                    <input readonly id="tokenInput" type="text" class="form-control">
-                                    <div id="copyToken" class="input-group-addon">
-                                        <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Copy Link to Clipboard"><span><i class="glyphicon glyphicon-copy"></i></span></a>
-                                    </div>
-                                </div>
-                            </span>
-                        </div>
                     </div>
                 </div>
             </div>

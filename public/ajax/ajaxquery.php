@@ -28,6 +28,7 @@ if ($p == "saveRun") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $nextText = urldecode($_REQUEST['nextText']);
     $proVarObj = urldecode($_REQUEST['proVarObj']);
+
     $runType = $_REQUEST['runType']; //"resumerun" or "newrun"
     $manualRun = isset($_REQUEST['manualRun']) ? $_REQUEST['manualRun'] : ""; //"true" or "false"
     $uuid = $_REQUEST['uuid'];
@@ -586,6 +587,8 @@ if ($p == "saveRun") {
     $type = "shared";
     $pipeline_id = $_REQUEST['pipeline_id'];
     $data = $db->getExistProjectPipelines($pipeline_id, $type, $ownerID);
+} else if ($p == "getProjectPipelinesCron") {
+    $data = $db->getProjectPipelinesCron($ownerID, $userRole);
 } else if ($p == "getProjectPipelines") {
     $project_id = isset($_REQUEST['project_id']) ? $_REQUEST['project_id'] : "";
     $data = $db->getProjectPipelines($id, $project_id, $ownerID, $userRole);
@@ -1955,6 +1958,24 @@ if ($p == "publishGithub") {
             $data = $db->updateProjectPipelineSummary($id, $uuid, $summary, $ownerID);
         }
     }
+} else if ($p == "saveCron") {
+    $data = json_encode("");
+    $project_pipeline_id = $_REQUEST['project_pipeline_id'];
+    $cron_min = !empty($_REQUEST['cron_min']) ? $_REQUEST['cron_min'] : 0;
+    $cron_hour = !empty($_REQUEST['cron_hour']) ? $_REQUEST['cron_hour'] : 0;
+    $cron_day = !empty($_REQUEST['cron_day']) ? $_REQUEST['cron_day'] : 0;
+    $cron_week = !empty($_REQUEST['cron_week']) ? $_REQUEST['cron_week'] : 0;
+    $cron_month = !empty($_REQUEST['cron_month']) ? $_REQUEST['cron_month'] : 0;
+    $cron_prefix = isset($_REQUEST['cron_prefix']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['cron_prefix']), ENT_QUOTES)) : "";
+
+    if (!empty($project_pipeline_id)) {
+        //don't allow to update if user doesn't own the project_pipeline.
+        $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.project_pipeline WHERE id='$project_pipeline_id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+        if (!empty($permCheck)) {
+            $data = $db->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $ownerID);
+        }
+    }
 } else if ($p == "saveProjectPipeline") {
     $pipeline_id = $_REQUEST['pipeline_id'];
     $project_id = $_REQUEST['project_id'];
@@ -1992,16 +2013,35 @@ if ($p == "publishGithub") {
     if (!empty($release_date)) {
         $release_date = date('Y-m-d', strtotime($release_date));
     }
+
+
+    $cron_check = isset($_REQUEST['cron_check']) ? $_REQUEST['cron_check'] : "";
+    $cron_prefix = isset($_REQUEST['cron_prefix']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['cron_prefix']), ENT_QUOTES)) : "";
+    $cron_min = isset($_REQUEST['cron_min']) ? $_REQUEST['cron_min'] : "";
+    $cron_hour = isset($_REQUEST['cron_hour']) ? $_REQUEST['cron_hour'] : "";
+    $cron_day = isset($_REQUEST['cron_day']) ? $_REQUEST['cron_day'] : "";
+    $cron_week = isset($_REQUEST['cron_week']) ? $_REQUEST['cron_week'] : "";
+    $cron_month = isset($_REQUEST['cron_month']) ? $_REQUEST['cron_month'] : "";
+
     settype($perms, 'integer');
     settype($group_id, 'integer');
     settype($amazon_cre_id, 'integer');
     settype($google_cre_id, 'integer');
+    settype($cron_min, 'integer');
+    settype($cron_hour, 'integer');
+    settype($cron_day, 'integer');
+    settype($cron_week, 'integer');
+    settype($cron_month, 'integer');
     if (!empty($id)) {
         //don't allow to update if user doesn't own the project_pipeline.
         $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.project_pipeline WHERE id='$id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
         if (!empty($permCheck)) {
-            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $ownerID);
+            if ($cron_check == "false") {
+                $targetTime = NULL;
+                $db->updateProjectPipelineCronTargetDate($id, $targetTime);
+            }
+            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
             $listPermsDenied = array();
             $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
@@ -2009,7 +2049,7 @@ if ($p == "publishGithub") {
             $data = json_encode($listPermsDenied);
         }
     } else {
-        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $ownerID);
+        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $ownerID);
     }
 } else if ($p == "saveProcessParameter") {
     $closure = isset($_REQUEST['closure']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['closure']), ENT_QUOTES)) : "";

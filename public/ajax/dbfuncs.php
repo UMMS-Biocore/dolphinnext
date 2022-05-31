@@ -2636,6 +2636,7 @@ class dbfuncs
         $newObj->{'summary'} = str_replace("\n", "</br>", $newObj->{"summary"});
         $newObj->{"dmeta"} = ""; // removed to protect json format
         $newObj->{'project_pipeline_input'} = $allinputs;
+        $pro_var_obj_db =  addslashes(htmlspecialchars($proVarObj, ENT_QUOTES));
         $newObj->{'proVarObj'} = htmlspecialchars($proVarObj, ENT_QUOTES);
         foreach ($allinputs as $inputitem) :
             $collection_id = $inputitem->{'collection_id'};
@@ -2651,7 +2652,7 @@ class dbfuncs
                 $newObj->{"collection-$collection_id"} = $collection_arr;
             }
         endforeach;
-        $this->updateRunLogOpt(json_encode($newObj), $uuid, $ownerID);
+        $this->updateRunLogOpt(json_encode($newObj), $uuid, $pro_var_obj_db, $ownerID);
     }
 
     function updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID)
@@ -5370,9 +5371,11 @@ class dbfuncs
         $sql = "UPDATE $this->db.run_log SET name='$name', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$id' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
-    function updateRunLogOpt($runLogOpt, $uuid, $ownerID)
+    function updateRunLogOpt($runLogOpt, $uuid, $pro_var_obj, $ownerID)
     {
-        $sql = "UPDATE $this->db.run_log SET run_opt='$runLogOpt', date_modified= now(), last_modified_user ='$ownerID'  WHERE run_log_uuid = '$uuid' AND owner_id = '$ownerID'";
+        $pro_var_obj_text = "run_opt='$runLogOpt', ";
+        if (is_null($pro_var_obj)) $pro_var_obj_text = "";
+        $sql = "UPDATE $this->db.run_log SET $pro_var_obj_text pro_var_obj='$pro_var_obj', date_modified= now(), last_modified_user ='$ownerID'  WHERE run_log_uuid = '$uuid' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
     function getRunLogById($id, $ownerID)
@@ -5404,7 +5407,7 @@ class dbfuncs
     }
     function getRunLogOpt($uuid)
     {
-        $sql = "SELECT run_opt FROM $this->db.run_log WHERE run_log_uuid = '$uuid'";
+        $sql = "SELECT run_opt, pro_var_obj FROM $this->db.run_log WHERE run_log_uuid = '$uuid'";
         return self::queryTable($sql);
     }
     function getRunLogStatus($uuid)
@@ -6439,10 +6442,10 @@ class dbfuncs
     }
 
     // ------- Project Pipelines  ------
-    function insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $ownerID)
+    function insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $ownerID)
     {
-        $sql = "INSERT INTO $this->db.project_pipeline(name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run)
-                  VALUES ('$name', '$project_id', '$pipeline_id', '$summary', '$output_dir', '$profile', '$interdel', '$cmd', '$exec_each', '$exec_all', '$exec_all_settings', '$exec_each_settings', '$docker_check', '$docker_img', '$singu_check', '$singu_save', '$singu_img', '$exec_next_settings', '$docker_opt', '$singu_opt', '$amazon_cre_id', '$google_cre_id', '$publish_dir','$publish_dir_check', '$withReport', '$withTrace', '$withTimeline', '$withDag', '$process_opt', '$onload', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id', '1')";
+        $sql = "INSERT INTO $this->db.project_pipeline(name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, cron_check, cron_prefix, cron_min, cron_hour, cron_day, cron_week, cron_month, new_run)
+                  VALUES ('$name', '$project_id', '$pipeline_id', '$summary', '$output_dir', '$profile', '$interdel', '$cmd', '$exec_each', '$exec_all', '$exec_all_settings', '$exec_each_settings', '$docker_check', '$docker_img', '$singu_check', '$singu_save', '$singu_img', '$exec_next_settings', '$docker_opt', '$singu_opt', '$amazon_cre_id', '$google_cre_id', '$publish_dir','$publish_dir_check', '$withReport', '$withTrace', '$withTimeline', '$withDag', '$process_opt', '$onload', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id', '$cron_check', '$cron_prefix', '$cron_min', '$cron_hour', '$cron_day', '$cron_week', '$cron_month', '1')";
         return self::insTable($sql);
     }
     function updateProjectPipelineOnload($id, $onload, $ownerID)
@@ -6462,7 +6465,7 @@ class dbfuncs
             $raw_data[0]->{'run_opt'} = str_replace('\\', '\\\\', $raw_data[0]->{'run_opt'});
             $data = json_decode($raw_data[0]->{'run_opt'});
             $data->{'summary'} = str_replace("\n", "</br>", $summary);
-            return $this->updateRunLogOpt(json_encode($data), $uuid, $ownerID);
+            return $this->updateRunLogOpt(json_encode($data), $uuid, null, $ownerID);
         }
         return json_encode("");
     }
@@ -6557,10 +6560,29 @@ class dbfuncs
         return self::runSQL($sql);
     }
 
-    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $ownerID)
+    function updateProjectPipelineCronTargetDate($id, $cron_target_date)
     {
-        $sql = "UPDATE $this->db.project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', release_date=" . ($release_date == NULL ? "NULL" : "'$release_date'") . " WHERE id = '$id'";
+        $cron_target_date = $cron_target_date == NULL ? "NULL" : "'$cron_target_date'";
+        $sql = "UPDATE $this->db.project_pipeline SET cron_target_date=$cron_target_date WHERE id = '$id' ";
         return self::runSQL($sql);
+    }
+
+    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $ownerID)
+    {
+        $sql = "UPDATE $this->db.project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', cron_check='$cron_check', cron_prefix='$cron_prefix', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', release_date=" . ($release_date == NULL ? "NULL" : "'$release_date'") . " WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
+
+    function updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $ownerID)
+    {
+
+        $php_set_date = strtotime("now");
+        $cron_set_date = date("Y-m-d H:i:s", $php_set_date);
+        $php_target_date = strtotime("+{$cron_min} minutes {$cron_hour} hours {$cron_day} days {$cron_week} weeks {$cron_month} months");
+        $cron_target_date = date("Y-m-d H:i:s", $php_target_date);
+        $sql = "UPDATE $this->db.project_pipeline SET type='cron', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', cron_set_date='$cron_set_date', cron_target_date='$cron_target_date', cron_prefix='$cron_prefix', cron_check='true' WHERE id = '$project_pipeline_id'";
+        self::runSQL($sql);
+        return json_encode($cron_target_date);
     }
 
     function getProPipeLastRunUUID($project_pipeline_id)
@@ -6579,6 +6601,23 @@ class dbfuncs
         $sql = "UPDATE $this->db.project_pipeline SET last_run_uuid='$uuid' WHERE id='$project_pipeline_id'";
         return self::runSQL($sql);
     }
+    function getProjectPipelinesCron($ownerID, $userRole)
+    {
+        if ($userRole == "admin") {
+            $where = " WHERE pp.deleted = 0 AND (pp.type='auto' OR pp.type='cron')";
+        } else {
+            $where = " LEFT JOIN $this->db.user_group ug ON pp.group_id=ug.g_id 
+            WHERE pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and pp.perms = 15)) AND (pp.type='auto' OR pp.type='cron')";
+        }
+
+        $sql = "SELECT DISTINCT r.date_created_last_run as run_date_created, r.run_status, pp.id as project_pipeline_id, pp.name, pp.summary, pp.output_dir,  pp.date_created as pp_date_created, pip.name as pipeline_name, pip.rev_id as pipeline_rev, pip.id as pipeline_id, u.email, u.username, pp.owner_id, IF(pp.owner_id='$ownerID',1,0) as own, pp.type, pp.template_id
+        FROM $this->db.project_pipeline pp
+        LEFT JOIN $this->db.run r  ON r.project_pipeline_id = pp.id
+        INNER JOIN $this->db.biocorepipe_save pip ON pip.id = pp.pipeline_id
+        INNER JOIN $this->db.users u ON pp.owner_id = u.id
+        $where";
+        return self::queryTable($sql);
+    }
     function getProjectPipelines($id, $project_id, $ownerID, $userRole)
     {
         if ($id != "") {
@@ -6588,7 +6627,8 @@ class dbfuncs
                 $where = " where pp.id = '$id' AND pip.deleted = 0 AND pp.deleted = 0 AND (pp.owner_id = '$ownerID' OR pp.perms = 63 OR (ug.u_id ='$ownerID' and pp.perms = 15))";
             }
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.dmeta, IF(pp.owner_id='$ownerID',1,0) as own
+
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM $this->db.project_pipeline pp
                       INNER JOIN $this->db.users u ON pp.owner_id = u.id
                       INNER JOIN $this->db.project p ON pp.project_id = p.id
@@ -6869,32 +6909,35 @@ class dbfuncs
         return $input_id;
     }
 
-    function duplicateProjectPipeline($type, $old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt, $project_id, $description)
+    function duplicateProjectPipeline($old_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt, $project_id, $description, $type)
     {
         ini_set('memory_limit', '900M');
-        $description = !empty($description) ?  addslashes(htmlspecialchars(urldecode($description), ENT_QUOTES)) : "";
         $newProPipeId = null;
-        if ($type == "dmeta") {
-            $userRole = $this->getUserRoleVal($ownerID);
-            $proPipeAll = json_decode($this->getProjectPipelines($old_run_id, "", $ownerID, $userRole));
-            if (empty($proPipeAll[0])) error_log("ProjectPipelines not found.");
-            if (!empty($proPipeAll[0])) {
-                $run_env = !empty($run_env) ? "'$run_env'" : "profile";
-                $work_dir = !empty($work_dir) ? "'$work_dir'" : "output_dir";
-                $project_id = !empty($project_id) ? "'$project_id'" : "project_id";
-                $summary = !empty($description) ? "'$description'" : "summary";
+        $userRole = $this->getUserRoleVal($ownerID);
+        $proPipeAll = json_decode($this->getProjectPipelines($old_run_id, "", $ownerID, $userRole));
+        if (empty($proPipeAll[0])) error_log("ProjectPipelines not found.");
+        if (!empty($proPipeAll[0])) {
+            $run_env = !empty($run_env) ? "'$run_env'" : "profile";
+            $work_dir = !empty($work_dir) ? "'$work_dir'" : "output_dir";
+            $project_id = !empty($project_id) ? "'$project_id'" : "project_id";
+            $summary = !is_null($description) ? "'$description'" : "summary";
+            $dmeta = !is_null($dmeta) ? "'$dmeta'" : "dmeta";
+            $process_opt = !is_null($process_opt) ? "'$process_opt'" : "process_opt";
+            $type = !is_null($type) ? "'$type'" : "NULL";
+            $template_id = "'$old_run_id'";
+            // save source_id as template_id for cron_jobs and dmetaruns
 
-
-                $sql = "INSERT INTO $this->db.project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta)
-                    SELECT '$run_name', $project_id, pipeline_id, $summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, '$process_opt', onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, '$dmeta'
+            $sql = "INSERT INTO $this->db.project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta, type, template_id)
+                    SELECT '$run_name', $project_id, pipeline_id, $summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, $process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, $dmeta, $type, $template_id
                     FROM $this->db.project_pipeline
                     WHERE id='$old_run_id'";
-                $proPipe = self::insTable($sql);
-                $newProPipe = json_decode($proPipe, true);
-                $newProPipeId = $newProPipe["id"];
-                if (empty($newProPipeId)) error_log("newProPipeId not found.");
-                if (!empty($newProPipeId)) {
-                    $this->duplicateProjectPipelineInput($newProPipeId, $old_run_id, $ownerID);
+            $proPipe = self::insTable($sql);
+            $newProPipe = json_decode($proPipe, true);
+            $newProPipeId = $newProPipe["id"];
+            if (empty($newProPipeId)) error_log("newProPipeId not found.");
+            if (!empty($newProPipeId)) {
+                $this->duplicateProjectPipelineInput($newProPipeId, $old_run_id, $ownerID);
+                if (!is_null($inputs)) {
                     // use $inputs and replace entered projectPipelineInputs
                     foreach ($inputs as $inputName => $inputVal) :
                         $input_id = 0;
@@ -6924,8 +6967,8 @@ class dbfuncs
                     endforeach;
                 }
             }
-            return $newProPipeId;
         }
+        return $newProPipeId;
     }
 
     function duplicateSSHKey($old_id, $ownerID)

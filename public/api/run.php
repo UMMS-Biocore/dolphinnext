@@ -252,27 +252,27 @@ class Run
         $dmetaServer = $info["dmetaServer"];
         $ownerID = $user["id"];
         $dbfuncs = new dbfuncs();
-        $process_opt = isset($info["process_opt"]) ? addslashes(htmlspecialchars(urldecode($info["process_opt"]), ENT_QUOTES)) : "";
-
+        $process_opt = isset($info["process_opt"]) ? addslashes(htmlspecialchars(urldecode($info["process_opt"]), ENT_QUOTES)) : null;
         $run_name = $doc["name"]; // test_run
         $tmplt_run_id = $doc["tmplt_id"]; //template run id e.g. 140
-        $project_id = $doc["project_id"];
-        $description = $doc["description"];
-        $run_env = !empty($doc["run_env"]) ? $doc["run_env"] : ""; //run_env e.g. cluster-5
-        $work_dir = !empty($doc["work_dir"]) ? $doc["work_dir"] : "";
+        $project_id = isset($doc["project_id"]) ? $doc["project_id"] : null;
+        $description = isset($doc["description"]) ?  addslashes(htmlspecialchars(urldecode($doc["description"]), ENT_QUOTES)) : null;
+
+        $run_env = !empty($doc["run_env"]) ? $doc["run_env"] : null; //run_env e.g. cluster-5
+        $work_dir = !empty($doc["work_dir"]) ? $doc["work_dir"] : null;
         // if hostname/amazon/google is entered get profile id.
         if (!empty($run_env)) {
             if ($run_env == "amazon") {
                 $profiles = $dbfuncs->getProfileAmazon($ownerID);
                 $profiles = json_decode($profiles, true);
                 if (!empty($profiles[0]["id"])) {
-                    $run_env = "amazon-" . $profiles[$i]["id"];
+                    $run_env = "amazon-" . $profiles[0]["id"];
                 }
             } else if ($run_env == "google") {
                 $profiles = $dbfuncs->getProfileGoogle($ownerID);
                 $profiles = json_decode($profiles, true);
                 if (!empty($profiles[0]["id"])) {
-                    $run_env = "google-" . $profiles[$i]["id"];
+                    $run_env = "google-" . $profiles[0]["id"];
                 }
             } else {
                 $profiles = $dbfuncs->getProfileCluster($ownerID);
@@ -287,21 +287,14 @@ class Run
         }
         $dmeta = $this->getDmetaObj($doc, $dmetaServer, $info);
         // update name and insert
-        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline("dmeta", $tmplt_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt, $project_id, $description);
+        $type = "dmeta";
+        $project_pipeline_id = $dbfuncs->duplicateProjectPipeline($tmplt_run_id, $ownerID, $inputs, $dmeta, $run_name, $run_env, $work_dir, $process_opt, $project_id, $description, $type);
+
         if (empty($project_pipeline_id)) {
             error_log("duplicateProjectPipeline failed.");
             return null;
         }
-        //        $temp_run_uuid = $dbfuncs->getProPipeLastRunUUID($tmplt_run_id);
-        //        $runOpt = json_decode($dbfuncs->getRunLogOpt($temp_run_uuid));
-        //        if (empty($runOpt[0])) {
-        //            error_log("getRunLogOpt failed."); 
-        //            return null;
-        //        }
-        //        $runOpt[0]->{'run_opt'} = str_replace('\\', '\\\\', $runOpt[0]->{'run_opt'});
-        //        $runOptData = json_decode($runOpt[0]->{'run_opt'});
-        //        $eachExecConfig = htmlspecialchars_decode($runOptData->{'eachExecConfig'}, ENT_QUOTES); 
-        //        $proVarObj = htmlspecialchars_decode($runOptData->{'proVarObj'}, ENT_QUOTES); 
+
         $manualRun = "false";
         $runType = "newrun"; //"resumerun" or "newrun"
         $uuid = $dbfuncs->updateRunAttemptLog($manualRun, $project_pipeline_id, $ownerID);

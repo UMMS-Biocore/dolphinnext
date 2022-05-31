@@ -7,7 +7,7 @@ function getProjectOptions(projectOwn) {
 }
 
 
-$(document).ready(function () {
+$(document).ready(function() {
 
     function getRunStatusButton(oData) {
         var sendEmail = "";
@@ -19,29 +19,36 @@ $(document).ready(function () {
         if (oData.own === "1") {
             deleteRun = '<li><a href="#confirmDelProModal" data-toggle="modal">Delete Run</a></li>';
         }
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu">' + viewRun + deleteRun + sendEmail + '</ul></div>';
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true"><i class="fa fa-gear"></i> <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu" role="menu">' + viewRun + deleteRun + sendEmail + '</ul></div>';
         return button;
     }
 
-    $('#sendMailModal').on('show.bs.modal', function (event) {
+    getActiveDataTable = function() {
+        let tab = $("ul#statTabs li.active >a ").attr("href")
+        if (tab == '#runStatusTab') return runStatusTable
+        if (tab == '#autoStatusTab') return autoStatusTable
+    }
+
+    $('#sendMailModal').on('show.bs.modal', function(event) {
         $(this).find('form').trigger('reset');
         $("#sendEmailUser").attr("class", "btn btn-primary btn-block");
         $("#sendEmailUser").html("Send!");
         $("#sendEmailUser").removeAttr("disabled");
         var button = $(event.relatedTarget);
         var clickedRow = $(button).closest('tr');
-        var rowData = runStatusTable.row(clickedRow).data();
+        var activeTable = getActiveDataTable()
+        var rowData = activeTable.row(clickedRow).data();
         var useremail = rowData.email;
         var adminemail = $("#userInfo").attr("email");
         var subject = "Regarding to your DophinNext run (" + truncateName(rowData.name, 'process') + ")";
         fillFormByName('#sendMailModal', 'input', { useremail: useremail, adminemail: adminemail, subject: subject });
     });
 
-    $('#sendMailModal').on('hide.bs.modal', function (event) {
+    $('#sendMailModal').on('hide.bs.modal', function(event) {
         cleanHasErrorClass("#sendMailModal")
     });
 
-    $('#sendMailModal').on('click', '#sendEmailUser', function (event) {
+    $('#sendMailModal').on('click', '#sendEmailUser', function(event) {
         event.preventDefault();
         var formValues = $('#sendMailModal').find('input, textarea');
         var requiredFields = ["adminemail", "useremail", "message"];
@@ -55,27 +62,27 @@ $(document).ready(function () {
                 url: "ajax/ajaxquery.php",
                 data: formObj,
                 async: true,
-                success: function (s) {
+                success: function(s) {
                     console.log(s)
                     if (s.status == "sent") {
                         $("#sendEmailUser").html("Your mail has sent!")
                         $("#sendEmailUser").attr("class", "btn btn-success btn-block");
                         $("#sendEmailUser").attr("disabled", "disabled");
-                        setTimeout(function () {
+                        setTimeout(function() {
                             $('#sendMailModal').modal('hide');
                         }, 2000);
                     } else {
                         $("#sendEmailUser").html("Your mail couldn't sent!")
                         $("#sendEmailUser").attr("class", "col-xs-12 btn btn-danger btn-load");
                         $("#sendEmailUser").attr("disabled", "disabled");
-                        setTimeout(function () {
+                        setTimeout(function() {
                             $("#sendEmailUser").attr("class", "btn btn-primary btn-block");
                             $("#sendEmailUser").html("Send!");
                             $("#sendEmailUser").removeAttr("disabled");
                         }, 2000);
                     }
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
@@ -84,10 +91,13 @@ $(document).ready(function () {
 
 
 
-    $('#runstatustable').on('click', '.runLinkImpersonate', function (event) {
+    $(document).on('click', '.runLinkImpersonate', function(event) {
         event.preventDefault();
         var clickedRow = $(this).closest('tr');
-        var rowData = runStatusTable.row(clickedRow).data();
+        var activeTable = getActiveDataTable()
+        var rowData = activeTable.row(clickedRow).data();
+        console.log(activeTable)
+        console.log(rowData)
         var runId = rowData.project_pipeline_id
         var owner_id = rowData.owner_id
         var own = rowData.own
@@ -100,21 +110,22 @@ $(document).ready(function () {
                 data: userData,
                 url: "ajax/ajaxquery.php",
                 async: false,
-                success: function (msg) {
+                success: function(msg) {
                     var logInSuccess = true;
                     window.location.replace("index.php?np=3&id=" + runId);
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });
         }
     });
 
-    $('#runstatustable').on('click', '.runLink', function (event) {
+    $(document).on('click', '.runLink', function(event) {
         event.preventDefault();
         var clickedRow = $(this).closest('tr');
-        var rowData = runStatusTable.row(clickedRow).data();
+        var activeTable = getActiveDataTable()
+        var rowData = activeTable.row(clickedRow).data();
         var runId = rowData.project_pipeline_id
         var owner_id = rowData.owner_id
         var own = rowData.own
@@ -124,6 +135,7 @@ $(document).ready(function () {
     });
 
     runStatusTable = $('#runstatustable').DataTable({
+        dom: '<"top"f>rt<"pull-left"l><"bottom"p><"clear">',
         "ajax": {
             url: "ajax/ajaxquery.php",
             data: { "p": "getProjectPipelines" },
@@ -133,7 +145,7 @@ $(document).ready(function () {
             "data": "project_pipeline_id"
         }, {
             "data": null,
-            "render": function (data, type, row) {
+            "render": function(data, type, row) {
                 var imperBut = "";
                 if (row.own !== "1" && usRole === "admin") {
                     imperBut = '<button type="button" class="btn runLinkImpersonate" data-backdrop="false"  style="background: none; margin: 0px; margin-left:5px; padding-left: 0px; padding-top: 1px; display: inline;"><a style=""  data-toggle="tooltip" data-placement="bottom" data-original-title="Impersonate User"><i style="font-size:12px;" class="glyphicon  glyphicon-log-out"></i></a></button>';
@@ -142,25 +154,36 @@ $(document).ready(function () {
             }
         }, {
             data: null,
-            render: function (data, type, row) {
+            render: function(data, type, row) {
                 var pipeline_rev = ""
-                if (row.pipeline_rev != null){
-                    pipeline_rev =  " (Rev " + row.pipeline_rev + ")"
+                if (row.pipeline_rev != null) {
+                    pipeline_rev = " (Rev " + row.pipeline_rev + ")"
                 }
                 return '<a href="index.php?np=1&amp;id=' + row.pipeline_id + '" >' + row.pipeline_name + pipeline_rev + '</a>';
             }
         }, {
             data: "output_dir"
-        },  {
+        }, {
             data: null,
-            render: function (data, type, row) {
+            render: function(data, type, row) {
                 return truncateName(row.summary, 'newTable');
             }
         }, {
             data: null,
-            render: function ( data, type, row ) {
+            render: function(data, type, row) {
+                var runType = "Standard"
+                if (row.type && row.type == "auto") {
+                    runType = "Scheduled"
+                } else if (row.type && row.type == "cron") {
+                    runType = "Scheduler"
+                }
+                return '<span>' + runType + '</span>';
+            }
+        }, {
+            data: null,
+            render: function(data, type, row) {
                 var st = row.run_status;
-                var href='href="index.php?np=3&amp;id=' + row.project_pipeline_id+'"';
+                var href = 'href="index.php?np=3&amp;id=' + row.project_pipeline_id + '"';
                 if (st == "NextErr" || st == "Error") {
                     return '<a ' + href + ' >Error</a>';
                 } else if (st == "Terminated") {
@@ -179,30 +202,31 @@ $(document).ready(function () {
                     return '<a ' + href + ' >Not Submitted</a>';
                 }
             }
-        },  {
+        }, {
             data: null,
             className: "center",
-            render: function ( data, type, row ) {
-                var date="" 
-                if (row.run_date_created){
-                    date= row.run_date_created
+            render: function(data, type, row) {
+                var date = ""
+                if (row.run_date_created) {
+                    date = row.run_date_created
                 } else if (row.pp_date_created) {
-                    date= row.pp_date_created
+                    date = row.pp_date_created
                 }
-                return '<span>'+date+'</span>';
+                return '<span>' + date + '</span>';
             }
-        },{
+        }, {
             "data": "username"
         }, {
             data: null,
             className: "center",
-            render: function (data, type, row) {
+            render: function(data, type, row) {
                 return getRunStatusButton(row);
             }
-        }
-                   ],
-        'order': [[6, 'desc']],
-        "createdRow": function (row, data, dataIndex) {
+        }],
+        'order': [
+            [7, 'desc']
+        ],
+        "createdRow": function(row, data, dataIndex) {
             var st = data.run_status;
             if (st == "NextErr" || st == "Error") {
                 $(row).css("background-color", "#F1DEDE");
@@ -218,28 +242,152 @@ $(document).ready(function () {
                 $(row).css("background-color", "#f4f4f4");
             }
         },
-        "autoWidth" : false,
+        "autoWidth": false,
+        deferRender: true
+    });
+
+
+    autoStatusTable = $('#autostatustable').DataTable({
+        dom: '<"top"f>rt<"pull-left"l><"bottom"p><"clear">',
+        "ajax": {
+            url: "ajax/ajaxquery.php",
+            data: { "p": "getProjectPipelinesCron" },
+            "dataSrc": ""
+        },
+        "columns": [{
+            "data": "project_pipeline_id"
+        }, {
+            "data": null,
+            "render": function(data, type, row) {
+                var imperBut = "";
+                if (row.own !== "1" && usRole === "admin") {
+                    imperBut = '<button type="button" class="btn runLinkImpersonate" data-backdrop="false"  style="background: none; margin: 0px; margin-left:5px; padding-left: 0px; padding-top: 1px; display: inline;"><a style=""  data-toggle="tooltip" data-placement="bottom" data-original-title="Impersonate User"><i style="font-size:12px;" class="glyphicon  glyphicon-log-out"></i></a></button>';
+                }
+                return '<a href="index.php?np=3&amp;id=' + row.project_pipeline_id + '" >' + row.name + '</a>   ' + imperBut;
+            }
+        }, {
+            data: null,
+            render: function(data, type, row) {
+                var pipeline_rev = ""
+                if (row.pipeline_rev != null) {
+                    pipeline_rev = " (Rev " + row.pipeline_rev + ")"
+                }
+                return '<a href="index.php?np=1&amp;id=' + row.pipeline_id + '" >' + row.pipeline_name + pipeline_rev + '</a>';
+            }
+        }, {
+            data: "output_dir"
+        }, {
+            data: null,
+            render: function(data, type, row) {
+                return truncateName(row.summary, 'newTable');
+            }
+        }, {
+            data: null,
+            render: function(data, type, row) {
+                var runType = "Standard"
+                if (row.type && row.type == "auto") {
+                    runType = "Scheduled"
+                } else if (row.type && row.type == "cron") {
+                    runType = "Scheduler"
+                }
+                return '<span>' + runType + '</span>';
+            }
+        }, {
+            data: null,
+            render: function(data, type, row) {
+                var templateID = ""
+                if (row.template_id) {
+                    templateID = row.template_id
+                }
+                return '<span>' + templateID + '</span>';
+            }
+        }, {
+            data: null,
+            render: function(data, type, row) {
+                var st = row.run_status;
+                var href = 'href="index.php?np=3&amp;id=' + row.project_pipeline_id + '"';
+                if (st == "NextErr" || st == "Error") {
+                    return '<a ' + href + ' >Error</a>';
+                } else if (st == "Terminated") {
+                    return '<a ' + href + ' >Terminated</a>';
+                } else if (st == "NextSuc") {
+                    return '<a ' + href + ' >Completed</a>';
+                } else if (st == "init" || st == "Waiting") {
+                    return '<a ' + href + ' >Initializing</a>';
+                } else if (st == "NextRun") {
+                    return '<a ' + href + ' >Running</a>';
+                } else if (st == "Aborted") {
+                    return '<a ' + href + ' >Reconnecting</a>';
+                } else if (st == "Manual") {
+                    return '<a ' + href + ' >Manual</a>';
+                } else {
+                    return '<a ' + href + ' >Not Submitted</a>';
+                }
+            }
+        }, {
+            data: null,
+            className: "center",
+            render: function(data, type, row) {
+                var date = ""
+                if (row.run_date_created) {
+                    date = row.run_date_created
+                } else if (row.pp_date_created) {
+                    date = row.pp_date_created
+                }
+                return '<span>' + date + '</span>';
+            }
+        }, {
+            "data": "username"
+        }, {
+            data: null,
+            className: "center",
+            render: function(data, type, row) {
+                return getRunStatusButton(row);
+            }
+        }],
+        'order': [
+            [8, 'desc']
+        ],
+        "createdRow": function(row, data, dataIndex) {
+            var st = data.run_status;
+            if (st == "NextErr" || st == "Error") {
+                $(row).css("background-color", "#F1DEDE");
+            } else if (st == "Terminated" || st == "Aborted") {
+                $(row).css("background-color", "#e2e2e2");
+            } else if (st == "NextSuc") {
+                $(row).css("background-color", "#DFEFD8");
+            } else if (st == "init" || st == "Waiting" || st == "NextRun") {
+                $(row).css("background-color", "#D8EDF6");
+            } else if (st == "Manual") {
+                $(row).css("background-color", "#dcdbfc");
+            } else {
+                $(row).css("background-color", "#f4f4f4");
+            }
+        },
+        "autoWidth": false,
         deferRender: true
     });
 
 
     //reload the table each 30 secs
-    setInterval(function () {
-        runStatusTable.ajax.reload(null,false);
+    setInterval(function() {
+        runStatusTable.ajax.reload(null, false);
+        autoStatusTable.ajax.reload(null, false);
     }, 30000);
 
     // confirm Delete ssh modal 
-    $('#confirmDelProModal').on('show.bs.modal', function (event) {
+    $('#confirmDelProModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         var clickedRow = button.closest('tr');
-        var rowData = runStatusTable.row(clickedRow).data();
+        var activeTable = getActiveDataTable()
+        var rowData = activeTable.row(clickedRow).data();
         $('#mDelProBtn').data('clickedRow', rowData);
         $('#mDelProBtn').attr('class', 'btn btn-primary deleteRun');
         $('#confirmDelProModalText').html(`Are you sure you want to delete "${rowData.name}"?`);
 
     });
 
-    $('#confirmDelProModal').on('click', '.deleteRun', function (event) {
+    $('#confirmDelProModal').on('click', '.deleteRun', function(event) {
         var rowData = $('#mDelProBtn').data('clickedRow');
         var title = $('#confirmDelProModalText').html();
         var proId = rowData.project_pipeline_id;
@@ -250,15 +398,16 @@ $(document).ready(function () {
                 url: "ajax/ajaxquery.php",
                 data: data,
                 async: true,
-                success: function (s) {
-                    if (s.error){
-                        showInfoModal("#infoMod","#infoModText", s.error)
+                success: function(s) {
+                    if (s.error) {
+                        showInfoModal("#infoMod", "#infoModText", s.error)
                     } else {
                         runStatusTable.ajax.reload(null, false);
+                        autoStatusTable.ajax.reload(null, false);
                         $('#confirmDelProModal').modal('hide');
                     }
                 },
-                error: function (errorThrown) {
+                error: function(errorThrown) {
                     alert("Error: " + errorThrown);
                 }
             });

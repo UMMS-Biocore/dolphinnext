@@ -5762,6 +5762,15 @@ async function loadRunSettings(pipeData) {
     updateCheckBox("#withReport", pipeData[0].withReport);
     updateCheckBox("#withDag", pipeData[0].withDag);
     updateCheckBox("#withTimeline", pipeData[0].withTimeline);
+    updateCheckBox("#cron_check", pipeData[0].cron_check);
+    $("#cron_prefix").val(decodeHtml(pipeData[0].cron_prefix));
+    $("#cron_min").val(pipeData[0].cron_min);
+    $("#cron_hour").val(pipeData[0].cron_hour);
+    $("#cron_day").val(pipeData[0].cron_day);
+    $("#cron_week").val(pipeData[0].cron_week);
+    $("#cron_month").val(pipeData[0].cron_month);
+    $("#cronNextSubDate").text(pipeData[0].cron_target_date)
+
     //fill process options table
     if (pipeData[0].process_opt) {
         loadProcessOpt(decodeHtml(pipeData[0].process_opt));
@@ -5863,6 +5872,39 @@ async function loadProjectPipeline(pipeData) {
 $("#inputsTable").on("click", "#systemInputs", function(e) {
     var indx = $("#systemInputs").index();
     $("#inputsTable> tbody > tr:gt(" + indx + ")").toggle();
+});
+
+//click on "system inputs" button
+$(document).on("click", "#setCron", async function(e) {
+    console.log("setCron")
+    var project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
+    var cron_min = $("#cron_min").val();
+    var cron_hour = $("#cron_hour").val();
+    var cron_day = $("#cron_day").val();
+    var cron_week = $("#cron_week").val();
+    var cron_month = $("#cron_month").val();
+    var cron_prefix = $("#cron_prefix").val();
+    var cron_check = $("#cron_check").is(":checked").toString();
+    var data = await doAjax({
+        p: "saveCron",
+        project_pipeline_id,
+        cron_min,
+        cron_hour,
+        cron_day,
+        cron_week,
+        cron_month,
+        cron_prefix,
+        cron_check
+    });
+    console.log(data)
+    if (data) {
+        toastr.info("Automated Execution is Activated");
+        $("#cronNextSubDate").text(data)
+    } else {
+        toastr.error("Error Occured");
+
+    }
+
 });
 
 async function refreshEnv() {
@@ -8213,6 +8255,13 @@ async function saveRun(sucFunc, showToastr) {
     var withDag = $("#withDag").is(":checked").toString();
     var process_opt = getProcessOpt();
     var release_date = $("#releaseVal").attr("date");
+    var cron_check = $("#cron_check").is(":checked").toString();
+    var cron_prefix = encodeURIComponent($("#cron_prefix").val());
+    var cron_min = $("#cron_min").val();
+    var cron_hour = $("#cron_hour").val();
+    var cron_day = $("#cron_day").val();
+    var cron_week = $("#cron_week").val();
+    var cron_month = $("#cron_month").val();
     if (run_name && project_id && newpipelineID) {
         data.push({ name: "id", value: project_pipeline_id });
         data.push({ name: "name", value: run_name });
@@ -8247,6 +8296,13 @@ async function saveRun(sucFunc, showToastr) {
         data.push({ name: "process_opt", value: process_opt });
         data.push({ name: "onload", value: onload });
         data.push({ name: "release_date", value: release_date });
+        data.push({ name: "cron_check", value: cron_check });
+        data.push({ name: "cron_prefix", value: cron_prefix });
+        data.push({ name: "cron_min", value: cron_min });
+        data.push({ name: "cron_hour", value: cron_hour });
+        data.push({ name: "cron_day", value: cron_day });
+        data.push({ name: "cron_week", value: cron_week });
+        data.push({ name: "cron_month", value: cron_month });
         data.push({ name: "p", value: "saveProjectPipeline" });
         $.ajax({
             type: "POST",
