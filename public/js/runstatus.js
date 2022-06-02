@@ -9,6 +9,117 @@ function getProjectOptions(projectOwn) {
 
 $(document).ready(function() {
 
+    initCompleteFunction = function(settings, json, tableID, columnsToSearch) {
+        console.log("initCompleteFunction")
+        for (var i in columnsToSearch) {
+            var api = new $.fn.dataTable.Api(settings);
+            $(`#${tableID}_filter`).css("display", "inline-block");
+            $(`#${tableID}_searchBarST`).append(
+                `<div style="margin-bottom:20px; padding-left:8px; display:inline-block;" id="${tableID}_filter-` +
+                columnsToSearch[i] +
+                '"></div>'
+            );
+            var select = $(
+                    `<select id="${tableID}_select-` +
+                    columnsToSearch[i] +
+                    '" name="' +
+                    columnsToSearch[i] +
+                    '" multiple="multiple"></select>'
+                )
+                .appendTo($(`#${tableID}_filter-` + columnsToSearch[i]).empty())
+                .attr("data-col", i)
+                .on("change", function() {
+                    var vals = $(this).val();
+                    var valReg = "";
+                    for (var k = 0; k < vals.length; k++) {
+                        var val = $.fn.dataTable.util.escapeRegex(vals[k]);
+                        if (val) {
+                            if (k + 1 !== vals.length) {
+                                valReg += val + "|";
+                            } else {
+                                valReg += val;
+                            }
+                        }
+                    }
+                    api
+                        .column($(this).attr("data-col"))
+                        .search(valReg ? "(^|,)" + valReg + "(,|$)" : "", true, false)
+                        .draw();
+
+                    //deselect rows that are selected but not visible
+                    var visibleRows = $(`#${tableID}`)
+                        .DataTable()
+                        .rows({ search: "applied" })[0];
+                    var selectedRows = $(`#${tableID}`).DataTable().rows(".selected")[0];
+                    api.column($(this).attr("data-col")).rows(function(idx, data, node) {
+                        if (
+                            $.inArray(idx, visibleRows) === -1 &&
+                            $.inArray(idx, selectedRows) !== -1
+                        ) {
+                            $(`#${tableID}`).DataTable().row(idx).deselect(idx);
+                        }
+                        return false;
+                    });
+                });
+            var collectionList = [];
+            api
+                .column(i)
+                .data()
+                .unique()
+                .sort()
+                .each(function(d, j) {
+                    if (d) {
+                        var multiCol = d.split(",");
+                        for (var n = 0; n < multiCol.length; n++) {
+                            if (collectionList.indexOf(multiCol[n]) == -1) {
+                                collectionList.push(multiCol[n]);
+                                select.append(
+                                    '<option value="' +
+                                    multiCol[n] +
+                                    '">' +
+                                    multiCol[n] +
+                                    "</option>"
+                                );
+                            }
+                        }
+                    }
+                });
+
+            createMultiselect = function(id, columnToSearch, apiColumn) {
+                $(id).multiselect({
+                    maxHeight: 400,
+                    includeResetOption: true,
+                    resetText: "Clear filters",
+                    includeResetDivider: true,
+                    buttonText: function(options, select) {
+                        if (options.length == 0) {
+                            return select.attr("name") + ": All";
+                        } else if (options.length > 2) {
+                            return select.attr("name") + ": " + options.length + " selected";
+                        } else {
+                            var labels = [];
+                            options.each(function() {
+                                labels.push($(this).text());
+                            });
+                            return select.attr("name") + ": " + labels.join(", ") + "";
+                        }
+                    },
+                });
+            };
+
+            createMultiselectBinder = function(id) {
+                var resetBut = $(id).find("a.btn-block");
+                resetBut.click(function() {
+                    $($(id).find("input")[0]).trigger("change");
+                });
+            };
+
+            createMultiselect(`#${tableID}_select-` + columnsToSearch[i]);
+            createMultiselectBinder(`#${tableID}_filter-` + columnsToSearch[i]);
+
+        }
+    };
+
     function getRunStatusButton(oData) {
         var sendEmail = "";
         var deleteRun = "";
@@ -96,8 +207,6 @@ $(document).ready(function() {
         var clickedRow = $(this).closest('tr');
         var activeTable = getActiveDataTable()
         var rowData = activeTable.row(clickedRow).data();
-        console.log(activeTable)
-        console.log(rowData)
         var runId = rowData.project_pipeline_id
         var owner_id = rowData.owner_id
         var own = rowData.own
@@ -135,7 +244,10 @@ $(document).ready(function() {
     });
 
     runStatusTable = $('#runstatustable').DataTable({
-        dom: '<"top"f>rt<"pull-left"l><"bottom"p><"clear">',
+        "initComplete": function(settings, json) {
+            initCompleteFunction(settings, json, "runstatustable", { 2: "Pipeline", 5: "Type", 6: "Status", 8: "Owner" })
+        },
+        dom: `<"#runstatustable_searchBarST.pull-left"><"pull-right"f>rt<"pull-left"li><"bottom"p><"clear">`,
         "ajax": {
             url: "ajax/ajaxquery.php",
             data: { "p": "getProjectPipelines" },
@@ -153,7 +265,13 @@ $(document).ready(function() {
                 return '<a href="index.php?np=3&amp;id=' + row.project_pipeline_id + '" >' + row.name + '</a>   ' + imperBut;
             }
         }, {
-            data: null,
+            data: function(data) {
+                var pipeline_rev = ""
+                if (data.pipeline_rev != null) {
+                    pipeline_rev = " (Rev " + data.pipeline_rev + ")"
+                }
+                return data.pipeline_name + pipeline_rev
+            },
             render: function(data, type, row) {
                 var pipeline_rev = ""
                 if (row.pipeline_rev != null) {
@@ -169,18 +287,53 @@ $(document).ready(function() {
                 return truncateName(row.summary, 'newTable');
             }
         }, {
-            data: null,
+            data: function(data) {
+                var type = "Standard"
+                if (data.type && data.type == "auto") {
+                    type = "Scheduled"
+                } else if (data.type && data.type == "cron") {
+                    if (data.cron_target_date) {
+                        type = "Automated-Active"
+                    } else {
+                        type = "Automated-Deactive"
+                    }
+                }
+                return type
+            },
             render: function(data, type, row) {
                 var runType = "Standard"
                 if (row.type && row.type == "auto") {
                     runType = "Scheduled"
                 } else if (row.type && row.type == "cron") {
-                    runType = "Scheduler"
+                    if (row.cron_target_date) {
+                        runType = "Automated-Active"
+                    } else {
+                        runType = "Automated-Deactive"
+                    }
                 }
                 return '<span>' + runType + '</span>';
             }
         }, {
-            data: null,
+            data: function(data) {
+                var st = data.run_status;
+                if (st == "NextErr" || st == "Error") {
+                    return 'Error';
+                } else if (st == "Terminated") {
+                    return 'Terminated';
+                } else if (st == "NextSuc") {
+                    return 'Completed';
+                } else if (st == "init" || st == "Waiting") {
+                    return 'Initializing';
+                } else if (st == "NextRun") {
+                    return 'Running';
+                } else if (st == "Aborted") {
+                    return 'Reconnecting';
+                } else if (st == "Manual") {
+                    return 'Manual';
+                } else {
+                    return 'Not Submitted';
+                }
+            },
             render: function(data, type, row) {
                 var st = row.run_status;
                 var href = 'href="index.php?np=3&amp;id=' + row.project_pipeline_id + '"';
@@ -248,7 +401,10 @@ $(document).ready(function() {
 
 
     autoStatusTable = $('#autostatustable').DataTable({
-        dom: '<"top"f>rt<"pull-left"l><"bottom"p><"clear">',
+        "initComplete": function(settings, json) {
+            initCompleteFunction(settings, json, "autostatustable", { 2: "Pipeline", 5: "Type", 6: "Template", 7: "Status", 9: "Owner" })
+        },
+        dom: `<"#autostatustable_searchBarST.pull-left"><"pull-right"f>rt<"pull-left"li><"bottom"p><"clear">`,
         "ajax": {
             url: "ajax/ajaxquery.php",
             data: { "p": "getProjectPipelinesCron" },
@@ -266,7 +422,13 @@ $(document).ready(function() {
                 return '<a href="index.php?np=3&amp;id=' + row.project_pipeline_id + '" >' + row.name + '</a>   ' + imperBut;
             }
         }, {
-            data: null,
+            data: function(data) {
+                var pipeline_rev = ""
+                if (data.pipeline_rev != null) {
+                    pipeline_rev = " (Rev " + data.pipeline_rev + ")"
+                }
+                return data.pipeline_name + pipeline_rev
+            },
             render: function(data, type, row) {
                 var pipeline_rev = ""
                 if (row.pipeline_rev != null) {
@@ -282,27 +444,82 @@ $(document).ready(function() {
                 return truncateName(row.summary, 'newTable');
             }
         }, {
-            data: null,
+            data: function(data) {
+                var type = "Standard"
+                if (data.type && data.type == "auto") {
+                    type = "Scheduled"
+                } else if (data.type && data.type == "cron") {
+                    if (data.cron_target_date) {
+                        type = "Automated - Active"
+                    } else {
+                        type = "Automated - Deactive"
+                    }
+                }
+                return type
+            },
             render: function(data, type, row) {
                 var runType = "Standard"
                 if (row.type && row.type == "auto") {
                     runType = "Scheduled"
                 } else if (row.type && row.type == "cron") {
-                    runType = "Scheduler"
+                    if (row.cron_target_date) {
+                        runType = "Automated - Active"
+                    } else {
+                        runType = "Automated - Deactive"
+                    }
                 }
                 return '<span>' + runType + '</span>';
             }
         }, {
-            data: null,
+            data: function(data) {
+                var templateID = ""
+                if (data.template_id) {
+                    templateID = data.template_id
+                    var allData = $('#autostatustable').DataTable().rows().data();
+                    for (var i = 0; i < allData.length; i++) {
+                        if (allData[i].project_pipeline_id == templateID) {
+                            templateID = `${templateID} - ${allData[i].name}`
+                            break
+                        }
+                    }
+                }
+                return templateID;
+            },
             render: function(data, type, row) {
                 var templateID = ""
                 if (row.template_id) {
                     templateID = row.template_id
+                    var allData = $('#autostatustable').DataTable().rows().data();
+                    for (var i = 0; i < allData.length; i++) {
+                        if (allData[i].project_pipeline_id == templateID) {
+                            templateID = `${templateID} - ${allData[i].name}`
+                            break
+                        }
+                    }
                 }
                 return '<span>' + templateID + '</span>';
             }
         }, {
-            data: null,
+            data: function(data) {
+                var st = data.run_status;
+                if (st == "NextErr" || st == "Error") {
+                    return 'Error';
+                } else if (st == "Terminated") {
+                    return 'Terminated';
+                } else if (st == "NextSuc") {
+                    return 'Completed';
+                } else if (st == "init" || st == "Waiting") {
+                    return 'Initializing';
+                } else if (st == "NextRun") {
+                    return 'Running';
+                } else if (st == "Aborted") {
+                    return 'Reconnecting';
+                } else if (st == "Manual") {
+                    return 'Manual';
+                } else {
+                    return 'Not Submitted';
+                }
+            },
             render: function(data, type, row) {
                 var st = row.run_status;
                 var href = 'href="index.php?np=3&amp;id=' + row.project_pipeline_id + '"';
@@ -368,6 +585,13 @@ $(document).ready(function() {
         deferRender: true
     });
 
+
+    // Re-Execute initCompleteFunction when table draw is completed
+    // $(document).on("xhr.dt", "#runstatustable", function(e, settings, json, xhr) {
+    //     new $.fn.dataTable.Api(settings).one("draw", function() {
+    //         initCompleteFunction(settings, json, "runstatustable", { 2: "Pipeline", 5: "Type", 6: "Status", 8: "Owner" });
+    //     });
+    // });
 
     //reload the table each 30 secs
     setInterval(function() {

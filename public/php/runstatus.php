@@ -5,15 +5,15 @@
         </div>
     </div>
 
-    <div class="panel-body" style="overflow-x:auto;">
+    <div class="panel-body" style="overflow-x:auto;  min-height:600px;">
         <div class="row">
             <div class="col-md-12">
                 <div class="nav-tabs-custom">
                     <ul class="nav nav-tabs" id="statTabs">
                         <li class="active"><a href="#runStatusTab" data-toggle="tab" aria-expanded="true">All</a></li>
-                        <li><a href="#autoStatusTab" data-toggle="tab" aria-expanded="true">Scheduled</a></li>
+                        <li><a href="#autoStatusTab" data-toggle="tab" aria-expanded="true">Automated</a></li>
                     </ul>
-                    <div class="tab-content">
+                    <div class="tab-content" style="display:inline;">
                         <div class="tab-pane active" id="runStatusTab">
                             <table id="runstatustable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                 <thead>
