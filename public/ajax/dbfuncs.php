@@ -2,7 +2,7 @@
 require_once(__DIR__ . "/../api/funcs.php");
 require_once(__DIR__ . "/../../config/config.php");
 require_once(__DIR__ . "/../php/jwt.php");
-
+require_once(__DIR__ . "/../php/email.php");
 
 
 class dbfuncs
@@ -7131,6 +7131,9 @@ class dbfuncs
 
     function sendEmail($from, $from_name, $to, $subject, $message)
     {
+        // $emailer = new emailer();
+        // $emailer->sendSimpleEmail();
+
         $message = str_replace("\n", "<br>", $message);
         $message = wordwrap($message, 70);
         $headers  = 'MIME-Version: 1.0' . "\r\n";
