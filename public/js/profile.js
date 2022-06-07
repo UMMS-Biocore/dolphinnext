@@ -82,6 +82,10 @@ function prepareGoogModal(data) {
 }
 
 $(document).ready(function() {
+    var userData = getValues({ p: "getCurrentUser" })
+    if (userData && userData[0] && userData[0].email_notif == "true") {
+        $("#email_notif").attr('checked', true);
+    }
     var profileTable = $('#profilesTable').DataTable({
         sScrollX: "100%",
         "ajax": {
@@ -483,6 +487,28 @@ $(document).ready(function() {
     });
 
     $(function() {
+        $(document).on('change', '#email_notif', function() {
+            let emailNotif = $('#email_notif').is(":checked").toString()
+            $.ajax({
+                url: "ajax/ajaxquery.php",
+                data: {
+                    p: "saveProfileUser",
+                    emailNotif: emailNotif
+                },
+                cache: false,
+                type: "POST",
+                success: async function(data) {
+                    if (data) {
+                        toastr.info("Changes saved.");
+                    } else {
+                        toastr.error("Error occured. Changes couldn't saved.");
+                    }
+                },
+                error: function(jqXHR, exception) {
+                    toastr.error("Error occured.");
+                },
+            });
+        });
         $(document).on('change', '#mExecJob', function() {
             var mExecJobType = $('#mExecJob option:selected').val();
             $('#mEnvAmzKeyDiv2').css('display', 'none');

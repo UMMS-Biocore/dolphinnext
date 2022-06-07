@@ -420,6 +420,8 @@ if ($p == "saveRun") {
     $data = $db->getGroups($id, $ownerID);
 } else if ($p == "getAllUsers") {
     $data = $db->getAllUsers($ownerID);
+} else if ($p == "getCurrentUser") {
+    $data = $db->getUserById($ownerID);
 } else if ($p == "getUserById") {
     $data = $db->getUserById($id);
 } else if ($p == "changeActiveUser") {
@@ -1325,6 +1327,15 @@ if ($p == "publishGithub") {
     } else {
         $data = $db->insertProfileCluster($name, $executor, $next_path, $port, $singu_cache, $username, $hostname, $cmd, $next_memory, $next_queue, $next_time, $next_cpu, $executor_job, $job_memory, $job_queue, $job_time, $job_cpu, $next_clu_opt, $job_clu_opt, $ssh_id, $public, $variable, $bash_variable, $group_id, $auto_workdir, $perms, $amazon_cre_id, $def_publishdir, $def_workdir, $ownerID);
     }
+} else if ($p == "saveProfileUser") {
+    $emailNotif = $_REQUEST['emailNotif'];
+    if (empty($ownerID)) {
+        header("HTTP/1.0 400 User session ended");
+        exit;
+    }
+    if (!empty($ownerID)) {
+        $data = $db->updateProfileUser($emailNotif, $ownerID);
+    }
 } else if ($p == "saveProfileAmazon") {
     $public = isset($_REQUEST['public']) ? $_REQUEST['public'] : "";
     settype($public, 'integer');
@@ -1510,11 +1521,11 @@ if ($p == "publishGithub") {
     settype($collection_id, 'integer');
     $collection_type = $_REQUEST['collection_type'];
     $archive_dir = isset($_REQUEST['archive_dir']) ? $_REQUEST['archive_dir'] : "";
-    $file_dir = isset($_REQUEST['file_dir']) ? $_REQUEST['file_dir'] : "";
+    $file_dir = isset($_REQUEST['file_dir']) ? json_decode($_REQUEST['file_dir']) : "";
+    $file_array = json_decode($_REQUEST['file_array']);
     $s3_archive_dir = isset($_REQUEST['s3_archive_dir']) ? $_REQUEST['s3_archive_dir'] : "";
     $gs_archive_dir = isset($_REQUEST['gs_archive_dir']) ? $_REQUEST['gs_archive_dir'] : "";
     $file_type = $_REQUEST['file_type'];
-    $file_array = $_REQUEST['file_array'];
     $project_id = $_REQUEST['project_id'];
     $run_env = $_REQUEST['run_env'];
     $run_env = $db->getRunEnv($run_env, $ownerID);
@@ -2022,6 +2033,8 @@ if ($p == "publishGithub") {
     $cron_day = isset($_REQUEST['cron_day']) ? $_REQUEST['cron_day'] : "";
     $cron_week = isset($_REQUEST['cron_week']) ? $_REQUEST['cron_week'] : "";
     $cron_month = isset($_REQUEST['cron_month']) ? $_REQUEST['cron_month'] : "";
+    $notif_check = isset($_REQUEST['notif_check']) ? $_REQUEST['notif_check'] : "";
+    $email_notif = isset($_REQUEST['email_notif']) ? $_REQUEST['email_notif'] : "";
 
     settype($perms, 'integer');
     settype($group_id, 'integer');
@@ -2041,7 +2054,7 @@ if ($p == "publishGithub") {
                 $targetTime = NULL;
                 $db->updateProjectPipelineCronTargetDate($id, $targetTime);
             }
-            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $ownerID);
+            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
             $listPermsDenied = array();
             $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);

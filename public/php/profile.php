@@ -4,17 +4,20 @@ $ownerID = isset($_SESSION['ownerID']) ? $_SESSION['ownerID'] : "";
 $name = isset($_SESSION['name']) ? $_SESSION['name'] : "";
 $admin_id = isset($_SESSION['admin_id']) ? $_SESSION['admin_id'] : "";
 $role = isset($_SESSION['role']) ? $_SESSION['role'] : "";
-if ($ownerID != ''){$login = 1;} 
-else { $login = 0;}
+if ($ownerID != '') {
+    $login = 1;
+} else {
+    $login = 0;
+}
 session_write_close();
 
-require_once(__DIR__."/../../config/config.php");
-$SHOW_GOOGLE_KEYS= SHOW_GOOGLE_KEYS;
-$SHOW_AMAZON_KEYS= SHOW_AMAZON_KEYS;
-$SHOW_SSH_KEYS=SHOW_SSH_KEYS;
-$SHOW_GROUPS=SHOW_GROUPS;
-$SHOW_GIT=SHOW_GITHUB;
-$GOOGPATH=GOOGPATH;
+require_once(__DIR__ . "/../../config/config.php");
+$SHOW_GOOGLE_KEYS = SHOW_GOOGLE_KEYS;
+$SHOW_AMAZON_KEYS = SHOW_AMAZON_KEYS;
+$SHOW_SSH_KEYS = SHOW_SSH_KEYS;
+$SHOW_GROUPS = SHOW_GROUPS;
+$SHOW_GIT = SHOW_GITHUB;
+$GOOGPATH = GOOGPATH;
 ?>
 
 <style>
@@ -23,7 +26,6 @@ $GOOGPATH=GOOGPATH;
         /*min-height: 0px !important;*/
         border: 1px solid #ccc;
     }
-
 </style>
 
 
@@ -36,25 +38,26 @@ $GOOGPATH=GOOGPATH;
                 <ul class="nav nav-tabs">
                     <li class="active"><a href="#runEnvDiv" data-toggle="tab" aria-expanded="true">Run Environments</a></li>
                     <?php
-                    if ($login == 1 && ($SHOW_GROUPS != false || !empty($admin_id) || $role == "admin")){
+                    if ($login == 1 && ($SHOW_GROUPS != false || !empty($admin_id) || $role == "admin")) {
                         echo '<li class=""><a href="#groups" data-toggle="tab" aria-expanded="false">Groups</a></li>';
                     }
-                    if ($login == 1 && ($SHOW_SSH_KEYS != false || !empty($admin_id) || $role == "admin")){
+                    if ($login == 1 && ($SHOW_SSH_KEYS != false || !empty($admin_id) || $role == "admin")) {
                         echo '<li class=""><a href="#sshKeys" data-toggle="tab" aria-expanded="false">SSH Keys</a></li>';
                     }
-                    if ($login == 1 && ($SHOW_AMAZON_KEYS != false || !empty($admin_id) || $role == "admin")){
+                    if ($login == 1 && ($SHOW_AMAZON_KEYS != false || !empty($admin_id) || $role == "admin")) {
                         echo '<li class=""><a href="#amazonKeys" data-toggle="tab" aria-expanded="false">Amazon Keys</a></li>';
                     }
-                    if ($login == 1 && !empty($GOOGPATH) && ($SHOW_GOOGLE_KEYS != false || !empty($admin_id) || $role == "admin")){
+                    if ($login == 1 && !empty($GOOGPATH) && ($SHOW_GOOGLE_KEYS != false || !empty($admin_id) || $role == "admin")) {
                         echo '<li class=""><a href="#googleKeys" data-toggle="tab" aria-expanded="false">Google Keys</a></li>';
                     }
-                    if ($login == 1 && ($SHOW_GIT != false || !empty($admin_id) || $role == "admin")){
+                    if ($login == 1 && ($SHOW_GIT != false || !empty($admin_id) || $role == "admin")) {
                         echo '<li class=""><a href="#github" data-toggle="tab" aria-expanded="false">GitHub</a></li>';
                     }
                     echo '<li class=""><a href="#changePass" data-toggle="tab" aria-expanded="false">Change Password</a></li>';
-                    if ($login == 1 && $role == "admin"){
+                    echo '<li class=""><a href="#changeNotifTab" data-toggle="tab" aria-expanded="false">Notification</a></li>';
+                    if ($login == 1 && $role == "admin") {
                         echo '<li id="adminTabBut"  class=""><a href="#adminTab" data-toggle="tab" aria-expanded="false">Admin</a></li>';
-                    } 
+                    }
                     ?>
                 </ul>
                 <div class="tab-content">
@@ -82,7 +85,7 @@ $GOOGPATH=GOOGPATH;
                             </div>
                         </div>
                         <?php
-                        if ($login == 1 && $role == "admin"){
+                        if ($login == 1 && $role == "admin") {
                             echo '<div class="panel panel-default" id="publicprofilepanel">
                                 <div class="panel-heading clearfix">
                                     <div class="pull-right">
@@ -286,8 +289,28 @@ $GOOGPATH=GOOGPATH;
                     </div>
                     <!-- /.tab-pane ends -->
                     <!-- /.tab-pane starts -->
-                    <?php 
-                    if ($login == 1 && $role == "admin"){
+                    <div class="tab-pane" id="changeNotifTab">
+                        <div class="panel panel-default">
+                            <div class="panel-heading clearfix">
+                                <div class="pull-left">
+                                    <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> Notification Settings</h5>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <form id="notifSettings">
+                                    <div class="col-md-12" style="display: block;">
+                                        <div>
+                                            <label> <input type="checkbox" id="email_notif" name="email_notif"> Receive an email about completed or failed runs</label>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.tab-pane ends -->
+                    <!-- /.tab-pane starts -->
+                    <?php
+                    if ($login == 1 && $role == "admin") {
                         echo '<div class="tab-pane" id="adminTab">
                                 <div class="panel panel-default">
                                     <div class="panel-heading clearfix">
@@ -365,9 +388,9 @@ $GOOGPATH=GOOGPATH;
                                 <option value="" disabled selected>Select environment </option>
                                 <option value="cluster">Host</option>
                                 <option value="amazon">Amazon Web Services</option>
-                                <?php if (!empty($GOOGPATH)){
-    echo '<option value="google">Google Cloud</option>';
-} ?>
+                                <?php if (!empty($GOOGPATH)) {
+                                    echo '<option value="google">Google Cloud</option>';
+                                } ?>
                             </select>
                         </div>
                     </div>
@@ -625,7 +648,7 @@ $GOOGPATH=GOOGPATH;
                         </div>
                     </div>
                     <?php
-                    if ($login == 1 && (!empty($admin_id) || $role == "admin")){
+                    if ($login == 1 && (!empty($admin_id) || $role == "admin")) {
                         echo '<div id="shareRunEnvDiv" class="form-group" style="display:none">
                         <label class="col-sm-3 control-label">
                         <input type="checkbox" id="shareRunEnv"> Share with Group </input></label>
@@ -696,7 +719,7 @@ $GOOGPATH=GOOGPATH;
 
                 <form id="joinmodaladd" class="form-horizontal" style="margin-bottom:40px;">
                     <h5 style="margin-bottom:20px;">Add New Member</h5>
-                    <div class="form-group" >
+                    <div class="form-group">
                         <label class="col-sm-2 control-label" style="padding-left:30px;">E-Mail of the User <span><a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Please enter e-mail address of the user and press add button."><i class="glyphicon glyphicon-info-sign"></i></a></span> </label>
                         <div class="col-sm-8">
                             <input type="email" class="form-control" id="joinmodal_email" name="email" value="">
@@ -760,61 +783,61 @@ $GOOGPATH=GOOGPATH;
                     <div class="form-group">
                         <label for="userKeyCheck" class="col-sm-4 control-label"><input type="checkbox" id="userKeyCheck" name="check_userkey" data-toggle="collapse" data-target="#userKeyDiv"> Use your own keys </input><span><a data-toggle="tooltip" data-placement="bottom" title="Use your own ssh keys and paste them below"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                     </div>
-                <div id="userKeyDiv" class="collapse">
-                    <div id="mUserPriKeyDiv" class="form-group">
-                        <label for="mUserPriKey" class="col-sm-4 control-label">Private Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to be used while connecting to a host"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                        <div class="col-sm-8">
-                            <textarea type="text" rows="5" class="form-control" id="mUserPriKey" name="prikey"></textarea>
+                    <div id="userKeyDiv" class="collapse">
+                        <div id="mUserPriKeyDiv" class="form-group">
+                            <label for="mUserPriKey" class="col-sm-4 control-label">Private Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to be used while connecting to a host"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <div class="col-sm-8">
+                                <textarea type="text" rows="5" class="form-control" id="mUserPriKey" name="prikey"></textarea>
+                            </div>
+                        </div>
+                        <div id="mUserPubKeyDiv" class="form-group">
+                            <label for="mUserPubKey" class="col-sm-4 control-label">Public Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to to be added into '~/.ssh/authorized_keys' in the host by user"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <div class="col-sm-8">
+                                <textarea type="text" rows="5" class="form-control" id="mUserPubKey" name="pubkey"></textarea>
+                                <p style="font-size:13px;"><b style="color:blue;">* Important Information:</b> Private key will be used for submiting jobs in the host. Therefore, public key of the private key required to be added into '~/.ssh/authorized_keys' in the host by user. Please check <a style="color:blue;" target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">adding keys section</a> for more information.</p>
+                            </div>
                         </div>
                     </div>
-                    <div id="mUserPubKeyDiv" class="form-group">
-                        <label for="mUserPubKey" class="col-sm-4 control-label">Public Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to to be added into '~/.ssh/authorized_keys' in the host by user"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                        <div class="col-sm-8">
-                            <textarea type="text" rows="5" class="form-control" id="mUserPubKey" name="pubkey"></textarea>
-                            <p style="font-size:13px;"><b style="color:blue;">* Important Information:</b> Private key will be used for submiting jobs in the host. Therefore, public key of the private key required to be added into '~/.ssh/authorized_keys' in the host by user. Please check <a style="color:blue;" target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">adding keys section</a> for more information.</p>
+                    <div class="form-group">
+                        <label for="ourKeyCheck" class="col-sm-4 control-label"><input type="checkbox" id="ourKeyCheck" name="check_ourkey" data-toggle="collapse" data-target="#ourKeyDiv"> Create new keys </input><span><a data-toggle="tooltip" data-placement="bottom" title="Create new ssh keys that are specifically produced for you by clicking generate keys button"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                    </div>
+                    <div id="ourKeyDiv" class="collapse">
+                        <div id="createKeysDiv" class="form-group">
+                            <label for="createKeysButton" class="col-sm-4 control-label">Generate Keys<span><a data-toggle="tooltip" data-placement="bottom" title="Click button to generate new keys for you"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <div class="col-sm-8">
+                                <button type="button" id="createKeysButton" class="btn btn-primary" onclick="generateKeys()">Generate Keys</button>
+                            </div>
+                        </div>
+                        <div id="mOurPriKeyDiv" class="form-group" style="display:none;">
+                            <label for="mOurPriKey" class="col-sm-4 control-label">Private Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to be used while connecting to a host"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <div class="col-sm-8">
+                                <textarea type="text" rows="5" class="form-control" id="mOurPriKey" name="prikey"></textarea>
+                            </div>
+                        </div>
+                        <div id="mOurPubKeyDiv" class="form-group" style="display:none;">
+                            <label for="mOurPubKey" class="col-sm-4 control-label">Public Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to to be added into '~/.ssh/authorized_keys' in the host by user"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                            <div class="col-sm-8">
+                                <textarea type="text" rows="5" class="form-control" id="mOurPubKey" name="pubkey"></textarea>
+                                <p style="font-size:13px;"><b style="color:blue;">* Important Information:</b> Private key will be used for submiting jobs in the host. Therefore, public key of the private key required to be added into '~/.ssh/authorized_keys' in the host by user. Please check <a style="color:blue;" target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">adding keys section</a> for more information.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label for="ourKeyCheck" class="col-sm-4 control-label"><input type="checkbox" id="ourKeyCheck" name="check_ourkey" data-toggle="collapse" data-target="#ourKeyDiv"> Create new keys </input><span><a data-toggle="tooltip" data-placement="bottom" title="Create new ssh keys that are specifically produced for you by clicking generate keys button"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-            </div>
-            <div id="ourKeyDiv" class="collapse">
-                <div id="createKeysDiv" class="form-group">
-                    <label for="createKeysButton" class="col-sm-4 control-label">Generate Keys<span><a data-toggle="tooltip" data-placement="bottom" title="Click button to generate new keys for you"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                    <div class="col-sm-8">
-                        <button type="button" id="createKeysButton" class="btn btn-primary" onclick="generateKeys()">Generate Keys</button>
-                    </div>
-                </div>
-                <div id="mOurPriKeyDiv" class="form-group" style="display:none;">
-                    <label for="mOurPriKey" class="col-sm-4 control-label">Private Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to be used while connecting to a host"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                    <div class="col-sm-8">
-                        <textarea type="text" rows="5" class="form-control" id="mOurPriKey" name="prikey"></textarea>
-                    </div>
-                </div>
-                <div id="mOurPubKeyDiv" class="form-group" style="display:none;">
-                    <label for="mOurPubKey" class="col-sm-4 control-label">Public Key<span><a data-toggle="tooltip" data-placement="bottom" title="Key to to be added into '~/.ssh/authorized_keys' in the host by user"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
-                    <div class="col-sm-8">
-                        <textarea type="text" rows="5" class="form-control" id="mOurPubKey" name="pubkey"></textarea>
-                        <p style="font-size:13px;"><b style="color:blue;">* Important Information:</b> Private key will be used for submiting jobs in the host. Therefore, public key of the private key required to be added into '~/.ssh/authorized_keys' in the host by user. Please check <a style="color:blue;" target="_blank" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/profile.html#ssh-keys">adding keys section</a> for more information.</p>
-                    </div>
-                </div>
-            </div>
-            <?php
-            if ($login == 1 && (!empty($admin_id) || $role == "admin")){
-                echo '<div id="hideKeysDiv" class="form-group">
+                    <?php
+                    if ($login == 1 && (!empty($admin_id) || $role == "admin")) {
+                        echo '<div id="hideKeysDiv" class="form-group">
                         <label class="col-sm-4 control-label">
                         <input type="checkbox" id="hideKeys"> Hide Keys from User </input></label>
                     </div>';
-            }
-            ?>
-            </form>
+                    }
+                    ?>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="savesshkey" data-clickedrow="">Submit</button>
+            </div>
+        </div>
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="savesshkey" data-clickedrow="">Submit</button>
-    </div>
-</div>
-</div>
 </div>
 <!-- ssh modal ends-->
 
@@ -1100,12 +1123,12 @@ $GOOGPATH=GOOGPATH;
             <div class="modal-body">
                 <span id="warnDelText">Text</span>
                 </br>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 <!--Confirm Del Modal-->
