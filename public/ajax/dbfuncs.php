@@ -32,6 +32,10 @@ class dbfuncs
     private $INITIAL_RUN_DOCKER = INITIAL_RUN_DOCKER;
     private $INITIAL_RUN_SINGULARITY = INITIAL_RUN_SINGULARITY;
     private $MOUNTED_VOLUME = MOUNTED_VOLUME;
+    private $EMAIL_TYPE = EMAIL_TYPE;
+    private $EMAIL_URL = EMAIL_URL;
+    private $EMAIL_HEADER_KEY = EMAIL_HEADER_KEY;
+    private $EMAIL_HEADER_VALUE = EMAIL_HEADER_VALUE;
 
     function __construct()
     {
@@ -2634,6 +2638,11 @@ class dbfuncs
     function updateUserDiskUsage($disk_usage, $userID, $ownerID)
     {
         $sql = "UPDATE $this->db.users SET disk_usage='$disk_usage', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$userID'";
+        return self::runSQL($sql);
+    }
+    function updateProfileUser($emailNotif, $ownerID)
+    {
+        $sql = "UPDATE $this->db.users SET email_notif='$emailNotif', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$ownerID'";
         return self::runSQL($sql);
     }
 
@@ -5447,6 +5456,10 @@ class dbfuncs
         if (empty($permCheck)) {
             exit();
         }
+        // Send Email to user if status is NextErr,NextSuc or Error
+        if ($status == "NextErr" || $status == "NextSuc" || $status == "Error") {
+            $this->sendRunStatusEmail($status, $project_pipeline_id, $curr_ownerID);
+        }
         $sql = "UPDATE $this->db.run SET run_status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
     }
@@ -6576,9 +6589,9 @@ class dbfuncs
         return self::runSQL($sql);
     }
 
-    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $ownerID)
+    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $ownerID)
     {
-        $sql = "UPDATE $this->db.project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', cron_check='$cron_check', cron_prefix='$cron_prefix', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', release_date=" . ($release_date == NULL ? "NULL" : "'$release_date'") . " WHERE id = '$id'";
+        $sql = "UPDATE $this->db.project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', cron_check='$cron_check', cron_prefix='$cron_prefix', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', notif_check='$notif_check', email_notif='$email_notif', release_date=" . ($release_date == NULL ? "NULL" : "'$release_date'") . " WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
@@ -6637,7 +6650,7 @@ class dbfuncs
             }
 
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, pp.type, IF(pp.owner_id='$ownerID',1,0) as own
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, pp.type, pp.email_notif, pp.notif_check, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM $this->db.project_pipeline pp
                       INNER JOIN $this->db.users u ON pp.owner_id = u.id
                       INNER JOIN $this->db.project p ON pp.project_id = p.id
@@ -7129,22 +7142,113 @@ class dbfuncs
         return self::insTable($sql);
     }
 
+    //Send Email to user if status is NextErr,NextSuc or Error
+    function sendRunStatusEmail($status, $project_pipeline_id, $ownerID)
+    {
+        $userData = json_decode($this->getUserById($ownerID));
+        $userRole = $this->getUserRoleVal($ownerID);
+        $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id, "", $ownerID, $userRole));
+
+        if (!empty($userData) && !empty($userData[0]) && !empty($proPipeAll) && !empty($proPipeAll[0])) {
+            $send = "false";
+            $email = $userData[0]->{'email'};
+            $name = $userData[0]->{'name'};
+            $email_notif = $userData[0]->{'email_notif'};
+            $project_pipeline_email_notif = $proPipeAll[0]->{'email_notif'};
+            $project_pipeline_notif_check = $proPipeAll[0]->{'notif_check'};
+            if ($project_pipeline_notif_check == "true" && $project_pipeline_email_notif == "true") {
+                $send = "true";
+            } else if ($project_pipeline_notif_check == "true" && $project_pipeline_email_notif == "false") {
+                $send = "false";
+            } else if ($project_pipeline_notif_check == "false" && $email_notif == "true") {
+                $send = "true";
+            }
+            if ($send == "true") {
+                $from = EMAIL_SENDER;
+                $EMAIL_ADMIN = EMAIL_ADMIN;
+                $from_name = "DolphinNext Team";
+                $to =  $email;
+                $subject = "";
+                $initialText = "";
+                $profile_url = "{$this->base_path}/index.php?np=4&";
+
+                $endText = "If you have any questions or issues please contact $EMAIL_ADMIN.";
+                $run_url = "{$this->base_path}/index.php?np=3&id=" . $project_pipeline_id;
+                $footerText = "<font size='1'>To unsubscribe from these e-mails <a href='$profile_url'> click here </a> and update the notification section.</font>";
+                $runText = "Please click the following link for details of the run: <a href='$run_url'> $run_url </a> ";
+                if ($status == "NextSuc") {
+                    $subject = "RUN $project_pipeline_id in DolphinNext is Completed";
+                    $initialText = "Your DolphinNext run $project_pipeline_id successfully completed!";
+                } else if ($status == "NextErr" || $status == "Error") {
+                    $subject = "RUN $project_pipeline_id in DolphinNext is Exited";
+                    $initialText = "Your DolphinNext run $project_pipeline_id completed unsuccessfully!";
+                }
+
+                $message = "Dear $name,<br><br>$initialText<br>$runText<br>$endText<br><br>Best Regards,<br><br>" . COMPANY_NAME . " DolphinNext Team<br>$footerText";
+                $this->sendEmail($from, $from_name, $to, $subject, $message);
+            }
+        }
+    }
+
     function sendEmail($from, $from_name, $to, $subject, $message)
     {
-        // $emailer = new emailer();
-        // $emailer->sendSimpleEmail();
 
-        $message = str_replace("\n", "<br>", $message);
-        $message = wordwrap($message, 70);
-        $headers  = 'MIME-Version: 1.0' . "\r\n";
-        $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
-        $headers .= 'From: ' . $from_name . ' <' . $from . '>' . "\r\n";
         $ret = array();
-        if (@mail($to, $subject, $message, $headers)) {
-            $ret['status'] = "sent";
-        } else {
-            $ret['status'] = "failed";
+        if ($this->EMAIL_TYPE == "DEFAULT") {
+            $message = str_replace("\n", "<br>", $message);
+            $message = wordwrap($message, 70);
+            $headers  = 'MIME-Version: 1.0' . "\r\n";
+            $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+            $headers .= 'From: ' . $from_name . ' <' . $from . '>' . "\r\n";
+
+            if (@mail($to, $subject, $message, $headers)) {
+                $ret['status'] = "sent";
+            } else {
+                $ret['status'] = "failed";
+            }
+        } else if ($this->EMAIL_TYPE == "HTTP") {
+            $message = wordwrap($message, 70);
+            $url = "{$this->EMAIL_URL}";
+            $header = array("Content-type: application/json");
+            if (!empty($this->EMAIL_HEADER_KEY)) {
+                $header = array(
+                    "Content-type: application/json", "{$this->EMAIL_HEADER_KEY}: {$this->EMAIL_HEADER_VALUE}"
+                );
+            }
+            $data = json_encode(array(
+                "to" => $to,
+                "subject" => $subject,
+                "body" => $message,
+            ));
+
+
+            $curl = curl_init($url);
+            curl_setopt($curl, CURLOPT_HEADER, false);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
+            curl_setopt($curl, CURLOPT_POST, true);
+            // secure it:
+            curl_setopt($curl, CURLOPT_FAILONERROR, true); // Required for HTTP error codes to curl_error
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+            $body = curl_exec($curl);
+            $statusCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $msg = json_decode($body, true);
+
+            if (curl_errno($curl) && $statusCode != 200) {
+                $error_msg = curl_error($curl);
+                $ret['status'] = "failed";
+                $ret['log'] = $error_msg;
+            } else {
+                $ret['status'] = "sent";
+            }
+            curl_close($curl);
+        } else if ($this->EMAIL_TYPE == "SMTP") {
+            $emailer = new emailer();
+            $ret = $emailer->sendSimpleEmail($from, $from_name, $to, $subject, $message);
         }
+
         return json_encode($ret);
     }
     // --------- Pipeline -----------

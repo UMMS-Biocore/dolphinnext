@@ -598,6 +598,17 @@ $DMETA_LABEL = DMETA_LABEL;
                         <label> <input type="checkbox" id="intermeDel" name="interDelete" value="interDel" checked> Delete intermediate files after run</input></label>
                     </div>
                 </div>
+                <div class="col-md-12" id="notifDivHide">
+                    <div>
+                        <label><input type="checkbox" id="notif_check" name="notif_check" data-toggle="collapse" data-target="#notifDiv"> Notification Settings </input> <span><a data-toggle="tooltip" data-placement="bottom" title="You may overwrite the default notification settings of the profile page by checking this checkbox"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
+                    </div>
+                    <div id="notifDiv" class="collapse">
+                        <div class="col-md-12" style="margin-bottom:10px;">
+                            <input type="checkbox" id="email_notif" name="email_notif"> Receive an email when the run is completed successfully or failed
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-md-12" id="cronDivHide">
                     <div>
                         <label><input type="checkbox" id="cron_check" name="cron_check" data-toggle="collapse" data-target="#cronDiv"> Automated Execution </input> <span><a data-toggle="tooltip" data-placement="bottom" title="You may activate the automated execution feature for periodically submission of this run"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>

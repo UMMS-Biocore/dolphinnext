@@ -1,3 +1,8 @@
+02.06.2021 Version 1.3.13
+EMAIL_TYPE feature added to .sec file. Available options: DEFAULT (for sendMail), SMTP or HTTP
+Email notification feature added.
+File addition error fixed for high amounts.
+
 02.06.2021 Version 1.3.12
 Run status page filtering improved.
 Automatic run execution feature added to run page.

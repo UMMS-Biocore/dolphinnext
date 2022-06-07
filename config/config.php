@@ -43,7 +43,14 @@ if (!empty($secConf)) {
     date_default_timezone_set($TIMEZONE);
     $INITIAL_RUN_DOCKER = isset($secConf['INITIAL_RUN_DOCKER']) ? $secConf['INITIAL_RUN_DOCKER'] : "ummsbiocore/initialrun-docker:1.0";
     $INITIAL_RUN_SINGULARITY = isset($secConf['INITIAL_RUN_SINGULARITY']) ? $secConf['INITIAL_RUN_SINGULARITY'] : "https://galaxyweb.umassmed.edu/pub/dolphinnext_singularity/UMMS-Biocore-initialrun-09.06.2020.simg";
-
+    $EMAIL_TYPE = isset($secConf['EMAIL_TYPE']) ? $secConf['EMAIL_TYPE'] : "DEFAULT";
+    $EMAIL_URL = isset($secConf['EMAIL_URL']) ? $secConf['EMAIL_URL'] : "";
+    $EMAIL_HEADER_KEY = isset($secConf['EMAIL_HEADER_KEY']) ? $secConf['EMAIL_HEADER_KEY'] : "";
+    $EMAIL_HEADER_VALUE = isset($secConf['EMAIL_HEADER_VALUE']) ? $secConf['EMAIL_HEADER_VALUE'] : "";
+    $EMAIL_HOST = isset($secConf['EMAIL_HOST']) ? $secConf['EMAIL_HOST'] : "";
+    $EMAIL_USERNAME = isset($secConf['EMAIL_USERNAME']) ? $secConf['EMAIL_USERNAME'] : "";
+    $EMAIL_PASSWORD = isset($secConf['EMAIL_PASSWORD']) ? $secConf['EMAIL_PASSWORD'] : "";
+    $EMAIL_PORT = isset($secConf['EMAIL_PORT']) ? $secConf['EMAIL_PORT'] : "";
 
     define('TIMEZONE', $TIMEZONE);
     define('MOUNTED_VOLUME', $MOUNTED_VOLUME);
@@ -68,6 +75,14 @@ if (!empty($secConf)) {
     define('DEFAULT_RUN_ENVIRONMENT', $DEFAULT_RUN_ENVIRONMENT);
     define('INITIAL_RUN_DOCKER', $INITIAL_RUN_DOCKER);
     define('INITIAL_RUN_SINGULARITY', $INITIAL_RUN_SINGULARITY);
+    define('EMAIL_TYPE', $EMAIL_TYPE);
+    define('EMAIL_URL', $EMAIL_URL);
+    define('EMAIL_HEADER_KEY', $EMAIL_HEADER_KEY);
+    define('EMAIL_HEADER_VALUE', $EMAIL_HEADER_VALUE);
+    define('EMAIL_HOST', $EMAIL_HOST);
+    define('EMAIL_USERNAME', $EMAIL_USERNAME);
+    define('EMAIL_PASSWORD', $EMAIL_PASSWORD);
+    define('EMAIL_PORT', $EMAIL_PORT);
 }
 $secUiconfig = $secRaw['UICONFIG'];
 if (!empty($secUiconfig)) {

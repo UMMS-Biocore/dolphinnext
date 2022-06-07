@@ -5763,6 +5763,8 @@ async function loadRunSettings(pipeData) {
     updateCheckBox("#withDag", pipeData[0].withDag);
     updateCheckBox("#withTimeline", pipeData[0].withTimeline);
     updateCheckBox("#cron_check", pipeData[0].cron_check);
+    updateCheckBox("#notif_check", pipeData[0].notif_check);
+    updateCheckBox("#email_notif", pipeData[0].email_notif);
     $("#cron_prefix").val(decodeHtml(pipeData[0].cron_prefix));
     $("#cron_min").val(pipeData[0].cron_min);
     $("#cron_hour").val(pipeData[0].cron_hour);
@@ -8262,6 +8264,9 @@ async function saveRun(sucFunc, showToastr) {
     var cron_day = $("#cron_day").val();
     var cron_week = $("#cron_week").val();
     var cron_month = $("#cron_month").val();
+    var notif_check = $("#notif_check").is(":checked").toString();
+    var email_notif = $("#email_notif").is(":checked").toString();
+
     if (run_name && project_id && newpipelineID) {
         data.push({ name: "id", value: project_pipeline_id });
         data.push({ name: "name", value: run_name });
@@ -8303,6 +8308,8 @@ async function saveRun(sucFunc, showToastr) {
         data.push({ name: "cron_day", value: cron_day });
         data.push({ name: "cron_week", value: cron_week });
         data.push({ name: "cron_month", value: cron_month });
+        data.push({ name: "notif_check", value: notif_check });
+        data.push({ name: "email_notif", value: email_notif });
         data.push({ name: "p", value: "saveProjectPipeline" });
         $.ajax({
             type: "POST",
@@ -11991,7 +11998,7 @@ $(document).ready(async function() {
                             formObj.collection_id = collection_data.id;
                         }
                     }
-                    formObj.file_dir = fileDirArr;
+                    formObj.file_dir = JSON.stringify(fileDirArr);
                     if (s3_archive_dir.match(/s3:/i)) {
                         s3_archive_dir = $.trim(s3_archive_dir);
                         formObj.s3_archive_dir = s3_archive_dir + "\t" + amzArchKey;
@@ -12001,7 +12008,7 @@ $(document).ready(async function() {
                         formObj.gs_archive_dir = gs_archive_dir + "\t" + googArchKey;
                     }
                     formObj.archive_dir = $.trim(formObj.archive_dir)
-                    formObj.file_array = ret.file_array;
+                    formObj.file_array = JSON.stringify(ret.file_array);
                     formObj.run_env = $("#chooseEnv").find(":selected").val();
                     formObj.project_id = project_id;
                     formObj.p = "saveFile";
