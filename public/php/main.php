@@ -1082,8 +1082,8 @@ immediately after the control sidebar -->
         <!--Confirm Delete Wizard Modal Ends-->
 
 
-        <!--Google Platform Library on your web pages that integrate Google Sign-In-->
-        <script src="https://apis.google.com/js/platform.js" async defer></script>
+        <!--Google client library for Google Sign-In-->
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
         <!-- jQuery 3 -->
         <script src="bower_components/jquery/dist/jquery.min-3.6.0.js"></script>
         <!-- Bootstrap 3.3.7 -->

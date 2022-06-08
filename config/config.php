@@ -96,6 +96,7 @@ if (!empty($secUiconfig)) {
     $ALLOW_SIGNUP = isset($secUiconfig['ALLOW_SIGNUP']) ? $secUiconfig['ALLOW_SIGNUP'] : "true";
     $ALLOW_SIGNUPGOOGLE = isset($secUiconfig['ALLOW_SIGNUPGOOGLE']) ? $secUiconfig['ALLOW_SIGNUPGOOGLE'] : "true";
     $PASSWORD_LOGIN = isset($secUiconfig['PASSWORD_LOGIN']) ? $secUiconfig['PASSWORD_LOGIN'] : "true";
+    $GOOGLE_CLIENT_ID = isset($secUiconfig['GOOGLE_CLIENT_ID']) ? $secUiconfig['GOOGLE_CLIENT_ID'] : "";
     define('SHOW_APPS', $SHOW_APPS);
     define('SHOW_AMAZON_KEYS', $SHOW_AMAZON_KEYS);
     define('SHOW_GOOGLE_KEYS', $SHOW_GOOGLE_KEYS);
@@ -105,6 +106,7 @@ if (!empty($secUiconfig)) {
     define('COMPANY_NAME', $COMPANY_NAME);
     define('ALLOW_SIGNUP', $ALLOW_SIGNUP);
     define('ALLOW_SIGNUPGOOGLE', $ALLOW_SIGNUPGOOGLE);
+    define('GOOGLE_CLIENT_ID', $GOOGLE_CLIENT_ID);
     define('PASSWORD_LOGIN', $PASSWORD_LOGIN);
     $SHOW_RUN_LOG = isset($secUiconfig['SHOW_RUN_LOG']) ? $secUiconfig['SHOW_RUN_LOG'] : "true";
     $SHOW_RUN_TIMELINE = isset($secUiconfig['SHOW_RUN_TIMELINE']) ? $secUiconfig['SHOW_RUN_TIMELINE'] : "true";
