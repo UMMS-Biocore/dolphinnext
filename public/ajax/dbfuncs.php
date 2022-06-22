@@ -6047,6 +6047,25 @@ class dbfuncs
                 $dir = $dir . "/";
             }
             $cmd = "s3cmd ls --access_key $access_key  --secret_key $secret_key $dir 2>&1 &";
+            if (preg_match('/[*?]/', $dir)) {
+                $s3bloks = explode('/', $dir);
+                $regexBlocks = array();
+                $staticBlocks = array();
+                $findRegex = false;
+                for ($i = 0; $i < count($s3bloks); ++$i) {
+                    $block = $s3bloks[$i];
+                    if (preg_match('/[*?]/', $block) || $findRegex === true) {
+                        $findRegex = true;
+                        $regexBlocks[] = $block;
+                    } else {
+                        $staticBlocks[] = $block;
+                    }
+                }
+
+                $initial_dir = implode('/', $staticBlocks);
+                $regex_part = implode('/', $regexBlocks);
+                $cmd = "s3cmd ls -r --access_key $access_key  --secret_key $secret_key $initial_dir 2>&1 &";
+            }
             $log = shell_exec($cmd);
             // For google storage queries
         } else if (preg_match("/gs:/i", $dir)) {
