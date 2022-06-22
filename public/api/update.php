@@ -39,14 +39,15 @@ class updates
             return $result;
         }
         $link->close();
-        return $sql;
+        return "";
     }
 
 
     function queryTable($sql)
     {
         $data = array();
-        if ($res = $this->runSQL($sql)) {
+        $res = $this->runSQL($sql);
+        if (!empty($res)) {
             while ($row = $res->fetch_assoc()) {
                 $data[] = $row;
             }
@@ -240,7 +241,8 @@ class updates
                         $new_run_id = $runSub["run_id"];
                         $status = $runSub["status"];
                         $ret .= "$time Cronjob(run id: $new_run_id) is $status.\n";
-                        $new_cron_target_date = json_decode($dbfun->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $ownerID));
+                        $cron_first = NULL;
+                        $new_cron_target_date = json_decode($dbfun->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first, $ownerID));
                         $ret .= "$time Next CronJob date: $new_cron_target_date\n";
                     }
                 }

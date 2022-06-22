@@ -295,7 +295,7 @@ $(document).ready(function() {
                     if (data.cron_target_date) {
                         type = "Automated-Active"
                     } else {
-                        type = "Automated-Deactive"
+                        type = "Automated-Deactived"
                     }
                 }
                 return type
@@ -306,9 +306,9 @@ $(document).ready(function() {
                     runType = "Scheduled"
                 } else if (row.type && row.type == "cron") {
                     if (row.cron_target_date) {
-                        runType = "Automated-Active"
+                        runType = "Automated - Active"
                     } else {
-                        runType = "Automated-Deactive"
+                        runType = "Automated - Deactived"
                     }
                 }
                 return '<span>' + runType + '</span>';
@@ -452,7 +452,7 @@ $(document).ready(function() {
                     if (data.cron_target_date) {
                         type = "Automated - Active"
                     } else {
-                        type = "Automated - Deactive"
+                        type = "Automated - Deactived"
                     }
                 }
                 return type
@@ -465,7 +465,7 @@ $(document).ready(function() {
                     if (row.cron_target_date) {
                         runType = "Automated - Active"
                     } else {
-                        runType = "Automated - Deactive"
+                        runType = "Automated - Deactived"
                     }
                 }
                 return '<span>' + runType + '</span>';

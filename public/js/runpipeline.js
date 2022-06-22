@@ -5771,6 +5771,10 @@ async function loadRunSettings(pipeData) {
     $("#cron_day").val(pipeData[0].cron_day);
     $("#cron_week").val(pipeData[0].cron_week);
     $("#cron_month").val(pipeData[0].cron_month);
+    if (pipeData[0].cron_first) {
+        let cron_first_tempVal = pipeData[0].cron_first.split(" ").join("T")
+        $("#cron_first").val(cron_first_tempVal);
+    }
     $("#cronNextSubDate").text(pipeData[0].cron_target_date)
 
     //fill process options table
@@ -5877,7 +5881,7 @@ $("#inputsTable").on("click", "#systemInputs", function(e) {
 });
 
 //click on "system inputs" button
-$(document).on("click", "#setCron", async function(e) {
+$(document).on("click", ".setCron", async function(e) {
     console.log("setCron")
     var project_pipeline_id = $("#pipeline-title").attr("projectpipelineid");
     var cron_min = $("#cron_min").val();
@@ -5886,6 +5890,7 @@ $(document).on("click", "#setCron", async function(e) {
     var cron_week = $("#cron_week").val();
     var cron_month = $("#cron_month").val();
     var cron_prefix = $("#cron_prefix").val();
+    var cron_first = $("#cron_first").val();
     var cron_check = $("#cron_check").is(":checked").toString();
     var data = await doAjax({
         p: "saveCron",
@@ -5896,7 +5901,8 @@ $(document).on("click", "#setCron", async function(e) {
         cron_week,
         cron_month,
         cron_prefix,
-        cron_check
+        cron_check,
+        cron_first
     });
     console.log(data)
     if (data) {
@@ -8264,6 +8270,7 @@ async function saveRun(sucFunc, showToastr) {
     var cron_day = $("#cron_day").val();
     var cron_week = $("#cron_week").val();
     var cron_month = $("#cron_month").val();
+    var cron_first = $("#cron_first").val();
     var notif_check = $("#notif_check").is(":checked").toString();
     var email_notif = $("#email_notif").is(":checked").toString();
 
@@ -8308,6 +8315,7 @@ async function saveRun(sucFunc, showToastr) {
         data.push({ name: "cron_day", value: cron_day });
         data.push({ name: "cron_week", value: cron_week });
         data.push({ name: "cron_month", value: cron_month });
+        data.push({ name: "cron_first", value: cron_first });
         data.push({ name: "notif_check", value: notif_check });
         data.push({ name: "email_notif", value: email_notif });
         data.push({ name: "p", value: "saveProjectPipeline" });

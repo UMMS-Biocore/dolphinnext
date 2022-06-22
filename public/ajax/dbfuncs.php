@@ -3385,6 +3385,9 @@ class dbfuncs
         }
         curl_close($curl);
         $msg = json_decode($body, true);
+        error_log(print_r($msg, TRUE));
+
+
         return $msg;
     }
 
@@ -5458,7 +5461,13 @@ class dbfuncs
         }
         // Send Email to user if status is NextErr,NextSuc or Error
         if ($status == "NextErr" || $status == "NextSuc" || $status == "Error") {
-            $this->sendRunStatusEmail($status, $project_pipeline_id, $curr_ownerID);
+            $runStat = json_decode($this->getRunStatus($project_pipeline_id, $ownerID));
+            if (!empty($runStat)) {
+                $oldStatus = $runStat[0]->{"run_status"};
+                if ($oldStatus != $status) {
+                    $this->sendRunStatusEmail($status, $project_pipeline_id, $curr_ownerID);
+                }
+            }
         }
         $sql = "UPDATE $this->db.run SET run_status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE project_pipeline_id = '$project_pipeline_id'";
         return self::runSQL($sql);
@@ -6589,20 +6598,30 @@ class dbfuncs
         return self::runSQL($sql);
     }
 
-    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $ownerID)
+    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $cron_first, $ownerID)
     {
-        $sql = "UPDATE $this->db.project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', cron_check='$cron_check', cron_prefix='$cron_prefix', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', notif_check='$notif_check', email_notif='$email_notif', release_date=" . ($release_date == NULL ? "NULL" : "'$release_date'") . " WHERE id = '$id'";
+        $sql = "UPDATE $this->db.project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', cron_check='$cron_check', cron_prefix='$cron_prefix', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', notif_check='$notif_check', email_notif='$email_notif', release_date=" . ($release_date == NULL ? "NULL" : "'$release_date'") . ", cron_first=" . ($cron_first == "" ? "NULL" : "'$cron_first'") . " WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
-    function updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $ownerID)
+    function updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first,  $ownerID)
     {
 
         $php_set_date = strtotime("now");
         $cron_set_date = date("Y-m-d H:i:s", $php_set_date);
         $php_target_date = strtotime("+{$cron_min} minutes {$cron_hour} hours {$cron_day} days {$cron_week} weeks {$cron_month} months");
         $cron_target_date = date("Y-m-d H:i:s", $php_target_date);
-        $sql = "UPDATE $this->db.project_pipeline SET type='cron', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', cron_set_date='$cron_set_date', cron_target_date='$cron_target_date', cron_prefix='$cron_prefix', cron_check='true' WHERE id = '$project_pipeline_id'";
+        if (!empty($cron_first)) $cron_target_date = $cron_first;
+        $cron_date_first_text = "";
+        if (is_null($cron_first)) {
+            $cron_date_first_text = "";
+        } else if ($cron_first == "") {
+            $cron_date_first_text = ', cron_first=NULL';
+        } else if (!empty($cron_first)) {
+            $cron_date_first_text = ", cron_first='$cron_first'";
+        }
+
+        $sql = "UPDATE $this->db.project_pipeline SET type='cron', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', cron_set_date='$cron_set_date', cron_target_date='$cron_target_date', cron_prefix='$cron_prefix', cron_check='true' $cron_date_first_text WHERE id = '$project_pipeline_id'";
         self::runSQL($sql);
         return json_encode($cron_target_date);
     }
@@ -6650,7 +6669,7 @@ class dbfuncs
             }
 
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, pp.type, pp.email_notif, pp.notif_check, IF(pp.owner_id='$ownerID',1,0) as own
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, pp.type, pp.email_notif, pp.notif_check, pp.cron_first, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM $this->db.project_pipeline pp
                       INNER JOIN $this->db.users u ON pp.owner_id = u.id
                       INNER JOIN $this->db.project p ON pp.project_id = p.id
@@ -7284,7 +7303,7 @@ class dbfuncs
                       INNER JOIN (
                         SELECT pipeline_gid, MAX(rev_id) rev_id
                         FROM $this->db.biocorepipe_save
-                        WHERE pin = 'true' AND perms = 63
+                        WHERE pin = 'true' AND perms = 63 AND deleted = 0
                         GROUP BY pipeline_gid
                         ) b ON pip.rev_id = b.rev_id AND pip.pipeline_gid=b.pipeline_gid AND pip.deleted = 0";
         return self::queryTable($sql);
