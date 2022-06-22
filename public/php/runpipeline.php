@@ -616,7 +616,7 @@ $DMETA_LABEL = DMETA_LABEL;
                     <div id="cronDiv" class="collapse">
                         <div class="col-md-12" style="margin-top:10px;">
                             <label class="col-md-2">Run Prefix</label>
-                            <div class="form-group col-md-4">
+                            <div class="form-group col-md-5">
                                 <input type="text" class="form-control" id="cron_prefix" name="cron_prefix">
                             </div>
                         </div>
@@ -643,7 +643,17 @@ $DMETA_LABEL = DMETA_LABEL;
                                 <input value=0 type="number" min="0" class="form-control" id="cron_month" name="cron_month">
                             </div>
                             <div class="form-group col-md-1">
-                                <button style="margin-top:22px;" type="button" class="btn btn-primary" id="setCron">Set</button>
+                                <button style="margin-top:22px;" type="button" class="btn btn-primary setCron">Set</button>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="col-md-2" style="margin-top:20px;">First Submission Date (Optional)</label>
+                            <div class="form-group col-md-5">
+                                <div class="text-center">Time</div>
+                                <input type="datetime-local" class="form-control" id="cron_first" name="cron_first">
+                            </div>
+                            <div class="form-group col-md-1">
+                                <button style="margin-top:22px;" type="button" class="btn btn-primary setCron">Set</button>
                             </div>
                         </div>
                         <div class="col-md-12">

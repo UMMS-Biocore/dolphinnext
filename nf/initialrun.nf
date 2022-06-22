@@ -1699,7 +1699,7 @@ process createCollection {
             $tmpSufx =~ s/[^A-Za-z0-9]/_/g; 
             my $confID = $data[1];
             my $down_path = ${s3down_dir_prefix}.${tmpSufx};
-            runCommand("mkdir -p $down_path && cd $down_path && s3cmd get --force --config=$run_dir/initialrun/.conf.$confID $s3Path/$file_name");
+            runCommand("mkdir -p $down_path && cd $down_path && s3cmd get --force --config=$run_dir/initialrun/.conf.$confID $s3Path/$file_name $file_name");
             print "down_path: $down_path\\n";
             return $down_path;
           }

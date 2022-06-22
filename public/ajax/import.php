@@ -48,7 +48,8 @@ if (!empty($_FILES)) {
         //runpipeline.php dynamicRows
     } else if (!empty($ownerID) && !empty($_FILES["pubweb"])){
         $run_path = RUNPATH;
-
+        $uuid = isset($_POST["uuid"]) ? $_POST["uuid"] : "";
+        $dir = isset($_POST["dir"]) ? $_POST["dir"] : "";
         $targetDir = "$run_path/$uuid/pubweb/$dir";
 
         if (!file_exists($targetDir)) {
@@ -95,5 +96,3 @@ if (!empty($_FILES)) {
     }
 
 }
-
-?>    

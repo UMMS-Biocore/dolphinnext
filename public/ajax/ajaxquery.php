@@ -1978,13 +1978,18 @@ if ($p == "publishGithub") {
     $cron_week = !empty($_REQUEST['cron_week']) ? $_REQUEST['cron_week'] : 0;
     $cron_month = !empty($_REQUEST['cron_month']) ? $_REQUEST['cron_month'] : 0;
     $cron_prefix = isset($_REQUEST['cron_prefix']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['cron_prefix']), ENT_QUOTES)) : "";
-
+    $cron_first = isset($_REQUEST['cron_first']) ? $_REQUEST['cron_first'] : "";
+    error_log($cron_first);
+    if (!empty($cron_first)) {
+        $cron_first = date('Y-m-d H:i:s', strtotime("$cron_first"));
+        error_log($cron_first);
+    }
     if (!empty($project_pipeline_id)) {
         //don't allow to update if user doesn't own the project_pipeline.
         $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.project_pipeline WHERE id='$project_pipeline_id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
         if (!empty($permCheck)) {
-            $data = $db->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $ownerID);
+            $data = $db->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first, $ownerID);
         }
     }
 } else if ($p == "saveProjectPipeline") {
@@ -2033,6 +2038,7 @@ if ($p == "publishGithub") {
     $cron_day = isset($_REQUEST['cron_day']) ? $_REQUEST['cron_day'] : "";
     $cron_week = isset($_REQUEST['cron_week']) ? $_REQUEST['cron_week'] : "";
     $cron_month = isset($_REQUEST['cron_month']) ? $_REQUEST['cron_month'] : "";
+    $cron_first = isset($_REQUEST['cron_first']) ? $_REQUEST['cron_first'] : "";
     $notif_check = isset($_REQUEST['notif_check']) ? $_REQUEST['notif_check'] : "";
     $email_notif = isset($_REQUEST['email_notif']) ? $_REQUEST['email_notif'] : "";
 
@@ -2054,7 +2060,7 @@ if ($p == "publishGithub") {
                 $targetTime = NULL;
                 $db->updateProjectPipelineCronTargetDate($id, $targetTime);
             }
-            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $ownerID);
+            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $cron_first, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
             $listPermsDenied = array();
             $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);

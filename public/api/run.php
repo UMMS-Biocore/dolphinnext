@@ -206,7 +206,8 @@ class Run
             //don't allow to update if user doesn't own the project_pipeline.
             $curr_ownerID = $dbfuncs->queryAVal("SELECT owner_id FROM $dbfuncs->db.project_pipeline WHERE id='$proPipeId'");
             $permCheck = $dbfuncs->checkUserOwnPerm($curr_ownerID, $ownerID);
-            if (!empty($permCheck)) {
+            $userRole = $dbfuncs->getUserRoleVal($ownerID);
+            if (!empty($permCheck) || $userRole == "admin") {
                 $dbfuncs->updateProjectPipelineDmeta($proPipeId, $dmeta, $ownerID);
                 $ret["status"] = "success";
                 $ret["log"] = "Existing run found.";
