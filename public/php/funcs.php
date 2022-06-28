@@ -30,6 +30,8 @@ function getTitle($np)
         $ret = "Run Status";
     } else if ($np == 7) {
         $ret = "Apps";
+    } else if ($np == 8) {
+        $ret = "Admin Dashboard";
     }
     return $ret;
 }
@@ -108,6 +110,13 @@ function getPage($np, $login, $id, $ownerID)
         include("php/app.php");
     } else if ($np == 7 && $login == 1 && !empty($id)) {
         include("php/appDetail.php");
+    } else if ($np == 8 && $login == 1) {
+        $userRole = $db->getUserRoleVal($ownerID);
+        if ($userRole == "admin") {
+            include("php/adminDashboard.php");
+        } else {
+            include("php/error403.php");
+        }
     } else {
         include("php/public.php");
     }
@@ -115,7 +124,7 @@ function getPage($np, $login, $id, $ownerID)
 
 function getSidebarMenu($np, $login)
 {
-    if (($np == 2 || $np == 3 || $np == 4 || $np == 5 || $np == 7) && $login == 1) {
+    if (($np == 2 || $np == 3 || $np == 4 || $np == 5 || $np == 7 || $np == 8) && $login == 1) {
         include("php/sidebarmenuproject.php");
     } else if ($np == '') {
         include("php/sidebarmenumain.php");
@@ -164,6 +173,9 @@ function getJS($np, $login, $id)
     } else if ($np == 7 && $login == 1 && !empty($id)) {
         $js .= '<script src="' . auto_version("js/plugins/textEditor.js") . '"></script>';
         $js .= '<script src="' . auto_version("js/appDetail.js") . '"></script>';
+    } else if ($np == 8 && $login == 1) {
+        $js .= '<script src="bower_components/chartjs/chart3.8.0.min.js"></script>';
+        $js .= '<script src="' . auto_version("js/adminDashboard.js") . '"></script>';
     } else {
         $js .= '<script src="' . auto_version("js/public.js") . '"></script>';
     }

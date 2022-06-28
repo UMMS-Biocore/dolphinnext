@@ -15573,7 +15573,7 @@ $(document).ready(async function() {
 
             var refreshUcscIframe = (link, navTabDiv, fileid) => {
                 // link example:
-                // http://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=1385266329_hzFy7AyNX1CiNfXlY7g4s5VHK3ZB
+                // https://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=1385266329_hzFy7AyNX1CiNfXlY7g4s5VHK3ZB
                 var content = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>';
                 var visType = "ucsc_genome_browser";
                 var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);">' + content + "</div>";
@@ -15592,7 +15592,7 @@ $(document).ready(async function() {
                 if (ucsc_session) {
                     var navTabDiv = $(this).closest(".collapseRowBody").find(".ucsc_gb_tab");
                     var hubFileID = navTabDiv.attr("fileid")
-                    var link = `http://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=${ucsc_session}&position=${gene}`
+                    var link = `https://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=${ucsc_session}&position=${gene}`
                     refreshUcscIframe(link, navTabDiv, hubFileID)
                         // bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
                 }
@@ -15618,7 +15618,7 @@ $(document).ready(async function() {
                             console.log(sessionID)
                             if (sessionID) collapseRowDiv.attr("ucsc_session", sessionID)
                             var navTabDiv = collapseRowDiv.closest(".collapseRowDiv").parent().find(".ucsc_gb_tab");
-                            var link = `http://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=${sessionID}`
+                            var link = `https://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=${sessionID}`
                             refreshUcscIframe(link, navTabDiv, hubFileID)
                         }
                     );
