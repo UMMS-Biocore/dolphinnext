@@ -128,6 +128,12 @@ if ($p == "saveRun") {
         $data = $db->getRemoteData($url);
     }
     $data = json_encode($data);
+} else if ($p == "getUcscSessionID") {
+    $hubFileLoc  = $_REQUEST['hubFileLoc'];
+    $genomeFileLoc  = $_REQUEST['genomeFileLoc'];
+    $run_log_uuid = $_REQUEST['run_log_uuid'];
+    $dir = $_REQUEST['dir'];
+    $data = $db->getUcscSessionID($hubFileLoc, $genomeFileLoc, $run_log_uuid, $dir, $ownerID);
 } else if ($p == "getReportData") {
     $uuid  = $_REQUEST['uuid'];
     $path = $_REQUEST['path']; //pubweb, run

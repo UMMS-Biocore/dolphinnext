@@ -1111,6 +1111,7 @@ immediately after the control sidebar -->
         <script src="dist/js/pagination.min.js"></script>
         <!--   Datatables-->
         <script type="text/javascript" src="bower_components/DataTables/datatables.min.js"></script>
+        <script type="text/javascript" src="bower_components/DataTables/dataTables.scroller.min.js"></script>
         <!-- jquery loading -->
         <script src="dist/jquery_loading/jquery.loading.min.js"></script>
         <!-- SlimScroll -->
