@@ -6175,8 +6175,8 @@ class dbfuncs
             $genomeFileText = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/{$genomeFileLoc}", $ownerID));
             preg_match("/genome (.*)/", $genomeFileText, $matchGenome);
             $genome = isset($matchGenome[1]) ? $matchGenome[1] : "";
-            $sessionFilePath =  "{$this->run_path}/$run_log_uuid/pubweb/{$dir}/.ucsc_session";
-            $hubUrl = "$this->base_path/tmp/pub/{$run_log_uuid}/$dir/$hubFileLoc";
+            $sessionFilePath =  "{$this->run_path}/$run_log_uuid/pubweb/$dir/.ucsc_session";
+            $hubUrl = "$this->base_path/tmp/pub/{$run_log_uuid}/pubweb/$dir/$hubFileLoc";
 
             if (!empty($developer_test)) {
                 $hubUrl = "https://dnext.dolphinnext.com/tmp/pub/2jk8tXl8RqSyEfoa9FB5eR7omXBpq0/pubweb/USCS_Track_Hubs/hub.txt";

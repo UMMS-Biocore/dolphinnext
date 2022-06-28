@@ -9700,7 +9700,7 @@ $(function() {
                     fnCreatedCell: function(nTd, oData) {
                         var fileList = oData.fileList;
                         if ($(nTd).is(":empty")) {
-                            var navTabDiv = '<div style="height:inherit;">';
+                            var navTabDiv = '<div style="height:inherit;" class="tab-content">';
                             if (oData.pubWeb == "ucsc_genome_browser") {
                                 const matchHub = fileList.find(value => /hub\.txt/.test(value));
                                 const matchGenome = fileList.find(value => /genomes\.txt/.test(value));
@@ -15779,7 +15779,7 @@ $(document).ready(async function() {
                     lineHeightT +
                     clearFix +
                     overflowT +
-                    "overflow: hidden; float:left;  width:" +
+                    "float:left;  width:" +
                     columnPercent +
                     '%; ">';
                 processParamDiv += getColumnContent(dataObj, cols[el], null);
