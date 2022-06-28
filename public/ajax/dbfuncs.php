@@ -6163,6 +6163,34 @@ class dbfuncs
         }
     }
 
+    function getUcscSessionID($hubFileLoc, $genomeFileLoc, $run_log_uuid, $dir, $ownerID)
+    {
+        // boolean for developer_tests -> refreshes session file and uses direct urls for hub and genome
+        $developer_test = false;
+        // 1.check if session file exist
+        $ucsc_session = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.ucsc_session", $ownerID));
+
+        if (!empty($developer_test) || empty($ucsc_session)) {
+            // 2.if not then create one
+            $genomeFileText = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/{$genomeFileLoc}", $ownerID));
+            preg_match("/genome (.*)/", $genomeFileText, $matchGenome);
+            $genome = isset($matchGenome[1]) ? $matchGenome[1] : "";
+            $sessionFilePath =  "{$this->run_path}/$run_log_uuid/pubweb/{$dir}/.ucsc_session";
+            $hubUrl = "$this->base_path/tmp/pub/{$run_log_uuid}/$dir/$hubFileLoc";
+
+            if (!empty($developer_test)) {
+                $hubUrl = "https://dnext.dolphinnext.com/tmp/pub/2jk8tXl8RqSyEfoa9FB5eR7omXBpq0/pubweb/USCS_Track_Hubs/hub.txt";
+                $genome = "mm10";
+            }
+            $check_cmd = 'echo $(curl -s "http://genome.ucsc.edu/cgi-bin/hgGateway?genome=' . $genome . '&hubUrl=' . $hubUrl . '" | grep hgsid= | head -n1 | awk \'BEGIN{RS="\""; FS="hgsid="}NF>1{print $NF}\') > ' . $sessionFilePath;
+            error_log($check_cmd);
+            shell_exec($check_cmd);
+            $ucsc_session = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.ucsc_session", $ownerID));
+        }
+        // 3. read the session id
+        return json_encode($ucsc_session);
+    }
+
     function getRemoteData($url)
     {
         $check_cmd = "curl -s '$url' 2>&1";
@@ -7215,11 +7243,11 @@ class dbfuncs
                 $footerText = "<font size='1'>To unsubscribe from these e-mails <a href='$profile_url'> click here </a> and update the notification section.</font>";
                 $runText = "Please click the following link for details of the run: <a href='$run_url'> $run_url </a> ";
                 if ($status == "NextSuc") {
-                    $subject = "RUN $project_pipeline_id in DolphinNext is Completed";
+                    $subject = "RUN $project_pipeline_id in DolphinNext Completed";
                     $initialText = "Your DolphinNext run $project_pipeline_id successfully completed!";
                 } else if ($status == "NextErr" || $status == "Error") {
-                    $subject = "RUN $project_pipeline_id in DolphinNext is Exited";
-                    $initialText = "Your DolphinNext run $project_pipeline_id completed unsuccessfully!";
+                    $subject = "RUN $project_pipeline_id in DolphinNext Exited";
+                    $initialText = "Your DolphinNext run $project_pipeline_id has failed.";
                 }
 
                 $message = "Dear $name,<br><br>$initialText<br>$runText<br>$endText<br><br>Best Regards,<br><br>" . COMPANY_NAME . " DolphinNext Team<br>$footerText";

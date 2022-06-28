@@ -9177,7 +9177,12 @@ $(function() {
                     //file list
                     data: null,
                     colPercent: "15",
-                    overflow: "scroll",
+                    overflow: function(oData) {
+                        if (oData.pubWeb == "ucsc_genome_browser") {
+                            return ""
+                        }
+                        return "scroll"
+                    },
                     fnCreatedCell: function(nTd, oData) {
                         var getIconByExtension = function(ext) {
                             var icon = "fa fa-file-text-o";
@@ -9303,6 +9308,21 @@ $(function() {
                                     "</a></li>";
                             }
                         });
+
+                        if (oData.pubWeb == "ucsc_genome_browser") {
+                            const match = fileList.find(value => /feature_metadata\.tsv/.test(value));
+
+                            if (match) {
+                                var filepath = oData.name + "/" + match;
+                                var filepathID = "ucsc_genes_" + filepath;
+                                var filepathCl = cleanProcessName(filepathID);
+                                var metadata_url = pubWebPath + "/" + run_log_uuid + "/" + "pubweb" + "/" + filepath;
+
+                                var contentDiv = `<div style="margin-top:5px; margin-left:5px;" class="table-responsive"><table style="border:none;  width:100%;" class="table table-striped table-bordered ucsc_gb_genes"  cellspacing="0"  metadata_url="${metadata_url}" id="${filepathCl}"><thead style="white-space: nowrap; table-layout:fixed;"></thead></table></div>`;
+                                $(nTd).html(contentDiv);
+                                return;
+                            }
+                        }
 
                         //xxxxxxx
                         var addEveHandlerIconDiv = function(id) {
@@ -9680,10 +9700,44 @@ $(function() {
                     fnCreatedCell: function(nTd, oData) {
                         var fileList = oData.fileList;
                         if ($(nTd).is(":empty")) {
-                            var navTabDiv = "";
-                            navTabDiv += '<div style="height:inherit;" class="tab-content">';
-                            var liText = "";
-                            var active = "";
+                            var navTabDiv = '<div style="height:inherit;">';
+                            if (oData.pubWeb == "ucsc_genome_browser") {
+                                const matchHub = fileList.find(value => /hub\.txt/.test(value));
+                                const matchGenome = fileList.find(value => /genomes\.txt/.test(value));
+                                console.log(fileList)
+                                const matchFeature = fileList.find(value => /feature_metadata\.tsv/.test(value));
+                                var dir = oData.name;
+                                console.log(matchFeature)
+
+
+                                navTabDiv += '<div ucsc_genome_browser_tabs="" style="height:100%; width:100%;" >';
+
+                                navTabDiv += `<ul class="nav nav-tabs">`
+                                if (matchHub && matchGenome) {
+                                    navTabDiv += `<li class="active"><a class="nav-item" data-toggle="tab" href="#ucsc_gb_tab_${oData.id}" aria-expanded="false">Genome Browser</a></li>`
+                                }
+                                if (matchFeature) {
+                                    navTabDiv += `<li class=""><a class="nav-item" data-toggle="tab" href="#ucsc_count_tab_${oData.id}" aria-expanded="false">Count Data</a></li>`
+                                }
+                                navTabDiv += `</ul>`;
+                                navTabDiv += `<div class="tab-content">`;
+                                if (matchHub && matchGenome) {
+                                    var filenameCl = cleanProcessName(matchHub);
+                                    var fileid = oData.id + "_" + filenameCl;
+                                    navTabDiv += `<div id="ucsc_gb_tab_${oData.id}" dir="${dir}" genome="${matchGenome}" fileid="${fileid}" file="${matchHub}" class="ucsc_gb_tab fullsize tab-pane fade active in" style="width:100%; height:595px;"></div>`;
+                                }
+                                if (matchFeature) {
+                                    var filenameCl = cleanProcessName(matchFeature);
+                                    var fileid = oData.id + "_" + filenameCl;
+                                    navTabDiv += `<div id="ucsc_count_tab_${oData.id}" dir="${dir}" file="${matchFeature}" fileid="${fileid}" style="width:100%;" class="ucsc_count_tab fullsize tab-pane fade"></div>`
+                                }
+                                navTabDiv += `</div>`;
+
+                                navTabDiv += "</div>";
+                                navTabDiv += "</div>";
+                                $(nTd).html(navTabDiv);
+                                return;
+                            }
                             $.each(fileList, function(el) {
                                 var filenameCl = cleanProcessName(fileList[el]);
                                 var tabID = "reportTab" + oData.id + "_" + filenameCl;
@@ -9691,12 +9745,7 @@ $(function() {
                                 if (el == 0) {
                                     active = "in active";
                                 }
-                                navTabDiv +=
-                                    '<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' +
-                                    tabID +
-                                    '" class = "tab-pane fade fullsize ' +
-                                    active +
-                                    '" ></div>';
+                                navTabDiv += '<div dynamicrowstabs="" style="height:100%; width:100%;" id = "' + tabID + '" class = "tab-pane fade fullsize ' + active + '" ></div>';
                             });
                             navTabDiv += "</div>";
                             $(nTd).html(navTabDiv);
@@ -9813,6 +9862,9 @@ $(function() {
                         } else if (visType === "run_description") {
                             icon = "fa fa-edit";
                             text = "Markdown";
+                        } else if (visType === "ucsc_genome_browser") {
+                            icon = "fa fa-area-chart";
+                            text = "UCSC Genome Browser";
                         }
                         $(nTd).html(
                             '<a data-toggle="tooltip" data-placement="bottom" data-original-title="View"><i class="' +
@@ -14834,90 +14886,204 @@ $(document).ready(async function() {
             }
         });
     });
+    var bindEveHandlerIcon = function(fileid, visType, pubWebPath, uuid) {
+        $('[data-toggle="tooltip"]').tooltip();
+        $("#fullscr-" + fileid).on("click", function(event) {
+            var iconClass = $(this).children().attr("class");
+            var toogleType;
+            if (iconClass == "fa fa-expand") {
+                $(this).children().attr("class", "fa fa-compress");
+                toogleType = "expand";
+            } else {
+                $(this).children().attr("class", "fa fa-expand");
+                toogleType = "compress";
+            }
+            toogleFullSize(this, toogleType);
+            if (visType == "text") {
+                toogleEditorSize(toogleType);
+            }
+        });
+        $(document).on("click", "#downUrl-" + fileid, function(event) {
+            event.preventDefault();
+            var fileid = $(this).attr("fileid");
+            var filename = $("#" + fileid).attr("filename");
+            var filepath = $("#" + fileid).attr("filepath");
+            var a = document.createElement("A");
+            var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath;
+            download_file(url, filename);
+        });
+        $("#blankUrl-" + fileid).on("click", function(event) {
+            var fileid = $(this).attr("fileid");
+            var filepath = $("#" + fileid).attr("filepath");
+            var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath;
+            if (!filepath) {
+                var ucsc_gb_tab = $(this).closest("div.ucsc_gb_tab")
+                if (ucsc_gb_tab[0]) {
+                    url = ucsc_gb_tab.find("iframe").attr("src")
+                }
+            }
+            var w = window.open();
+            w.location = url;
+        });
+    };
+    var getHeaderIconDiv = function(fileid, visType) {
+        var blankUrlIcon = "";
+        var downloadIcon = "";
+        // "ucsc_genome_browser"
+        if (visType !== "table-percent" && visType !== "table" && visType !== "debrowser") {
+            blankUrlIcon = `<li role="presentation"><a fileid="` + fileid + `" id="blankUrl-` +
+                fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Open in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>`;
+        }
+        if (visType !== "ucsc_genome_browser") {
+            downloadIcon = `<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+            <i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
+            <ul class="dropdown-menu dropdown-menu-right">
+            <li><a fileid="` + fileid + `" id="downUrl-` + fileid + `" href="#">Download</a></li> </ul> </li>`;
+        }
+
+        var content = `<ul style="float:inherit"  class="nav nav-pills panelheader">` + blankUrlIcon +
+            ` <li role="presentation"><a fileid="` +
+            fileid + `" id="fullscr-` + fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>` + downloadIcon + `</ul>`;
+        var wrapDiv = '<div id="' + fileid + '-HeaderIconDiv" style="float:right; height:35px; width:100%;">' +
+            content + "</div>";
+        return wrapDiv;
+    };
+
+    const loadTableView = (visType, filePath, fileid, dir, filename, href, uuid, pubWebPath) => {
+        var ext = getExtension(filePath);
+        var validList = ["csv", "tsv", "txt"];
+        var iframeList = [
+            "pdf",
+            "jpeg",
+            "html",
+            "jpg",
+            "png",
+            "gif",
+            "tif",
+            "tiff",
+            "svg",
+            "txt",
+        ];
+        if (validList.includes(ext)) {
+            var headerStyle = "";
+            var tableStyle = "";
+            if (visType == "table-percent") {
+                headerStyle = "white-space: nowrap;";
+            } else {
+                tableStyle = "white-space: nowrap; table-layout:fixed;";
+            }
+            var contentDiv =
+                getHeaderIconDiv(fileid, visType) +
+                '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; overflow-x:auto; width:calc(100% - 35px);" class="table-responsive"><table style="' +
+                headerStyle +
+                ' border:none;  width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' +
+                dir +
+                '" filename="' +
+                filename +
+                '" filepath="' +
+                filePath +
+                '" id="' +
+                fileid +
+                '"><thead style="' +
+                tableStyle +
+                '" "></thead></table></div>';
+            $.ajax({
+                url: "ajax/ajaxquery.php",
+                data: {
+                    p: "getFileContent",
+                    uuid: uuid,
+                    filename: "pubweb/" + filePath,
+                },
+                async: true,
+                beforeSend: function() {
+                    showLoadingDiv(href.substr(1));
+                },
+                cache: false,
+                type: "POST",
+                success: function(data) {
+                    $(href).append(contentDiv);
+                    var fixHeader = true;
+                    var dataTableObj;
+                    if (ext && ext.toLowerCase() == "csv") {
+                        dataTableObj = tsvCsvDatatablePrep(data, fixHeader, ",");
+                    } else {
+                        if (visType == "table-percent") {
+                            //by default based on second column data, calculate percentages for each row
+                            data = tsvPercent(data);
+                        }
+                        dataTableObj = tsvCsvDatatablePrep(data, fixHeader, "\t");
+                    }
+                    //speed up the table loading
+                    dataTableObj.deferRender = true;
+                    dataTableObj.scroller = true;
+                    dataTableObj.scrollCollapse = true;
+                    dataTableObj.scrollY = 395;
+                    dataTableObj.scrollX = true;
+                    dataTableObj.sScrollX = true;
+                    //hides undefined error
+                    dataTableObj.columnDefs = [
+                        { defaultContent: "-", targets: "_all" },
+                    ];
+                    $("#" + fileid).DataTable(dataTableObj);
+                    hideLoadingDiv(href.substr(1));
+                    bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
+                },
+                error: function(errorThrown) {
+                    hideLoadingDiv(href.substr(1));
+                    console.log("AJAX Error occured.");
+                    var content =
+                        '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
+                        fileid +
+                        '" id="downUrl-' +
+                        fileid +
+                        '" href="#">download</a> the file.</div>';
+                    var contentDiv =
+                        getHeaderIconDiv(fileid, visType) +
+                        '<div style="width:100%; height:calc(100% - 35px);" dir="' +
+                        dir +
+                        '" filename="' +
+                        filename +
+                        '" filepath="' +
+                        filePath +
+                        '" id="' +
+                        fileid +
+                        '">' +
+                        content +
+                        "</div>";
+                    $(href).append(contentDiv);
+                    bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
+                },
+            });
+        } else if (iframeList.includes(ext)) {
+            loadIframeView(visType, filePath, pubWebPath, uuid, fileid, dir, filename, href)
+        } else {
+            var content =
+                '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
+                fileid +
+                '" id="downUrl-' +
+                fileid +
+                '" href="#">download</a> the file.</div>';
+            var contentDiv =
+                getHeaderIconDiv(fileid, visType) +
+                '<div style="width:100%; height:calc(100% - 35px);" dir="' +
+                dir +
+                '" filename="' +
+                filename +
+                '" filepath="' +
+                filePath +
+                '" id="' +
+                fileid +
+                '">' +
+                content +
+                "</div>";
+            $(href).append(contentDiv);
+            bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
+        }
+
+    }
 
     //$(document) allows to trigger when a.reportFile added later into the DOM
     $(function() {
-        var getHeaderIconDiv = function(fileid, visType) {
-            var blankUrlIcon = "";
-            var downloadIcon = "";
-            if (
-                visType !== "table-percent" &&
-                visType !== "table" &&
-                visType !== "debrowser"
-            ) {
-                blankUrlIcon =
-                    `<li role="presentation"><a fileid="` +
-                    fileid +
-                    `" id="blankUrl-` +
-                    fileid +
-                    `" data-toggle="tooltip" data-placement="bottom" data-original-title="Open in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>`;
-            }
-            downloadIcon =
-                `<li role="presentation"><a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-<i style="font-size: 18px;" class="fa fa-download"></i> <span class="caret"></span></a>
-<ul class="dropdown-menu dropdown-menu-right">
-<li><a fileid="` +
-                fileid +
-                `" id="downUrl-` +
-                fileid +
-                `" href="#">Download</a></li>
-</ul>
-</li>`;
-            var content =
-                `<ul style="float:inherit"  class="nav nav-pills panelheader">
-` +
-                blankUrlIcon +
-                `
-<li role="presentation"><a fileid="` +
-                fileid +
-                `" id="fullscr-` +
-                fileid +
-                `" data-toggle="tooltip" data-placement="bottom" data-original-title="Toogle Full Screen"><i style="font-size: 18px;" class="fa fa-expand"></i></a></li>` +
-                downloadIcon +
-                `</ul>`;
-            var wrapDiv =
-                '<div id="' +
-                fileid +
-                '-HeaderIconDiv" style="float:right; height:35px; width:100%;">' +
-                content +
-                "</div>";
-            return wrapDiv;
-        };
-        var bindEveHandlerIcon = function(fileid, visType, pubWebPath, uuid) {
-            $('[data-toggle="tooltip"]').tooltip();
-            $("#fullscr-" + fileid).on("click", function(event) {
-                var iconClass = $(this).children().attr("class");
-                var toogleType;
-                if (iconClass == "fa fa-expand") {
-                    $(this).children().attr("class", "fa fa-compress");
-                    toogleType = "expand";
-                } else {
-                    $(this).children().attr("class", "fa fa-expand");
-                    toogleType = "compress";
-                }
-                toogleFullSize(this, toogleType);
-                if (visType == "text") {
-                    toogleEditorSize(toogleType);
-                }
-            });
-            $(document).on("click", "#downUrl-" + fileid, function(event) {
-                event.preventDefault();
-                var fileid = $(this).attr("fileid");
-                var filename = $("#" + fileid).attr("filename");
-                var filepath = $("#" + fileid).attr("filepath");
-                var a = document.createElement("A");
-                var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath;
-                download_file(url, filename);
-            });
-            $("#blankUrl-" + fileid).on("click", function(event) {
-                var fileid = $(this).attr("fileid");
-                var filename = $("#" + fileid).attr("filename");
-                var filepath = $("#" + fileid).attr("filepath");
-                var url = pubWebPath + "/" + uuid + "/pubweb/" + filepath;
-                var w = window.open();
-                w.location = url;
-            });
-        };
         // visType == "html","pdf","image","rdata" 
         const loadIframeView = (visType, filePath, pubWebPath, uuid, fileid, dir, filename, href) => {
             var ext = getExtension(filePath);
@@ -14967,152 +15133,11 @@ $(document).ready(async function() {
             }
             var contentDiv =
                 getHeaderIconDiv(fileid, visType) +
-                '<div style="width:100%; height:calc(100% - 35px);" dir="' +
-                dir +
-                '" filename="' +
-                filename +
-                '" filepath="' +
-                filePath +
-                '" id="' +
-                fileid +
-                '">' +
-                content +
-                "</div>";
+                '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + content + "</div>";
             $(href).append(contentDiv);
             bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
         }
-        const loadTableView = (visType, filePath, fileid, dir, filename, href, uuid, pubWebPath) => {
-            var ext = getExtension(filePath);
-            var validList = ["csv", "tsv", "txt"];
-            var iframeList = [
-                "pdf",
-                "jpeg",
-                "html",
-                "jpg",
-                "png",
-                "gif",
-                "tif",
-                "tiff",
-                "svg",
-                "txt",
-            ];
-            if (validList.includes(ext)) {
-                var headerStyle = "";
-                var tableStyle = "";
-                if (visType == "table-percent") {
-                    headerStyle = "white-space: nowrap;";
-                } else {
-                    tableStyle = "white-space: nowrap; table-layout:fixed;";
-                }
-                var contentDiv =
-                    getHeaderIconDiv(fileid, visType) +
-                    '<div style="margin-left:15px; margin-right:15px; margin-bottom:15px; overflow-x:auto; width:calc(100% - 35px);" class="table-responsive"><table style="' +
-                    headerStyle +
-                    ' border:none;  width:100%;" class="table table-striped table-bordered" cellspacing="0"  dir="' +
-                    dir +
-                    '" filename="' +
-                    filename +
-                    '" filepath="' +
-                    filePath +
-                    '" id="' +
-                    fileid +
-                    '"><thead style="' +
-                    tableStyle +
-                    '" "></thead></table></div>';
-                $.ajax({
-                    url: "ajax/ajaxquery.php",
-                    data: {
-                        p: "getFileContent",
-                        uuid: uuid,
-                        filename: "pubweb/" + filePath,
-                    },
-                    async: true,
-                    beforeSend: function() {
-                        showLoadingDiv(href.substr(1));
-                    },
-                    cache: false,
-                    type: "POST",
-                    success: function(data) {
-                        $(href).append(contentDiv);
-                        var fixHeader = true;
-                        var dataTableObj;
-                        if (ext && ext.toLowerCase() == "csv") {
-                            dataTableObj = tsvCsvDatatablePrep(data, fixHeader, ",");
-                        } else {
-                            if (visType == "table-percent") {
-                                //by default based on second column data, calculate percentages for each row
-                                data = tsvPercent(data);
-                            }
-                            dataTableObj = tsvCsvDatatablePrep(data, fixHeader, "\t");
-                        }
-                        //speed up the table loading
-                        dataTableObj.deferRender = true;
-                        dataTableObj.scroller = true;
-                        dataTableObj.scrollCollapse = true;
-                        dataTableObj.scrollY = 395;
-                        dataTableObj.scrollX = true;
-                        dataTableObj.sScrollX = true;
-                        //hides undefined error
-                        dataTableObj.columnDefs = [
-                            { defaultContent: "-", targets: "_all" },
-                        ];
-                        $("#" + fileid).DataTable(dataTableObj);
-                        hideLoadingDiv(href.substr(1));
-                        bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
-                    },
-                    error: function(errorThrown) {
-                        hideLoadingDiv(href.substr(1));
-                        console.log("AJAX Error occured.");
-                        var content =
-                            '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
-                            fileid +
-                            '" id="downUrl-' +
-                            fileid +
-                            '" href="#">download</a> the file.</div>';
-                        var contentDiv =
-                            getHeaderIconDiv(fileid, visType) +
-                            '<div style="width:100%; height:calc(100% - 35px);" dir="' +
-                            dir +
-                            '" filename="' +
-                            filename +
-                            '" filepath="' +
-                            filePath +
-                            '" id="' +
-                            fileid +
-                            '">' +
-                            content +
-                            "</div>";
-                        $(href).append(contentDiv);
-                        bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
-                    },
-                });
-            } else if (iframeList.includes(ext)) {
-                loadIframeView(visType, filePath, pubWebPath, uuid, fileid, dir, filename, href)
-            } else {
-                var content =
-                    '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
-                    fileid +
-                    '" id="downUrl-' +
-                    fileid +
-                    '" href="#">download</a> the file.</div>';
-                var contentDiv =
-                    getHeaderIconDiv(fileid, visType) +
-                    '<div style="width:100%; height:calc(100% - 35px);" dir="' +
-                    dir +
-                    '" filename="' +
-                    filename +
-                    '" filepath="' +
-                    filePath +
-                    '" id="' +
-                    fileid +
-                    '">' +
-                    content +
-                    "</div>";
-                $(href).append(contentDiv);
-                bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
-            }
 
-        }
 
 
         $(document).on("shown.bs.tab click", "a.reportFile", async function(event) {
@@ -15546,17 +15571,138 @@ $(document).ready(async function() {
                 },
             });
 
+            var refreshUcscIframe = (link, navTabDiv, fileid) => {
+                // link example:
+                // http://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=1385266329_hzFy7AyNX1CiNfXlY7g4s5VHK3ZB
+                var content = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>';
+                var visType = "ucsc_genome_browser";
+                var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);">' + content + "</div>";
+                var run_log_uuid = $("#runVerLog").val();
+                var pubWebPath = $("#basepathinfo").attr("pubweb");
+                $(navTabDiv).empty().append(contentDiv);
+                bindEveHandlerIcon(fileid, visType, pubWebPath, run_log_uuid);
+
+            }
+
+
+            $(document).on("click", "a.ucsc_gene_link", function(e) {
+                e.preventDefault();
+                var ucsc_session = $(this).closest(".collapseRowBody").parent().find(".collapseRowDiv").attr("ucsc_session");
+                var gene = $(this).attr("gene");
+                if (ucsc_session) {
+                    var navTabDiv = $(this).closest(".collapseRowBody").find(".ucsc_gb_tab");
+                    var hubFileID = navTabDiv.attr("fileid")
+                    var link = `http://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=${ucsc_session}&position=${gene}`
+                    refreshUcscIframe(link, navTabDiv, hubFileID)
+                        // bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
+                }
+            });
+
             $(".collapseRowDiv").on("click", function(e) {
-                var textClassPlus = $(this).find(".fa-plus-square-o")[0];
-                var textClassMinus = $(this).find(".fa-minus-square-o")[0];
-                if (textClassPlus) {
-                    $(this).css("background-color", settings.backgroundcolorenter);
-                    $(textClassPlus).removeClass("fa-plus-square-o");
-                    $(textClassPlus).addClass("fa-minus-square-o");
-                } else if (textClassMinus) {
-                    $(this).css("background-color", settings.backgroundcolorleave);
-                    $(textClassMinus).removeClass("fa-minus-square-o");
-                    $(textClassMinus).addClass("fa-plus-square-o");
+                var run_log_uuid = $("#runVerLog").val();
+                var href = $(this).attr("href");
+                var ucsc_session = $(this).attr("ucsc_session");
+                var collapseRowDiv = $(this)
+                var navTabDiv = collapseRowDiv.closest(".collapseRowDiv").parent().find(".ucsc_gb_tab");
+                var pubWebPath = $("#basepathinfo").attr("pubweb");
+
+                //for pubWeb == "ucsc_genome_browser"
+                if (!ucsc_session && navTabDiv[0]) {
+                    // check session for files -> if nor found then create session. 
+                    var hubFileLoc = $(href).find("div.ucsc_gb_tab").attr("file")
+                    var hubFileID = $(href).find("div.ucsc_gb_tab").attr("fileid")
+                    var genomeFileLoc = $(href).find("div.ucsc_gb_tab").attr("genome")
+                    var dir = $(href).find("div.ucsc_gb_tab").attr("dir")
+                    getValuesAsync({ p: "getUcscSessionID", hubFileLoc, genomeFileLoc, run_log_uuid, dir },
+                        function(sessionID) {
+                            console.log(sessionID)
+                            if (sessionID) collapseRowDiv.attr("ucsc_session", sessionID)
+                            var navTabDiv = collapseRowDiv.closest(".collapseRowDiv").parent().find(".ucsc_gb_tab");
+                            var link = `http://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=${sessionID}`
+                            refreshUcscIframe(link, navTabDiv, hubFileID)
+                        }
+                    );
+                }
+
+
+                //check if metadata table is loaded
+                if (!($.trim($(href).find("div.ucsc_count_tab").html())).length) {
+                    var table = $(href).find("div.ucsc_count_tab")
+                    var table_id = table.attr("id");
+                    var metadataFileID = $(href).find("div.ucsc_count_tab").attr("fileid")
+                    var metadataFileLoc = $(href).find("div.ucsc_count_tab").attr("file")
+                    var metadataFileDir = $(href).find("div.ucsc_count_tab").attr("dir")
+                    var insertHref = `#${$(href).find("div.ucsc_count_tab").attr("id")}`
+
+                    // fileid="g-124_table_overall_summary_tsv"
+                    //  filepath="summary/overall_summary.tsv"
+                    //   href="#reportTabg-124_table_overall_summary_tsv" 
+
+                    var filePath = metadataFileDir + "/" + metadataFileLoc;
+                    var split = filePath.split("/");
+                    var filename = "";
+                    var dir = "";
+                    if (split.length > 1) {
+                        filename = split[split.length - 1];
+                        dir = filePath.substring(0, filePath.indexOf(filename));
+                    }
+
+
+                    var visType = "table";
+                    loadTableView(visType, filePath, metadataFileID, metadataFileDir, filename, insertHref, run_log_uuid, pubWebPath)
+
+                }
+
+                //check if left sidebar features table is loaded
+                if ($.trim($(href).find("table.ucsc_gb_genes")[0])) {
+                    var table = $(href).find("table.ucsc_gb_genes")
+                    var metadata_url = table.attr("metadata_url");
+                    var table_id = table.attr("id");
+                    if (!$.fn.DataTable.isDataTable(`#${table_id}`)) {
+                        $.ajax({
+                            url: metadata_url,
+                            async: true,
+                            type: "GET",
+                            success: function(metadata_tsv) {
+                                var geneList = ""
+                                if (metadata_tsv) {
+                                    let metadata_arr = metadata_tsv.split('\n')
+                                    metadata_arr.splice(0, 1);
+                                    metadata_arr = metadata_arr.filter(n => n)
+                                    geneList = metadata_arr.map((elt) => {
+                                        const gene = elt.split("\t")[0].replace('\r', '');
+                                        return [gene];
+                                    });
+                                    var dataTableObj = {};
+                                    dataTableObj.columns = [{
+                                        "title": "Features",
+                                        "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
+                                            $(nTd).html(`<a class="ucsc_gene_link" href="#" gene="${oData[0]}">${oData[0]}</a>`);
+                                        }
+                                    }]
+
+                                    dataTableObj.data = geneList;
+                                    dataTableObj.dom = 'ft';
+                                    //speed up the table loading;
+                                    dataTableObj.deferRender = true;
+                                    dataTableObj.scroller = true;
+                                    dataTableObj.scrollCollapse = true;
+                                    dataTableObj.scrollY = 505;
+                                    dataTableObj.scrollX = true;
+                                    dataTableObj.sScrollX = true;
+                                    //hides undefined error
+                                    dataTableObj.columnDefs = [
+                                        { defaultContent: "-", targets: "_all" },
+                                    ];
+                                    $("#" + table_id).DataTable(dataTableObj);
+                                }
+                            },
+                            error: function(e) {
+                                console.log(e)
+                            }
+                        });
+
+                    }
                 }
             });
             $(".collapseIconItem").on("click", function(e) {
@@ -15597,7 +15743,11 @@ $(document).ready(async function() {
             $.each(cols, function(el) {
                 var overflowT = "";
                 if (cols[el].overflow) {
-                    overflowT = "overflow:" + cols[el].overflow + "; ";
+                    var oTemp = cols[el].overflow
+                    if (cols[el].overflow && typeof cols[el].overflow === 'function') {
+                        oTemp = cols[el].overflow(dataObj)
+                    }
+                    overflowT = "overflow:" + oTemp + "; ";
                 }
                 if (cols[el].colPercent) {
                     columnPercent = cols[el].colPercent;
@@ -15629,7 +15779,7 @@ $(document).ready(async function() {
                     lineHeightT +
                     clearFix +
                     overflowT +
-                    "float:left;  width:" +
+                    "overflow: hidden; float:left;  width:" +
                     columnPercent +
                     '%; ">';
                 processParamDiv += getColumnContent(dataObj, cols[el], null);

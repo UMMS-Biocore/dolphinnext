@@ -967,17 +967,18 @@
                         </div>
                         <div class="col-sm-7">
                             <select multiple="multiple" id="pubWebOpt" name="pubWebOpt">
-                                <option value="text">Text</option>
-                                <option value="image">Image</option>
-                                <option value="html">HTML</option>
+                                <option value="apps">Apps</option>
                                 <option value="table" plugin="dataTables.js">DataTables</option>
                                 <option value="table-percent" plugin="dataTables.js">DataTables Percentage</option>
-                                <!--<option value="highcharts" plugin="highcharts.js">Highcharts</option>-->
-                                <option value="rmarkdown">R Markdown</option>
                                 <option value="debrowser">DEBrowser</option>
+                                <option value="html">HTML</option>
+                                <option value="image">Image</option>
+                                <!--<option value="highcharts" plugin="highcharts.js">Highcharts</option>-->
                                 <option value="pdf">PDF Reader</option>
                                 <option value="rdata">RData</option>
-                                <option value="apps">Apps</option>
+                                <option value="rmarkdown">R Markdown</option>
+                                <option value="text">Text</option>
+                                <option value="ucsc_genome_browser">USCS Genome Browser</option>
                             </select>
                         </div>
 
