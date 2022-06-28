@@ -6182,7 +6182,7 @@ class dbfuncs
                 $hubUrl = "https://dnext.dolphinnext.com/tmp/pub/2jk8tXl8RqSyEfoa9FB5eR7omXBpq0/pubweb/USCS_Track_Hubs/hub.txt";
                 $genome = "mm10";
             }
-            $check_cmd = 'echo $(curl -s "http://genome.ucsc.edu/cgi-bin/hgGateway?genome=' . $genome . '&hubUrl=' . $hubUrl . '" | grep hgsid= | head -n1 | awk \'BEGIN{RS="\""; FS="hgsid="}NF>1{print $NF}\') > ' . $sessionFilePath;
+            $check_cmd = 'echo $(curl -s "https://genome.ucsc.edu/cgi-bin/hgGateway?genome=' . $genome . '&hubUrl=' . $hubUrl . '" | grep hgsid= | head -n1 | awk \'BEGIN{RS="\""; FS="hgsid="}NF>1{print $NF}\') > ' . $sessionFilePath;
             error_log($check_cmd);
             shell_exec($check_cmd);
             $ucsc_session = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.ucsc_session", $ownerID));

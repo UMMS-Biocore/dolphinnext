@@ -568,7 +568,8 @@ folder instead of downloading all of them to reduce the load. -->
                         <li><a href="index.php?np=1">Pipelines </a></li>
                         <?php
                         if ($login == 1) {
-                            echo '<li><a href="index.php?np=2">Projects </a></li><li><a href="index.php?np=5">Run Status </a></li>';
+                            echo '<li><a href="index.php?np=2">Projects </a></li>
+                                  <li><a href="index.php?np=5">Run Status </a></li>';
                             if ($login == 1 && $SHOW_APPS) {
                                 echo '<li class="dropdown" >
         <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Data <span class="caret"></span></a>
@@ -577,6 +578,9 @@ folder instead of downloading all of them to reduce the load. -->
         </ul>
         </li>';
                             }
+                            // if ($login == 1 && $role == "admin") {
+                            //     echo '<li><a href="index.php?np=8">Dashboard</a></li>';
+                            // }
                         }
                         ?>
                     </ul>
