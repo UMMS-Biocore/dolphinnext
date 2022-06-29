@@ -7888,12 +7888,13 @@ class dbfuncs
         // check if current value of the group and perm are same as expected values
         $checkEq = $this->checkPermGroupEq($curr_group_id, $curr_perms, $group_id, $perms);
         if ($checkEq != 1) {
-            // if user doesn't own the process then don't allow to change.
+            // if user is not admin and user doesn't own the process then don't allow to change.
             $ownCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
+            $userRole = $this->getUserRoleVal($ownerID);
             list($permCheck, $warnName) = $this->checkUserPermission($table, $id, $ownerID, "w");
             list($checkUsed, $warn) = $this->checkUsed($table, $warnName, $id, $ownerID);
-            //            error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
-            if (!empty($permCheck) && (empty($checkUsed) || $perms > $curr_perms || ($perms == $curr_perms && $curr_perms > 15) || ($perms == $curr_perms && empty($curr_group_id) && !empty($group_id))) && !empty($ownCheck) && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms >= $curr_perms))) {
+            // error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
+            if ((!empty($permCheck) || $userRole == "admin") && (empty($checkUsed) || $perms > $curr_perms || ($perms == $curr_perms && $curr_perms > 15) || ($perms == $curr_perms && empty($curr_group_id) && !empty($group_id))) && (!empty($ownCheck) || $userRole == "admin") && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms >= $curr_perms))) {
                 if (!preg_match("/dry-run/i", $type)) {
                     if ($table == "biocorepipe_save") {
                         $this->updatePipelineGroupPermByPipeId($id, $group_id, $perms, $ownerID);

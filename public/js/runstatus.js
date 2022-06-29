@@ -66,7 +66,9 @@ $(document).ready(function() {
                 .column(i)
                 .data()
                 .unique()
-                .sort()
+                .sort(function(a, b) {
+                    return a.toLowerCase().localeCompare(b.toLowerCase());
+                })
                 .each(function(d, j) {
                     if (d) {
                         var multiCol = d.split(",");
@@ -87,6 +89,7 @@ $(document).ready(function() {
 
             createMultiselect = function(id, columnToSearch, apiColumn) {
                 $(id).multiselect({
+                    enableFiltering: true,
                     maxHeight: 400,
                     includeResetOption: true,
                     resetText: "Clear filters",
