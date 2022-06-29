@@ -15583,7 +15583,7 @@ $(document).ready(async function() {
                 bindEveHandlerIcon(fileid, visType, pubWebPath, run_log_uuid);
 
             }
-
+            const ucscQueryUrl = "https://genome.ucsc.edu/cgi-bin/hgTracks?hgsid="
 
             $(document).on("click", "a.ucsc_gene_link", function(e) {
                 e.preventDefault();
@@ -15592,7 +15592,7 @@ $(document).ready(async function() {
                 if (ucsc_session) {
                     var navTabDiv = $(this).closest(".collapseRowBody").find(".ucsc_gb_tab");
                     var hubFileID = navTabDiv.attr("fileid")
-                    var link = `https://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=${ucsc_session}&position=${gene}`
+                    var link = `${ucscQueryUrl}${ucsc_session}&position=${gene}`
                     refreshUcscIframe(link, navTabDiv, hubFileID)
                         // bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
                 }
@@ -15610,15 +15610,17 @@ $(document).ready(async function() {
                 if (!ucsc_session && navTabDiv[0]) {
                     // check session for files -> if nor found then create session. 
                     var hubFileLoc = $(href).find("div.ucsc_gb_tab").attr("file")
+                    var dir = $(href).find("div.ucsc_gb_tab").attr("dir")
+                    var hubFileUrl = `${pubWebPath}/${run_log_uuid}/pubweb/${dir}/${hubFileLoc}`;
                     var hubFileID = $(href).find("div.ucsc_gb_tab").attr("fileid")
                     var genomeFileLoc = $(href).find("div.ucsc_gb_tab").attr("genome")
-                    var dir = $(href).find("div.ucsc_gb_tab").attr("dir")
                     getValuesAsync({ p: "getUcscSessionID", hubFileLoc, genomeFileLoc, run_log_uuid, dir },
                         function(sessionID) {
                             console.log(sessionID)
                             if (sessionID) collapseRowDiv.attr("ucsc_session", sessionID)
                             var navTabDiv = collapseRowDiv.closest(".collapseRowDiv").parent().find(".ucsc_gb_tab");
-                            var link = `https://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=${sessionID}`
+                            var link = `${ucscQueryUrl}${sessionID}&hubUrl=${hubFileUrl}`
+                            console.log(link)
                             refreshUcscIframe(link, navTabDiv, hubFileID)
                         }
                     );
