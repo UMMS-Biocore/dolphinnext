@@ -578,9 +578,9 @@ folder instead of downloading all of them to reduce the load. -->
         </ul>
         </li>';
                             }
-                            // if ($login == 1 && $role == "admin") {
-                            //     echo '<li><a href="index.php?np=8">Dashboard</a></li>';
-                            // }
+                            if ($login == 1 && $role == "admin") {
+                                echo '<li><a href="index.php?np=8">Dashboard</a></li>';
+                            }
                         }
                         ?>
                     </ul>

@@ -4399,6 +4399,26 @@ class dbfuncs
                 WHERE (p.public != '1' OR p.public IS NULL) AND (p.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' and p.perms = 15))";
         return self::queryTable($sql);
     }
+
+    function getRunStatsByPipeline($ownerID)
+    {
+        $sql = "SELECT rl.owner_id as own, rl.id, rl.run_status as stat, rl.duration as dur, rl.date_created as date, b.pipeline_id as pip, b.pipeline_gid as gid, b.name as pname, e.name as oname,  e.lab as olab
+        FROM $this->db.run_log rl
+        INNER JOIN (
+          SELECT pp.id, pp.pipeline_id, c.pipeline_gid, c.name
+          FROM $this->db.project_pipeline pp
+            INNER JOIN (
+            SELECT p.id, p.pipeline_gid, p.name
+            FROM $this->db.biocorepipe_save p
+            ) c ON pp.pipeline_id = c.id
+          ) b ON rl.project_pipeline_id = b.id
+          INNER JOIN (
+          SELECT u.id, u.name, u.lab
+          FROM $this->db.users u
+          ) e ON rl.owner_id = e.id";
+        return self::queryTable($sql);
+    }
+
     function getCollections($ownerID)
     {
         $sql = "SELECT c.id, c.name, count(fc.c_id) AS fileCount

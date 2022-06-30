@@ -130,11 +130,15 @@ function filterObjVal(obj, filter) {
 
 
 //sort array of object by key
-function sortByKey(array, key) {
+function sortByKey(array, key, type) {
     return array.sort(function(a, b) {
         var x = a[key];
         var y = b[key];
-        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+        if (type && type == "desc") {
+            return ((x > y) ? -1 : ((x < y) ? 1 : 0));
+        } else {
+            return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+        }
     });
 }
 

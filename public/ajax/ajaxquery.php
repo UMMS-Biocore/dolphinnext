@@ -2121,6 +2121,8 @@ if ($p == "publishGithub") {
     $data = $db->getPipelineRevision($pipeline_gid, $ownerID);
 } else if ($p == "getPublicPipelines") {
     $data = $db->getPublicPipelines($ownerID);
+} else if ($p == "getRunStatsByPipeline") {
+    $data = $db->getRunStatsByPipeline($ownerID);
 } else if ($p == "checkPipeline") {
     $process_id = $_REQUEST['process_id'];
     $data = $db->checkPipeline($process_id, $ownerID);
