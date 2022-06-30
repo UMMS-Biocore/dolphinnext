@@ -6,7 +6,7 @@
         <div class="box-body" bis_skin_checked="1">
             <div class="row" bis_skin_checked="1">
                 <div class="col-md-10" bis_skin_checked="1">
-                    <canvas id="runStatsByPipelineChart" width="400" height="400"></canvas>
+                    <canvas id="runStatsByPipelineChart" width="400" height="250"></canvas>
                 </div>
                 <div class="col-md-2" bis_skin_checked="1">
                     <select id="runsByPipelineUser" style="display:none;" name="Users" multiple="multiple"></select>
@@ -23,7 +23,7 @@
         <div class="box-body" bis_skin_checked="1">
             <div class="row" bis_skin_checked="1">
                 <div class="col-md-10" bis_skin_checked="1">
-                    <canvas id="runStatsByUserChart" width="400" height="400"></canvas>
+                    <canvas id="runStatsByUserChart" width="400" height="250"></canvas>
                 </div>
                 <div class="col-md-2" bis_skin_checked="1">
                     <select id="runsByUser">

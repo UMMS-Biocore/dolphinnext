@@ -175,6 +175,10 @@ function getJS($np, $login, $id)
         $js .= '<script src="' . auto_version("js/appDetail.js") . '"></script>';
     } else if ($np == 8 && $login == 1) {
         $js .= '<script src="bower_components/chartjs/chart3.8.0.min.js"></script>';
+        $js .= '<script src="bower_components/chartjs/hammerjs2.0.8.min.js"></script>';
+        $js .= '<script src="bower_components/chartjs/chartjs-plugin-zoom1.2.0.min.js"></script>';
+
+
         $js .= '<script src="' . auto_version("js/adminDashboard.js") . '"></script>';
     } else {
         $js .= '<script src="' . auto_version("js/public.js") . '"></script>';
