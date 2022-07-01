@@ -46,9 +46,9 @@
 
 
 <!-- Add Process Modal -->
-<div id="addProcessModal" data-keyboard="false" data-backdrop="static" style="overflow-y:scroll;" class="modal fade " tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" style="width:1350px;" role="document">
-        <div class="modal-content">
+<div id="addProcessModal" data-keyboard="false" data-backdrop="static" style="overflow-y:scroll;" class="modal fade fullscreen" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg fullscreen" role=" document">
+        <div class="modal-content fullscreen">
             <span id="addHeader"></span>
             <div id="revModalHeader" class="modal-header">
                 <button style="padding-top:6px;" type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -74,31 +74,31 @@
             <div class="modal-body">
                 <form class="form-horizontal">
                     <div class="form-group" style="display:none">
-                        <label for="mIdPro" class="col-sm-2 control-label">ID</label>
-                        <div class="col-sm-10">
+                        <label for="mIdPro" class="col-sm-1 control-label">ID</label>
+                        <div class="col-sm-11">
                             <input type="text" class="form-control" id="mIdPro" name="id">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="mName" style="width:150px;" class="col-sm-2 control-label">Name</label>
-                        <div class="col-sm-10">
+                        <label for="mName" class="col-sm-1 control-label">Name</label>
+                        <div class="col-sm-11">
                             <input type="text" class="form-control" id="mName" name="name">
                         </div>
                     </div>
                     <div id="versionGroup" class="form-group" style="display:none">
-                        <label for="mVersion" style="width:150px;" class="col-sm-2 control-label">Version</label>
-                        <div class="col-sm-10">
+                        <label for="mVersion" class="col-sm-1 control-label">Version</label>
+                        <div class="col-sm-11">
                             <input type="text" class="form-control" id="mVersion" name="version">
                         </div>
                     </div>
                     <div id="describeGroup" class="form-group">
-                        <label for="mDescription" style="width:150px;" class="col-sm-2 control-label">Description</label>
-                        <div class="col-sm-10">
+                        <label for="mDescription" class="col-sm-1 control-label">Description</label>
+                        <div class="col-sm-11">
                             <textarea rows="3" class="form-control" id="mDescription" name="summary"></textarea>
                         </div>
                     </div>
                     <div id="proGroup" class="form-group">
-                        <label for="mProcessGroup" style="width:150px;" class="col-sm-2 control-label">Menu Group</label>
+                        <label for="mProcessGroup" class="col-sm-1 control-label">Menu Group</label>
                         <div style="width:270px;" class="col-sm-3">
                             <select id="mProcessGroup" class="fbtn btn-default form-control" name="process_group_id"></select>
                         </div>
@@ -113,7 +113,7 @@
                         </div>
                     </div>
                     <div id="mParameters" class="form-group" style=" padding-top:15px; border-top:0.094em solid lightgrey;">
-                        <label for="mParamAll" style="width:150px;" class="col-sm-2 control-label">Parameters</label>
+                        <label for="mParamAll" class="col-sm-1 control-label">Parameters</label>
                         <div id="mParamAll" class="col-sm-5">
                             <select id="mParamAllIn" class="fbtn btn-default form-control mParChange" name="ParamAll" style="display:none;"></select>
                         </div>
@@ -150,12 +150,12 @@
                         <div class="col-sm-2 " style="width:100px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:15px;">Optional <span><a data-toggle="tooltip" data-placement="bottom" title="Optional input parameter. Process will be executed in case parameter is empty."><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
-                        <div id="mInTestValueT" class="col-sm-2" style="width:220px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
+                        <div id="mInTestValueT" class="col-sm-2" style="width:250px; padding-left:5px; padding-right:0; border-bottom:1px solid lightgrey;">
                             <p style="padding-left:20px;">Test Value <span><a data-toggle="tooltip" data-placement="bottom" title="example values for each qualifier: val: 5, file: /export/file, set: [1, 'a'], [2, 'b'], set: /path/*.fastq, each: [5, 10]"><i class='glyphicon glyphicon-info-sign' style="font-size:13px;"></i></a></span></p>
                         </div>
                     </div>
                     <div id="inputGroup" class="form-group">
-                        <label for="mInputs-1" style="width:150px;" class="col-sm-2 control-label">Inputs</label>
+                        <label for="mInputs-1" class="col-sm-1 control-label">Inputs</label>
                         <div id="mInputs" class="col-sm-3" style="width:270px;">
                             <select id="mInputs-1" num="1" class="fbtn btn-default form-control mParChange" prev="-1" name="mInputs-1"></select>
                         </div>
@@ -233,7 +233,7 @@
                         <div id="mInOptional" class="col-sm-1" style="width:40px; padding-left:0;padding-right:0;">
                             <label style="display:none;" class="btn btn-default form-control"><input id="mInOptional-0" name="mInOptional-0" type="checkbox" autocomplete="off"> </label>
                         </div>
-                        <div id="mInTestValue" class="col-sm-2 " style="width:250px; padding-left:30px; padding-right:0;">
+                        <div id="mInTestValue" class="col-sm-2 " style="width:300px; padding-left:30px; padding-right:0;">
                             <input type="text" style="display:none; " placeholder="Enter value" class="form-control" ppID="" id="mInTestValue-0" name="mInTestValue-0">
                         </div>
                     </div>
@@ -265,7 +265,7 @@
                         </div>
                     </div>
                     <div id="outputGroup" class="form-group">
-                        <label for="mOutput-1" style="width:150px;" class="col-sm-2 control-label">Outputs</label>
+                        <label for="mOutput-1" class="col-sm-1 control-label">Outputs</label>
                         <div id="mOutputs" class="col-sm-3" style="width:270px;">
                             <select id="mOutputs-1" num="1" class="fbtn btn-default form-control mParChange" prev="-1" name="mOutputs-1"></select>
                         </div>
@@ -349,18 +349,19 @@
                     </div>
 
 
-                    <div class="form-group" style=" padding-top:15px; border-top:0.094em solid lightgrey;">
-                        <label style="width:150px;" class="col-sm-2 control-label"></label>
-                        <div class="col-sm-10">
+                    <div class="form-group" style=" padding-left:30px; padding-top:15px; border-top:0.094em solid lightgrey;">
+                        <div class="col-sm-12">
                             <ul class="nav nav-tabs">
                                 <li class="active"><a class="nav-item" href="#pro_editor_tab" data-toggle="tab" aria-expanded="true">Script</a></li>
                                 <li class=""><a class="nav-item" href="#pro_test_tab" data-toggle="tab" aria-expanded="false">Process Test</a></li>
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane active" id="pro_editor_tab">
+
+
                                     <div id="editordiv" class="col-sm-12" style="padding-left:0px;">
                                         <div id="editor" style="height: 300px;"></div>
-                                        <div id="editor_dragbar" class="app_editor_dragbar"></div>
+                                        <div id="editor_draghandle" class="ui-icon ui-icon-gripsmall-diagonal-se" style="float:right;"></div>
                                         <div class="row">
                                             <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
                                             <div class="col-sm-3" style="padding-left:0;">
@@ -534,16 +535,9 @@
 
 
 
-
-
-
-
-
-
-
                     <div id="advOptProDiv">
                         <div class="form-group">
-                            <label for="mAdvIcon" class="col-sm-2 control-label">Advanced Options</label>
+                            <label for="mAdvIcon" class="col-sm-1 control-label" style="width:fit-content;">Advanced Options</label>
                             <div class="col-sm-10">
                                 <i id="mAdvProIcon" data-toggle="tooltip" data-placement="bottom" data-original-title="Expand/Collapse"><a id="mAdvProCollap" class="fa fa-plus-square-o collapseIcon" style=" font-size:15px; padding-top:10px; padding-left:5px;" data-toggle="collapse" data-target="#advOptPro"></a></i>
                             </div>

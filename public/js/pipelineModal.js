@@ -72,7 +72,23 @@ function createAceEditors(editorId, script_modeId) {
         window[editorId].getSession().setMode("ace/mode/sh");
         window[editorId].setOptions({ useSoftTabs: false });
         window[editorId].$blockScrolling = Infinity;
-        //        makeAceEditorResizable(window[editorId])
+        console.log(editorId)
+        if (editorId == "editor") {
+            $("#editordiv").resizable({
+                handles: { 's': '#editor_draghandle' },
+                minHeight: 340,
+                resize: function(event, ui) {
+                    // prevent width change
+                    $(this).css('width', '');
+                    let newHeight = $("#editordiv").css("height")
+                    newHeight = newHeight.slice(0, -2); // remove px
+                    newHeight = `${newHeight-38.5}px`;
+                    $(`#${editorId}`).css("height", newHeight)
+                    window[editorId].resize()
+                }
+            });
+        }
+        // makeAceEditorResizable(window[editorId])
         //If mode is exist, then apply it
         var mode = $(script_modeId).val();
         if (mode && mode != "") {
@@ -1977,7 +1993,7 @@ $(document).ready(function() {
     }
 
     //Make modal draggable    
-    $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorProHeaderdiv, #editorTestProdiv, #editorProFooterdiv, button, span, a, #amazonTable, #googleTable' });
+    // $('.modal-dialog').draggable({ cancel: 'p, input, textarea, select, #editordiv, #editorProHeaderdiv, #editorTestProdiv, #editorProFooterdiv, button, span, a, #amazonTable, #googleTable' });
 
     // Selectize pubDmetaTarget Dropdown
     $("#pubDmetaTarget").selectize({ create: true, placeholder: "Choose or Type for New", createOnBlur: true })
