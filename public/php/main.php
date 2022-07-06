@@ -333,6 +333,12 @@ folder instead of downloading all of them to reduce the load. -->
             overflow: auto;
         }
 
+        body.modal-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+
         .form-horizontal .control-label.text-left {
             text-align: left;
         }
@@ -528,6 +534,7 @@ folder instead of downloading all of them to reduce the load. -->
         .dz-error-mark svg g g {
             fill: #c00;
         }
+
 
         /*      draggable ace editor
 

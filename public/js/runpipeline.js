@@ -12172,7 +12172,6 @@ $(document).ready(async function() {
                         data: formObj,
                         async: true,
                         success: function(s) {
-                            console.log(s)
                             if (s.length) {
                                 $("#sampleTable").data("select", [collection_name]);
                                 $("#sampleTable").DataTable().ajax.reload(null, false);
