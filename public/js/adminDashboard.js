@@ -1,11 +1,5 @@
-//1. Which pipelines are being run the most often across the org? ( # of jobs) (vs. Which ones are not having much traction?) 
-// 2. Which groups/departments are the heaviest users of DolphinNEXT? 
-//   a.Which pipelines are they using? 
-//   b.Who are the heaviest individual users? 
-//her pipeline group icin hangi user ve group kac kere run etmis? 
-//run tarihleri olursa zaman araligini daraltilbilir
-
 $(document).ready(async function() {
+
 
     $s = { users: [], runStatsByPipeline: [], runStatsByPipelineChart: null };
 
@@ -19,17 +13,20 @@ $(document).ready(async function() {
     console.log($s.runStatsByPipeline)
 
 
-    const createMultiselect = function(id) {
+    const createMultiselect = function(id, selectAll) {
         $(id).multiselect({
             enableFiltering: true,
             maxHeight: 400,
             includeResetOption: true,
-            resetText: "Clear filters",
+            resetText: "Clear Selections",
             includeResetDivider: true,
             includeSelectAllOption: true,
             enableCaseInsensitiveFiltering: true,
             buttonText: function(options, select) {
+                const totalOptions = $(select).find("option").length
                 if (options.length == 0) {
+                    return select.attr("name") + ": None";
+                } else if (options.length == totalOptions) {
                     return select.attr("name") + ": All";
                 } else if (options.length > 2) {
                     return select.attr("name") + ": " + options.length + " selected";
@@ -41,14 +38,18 @@ $(document).ready(async function() {
                     return select.attr("name") + ": " + labels.join(", ") + "";
                 }
             },
-        });
+
+        })
+        if (selectAll) {
+            $(id).multiselect('selectAll', false).multiselect('updateButtonText');
+        }
+
         $(id).css("display", "inline-block")
     };
 
 
 
     const getData = (settings) => {
-        const chartID = settings.chartID
         const dropdownOpts = settings.dropdownOpts
         const source = settings.source
         const groupby = settings.groupbyField
@@ -56,74 +57,101 @@ $(document).ready(async function() {
         let obj = {}
         for (let n = 0; n < source.length; n++) {
             let groupbyVal = source[n][groupby]
-            let skip = false;
-            if (!obj[groupbyVal]) obj[groupbyVal] = { x: "", y: 0 }
+            let keepArr = [];
+            let keep = true;
+            if (!obj[groupbyVal]) obj[groupbyVal] = { label: "", total: 0, success: 0, error: 0 }
             if (dropdownOpts.length) {
                 for (let k = 0; k < dropdownOpts.length; k++) {
+                    keep = true;
                     const opts = dropdownOpts[k];
                     const dropOpts = opts.options
                     const dropName = opts.name
                     let checkedVal = source[n][dropName];
                     // for multiselect
-                    if (Array.isArray(dropOpts) && dropOpts.length && checkedVal && !dropOpts.includes(checkedVal)) {
-                        skip = true;
+                    if (Array.isArray(dropOpts)) {
+                        if (dropOpts.length && (checkedVal && !dropOpts.includes(checkedVal) || checkedVal == "")) {
+                            keep = false;
+                        } else if (dropOpts.length === 0) {
+                            keep = false;
+                        }
                         // for regular dropdown;
                     } else if (!Array.isArray(dropOpts) && dropOpts && dropOpts !== checkedVal) {
-                        skip = true;
+                        keep = false;
                     }
+                    keepArr.push(keep)
                 }
+            } else {
+                // for regular dropdown;
+                keepArr.push(true)
             }
-            if (!skip) {
-                obj[groupbyVal]["x"] = source[n][label]
-                obj[groupbyVal]["y"]++
+            if (keepArr.includes(true)) {
+                //{x: 'RNA-seq Pipeline', y: 504}
+                obj[groupbyVal]["label"] = source[n][label];
+                if (source[n]["stat"] == "NextErr" || source[n]["stat"] == "Error") obj[groupbyVal]["error"]++;
+                if (source[n]["stat"] == "NextSuc") obj[groupbyVal]["success"]++;
+                if (source[n]["stat"] == "NextSuc" || source[n]["stat"] == "NextErr" || source[n]["stat"] == "Error") {
+                    obj[groupbyVal]["total"]++;
+
+                }
             }
 
         }
-        let final = [];
+        let arrObj = [];
         Object.keys(obj).forEach((k, i) => {
-            final.push(obj[k])
+            arrObj.push(obj[k])
         });
-        final = sortByKey(final, "y", { type: "desc" })
-        return final
+        console.log(arrObj)
+        arrObj = sortByKey(arrObj, "total", { type: "desc" })
+        console.log(arrObj)
+        let total = []
+        let success = []
+        let error = []
+        let labels = []
+        for (let n = 0; n < arrObj.length; n++) {
+            total.push(arrObj[n].total)
+            labels.push(arrObj[n].label)
+            success.push(arrObj[n].success)
+            error.push(arrObj[n].error)
+        }
+
+        let datasets = [{
+                label: 'Error',
+                data: error,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            },
+            {
+                label: 'Success',
+                data: success,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            },
+        ]
+
+
+        return [datasets, labels, total]
     }
 
 
-    const updateChart = (settings) => {
+    const createChart = (settings) => {
         const chartID = settings.chartID
-        let data = getData(settings);
-        console.log(data);
-        // destroy first to update all data
+        const datasets = settings.datasets
+        const labels = settings.labels
+        const legend = settings.legend
+        const yAxes = settings.yAxes
+
         if ($s[chartID]) $s[chartID].destroy();
         $s[chartID] = new Chart(document.getElementById(chartID), {
             type: 'bar',
             data: {
-                datasets: [{
-                    label: "# of runs",
-                    data: data,
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
+                labels: labels,
+                datasets: datasets
             },
             options: {
+                scales: {
+                    yAxes
+                },
+                responsive: true,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: legend,
                     zoom: {
                         pan: {
                             enabled: true,
@@ -139,13 +167,123 @@ $(document).ready(async function() {
                         },
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
             }
         });
+    }
+
+    const updateChart = (settings) => {
+        const chartID = settings.chartID
+        const stacked = settings.stacked
+        let [datasets, labels, total] = getData(settings);
+        // destroy first to update all data
+        if ($s[chartID]) $s[chartID].destroy();
+        if (stacked) {
+            $s[chartID] = new Chart(document.getElementById(chartID), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                footer: function(items) {
+                                    console.log(items)
+                                    let total = items[0].parsed._stacks.y[0] + items[0].parsed._stacks.y[1]
+                                    return 'Total: ' + total;
+                                }
+                            }
+                        },
+
+                        // legend: {
+                        //     display: false
+                        // },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                            },
+                            zoom: {
+                                wheel: {
+                                    enabled: true
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'x',
+                            },
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            beginAtZero: true,
+                            stacked: true
+                        }
+                    }
+                }
+            });
+
+        } else {
+            $s[chartID] = new Chart(document.getElementById(chartID), {
+                type: 'bar',
+                data: {
+                    datasets: [{
+                        label: "# of runs",
+                        data: data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(255, 206, 86, 0.2)',
+                            'rgba(75, 192, 192, 0.2)',
+                            'rgba(153, 102, 255, 0.2)',
+                            'rgba(255, 159, 64, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        zoom: {
+                            pan: {
+                                enabled: true,
+                            },
+                            zoom: {
+                                wheel: {
+                                    enabled: true
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'x',
+                            },
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+
+
     }
 
     // #############################################
@@ -154,8 +292,10 @@ $(document).ready(async function() {
     // runsByPipelineUser chart
 
     const runsByPipelineUserID = "#runsByPipelineUser";
+    const runsByPipelineGroup = "#runsByPipelineGroup";
 
     $s.users_sorted = sortByKey($s.users, "name", { caseinsensitive: true })
+    $s.lab_sorted = sortByKey($s.users, "lab", { caseinsensitive: true })
 
     for (var n = 0; n < $s.users_sorted.length; n++) {
         $(runsByPipelineUserID).append(
@@ -167,21 +307,42 @@ $(document).ready(async function() {
         );
     }
 
-    $(runsByPipelineUserID).on("change", function() {
-        var options = $(this).val();
+    let labList = []
+    for (var n = 0; n < $s.lab_sorted.length; n++) {
+        if (!labList.includes($s.lab_sorted[n].lab)) {
+            label = $s.lab_sorted[n].lab
+            if (!$s.lab_sorted[n].lab) label = "Unknown"
+            $(runsByPipelineGroup).append(
+                '<option value="' +
+                $s.lab_sorted[n].lab +
+                '">' +
+                label +
+                "</option>"
+            );
+            labList.push($s.lab_sorted[n].lab)
+        }
+
+    }
+
+    $(`${runsByPipelineUserID},${runsByPipelineGroup}`).on("change", function() {
+        var options = $(runsByPipelineUserID).val();
+        var optionsGroup = $(runsByPipelineGroup).val();
         let dropdownOpts = [];
         // name should be the field in chart data
         dropdownOpts.push({ name: "own", options: options })
+        dropdownOpts.push({ name: "olab", options: optionsGroup })
         updateChart({
             chartID: "runStatsByPipelineChart",
             dropdownOpts: dropdownOpts,
             source: $s.runStatsByPipeline,
             groupbyField: "gid",
-            labelField: "pname"
+            labelField: "pname",
+            stacked: true
         })
-    })
-    createMultiselect(runsByPipelineUserID)
-    $(runsByPipelineUserID).trigger("change")
+    });
+    createMultiselect(runsByPipelineUserID, true);
+    createMultiselect(runsByPipelineGroup, false);
+    $(runsByPipelineUserID).trigger("change");
 
     // runsByUserID chart
     const runsByUserID = "#runsByUser";
@@ -196,12 +357,149 @@ $(document).ready(async function() {
             dropdownOpts: dropdownOpts,
             source: $s.runStatsByPipeline,
             groupbyField: options,
-            labelField: options
+            labelField: options,
+            stacked: true
         })
-    })
+    });
     $(runsByUserID).trigger("change")
 
 
+    // chart-3: "runStatsTotalUsers"
+    function sumArray(array) {
+        let sum = 0;
+        array.forEach(item => { sum += item; });
+        return sum;
+    }
+
+    const getTotalUserData = () => {
+        let obj = {}
+        for (var n = 0; n < $s.users.length; n++) {
+            let yearmonthArr = $s.users[n].memberdate.split("-");
+            let yearmonth = yearmonthArr[0] + "-" + yearmonthArr[1];
+            if (!obj[yearmonth]) obj[yearmonth] = { label: "", total: 0 }
+            obj[yearmonth]["label"] = yearmonth;
+            obj[yearmonth]["total"]++;
+        }
+        console.log(obj)
+        let arrObj = [];
+        Object.keys(obj).forEach((k, i) => {
+            arrObj.push(obj[k])
+        });
+
+        arrObj = arrObj.sort(function(a, b) {
+            a = a.label.split("-");
+            b = b.label.split("-")
+            return new Date(a[0], a[1], 1) - new Date(b[0], b[1], 1)
+        });
+        console.log(arrObj)
+        let each = []
+        let total = []
+        let labels = []
+
+
+        for (let n = 0; n < arrObj.length; n++) {
+            each.push(arrObj[n].total)
+            total.push(sumArray(each))
+            labels.push(arrObj[n].label)
+        }
+        let datasets = [{
+                label: 'New Members',
+                data: each,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            },
+            {
+                label: 'Cumulative Total Members',
+                data: total,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                type: 'line',
+            },
+        ]
+        return [datasets, labels]
+    }
+
+    let [userDataset, userlabels] = getTotalUserData()
+    createChart({
+        chartID: "runStatsTotalUsers",
+        datasets: userDataset,
+        labels: userlabels,
+        legend: { position: "top" },
+        yAxes: {}
+    })
+
+
+    // chart-4: "runStatsAvgRun"
+    const getAvgRunTime = () => {
+        let obj = {}
+        for (var n = 0; n < $s.runStatsByPipeline.length; n++) {
+            let status = $s.runStatsByPipeline[n].stat
+            let duration = $s.runStatsByPipeline[n].dur
+            let gid = $s.runStatsByPipeline[n].gid
+            let pname = $s.runStatsByPipeline[n].pname
+            if (status == "NextSuc") {
+                //duration  9h 43m 18s;
+                //duration  43m 18s;
+                //duration  18s;
+                duration = $.trim(duration);
+                durations = duration.split(" ");
+                totalSec = 0;
+                for (var k = 0; k < durations.length; k++) {
+                    if (durations[k].match(/s/)) {
+                        totalSec += parseInt(durations[k].slice(0, -1));
+                    } else if (durations[k].match(/m/)) {
+                        totalSec += parseInt(durations[k].slice(0, -1)) * 60;
+                    } else if (durations[k].match(/h/)) {
+                        totalSec += parseInt(durations[k].slice(0, -1)) * 60 * 60;
+                    } else if (durations[k].match(/d/)) {
+                        totalSec += parseInt(durations[k].slice(0, -1)) * 60 * 60 * 24;
+                    }
+                }
+                console.log(totalSec)
+                    // exclude runs that are faster than 3 minutes (resumed jobs)
+                if (totalSec > 180) {
+                    if (!obj[gid]) obj[gid] = { label: "", total: [] }
+                    obj[gid]["label"] = pname;
+                    obj[gid]["total"].push(totalSec);
+                }
+
+
+            }
+
+        }
+        let arrObj = [];
+        Object.keys(obj).forEach((k, i) => {
+            arrObj.push(obj[k])
+        });
+        arrObj = sortByKey(arrObj, "total", { type: "desc" })
+        let total = []
+        let labels = []
+        for (let n = 0; n < arrObj.length; n++) {
+            total.push(sumArray(arrObj[n].total) / arrObj[n].total.length / 60 / 60)
+            labels.push(arrObj[n].label)
+        }
+        let datasets = [{
+            data: total,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        }]
+        return [datasets, labels]
+    }
+
+    let [avgTimeDataset, avgTimelabels] = getAvgRunTime();
+    createChart({
+        chartID: "runStatsAvgRun",
+        datasets: avgTimeDataset,
+        labels: avgTimelabels,
+        legend: { display: false },
+        yAxes: {
+            title: {
+                display: true,
+                text: "Hours",
+            }
+        }
+    });
+
+
+    // after createMultiselects to trigger change on reset
+    $('.multiselect-reset').on('click', function() { $(this).closest('.multiselect-native-select').find('select').trigger("change") });
 
 
 

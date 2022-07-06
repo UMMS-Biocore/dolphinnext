@@ -6676,6 +6676,11 @@ class dbfuncs
 
         $php_set_date = strtotime("now");
         $cron_set_date = date("Y-m-d H:i:s", $php_set_date);
+        if (empty($cron_min) && empty($cron_hour)  && empty($cron_day)  && empty($cron_week)  && empty($cron_month)) {
+            $sql = "UPDATE $this->db.project_pipeline SET type='cron', cron_target_date=NULL,  cron_check='false'  WHERE id = '$project_pipeline_id'";
+            self::runSQL($sql);
+            return json_encode("");
+        }
         $php_target_date = strtotime("+{$cron_min} minutes {$cron_hour} hours {$cron_day} days {$cron_week} weeks {$cron_month} months");
         $cron_target_date = date("Y-m-d H:i:s", $php_target_date);
         if (!empty($cron_first)) $cron_target_date = $cron_first;
