@@ -1,3 +1,12 @@
+02.07.2021 Version 1.3.21
+Warning added for automated execution.
+Automated execution is allowed for single run submission when frequency is not set.
+Run word replaced with Attempt in run page dropdown.
+UCSC Genome Browser links added to count table.
+Lab filter added to Total Runs by Pipeline graph.
+Error vs success run counts added to Admin Dashboard.
+Average Run Time plot added to Admin Dashboard.
+
 01.07.2021 Version 1.3.20
 Size of the add/edit process modal increased. Height control handles were added to the editor. 
 

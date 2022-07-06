@@ -5892,26 +5892,37 @@ $(document).on("click", ".setCron", async function(e) {
     var cron_prefix = $("#cron_prefix").val();
     var cron_first = $("#cron_first").val();
     var cron_check = $("#cron_check").is(":checked").toString();
-    var data = await doAjax({
-        p: "saveCron",
-        project_pipeline_id,
-        cron_min,
-        cron_hour,
-        cron_day,
-        cron_week,
-        cron_month,
-        cron_prefix,
-        cron_check,
-        cron_first
-    });
-    console.log(data)
-    if (data) {
-        toastr.info("Automated Execution is Activated");
-        $("#cronNextSubDate").text(data)
+    let run = false
+    console.log()
+    if ((cron_min && cron_min != "0") || (cron_hour && cron_hour != "0") || (cron_day && cron_day != "0") ||
+        (cron_week && cron_week != "0") || (cron_month && cron_month != "0") || cron_first) {
+        run = true
     } else {
-        toastr.error("Error Occured");
-
+        showInfoModal("#infoModal", "#infoModalText", "Please set frequency or first submission date for automated execution.");
     }
+    if (run) {
+        var data = await doAjax({
+            p: "saveCron",
+            project_pipeline_id,
+            cron_min,
+            cron_hour,
+            cron_day,
+            cron_week,
+            cron_month,
+            cron_prefix,
+            cron_check,
+            cron_first
+        });
+        console.log(data)
+        if (data) {
+            toastr.info("Automated Execution is Activated");
+            $("#cronNextSubDate").text(data)
+        } else {
+            toastr.error("Error Occured");
+
+        }
+    }
+
 
 });
 
@@ -8689,7 +8700,7 @@ async function fillRunVerOpt(dropDownId) {
             if (newRunLogs[el].name) {
                 runName = decodeHtml(newRunLogs[el].name);
             } else {
-                runName = "Run " + n;
+                runName = "Attempt " + n;
             }
 
             if (run_log_uuid) {
@@ -14930,7 +14941,7 @@ $(document).ready(async function() {
         var blankUrlIcon = "";
         var downloadIcon = "";
         // "ucsc_genome_browser"
-        if (visType !== "table-percent" && visType !== "table" && visType !== "debrowser") {
+        if (visType !== "table-percent" && visType !== "table" && visType !== "debrowser" && visType !== "ucsc_genome_browser_metadata") {
             blankUrlIcon = `<li role="presentation"><a fileid="` + fileid + `" id="blankUrl-` +
                 fileid + `" data-toggle="tooltip" data-placement="bottom" data-original-title="Open in a New Window"><i style="font-size: 18px;" class="fa fa-external-link"></i></a></li>`;
         }
@@ -14948,6 +14959,18 @@ $(document).ready(async function() {
             content + "</div>";
         return wrapDiv;
     };
+
+    const addUcscDatatableLinks = (obj) => {
+        if (obj && obj.columns && obj.columns[0]) {
+            obj.columns[0] = {
+                "title": "Genes",
+                "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html(`<a class="ucsc_gene_link" href="#" gene="${oData[0]}">${oData[0]}</a>`);
+                }
+            }
+        }
+        return obj
+    }
 
     const loadTableView = (visType, filePath, fileid, dir, filename, href, uuid, pubWebPath) => {
         var ext = getExtension(filePath);
@@ -15012,6 +15035,9 @@ $(document).ready(async function() {
                             data = tsvPercent(data);
                         }
                         dataTableObj = tsvCsvDatatablePrep(data, fixHeader, "\t");
+                    }
+                    if (visType == "ucsc_genome_browser_metadata") {
+                        dataTableObj = addUcscDatatableLinks(dataTableObj)
                     }
                     //speed up the table loading
                     dataTableObj.deferRender = true;
@@ -15594,7 +15620,8 @@ $(document).ready(async function() {
                     var hubFileID = navTabDiv.attr("fileid")
                     var link = `${ucscQueryUrl}${ucsc_session}&position=${gene}`
                     refreshUcscIframe(link, navTabDiv, hubFileID)
-                        // bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
+                    var tabHrefId = $(this).closest(".collapseRowBody").find(".ucsc_gb_tab").attr("id")
+                    $(`a[href="#${tabHrefId}"]`)[0].click();
                 }
             });
 
@@ -15650,7 +15677,7 @@ $(document).ready(async function() {
                     }
 
 
-                    var visType = "table";
+                    var visType = "ucsc_genome_browser_metadata";
                     loadTableView(visType, filePath, metadataFileID, metadataFileDir, filename, insertHref, run_log_uuid, pubWebPath)
 
                 }
@@ -15677,7 +15704,7 @@ $(document).ready(async function() {
                                     });
                                     var dataTableObj = {};
                                     dataTableObj.columns = [{
-                                        "title": "Features",
+                                        "title": "Genes",
                                         "fnCreatedCell": function(nTd, sData, oData, iRow, iCol) {
                                             $(nTd).html(`<a class="ucsc_gene_link" href="#" gene="${oData[0]}">${oData[0]}</a>`);
                                         }
