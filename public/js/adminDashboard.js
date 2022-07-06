@@ -27,6 +27,7 @@ $(document).ready(async function() {
             resetText: "Clear filters",
             includeResetDivider: true,
             includeSelectAllOption: true,
+            enableCaseInsensitiveFiltering: true,
             buttonText: function(options, select) {
                 if (options.length == 0) {
                     return select.attr("name") + ": All";
@@ -82,7 +83,7 @@ $(document).ready(async function() {
         Object.keys(obj).forEach((k, i) => {
             final.push(obj[k])
         });
-        final = sortByKey(final, "y", "desc")
+        final = sortByKey(final, "y", { type: "desc" })
         return final
     }
 
@@ -122,6 +123,20 @@ $(document).ready(async function() {
                 plugins: {
                     legend: {
                         display: false
+                    },
+                    zoom: {
+                        pan: {
+                            enabled: true,
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true
+                            },
+                            pinch: {
+                                enabled: true
+                            },
+                            mode: 'x',
+                        },
                     }
                 },
                 scales: {
@@ -139,12 +154,15 @@ $(document).ready(async function() {
     // runsByPipelineUser chart
 
     const runsByPipelineUserID = "#runsByPipelineUser";
-    for (var n = 0; n < $s.users.length; n++) {
+
+    $s.users_sorted = sortByKey($s.users, "name", { caseinsensitive: true })
+
+    for (var n = 0; n < $s.users_sorted.length; n++) {
         $(runsByPipelineUserID).append(
             '<option value="' +
-            $s.users[n].id +
+            $s.users_sorted[n].id +
             '">' +
-            $s.users[n].name +
+            $s.users_sorted[n].name +
             "</option>"
         );
     }

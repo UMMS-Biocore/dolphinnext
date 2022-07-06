@@ -94,6 +94,7 @@ $(document).ready(function() {
                     includeResetOption: true,
                     resetText: "Clear filters",
                     includeResetDivider: true,
+                    enableCaseInsensitiveFiltering: true,
                     buttonText: function(options, select) {
                         if (options.length == 0) {
                             return select.attr("name") + ": All";

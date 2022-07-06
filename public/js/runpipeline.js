@@ -12161,7 +12161,7 @@ $(document).ready(async function() {
                         formObj.gs_archive_dir = gs_archive_dir_geo + "\t" + googArchKey;
                     }
                     formObj.archive_dir = $.trim(formObj.archive_dir);
-                    formObj.file_array = ret.file_array;
+                    formObj.file_array = JSON.stringify(ret.file_array);
                     formObj.run_env = $("#chooseEnv").find(":selected").val();
                     formObj.project_id = project_id;
                     formObj.p = "saveFile";
@@ -12172,6 +12172,7 @@ $(document).ready(async function() {
                         data: formObj,
                         async: true,
                         success: function(s) {
+                            console.log(s)
                             if (s.length) {
                                 $("#sampleTable").data("select", [collection_name]);
                                 $("#sampleTable").DataTable().ajax.reload(null, false);
