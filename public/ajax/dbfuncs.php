@@ -3834,7 +3834,7 @@ class dbfuncs
                             // run error
                             //"WARN: Failed to publish file" gives error
                             //|| preg_match("/failed/i",$nextflowLog) removed 
-                        } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $nextflowLog) || preg_match("/\n -- Check script /", $nextflowLog)) {
+                        } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $nextflowLog) || preg_match("/\n -- Check script /", $nextflowLog) || preg_match("/Unable to parse config file/", $nextflowLog)) {
                             $confirmErr = true;
                             if (preg_match("/-- Execution is retried/i", $nextflowLog) || preg_match("/WARN: One or more errors/i", $nextflowLog) || preg_match("/-- Error is ignored/i", $nextflowLog)) {
                                 //if only process retried, status shouldn't set as error.
@@ -4400,23 +4400,35 @@ class dbfuncs
         return self::queryTable($sql);
     }
 
-    function getRunStatsByPipeline($ownerID)
+    function getRunStatsByPipeline($type)
     {
-        $sql = "SELECT rl.owner_id as own, rl.id, rl.run_status as stat, rl.duration as dur, rl.date_created as date, b.pipeline_id as pip, b.pipeline_gid as gid, b.name as pname, e.name as oname,  e.lab as olab
-        FROM $this->db.run_log rl
-        INNER JOIN (
-          SELECT pp.id, pp.pipeline_id, c.pipeline_gid, c.name
-          FROM $this->db.project_pipeline pp
+        if ($type == "runAttempt") {
+            $sql = "SELECT rl.owner_id as own, rl.id, rl.run_status as stat, rl.duration as dur, rl.date_created as date, b.pipeline_id as pip, b.pipeline_gid as gid, b.name as pname, e.name as oname,  e.lab as olab
+            FROM $this->db.run_log rl
             INNER JOIN (
-            SELECT p.id, p.pipeline_gid, p.name
-            FROM $this->db.biocorepipe_save p
-            ) c ON pp.pipeline_id = c.id
-          ) b ON rl.project_pipeline_id = b.id
-          INNER JOIN (
-          SELECT u.id, u.name, u.lab
-          FROM $this->db.users u
-          ) e ON rl.owner_id = e.id";
-        return self::queryTable($sql);
+              SELECT pp.id, pp.pipeline_id, c.pipeline_gid, c.name
+              FROM $this->db.project_pipeline pp
+                INNER JOIN (
+                SELECT p.id, p.pipeline_gid, p.name
+                FROM $this->db.biocorepipe_save p
+                ) c ON pp.pipeline_id = c.id
+              ) b ON rl.project_pipeline_id = b.id
+              INNER JOIN (
+              SELECT u.id, u.name, u.lab
+              FROM $this->db.users u
+              ) e ON rl.owner_id = e.id 
+              WHERE rl.deleted = 0";
+            return self::queryTable($sql);
+        } else if ($type == "run") {
+            $sql = "SELECT DISTINCT pp.owner_id as own, pp.id, r.run_status as stat, r.date_created_last_run as date,
+            pip.id as pip, pip.pipeline_gid as gid, pip.name as pname, u.name as oname,  u.lab as olab
+            FROM $this->db.project_pipeline pp
+            LEFT JOIN $this->db.run r  ON r.project_pipeline_id = pp.id
+            INNER JOIN $this->db.biocorepipe_save pip ON pip.id = pp.pipeline_id
+            INNER JOIN $this->db.users u ON pp.owner_id = u.id 
+            WHERE pp.deleted = 0";
+            return self::queryTable($sql);
+        }
     }
 
     function getCollections($ownerID)

@@ -1,3 +1,9 @@
+08.07.2021 Version 1.3.22
+Minor bug fixed in process modal.
+Data dropdown added for Admin Dashboard to differentiate run and run attempts.
+Minor bug fixed for Admin Dashboard.
+Left sidebar removed if feature_metadata.tsv is not published in UCSC Genome Browser report.
+
 02.07.2021 Version 1.3.21
 Warning added for automated execution.
 Automated execution is allowed for single run submission when frequency is not set.

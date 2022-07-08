@@ -331,6 +331,7 @@ $GOOGPATH = GOOGPATH;
                                                 <th>E-mail</th>
                                                 <th>Institute</th>
                                                 <th>Usage(MB)</th>
+                                                <th>Lab</th>
                                                 <th>Role</th>
                                                 <th>Active</th>
                                                 <th>Member Date</th>

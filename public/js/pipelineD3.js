@@ -23,25 +23,27 @@ function createPiGnumList() {
 //adjust container size based on window size
 window.onresize = function(event) {
     createPiGnumList();
-    var Maint = d3.transform(d3.select('#' + "mainG").attr("transform"));
-    var Mainx = Maint.translate[0]
-    var Mainy = Maint.translate[1]
-    var Mainz = Maint.scale[0]
-    if (window.lastMG) {
-        translateSVG([Mainx, Mainy, Mainz, window.lastMG[3], window.lastMG[4]], window)
-    }
-    //for pipeline modules
-    for (var j = 0; j < piGnumList.length; j++) {
-        if (d3.select('#' + "mainG" + piGnumList[j])) {
-            var MaintP = d3.transform(d3.select('#' + "mainG" + piGnumList[j]).attr("transform"));
-            var MainxP = MaintP.translate[0]
-            var MainyP = MaintP.translate[1]
-            var MainzP = MaintP.scale[0]
-            if (window["pObj" + piGnumList[j]].lastMG) {
-                translateSVG([MainxP, MainyP, MainzP, window["pObj" + piGnumList[j]].lastMG[3], window["pObj" + piGnumList[j]].lastMG[4]], window["pObj" + piGnumList[j]]);
-            }
+    if ($('#' + "mainG").length) {
+        var Maint = d3.transform(d3.select('#' + "mainG").attr("transform"));
+        var Mainx = Maint.translate[0]
+        var Mainy = Maint.translate[1]
+        var Mainz = Maint.scale[0]
+        if (window.lastMG) {
+            translateSVG([Mainx, Mainy, Mainz, window.lastMG[3], window.lastMG[4]], window)
         }
-    };
+        //for pipeline modules
+        for (var j = 0; j < piGnumList.length; j++) {
+            if (d3.select('#' + "mainG" + piGnumList[j])) {
+                var MaintP = d3.transform(d3.select('#' + "mainG" + piGnumList[j]).attr("transform"));
+                var MainxP = MaintP.translate[0]
+                var MainyP = MaintP.translate[1]
+                var MainzP = MaintP.scale[0]
+                if (window["pObj" + piGnumList[j]].lastMG) {
+                    translateSVG([MainxP, MainyP, MainzP, window["pObj" + piGnumList[j]].lastMG[3], window["pObj" + piGnumList[j]].lastMG[4]], window["pObj" + piGnumList[j]]);
+                }
+            }
+        };
+    }
 }
 
 

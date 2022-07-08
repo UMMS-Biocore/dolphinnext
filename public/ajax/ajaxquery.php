@@ -2122,7 +2122,11 @@ if ($p == "publishGithub") {
 } else if ($p == "getPublicPipelines") {
     $data = $db->getPublicPipelines($ownerID);
 } else if ($p == "getRunStatsByPipeline") {
-    $data = $db->getRunStatsByPipeline($ownerID);
+    $type = $_REQUEST['type'];
+    $userRole = $db->getUserRoleVal($ownerID);
+    if ($userRole == "admin") {
+        $data = $db->getRunStatsByPipeline($type, $ownerID);
+    }
 } else if ($p == "checkPipeline") {
     $process_id = $_REQUEST['process_id'];
     $data = $db->checkPipeline($process_id, $ownerID);

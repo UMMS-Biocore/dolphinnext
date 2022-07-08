@@ -4,12 +4,30 @@ $(document).ready(async function() {
     $s = { users: [], runStatsByPipeline: [], runStatsByPipelineChart: null };
 
     $s.runStatsByPipeline = await doAjax({
-        p: "getRunStatsByPipeline"
+        p: "getRunStatsByPipeline",
+        type: "runAttempt"
+    });
+    $s.runAttemptStatsByPipeline = await doAjax({
+        p: "getRunStatsByPipeline",
+        type: "run"
     });
     $s.users = await doAjax({
         p: "getAllUsers"
     });
+
+    //clean null lab values
+    for (var n = 0; n < $s.users.length; n++) {
+        if ($s.users[n].lab == null || !$s.users[n].lab) $s.users[n].lab = "unknown"
+    }
+    for (var n = 0; n < $s.runStatsByPipeline.length; n++) {
+        if ($s.runStatsByPipeline[n].olab == null || !$s.runStatsByPipeline[n].olab) $s.runStatsByPipeline[n].olab = "unknown"
+    }
+    for (var n = 0; n < $s.runAttemptStatsByPipeline.length; n++) {
+        if ($s.runAttemptStatsByPipeline[n].olab == null || !$s.runAttemptStatsByPipeline[n].olab) $s.runAttemptStatsByPipeline[n].olab = "unknown"
+    }
+
     console.log($s.users)
+    console.log($s.runAttemptStatsByPipeline)
     console.log($s.runStatsByPipeline)
 
 
@@ -69,7 +87,7 @@ $(document).ready(async function() {
                     let checkedVal = source[n][dropName];
                     // for multiselect
                     if (Array.isArray(dropOpts)) {
-                        if (dropOpts.length && (checkedVal && !dropOpts.includes(checkedVal) || checkedVal == "")) {
+                        if (dropOpts.length && (checkedVal && !dropOpts.includes(checkedVal) || checkedVal == "" || checkedVal == null)) {
                             keep = false;
                         } else if (dropOpts.length === 0) {
                             keep = false;
@@ -293,6 +311,8 @@ $(document).ready(async function() {
 
     const runsByPipelineUserID = "#runsByPipelineUser";
     const runsByPipelineGroup = "#runsByPipelineGroup";
+    const runsByPipelineDataID = "#runsByPipelineData";
+
 
     $s.users_sorted = sortByKey($s.users, "name", { caseinsensitive: true })
     $s.lab_sorted = sortByKey($s.users, "lab", { caseinsensitive: true })
@@ -309,9 +329,12 @@ $(document).ready(async function() {
 
     let labList = []
     for (var n = 0; n < $s.lab_sorted.length; n++) {
+        if (!$s.lab_sorted[n].lab) $s.lab_sorted[n].lab = ""
         if (!labList.includes($s.lab_sorted[n].lab)) {
             label = $s.lab_sorted[n].lab
-            if (!$s.lab_sorted[n].lab) label = "Unknown"
+            if (!$s.lab_sorted[n].lab) {
+                label = "Unknown"
+            }
             $(runsByPipelineGroup).append(
                 '<option value="' +
                 $s.lab_sorted[n].lab +
@@ -324,9 +347,18 @@ $(document).ready(async function() {
 
     }
 
-    $(`${runsByPipelineUserID},${runsByPipelineGroup}`).on("change", function() {
+    $(`${runsByPipelineUserID},${runsByPipelineGroup},${runsByPipelineDataID}`).on("change", function() {
         var options = $(runsByPipelineUserID).val();
         var optionsGroup = $(runsByPipelineGroup).val();
+        var dataSource = $(runsByPipelineDataID).val();
+        let source = "";
+        if (dataSource == "run") {
+            source = $s.runAttemptStatsByPipeline;
+            $("#runStatsByPipelineTitle").text("Total Runs by Pipeline")
+        } else if (dataSource == "run_attempt") {
+            source = $s.runStatsByPipeline;
+            $("#runStatsByPipelineTitle").text("Total Run Attempts by Pipeline")
+        }
         let dropdownOpts = [];
         // name should be the field in chart data
         dropdownOpts.push({ name: "own", options: options })
@@ -334,7 +366,7 @@ $(document).ready(async function() {
         updateChart({
             chartID: "runStatsByPipelineChart",
             dropdownOpts: dropdownOpts,
-            source: $s.runStatsByPipeline,
+            source: source,
             groupbyField: "gid",
             labelField: "pname",
             stacked: true
@@ -346,8 +378,18 @@ $(document).ready(async function() {
 
     // runsByUserID chart
     const runsByUserID = "#runsByUser";
-    $(runsByUserID).on("change", function() {
-        var options = $(this).val();
+    const runStatsByUserDataID = "#runStatsByUserData";
+    $(`${runsByUserID},${runStatsByUserDataID}`).on("change", function() {
+        var options = $(runsByUserID).val();
+        var dataSource = $(runStatsByUserDataID).val();
+        let source = "";
+        if (dataSource == "run") {
+            source = $s.runAttemptStatsByPipeline;
+            $("#runStatsByUserTitle").text("Total Runs by User/Lab")
+        } else if (dataSource == "run_attempt") {
+            source = $s.runStatsByPipeline;
+            $("#runStatsByUserTitle").text("Total Run Attempts by User/Lab")
+        }
         // filtering based on selected options
         let dropdownOpts = [];
         // name should be the field in chart data
@@ -355,7 +397,7 @@ $(document).ready(async function() {
         updateChart({
             chartID: "runStatsByUserChart",
             dropdownOpts: dropdownOpts,
-            source: $s.runStatsByPipeline,
+            source: source,
             groupbyField: options,
             labelField: options,
             stacked: true
@@ -453,9 +495,8 @@ $(document).ready(async function() {
                         totalSec += parseInt(durations[k].slice(0, -1)) * 60 * 60 * 24;
                     }
                 }
-                console.log(totalSec)
-                    // exclude runs that are faster than 3 minutes (resumed jobs)
-                if (totalSec > 180) {
+                // exclude runs that are faster than 5 minutes (resumed jobs)
+                if (totalSec > 300) {
                     if (!obj[gid]) obj[gid] = { label: "", total: [] }
                     obj[gid]["label"] = pname;
                     obj[gid]["total"].push(totalSec);
