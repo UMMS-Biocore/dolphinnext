@@ -9187,7 +9187,13 @@ $(function() {
             columnsBody: [{
                     //file list
                     data: null,
-                    colPercent: "15",
+                    colPercent: function(oData) {
+                        if (oData.pubWeb == "ucsc_genome_browser") {
+                            const match = oData.fileList.find(value => /feature_metadata\.tsv/.test(value));
+                            if (!match) return 0
+                        }
+                        return 15
+                    },
                     overflow: function(oData) {
                         if (oData.pubWeb == "ucsc_genome_browser") {
                             return ""
@@ -9331,6 +9337,10 @@ $(function() {
 
                                 var contentDiv = `<div style="margin-top:5px; margin-left:5px;" class="table-responsive"><table style="border:none;  width:100%;" class="table table-striped table-bordered ucsc_gb_genes"  cellspacing="0"  metadata_url="${metadata_url}" id="${filepathCl}"><thead style="white-space: nowrap; table-layout:fixed;"></thead></table></div>`;
                                 $(nTd).html(contentDiv);
+                                return;
+                            } else {
+                                // remove left sidebar if feature_metadata.tsv is not there
+                                $(nTd).html("");
                                 return;
                             }
                         }
@@ -9707,7 +9717,13 @@ $(function() {
                 {
                     //file content
                     data: null,
-                    colPercent: "85",
+                    colPercent: function(oData) {
+                        if (oData.pubWeb == "ucsc_genome_browser") {
+                            const match = oData.fileList.find(value => /feature_metadata\.tsv/.test(value));
+                            if (!match) return 100
+                        }
+                        return 85
+                    },
                     fnCreatedCell: function(nTd, oData) {
                         var fileList = oData.fileList;
                         if ($(nTd).is(":empty")) {
@@ -9715,14 +9731,10 @@ $(function() {
                             if (oData.pubWeb == "ucsc_genome_browser") {
                                 const matchHub = fileList.find(value => /hub\.txt/.test(value));
                                 const matchGenome = fileList.find(value => /genomes\.txt/.test(value));
-                                console.log(fileList)
                                 const matchFeature = fileList.find(value => /feature_metadata\.tsv/.test(value));
                                 var dir = oData.name;
-                                console.log(matchFeature)
-
 
                                 navTabDiv += '<div ucsc_genome_browser_tabs="" style="height:100%; width:100%;" >';
-
                                 navTabDiv += `<ul class="nav nav-tabs">`
                                 if (matchHub && matchGenome) {
                                     navTabDiv += `<li class="active"><a class="nav-item" data-toggle="tab" href="#ucsc_gb_tab_${oData.id}" aria-expanded="false">Genome Browser</a></li>`
@@ -15602,7 +15614,7 @@ $(document).ready(async function() {
                 // https://genome.ucsc.edu/cgi-bin/hgTracks?hgsid=1385266329_hzFy7AyNX1CiNfXlY7g4s5VHK3ZB
                 var content = '<iframe frameborder="0"  style="width:100%; height:100%;" src="' + link + '"></iframe>';
                 var visType = "ucsc_genome_browser";
-                var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 35px);">' + content + "</div>";
+                var contentDiv = getHeaderIconDiv(fileid, visType) + '<div style="width:100%; height:calc(100% - 70px);">' + content + "</div>";
                 var run_log_uuid = $("#runVerLog").val();
                 var pubWebPath = $("#basepathinfo").attr("pubweb");
                 $(navTabDiv).empty().append(contentDiv);
@@ -15780,6 +15792,9 @@ $(document).ready(async function() {
                 }
                 if (cols[el].colPercent) {
                     columnPercent = cols[el].colPercent;
+                    if (cols[el].colPercent && typeof cols[el].colPercent === 'function') {
+                        columnPercent = cols[el].colPercent(dataObj)
+                    }
                 } else {
                     columnPercent = Math.floor((columnPercent / columnCount) * 100) / 100;
                 }

@@ -1782,6 +1782,8 @@ $(document).ready(function() {
                     $(nTd).html(sizeInMB);
                 }
             }, {
+                "data": "lab"
+            }, {
                 "data": "role"
             }, {
                 "data": "active",
@@ -1802,7 +1804,7 @@ $(document).ready(function() {
                 }
             }],
             'order': [
-                [8, 'desc']
+                [0, 'desc']
             ]
         });
 
@@ -1872,8 +1874,8 @@ $(document).ready(function() {
                     success: function(sc) {
                         var newUserData = getValues({ p: "getUserById", id: userId })
                         if (newUserData[0]) {
-                            AdmUserTable.row(clickedRow).remove().draw();
-                            AdmUserTable.row.add(newUserData[0]).draw();
+                            AdmUserTable.ajax.reload(null, false);
+
                         }
                     },
                     error: function(errorThrown) {
@@ -1936,13 +1938,12 @@ $(document).ready(function() {
                             if (savetype.length) { //edit
                                 var newUserData = getValues({ p: "getUserById", id: savetype })
                                 if (newUserData[0]) {
-                                    AdmUserTable.row(clickedRow).remove().draw();
-                                    AdmUserTable.row.add(newUserData[0]).draw();
+                                    AdmUserTable.ajax.reload(null, false);
                                 }
                             } else { //insert
                                 var newUserData = getValues({ p: "getUserById", id: s.id })
                                 if (newUserData[0]) {
-                                    AdmUserTable.row.add(newUserData[0]).draw();
+                                    AdmUserTable.ajax.reload(null, false);
                                 }
                             }
                             $('#userModal').modal('hide');

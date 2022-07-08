@@ -137,8 +137,8 @@ function sortByKey(array, key, settings) {
         var x = a[key];
         var y = b[key];
         if (caseinsensitive) {
-            x = x.toUpperCase()
-            y = y.toUpperCase()
+            if (x) x = x.toUpperCase()
+            if (y) y = y.toUpperCase()
         }
         if (type && type == "desc") {
             return ((x > y) ? -1 : ((x < y) ? 1 : 0));
@@ -1569,7 +1569,7 @@ async function doAjax(data) {
             type: "POST",
         });
     } catch (error) {
-        console.error(error);
+        console.log(error);
     }
     return result;
 }
