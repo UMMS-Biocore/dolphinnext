@@ -773,7 +773,7 @@ else if ($p == "saveToken") {
     $data = $db->getInputs($id, $ownerID);
 } else if ($p == "getCollection") {
     if (!empty($id)) {
-        $data = $db->getCollectionById($id, $ownerID);
+        $data = $db->getCollectionById($id, $userRole, $ownerID);
     } else {
         $data = $db->getCollections($ownerID);
     }
@@ -1912,6 +1912,46 @@ if ($p == "publishGithub") {
     $new_id = $_REQUEST['new_id'];
     $old_id = $_REQUEST['old_id'];
     $data = $db->duplicateProjectPipelineInput($new_id, $old_id, $ownerID);
+    // dupicate collection files if user is admin and files/collection not shared
+    $userRole = $db->getUserRoleVal($ownerID);
+    if ($userRole == "admin") {
+        // check if collection exists
+        $allinputs = json_decode($db->getProjectPipelineInputs($new_id, $ownerID));
+        if (!empty($allinputs)) {
+            foreach ($allinputs as $inputitem) :
+                $collection_id = $inputitem->{'collection_id'};
+                $proPipeInputId = $inputitem->{'id'};
+                if (!empty($collection_id)) {
+                    error_log("proPipeInputId: $proPipeInputId");
+                    // get collection and check if it is not shared
+                    // $checkerRole set to user to learn if it is shared to admin/owned by admin or not
+                    $checkerRole = "user";
+                    $colData = $db->getCollectionById($collection_id, $checkerRole, $ownerID);
+                    $colData = json_decode($colData, true);
+                    error_log(print_r($colData, TRUE));
+                    if (!isset($colData[0])) {
+                        error_log("## collection not shared -> insert collection");
+                        $checkerRole = "admin";
+                        $orgColData = $db->getCollectionById($collection_id, $checkerRole, $ownerID);
+                        $orgColData = json_decode($orgColData, true);
+                        error_log(print_r($orgColData, TRUE));
+
+                        if (isset($orgColData[0])) {
+                            $collection_name = $orgColData[0]["name"];
+                            error_log($collection_name);
+                            // collection not shared or not owned
+                            $allfiles = json_decode($db->getCollectionFiles($collection_id, $ownerID), true);
+                            error_log(print_r($allfiles, TRUE));
+                            $new_collection_id = $db->checkAndInsertCollectionForDup($allfiles,  $collection_name, $ownerID);
+                            error_log("update updateValProPipeInput $proPipeInputId: $new_collection_id");
+                            $input_id = 0;
+                            $db->updateProPipeInputCollInput($proPipeInputId, $input_id, $new_collection_id, $ownerID);
+                        }
+                    }
+                }
+            endforeach;
+        }
+    }
 } else if ($p == "moveRun") {
     $project_pipeline_id = $_REQUEST['project_pipeline_id'];
     $new_project_id = $_REQUEST['new_project_id'];
