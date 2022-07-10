@@ -4440,9 +4440,19 @@ class dbfuncs
                 GROUP BY fc.c_id";
         return self::queryTable($sql);
     }
-    function getCollectionById($id, $ownerID)
+    function getCollectionById($id, $userRole, $ownerID)
     {
-        $sql = "SELECT id, name FROM $this->db.collection WHERE id = '$id' AND owner_id = '$ownerID' AND deleted = 0";
+
+        $where = " WHERE c.deleted = 0 AND (c.owner_id = '$ownerID' OR (ug.u_id ='$ownerID' AND c.perms = 15)) AND c.id = '$id'";
+        if ($userRole == "admin") {
+            $where = " WHERE c.id = '$id' AND c.deleted = 0";
+        }
+
+        $sql = "SELECT c.id, c.name, c.owner_id, c.group_id, c.perms 
+        FROM $this->db.collection  c
+        INNER JOIN $this->db.users u ON c.owner_id = u.id
+        LEFT JOIN $this->db.user_group ug ON c.group_id=ug.g_id
+        $where";
         return self::queryTable($sql);
     }
     function getFiles($ownerID)
@@ -6867,7 +6877,7 @@ class dbfuncs
             }
             return $collection_id;
         } else {
-            // if it is found in $collection_name_Array add suffix
+            // if it is found in $collNameArr add suffix
             return $this->getEmptyCollectionId($ownerID, $collection_name, $collNameArr, $suffix);
         }
     }
@@ -6944,10 +6954,39 @@ class dbfuncs
         return $file_dir;
     }
 
+    // duplicateProjectPipelineInput specific collection duplication
+    function checkAndInsertCollectionForDup($allfiles,  $collection_name, $ownerID)
+    {
+        // use checkFileAndSave to save file and get file_id and fill $file_array
+        $file_array = array();
+        foreach ($allfiles as $file_item) :
+            $name = $file_item["name"];
+            $file_dir = $file_item["file_dir"];
+            $file_type = $file_item["file_type"];
+            $files_used = $file_item["files_used"];
+            $collection_type = $file_item["collection_type"];
+            $archive_dir = $file_item["archive_dir"];
+            $s3_archive_dir = $file_item["s3_archive_dir"];
+            $gs_archive_dir = $file_item["gs_archive_dir"];
+            $run_env = $file_item["run_env"];
+            // get new amz_cre_id for user
+            $file_dir = $this->mergeUserSpecificCloudConfig($file_dir, $ownerID);
+            $s3_archive_dir = $this->mergeUserSpecificCloudConfig($s3_archive_dir, $ownerID);
+            $gs_archive_dir = $this->mergeUserSpecificCloudConfig($gs_archive_dir, $ownerID);
+            $file_id = $this->checkFileAndSave($name, $file_dir, $file_type, $files_used, $collection_type, $archive_dir, $s3_archive_dir, $gs_archive_dir, $run_env, $ownerID);
+            if (!empty($file_id)) {
+                $file_array[] = $file_id;
+            }
+        endforeach;
+        $collection_id = $this->checkCollectionFiles($file_array, $collection_name, $ownerID);
+        return $collection_id;
+    }
+
+
+
     // Dmeta specific duplicate project pipeline insertion
     function checkAndInsertCollection($inputVal, $ownerID)
     {
-        $collection_id = 0;
         // e.g. collection data:
         // $name: experiment
         // $file_env: cluster-2
@@ -7139,7 +7178,12 @@ class dbfuncs
     }
     function getCollectionFiles($collection_id, $ownerID)
     {
+        $userRole = $this->getUserRoleVal($ownerID);
         $where = " where f.deleted=0 AND fc.deleted=0 AND fc.c_id = '$collection_id' AND (f.owner_id = '$ownerID' OR f.perms = 63 OR (ug.u_id ='$ownerID' and f.perms = 15))";
+        if ($userRole == "admin") {
+            $where = " where f.deleted=0 AND fc.deleted=0 AND fc.c_id = '$collection_id'";
+        }
+
         $sql = "SELECT DISTINCT f.*
                     FROM $this->db.file f
                     INNER JOIN $this->db.file_collection fc ON f.id=fc.f_id
