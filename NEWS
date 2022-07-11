@@ -1,3 +1,7 @@
+11.07.2021 Version 1.3.24
+AWS s3 rm command updated to effectively use the beforerun script.
+Beforeschedule script added for cron jobs.
+
 09.07.2021 Version 1.3.23
 Collection duplication support added for run duplication.
 

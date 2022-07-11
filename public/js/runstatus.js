@@ -297,9 +297,9 @@ $(document).ready(function() {
                     type = "Scheduled"
                 } else if (data.type && data.type == "cron") {
                     if (data.cron_target_date) {
-                        type = "Automated-Active"
+                        type = "Automated - Active"
                     } else {
-                        type = "Automated-Deactived"
+                        type = "Automated - Deactived"
                     }
                 }
                 return type
