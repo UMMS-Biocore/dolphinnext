@@ -469,7 +469,9 @@ class dbfuncs
             } else if (preg_match("/gs:/i", $repDir)) {
                 $cmd = "gcloud auth activate-service-account --key-file=\$GOOGLE_APPLICATION_CREDENTIALS && gsutil -m rm -rf $repDir 2> /dev/null || true &&";
             } else if (preg_match("/s3:/i", $repDir)) {
-                $cmd = "aws s3 rm $repDir --recursive 2> /dev/null || true &&";
+                // 2> /dev/null || true part removed to effectively use the beforerun script
+                //$cmd = "aws s3 rm $repDir --recursive 2> /dev/null || true &&";
+                $cmd = "aws s3 rm $repDir --recursive &&";
             }
         }
         return $cmd;
@@ -504,9 +506,6 @@ class dbfuncs
         if (file_exists($extractedDir)) system('rm -rf ' . escapeshellarg("$extractedDir"));
         return $nffile;
     }
-
-
-
 
     function getDolphinPathReal($proPipeAll)
     {
@@ -824,7 +823,7 @@ class dbfuncs
         return $postCmd . $failCmd;
     }
 
-    function getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real)
+    function getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real, $attempt, $proPipeAll)
     {
         $profile_def = "";
         if ($profileType == "amazon" || $profileType == "google") {
@@ -840,15 +839,25 @@ class dbfuncs
         //export 
         // set NXF_SINGULARITY_CACHEDIR as $HOME/.dolphinnext/singularity, if it is not defined.
         $singu_cachedir = 'NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$HOME/.dolphinnext/singularity}" && export NXF_SINGULARITY_CACHEDIR=$NXF_SINGULARITY_CACHEDIR';
+        $beforeSchedule = '';
+        settype($attempt, 'integer');
+        error_log("attempt: $attempt");
+        $proPipeType = $proPipeAll[0]->{'type'};
+        error_log("proPipeType: $proPipeType ");
+
+        if ($proPipeType == "auto" && $attempt == 1 && file_exists($run_path_real . "/beforeschedule.sh")) {
+            $beforeSchedule = "echo \"INFO: Executing beforeschedule.sh...\" >> $dolphin_path_real/log.txt && bash $dolphin_path_real/beforeschedule.sh >> $dolphin_path_real/log.txt && echo \"INFO: beforeschedule.sh execution passed.\" >> $dolphin_path_real/log.txt";
+        }
         $beforeRun = '';
         if (file_exists($run_path_real . "/beforerun.sh")) {
             $beforeRun = "bash $dolphin_path_real/beforerun.sh >> $dolphin_path_real/log.txt";
         }
 
+
         // combine pre-run cmd
         // should start without && and end with &&
 
-        $arr = array($profile_def, $nextVerText, $nextANSILog, $nextDSL, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd, $initImageCmd, $downCacheCmd, $beforeRun);
+        $arr = array($profile_def, $nextVerText, $nextANSILog, $nextDSL, $profileCmd, $proPipeCmd, $singu_cachedir, $imageCmd, $initImageCmd, $downCacheCmd, $beforeSchedule, $beforeRun);
         $preCmd = "";
         for ($i = 0; $i < count($arr); $i++) {
             if (!empty($arr[$i]) && !empty($preCmd)) {
@@ -2080,7 +2089,7 @@ class dbfuncs
         list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port) = $this->getNextConnectExec($profileId, $ownerID, $profileType);
         //get cmd before run
         $downCacheCmd = $this->getDownCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType);
-        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real);
+        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real, $attempt, $proPipeAll);
         $next_path_real = $this->getNextPathReal($next_path); //eg. /project/umw_biocore/bin
         $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job, $run_path_real);
 
@@ -2163,7 +2172,7 @@ class dbfuncs
         list($connect, $next_path, $profileCmd, $executor, $next_time, $next_queue, $next_memory, $next_cpu, $next_clu_opt, $executor_job, $ssh_id, $ssh_port) = $this->getNextConnectExec($profileId, $ownerID, $profileType);
         //get cmd before run
         $downCacheCmd = $this->getDownCacheCmd($dolphin_path_real, $dolphin_publish_real, $profileType);
-        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real);
+        $preCmd = $this->getPreCmd($profileType, $profileCmd, $proPipeCmd, $imageCmd, $initImageCmd, $downCacheCmd, $run_path_real, $dolphin_path_real, $attempt, $proPipeAll);
         $next_path_real = $this->getNextPathReal($next_path); //eg. /project/umw_biocore/bin
         $postCmd = $this->getPostCmd($proPipeAll, $dolphin_path_real, $dolphin_publish_real, $profileType, $executor_job, $run_path_real);
 
@@ -2538,14 +2547,6 @@ class dbfuncs
         return $data;
     }
 
-    // TODO:integrate beforecron.sh
-    // check if beforecron.sh exist
-    // create new run in target host
-    // prevent run submission if it fails
-    function checkBeforeCronScript($project_pipeline_id, $ownerID)
-    {
-        return true;
-    }
 
     function saveRun($project_pipeline_id, $nextText, $runType, $manualRun, $uuid, $proVarObj, $ownerID)
     {
@@ -3711,6 +3712,55 @@ class dbfuncs
         return json_encode($ret);
     }
 
+    // clean ScheduledRun related data from database since beforeschedule script failed.
+    function cleanScheduledRun($project_pipeline_id, $uuid, $ownerID)
+    {
+        error_log("cleanScheduledRun $project_pipeline_id $uuid $ownerID");
+        // 1. delete project_pipeline_inputs
+        $sql = "DELETE FROM $this->db.project_pipeline_input WHERE project_pipeline_id = '$project_pipeline_id'";
+        self::runSQL($sql);
+        // 2. delete run
+        $sql = "DELETE FROM $this->db.run WHERE project_pipeline_id = '$project_pipeline_id'";
+        self::runSQL($sql);
+        // 3. delete run_log
+        $sql = "DELETE FROM $this->db.run_log WHERE run_log_uuid = '$uuid'";
+        self::runSQL($sql);
+        // 4. delete project_pipeline
+        $sql = "DELETE FROM $this->db.project_pipeline WHERE id = '$project_pipeline_id'";
+        self::runSQL($sql);
+        // 5. move log files to schedular directory. with date 
+        $rundir = $uuid;
+        $run_path_server = "{$this->run_path}/$rundir";
+        $run_path_server_log = "{$this->run_path}/$rundir/run/log.txt";
+        error_log("run_path_server_log $run_path_server_log");
+        if (file_exists($run_path_server_log) && !empty("{$this->run_path}") && !empty($rundir)) {
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id, "", $ownerID, ""));
+            error_log(print_r($proPipeAll[0]->{'template_uuid'}, TRUE));
+
+            if (!empty($proPipeAll[0]) && !empty($proPipeAll[0]->{'template_uuid'})) {
+                $template_uuid = $proPipeAll[0]->{'template_uuid'};
+                $now = date("Y-m-d_H-i-s");
+                $target_template_file = "{$this->run_path}/$template_uuid/auto/log_txt/$now";
+                error_log($target_template_file);
+                if (!file_exists("{$this->run_path}/$template_uuid/auto")) {
+                    mkdir("{$this->run_path}/$template_uuid/auto", 0755, true);
+                }
+                if (!file_exists("{$this->run_path}/$template_uuid/auto/log_txt")) {
+                    mkdir("{$this->run_path}/$template_uuid/auto/log_txt", 0755, true);
+                }
+                system('cp ' . escapeshellarg("$run_path_server_log") . " " . escapeshellarg("$target_template_file"), $retval);
+            }
+        }
+
+
+        // 6. remove log directory
+        if (file_exists($run_path_server) && !empty("{$this->run_path}") && !empty($rundir)) {
+            system('rm -rf ' . escapeshellarg("$run_path_server"), $retval);
+            if ($retval != 0) {
+                error_log("cleanScheduledRun failed.");
+            }
+        }
+    }
 
     function updateProPipeStatus($project_pipeline_id, $process_id, $loadtype, $ownerID)
     {
@@ -3808,8 +3858,12 @@ class dbfuncs
                 $out["nextflowLog"] = $nextflowLog;
                 $this->parseUpdateRunPid($serverLog, $project_pipeline_id, $process_id, $ownerID);
                 $this->parseUpdateSessionUUID($dotNextflowLog, $dotNextflowLogInitial, $project_pipeline_id, $ownerID);
-                // run is not active
-                if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr" || $runStatus === "Manual") {
+                // keep this beforeschedule\.sh check at the top of if chain to prevent setting status to error with pid check
+                if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $nextflowLog) && preg_match("/INFO: Executing beforeschedule\.sh\.\.\./", $nextflowLog) && !preg_match("/INFO: beforeschedule\.sh execution passed\./", $nextflowLog)) {
+                    $newRunStatus = "Terminated";
+                    $this->cleanScheduledRun($project_pipeline_id, $uuid, $ownerID);
+                    // run is not active
+                } else if ($runStatus === "Terminated" || $runStatus === "NextSuc" || $runStatus === "Error" || $runStatus === "NextErr" || $runStatus === "Manual") {
                     // when run hasn't finished yet and connection is down
                 } else if ($loadtype == "slow" && $saveNextLog == "logNotFound" && ($runStatus != "Waiting" && $runStatus !== "init")) {
                     //log file might be deleted or couldn't read the log file
@@ -6686,6 +6740,11 @@ class dbfuncs
         $sql = "UPDATE $this->db.project_pipeline SET cron_target_date=$cron_target_date WHERE id = '$id' ";
         return self::runSQL($sql);
     }
+    function resetProjectPipelineCron($project_pipeline_id)
+    {
+        $sql = "UPDATE $this->db.project_pipeline SET type='cron', cron_target_date=NULL,  cron_check='false'  WHERE id = '$project_pipeline_id'";
+        self::runSQL($sql);
+    }
 
     function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $cron_first, $ownerID)
     {
@@ -6695,16 +6754,12 @@ class dbfuncs
 
     function updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first,  $ownerID)
     {
-
         $php_set_date = strtotime("now");
         $cron_set_date = date("Y-m-d H:i:s", $php_set_date);
-        if (empty($cron_min) && empty($cron_hour)  && empty($cron_day)  && empty($cron_week)  && empty($cron_month)) {
-            $sql = "UPDATE $this->db.project_pipeline SET type='cron', cron_target_date=NULL,  cron_check='false'  WHERE id = '$project_pipeline_id'";
-            self::runSQL($sql);
-            return json_encode("");
-        }
+
         $php_target_date = strtotime("+{$cron_min} minutes {$cron_hour} hours {$cron_day} days {$cron_week} weeks {$cron_month} months");
         $cron_target_date = date("Y-m-d H:i:s", $php_target_date);
+        error_log($cron_target_date);
         if (!empty($cron_first)) $cron_target_date = $cron_first;
         $cron_date_first_text = "";
         if (is_null($cron_first)) {
@@ -6763,7 +6818,7 @@ class dbfuncs
             }
 
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, pp.type, pp.email_notif, pp.notif_check, pp.cron_first, IF(pp.owner_id='$ownerID',1,0) as own
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, pp.type, pp.email_notif, pp.notif_check, pp.cron_first, pp.template_uuid, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM $this->db.project_pipeline pp
                       INNER JOIN $this->db.users u ON pp.owner_id = u.id
                       INNER JOIN $this->db.project p ON pp.project_id = p.id
@@ -7089,10 +7144,16 @@ class dbfuncs
             $process_opt = !is_null($process_opt) ? "'$process_opt'" : "process_opt";
             $type = !is_null($type) ? "'$type'" : "NULL";
             $template_id = "'$old_run_id'";
+            $template_uuid = 0;
+            $runDataJS = $this->getLastRunData($old_run_id);
+            if (!empty(json_decode($runDataJS, true))) {
+                $runData = json_decode($runDataJS, true)[0];
+                $template_uuid = "'" . $runData["last_run_uuid"] . "'";
+            }
             // save source_id as template_id for cron_jobs and dmetaruns
 
-            $sql = "INSERT INTO $this->db.project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta, type, template_id)
-                    SELECT '$run_name', $project_id, pipeline_id, $summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, $process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, $dmeta, $type, $template_id
+            $sql = "INSERT INTO $this->db.project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta, type, template_id, template_uuid)
+                    SELECT '$run_name', $project_id, pipeline_id, $summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, $process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, $dmeta, $type, $template_id, $template_uuid
                     FROM $this->db.project_pipeline
                     WHERE id='$old_run_id'";
             $proPipe = self::insTable($sql);
