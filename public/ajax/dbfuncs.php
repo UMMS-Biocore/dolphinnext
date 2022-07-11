@@ -3716,18 +3716,6 @@ class dbfuncs
     function cleanScheduledRun($project_pipeline_id, $uuid, $ownerID)
     {
         error_log("cleanScheduledRun $project_pipeline_id $uuid $ownerID");
-        // 1. delete project_pipeline_inputs
-        $sql = "DELETE FROM $this->db.project_pipeline_input WHERE project_pipeline_id = '$project_pipeline_id'";
-        self::runSQL($sql);
-        // 2. delete run
-        $sql = "DELETE FROM $this->db.run WHERE project_pipeline_id = '$project_pipeline_id'";
-        self::runSQL($sql);
-        // 3. delete run_log
-        $sql = "DELETE FROM $this->db.run_log WHERE run_log_uuid = '$uuid'";
-        self::runSQL($sql);
-        // 4. delete project_pipeline
-        $sql = "DELETE FROM $this->db.project_pipeline WHERE id = '$project_pipeline_id'";
-        self::runSQL($sql);
         // 5. move log files to schedular directory. with date 
         $rundir = $uuid;
         $run_path_server = "{$this->run_path}/$rundir";
@@ -3760,6 +3748,18 @@ class dbfuncs
                 error_log("cleanScheduledRun failed.");
             }
         }
+        // 1. delete project_pipeline_inputs
+        $sql = "DELETE FROM $this->db.project_pipeline_input WHERE project_pipeline_id = '$project_pipeline_id'";
+        self::runSQL($sql);
+        // 2. delete run
+        $sql = "DELETE FROM $this->db.run WHERE project_pipeline_id = '$project_pipeline_id'";
+        self::runSQL($sql);
+        // 3. delete run_log
+        $sql = "DELETE FROM $this->db.run_log WHERE run_log_uuid = '$uuid'";
+        self::runSQL($sql);
+        // 4. delete project_pipeline
+        $sql = "DELETE FROM $this->db.project_pipeline WHERE id = '$project_pipeline_id'";
+        self::runSQL($sql);
     }
 
     function updateProPipeStatus($project_pipeline_id, $process_id, $loadtype, $ownerID)

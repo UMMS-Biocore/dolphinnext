@@ -1436,7 +1436,8 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     },
                     backgroundcolorenter: "#ced9e3",
                     backgroundcolorleave: "#ECF0F4",
-                    height: "600px"
+                    height: "600px",
+                    language: ["groovy", "markdown", "perl", "python", "r", "sh"]
                 });
 
                 //load user groups
