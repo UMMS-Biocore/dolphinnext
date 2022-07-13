@@ -117,6 +117,8 @@ if (!empty($secUiconfig)) {
     $SHOW_RUN_NEXTFLOWNF = isset($secUiconfig['SHOW_RUN_NEXTFLOWNF']) ? $secUiconfig['SHOW_RUN_NEXTFLOWNF'] : "true";
     $SHOW_RUN_NEXTFLOWCONFIG = isset($secUiconfig['SHOW_RUN_NEXTFLOWCONFIG']) ? $secUiconfig['SHOW_RUN_NEXTFLOWCONFIG'] : "true";
     $SHOW_HOMEPAGE = isset($secUiconfig['SHOW_HOMEPAGE']) ? $secUiconfig['SHOW_HOMEPAGE'] : "1";
+    $CUSTOM_HELP_MESSAGE = isset($secUiconfig['CUSTOM_HELP_MESSAGE']) ? $secUiconfig['CUSTOM_HELP_MESSAGE'] : "";
+    $CUSTOM_FILE_LOCATION_MESSAGE = isset($secUiconfig['CUSTOM_FILE_LOCATION_MESSAGE']) ? $secUiconfig['CUSTOM_FILE_LOCATION_MESSAGE'] : "";
     define('SHOW_RUN_LOG', $SHOW_RUN_LOG);
     define('SHOW_RUN_TIMELINE', $SHOW_RUN_TIMELINE);
     define('SHOW_RUN_REPORT', $SHOW_RUN_REPORT);
@@ -126,6 +128,9 @@ if (!empty($secUiconfig)) {
     define('SHOW_RUN_NEXTFLOWNF', $SHOW_RUN_NEXTFLOWNF);
     define('SHOW_RUN_NEXTFLOWCONFIG', $SHOW_RUN_NEXTFLOWCONFIG);
     define('SHOW_HOMEPAGE', $SHOW_HOMEPAGE);
+    define('CUSTOM_FILE_LOCATION_MESSAGE', $CUSTOM_FILE_LOCATION_MESSAGE);
+    define('CUSTOM_HELP_MESSAGE', $CUSTOM_HELP_MESSAGE);
+
     //  WIZARD CONFIG
     $SHOW_WIZARD = isset($secUiconfig['SHOW_WIZARD']) ? $secUiconfig['SHOW_WIZARD'] : false;
     $SHOW_TEST_PROFILE = isset($secUiconfig['SHOW_TEST_PROFILE']) ? $secUiconfig['SHOW_TEST_PROFILE'] : false;

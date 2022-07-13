@@ -114,7 +114,7 @@ $(document).ready(function() {
             createMultiselectBinder = function(id) {
                 var resetBut = $(id).find("a.btn-block");
                 resetBut.click(function() {
-                    $($(id).find("input")[0]).trigger("change");
+                    $($(id).find("select")[0]).trigger("change");
                 });
             };
 
@@ -641,5 +641,6 @@ $(document).ready(function() {
             });
         }
     });
+
 
 });

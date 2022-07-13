@@ -800,6 +800,19 @@ else if ($p == "saveToken") {
     $db->removeProcessParameterByProcessGroupID($id);
     $db->removeProcessByProcessGroupID($id);
     $data = $db->removeProcessGroup($id);
+} else if ($p == "removePipelineGithub") {
+    $permCheck = 0;
+    $userRole = $db->getUserRoleVal($ownerID);
+    //don't allow to update if user not own the pipeline.
+    if ($userRole != "admin" && !empty($id)) {
+        $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE id='$id'");
+        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    } else if ($userRole == "admin") {
+        $permCheck = 1;
+    }
+    if (!empty($permCheck)) {
+        $data = $db->removePipelineGithub($id, $ownerID);
+    }
 } else if ($p == "removePipelineGroup") {
     $data = $db->removePipelineGroup($id);
 } else if ($p == "removePipelineById") {

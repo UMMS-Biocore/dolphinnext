@@ -1,5 +1,5 @@
 $(document).ready(async function() {
-
+    $("#main-content-box-header").css("background-color", "#ecf0f5")
 
     $s = { users: [], runStatsByPipeline: [], runStatsByPipelineChart: null };
 

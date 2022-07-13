@@ -54,7 +54,7 @@
                 <button style="padding-top:6px;" type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <div id="mProActionsDiv" style="float:right; margin-right:15px; display:none;" class="dropdown">
                     <button class="btn btn-default dropdown-toggle" type="button" id="mProActions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="vertical-align:middle;"><span class="fa fa-ellipsis-h"></span></button>
-                    <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                    <ul class="dropdown-menu pull-right" role="menu" aria-labelledby="dropdownMenu1">
                         <li><a id="deleteRevision" data-toggle="modal" href="#confirmModal">Delete Revision</a></li>
                         <li><a id="createRevision" class="saveprocess" style="display:none;">Create Revision</a></li>
                         <li><a id="duplicaProRev" onclick="duplicateProcessRev()">Copy Process</a></li>

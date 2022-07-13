@@ -15,6 +15,7 @@ if ($email != '') {
 require_once(__DIR__ . "/../../config/config.php");
 $SHOW_WIZARD = SHOW_WIZARD;
 $SHOW_APPS = SHOW_APPS;
+$CUSTOM_HELP_MESSAGE = CUSTOM_HELP_MESSAGE;
 
 require_once("php/funcs.php");
 $np = isset($_REQUEST["np"]) ? $_REQUEST["np"] : "";
@@ -793,7 +794,7 @@ folder instead of downloading all of them to reduce the load. -->
                     <div class="box">
 
                         <!--/.box-header -->
-                        <div class="box-body table-responsive" style="min-height:90vh; overflow-y:scroll;">
+                        <div id="main-content-box-header" class="box-body table-responsive" style="min-height:90vh; overflow-y:scroll;">
 
                             <?php print getPage($np, $login, $id, $ownerID);
 
@@ -829,6 +830,7 @@ immediately after the control sidebar -->
                 <form class="form panel-body" role="form">
                     <div style="margin-top:30px; margin-bottom:15px;"><b>Need Help?</b></div>
                     <div class="form-group">
+                        <p><?php echo $CUSTOM_HELP_MESSAGE ?></p>
                         <p>Learn from the documentation below.</p>
                     </div>
                     <div class="form-group">

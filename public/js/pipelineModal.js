@@ -1277,7 +1277,8 @@ function updateGitTitle(github_username, github_repo, commit_id) {
         var username = '<a target="_blank" href="https://github.com/' + github_username + '">' + github_username + '</a>';
         var repo = '<a target="_blank" href="https://github.com/' + github_username + '/' + github_repo + '">' + github_repo + '</a>';
         var commit = '<a target="_blank" href="https://github.com/' + github_username + '/' + github_repo + '/tree/' + commit_id + '"><i style="font-size:12px;" class="fa fa-external-link"></i></a>';
-        $("#pipGitTitle").html(username + " / " + repo + " / " + commit);
+        var deleteIcon = `<a id="removePipelineGit" href="#"><i style="font-size:13px; position: absolute; top: 14px;margin-left:5px;" class="fa fa-trash-o"></i></a>`
+        $("#pipGitTitle").html(username + " / " + repo + " / " + commit + deleteIcon);
     }
 }
 
@@ -1394,6 +1395,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     $('#permsPipeDiv').css('display', 'none');
                     $('#groupSelPipeDiv').css('display', 'none');
                     $('#gitConsoleBtn').css('display', 'none');
+                    $('#removePipelineGit').css('display', 'none');
                     $('#pipeMenuGroupBottom').css('display', 'none');
                 }
                 if (usRole === "admin") {
@@ -2039,6 +2041,29 @@ $(document).ready(function() {
             saveDetails(sucFunc);
         }
     });
+
+    $(document).on('click', '#removePipelineGit', function(e) {
+        console.log("s")
+        e.preventDefault()
+        var text = "Are you sure you want to remove the Github title?";
+        var savedData = "";
+        var execFunc = function(savedData) {
+            $.ajax({
+                type: "POST",
+                url: "ajax/ajaxquery.php",
+                data: { "p": "removePipelineGithub", "id": pipeline_id },
+                async: true,
+                success: function(s) {
+                    $("#pipGitTitleDiv").css("display", "none");
+                }
+            })
+        };
+        var btnText = "Delete";
+        showConfirmDeleteModal(text, savedData, execFunc, btnText);
+    });
+
+
+
 
     $("#copyToken").on('click', function(e) {
         var copyText = document.getElementById("tokenInput");

@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box" bis_skin_checked="1">
+        <div class="box box-primary" bis_skin_checked="1">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title" id="runStatsByPipelineTitle"></h3>
             </div>
@@ -26,7 +26,7 @@
         </div>
     </div>
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box" bis_skin_checked="1">
+        <div class="box box-primary" bis_skin_checked="1">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title" id="runStatsByUserTitle"></h3>
             </div>
@@ -55,7 +55,7 @@
 <div class="row">
 
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box" bis_skin_checked="1">
+        <div class="box box-danger" bis_skin_checked="1">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title">Total Users</h3>
             </div>
@@ -69,7 +69,7 @@
         </div>
     </div>
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box" bis_skin_checked="1">
+        <div class="box box-success" bis_skin_checked="1">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title">Average Successful Run Time</h3>
             </div>
