@@ -1,3 +1,8 @@
+11.07.2021 Version 1.3.25
+Minor bug fixed in Run Status filter resets.
+CUSTOM_FILE_LOCATION_MESSAGE and CUSTOM_HELP_MESSAGE parameters added to .sec file under [UICONFIG] section.
+Github link delete icon added to pipeline page.
+
 11.07.2021 Version 1.3.24
 AWS s3 rm command updated to effectively use the beforerun script.
 Beforeschedule script added for cron jobs.

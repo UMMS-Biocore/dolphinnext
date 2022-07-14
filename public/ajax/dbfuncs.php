@@ -1650,6 +1650,11 @@ class dbfuncs
         return $logObj;
     }
 
+    function removePipelineGithub($id, $ownerID)
+    {
+        $sql = "UPDATE $this->db.biocorepipe_save SET github=NULL,last_modified_user ='$ownerID', date_modified = now() WHERE id = '$id'";
+        return self::runSQL($sql);
+    }
     function updatePipelineGithub($pipeline_id, $username, $repo, $branch, $commit, $ownerID)
     {
         $obj = array();
@@ -3720,6 +3725,7 @@ class dbfuncs
         $rundir = $uuid;
         $run_path_server = "{$this->run_path}/$rundir";
         $run_path_server_log = "{$this->run_path}/$rundir/run/log.txt";
+        $run_path_server_log0 = "{$this->run_path}/$rundir/run/serverlog.txt";
         error_log("run_path_server_log $run_path_server_log");
         if (file_exists($run_path_server_log) && !empty("{$this->run_path}") && !empty($rundir)) {
             $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id, "", $ownerID, ""));
@@ -3736,7 +3742,7 @@ class dbfuncs
                 if (!file_exists("{$this->run_path}/$template_uuid/auto/log_txt")) {
                     mkdir("{$this->run_path}/$template_uuid/auto/log_txt", 0755, true);
                 }
-                system('cp ' . escapeshellarg("$run_path_server_log") . " " . escapeshellarg("$target_template_file"), $retval);
+                system('cat ' . escapeshellarg("$run_path_server_log0") . " " . escapeshellarg("$run_path_server_log") . " >>" . escapeshellarg("$target_template_file"), $retval);
             }
         }
 
@@ -5014,6 +5020,8 @@ class dbfuncs
         $sql = "UPDATE $this->db.github SET deleted = 1, date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
+
+
     function removeGoogle($id, $ownerID)
     {
         $sql = "UPDATE $this->db.google_credentials SET deleted = 1, date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
@@ -6742,7 +6750,7 @@ class dbfuncs
     }
     function resetProjectPipelineCron($project_pipeline_id)
     {
-        $sql = "UPDATE $this->db.project_pipeline SET type='cron', cron_target_date=NULL,  cron_check='false'  WHERE id = '$project_pipeline_id'";
+        $sql = "UPDATE $this->db.project_pipeline SET cron_target_date=NULL,  cron_check='false'  WHERE id = '$project_pipeline_id'";
         self::runSQL($sql);
     }
 

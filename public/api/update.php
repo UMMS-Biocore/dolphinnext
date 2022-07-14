@@ -194,7 +194,7 @@ class updates
         // find cron_target_date and cron_check == "true"
         $sql = "SELECT DISTINCT pp.id, pp.name, pp.owner_id, pp.cron_target_date, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month
         FROM $this->db.project_pipeline pp
-        WHERE  pp.deleted=0 AND pp.cron_check='true' AND (pp.cron_target_date != '' AND pp.cron_target_date IS NOT NULL) ";
+        WHERE  pp.deleted=0 AND pp.cron_check='true' AND pp.cron_target_date IS NOT NULL ";
         $data = $this->queryTable($sql);
 
         $time = date("M-d-Y H:i:s");

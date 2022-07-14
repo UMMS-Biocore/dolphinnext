@@ -16,6 +16,7 @@ $SHOW_RUN_NEXTFLOWCONFIG = SHOW_RUN_NEXTFLOWCONFIG;
 $SHOW_DMETA = SHOW_DMETA;
 $DMETA_URL = DMETA_URL;
 $DMETA_LABEL = DMETA_LABEL;
+$CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
 ?>
 <style type="text/css">
     #fileContent .multiselect-item.multiselect-filter {
@@ -1361,6 +1362,7 @@ $DMETA_LABEL = DMETA_LABEL;
                                     <div>
                                         <div class="col-sm-3"></div>
                                         <div class="col-sm-9">
+                                            <span class="small"><?php echo $CUSTOM_FILE_LOCATION_MESSAGE ?></span>
                                             <a class="small" href="https://dolphinnext.readthedocs.io/en/latest/dolphinNext/quick.html#adding-files" target="_blank">Need help?</a> <span class="small">
                                                 Full path of a directory: eg.<code style="color:#333; cursor:pointer;" onclick="fillFileSearchBox(this, 'file_dir')">/share/data/umw_biocore/genome_data/mousetest/mm10/gz</code>
                                             </span>
