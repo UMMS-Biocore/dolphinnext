@@ -1861,11 +1861,14 @@ class dbfuncs
         $DNEXT_WEB_REPORT_DIR = "{$this->pubweb_url}/$uuid/pubweb";
         $DNEXT_WEB_RUN_DIR = "{$this->pubweb_url}/$uuid/run";
         $DNEXT_PUBLISH_DIR = $this->getReportDir($proPipeAll);
+        $project_pipeline_id = $proPipeAll[0]->{'id'};
+        $DNEXT_RUN_URL = "{$this->base_path}/index.php?np=3&id=" . $project_pipeline_id;
         $userData = json_decode($this->getUserById($ownerID))[0];
         $username = $userData->{'username'};
         $email = $userData->{'email'};
         $lab = $userData->{'lab'};
         $allvars = array();
+        $allvars["DNEXT_RUN_URL"] =  $this->escapeRegex($DNEXT_RUN_URL);
         $allvars["DNEXT_WEB_REPORT_DIR"] =  $this->escapeRegex($DNEXT_WEB_REPORT_DIR);
         $allvars["DNEXT_WEB_RUN_DIR"] =  $this->escapeRegex($DNEXT_WEB_RUN_DIR);
         $allvars["DNEXT_PUBLISH_DIR"] =  $this->escapeRegex($DNEXT_PUBLISH_DIR);
@@ -6241,6 +6244,8 @@ class dbfuncs
             $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
             $log = shell_exec($cmd);
         }
+        error_log($cmd);
+        error_log($log);
         if (!is_null($log) && isset($log)) {
             return json_encode($log);
         } else {
