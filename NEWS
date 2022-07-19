@@ -1,3 +1,11 @@
+18.07.2021 Version 1.3.27
+Minor bug fixed in the label creation of the run page.
+Processed Samples by Pipeline and Active Users data added to Admin Dashboard.
+
+17.07.2021 Version 1.3.26
+{{DNEXT_RUN_URL}} global variable added for scripts.
+Nextflow script creation improved for advanced node connections.
+
 11.07.2021 Version 1.3.25
 Minor bug fixed in Run Status filter resets.
 CUSTOM_FILE_LOCATION_MESSAGE and CUSTOM_HELP_MESSAGE parameters added to .sec file under [UICONFIG] section.

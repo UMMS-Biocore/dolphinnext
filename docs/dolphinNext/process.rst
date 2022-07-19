@@ -89,7 +89,6 @@ If you want use optional input parameter, you can check the optional checkbox. T
 
 Here, ``filter`` parameter will be defined with ``NO_FILE`` prefix in case input parameter ``genome`` is empty. Otherwise, when input parameter ``genome`` is found, ``filter`` parameter will be defined as ``---filter ${genome}"``.
 
-Note that the existance of ``genome`` variable is required to be checked after using ``toString()`` operator::
 
     filter = genome.name.startsWith('NO_FILE') ? "" : "--filter ${genome}"
     

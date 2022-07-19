@@ -1,7 +1,17 @@
 $(document).ready(async function() {
     $("#main-content-box-header").css("background-color", "#ecf0f5")
 
-    $s = { users: [], runStatsByPipeline: [], runStatsByPipelineChart: null };
+    $s = { users: [], runStatsByPipeline: [], runStatsByPipelineChart: null, fileCountStatsByPipeline: [], active_users: [] };
+
+    let chartColors = {
+        "red": "rgb(255, 99, 132)",
+        "orange": "rgb(255, 159, 64)",
+        "yellow": "rgb(255, 205, 86)",
+        "green": "rgb(75, 192, 192)",
+        "blue": "rgb(54, 162, 235)",
+        "purple": "rgb(153, 102, 255)",
+        "grey": "rgb(201, 203, 207)"
+    }
 
     $s.runStatsByPipeline = await doAjax({
         p: "getRunStatsByPipeline",
@@ -11,8 +21,14 @@ $(document).ready(async function() {
         p: "getRunStatsByPipeline",
         type: "run"
     });
+
     $s.users = await doAjax({
         p: "getAllUsers"
+    });
+
+    $s.active_users = await doAjax({
+        p: "getRunStatsByPipeline",
+        type: "active_user"
     });
 
     //clean null lab values
@@ -29,6 +45,7 @@ $(document).ready(async function() {
     console.log($s.users)
     console.log($s.runAttemptStatsByPipeline)
     console.log($s.runStatsByPipeline)
+    console.log($s.active_users)
 
 
     const createMultiselect = function(id, selectAll) {
@@ -414,17 +431,39 @@ $(document).ready(async function() {
     }
 
     const getTotalUserData = () => {
+        // prepare activeUsersObj
+        let activeUsersObj = {}
+        for (var n = 0; n < $s.active_users.length; n++) {
+            let year = $s.active_users[n].year;
+            let month = $s.active_users[n].month;
+            let owner_id = $s.active_users[n].owner_id;
+            let yearmonth = year + "-" + month;
+            if (!activeUsersObj[yearmonth]) activeUsersObj[yearmonth] = {}
+            activeUsersObj[yearmonth][owner_id] = 1;
+        }
+        console.log(activeUsersObj)
+
         let obj = {}
         for (var n = 0; n < $s.users.length; n++) {
             let yearmonthArr = $s.users[n].memberdate.split("-");
-            let yearmonth = yearmonthArr[0] + "-" + yearmonthArr[1];
+            let yearmonth = yearmonthArr[0] + "-" + parseInt(yearmonthArr[1]);
             if (!obj[yearmonth]) obj[yearmonth] = { label: "", total: 0 }
             obj[yearmonth]["label"] = yearmonth;
             obj[yearmonth]["total"]++;
         }
-        console.log(obj)
+
         let arrObj = [];
-        Object.keys(obj).forEach((k, i) => {
+        Object.keys(activeUsersObj).forEach((k, i) => {
+            let yearMonth = k;
+            let activeUsers = 0
+            if (!obj[k]) {
+                obj[k] = { label: yearMonth, total: 0 }
+            }
+            if (activeUsersObj[k]) {
+                activeUsers = Object.keys(activeUsersObj[k]).length
+            }
+
+            obj[k].active = activeUsers
             arrObj.push(obj[k])
         });
 
@@ -433,26 +472,36 @@ $(document).ready(async function() {
             b = b.label.split("-")
             return new Date(a[0], a[1], 1) - new Date(b[0], b[1], 1)
         });
-        console.log(arrObj)
         let each = []
         let total = []
         let labels = []
+        let active = []
 
 
         for (let n = 0; n < arrObj.length; n++) {
             each.push(arrObj[n].total)
             total.push(sumArray(each))
             labels.push(arrObj[n].label)
+            active.push(arrObj[n].active)
         }
         let datasets = [{
-                label: 'New Members',
+                label: 'New Users',
                 data: each,
+                borderColor: 'rgba(255, 99, 132, 0.2)',
                 backgroundColor: 'rgba(255, 99, 132, 0.2)',
             },
             {
-                label: 'Cumulative Total Members',
+                label: 'Total Users',
                 data: total,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: "#64d0e5",
+                backgroundColor: "#64d0e5",
+                type: 'line',
+            },
+            {
+                label: 'Active Users',
+                data: active,
+                borderColor: chartColors.green,
+                backgroundColor: chartColors.green,
                 type: 'line',
             },
         ]
@@ -536,6 +585,51 @@ $(document).ready(async function() {
                 text: "Hours",
             }
         }
+    });
+
+    // chart-5: "fileStatsByPipeline"
+    $s.fileCountStatsByPipeline = await doAjax({
+        p: "getRunStatsByPipeline",
+        type: "file_count"
+    });
+    console.log($s.fileCountStatsByPipeline)
+    const getFileStatsByPipeline = () => {
+        let obj = {}
+        for (var n = 0; n < $s.fileCountStatsByPipeline.length; n++) {
+            let fileCount = $s.fileCountStatsByPipeline[n].fileCount
+            let gid = $s.fileCountStatsByPipeline[n].gid
+            let pname = $s.fileCountStatsByPipeline[n].pname
+            if (!obj[gid]) obj[gid] = { label: "", total: 0 }
+            obj[gid]["label"] = pname;
+            obj[gid]["total"] += parseInt(fileCount);
+
+        }
+        console.log(obj)
+        let arrObj = [];
+        Object.keys(obj).forEach((k, i) => {
+            arrObj.push(obj[k])
+        });
+        arrObj = sortByKey(arrObj, "total", { type: "desc" })
+        let total = []
+        let labels = []
+        for (let n = 0; n < arrObj.length; n++) {
+            total.push(arrObj[n].total)
+            labels.push(arrObj[n].label)
+        }
+        let datasets = [{
+            data: total,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        }]
+        return [datasets, labels]
+    }
+
+    let [fileByPipelineDataset, fileByPipelineLabels] = getFileStatsByPipeline();
+    createChart({
+        chartID: "fileStatsByPipeline",
+        datasets: fileByPipelineDataset,
+        labels: fileByPipelineLabels,
+        legend: { display: false },
+        yAxes: {}
     });
 
 

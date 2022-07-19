@@ -708,6 +708,7 @@ function InputParameters(inGNum, getProPipeInputs, allEdges) {
                 [fNode, sNode] = splitEdges(allEdges[c]);
                 var secNodeSplit = sNode.split("-");
                 var sNodeProId = secNodeSplit[1];
+                var sNodeOrder = secNodeSplit[2];
                 var secNodeName = $(document.getElementById(sNode)).attr("name");
                 var secParam = parametersData.filter(function(el) { return el.id == secNodeSplit[3] })[0];
                 var secParName = secParam.name;
@@ -717,7 +718,7 @@ function InputParameters(inGNum, getProPipeInputs, allEdges) {
                     optionalInputID = getOptionalInputID(sNode, sNodeProId);
                 }
                 //g_3_reads_g_0
-                var chnName = gFormat(inGNum) + "_" + secParName + "_" + gFormat(document.getElementById(sNode).getAttribute("parentG"));
+                var chnName = gFormat(inGNum) + "_" + secParName + sNodeOrder + "_" + gFormat(document.getElementById(sNode).getAttribute("parentG"));
                 chnObj = getInputParamContent(chnObj, getProPipeInputs, inGID, inputParamName, secParQual, secParName, secNodeName, sNodeProId, chnName, optionalInputID);
             }
         }
@@ -1060,7 +1061,7 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         }
         find = false
         for (var e = 0; e < allEdges.length; e++) {
-            if (allEdges[e].indexOf(Iid) > -1) { //if not exist: -1
+            if (allEdges[e].indexOf(Iid) > -1) {
                 find = true
                 var fNode = "";
                 var sNode = "";
@@ -1076,15 +1077,16 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                     node2 = fNode;
                 }
                 // find connected process of the input and find oIndex of the output process. 
-                // oIndex prevents duplicate channel error
+                // oIndex and iIndex prevents duplicate channel error
                 var connectedOGnum = document.getElementById(node1).getAttribute("parentG");
                 var connectedOList = d3.select("#" + connectedOGnum).selectAll("circle[kind ='output']")[0]
                 var oIndex = connectedOList.findIndex(x => $(x).attr("id") === node1);
                 if (oIndex === -1) oIndex = ""
+                var iIndex = i;
                 var inputIdSplit = node1.split("-")
                 var filteredParamData = parametersData.filter(function(el) { return el.id == inputIdSplit[3] })[0];
                 var genParName = filteredParamData.name;
-                var channelName = gFormat(document.getElementById(node1).getAttribute("parentG")) + "_" + genParName + oIndex + "_" + gFormat(document.getElementById(node2).getAttribute("parentG"));
+                var channelName = gFormat(document.getElementById(node1).getAttribute("parentG")) + "_" + genParName + oIndex + iIndex + "_" + gFormat(document.getElementById(node2).getAttribute("parentG"));
 
                 whenInLib = addChannelName(whenCond, whenInLib, file_type, channelName, param_name, qual)
                 if (inputOptional == "true") {
@@ -1129,8 +1131,9 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         genParName = parametersData.filter(function(el) {
             return el.id == outputIdSplit[3]
         })[0].name;
-        // +o prevents duplicate channel name error
-        channelName = gFormat(document.getElementById(Oid).getAttribute("parentG")) + "_" + genParName + o;
+        var oIndex = o
+            // +o prevents duplicate channel name error
+        channelName = gFormat(document.getElementById(Oid).getAttribute("parentG")) + "_" + genParName + oIndex;
         var channelNameAll = "";
         for (var c = 0; c < allEdges.length; c++) {
             if (allEdges[c].indexOf(Oid) == 0) {
@@ -1138,11 +1141,12 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                 var secNode = "";
                 [fNode, secNode] = splitEdges(allEdges[c]);
                 var secProType = secNode.split("-")[1];
+                var secProOrder = secNode.split("-")[2];
                 if (secProType !== "outPro") {
                     if (channelNameAll === "") {
-                        channelNameAll = channelNameAll + channelName + "_" + gFormat(document.getElementById(secNode).getAttribute("parentG"));
+                        channelNameAll = channelNameAll + channelName + secProOrder + "_" + gFormat(document.getElementById(secNode).getAttribute("parentG"));
                     } else {
-                        channelNameAll = channelNameAll + ", " + channelName + "_" + gFormat(document.getElementById(secNode).getAttribute("parentG"));
+                        channelNameAll = channelNameAll + ", " + channelName + secProOrder + "_" + gFormat(document.getElementById(secNode).getAttribute("parentG"));
                     }
                 }
             } else if (allEdges[c].indexOf(Oid) > 0) {
@@ -1150,11 +1154,13 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
                 var secNode = "";
                 [fstNode, secNode] = splitEdges(allEdges[c]);
                 var fstProType = fstNode.split("-")[1];
+                var fstProOrder = fstNode.split("-")[2];
+
                 if (fstProType !== "outPro") {
                     if (channelNameAll === "") {
-                        channelNameAll = channelNameAll + channelName + "_" + gFormat(document.getElementById(fstNode).getAttribute("parentG"));
+                        channelNameAll = channelNameAll + channelName + fstProOrder + "_" + gFormat(document.getElementById(fstNode).getAttribute("parentG"));
                     } else {
-                        channelNameAll = channelNameAll + ", " + channelName + "_" + gFormat(document.getElementById(fstNode).getAttribute("parentG"));
+                        channelNameAll = channelNameAll + ", " + channelName + fstProOrder + "_" + gFormat(document.getElementById(fstNode).getAttribute("parentG"));
                     }
                 }
             }
@@ -1162,7 +1168,8 @@ function IOandScriptForNf(id, currgid, allEdges, nxf_runmode, run_uuid, mainPipe
         // if output node is not connected to input node.
         if (channelNameAll === '') {
             // o prevents duplicate channel name error
-            channelNameAll = channelName + o;
+            var oIndex = o
+            channelNameAll = channelName + oIndex;
         }
         whenOutLib = addChannelName(whenCond, whenOutLib, file_type, channelNameAll, param_name, qual)
         bodyOutput = bodyOutput + " " + qual + " " + outputName + outputOptionalText + " into " + channelNameAll + outputOperatorText + "\n"

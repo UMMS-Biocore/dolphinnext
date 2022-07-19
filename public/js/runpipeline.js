@@ -1841,8 +1841,10 @@ function hideProcessOptionsAsIcons() {
                     var checkVarName = $("#inputsTab, .ui-dialog").find("td[given_name='" + varName + "']").parent();
                     if (checkVarName[0]) {
                         var checkOptional = checkVarName.attr("optional")
-                        var optionalText = ""
-                        if (checkOptional) optionalText = ' (Optional)'
+                        var labelText = checkVarName.attr("label")
+                        var finalText = varName;
+                        if (checkOptional) finalText = `${varName} (Optional)`;
+                        if (labelText) finalText = labelText;
                         var panelContent = `<table style="margin-bottom:10px;" class="table"><thead>
 <tr>
 <th style="display:none; width:30%;" scope="col">Given Name</th>
@@ -1850,7 +1852,7 @@ function hideProcessOptionsAsIcons() {
 <th style="display:none;" scope="col">File Type</th>
 <th style="display:none;" scope="col">Qualifier</th>
 <th style="display:none;" scope="col">Process Name</th>
-<th style="width:70%; padding-bottom:4px;" scope="col">${varName}${optionalText}</th>
+<th style="width:70%; padding-bottom:4px;" scope="col">${finalText}</th>
 </tr>
 </thead><tbody id="processInputs-${i}" style="word-break: break-all;"></tbody></table>`;
                     }
@@ -3714,6 +3716,7 @@ function getRowTable(
     var trID = 'id="' + rowType + "Ta-" + firGnum + '"';
     var optional_attr = "";
     var optional_txt = "";
+    let labelAttr = ""
     if (optional) {
         optional_attr = ' optional="true" ';
         optional_txt = ' (Optional)';
@@ -3726,11 +3729,15 @@ function getRowTable(
         paraFileType = "-";
     }
     var finalText = paramGivenName + optional_txt;
-    if (labelText) finalText = labelText
+    if (labelText) {
+        labelAttr = ` label="${labelText}" `;
+        finalText = labelText;
+    }
     return (
         "<tr " +
         trID +
         optional_attr +
+        labelAttr +
         show_setting_attr +
         ' ><td name="' + paramGivenName + '" id="' +
         rowType +
