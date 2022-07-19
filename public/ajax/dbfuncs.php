@@ -916,6 +916,7 @@ class dbfuncs
     }
     function escapeRegex($name)
     {
+        $name = str_replace("&", "\&", $name);
         $name = str_replace("/", "\/", $name);
         $name = str_replace('"', '\"', $name);
         $name = str_replace("'", "\'", $name);
@@ -1869,6 +1870,8 @@ class dbfuncs
         $lab = $userData->{'lab'};
         $allvars = array();
         $allvars["DNEXT_RUN_URL"] =  $this->escapeRegex($DNEXT_RUN_URL);
+        error_log($DNEXT_RUN_URL);
+        error_log($allvars["DNEXT_RUN_URL"]);
         $allvars["DNEXT_WEB_REPORT_DIR"] =  $this->escapeRegex($DNEXT_WEB_REPORT_DIR);
         $allvars["DNEXT_WEB_RUN_DIR"] =  $this->escapeRegex($DNEXT_WEB_RUN_DIR);
         $allvars["DNEXT_PUBLISH_DIR"] =  $this->escapeRegex($DNEXT_PUBLISH_DIR);
@@ -4490,6 +4493,20 @@ class dbfuncs
             INNER JOIN $this->db.biocorepipe_save pip ON pip.id = pp.pipeline_id
             INNER JOIN $this->db.users u ON pp.owner_id = u.id 
             WHERE pp.deleted = 0";
+            return self::queryTable($sql);
+        } else if ($type == "file_count") {
+            $sql = "SELECT  count(pp.id) AS fileCount, pp.owner_id as own, pip.id as pip, pip.pipeline_gid as gid, pip.name as pname
+            FROM $this->db.project_pipeline pp
+            LEFT JOIN  $this->db.project_pipeline_input pi ON pi.project_pipeline_id = pp.id 
+            LEFT JOIN  $this->db.file_collection fc ON pi.collection_id = fc.c_id 
+            INNER JOIN $this->db.biocorepipe_save pip ON pip.id = pp.pipeline_id
+            WHERE pp.deleted = 0 AND pi.collection_id != 0 AND pi.deleted = 0
+            GROUP BY pp.id";
+            return self::queryTable($sql);
+        } else if ($type == "active_user") {
+            $sql = "SELECT  owner_id, YEAR(date_created) as year, MONTH(date_created) as month
+            FROM $this->db.run_log 
+            GROUP BY DATE_FORMAT(date_created, '%Y%m'), owner_id";
             return self::queryTable($sql);
         }
     }
