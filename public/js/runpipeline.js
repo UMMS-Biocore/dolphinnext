@@ -453,6 +453,7 @@ async function openSubPipeline(piID, pObj) {
                     if (pObj.pId.match(/p(.*)/)) {
                         var newPiID = pObj.pId.match(/p(.*)/)[1];
                         var newMainGnum = "pObj" + MainGNum + "_" + pObj.gNum;
+                        var mergedPipeNameFinal = ""
                         window[newMainGnum] = {};
                         window[newMainGnum].piID = newPiID;
                         window[newMainGnum].MainGNum = MainGNum + "_" + pObj.gNum;
@@ -461,12 +462,12 @@ async function openSubPipeline(piID, pObj) {
                             window.pipeObj["pipeline_module_" + newPiID],
                         ];
                         if (mergedPipeName) {
-                            mergedPipeName = mergedPipeName + "_" + pObj.name
+                            mergedPipeNameFinal = mergedPipeName + "_" + pObj.name
                         } else {
-                            mergedPipeName = pObj.name
+                            mergedPipeNameFinal = pObj.name
                         }
                         window[newMainGnum].lastPipeName = pObj.name;
-                        window[newMainGnum].mergedPipeName = mergedPipeName;
+                        window[newMainGnum].mergedPipeName = mergedPipeNameFinal;
                         // create new SVG workplace inside panel, if not added before
                         await openSubPipeline(newPiID, window[newMainGnum]);
                         // add pipeline circle to main workplace
@@ -3351,6 +3352,7 @@ function parseProPipePanelScript(script) {
         }
     }
     return panelObj;
+    console.log(panelObj)
 }
 
 const addEmptyRows = (data, numRows, colHeaders) => {

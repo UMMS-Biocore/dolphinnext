@@ -131,8 +131,8 @@ function filterObjVal(obj, filter) {
 
 //sort array of object by key
 function sortByKey(array, key, settings) {
-    let type = settings.type ? settings.type : "";
-    let caseinsensitive = settings.caseinsensitive ? settings.caseinsensitive : "";
+    let type = settings && settings.type ? settings.type : "";
+    let caseinsensitive = settings && settings.caseinsensitive ? settings.caseinsensitive : "";
     return array.sort(function(a, b) {
         var x = a[key];
         var y = b[key];

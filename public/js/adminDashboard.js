@@ -434,8 +434,8 @@ $(document).ready(async function() {
         // prepare activeUsersObj
         let activeUsersObj = {}
         for (var n = 0; n < $s.active_users.length; n++) {
-            let year = $s.active_users[n].year;
-            let month = $s.active_users[n].month;
+            let year = parseInt($s.active_users[n].year);
+            let month = parseInt($s.active_users[n].month);
             let owner_id = $s.active_users[n].owner_id;
             let yearmonth = year + "-" + month;
             if (!activeUsersObj[yearmonth]) activeUsersObj[yearmonth] = {}
