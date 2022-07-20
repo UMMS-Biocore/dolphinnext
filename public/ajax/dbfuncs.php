@@ -4504,9 +4504,9 @@ class dbfuncs
             GROUP BY pp.id";
             return self::queryTable($sql);
         } else if ($type == "active_user") {
-            $sql = "SELECT  owner_id, YEAR(date_created) as year, MONTH(date_created) as month
+            $sql = "SELECT  owner_id, DATE_FORMAT(date_created, '%Y') as year, DATE_FORMAT(date_created, '%m') as month
             FROM $this->db.run_log 
-            GROUP BY DATE_FORMAT(date_created, '%Y%m'), owner_id";
+            GROUP BY year, month, owner_id";
             return self::queryTable($sql);
         }
     }
