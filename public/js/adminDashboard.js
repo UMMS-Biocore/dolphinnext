@@ -4,13 +4,14 @@ $(document).ready(async function() {
     $s = { users: [], runStatsByPipeline: [], runStatsByPipelineChart: null, fileCountStatsByPipeline: [], active_users: [] };
 
     let chartColors = {
-        "red": "rgb(255, 99, 132)",
-        "orange": "rgb(255, 159, 64)",
-        "yellow": "rgb(255, 205, 86)",
-        "green": "rgb(75, 192, 192)",
-        "blue": "rgb(54, 162, 235)",
-        "purple": "rgb(153, 102, 255)",
-        "grey": "rgb(201, 203, 207)"
+        "red": "#F56954",
+        "lightred": "rgba(255, 99, 132, 0.2)",
+        "orange": "#F39C12",
+        "green": "#009954",
+        "lightblue": "#00C0EF",
+        "darkblue": "#3C8DBC",
+        "grey": "#D2D6DF",
+        "lightorange": 'rgba(255, 159, 64, 0.5)'
     }
 
     $s.runStatsByPipeline = await doAjax({
@@ -152,12 +153,12 @@ $(document).ready(async function() {
         let datasets = [{
                 label: 'Error',
                 data: error,
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                backgroundColor: chartColors.red,
             },
             {
                 label: 'Success',
                 data: success,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                backgroundColor: chartColors.green,
             },
         ]
 
@@ -441,7 +442,6 @@ $(document).ready(async function() {
             if (!activeUsersObj[yearmonth]) activeUsersObj[yearmonth] = {}
             activeUsersObj[yearmonth][owner_id] = 1;
         }
-        console.log(activeUsersObj)
 
         let obj = {}
         for (var n = 0; n < $s.users.length; n++) {
@@ -452,19 +452,44 @@ $(document).ready(async function() {
             obj[yearmonth]["total"]++;
         }
 
-        let arrObj = [];
-        Object.keys(activeUsersObj).forEach((k, i) => {
-            let yearMonth = k;
-            let activeUsers = 0
-            if (!obj[k]) {
-                obj[k] = { label: yearMonth, total: 0 }
-            }
-            if (activeUsersObj[k]) {
-                activeUsers = Object.keys(activeUsersObj[k]).length
-            }
+        let sortedDates = Object.keys(obj).sort(function(a, b) {
+            a = a.split("-");
+            b = b.split("-")
+            return new Date(a[0], a[1], 1) - new Date(b[0], b[1], 1)
+        });
 
-            obj[k].active = activeUsers
-            arrObj.push(obj[k])
+        let firstMemberYearMonth = sortedDates[0]; // 2022-6
+        var dateObj = new Date();
+        let todaysYearMonth = dateObj.getUTCFullYear() + "-" + (dateObj.getUTCMonth() + 1);
+
+        let getDaysArray = function(start, end) {
+            for (var arr = [], dt = new Date(start); dt <= new Date(end); dt.setDate(dt.getDate() + 1)) {
+                let dateObj = new Date(dt);
+                let newDate = dateObj.getUTCFullYear() + "-" + (dateObj.getUTCMonth() + 1)
+                if (arr.indexOf(newDate) === -1) {
+                    arr.push(newDate)
+                }
+            }
+            return arr;
+        };
+        let yearMonthArr = getDaysArray(firstMemberYearMonth, todaysYearMonth)
+
+        // combine obj and activeUsersObj
+        let combineObj = {};
+        for (var n = 0; n < yearMonthArr.length; n++) {
+            let combDate = yearMonthArr[n];
+            let total = 0;
+            let active = 0;
+            if (obj[combDate]) total = obj[combDate].total
+            if (activeUsersObj[combDate]) {
+                active = Object.keys(activeUsersObj[combDate]).length
+            }
+            combineObj[combDate] = { label: combDate, total, active }
+        }
+        console.log(combineObj)
+        let arrObj = []
+        Object.keys(combineObj).forEach((k, i) => {
+            arrObj.push(combineObj[k])
         });
 
         arrObj = arrObj.sort(function(a, b) {
@@ -484,17 +509,19 @@ $(document).ready(async function() {
             labels.push(arrObj[n].label)
             active.push(arrObj[n].active)
         }
+
+
         let datasets = [{
                 label: 'New Users',
                 data: each,
-                borderColor: 'rgba(255, 99, 132, 0.2)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: chartColors.lightorange,
+                backgroundColor: chartColors.lightorange
             },
             {
                 label: 'Total Users',
                 data: total,
-                borderColor: "#64d0e5",
-                backgroundColor: "#64d0e5",
+                borderColor: chartColors.darkblue,
+                backgroundColor: chartColors.darkblue,
                 type: 'line',
             },
             {
@@ -568,7 +595,7 @@ $(document).ready(async function() {
         }
         let datasets = [{
             data: total,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            backgroundColor: chartColors.darkblue,
         }]
         return [datasets, labels]
     }
@@ -618,7 +645,7 @@ $(document).ready(async function() {
         }
         let datasets = [{
             data: total,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            backgroundColor: chartColors.darkblue,
         }]
         return [datasets, labels]
     }
