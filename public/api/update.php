@@ -164,10 +164,6 @@ class updates
 
         $temp_run_uuid = $dbfun->getProPipeLastRunUUID($tmplt_run_id);
         $runOpt = json_decode($dbfun->getRunLogOpt($temp_run_uuid));
-        if (empty($runOpt[0])) {
-            error_log("getRunLogOpt failed.");
-            return null;
-        }
         $proVarObj = htmlspecialchars_decode($runOpt[0]->{'pro_var_obj'}, ENT_QUOTES);
         if (!empty($nextText) && !empty($uuid)) {
             $data = $dbfun->saveRun($project_pipeline_id, $nextText, $runType, $manualRun, $uuid, $proVarObj, $ownerID);
@@ -232,20 +228,19 @@ class updates
                     $runSub = $this->startCronRun($project_pipeline_id, $ownerID, $run_name);
                     error_log(print_r($runSub, TRUE));
 
-                    if (isset($runSub["status"]) && ($runSub["status"] == "initiated" || $runSub["status"] == "skipped")) {
-                        $new_run_id = $runSub["run_id"];
-                        $status = $runSub["status"];
-                        $ret .= "$time Cronjob(run id: $new_run_id) is $status.\n";
-                        if (empty($cron_min) && empty($cron_hour)  && empty($cron_day)  && empty($cron_week)  && empty($cron_month)) {
-                            $dbfun->resetProjectPipelineCron($project_pipeline_id);
-                            $new_cron_target_date = "";
-                        } else {
-                            $cron_first = NULL;
-                            $new_cron_target_date = json_decode($dbfun->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first, $ownerID));
-                        }
 
-                        $ret .= "$time Next CronJob date: $new_cron_target_date\n";
+                    $new_run_id = $runSub["run_id"];
+                    $status = $runSub["status"];
+                    $ret .= "$time Cronjob(run id: $new_run_id) is $status.\n";
+                    if (empty($cron_min) && empty($cron_hour)  && empty($cron_day)  && empty($cron_week)  && empty($cron_month)) {
+                        $dbfun->resetProjectPipelineCron($project_pipeline_id);
+                        $new_cron_target_date = "";
+                    } else {
+                        $cron_first = NULL;
+                        $new_cron_target_date = json_decode($dbfun->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first, $ownerID));
                     }
+
+                    $ret .= "$time Next CronJob date: $new_cron_target_date\n";
                 }
                 error_log($ret);
             endforeach;

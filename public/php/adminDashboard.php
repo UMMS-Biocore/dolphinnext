@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box box-primary" bis_skin_checked="1">
+        <div class="box box-primary" bis_skin_checked="1" style="border-top-width:7px;">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title" id="runStatsByPipelineTitle"></h3>
             </div>
@@ -26,7 +26,7 @@
         </div>
     </div>
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box box-primary" bis_skin_checked="1">
+        <div class="box box-primary" bis_skin_checked="1" style="border-top-width:7px;">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title" id="runStatsByUserTitle"></h3>
             </div>
@@ -54,13 +54,13 @@
 </div>
 <div class="row">
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box box-primary" bis_skin_checked="1">
+        <div class="box box-primary" style="border-top-width:7px;">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title">Processed Samples by Pipeline</h3>
             </div>
             <div class="box-body" bis_skin_checked="1">
                 <div class="row" bis_skin_checked="1">
-                    <div class="col-md-10" bis_skin_checked="1">
+                    <div class="col-md-12" bis_skin_checked="1">
                         <canvas id="fileStatsByPipeline" width="400" height="250"></canvas>
                     </div>
                 </div>
@@ -69,13 +69,13 @@
     </div>
 
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box box-success" bis_skin_checked="1">
+        <div class="box box-success" bis_skin_checked="1" style="border-top-width:7px;">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title">Average Successful Run Time</h3>
             </div>
             <div class="box-body" bis_skin_checked="1">
                 <div class="row" bis_skin_checked="1">
-                    <div class="col-md-10" bis_skin_checked="1">
+                    <div class="col-md-12" bis_skin_checked="1">
                         <canvas id="runStatsAvgRun" width="400" height="250"></canvas>
                     </div>
                 </div>
@@ -85,13 +85,13 @@
 </div>
 <div class="row">
     <div class="col-md-6" bis_skin_checked="1">
-        <div class="box box-danger" bis_skin_checked="1">
+        <div class="box box-danger" bis_skin_checked="1" style="border-top-width:7px;">
             <div class="box-header with-border" bis_skin_checked="1">
                 <h3 class="box-title">Total Users</h3>
             </div>
             <div class="box-body" bis_skin_checked="1">
                 <div class="row" bis_skin_checked="1">
-                    <div class="col-md-10" bis_skin_checked="1">
+                    <div class="col-md-12" bis_skin_checked="1">
                         <canvas id="runStatsTotalUsers" width="400" height="250"></canvas>
                     </div>
                 </div>
