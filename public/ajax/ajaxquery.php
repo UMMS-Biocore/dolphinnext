@@ -1758,6 +1758,7 @@ if ($p == "publishGithub") {
     $rev_id = isset($_REQUEST['rev_id']) ? $_REQUEST['rev_id'] : "";
     $rev_comment = isset($_REQUEST['rev_comment']) ? $_REQUEST['rev_comment'] : "";
     $group_id = isset($_REQUEST['group']) ? $_REQUEST['group'] : "";
+    $write_group_id = isset($_REQUEST['write_group_id']) ? $_REQUEST['write_group_id'] : "";
     $perms = isset($_REQUEST['perms']) ? $_REQUEST['perms'] : 3;
     settype($id, 'integer');
     settype($rev_id, 'integer');
@@ -1770,21 +1771,22 @@ if ($p == "publishGithub") {
         exit;
     }
 
+
+
+
     if (!empty($id)) {
-        //don't allow to update if user not own the process.
         $permCheck = 1;
-        $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.process WHERE id='$id'");
-        if ($userRole != "admin") {
-            $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
-        }
+        $$userRole = $db->getUserRoleVal($ownerID);
+        $getUserGroupsIDs = json_decode($db->getUserGroupsIDs($ownerID), true);
+        list($permCheck, $warnName) = $db->getWritePerm($ownerID, $id, $userRole, "process", $getUserGroupsIDs);
 
         if (!empty($permCheck)) {
             $db->updateAllProcessGroupByGid($process_gid, $process_group_id, $ownerID);
             $db->updateAllProcessNameByGid($process_gid, $name, $ownerID);
-            $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
+            $data = $db->updateProcess($id, $name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $group_id, $perms, $script_mode, $script_mode_header, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $write_group_id, $ownerID);
         }
     } else {
-        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $ownerID);
+        $data = $db->insertProcess($name, $process_gid, $summary, $process_group_id, $script, $script_header, $script_footer, $rev_id, $rev_comment, $group_id, $perms, $script_mode, $script_mode_header, $process_uuid, $process_rev_uuid, $test_env, $test_work_dir, $docker_check, $docker_img, $docker_opt, $singu_check, $singu_img, $singu_opt, $script_test, $script_test_mode, $write_group_id, $ownerID);
         $idArray = json_decode($data, true);
         $new_pro_id = $idArray["id"];
         if (empty($id) && empty($process_uuid)) {
@@ -2122,7 +2124,7 @@ if ($p == "publishGithub") {
             $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $cron_first, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
             $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
+            $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null, null);
             $listPermsDenied = $db->checkPermUpdtProject("greaterOrEqual", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
             $data = json_encode($listPermsDenied);
         }
@@ -2215,7 +2217,8 @@ if ($p == "publishGithub") {
         $pro_owner_id = $process_data[0]["owner_id"];
         settype($group_id, 'integer');
         settype($perms, 'integer');
-        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $pro_owner_id, $ownerID);
+        $getUserGroupsIDs = json_decode($db->getUserGroupsIDs($ownerID), true);
+        $listPermsDenied = $db->permUpdtModule($listPermsDenied, "dry-run-strict", "process", $process_id, $pro_group_id, $pro_perms, $group_id, $perms, $pro_owner_id, $ownerID, null, null, $getUserGroupsIDs);
     }
     $data = json_encode($listPermsDenied);
 } else if ($p == "checkPermUpdtPipeline") {
@@ -2225,7 +2228,8 @@ if ($p == "publishGithub") {
     settype($group_id, 'integer');
     settype($perms, 'integer');
     $listPermsDenied = array();
-    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run-strict", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
+    // strict removed because couldn't make the pipeline public since one public module used 
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null, null);
     $data = json_encode($listPermsDenied);
 } else if ($p == "checkPermUpdtRun") {
     $project_id = $_REQUEST['project_id'];
@@ -2235,7 +2239,7 @@ if ($p == "publishGithub") {
     settype($group_id, 'integer');
     settype($perms, 'integer');
     $listPermsDenied = array();
-    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null);
+    $listPermsDenied = $db->recursivePermUpdtPipeline("dry-run", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null, null);
     $listPermsDenied = $db->checkPermUpdtProject("dry-run", $listPermsDenied, $project_id, $group_id, $perms, $ownerID);
     $data = json_encode($listPermsDenied);
 } else if ($p == "checkUserWritePermRun") {
@@ -2308,10 +2312,11 @@ if ($p == "publishGithub") {
 } else if ($p == "getMaxPipRev_id") {
     $data = json_encode("");
     $pipeline_gid = $_REQUEST['pipeline_gid'];
-    $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE pipeline_gid='$pipeline_gid' AND deleted=0");
-    $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
+    $pipeline_id = $_REQUEST['pipeline_id'];
     $userRole = $db->getUserRoleVal($ownerID);
-    if (!empty($permCheck) || $userRole == "admin") {
+    $getUserGroupsIDs = json_decode($db->getUserGroupsIDs($ownerID), true);
+    list($permCheck, $warnName) = $db->getWritePerm($ownerID, $pipeline_id, $userRole, "biocorepipe_save", $getUserGroupsIDs);
+    if (!empty($permCheck)) {
         $data = $db->getMaxPipRev_id($pipeline_gid);
     }
 } else if ($p == "getInputsPP") {
@@ -2333,6 +2338,7 @@ if ($p == "publishGithub") {
     endforeach;
     $id = $newObj->{"id"};
     $group_id = $newObj->{"group_id"};
+    $write_group_id = $newObj->{"write_group_id"};
     settype($group_id, 'integer');
     $perms = $newObj->{"perms"};
     $publicly_searchable = isset($newObj->{"publicly_searchable"}) ? $newObj->{"publicly_searchable"} : "false"; // only effective if user is admin
@@ -2340,13 +2346,10 @@ if ($p == "publishGithub") {
     if (!empty($release_date)) {
         $release_date = date('Y-m-d', strtotime($release_date));
     }
-    $permCheck = 1;
     $userRole = $db->getUserRoleVal($ownerID);
-    //don't allow to update if user not own the pipeline.
-    if ($userRole != "admin" && !empty($id)) {
-        $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE id='$id'");
-        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
-    }
+    $getUserGroupsIDs = json_decode($db->getUserGroupsIDs($ownerID), true);
+    list($permCheck, $warnName) = $db->getWritePerm($ownerID, $id, $userRole, "biocorepipe_save", $getUserGroupsIDs);
+    error_log($permCheck);
     if (!empty($permCheck)) {
         $data = $db->saveAllPipeline($newObj, $userRole, $ownerID);
     }
@@ -2354,7 +2357,7 @@ if ($p == "publishGithub") {
     if (!empty($id)) {
         if (!empty($permCheck)) {
             $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date);
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date, $write_group_id);
             $data = json_encode($listPermsDenied);
         }
         //insert
@@ -2374,6 +2377,7 @@ if ($p == "publishGithub") {
 } else if ($p == "savePipelineDetails") {
     $data = json_encode("");
     $summary = addslashes(htmlspecialchars(urldecode($_REQUEST['summary']), ENT_QUOTES));
+    $write_group_id = $_REQUEST['write_group_id'];
     $group_id = $_REQUEST['group_id'];
     $nodesRaw = isset($_REQUEST['nodes']) ? $_REQUEST['nodes'] : "";
     $perms = $_REQUEST['perms'];
@@ -2391,19 +2395,16 @@ if ($p == "publishGithub") {
     }
     settype($group_id, 'integer');
     settype($pin_order, "integer");
-    $permCheck = 1;
     $userRole = $db->getUserRoleVal($ownerID);
-    //don't allow to update if user not own the pipeline.
-    if ($userRole != "admin" && !empty($id)) {
-        $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.biocorepipe_save WHERE id='$id'");
-        $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
-    }
+    $getUserGroupsIDs = json_decode($db->getUserGroupsIDs($ownerID), true);
+    list($permCheck, $warnName) = $db->getWritePerm($ownerID, $id, $userRole, "biocorepipe_save", $getUserGroupsIDs);
+
     if (!empty($permCheck)) {
         $data = $db->savePipelineDetails($id, $summary, $group_id, $perms, $pin, $pin_order, $publicly_searchable, $pipeline_group_id, $userRole, $release_date, $ownerID);
         //update permissions
         if (!empty($nodesRaw)) {
             $listPermsDenied = array();
-            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date);
+            $listPermsDenied = $db->recursivePermUpdtPipeline("default", $listPermsDenied, $id, $group_id, $perms, $ownerID, $publicly_searchable, $release_date, $write_group_id);
         }
     }
 } else if ($p == "getSavedPipelines") {

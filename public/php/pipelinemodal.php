@@ -577,11 +577,10 @@
                         </div>
                         <div class="form-horizontal">
                             <div id="proPermGroPubDiv">
-                                <label class="col-sm-1 control-label"></label>
                                 <div class="col-sm-4">
                                     <div class="form-group">
-                                        <label class="col-sm-6 control-label">Permissions to View</label>
-                                        <div class="col-sm-6">
+                                        <label class="col-sm-5 control-label">Permission to View</label>
+                                        <div class="col-sm-7">
                                             <select id="permsPro" class="fbtn btn-default form-control permscheck" name="perms">
                                                 <option value="3" selected="">Only me </option>
                                                 <option value="15">Only my groups</option>
@@ -590,12 +589,21 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-sm-5">
+                                <div class="col-sm-4">
                                     <div class="form-group">
-                                        <label class="col-sm-6 control-label">Group Selection</label>
-                                        <div class="col-sm-6">
+                                        <label class="col-sm-5 control-label">Group Permission to View</label>
+                                        <div class="col-sm-7">
                                             <select id="groupSelPro" class="fbtn btn-default form-control permscheck" name="group_id">
                                                 <option value="" selected>Choose group </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="col-sm-5 control-label ">Group Permission to Write</label>
+                                        <div class="col-sm-7" style="padding-right:60px;">
+                                            <select id="proWriteGroupPipe" class="fbtn btn-default form-control" name="write_group_id" style="margin-top:10px;" multiple="multiple">
                                             </select>
                                         </div>
                                     </div>
@@ -603,7 +611,6 @@
                             </div>
                         </div>
                     </div>
-
                 </form>
             </div>
             <div class="modal-footer">
