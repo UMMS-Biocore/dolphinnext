@@ -1,3 +1,5 @@
+// Global scope
+$s = { getUserGroups: null, allgroups: null };
 //template text for ace editor
 window.draggingAceEditor = {};
 templategroovy = '//groovy example: \n\n println "Hello, World!"';
@@ -443,7 +445,9 @@ function loadSelectedProcess(selProcessId) {
     })[0];
     $('#addProcessModal').removeData("prodata");
     $('#addProcessModal').data("prodata", showProcess);
+    console.log(showProcess)
     var processOwn = showProcess.own;
+    var processWritePerm = showProcess.write_group_perm;
     if (showProcess.test_env) {
         $('#test_env').val(showProcess.test_env);
         var patt = /(.*)-(.*)/;
@@ -466,6 +470,8 @@ function loadSelectedProcess(selProcessId) {
     if (showProcess.docker_opt) $('#docker_opt').val(showProcess.docker_opt);
     if (showProcess.singu_img) $('#singu_img').val(showProcess.singu_img);
     if (showProcess.singu_opt) $('#singu_opt').val(showProcess.singu_opt);
+    fillProcessGroups(showProcess)
+    setMultiSelectValue('#proWriteGroupPipe', showProcess.write_group_id, { "rebuild": true })
     if (showProcess.script_test_mode) {
         $('#script_mode_test_pro').val(showProcess.script_test_mode);
     }
@@ -571,7 +577,7 @@ function loadSelectedProcess(selProcessId) {
         }
     }
     // disable modal based on permissions
-    if (processOwn === "1" || usRole === "admin") {
+    if (processOwn === "1" || processWritePerm == "1" || usRole === "admin") {
         $('#createRevision').css('display', "inline");
     } else {
         $('#mProActionsDiv').css('display', "none");
@@ -580,7 +586,7 @@ function loadSelectedProcess(selProcessId) {
         $('#createRevisionBut').css('display', "none");
         disableProModal(selProcessId);
     }
-    if (processOwn === "1") {
+    if (processOwn === "1" || processWritePerm == "1") {
         $('#pipeRunStatDiv').css('display', "inline");
         $('#runEnvDiv').css('display', "inline");
     } else {
@@ -1117,6 +1123,7 @@ function checkRevisionProc(data, proID) {
     var numOfProcess = checkPipe.length;
     var numOfProcessPublic = checkPipePublic.length;
     var numOfProPipePublic = checkProPipePublic.length;
+    console.log("numOfProPipePublic", checkProPipePublic)
     if (numOfProcess > 0 && numOfProcessPublic === 0 && numOfProPipePublic === 0) {
         warnUser = true;
         infoText = infoText + 'This revision of process already used in following pipeline(s): ';
@@ -1332,6 +1339,110 @@ function combineTextEditor(divID) {
     return encodeURIComponent(ret)
 }
 
+const fillProcessGroups = (pData) => {
+    $('#proWriteGroupPipe').empty();
+    $('#groupSelPro').empty();
+    $('#proWriteGroupPipe').append($('<option>', { value: "", text: "Choose Group" }));
+    $('#groupSelPro').append($('<option>', { value: "", text: "Choose Group" }));
+    var allUserGrp = $s.getUserGroups;
+    let proWriteGroupID = pData.write_group_id;
+
+    var proGroupIDs = [];
+    if (proWriteGroupID) {
+        proGroupIDs = proWriteGroupID.split(",");
+    }
+
+    if (pData.group_id) {
+        if (proGroupIDs.indexOf(pData.group_id) === -1) proGroupIDs.push(pData.group_id);
+    }
+
+
+    for (var j = 0; j < allUserGrp.length; j++) {
+        if (proGroupIDs.indexOf(allUserGrp[j].id) === -1) proGroupIDs.push(allUserGrp[j].id);
+    }
+
+
+    for (var j = 0; j < proGroupIDs.length; j++) {
+        let group_id = proGroupIDs[j];
+        if ($s.allgroups) {
+            let eachGrp = $s.allgroups.filter(i => i.id == group_id);
+            if (eachGrp && eachGrp[0] && eachGrp[0].name) {
+                $('#proWriteGroupPipe').append($('<option>', { value: eachGrp[0].id, text: eachGrp[0].name }));
+                $('#groupSelPro').append($('<option>', { value: eachGrp[0].id, text: eachGrp[0].name }));
+            }
+        }
+    }
+}
+
+const fillPipelineGroups = (pData) => {
+    let allUserGrp = $s.getUserGroups;
+    let pipelineWriteGroupID = pData[0].write_group_id;
+    $s.allgroups = getValues({ p: "getAllGroups" });
+    var pipelineGroupIDs = [];
+    if (pipelineWriteGroupID) {
+        pipelineGroupIDs = pipelineWriteGroupID.split(",");
+    }
+
+    if (pData[0].group_id) {
+        if (pipelineGroupIDs.indexOf(pData[0].group_id) === -1) pipelineGroupIDs.push(pData[0].group_id);
+    }
+
+
+    for (var j = 0; j < allUserGrp.length; j++) {
+        if (pipelineGroupIDs.indexOf(allUserGrp[j].id) === -1) pipelineGroupIDs.push(allUserGrp[j].id);
+    }
+
+
+    for (var j = 0; j < pipelineGroupIDs.length; j++) {
+        let group_id = pipelineGroupIDs[j];
+        if ($s.allgroups) {
+            let eachGrp = $s.allgroups.filter(i => i.id == group_id);
+            if (eachGrp && eachGrp[0] && eachGrp[0].name) {
+                $('#groupSelPipe').append($('<option>', { value: eachGrp[0].id, text: eachGrp[0].name }));
+                $('#writeGroupPipe').append($('<option>', { value: eachGrp[0].id, text: eachGrp[0].name }));
+            }
+        }
+    }
+}
+
+
+let createMultiselect = (id) => {
+    $(id).multiselect({
+        buttonWidth: '100%',
+        buttonText: function(options, select) {
+            const totalOptions = $(select).find("option").length
+            if (options.length == 0) {
+                return "Choose Group";
+            } else if (options.length > 2) {
+                return options.length + " selected";
+            } else {
+                var labels = [];
+                options.each(function() {
+                    labels.push($(this).text());
+                });
+                return labels.join(", ");
+            }
+        },
+    })
+}
+
+let setMultiSelectValue = (id, selectedText, opts) => {
+    var dataarray = [];
+    if (opts && opts.rebuild) {
+        $(id).multiselect("rebuild");
+    }
+    if (selectedText) {
+        dataarray = selectedText.split(",");
+        $(id).val(dataarray);
+        $(id).multiselect("refresh");
+    } else {
+        // $(id).multiselect("clearSelection");
+    }
+}
+let getMultiSelectValue = (id) => {
+    return $(id).val().join(",");
+}
+
 function loadPipelineDetails(pipeline_id, usRole) {
     window.pipeObj = {};
     var getPipelineD = [];
@@ -1362,12 +1473,16 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 }
                 pipelineOwn = pData[0].own;
                 pipelinePerm = pData[0].perms;
+                pipelineWritePerm = pData[0].write_group_perm;
+
+
+
                 //release
                 if (pData[0].release_date) {
                     var parts = pData[0].release_date.split('-'); //YYYY-MM-DD
                     var releaseDate = parts[1] + "/" + parts[2] + "/" + parts[0] //MM,DD,YYYY
                     $('#releaseVal').attr("date", releaseDate);
-                    if (pipelineOwn == "1") {
+                    if (pipelineOwn == "1" || pipelineWritePerm === "1") {
                         $("#getTokenLink").css("display", "inline")
                         $('#releaseVal').text(releaseDate);
                     } else {
@@ -1384,7 +1499,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 //release ends --
 
                 // if user not own it, cannot change or delete pipeline
-                if (pipelineOwn === "0") {
+                if (pipelineOwn === "0" && pipelineWritePerm === "0") {
                     $('#delPipeline').remove();
                     $('#savePipeline').css('display', 'none');
                     $('#newRevPipeline').css('display', 'none');
@@ -1394,9 +1509,11 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     editorPipeFooter.setReadOnly(true);
                     $('#permsPipeDiv').css('display', 'none');
                     $('#groupSelPipeDiv').css('display', 'none');
+                    $('#writeGroupPipeDiv').css('display', 'none');
                     $('#gitConsoleBtn').css('display', 'none');
                     $('#removePipelineGit').css('display', 'none');
                     $('#pipeMenuGroupBottom').css('display', 'none');
+                    $("#pipeline-title").attr('disabled', "disabled");
                 }
                 if (usRole === "admin") {
                     $('#pinMainPage').css("display", "inline");
@@ -1439,15 +1556,22 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     backgroundcolorenter: "#ced9e3",
                     backgroundcolorleave: "#ECF0F4",
                     height: "600px",
-                    language: ["groovy", "markdown", "perl", "python", "r", "sh"]
+                    language: ["groovy", "dockerfile", "markdown", "perl", "python", "r", "sh", "yaml"]
                 });
 
                 //load user groups
                 var allUserGrp = getValues({ p: "getUserGroups" });
-                $.each(allUserGrp, function(i, item) {
-                    $('#groupSelPipe').append($('<option>', { value: item.id, text: item.name }));
-                    $('#groupSelPro').append($('<option>', { value: item.id, text: item.name }));
-                });
+                $s.getUserGroups = allUserGrp;
+                fillPipelineGroups(pData);
+
+                createMultiselect('#writeGroupPipe')
+                createMultiselect('#proWriteGroupPipe')
+
+                if (pData[0].write_group_id) {
+                    setMultiSelectValue('#writeGroupPipe', pData[0].write_group_id)
+                }
+
+
                 if (pData[0].group_id !== "0") {
                     $('#groupSelPipe').val(pData[0].group_id);
                 }
@@ -1500,11 +1624,6 @@ function loadPipelineDetails(pipeline_id, usRole) {
         data: getRevD,
         async: false,
         success: function(s) {
-            if (s.length > 1) {
-                $("#pipeline-title").attr('disabled', "disabled");
-            } else {
-                $("#pipeline-title").removeAttr('disabled');
-            }
             $("#pipeRev").empty();
             for (var i = 0; i < s.length; i++) {
                 var param = s[i];
@@ -1842,7 +1961,8 @@ async function readNextLog(proType, proId, type) {
     var showProcess = $('#addProcessModal').data("prodata");
     var processOwn = showProcess.own;
     var process_id = showProcess.id;
-    if (processOwn === "1") {
+    var processWritePerm = showProcess.write_group_perm;
+    if (processOwn === "1" || processWritePerm == "1") {
         var updateProPipeStatus = await doAjax({
             p: "updateProcessStatus",
             process_id: process_id,
@@ -1977,10 +2097,18 @@ $(document).ready(function() {
 
         //load user groups
         var allUserGrp = getValues({ p: "getUserGroups" });
-        $.each(allUserGrp, function(i, item) {
+        $s.getUserGroups = allUserGrp;
+        for (var j = 0; j < allUserGrp.length; j++) {
+            let item = allUserGrp[j];
             $('#groupSelPipe').append($('<option>', { value: item.id, text: item.name }));
             $('#groupSelPro').append($('<option>', { value: item.id, text: item.name }));
-        });
+            $('#proWriteGroupPipe').append($('<option>', { value: item.id, text: item.name }));
+            $('#writeGroupPipe').append($('<option>', { value: item.id, text: item.name }));
+        }
+        $s.allgroups = getValues({ p: "getAllGroups" });
+        createMultiselect('#writeGroupPipe');
+        createMultiselect('#proWriteGroupPipe');
+
         loadPipeMenuGroup(true);
         if (document.getElementById("pipelineFiles")) {
             $("#pipelineFiles").textEditor({
@@ -2843,6 +2971,8 @@ $(document).ready(function() {
             var singu_check = $("#singu_check").is(":checked") ? 1 : 0;
             var singu_img = $("#singu_img").val();
             var singu_opt = $("#singu_opt").val();
+            var write_group_id = getMultiSelectValue("#proWriteGroupPipe");
+            dataToProcess.push({ name: "write_group_id", value: write_group_id });
             dataToProcess.push({ name: "test_env", value: test_env });
             dataToProcess.push({ name: "test_work_dir", value: test_work_dir });
             dataToProcess.push({ name: "docker_check", value: docker_check });
@@ -2940,6 +3070,8 @@ $(document).ready(function() {
                 var singu_check = $("#singu_check").is(":checked") ? 1 : 0;
                 var singu_img = $("#singu_img").val();
                 var singu_opt = $("#singu_opt").val();
+                var write_group_id = getMultiSelectValue("#proWriteGroupPipe");
+                dataToProcess.push({ name: "write_group_id", value: write_group_id });
                 dataToProcess.push({ name: "test_env", value: test_env });
                 dataToProcess.push({ name: "test_work_dir", value: test_work_dir });
                 dataToProcess.push({ name: "docker_check", value: docker_check });
@@ -3044,6 +3176,8 @@ $(document).ready(function() {
                     var singu_check = $("#singu_check").is(":checked") ? 1 : 0;
                     var singu_img = $("#singu_img").val();
                     var singu_opt = $("#singu_opt").val();
+                    var write_group_id = getMultiSelectValue("#proWriteGroupPipe");
+                    dataToProcess.push({ name: "write_group_id", value: write_group_id });
                     dataToProcess.push({ name: "test_env", value: test_env });
                     dataToProcess.push({ name: "test_work_dir", value: test_work_dir });
                     dataToProcess.push({ name: "docker_check", value: docker_check });
@@ -3135,6 +3269,8 @@ $(document).ready(function() {
                         var singu_check = $("#singu_check").is(":checked") ? 1 : 0;
                         var singu_img = $("#singu_img").val();
                         var singu_opt = $("#singu_opt").val();
+                        var write_group_id = getMultiSelectValue("#proWriteGroupPipe");
+                        dataToProcess.push({ name: "write_group_id", value: write_group_id });
                         dataToProcess.push({ name: "test_env", value: test_env });
                         dataToProcess.push({ name: "test_work_dir", value: test_work_dir });
                         dataToProcess.push({ name: "docker_check", value: docker_check });

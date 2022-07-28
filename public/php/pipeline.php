@@ -252,9 +252,9 @@ session_write_close();
                 <div id="pipeMenuGroupBottom" class="col-md-12" style="display:none; margin-top:10px; margin-bottom:20px;">
                 </div>
 
-                <div id="permsPipeDiv" class="col-md-6">
+                <div id="permsPipeDiv" class="col-md-4">
                     <div class="form-group">
-                        <label class="control-label">Permissions to View</label>
+                        <label class="control-label">Permission to View</label>
                         <select id="permsPipe" class="fbtn btn-default form-control permscheck" name="perms">
                             <option value="3" selected="">Only me </option>
                             <option value="15">Only my group</option>
@@ -262,14 +262,24 @@ session_write_close();
                         </select>
                     </div>
                 </div>
-                <div id="groupSelPipeDiv" class="col-md-6">
+                <div id="groupSelPipeDiv" class="col-md-4">
                     <div class="form-group">
-                        <label class="control-label">Group Selection</label>
+                        <label class="control-label">Group Permission to View</label>
                         <select id="groupSelPipe" class="fbtn btn-default form-control permscheck" name="group_id">
                             <option value="" selected>Choose group </option>
                         </select>
                     </div>
                 </div>
+                <div id="writeGroupPipeDiv" class="col-md-4">
+                    <div class="form-group">
+                        <label class="control-label">Group Permission to Write</label>
+                        <div style="display:block;">
+                            <select id="writeGroupPipe" class="fbtn btn-default form-control" style="margin-top:10px;" multiple="multiple" name="write_group_id">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
 
                 <div id="releaseDiv" style="margin-top:5px;" class="col-md-12">
                     <div class="form-group">

@@ -214,9 +214,10 @@ timeoutId = 0;
 toogleAutosave = true;
 pipelineOwn = '';
 pipelinePerm = '';
+pipelineWritePerm = '';
 
 function autosave() {
-    if ((pipelineOwn === '' || pipelineOwn === "1") && pipelinePerm !== "63" && toogleAutosave) {
+    if ((pipelineOwn === '' || pipelineOwn === "1" || pipelineWritePerm === "1") && toogleAutosave) {
         var pipName = $('#pipeline-title').val()
         var pipGroup = $('#pipeGroupAll').val()
         if (pipName !== '' && pipGroup != '') {
@@ -228,7 +229,7 @@ function autosave() {
 }
 
 function autosaveDetails() {
-    if (toogleAutosave && ((pipelineOwn === '' || pipelineOwn === "1") && pipelinePerm !== "63") || usRole === "admin") {
+    if (toogleAutosave && ((pipelineOwn === '' || pipelineOwn === "1" || pipelineWritePerm === "1")) || usRole === "admin") {
         var pipName = $('#pipeline-title').val();
         var pipGroup = $('#pipeGroupAll').val();
         var id = $("#pipeline-title").attr('pipelineid');
@@ -2001,6 +2002,8 @@ function saveDetails(sucFunc) {
         var pipGroup = $('#pipeGroupAll').val()
         var oldPipeGroupId = $('#pipeGroupAll').attr("pipe_group_id");
         var release_date = $('#releaseVal').attr("date");
+        var write_group_id = getMultiSelectValue('#writeGroupPipe')
+
         sName = document.getElementById("pipeline-title").value;
         sName = sName.replace(/\"/g, "").replace(/\'/g, "").replace(/\\/g, "");
         $("#pipeline-title").changeVal(sName);
@@ -2010,6 +2013,7 @@ function saveDetails(sucFunc) {
             id: id,
             summary: summary,
             group_id: group_id,
+            write_group_id: write_group_id,
             perms: perms,
             pin: pin,
             pin_order: pin_order,
@@ -2265,6 +2269,7 @@ function save(type) {
     var script_pipe_header = getScriptEditor('editorPipeHeader');
     var script_pipe_footer = getScriptEditor('editorPipeFooter');
     var script_pipe_config = combineTextEditor('pipelineFiles')
+    var write_group_id = getMultiSelectValue('#writeGroupPipe')
     pipeline_group_id = $('#pipeGroupAll').val();
     pubWebAppDirListDb = pubWebAppDirListDb.filter((x, i, a) => a.indexOf(x) == i)
     var pipeGroupWarn = false;
@@ -2282,51 +2287,45 @@ function save(type) {
     }
 
     saveMainG["mainG"] = [Mainx, Mainy, Mainz, svgW, svgH]
-    savedList = [{
-        "name": sName
-    }, {
-        "id": id
-    }, {
-        "nodes": saveNodes
-    }, saveMainG, {
-        "edges": edges
-    }, {
-        "summary": pipelineSummary
-    }, {
-        "group_id": group_id
-    }, {
-        "perms": perms
-    }, {
-        "pin": pin
-    }, {
-        "pin_order": pin_order
-    }, {
-        "publicly_searchable": publicly_searchable
-    }, {
-        "release_date": release_date
-    }, {
-        "script_pipe_header": script_pipe_header
-    }, {
-        "script_pipe_footer": script_pipe_footer
-    }, {
-        "script_mode_header": script_mode_header
-    }, {
-        "script_mode_footer": script_mode_footer
-    }, {
-        "script_pipe_config": script_pipe_config
-    }, {
-        "pipeline_group_id": pipeline_group_id
-    }, {
-        "process_list": processListDb.toString()
-    }, {
-        "pipeline_list": pipelineListDb.toString()
-    }, {
-        "publish_web_dir": pubWebDirListDb.toString()
-    }, {
-        "app_list": pubWebAppDirListDb.toString()
-    }, {
-        "publish_dmeta_dir": encodeURIComponent(JSON.stringify(pubDmetaDirListDb))
-    }];
+    savedList = [{ "name": sName },
+        { "id": id },
+        { "nodes": saveNodes },
+        saveMainG,
+        { "edges": edges },
+        { "summary": pipelineSummary },
+        {
+            "group_id": group_id
+        }, {
+            "perms": perms
+        }, {
+            "pin": pin
+        }, {
+            "pin_order": pin_order
+        }, {
+            "publicly_searchable": publicly_searchable
+        }, {
+            "release_date": release_date
+        }, {
+            "script_pipe_header": script_pipe_header
+        }, {
+            "script_pipe_footer": script_pipe_footer
+        }, {
+            "script_mode_header": script_mode_header
+        }, {
+            "script_mode_footer": script_mode_footer
+        }, {
+            "script_pipe_config": script_pipe_config
+        }, {
+            "pipeline_group_id": pipeline_group_id
+        }, {
+            "process_list": processListDb.toString()
+        }, {
+            "pipeline_list": pipelineListDb.toString()
+        }, { "publish_web_dir": pubWebDirListDb.toString() },
+        { "app_list": pubWebAppDirListDb.toString() },
+        { "publish_dmeta_dir": encodeURIComponent(JSON.stringify(pubDmetaDirListDb)) },
+        { "write_group_id": write_group_id }
+    ];
 
 
 
@@ -2438,7 +2437,8 @@ function save(type) {
                 if (revComment === '') { //xxx warn user to enter comment
                 } else if (revComment !== '') {
                     var pipeline_gid = getValues({ p: "getPipeline_gid", "pipeline_id": id })[0].pipeline_gid;
-                    var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid });
+                    var maxPipRev_id = getValues({ p: "getMaxPipRev_id", "pipeline_gid": pipeline_gid, "pipeline_id": id });
+                    console.log(pipeline_gid)
                     console.log(maxPipRev_id)
                     if (maxPipRev_id[0]) {
                         var newPipRev_id = parseInt(maxPipRev_id[0].rev_id) + 1;

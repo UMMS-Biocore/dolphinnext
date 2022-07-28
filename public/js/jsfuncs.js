@@ -1587,6 +1587,7 @@ function getValues(data, async) {
             result = data;
         },
         error: function(jqXHR, exception) {
+            toastr.error("Error occured.");
             reportAjaxError(jqXHR, exception, data)
         }
     });
@@ -1605,6 +1606,7 @@ function getValuesErr(data, async) {
             result = data;
         },
         error: function(jqXHR, exception) {
+            toastr.error("Error occured.");
             reportAjaxError(jqXHR, exception, data)
         }
     });

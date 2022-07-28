@@ -1062,6 +1062,7 @@ class ajaxQueryTest extends TestCase
 		ob_start();
 		$_REQUEST['p'] = 'getMaxPipRev_id';
 		$_REQUEST['pipeline_gid'] = '1';
+		$_REQUEST['pipeline_id'] = '1';
 		include('ajaxquery.php');
 		$this->assertEquals(json_decode($data)[0]->rev_id, '0');
 		ob_end_clean();

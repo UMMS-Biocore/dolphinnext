@@ -536,6 +536,10 @@ folder instead of downloading all of them to reduce the load. -->
             fill: #c00;
         }
 
+        .multiselect.dropdown-toggle {
+            text-align: left;
+        }
+
 
         /*      draggable ace editor
 

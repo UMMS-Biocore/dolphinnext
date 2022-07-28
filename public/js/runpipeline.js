@@ -14993,6 +14993,60 @@ $(document).ready(async function() {
         return obj
     }
 
+    // visType == "html","pdf","image","rdata" 
+    const loadIframeView = (visType, filePath, pubWebPath, uuid, fileid, dir, filename, href) => {
+        var ext = getExtension(filePath);
+        var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
+        var checkIfValidIframeExt = function(ext) {
+            var ret = false;
+            var validList = [
+                "pdf",
+                "jpeg",
+                "html",
+                "jpg",
+                "png",
+                "gif",
+                "tif",
+                "tiff",
+                "svg",
+                "txt",
+            ];
+            if (validList.includes(ext)) {
+                ret = true;
+            }
+            return ret;
+        };
+        var content = "";
+        if (visType == "pdf" && ext && ext.toLowerCase() == "pdf") {
+            content =
+                '<object style="width:100%; height:100%;"  data="' +
+                link +
+                '" type="application/pdf"><embed src="' +
+                link +
+                '" type="application/pdf" /></object>';
+        } else {
+            var validExt = checkIfValidIframeExt(ext);
+            if (validExt) {
+                content =
+                    '<iframe frameborder="0"  style="width:100%; height:100%;" src="' +
+                    link +
+                    '"></iframe>';
+            } else {
+                content =
+                    '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
+                    fileid +
+                    '" id="downUrl-' +
+                    fileid +
+                    '" href="#">download</a> the file.</div>';
+            }
+        }
+        var contentDiv =
+            getHeaderIconDiv(fileid, visType) +
+            '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + content + "</div>";
+        $(href).append(contentDiv);
+        bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
+    }
+
     const loadTableView = (visType, filePath, fileid, dir, filename, href, uuid, pubWebPath) => {
         var ext = getExtension(filePath);
         var validList = ["csv", "tsv", "txt"];
@@ -15008,6 +15062,7 @@ $(document).ready(async function() {
             "svg",
             "txt",
         ];
+        console.log(ext)
         if (validList.includes(ext)) {
             var headerStyle = "";
             var tableStyle = "";
@@ -15131,59 +15186,7 @@ $(document).ready(async function() {
 
     //$(document) allows to trigger when a.reportFile added later into the DOM
     $(function() {
-        // visType == "html","pdf","image","rdata" 
-        const loadIframeView = (visType, filePath, pubWebPath, uuid, fileid, dir, filename, href) => {
-            var ext = getExtension(filePath);
-            var link = pubWebPath + "/" + uuid + "/" + "pubweb" + "/" + filePath;
-            var checkIfValidIframeExt = function(ext) {
-                var ret = false;
-                var validList = [
-                    "pdf",
-                    "jpeg",
-                    "html",
-                    "jpg",
-                    "png",
-                    "gif",
-                    "tif",
-                    "tiff",
-                    "svg",
-                    "txt",
-                ];
-                if (validList.includes(ext)) {
-                    ret = true;
-                }
-                return ret;
-            };
-            var content = "";
-            if (visType == "pdf" && ext && ext.toLowerCase() == "pdf") {
-                content =
-                    '<object style="width:100%; height:100%;"  data="' +
-                    link +
-                    '" type="application/pdf"><embed src="' +
-                    link +
-                    '" type="application/pdf" /></object>';
-            } else {
-                var validExt = checkIfValidIframeExt(ext);
-                if (validExt) {
-                    content =
-                        '<iframe frameborder="0"  style="width:100%; height:100%;" src="' +
-                        link +
-                        '"></iframe>';
-                } else {
-                    content =
-                        '<div style="text-align:center; vertical-align:middle; line-height: 300px;">File preview is not available, click to <a class="link-underline" fileid="' +
-                        fileid +
-                        '" id="downUrl-' +
-                        fileid +
-                        '" href="#">download</a> the file.</div>';
-                }
-            }
-            var contentDiv =
-                getHeaderIconDiv(fileid, visType) +
-                '<div style="width:100%; height:calc(100% - 35px);" dir="' + dir + '" filename="' + filename + '" filepath="' + filePath + '" id="' + fileid + '">' + content + "</div>";
-            $(href).append(contentDiv);
-            bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
-        }
+
 
 
 

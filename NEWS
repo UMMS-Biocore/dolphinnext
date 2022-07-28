@@ -1,3 +1,6 @@
+27.07.2021 Version 1.3.30
+Write permission to group feature added to process and pipelines. 
+
 22.07.2021 Version 1.3.29
 Minor admin dashboard bug fixed. 
 Major bug fixed in cronjob submission.
