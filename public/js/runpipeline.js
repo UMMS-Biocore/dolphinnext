@@ -5775,6 +5775,7 @@ async function loadRunSettings(pipeData) {
     updateCheckBox("#cron_check", pipeData[0].cron_check);
     updateCheckBox("#notif_check", pipeData[0].notif_check);
     updateCheckBox("#email_notif", pipeData[0].email_notif);
+    $("#notif_email_list").val(decodeHtml(pipeData[0].notif_email_list));
     $("#cron_prefix").val(decodeHtml(pipeData[0].cron_prefix));
     $("#cron_min").val(pipeData[0].cron_min);
     $("#cron_hour").val(pipeData[0].cron_hour);
@@ -8282,6 +8283,7 @@ async function saveRun(sucFunc, showToastr) {
     var cron_first = $("#cron_first").val();
     var notif_check = $("#notif_check").is(":checked").toString();
     var email_notif = $("#email_notif").is(":checked").toString();
+    var notif_email_list = encodeURIComponent($("#notif_email_list").val());
 
     if (run_name && project_id && newpipelineID) {
         data.push({ name: "id", value: project_pipeline_id });
@@ -8327,6 +8329,7 @@ async function saveRun(sucFunc, showToastr) {
         data.push({ name: "cron_first", value: cron_first });
         data.push({ name: "notif_check", value: notif_check });
         data.push({ name: "email_notif", value: email_notif });
+        data.push({ name: "notif_email_list", value: notif_email_list });
         data.push({ name: "p", value: "saveProjectPipeline" });
         $.ajax({
             type: "POST",
@@ -14031,10 +14034,7 @@ $(document).ready(async function() {
         var rowID = clickedRow[0].id; //#inputTa-3
         var gNumParam = rowID.split("Ta-")[1];
         var proPipeInputID = $("#" + rowID).attr("propipeinputid");
-        console.log(proPipeInputID)
-        console.log($("#" + rowID))
         var path = $(`#filePath-${gNumParam}`).text()
-        console.log(path)
         if (!proPipeInputID) {
             toastr.error("File Not Found.");
             return;

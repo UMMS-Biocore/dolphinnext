@@ -586,11 +586,16 @@ $(document).ready(async function() {
         Object.keys(obj).forEach((k, i) => {
             arrObj.push(obj[k])
         });
-        arrObj = sortByKey(arrObj, "total", { type: "desc" })
+        console.log(arrObj)
         let total = []
         let labels = []
+        let newArr = []
         for (let n = 0; n < arrObj.length; n++) {
-            total.push(sumArray(arrObj[n].total) / arrObj[n].total.length / 60 / 60)
+            newArr.push({ total: sumArray(arrObj[n].total) / arrObj[n].total.length / 60 / 60, label: arrObj[n].label })
+        }
+        arrObj = sortByKey(newArr, "total", { type: "desc" })
+        for (let n = 0; n < arrObj.length; n++) {
+            total.push(arrObj[n].total)
             labels.push(arrObj[n].label)
         }
         let datasets = [{

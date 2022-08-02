@@ -2143,6 +2143,7 @@ if ($p == "publishGithub") {
     $cron_first = isset($_REQUEST['cron_first']) ? $_REQUEST['cron_first'] : "";
     $notif_check = isset($_REQUEST['notif_check']) ? $_REQUEST['notif_check'] : "";
     $email_notif = isset($_REQUEST['email_notif']) ? $_REQUEST['email_notif'] : "";
+    $notif_email_list = isset($_REQUEST['notif_email_list']) ?  addslashes(htmlspecialchars(urldecode($_REQUEST['notif_email_list']), ENT_QUOTES)) : "";
 
     settype($perms, 'integer');
     settype($group_id, 'integer');
@@ -2162,7 +2163,7 @@ if ($p == "publishGithub") {
                 $targetTime = NULL;
                 $db->updateProjectPipelineCronTargetDate($id, $targetTime);
             }
-            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $cron_first, $ownerID);
+            $db->updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $cron_first, $notif_email_list, $ownerID);
             $db->updateProjectPipelineInputGroupPerm($id, $group_id, $perms, $ownerID);
             $listPermsDenied = array();
             $listPermsDenied = $db->recursivePermUpdtPipeline("greaterOrEqual", $listPermsDenied, $pipeline_id, $group_id, $perms, $ownerID, null, null, null);
@@ -2170,7 +2171,7 @@ if ($p == "publishGithub") {
             $data = json_encode($listPermsDenied);
         }
     } else {
-        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $ownerID);
+        $data = $db->insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_email_list, $ownerID);
     }
 } else if ($p == "saveProcessParameter") {
     $closure = isset($_REQUEST['closure']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['closure']), ENT_QUOTES)) : "";

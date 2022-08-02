@@ -605,7 +605,10 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
                     </div>
                     <div id="notifDiv" class="collapse">
                         <div class="col-md-12" style="margin-bottom:10px;">
-                            <input type="checkbox" id="email_notif" name="email_notif"> Receive an email when the run is completed successfully or failed
+                            <input type="checkbox" id="email_notif" name="email_notif" checked> Receive an email when the run is completed successfully or failed
+                        </div>
+                        <div class="col-md-12 form-group" style="margin-bottom:10px;">
+                            <span>Email Recipients (optional): <span><a data-toggle="tooltip" data-placement="bottom" title="You may overwrite the default email recipients by entering comma-separated emails."><i class='glyphicon glyphicon-info-sign'></i></a></span></span> <input type="text" style="width:100%;" id="notif_email_list" name="notif_email_list">
                         </div>
                     </div>
                 </div>

@@ -36,6 +36,7 @@ if (!empty($secConf)) {
     $BIND_PASS = isset($secConf['BIND_PASS']) ? $secConf['BIND_PASS'] : "";
     $EMAIL_SENDER = isset($secConf['EMAIL_SENDER']) ? $secConf['EMAIL_SENDER'] : "";
     $EMAIL_ADMIN = isset($secConf['EMAIL_ADMIN']) ? $secConf['EMAIL_ADMIN'] : "";
+    $EMAIL_BODY_ADMIN = isset($secConf['EMAIL_BODY_ADMIN']) ? $secConf['EMAIL_BODY_ADMIN'] : $EMAIL_ADMIN;
     $ENV_PATH = isset($secConf['ENV_PATH']) ? $secConf['ENV_PATH'] : "";
     $TIMEZONE = isset($secConf['TIMEZONE']) ? $secConf['TIMEZONE'] : "";
     $DEFAULT_GROUP_ID = isset($secConf['DEFAULT_GROUP_ID']) ? $secConf['DEFAULT_GROUP_ID'] : "";
@@ -71,6 +72,7 @@ if (!empty($secConf)) {
     define('BIND_PASS', $BIND_PASS);
     define('EMAIL_SENDER', $EMAIL_SENDER);
     define('EMAIL_ADMIN', $EMAIL_ADMIN);
+    define('EMAIL_BODY_ADMIN', $EMAIL_BODY_ADMIN);
     define('DEFAULT_GROUP_ID', $DEFAULT_GROUP_ID);
     define('DEFAULT_RUN_ENVIRONMENT', $DEFAULT_RUN_ENVIRONMENT);
     define('INITIAL_RUN_DOCKER', $INITIAL_RUN_DOCKER);
