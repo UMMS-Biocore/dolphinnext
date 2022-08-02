@@ -34,7 +34,9 @@ class emailer
             //Server settings
             $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
             $mail->isSMTP();                                            //Send using SMTP
-            $mail->Host       = $this->EMAIL_HOST;                     //Set the SMTP server to send through
+            $mail->Host       = $this->EMAIL_HOST;                      //Set the SMTP server to send through
+            $mail->SMTPDebug = 0;                                       //disable Sending debug as php response
+            $mail->Debugoutput = 'html';
             $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
             $mail->Username   = $this->EMAIL_USERNAME;                  //SMTP username
             $mail->Password   = $this->EMAIL_PASSWORD;                  //SMTP password

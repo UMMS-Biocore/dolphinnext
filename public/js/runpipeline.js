@@ -103,6 +103,7 @@ $runscope = {
             id: project_pipeline_id,
         });
         var projectpipelineOwn = pipeData[0].own;
+        $runscope.projectpipelineOwn = projectpipelineOwn;
         return projectpipelineOwn;
     },
 };
@@ -6048,6 +6049,7 @@ function insertSelectInput(
     fillingType
 ) {
     var checkDropDown = $("#" + rowID).find("select[indropdown]")[0];
+    var downloadIcon = "";
     if (checkDropDown) {
         $(checkDropDown).val(filePath);
         $("#" + rowID).attr("propipeinputid", proPipeInputID);
@@ -6072,12 +6074,9 @@ function insertSelectInput(
         } else if (qualifier === "single_file") {
             var editIcon = getIconButtonModal("inputSingleFile", "Edit", "fa fa-pencil");
             var deleteIcon = getIconButton("inputSingleFile", "Delete", "fa fa-trash-o");
-            $("#" + rowID)
-                .find("#inputSingleFileEnter")
-                .css("display", "none");
-            $("#" + rowID)
-                .find("#defValUse")
-                .css("display", "none");
+            downloadIcon = getIconButton("inputSingleFile", "Download", "fa fa-download", "padding-top: 3px;");
+            $("#" + rowID).find("#inputSingleFileEnter").css("display", "none");
+            $("#" + rowID).find("#defValUse").css("display", "none");
         } else {
             var editIcon = getIconButtonModal("inputVal", "Edit", "fa fa-pencil");
             var deleteIcon = getIconButton("inputVal", "Delete", "fa fa-trash-o");
@@ -6133,6 +6132,7 @@ function insertSelectInput(
                 ">" +
                 filePath +
                 "</span>" +
+                downloadIcon +
                 urlIcon +
                 editIcon +
                 deleteIcon
@@ -6179,23 +6179,13 @@ function removeSelectFile(rowID, sType, fillingType) {
                     .css("display", "inline");
             }
         } else if (sType === "single_file") {
-            $("#" + rowID)
-                .find("#inputSingleFileEnter")
-                .css("display", "inline");
+            $("#" + rowID).find("#inputSingleFileEnter").css("display", "inline");
             if (fillingType == "dry") {
-                $("#" + rowID)
-                    .find("#inputSingleFileEnter")
-                    .prop("disabled", true);
-                $("#" + rowID)
-                    .find("#defValUse")
-                    .css("display", "none");
+                $("#" + rowID).find("#inputSingleFileEnter").prop("disabled", true);
+                $("#" + rowID).find("#defValUse").css("display", "none");
             } else {
-                $("#" + rowID)
-                    .find("#inputSingleFileEnter")
-                    .prop("disabled", false);
-                $("#" + rowID)
-                    .find("#defValUse")
-                    .css("display", "inline");
+                $("#" + rowID).find("#inputSingleFileEnter").prop("disabled", false);
+                $("#" + rowID).find("#defValUse").css("display", "inline");
             }
         } else if (sType === "val") {
             $("#" + rowID)
@@ -6221,9 +6211,7 @@ function removeSelectFile(rowID, sType, fillingType) {
             }
         }
 
-        $("#" + rowID)
-            .find(".firstsec > span")
-            .remove();
+        $("#" + rowID).find(".firstsec > span").remove();
         var buttonList = $("#" + rowID).find(".firstsec > button");
         for (var c = 0; c < buttonList.length; c++) {
             var butid = $(buttonList[c]).attr("id");
@@ -6232,6 +6220,7 @@ function removeSelectFile(rowID, sType, fillingType) {
                 butid == "inputValDelete" ||
                 butid == "inputValEdit" ||
                 butid == "inputSingleFileDelete" ||
+                butid == "inputSingleFileDownload" ||
                 butid == "inputSingleFileEdit" ||
                 butid == "inputFileDelete" ||
                 butid == "inputFileEdit" ||
@@ -9161,7 +9150,7 @@ function toogleRunInputs(type) {
     } else if (type == "enable") {
         bool = false;
     }
-    $("#configTab :input").not(":button[show_sett_but]").prop("disabled", bool);
+    $("#configTab :input").not(":button#inputSingleFileDownload").not(":button[show_sett_but]").prop("disabled", bool);
     $("#advancedTab :input").prop("disabled", bool);
     $(".ui-dialog :input")
         .not(".ui-dialog-buttonpane :input")
@@ -9942,6 +9931,22 @@ $(function() {
 
     $(document).on("click", "#refreshVerReport", function(event) {
         reloadReportRows();
+    });
+    $(document).on("click", "#addRunNotes", function(event) {
+        var run_log_uuid = $("#runVerLog").val();
+
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: { p: "addRunNotes", run_log_uuid: run_log_uuid },
+            async: true,
+            success: function(pipe) {
+                reloadReportRows();
+            },
+            error: function(errorThrown) {
+                toastr.error("Error occured.");
+            },
+        });
     });
 
     function updateRunReportTab(run_log_uuid) {
@@ -14021,6 +14026,43 @@ $(document).ready(async function() {
         createFileTable(table_id, ajax);
     });
 
+    $(document).on("click", "#inputSingleFileDownload", async function(e) {
+        var clickedRow = $(this).closest("tr");
+        var rowID = clickedRow[0].id; //#inputTa-3
+        var gNumParam = rowID.split("Ta-")[1];
+        var proPipeInputID = $("#" + rowID).attr("propipeinputid");
+        console.log(proPipeInputID)
+        console.log($("#" + rowID))
+        var path = $(`#filePath-${gNumParam}`).text()
+        console.log(path)
+        if (!proPipeInputID) {
+            toastr.error("File Not Found.");
+            return;
+        }
+        $.ajax({
+            type: "POST",
+            url: "ajax/ajaxquery.php",
+            data: {
+                pro_pipe_input_id: proPipeInputID,
+                path: path,
+                p: "getHostFile"
+            },
+            async: true,
+            success: function(s) {
+                if (s && s.location && s.name) {
+                    var link = document.createElement("a");
+                    link.setAttribute('download', s.name);
+                    link.href = s.location
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                }
+            },
+            error: function(errorThrown) {
+                toastr.error("File Not Found.");
+            },
+        });
+    });
     $(document).on("click", "#inputDelDelete, #inputValDelete, #inputSingleFileDelete", async function(e) {
         var clickedRow = $(this).closest("tr");
         var rowID = clickedRow[0].id; //#inputTa-3
@@ -15533,6 +15575,19 @@ $(document).ready(async function() {
                 var elemsID = $(this).attr("id");
                 elems.data("settings", settings);
                 var data = getData(settings);
+                // hide add run notes button
+                if (data) {
+                    $("#addRunNotes").css("display", "none")
+                    if ($runscope.projectpipelineOwn === "1") {
+                        $("#addRunNotes").css("display", "inline-block")
+                        let runNoteCheck = data.filter(i => i.name == "_Description")
+                        if (runNoteCheck && runNoteCheck[0]) {
+                            $("#addRunNotes").css("display", "none")
+                        }
+                    }
+
+                }
+
                 if (data === undefined || data == null || data == "") {
                     elems.append(
                         '<div  style="font-weight:900; line-height:' +

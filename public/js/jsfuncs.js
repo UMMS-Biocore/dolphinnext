@@ -1386,11 +1386,13 @@ function getIconButtonModal(name, buttons, icon) {
     return button;
 }
 
-function getIconButton(name, buttons, icon) {
+function getIconButton(name, buttons, icon, style) {
+    var styleText = style ? style : "";
     var buttonId = buttons.split(' ')[0];
-    var button = '<button type="submit" style="background:none; padding:0px;" class="btn" title="' + buttons + '" id="' + name + buttonId + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' + name + '"><i class="' + icon + '" style="font-size: 17px;"></i></a></button>';
+    var button = '<button type="submit" style="background:none; padding:0px; ' + styleText + '" class="btn" title="' + buttons + '" id="' + name + buttonId + '"><a data-toggle="tooltip" data-placement="bottom" data-original-title="' + name + '"><i class="' + icon + '" style="font-size: 17px;"></i></a></button>';
     return button;
 }
+
 
 
 

@@ -128,6 +128,44 @@ if ($p == "saveRun") {
         $data = $db->getRemoteData($url);
     }
     $data = json_encode($data);
+} else if ($p == "getHostFile") {
+    $data = array();
+
+    if (!empty($ownerID)) {
+        $pro_pipe_input_id  = $_REQUEST['pro_pipe_input_id'];
+        $path  = $_REQUEST['path'];
+        if (!empty($pro_pipe_input_id)) {
+            $userRole = $db->getUserRoleVal($ownerID);
+            $where = " WHERE p.id=$pro_pipe_input_id AND (p.owner_id='$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15)) ";
+            if ($userRole == "admin") {
+                $where = "WHERE  p.id=$pro_pipe_input_id";
+            }
+
+            $sql = "SELECT p.owner_id, p.project_pipeline_id, p.uid, pp.profile
+                FROM $db->db.project_pipeline_input p
+                LEFT JOIN $db->db.project_pipeline pp ON  p.project_pipeline_id=pp.id
+                LEFT JOIN $db->db.user_group ug ON  pp.group_id=ug.g_id
+                $where ";
+            $inputData = json_decode($db->queryTable($sql), true);
+            if (!empty($inputData) && !empty($inputData[0]) && !empty($inputData[0]["owner_id"])) {
+                $profile  = $inputData[0]["profile"];
+                $uid  = $inputData[0]["uid"];
+                error_log($pro_pipe_input_id);
+                error_log($uid);
+
+                if (empty($uid)) {
+                    $res = $db->getUUIDLocal("run_log");
+                    $uid = $res->rev_uuid;
+                    $db->updateUIDproPipeInput($pro_pipe_input_id, $uid, $ownerID);
+                }
+
+                if (!empty($uid)) {
+                    $data = $db->getHostFile($path, $uid, $profile, $ownerID);
+                }
+            }
+        }
+    }
+    $data = json_encode($data);
 } else if ($p == "getUcscSessionID") {
     $hubFileLoc  = $_REQUEST['hubFileLoc'];
     $genomeFileLoc  = $_REQUEST['genomeFileLoc'];
@@ -392,6 +430,9 @@ if ($p == "saveRun") {
 } else if ($p == "removeUpload") {
     $name = $_REQUEST['name'];
     $data = $db->removeUpload($name, $ownerID);
+} else if ($p == "addRunNotes") {
+    $run_log_uuid = $_REQUEST['run_log_uuid'];
+    $data = $db->addRunNotes($run_log_uuid, $ownerID);
 } else if ($p == "getAllGroups") {
     $data = $db->getAllGroups($ownerID);
 } else if ($p == "getAllAvailableGroups") {
