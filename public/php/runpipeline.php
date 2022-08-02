@@ -756,6 +756,7 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
                     <div class="form-group">
                         <h5><span id="runTitleReport">Run Report</span>
                             <button id="refreshVerReport" type="button" class="btn" data-backdrop="false" style=" background:none; margin-left:5px; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Reload Report Section"><i class="fa fa-refresh" style="font-size: 15px;"></i></a></button>
+                            <button id="addRunNotes" type="button" class="btn" data-backdrop="false" style=" background:none; margin-left:5px; padding:0px;"><a data-toggle="tooltip" data-placement="bottom" data-original-title="Add Run Notes"><i class="fa fa-edit" style="font-size: 15px;"></i></a></button>
                         </h5>
                     </div>
                     <div id="reportRows" style="margin-top:25px;"></div>
@@ -1329,7 +1330,7 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">Optional: Amazon Keys for S3 <span><a data-toggle="tooltip" data-placement="bottom" title="Amazon Keys to access your S3 storage. If you need Amazon Keys to access S3 storage, you can enter your keys in profile->Amazon Keys section."><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                                     <div class="col-sm-8">
                                         <select id="mRunAmzKeyS3" class="fbtn btn-default form-control" name="amazon_cre_id">
-                                            <option value="" disabled selected>Select Amazon Keys </option>
+                                            <option value="" selected>Select Amazon Keys </option>
                                         </select>
                                     </div>
                                     <div>

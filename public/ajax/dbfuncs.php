@@ -1971,6 +1971,19 @@ class dbfuncs
         }
         die(json_encode($message));
     }
+
+    function addRunNotes($uuid, $ownerID)
+    {
+        if (!empty($uuid)) {
+            $targetDir = "{$this->run_path}/$uuid/pubweb/_Description";
+            //if not _Description not created before, create only for once
+            if (!file_exists($targetDir)) {
+                $this->createReadmeMD($uuid);
+                return json_encode("file created");
+            }
+        }
+        return json_encode("file exist");
+    }
     function createReadmeMD($uuid)
     {
         $this->createDirFile("{$this->run_path}/$uuid/pubweb/_Description", "README.md", 'w', "#### **Run Description**\n\nYou can use this space for adding notes about your run such as its aims, experimental context, and any other ideas that you’d like to share with your group members. We support <a style=\"color:#1479cc;\" href=\"https://guides.github.com/features/mastering-markdown/\" target=\"_blank\">Markdown</a> for styling and formatting your notes.\n\nTo start editing this text, click **Edit Markdown** <i style=\"font-size: 14px;\" class=\"fa fa-pencil-square-o\"></i> icon on the right.\n\nYou can also upload additional files such as images, PDFs, Excel docs, etc. Please click the **Add File** <i style=\"font-size: 14px;\" class=\"fa fa-plus\"></i> icon on the left to upload your files.\n\n</br>\nHere are some examples for markdown format:\n\na) Lists\n\n* Star used for unordered list.\n* if you have sub points, put tab before the star\n\t* Like this\n\n1. You can user numbers for ordered list\n2. Like this\n\nb) Images\n\n![rnaseq](https://dolphinnext.umassmed.edu/public/images/stranded_rnaseq.png)\n\nc) Code Blocks\n\n```\nplot(gene)\n```\n\nd) Tables\n\nHeader 1 | Header 2\n-------- | --------\nCell 1   | Cell 2\nCell 3   | Cell 4\n");
@@ -1993,9 +2006,6 @@ class dbfuncs
                     $succ = 1;
                 }
             }
-        }
-        if (empty($succ)) {
-            $this->createReadmeMD($uuid);
         }
     }
 
@@ -3999,7 +4009,40 @@ class dbfuncs
         }
         return json_encode($out);
     }
+    function getHostFile($path, $uid, $profile, $ownerID)
+    {
+        $ret = array();
+        $upDir = "{$this->tmp_path}/runuploads/$uid";
+        if (!empty($path) && strpos($path, '/') !== false) {
+            // remove last slash if exist
+            if (substr($path, -1) === "/") {
+                $path = substr($path, 0, -1);
+            }
+            // download file from host machine
+            if (!empty($path) && strpos($path, '/') !== false) {
+                $pathAr = explode('/', $path);
+                $fileName = array_pop($pathAr);
+                $target_dir =  join("/", $pathAr);
+                $localFile = "{$this->tmp_path}/runuploads/$uid/$fileName";
+                $localFile_public = "{$this->base_path}/tmp/runuploads/$uid/$fileName";
+                $profileAr = explode("-", $profile);
+                $profileType = $profileAr[0];
+                $profileId = $profileAr[1];
+                if (!file_exists($upDir)) {
+                    mkdir($upDir, 0755, true);
+                }
+                $rsync_log = $this->rsyncTransfer($localFile, $fileName, $target_dir, $upDir, $profileId, $profileType, $ownerID, "sync-download");
+                $ret["rsync_log"] = $rsync_log;
+            }
+            // check if file ready
+            if (file_exists("$upDir/$fileName")) {
+                $ret["location"] = $localFile_public;
+                $ret["name"] = $fileName;
+            }
+        }
 
+        return $ret;
+    }
 
     //------------- SideBar Funcs --------
     function getParentSideBar($ownerID)
@@ -4180,6 +4223,11 @@ class dbfuncs
         $emailusername = strtolower(str_replace("'", "''", $emailusername));
         $sql = "SELECT * FROM $this->db.users WHERE (email = '$emailusername' OR username = '$emailusername' ) AND deleted=0";
         return self::queryTable($sql);
+    }
+    function updateUIDproPipeInput($id, $uid, $ownerID)
+    {
+        $sql = "UPDATE $this->db.project_pipeline_input SET uid='$uid', last_modified_user='$ownerID' WHERE id = '$id'";
+        return self::runSQL($sql);
     }
     function updateUserManual($id, $name, $email, $username, $institute, $lab, $logintype, $ownerID)
     {
@@ -5992,7 +6040,7 @@ class dbfuncs
         list($connect, $ssh_port, $scp_port, $cluDataArr) = $this->getCluAmzData($profileId, $profileType, $ownerID);
         $cmd_log = "";
         $async = " & echo $! &";
-        if ($type == "sync") {
+        if ($type == "sync" || $type == "sync-download") {
             $async = "&& echo rsync successfully completed || cat $upload_dir/.$fileName";
         }
         if (!empty($cluDataArr)) {
@@ -6003,6 +6051,10 @@ class dbfuncs
             $userpky = "{$this->ssh_path}/{$ssh_own_id}_{$ssh_id}_ssh_pri.pky";
             if (!file_exists($userpky)) die(json_encode('Private key is not found!'));
             $cmd = "rsync --info=progress2 --partial-dir='$target_dir/.tmp_$fileName' -avzu --rsync-path='mkdir -p $target_dir && rsync' -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $localFile $connect:$target_dir/ > $upload_dir/.$fileName 2>&1 $async";
+            if ($type == "sync-download") {
+                $cmd = "rsync --info=progress2 --partial-dir='$target_dir/.tmp_$fileName' -avzu  -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $connect:$target_dir/$fileName $localFile > $upload_dir/.$fileName 2>&1 $async";
+                error_log($cmd);
+            }
             $cmd_log = shell_exec($cmd);
             if (!empty($cmd_log)) {
                 $cmd_log = trim($cmd_log);
@@ -6463,20 +6515,16 @@ class dbfuncs
         $id = $module;
         $fileList = array_values((array)json_decode($this->getFileList($uuid, "$path/$name", "onlyfile")));
         $fileList = array_filter($fileList);
-        if (empty($fileList)) {
-            $targetDir = "{$this->run_path}/$uuid/pubweb/_Description";
-            //if not _Description not created before, create only for once
-            if (!file_exists($targetDir)) {
-                $this->createReadmeMD($uuid);
-                $fileList = array_values((array)json_decode($this->getFileList($uuid, "$path/$name", "onlyfile")));
-                $fileList = array_filter($fileList);
-            }
+        $targetDir = "{$this->run_path}/$uuid/pubweb/_Description";
+        //if _Description exist then send new data
+        if (file_exists($targetDir)) {
+            $out["fileList"] = $fileList;
+            $out["name"] = $name;
+            $out["pubWeb"] = $module;
+            $out["id"] = $id . "_" . $module;
+            array_unshift($data, $out); //push to the top of the array
         }
-        $out["fileList"] = $fileList;
-        $out["name"] = $name;
-        $out["pubWeb"] = $module;
-        $out["id"] = $id . "_" . $module;
-        array_unshift($data, $out); //push to the top of the array
+
         return $data;
     }
 
@@ -8871,6 +8919,7 @@ class dbfuncs
             $err = "{$targetDir}/{$filename}.{$format}.err{$pUUID}";
             $url =  OCPU_URL . "/ocpu/library/markdownapp/R/" . $type;
             $cmd = "(curl '$url' -H \"Content-Type: application/json\" -k -d '{\"text\":$text}' -o $response > $log 2>&1) & echo \$!";
+            error_log($cmd);
             $pid = exec($cmd);
             $data = json_encode($pUUID);
             if (!headers_sent()) {

@@ -632,7 +632,7 @@ $GOOGPATH = GOOGPATH;
                         <label for="mEnvAmzKey2" class="col-sm-3 control-label">Amazon Keys<span><a data-toggle="tooltip" data-placement="bottom" title="Keys that are saved in Amazon keys tab and to be used while creating instance in Amazon Cloud"><i class='glyphicon glyphicon-info-sign'></i></a></span></label>
                         <div class="col-sm-9">
                             <select id="mEnvAmzKey2" class="fbtn btn-default form-control" name="amazon_cre_id2">
-                                <option value="" disabled selected>Select Amazon Keys </option>
+                                <option value="" selected>Select Amazon Keys </option>
                             </select>
                         </div>
                     </div>
