@@ -3280,7 +3280,7 @@ class dbfuncs
 
     function getLastRunData($project_pipeline_id)
     {
-        $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status
+        $sql = "SELECT DISTINCT pp.id, pp.output_dir, pp.profile, pp.last_run_uuid, pp.date_modified, pp.owner_id, r.run_status, pp.type
             FROM $this->db.project_pipeline pp
             INNER JOIN (
                         SELECT DISTINCT rr.run_status, rr.id, rr.project_pipeline_id
@@ -3793,6 +3793,7 @@ class dbfuncs
         $duration = ""; //run duration
         $newRunStatus = "";
         $saveNextLog = "";
+        $run_type = "";
         if (!empty($project_pipeline_id)) {
             $curr_ownerID = $this->queryAVal("SELECT owner_id FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
             $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
@@ -3823,6 +3824,7 @@ class dbfuncs
                     $last_run_uuid = $runData["last_run_uuid"];
                     $output_dir = $runData["output_dir"];
                     $profile = $runData["profile"];
+                    $run_type = $runData["type"];
                     $subRunLogDir = "run";
                 }
             }
@@ -3990,6 +3992,11 @@ class dbfuncs
                     }
                 }
                 if (!empty($newRunStatus)) {
+                    // send email for scheduled jobs
+                    if ($newRunStatus == "NextRun" && $runStatus !== "NextRun" && $run_type == "auto") {
+                        $this->sendRunStatusEmail($newRunStatus, $project_pipeline_id, $curr_ownerID);
+                    }
+
                     if (!empty($project_pipeline_id)) {
                         $setStatus = $this->updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
                         $setLog = $this->updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID);
@@ -6701,10 +6708,10 @@ class dbfuncs
     }
 
     // ------- Project Pipelines  ------
-    function insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $ownerID)
+    function insertProjectPipeline($name, $project_id, $pipeline_id, $summary, $output_dir, $profile, $interdel, $cmd, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $perms, $group_id, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_email_list, $ownerID)
     {
-        $sql = "INSERT INTO $this->db.project_pipeline(name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, cron_check, cron_prefix, cron_min, cron_hour, cron_day, cron_week, cron_month, new_run)
-                  VALUES ('$name', '$project_id', '$pipeline_id', '$summary', '$output_dir', '$profile', '$interdel', '$cmd', '$exec_each', '$exec_all', '$exec_all_settings', '$exec_each_settings', '$docker_check', '$docker_img', '$singu_check', '$singu_save', '$singu_img', '$exec_next_settings', '$docker_opt', '$singu_opt', '$amazon_cre_id', '$google_cre_id', '$publish_dir','$publish_dir_check', '$withReport', '$withTrace', '$withTimeline', '$withDag', '$process_opt', '$onload', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id', '$cron_check', '$cron_prefix', '$cron_min', '$cron_hour', '$cron_day', '$cron_week', '$cron_month', '1')";
+        $sql = "INSERT INTO $this->db.project_pipeline(name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, cron_check, cron_prefix, cron_min, cron_hour, cron_day, cron_week, cron_month, new_run, notif_email_list)
+                  VALUES ('$name', '$project_id', '$pipeline_id', '$summary', '$output_dir', '$profile', '$interdel', '$cmd', '$exec_each', '$exec_all', '$exec_all_settings', '$exec_each_settings', '$docker_check', '$docker_img', '$singu_check', '$singu_save', '$singu_img', '$exec_next_settings', '$docker_opt', '$singu_opt', '$amazon_cre_id', '$google_cre_id', '$publish_dir','$publish_dir_check', '$withReport', '$withTrace', '$withTimeline', '$withDag', '$process_opt', '$onload', '$ownerID', now(), now(), '$ownerID', '$perms', '$group_id', '$cron_check', '$cron_prefix', '$cron_min', '$cron_hour', '$cron_day', '$cron_week', '$cron_month', '1', '$notif_email_list')";
         return self::insTable($sql);
     }
     function updateProjectPipelineOnload($id, $onload, $ownerID)
@@ -6831,9 +6838,9 @@ class dbfuncs
         self::runSQL($sql);
     }
 
-    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $cron_first, $ownerID)
+    function updateProjectPipeline($id, $name, $summary, $output_dir, $perms, $profile, $interdel, $cmd, $group_id, $exec_each, $exec_all, $exec_all_settings, $exec_each_settings, $docker_check, $docker_img, $singu_check, $singu_save, $singu_img, $exec_next_settings, $docker_opt, $singu_opt, $amazon_cre_id, $google_cre_id, $publish_dir, $publish_dir_check, $withReport, $withTrace, $withTimeline, $withDag, $process_opt, $onload, $release_date, $cron_check, $cron_prefix, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $notif_check, $email_notif, $cron_first, $notif_email_list, $ownerID)
     {
-        $sql = "UPDATE $this->db.project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', cron_check='$cron_check', cron_prefix='$cron_prefix', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', notif_check='$notif_check', email_notif='$email_notif', release_date=" . ($release_date == NULL ? "NULL" : "'$release_date'") . ", cron_first=" . ($cron_first == "" ? "NULL" : "'$cron_first'") . " WHERE id = '$id'";
+        $sql = "UPDATE $this->db.project_pipeline SET name='$name', summary='$summary', output_dir='$output_dir', perms='$perms', profile='$profile', interdel='$interdel', cmd='$cmd', group_id='$group_id', exec_each='$exec_each', exec_all='$exec_all', exec_all_settings='$exec_all_settings', exec_each_settings='$exec_each_settings', docker_check='$docker_check', docker_img='$docker_img', singu_check='$singu_check', singu_save='$singu_save', singu_img='$singu_img', exec_next_settings='$exec_next_settings', docker_opt='$docker_opt', singu_opt='$singu_opt', amazon_cre_id='$amazon_cre_id', google_cre_id='$google_cre_id', publish_dir='$publish_dir', publish_dir_check='$publish_dir_check', date_modified= now(), last_modified_user ='$ownerID', withReport='$withReport', withTrace='$withTrace', withTimeline='$withTimeline', withDag='$withDag',  process_opt='$process_opt', onload='$onload', cron_check='$cron_check', cron_prefix='$cron_prefix', cron_min='$cron_min', cron_hour='$cron_hour', cron_day='$cron_day', cron_week='$cron_week', cron_month='$cron_month', notif_check='$notif_check', notif_email_list='$notif_email_list', email_notif='$email_notif', release_date=" . ($release_date == NULL ? "NULL" : "'$release_date'") . ", cron_first=" . ($cron_first == "" ? "NULL" : "'$cron_first'") . " WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
@@ -6903,7 +6910,7 @@ class dbfuncs
             }
 
 
-            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, pp.type, pp.email_notif, pp.notif_check, pp.cron_first, pp.template_uuid, IF(pp.owner_id='$ownerID',1,0) as own
+            $sql = "SELECT DISTINCT pp.id, pp.name as pp_name, pip.id as pip_id, pip.rev_id, pip.name, u.username, pp.summary, pp.project_id, pp.pipeline_id, pp.date_created, pp.date_modified, pp.owner_id, p.name as project_name, pp.output_dir, pp.profile, pp.interdel, pp.group_id, pp.exec_each, pp.exec_all, pp.exec_all_settings, pp.exec_each_settings, pp.perms, pp.docker_check, pp.docker_img, pp.singu_check, pp.singu_save, pp.singu_img, pp.exec_next_settings, pp.cmd, pp.singu_opt, pp.docker_opt, pp.amazon_cre_id, pp.google_cre_id, pp.publish_dir, pp.publish_dir_check, pp.withReport, pp.withTrace, pp.withTimeline, pp.withDag, pp.process_opt, pp.onload, pp.new_run, pp.release_date, pp.cron_check, pp.cron_prefix, pp.cron_min, pp.cron_hour, pp.cron_day, pp.cron_week, pp.cron_month, pp.cron_target_date, pp.dmeta, pp.type, pp.email_notif, pp.notif_check, pp.cron_first, pp.template_uuid, pp.notif_email_list, IF(pp.owner_id='$ownerID',1,0) as own
                       FROM $this->db.project_pipeline pp
                       INNER JOIN $this->db.users u ON pp.owner_id = u.id
                       INNER JOIN $this->db.project p ON pp.project_id = p.id
@@ -7237,8 +7244,8 @@ class dbfuncs
             }
             // save source_id as template_id for cron_jobs and dmetaruns
 
-            $sql = "INSERT INTO $this->db.project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta, type, template_id, template_uuid)
-                    SELECT '$run_name', $project_id, pipeline_id, $summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, $process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, $dmeta, $type, $template_id, $template_uuid
+            $sql = "INSERT INTO $this->db.project_pipeline (name, project_id, pipeline_id, summary, output_dir, profile, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, process_opt, onload, owner_id, date_created, date_modified, last_modified_user, perms, group_id, new_run, dmeta, type, template_id, template_uuid, email_notif, notif_check, notif_email_list)
+                    SELECT '$run_name', $project_id, pipeline_id, $summary, $work_dir, $run_env, interdel, cmd, exec_each, exec_all, exec_all_settings, exec_each_settings, docker_check, docker_img, singu_check, singu_save, singu_img, exec_next_settings, docker_opt, singu_opt, amazon_cre_id, google_cre_id, publish_dir, publish_dir_check, withReport, withTrace, withTimeline, withDag, $process_opt, onload, $ownerID, now(), now(), $ownerID, perms, group_id, new_run, $dmeta, $type, $template_id, $template_uuid, email_notif, notif_check, notif_email_list
                     FROM $this->db.project_pipeline
                     WHERE id='$old_run_id'";
             $proPipe = self::insTable($sql);
@@ -7449,6 +7456,9 @@ class dbfuncs
             $email_notif = $userData[0]->{'email_notif'};
             $project_pipeline_email_notif = $proPipeAll[0]->{'email_notif'};
             $project_pipeline_notif_check = $proPipeAll[0]->{'notif_check'};
+            $notif_email_list = htmlspecialchars_decode($proPipeAll[0]->{'notif_email_list'}, ENT_QUOTES);
+
+            error_log($notif_email_list);
             if ($project_pipeline_notif_check == "true" && $project_pipeline_email_notif == "true") {
                 $send = "true";
             } else if ($project_pipeline_notif_check == "true" && $project_pipeline_email_notif == "false") {
@@ -7458,14 +7468,22 @@ class dbfuncs
             }
             if ($send == "true") {
                 $from = EMAIL_SENDER;
-                $EMAIL_ADMIN = EMAIL_ADMIN;
+                $EMAIL_BODY_ADMIN = EMAIL_BODY_ADMIN;
                 $from_name = "DolphinNext Team";
                 $to =  $email;
+                if (!empty($notif_email_list)) {
+                    $notif_email_list = trim($notif_email_list);
+                    $notif_email_list = str_replace(",", ";", $notif_email_list);
+                    if (!empty($notif_email_list)) {
+                        $to =  "$email;$notif_email_list";
+                    }
+                }
+                error_log($to);
                 $subject = "";
                 $initialText = "";
                 $profile_url = "{$this->base_path}/index.php?np=4&";
 
-                $endText = "If you have any questions or issues please contact $EMAIL_ADMIN.";
+                $endText = "If you have any questions or issues please contact $EMAIL_BODY_ADMIN.";
                 $run_url = "{$this->base_path}/index.php?np=3&id=" . $project_pipeline_id;
                 $footerText = "<font size='1'>To unsubscribe from these e-mails <a href='$profile_url'> click here </a> and update the notification section.</font>";
                 $runText = "Please click the following link for details of the run: <a href='$run_url'> $run_url </a> ";
@@ -7475,6 +7493,9 @@ class dbfuncs
                 } else if ($status == "NextErr" || $status == "Error") {
                     $subject = "RUN $project_pipeline_id in DolphinNext Exited";
                     $initialText = "Your DolphinNext run $project_pipeline_id has failed.";
+                } else if ($status == "NextRun") {
+                    $subject = "RUN $project_pipeline_id in DolphinNext initiated.";
+                    $initialText = "Your DolphinNext run $project_pipeline_id has started.";
                 }
 
                 $message = "Dear $name,<br><br>$initialText<br>$runText<br>$endText<br><br>Best Regards,<br><br>" . COMPANY_NAME . " DolphinNext Team<br>$footerText";

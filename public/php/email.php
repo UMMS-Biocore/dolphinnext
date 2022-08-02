@@ -46,9 +46,16 @@ class emailer
             //Recipients
             $mail->setFrom($from, 'Mailer');
             // $mail->addCC('cc@example.com');
-            $recipient = $to;
-            // $recipient_name = "example name";
-            $mail->AddAddress($recipient);
+            $to = preg_replace('/,/', ';', $to);
+            if (str_contains($to, ';')) {
+                $toArr = explode(";", $to);
+                foreach ($toArr as $eachEmail) {
+                    error_log($eachEmail);
+                    $mail->AddAddress($eachEmail);
+                }
+            } else {
+                $mail->AddAddress($to);
+            }
             //Content
             $mail->isHTML(true);
             $mail->Subject = $subject;
@@ -60,9 +67,8 @@ class emailer
         } catch (Exception $e) {
             $ret['status'] = "failed";
             $ret['log'] = "Message could not be sent. Mailer Error: {$mail->ErrorInfo} {$e}";
-            error_log(print_r($ret, TRUE));
         }
-
+        error_log(print_r($ret, TRUE));
         return $ret;
     }
 }
