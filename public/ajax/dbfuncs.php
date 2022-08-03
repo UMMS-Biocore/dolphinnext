@@ -5963,10 +5963,7 @@ class dbfuncs
             $ret = $this->execute_cmd($uuid_exist_cmd, $ret, "uuid_exist_cmd_log", "uuid_exist_cmd");
             if (preg_match("/INFO: Run package for $uuid exists\./", $ret["uuid_exist_cmd_log"])) {
                 if (preg_match("/s3:/i", $files[0])) {
-                    $fileList = "";
-                    foreach ($files as $item) :
-                        $fileList .= "$item ";
-                    endforeach;
+
                     $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id, "", $ownerID, ""));
                     $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
                     $keys = "";
@@ -5985,7 +5982,15 @@ class dbfuncs
                         }
                     }
                     // $cmd = "s3cmd sync $keys $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
-                    $cmd = "$keys aws s3 sync  $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                    $cmd = "$keys  ";
+                    foreach ($files as $item) :
+                        $target = "";
+                        if (!empty($item) && preg_match("/\//", $item)) {
+                            $pathSplit = explode("/", $item);
+                            $target = end($pathSplit);
+                        }
+                        $cmd .= " aws s3 sync $item {$this->run_path}/$uuid/$last_server_dir/$target 2>&1 &; ";
+                    endforeach;
                     error_log($cmd);
                 } else if (preg_match("/gs:/i", $files[0])) {
                     $fileList = "";
