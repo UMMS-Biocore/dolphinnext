@@ -5989,7 +5989,7 @@ class dbfuncs
                             $pathSplit = explode("/", $item);
                             $target = end($pathSplit);
                         }
-                        $cmd .= " aws s3 sync $item {$this->run_path}/$uuid/$last_server_dir/$target 2>&1 &; ";
+                        $cmd .= " aws s3 sync $item {$this->run_path}/$uuid/$last_server_dir/$target 2>&1 & ";
                     endforeach;
                     error_log($cmd);
                 } else if (preg_match("/gs:/i", $files[0])) {
