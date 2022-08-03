@@ -120,6 +120,10 @@ def main():
     print ("\nINFO:"+ " Database update initiated:")
     runUpdateLog = updateDB(conf['DB'], conf['DBUSER'], conf['DBPASS'], conf['DBHOST'], conf['DBPORT'])
     print (runUpdateLog)
+    package_cmd = "cd "+scriptDir+" && bash installPackages.sh"
+    print("INFO: Checking Packages"+"\nRUN : "+ package_cmd)
+    package_cmd_log = os.popen(package_cmd).read()
+    print ("\n"+"LOG :\n" + package_cmd)
     
     
 if __name__ == "__main__":

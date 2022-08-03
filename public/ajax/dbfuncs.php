@@ -5981,10 +5981,12 @@ class dbfuncs
                         $access_key = $amz_data[0]->{'amz_acc_key'};
                         $secret_key = $amz_data[0]->{'amz_suc_key'};
                         if (!empty($access_key) && !empty($secret_key)) {
-                            $keys = "--access_key $access_key  --secret_key $secret_key";
+                            $keys = "aws configure set aws_access_key_id $access_key && aws configure set aws_secret_access_key $secret_key && ";
                         }
                     }
-                    $cmd = "s3cmd sync $keys $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                    // $cmd = "s3cmd sync $keys $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                    $cmd = "$keys aws s3 sync  $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                    error_log($cmd);
                 } else if (preg_match("/gs:/i", $files[0])) {
                     $fileList = "";
                     foreach ($files as $item) :
@@ -6236,7 +6238,13 @@ class dbfuncs
             if ($lastChar != "/") {
                 $dir = $dir . "/";
             }
-            $cmd = "s3cmd ls --access_key $access_key  --secret_key $secret_key $dir 2>&1 &";
+            // $cmd = "s3cmd ls --access_key $access_key  --secret_key $secret_key $dir 2>&1 &";
+            $keyCmd = "";
+            if (!empty($access_key) && !empty($secret_key)) {
+                $keyCmd = "aws configure set aws_access_key_id $access_key && aws configure set aws_secret_access_key $secret_key && ";
+            }
+            $cmd = "$keyCmd aws s3 ls $dir --summarize 2>&1 &";
+            error_log($cmd);
             if (preg_match('/[*?]/', $dir)) {
                 $s3bloks = explode('/', $dir);
                 $regexBlocks = array();
@@ -6254,7 +6262,8 @@ class dbfuncs
 
                 $initial_dir = implode('/', $staticBlocks);
                 $regex_part = implode('/', $regexBlocks);
-                $cmd = "s3cmd ls -r --access_key $access_key  --secret_key $secret_key $initial_dir 2>&1 &";
+                // $cmd = "s3cmd ls -r --access_key $access_key  --secret_key $secret_key $initial_dir 2>&1 &";
+                $cmd = "$keyCmd aws s3 ls --recursive $initial_dir --summarize 2>&1 &";
             }
             $log = shell_exec($cmd);
             // For google storage queries

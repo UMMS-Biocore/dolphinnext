@@ -8902,7 +8902,10 @@ async function viewDirButSearch(dir) {
                 if (dir.match(/s3:/i) || dir.match(/gs:/i)) {
                     var raw = dirList.split("\n");
                     for (var i = 0; i < raw.length; i++) {
-                        var filePath = raw[i].split(" ").pop();
+                        var filePathArr = raw[i].split(" ")
+                        var filePath = filePathArr.pop();
+                        console.log(filePath)
+                        console.log(filePathArr)
                         if (filePath) {
                             if (
                                 filePath.toLowerCase() === dir.toLowerCase() ||
@@ -8911,10 +8914,15 @@ async function viewDirButSearch(dir) {
                                 console.log("skip", filePath);
                                 continue;
                             }
-                            if (filePath.match(/s3:/i) || filePath.match(/gs:/i)) {
+                            if (dirList.match(/Total Objects/i) || filePath.match(/gs:/i)) {
+                                // exclude aws s3 --summary info
+                                if (raw[i].match(/Total Objects:/) || raw[i].match(/Total Size:/)) {
+                                    console.log("skip", filePath);
+                                    continue;
+                                }
                                 var allBlock = filePath.split("/");
                                 if (filePath.substr(-1) == "/") {
-                                    var lastBlock = allBlock[allBlock.length - 2];
+                                    var lastBlock = allBlock[allBlock.length - 2] + "/";
                                 } else {
                                     var lastBlock = allBlock[allBlock.length - 1];
                                 }
