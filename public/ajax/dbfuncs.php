@@ -39,6 +39,8 @@ class dbfuncs
     private $EMAIL_URL = EMAIL_URL;
     private $EMAIL_HEADER_KEY = EMAIL_HEADER_KEY;
     private $EMAIL_HEADER_VALUE = EMAIL_HEADER_VALUE;
+    private $AWS_CONFIG_PATH = "/data/.aws/config";
+    private $AWS_CREDENTIALS_PATH = "/data/.aws/config";
 
     function __construct()
     {
@@ -5988,8 +5990,8 @@ class dbfuncs
 
         // 1. read config file ~/.aws/config
         //https://docs.aws.amazon.com/cli/latest/topic/config-vars.html
-        $confPath = "/data/.aws/config";
-        $credPath = "/data/.aws/credentials";
+        $confPath = $this->AWS_CONFIG_PATH;
+        $credPath = $this->AWS_CREDENTIALS_PATH;
         putenv("AWS_CONFIG_FILE=$confPath");
         putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
         if (!file_exists("/data")) {
@@ -6067,6 +6069,11 @@ class dbfuncs
                         if (!empty($profileID)) {
                             $profileText = "--profile $profileID";
                         }
+
+                        $confPath = $this->AWS_CONFIG_PATH;
+                        $credPath = $this->AWS_CREDENTIALS_PATH;
+                        putenv("AWS_CONFIG_FILE=$confPath");
+                        putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
                     }
                     // $cmd = "s3cmd sync $keys $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
                     $cmd = "";
@@ -6325,6 +6332,10 @@ class dbfuncs
                     $profileText = "--profile $profileID";
                 }
             }
+            $confPath = $this->AWS_CONFIG_PATH;
+            $credPath = $this->AWS_CREDENTIALS_PATH;
+            putenv("AWS_CONFIG_FILE=$confPath");
+            putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
 
             $cmd = "aws s3 ls $profileText $dir --summarize 2>&1 &";
             error_log($cmd);
