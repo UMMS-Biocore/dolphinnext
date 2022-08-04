@@ -5950,8 +5950,8 @@ class dbfuncs
         foreach ($array as $key => $val) {
             if (is_array($val)) {
                 $res[] = "[$key]";
-                foreach ($val as $skey => $sval) $res[] = "$skey = " . (is_numeric($sval) ? $sval : '"' . $sval . '"');
-            } else $res[] = "$key = " . (is_numeric($val) ? $val : '"' . $val . '"');
+                foreach ($val as $skey => $sval) $res[] = "$skey = " . $sval;
+            } else $res[] = "$key = " . $val;
         }
         $this->safefilerewrite($file, implode("\r\n", $res));
     }
