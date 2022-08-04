@@ -6020,18 +6020,14 @@ class dbfuncs
         }
         if (!empty($access_key) && !empty($secret_key)) {
             $profileID = "cred{$amazon_cre_id}";
-            if (empty($confArr["profile cred{$amazon_cre_id}"])) {
-                $confArr["profile $profileID"] = array(
-                    "credential_source" => $profileID
-                );
-            }
+            $confArr["profile $profileID"] = array(
+                "credential_source" => $profileID
+            );
 
-            if (empty($credArr[$profileID])) {
-                $credArr[$profileID] = array(
-                    "aws_access_key_id" => "$access_key",
-                    "aws_secret_access_key" => "$secret_key"
-                );
-            }
+            $credArr[$profileID] = array(
+                "aws_access_key_id" => "$access_key",
+                "aws_secret_access_key" => "$secret_key"
+            );
         }
 
         // 2. write to ini file 
