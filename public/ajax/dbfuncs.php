@@ -39,6 +39,8 @@ class dbfuncs
     private $EMAIL_URL = EMAIL_URL;
     private $EMAIL_HEADER_KEY = EMAIL_HEADER_KEY;
     private $EMAIL_HEADER_VALUE = EMAIL_HEADER_VALUE;
+    private $AWS_CONFIG_PATH = "/data/.aws/config";
+    private $AWS_CREDENTIALS_PATH = "/data/.aws/config";
 
     function __construct()
     {
@@ -5942,6 +5944,98 @@ class dbfuncs
         return true;
     }
 
+    function write_php_ini($array, $file)
+    {
+        $res = array();
+        foreach ($array as $key => $val) {
+            if (is_array($val)) {
+                $res[] = "[$key]";
+                foreach ($val as $skey => $sval) $res[] = "$skey = " . $sval;
+            } else $res[] = "$key = " . $val;
+        }
+        $this->safefilerewrite($file, implode("\r\n", $res));
+    }
+
+    function safefilerewrite($fileName, $dataToSave)
+    {
+        if ($fp = fopen($fileName, 'w')) {
+            $startTime = microtime(TRUE);
+            do {
+                $canWrite = flock($fp, LOCK_EX);
+                // If lock not obtained sleep for 0 - 100 milliseconds, to avoid collision and CPU load
+                if (!$canWrite) usleep(round(rand(0, 100) * 1000));
+            } while ((!$canWrite) and ((microtime(TRUE) - $startTime) < 5));
+
+            //file was locked so now we can store information
+            if ($canWrite) {
+                fwrite($fp, $dataToSave);
+                flock($fp, LOCK_UN);
+            }
+            fclose($fp);
+        }
+    }
+
+    function updateAWSCliConfig($amazon_cre_id, $ownerID)
+    {
+        $profileID = "";
+        $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
+        foreach ($amz_data as $d) {
+            $access = $d->amz_acc_key;
+            $d->amz_acc_key = trim($this->amazonDecode($access));
+            $secret = $d->amz_suc_key;
+            $d->amz_suc_key = trim($this->amazonDecode($secret));
+        }
+        $access_key = $amz_data[0]->{'amz_acc_key'};
+        $secret_key = $amz_data[0]->{'amz_suc_key'};
+
+        // 1. read config file ~/.aws/config
+        //https://docs.aws.amazon.com/cli/latest/topic/config-vars.html
+        $confPath = $this->AWS_CONFIG_PATH;
+        $credPath = $this->AWS_CREDENTIALS_PATH;
+        putenv("AWS_CONFIG_FILE=$confPath");
+        putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
+        if (!file_exists("/data")) {
+            mkdir("/data", 0755, true);
+        }
+        if (!file_exists("/data/.aws")) {
+            mkdir("/data/.aws", 0755, true);
+        }
+        if (!file_exists("$confPath")) {
+            $file = fopen("$confPath", 'w') or die("can't open file");
+            fclose($file);
+        }
+        if (!file_exists("$credPath")) {
+            $file = fopen("$credPath", 'w') or die("can't open file");
+            fclose($file);
+        }
+        $confArr = parse_ini_file($confPath, true);
+        $credArr = parse_ini_file($credPath, true);
+        error_log(print_r($confArr, TRUE));
+        error_log(print_r($credArr, TRUE));
+
+        if (empty($confArr["default"])) {
+            $confArr['default'] = array(
+                "credential_source" => "Ec2InstanceMetadata"
+            );
+        }
+        if (!empty($access_key) && !empty($secret_key)) {
+            $profileID = "cred{$amazon_cre_id}";
+            $confArr["profile $profileID"] = array(
+                "credential_source" => $profileID
+            );
+
+            $credArr[$profileID] = array(
+                "aws_access_key_id" => "$access_key",
+                "aws_secret_access_key" => "$secret_key"
+            );
+        }
+
+        // 2. write to ini file 
+        $this->write_php_ini($confArr, $confPath);
+        $this->write_php_ini($credArr, $credPath);
+
+        return $profileID;
+    }
 
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb
     function saveNextflowLog($files, $uuid, $last_server_dir, $profileType, $profileId, $project_pipeline_id, $dolphin_path_real, $ownerID)
@@ -5963,28 +6057,30 @@ class dbfuncs
             $ret = $this->execute_cmd($uuid_exist_cmd, $ret, "uuid_exist_cmd_log", "uuid_exist_cmd");
             if (preg_match("/INFO: Run package for $uuid exists\./", $ret["uuid_exist_cmd_log"])) {
                 if (preg_match("/s3:/i", $files[0])) {
-                    $fileList = "";
-                    foreach ($files as $item) :
-                        $fileList .= "$item ";
-                    endforeach;
                     $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id, "", $ownerID, ""));
                     $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
-                    $keys = "";
+                    $profileText = "";
                     if (!empty($amazon_cre_id)) {
-                        $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
-                        foreach ($amz_data as $d) {
-                            $access = $d->amz_acc_key;
-                            $d->amz_acc_key = trim($this->amazonDecode($access));
-                            $secret = $d->amz_suc_key;
-                            $d->amz_suc_key = trim($this->amazonDecode($secret));
+                        $profileID = $this->updateAWSCliConfig($amazon_cre_id, $ownerID);
+                        if (!empty($profileID)) {
+                            $profileText = "--profile $profileID";
                         }
-                        $access_key = $amz_data[0]->{'amz_acc_key'};
-                        $secret_key = $amz_data[0]->{'amz_suc_key'};
-                        if (!empty($access_key) && !empty($secret_key)) {
-                            $keys = "--access_key $access_key  --secret_key $secret_key";
-                        }
+
+                        $confPath = $this->AWS_CONFIG_PATH;
+                        $credPath = $this->AWS_CREDENTIALS_PATH;
+                        putenv("AWS_CONFIG_FILE=$confPath");
+                        putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
                     }
-                    $cmd = "s3cmd sync $keys $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                    // $cmd = "s3cmd sync $keys $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
+                    $cmd = "";
+                    foreach ($files as $item) :
+                        $target = "";
+                        if (!empty($item) && preg_match("/\//", $item)) {
+                            $pathSplit = explode("/", $item);
+                            $target = end($pathSplit);
+                        }
+                        $cmd .= " aws s3 sync $profileText $item {$this->run_path}/$uuid/$last_server_dir/$target 2>&1 & ";
+                    endforeach;
                 } else if (preg_match("/gs:/i", $files[0])) {
                     $fileList = "";
                     foreach ($files as $item) :
@@ -6221,22 +6317,24 @@ class dbfuncs
         $dir = trim($dir);
         $log = "";
         if (preg_match("/s3:/i", $dir)) {
-            if (!empty($amazon_cre_id)) {
-                $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
-                foreach ($amz_data as $d) {
-                    $access = $d->amz_acc_key;
-                    $d->amz_acc_key = trim($this->amazonDecode($access));
-                    $secret = $d->amz_suc_key;
-                    $d->amz_suc_key = trim($this->amazonDecode($secret));
-                }
-                $access_key = $amz_data[0]->{'amz_acc_key'};
-                $secret_key = $amz_data[0]->{'amz_suc_key'};
-            }
             $lastChar = substr($dir, -1);
             if ($lastChar != "/") {
                 $dir = $dir . "/";
             }
-            $cmd = "s3cmd ls --access_key $access_key  --secret_key $secret_key $dir 2>&1 &";
+            $profileText = "";
+            if (!empty($amazon_cre_id)) {
+                $profileID = $this->updateAWSCliConfig($amazon_cre_id, $ownerID);
+                if (!empty($profileID)) {
+                    $profileText = "--profile $profileID";
+                }
+            }
+            $confPath = $this->AWS_CONFIG_PATH;
+            $credPath = $this->AWS_CREDENTIALS_PATH;
+            putenv("AWS_CONFIG_FILE=$confPath");
+            putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
+
+            $cmd = "aws s3 ls $profileText $dir --summarize 2>&1 &";
+            error_log($cmd);
             if (preg_match('/[*?]/', $dir)) {
                 $s3bloks = explode('/', $dir);
                 $regexBlocks = array();
@@ -6254,7 +6352,8 @@ class dbfuncs
 
                 $initial_dir = implode('/', $staticBlocks);
                 $regex_part = implode('/', $regexBlocks);
-                $cmd = "s3cmd ls -r --access_key $access_key  --secret_key $secret_key $initial_dir 2>&1 &";
+                // $cmd = "s3cmd ls -r --access_key $access_key  --secret_key $secret_key $initial_dir 2>&1 &";
+                $cmd = "aws s3 ls $profileText --recursive $initial_dir --summarize 2>&1 &";
             }
             $log = shell_exec($cmd);
             // For google storage queries
