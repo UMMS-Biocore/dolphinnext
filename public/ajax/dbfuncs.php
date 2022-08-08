@@ -40,7 +40,7 @@ class dbfuncs
     private $EMAIL_HEADER_KEY = EMAIL_HEADER_KEY;
     private $EMAIL_HEADER_VALUE = EMAIL_HEADER_VALUE;
     private $AWS_CONFIG_PATH = "/data/.aws/config";
-    private $AWS_CREDENTIALS_PATH = "/data/.aws/config";
+    private $AWS_CREDENTIALS_PATH = "/data/.aws/credentials";
 
     function __construct()
     {
@@ -5947,12 +5947,20 @@ class dbfuncs
     function write_php_ini($array, $file)
     {
         $res = array();
+        error_log("write_php_ini");
+        error_log(print_r($file, TRUE));
+        error_log(print_r($array, TRUE));
+
         foreach ($array as $key => $val) {
+            error_log(print_r($key, TRUE));
+            error_log(print_r($val, TRUE));
+
             if (is_array($val)) {
                 $res[] = "[$key]";
                 foreach ($val as $skey => $sval) $res[] = "$skey = " . $sval;
             } else $res[] = "$key = " . $val;
         }
+
         $this->safefilerewrite($file, implode("\r\n", $res));
     }
 
@@ -5978,15 +5986,19 @@ class dbfuncs
     function updateAWSCliConfig($amazon_cre_id, $ownerID)
     {
         $profileID = "";
-        $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
-        foreach ($amz_data as $d) {
-            $access = $d->amz_acc_key;
-            $d->amz_acc_key = trim($this->amazonDecode($access));
-            $secret = $d->amz_suc_key;
-            $d->amz_suc_key = trim($this->amazonDecode($secret));
+        $access_key = "";
+        $secret_key = "";
+        if (!empty($amazon_cre_id)) {
+            $amz_data = json_decode($this->getAmzbyID($amazon_cre_id, $ownerID));
+            foreach ($amz_data as $d) {
+                $access = $d->amz_acc_key;
+                $d->amz_acc_key = trim($this->amazonDecode($access));
+                $secret = $d->amz_suc_key;
+                $d->amz_suc_key = trim($this->amazonDecode($secret));
+            }
+            $access_key = $amz_data[0]->{'amz_acc_key'};
+            $secret_key = $amz_data[0]->{'amz_suc_key'};
         }
-        $access_key = $amz_data[0]->{'amz_acc_key'};
-        $secret_key = $amz_data[0]->{'amz_suc_key'};
 
         // 1. read config file ~/.aws/config
         //https://docs.aws.amazon.com/cli/latest/topic/config-vars.html
@@ -6010,8 +6022,7 @@ class dbfuncs
         }
         $confArr = parse_ini_file($confPath, true);
         $credArr = parse_ini_file($credPath, true);
-        error_log(print_r($confArr, TRUE));
-        error_log(print_r($credArr, TRUE));
+
 
         if (empty($confArr["default"])) {
             $confArr['default'] = array(
@@ -6060,17 +6071,15 @@ class dbfuncs
                     $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id, "", $ownerID, ""));
                     $amazon_cre_id = $proPipeAll[0]->{'amazon_cre_id'};
                     $profileText = "";
-                    if (!empty($amazon_cre_id)) {
-                        $profileID = $this->updateAWSCliConfig($amazon_cre_id, $ownerID);
-                        if (!empty($profileID)) {
-                            $profileText = "--profile $profileID";
-                        }
-
-                        $confPath = $this->AWS_CONFIG_PATH;
-                        $credPath = $this->AWS_CREDENTIALS_PATH;
-                        putenv("AWS_CONFIG_FILE=$confPath");
-                        putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
+                    $profileID = $this->updateAWSCliConfig($amazon_cre_id, $ownerID);
+                    if (!empty($profileID)) {
+                        $profileText = "--profile $profileID";
                     }
+
+                    $confPath = $this->AWS_CONFIG_PATH;
+                    $credPath = $this->AWS_CREDENTIALS_PATH;
+                    putenv("AWS_CONFIG_FILE=$confPath");
+                    putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
                     // $cmd = "s3cmd sync $keys $fileList {$this->run_path}/$uuid/$last_server_dir/ 2>&1 &";
                     $cmd = "";
                     foreach ($files as $item) :
@@ -6322,11 +6331,9 @@ class dbfuncs
                 $dir = $dir . "/";
             }
             $profileText = "";
-            if (!empty($amazon_cre_id)) {
-                $profileID = $this->updateAWSCliConfig($amazon_cre_id, $ownerID);
-                if (!empty($profileID)) {
-                    $profileText = "--profile $profileID";
-                }
+            $profileID = $this->updateAWSCliConfig($amazon_cre_id, $ownerID);
+            if (!empty($profileID)) {
+                $profileText = "--profile $profileID";
             }
             $confPath = $this->AWS_CONFIG_PATH;
             $credPath = $this->AWS_CREDENTIALS_PATH;
