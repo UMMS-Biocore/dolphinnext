@@ -40,7 +40,7 @@ class dbfuncs
     private $EMAIL_HEADER_KEY = EMAIL_HEADER_KEY;
     private $EMAIL_HEADER_VALUE = EMAIL_HEADER_VALUE;
     private $AWS_CONFIG_PATH = "/data/.aws/config";
-    private $AWS_CREDENTIALS_PATH = "/data/.aws/config";
+    private $AWS_CREDENTIALS_PATH = "/data/.aws/credentials";
 
     function __construct()
     {
@@ -5947,12 +5947,20 @@ class dbfuncs
     function write_php_ini($array, $file)
     {
         $res = array();
+        error_log("write_php_ini");
+        error_log(print_r($file, TRUE));
+        error_log(print_r($array, TRUE));
+
         foreach ($array as $key => $val) {
+            error_log(print_r($key, TRUE));
+            error_log(print_r($val, TRUE));
+
             if (is_array($val)) {
                 $res[] = "[$key]";
                 foreach ($val as $skey => $sval) $res[] = "$skey = " . $sval;
             } else $res[] = "$key = " . $val;
         }
+
         $this->safefilerewrite($file, implode("\r\n", $res));
     }
 
@@ -6014,8 +6022,7 @@ class dbfuncs
         }
         $confArr = parse_ini_file($confPath, true);
         $credArr = parse_ini_file($credPath, true);
-        error_log(print_r($confArr, TRUE));
-        error_log(print_r($credArr, TRUE));
+
 
         if (empty($confArr["default"])) {
             $confArr['default'] = array(
