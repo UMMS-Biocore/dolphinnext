@@ -1970,11 +1970,12 @@ process cleanUp {
           
           ## remove invalid collections from inputs folder:
           my @inputCollections = <$run_dir/inputs/*>;
+          my %inputCollectionsHash = map { $_ => 1 } @inputCollections;
             foreach my $dir (@inputCollections) {
                 print "dirs: $dir"; 
-                if ( !grep( /^$dir$/, @validCollection)) {
-                    print "\\nInvalid directory $dir will be removed from inputs directory\\n";
-                    runCommand("rm -rf $dir");
+                if(!exists($inputCollectionsHash{$dir})) { 
+                  print "\\nInvalid directory $dir will be removed from inputs directory\\n";
+                  runCommand("rm -rf $dir");
                 }
             }
           
