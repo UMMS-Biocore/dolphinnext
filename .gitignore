@@ -1,6 +1,7 @@
 scripts/log.txt
 public/tmp/*
 !public/tmp/index.html
+!public/tmp/pub/index.html
 !public/tmp/runuploads/index.html
 !public/tmp/git/index.html
 config/.sec

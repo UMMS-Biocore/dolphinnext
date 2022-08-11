@@ -124,7 +124,7 @@ def main():
     updateText = """
 As of August 8th, 2022 no updates will be made to this container. We prepared new container to support Python 3, MySQL, and PHP 8. Therefore please follow these steps to use new version of the software and container.
 
-* Step 1. Backup your database and rename your database folder with the following commands: 
+* Step 1. Backup your local database and rename your database folder with the following commands: 
   mysqldump -u docker -pdocker dolphinnext > /export/dolphinnext_db_backup.sql
   mv /export/mysql /export/mysql.bak 
 
@@ -133,14 +133,17 @@ As of August 8th, 2022 no updates will be made to this container. We prepared ne
   A) If you're using DolphinNext with Dmeta & Dportal use: ummsbiocore/dsuite-studio:2.0
   B) If you're using DolphinNext alone use: ummsbiocore/dolphinnext-studio:2.0
 
-  example command: 
+  Example command: 
   docker run -m 10G -p 8080:80 -v /path/to/mount:/export  -ti ummsbiocore/dolphinnext-studio:2.0 /bin/bash
+
+  PS. If you're using docker desktop for mac, please disable the gRPC Fuse for file sharing.
 
 * Step 4. Execute startup command
 * Step 5. Import database with the command below:
   mysql -u docker -pdocker dolphinnext < /export/dolphinnext_db_backup.sql
 
-Please contact biocorestaff@umassmed.edu for any questions.
+Please send email to biocorestaff@umassmed.edu for any questions.
+test
     """
 
     # if sys.version_info[0] < 3:
