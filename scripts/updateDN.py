@@ -136,16 +136,24 @@ As of August 8th, 2022 no updates will be made to this container. We prepared ne
   example command: 
   docker run -m 10G -p 8080:80 -v /path/to/mount:/export  -ti ummsbiocore/dolphinnext-studio:2.0 /bin/bash
 
-* Step 4. Execute startup command
+* Step 4. Execute startup command:
+  startup
 * Step 5. Import database with the command below:
   mysql -u docker -pdocker dolphinnext < /export/dolphinnext_db_backup.sql
+* Step 6. Execute the updateDN script:
+  python /export/dolphinnext/scripts/updateDN.py
 
 Please contact biocorestaff@umassmed.edu for any questions.
     """
-
-    pull_cmd = "cd "+scriptDir + \
-        "/.. && git pull https://github.com/UMMS-Biocore/dolphinnext.git " + \
-        args.version + " 2>&1"
+    pull_cmd = ""
+    if sys.version_info[0] < 3:
+        pull_cmd = "cd "+scriptDir + \
+            "/.. && git pull https://github.com/UMMS-Biocore/dolphinnext.git " + \
+            args.version + " 2>&1"
+    else:
+        pull_cmd = "cd "+scriptDir + \
+            "/.. && git fetch && git checkout 2.0 && git pull origin " + \
+            args.version + " 2>&1"
     print("INFO: Pulling"+"\nRUN : " + pull_cmd)
     pull_cmd_log = os.popen(pull_cmd).read()
     print("\n"+"LOG :\n" + pull_cmd_log)
