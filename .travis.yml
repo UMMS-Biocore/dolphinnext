@@ -3,7 +3,7 @@ language: php
 
 # list any PHP version you want to test against
 php:
-  - 7.2.15
+  - 8.1.2
 
 env:
   - mysql
