@@ -118,7 +118,7 @@ def updateDB(db, user, p, host, port):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", type=str,
-                        help="Please enter the version or branch name to pull", default="master")
+                        help="Please enter the version or branch name to pull", default="2.0")
     args = parser.parse_args()
     conf = getConf()
     updateText = """
