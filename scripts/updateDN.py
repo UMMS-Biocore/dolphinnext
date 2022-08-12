@@ -1,7 +1,6 @@
-#!/share/bin/python
+#!/usr/bin/python
 
-from pkg_resources import parse_version
-from optparse import OptionParser
+from natsort import natsorted
 import os
 import argparse
 import mysql.connector
@@ -19,7 +18,7 @@ def getConf():
     ret = dict()
     config = configparser.ConfigParser()
     try:
-        config.readfp(open(scriptDir+'/../config/.sec'))
+        config.read_file(open(scriptDir+'/../config/.sec'))
         ret['DB'] = config.get('Dolphinnext', 'DB')
         ret['DBUSER'] = config.get('Dolphinnext', 'DBUSER')
         ret['DBPASS'] = config.get('Dolphinnext', 'DBPASS')
@@ -77,6 +76,7 @@ def updateDB(db, user, p, host, port):
              db+"' and table_name='update_db';")
     cursor.execute(query)
     exist_table_rows = cursor.fetchall()
+
     for row in exist_table_rows:
         exist_table = row[0]
     if exist_table == 1:
@@ -92,7 +92,8 @@ def updateDB(db, user, p, host, port):
         exist_patch = listdir_nohidden(scriptDir+'/../db/patch')
         ret += "\nINFO: Checking exist patches: "+str(len(exist_patch))
         not_exist_db = list(set(exist_patch) - set(exist_db))
-        not_exist_db = sorted(not_exist_db, key=parse_version)
+        not_exist_db = natsorted(not_exist_db)
+
     elif exist_table == 0:
         ret += "INFO: update_db table not found."
         not_exist_db = listdir_nohidden(scriptDir+'/../db/patch')
@@ -109,7 +110,6 @@ def updateDB(db, user, p, host, port):
             cnx.commit()
     else:
         ret += "\nINFO: No new DB patches found."
-
     ret += "\nINFO: Database update completed."
     cursor.close()
     return ret
@@ -143,7 +143,6 @@ As of August 8th, 2022 no updates will be made to this container. We prepared ne
   mysql -u docker -pdocker dolphinnext < /export/dolphinnext_db_backup.sql
 
 Please send email to biocorestaff@umassmed.edu for any questions.
-test
     """
 
     # if sys.version_info[0] < 3:
@@ -152,6 +151,7 @@ test
     pull_cmd = "cd "+scriptDir + \
         "/.. && git pull https://github.com/UMMS-Biocore/dolphinnext.git " + \
         args.version + " 2>&1"
+    pull_cmd = ""
     print("INFO: Pulling"+"\nRUN : " + pull_cmd)
     pull_cmd_log = os.popen(pull_cmd).read()
     print("\n"+"LOG :\n" + pull_cmd_log)

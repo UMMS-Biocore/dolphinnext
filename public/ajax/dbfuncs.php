@@ -846,9 +846,7 @@ class dbfuncs
         $singu_cachedir = 'NXF_SINGULARITY_CACHEDIR="${NXF_SINGULARITY_CACHEDIR:-$HOME/.dolphinnext/singularity}" && export NXF_SINGULARITY_CACHEDIR=$NXF_SINGULARITY_CACHEDIR';
         $beforeSchedule = '';
         settype($attempt, 'integer');
-        error_log("attempt: $attempt");
         $proPipeType = $proPipeAll[0]->{'type'};
-        error_log("proPipeType: $proPipeType ");
 
         if ($proPipeType == "auto" && $attempt == 1 && file_exists($run_path_real . "/beforeschedule.sh")) {
             $beforeSchedule = "echo \"INFO: Executing beforeschedule.sh...\" >> $dolphin_path_real/log.txt && bash $dolphin_path_real/beforeschedule.sh >> $dolphin_path_real/log.txt && echo \"INFO: beforeschedule.sh execution passed.\" >> $dolphin_path_real/log.txt";
@@ -1875,8 +1873,6 @@ class dbfuncs
         $lab = $userData->{'lab'};
         $allvars = array();
         $allvars["DNEXT_RUN_URL"] =  $this->escapeRegex($DNEXT_RUN_URL);
-        error_log($DNEXT_RUN_URL);
-        error_log($allvars["DNEXT_RUN_URL"]);
         $allvars["DNEXT_WEB_REPORT_DIR"] =  $this->escapeRegex($DNEXT_WEB_REPORT_DIR);
         $allvars["DNEXT_WEB_RUN_DIR"] =  $this->escapeRegex($DNEXT_WEB_RUN_DIR);
         $allvars["DNEXT_PUBLISH_DIR"] =  $this->escapeRegex($DNEXT_PUBLISH_DIR);
@@ -2263,6 +2259,7 @@ class dbfuncs
         // 2. rsync $targz_file
         $rsync_cmd = "rsync -e 'ssh {$this->ssh_settings} $ssh_port -i $userpky' $targz_file $connect:$dolphin_path_real  2>&1";
         $ret = $this->execute_cmd_logfile($rsync_cmd, $ret, "scp_cmd_log", "scp_cmd", "$run_path_real/serverlog.txt", "a");
+
         // 3. remove local $targz_file after transfer (if this command couldn't executed, cronjob will remove it->cleanTempDir)
         if (file_exists($targz_file)) {
             unlink($targz_file);
@@ -5889,7 +5886,6 @@ class dbfuncs
     function checkFileExist($location, $uuid, $ownerID)
     {
         $ret = 0;
-        error_log("{$this->run_path}/$uuid/$location");
         if (file_exists("{$this->run_path}/$uuid/$location")) {
             $ret = 1;
         }
@@ -5947,14 +5943,7 @@ class dbfuncs
     function write_php_ini($array, $file)
     {
         $res = array();
-        error_log("write_php_ini");
-        error_log(print_r($file, TRUE));
-        error_log(print_r($array, TRUE));
-
         foreach ($array as $key => $val) {
-            error_log(print_r($key, TRUE));
-            error_log(print_r($val, TRUE));
-
             if (is_array($val)) {
                 $res[] = "[$key]";
                 foreach ($val as $skey => $sval) $res[] = "$skey = " . $sval;
@@ -6250,7 +6239,6 @@ class dbfuncs
         $profileType = $profileAr[0];
         $profileId = $profileAr[1];
         $logReset = $this->resetUpload($fileName, $email, $ownerID);
-        error_log($logReset);
         $tmp_path = TEMPPATH;
         $upload_dir = "$tmp_path/uploads/{$email}";
         if (!file_exists($upload_dir)) {
@@ -6341,7 +6329,6 @@ class dbfuncs
             putenv("AWS_SHARED_CREDENTIALS_FILE=$credPath");
 
             $cmd = "aws s3 ls $profileText $dir --summarize 2>&1 &";
-            error_log($cmd);
             if (preg_match('/[*?]/', $dir)) {
                 $s3bloks = explode('/', $dir);
                 $regexBlocks = array();
@@ -6433,8 +6420,6 @@ class dbfuncs
             $cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"ls -1 $dir\" 2>&1 &";
             $log = shell_exec($cmd);
         }
-        error_log($cmd);
-        error_log($log);
         if (!is_null($log) && isset($log)) {
             return json_encode($log);
         } else {
@@ -7564,7 +7549,6 @@ class dbfuncs
             $project_pipeline_notif_check = $proPipeAll[0]->{'notif_check'};
             $notif_email_list = htmlspecialchars_decode($proPipeAll[0]->{'notif_email_list'}, ENT_QUOTES);
 
-            error_log($notif_email_list);
             if ($project_pipeline_notif_check == "true" && $project_pipeline_email_notif == "true") {
                 $send = "true";
             } else if ($project_pipeline_notif_check == "true" && $project_pipeline_email_notif == "false") {
@@ -7584,7 +7568,6 @@ class dbfuncs
                         $to =  "$email;$notif_email_list";
                     }
                 }
-                error_log($to);
                 $subject = "";
                 $initialText = "";
                 $profile_url = "{$this->base_path}/index.php?np=4&";
@@ -9046,7 +9029,6 @@ class dbfuncs
             $err = "{$targetDir}/{$filename}.{$format}.err{$pUUID}";
             $url =  OCPU_URL . "/ocpu/library/markdownapp/R/" . $type;
             $cmd = "(curl '$url' -H \"Content-Type: application/json\" -k -d '{\"text\":$text}' -o $response > $log 2>&1) & echo \$!";
-            error_log($cmd);
             $pid = exec($cmd);
             $data = json_encode($pUUID);
             if (!headers_sent()) {

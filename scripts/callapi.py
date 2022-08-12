@@ -1,38 +1,40 @@
-#!/share/bin/python
+#!/usr/bin/python
 
 import json
-import urllib
+# import urllib
+import urllib.request
 from datetime import datetime
 from simplecrypt import encrypt, decrypt
 from binascii import hexlify, unhexlify
 import cgi
 import re
 from optparse import OptionParser
-import ConfigParser
+from six.moves import configparser
 import os
 import sys
 os.environ['http_proxy'] = ''
 
 
 def callApi(url):
-    response = urllib.urlopen(url)
+    response = urllib.request.urlopen(url)
     data = json.loads(response.read())
-    print data
+    print(data)
     return data
 
 
 def getBasePath():
-    config = ConfigParser.ConfigParser()
-    config.readfp(open('../config/.sec'))
+    config = configparser.ConfigParser()
+    config.read_file(open('../config/.sec'))
     basePath = config.get('CONFIG', 'API_URL')
     return basePath
 
 
 def getToken():
-    config = ConfigParser.ConfigParser()
-    config.readfp(open('../config/.sec'))
+    config = configparser.ConfigParser()
+    config.read_file(open('../config/.sec'))
     password = config.get('Dolphinnext', 'VERIFY')
-    encrypted = hexlify(encrypt(password, 'OK'))
+    encrypted = encrypt(password, 'OK').hex()
+
     return encrypted
 
 
@@ -40,17 +42,17 @@ def main():
     basePath = getBasePath()
     token = getToken()
     url = basePath + "/api/service.php?upd=updateCloudInst&token=" + token
-    print url
+    print(url)
     resAmz = callApi(url)
     url = basePath + "/api/service.php?upd=updateRunStat&token=" + token
-    print url
+    print(url)
     resRun = callApi(url)
     url = basePath + "/api/service.php?upd=submitCronJobs&token=" + token
-    print url
+    print(url)
     resCron = callApi(url)
-    print resCron
+    print(resCron)
     url = basePath + "/api/service.php?upd=cleanTempDir&token=" + token
-    print url
+    print(url)
     resClean = callApi(url)
 
 
