@@ -149,9 +149,8 @@ Please send email to biocorestaff@umassmed.edu for any questions.
     #     print(updateText)
     #     sys.exit()
     pull_cmd = "cd "+scriptDir + \
-        "/.. && git pull https://github.com/UMMS-Biocore/dolphinnext.git " + \
+        "/.. && git fetch && git checkout 2.0 && git pull origin " + \
         args.version + " 2>&1"
-    pull_cmd = ""
     print("INFO: Pulling"+"\nRUN : " + pull_cmd)
     pull_cmd_log = os.popen(pull_cmd).read()
     print("\n"+"LOG :\n" + pull_cmd_log)
