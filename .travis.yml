@@ -1,6 +1,9 @@
 # see http://about.travis-ci.org/docs/user/languages/php/ for more hints
 language: php
 
+python:
+  - "3.9"
+
 # list any PHP version you want to test against
 php:
   - 8.1.2
@@ -16,7 +19,7 @@ before_install:
   - sudo apt-get update
   - sudo apt-get install python3
   - sudo apt-get -y install aptitude
-  - sudo apt-get -y install apache2 php-pear curl lynx-cur libreadline-dev libsqlite3-dev libbz2-dev libssl-dev  libmysqlclient-dev python-pip git expect default-jre libxml2-dev software-properties-common gdebi-core wget tree vim libv8-dev subversion g++ gcc gfortran zlib1g-dev libx11-dev xorg-dev libbz2-dev liblzma-dev libpcre3-dev libcurl4-openssl-dev 
+  - sudo apt-get -y install apache2 php-pear curl lynx-cur libreadline-dev libsqlite3-dev libbz2-dev libssl-dev  libmysqlclient-dev python-pip git expect default-jre libxml2-dev software-properties-common gdebi-core wget tree vim libv8-dev subversion g++ gcc gfortran zlib1g-dev libx11-dev xorg-dev libbz2-dev liblzma-dev libpcre3-dev libcurl4-openssl-dev python3.9
   - sudo apt-get -y install python-software-properties
   - sudo apt-get update
   - sudo pip3 install mysql-connector natsort
