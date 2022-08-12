@@ -17,7 +17,8 @@ services:
 addons:
   apt:
     packages:
-      - python3-pip
+      - "python3"
+      - "python3-pip"
   
 
 before_install:
