@@ -1081,7 +1081,34 @@
                             <div id="importModalPart2"></div>
                         </div>
                         <div role="tabpanel" class="tab-pane" searchtab="true" id="publicImportTab">
-                            <p>This section is under development.</p>
+                            <form class="form-horizontal" id="publicPipeImportForm" style="margin-top:20px;">
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label"> Git Repository URL</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" name="import_repo">
+                                        <span class="indesc">e.g. https://github.com/nf-core/rnaseq or https://github.com/dolphinnext/chipseq</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label"> Branch or Tag Name (optional)</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" value="" class="form-control" name="import_branch">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-12">
+                                        <div class="pull-right">
+                                            <button type="button" class="btn btn-default" id="pullPipeline" data-clickedrow="">Pull Pipeline</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-12">
+                                        <textarea rows="14" class="form-control" id="pullPipeLog" style="display:none;"></textarea>
+                                        <p id="mPullPipeSuccess"></p>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

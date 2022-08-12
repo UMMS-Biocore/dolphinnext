@@ -1257,8 +1257,11 @@ else if ($p == "saveToken") {
     } else {
         $data = $db->insertAmz($name, $amz_def_reg, $amz_acc_key, $amz_suc_key, $ownerID);
     }
-}
-if ($p == "publishGithub") {
+} else if ($p == "pullPipeline") {
+    $data = json_encode("");
+    $import_repo = isset($_REQUEST['import_repo']) ? $_REQUEST['import_repo'] : "";
+    $import_branch = isset($_REQUEST['import_branch']) ? $_REQUEST['import_branch'] : "";
+} else if ($p == "publishGithub") {
     $data = json_encode("");
     $username_id = isset($_REQUEST['username']) ? $_REQUEST['username'] : "";
     $github_repo = isset($_REQUEST['github_repo']) ? $_REQUEST['github_repo'] : "";

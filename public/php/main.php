@@ -541,6 +541,15 @@ folder instead of downloading all of them to reduce the load. -->
         }
 
 
+        .indesc {
+            font-style: italic;
+            color: darkslategray;
+            font-weight: 300;
+            font-size: 13px;
+            display: block;
+            padding-top: 5px;
+        }
+
         /*      draggable ace editor
 
             .app_editor_dragbar {

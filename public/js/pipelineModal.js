@@ -2448,6 +2448,43 @@ $(document).ready(function() {
             }
         });
 
+        $('#importModal').on('click', '#pullPipeline', function(event) {
+            event.preventDefault();
+            var github_username = $("#mGitUsername option:selected").text();
+            var formValues = $('#publicPipeImportForm').find('input, select');
+            var requiredFields = ["import_repo"];
+            var formObj = {};
+            var stop = "";
+            [formObj, stop] = createFormObj(formValues, requiredFields)
+            if (stop === false) {
+                showLoadingDiv("publicPipeImportForm");
+                var pipeline_id = $('#pipeline-title').attr('pipelineid');
+                if (pipeline_id) {
+                    formObj.p = "pullPipeline"
+                    $.ajax({
+                        type: "POST",
+                        url: "ajax/ajaxquery.php",
+                        data: formObj,
+                        complete: function() {
+                            hideLoadingDiv("publicPipeImportForm");
+                        },
+                        async: true,
+                        success: function(s) {
+                            $("#pullPipeLog").val("");
+                            $("#pullPipeLog").css("display", "inline-block");
+                            if (IsJsonString(s)) {
+                                var json = JSON.parse(s)
+                                console.log(json)
+                            }
+                        },
+                        error: function(errorThrown) {
+                            toastr.error("Error occured.");
+                        }
+                    });
+                }
+            }
+        });
+
         $(document).on('click', "#downPipeline", function(e) {
             var pipeline_id = $('#pipeline-title').attr('pipelineid');
             if (pipeline_id) {
