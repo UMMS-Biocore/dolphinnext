@@ -143,9 +143,6 @@ As of August 8th, 2022 no updates will be made to this container. We prepared ne
 Please contact biocorestaff@umassmed.edu for any questions.
     """
 
-    # if sys.version_info[0] < 3:
-    #     print(updateText)
-    #     sys.exit()
     pull_cmd = "cd "+scriptDir + \
         "/.. && git pull https://github.com/UMMS-Biocore/dolphinnext.git " + \
         args.version + " 2>&1"
@@ -160,6 +157,9 @@ Please contact biocorestaff@umassmed.edu for any questions.
     print("INFO: Checking Packages"+"\nRUN : " + package_cmd)
     package_cmd_log = os.popen(package_cmd).read()
     print("\n"+"LOG :\n" + package_cmd)
+    if sys.version_info[0] < 3:
+        print(updateText)
+        sys.exit()
 
 
 if __name__ == "__main__":
