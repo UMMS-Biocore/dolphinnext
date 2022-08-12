@@ -27,11 +27,11 @@ before_install:
 
 before_script:
   - sudo service apache2 restart
-  - sudo mysql -e "CREATE DATABASE biocorepipe;" -uroot
-  - printf "[Dolphinnext]\nDB=biocorepipe\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\nSALT=123test\nPEPPER=456test\nMASTER=test\nVERIFY=verifytest\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=../tmp/logs\nTEMPPATH=../tmp\nAPI_URL=http://localhost/dolphinnext\nCENTRAL_API_URL=https://www.dolphinnext.com\nBASE_PATH=https://www.dolphinnext.com\nPUBWEB_URL=http://localhost:8080/dolphinnext/tmp/pub\nOCPU_URL=http://localhost\nDEBROWSER_URL=https://debrowser.umassmed.edu:444\nOCPU_PUBWEB_URL=http://localhost/dolphinnext/tmp/pub\nNEXTFLOW_VERSION=0.30.0\nLDAP_SERVER=test\nDN_STRING=test\nBIND_USER= SVCLinuxLDAPAuth\nBIND_PASS=test\nEMAIL_SENDER=biocore@umassmed.edu\nEMAIL_ADMIN= onur.yukselen@umassmed.edu\n[UICONFIG]\nSHOW_AMAZON_KEYS=false\nSHOW_SSH_KEYS=false\nSHOW_GROUPS=false\nCOMPANY_NAME=Biocore\nALLOW_SIGNUP=true\nALLOW_SIGNUPGOOGLE=true" > config/.sec
+  - sudo mysql -e "CREATE DATABASE dolphinnext;" -uroot
+  - printf "[Dolphinnext]\nDB=dolphinnext\nDBUSER=root\nDBPASS=\nDBHOST=localhost\nDBPORT=3306\nSSHPATH=/export/.dolphinnext/.ssh\nAMAZON=z176eG0i8gh4fake\nAMZPATH=/export/.dolphinnext/.amz\nSALT=123test\nPEPPER=456test\nMASTER=test\nVERIFY=verifytest\n[CONFIG]\nTIMEZONE=America/New_York\nRUNPATH=../tmp/logs\nTEMPPATH=../tmp\nAPI_URL=http://localhost/dolphinnext\nCENTRAL_API_URL=https://www.dolphinnext.com\nBASE_PATH=https://www.dolphinnext.com\nPUBWEB_URL=http://localhost:8080/dolphinnext/tmp/pub\nOCPU_URL=http://localhost\nDEBROWSER_URL=https://debrowser.umassmed.edu:444\nOCPU_PUBWEB_URL=http://localhost/dolphinnext/tmp/pub\nNEXTFLOW_VERSION=0.30.0\nLDAP_SERVER=test\nDN_STRING=test\nBIND_USER= SVCLinuxLDAPAuth\nBIND_PASS=test\nEMAIL_SENDER=biocore@umassmed.edu\nEMAIL_ADMIN= onur.yukselen@umassmed.edu\n[UICONFIG]\nSHOW_AMAZON_KEYS=false\nSHOW_SSH_KEYS=false\nSHOW_GROUPS=false\nCOMPANY_NAME=Biocore\nALLOW_SIGNUP=true\nALLOW_SIGNUPGOOGLE=true" > config/.sec
   
   - cd db
-  - sudo mysql -u root biocorepipe < db_structure.sql
+  - sudo mysql -u root dolphinnext < db_structure.sql
   - sudo python ../scripts/updateDN.py
   - cd ..
 
@@ -42,20 +42,20 @@ script:
 
 after_script:
   - mysql -e "show databases;" -uroot
-  - mysql -e "use biocorepipe; show tables;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM biocorepipe_save;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM parameter;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM process;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM process_group;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM pipeline_group;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM process_parameter;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM project;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM users;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM user_group;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM groups;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM input;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM project_input;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM project_pipeline;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM project_pipeline_input;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM profile_cluster;" -uroot
-  - mysql -e "use biocorepipe; SELECT * FROM profile_amazon;" -uroot
+  - mysql -e "use dolphinnext; show tables;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM biocorepipe_save;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM parameter;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM process;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM process_group;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM pipeline_group;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM process_parameter;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM project;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM users;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM user_group;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM groups;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM input;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM project_input;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM project_pipeline;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM project_pipeline_input;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM profile_cluster;" -uroot
+  - mysql -e "use dolphinnext; SELECT * FROM profile_amazon;" -uroot
