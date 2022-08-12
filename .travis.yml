@@ -32,7 +32,7 @@ before_install:
   - sudo apt-get update
   - sudo apt-get -y install python3-pip
   - sudo pip3 install mysql-connector natsort
-  - git clone https://github.com/UMMS-Biocore/dolphinnext.git /home/travis/build/dolphinnext
+  - git clone -b 2.0 https://github.com/UMMS-Biocore/dolphinnext.git /home/travis/build/dolphinnext
   - sudo sudo cp -r /home/travis/build/${TRAVIS_REPO_SLUG} /var/www/html/
   - sudo chown -R ${APACHE_RUN_USER}:${APACHE_RUN_GROUP} /var/www
   - sudo chmod -R g+w /var/www/html
