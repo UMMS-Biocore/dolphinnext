@@ -15,6 +15,7 @@ use Doctrine\Common\Annotations\AnnotationException;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Annotations\PsrCachedReader;
 use Doctrine\Common\Annotations\Reader;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
 use Symfony\Component\Cache\DoctrineProvider;
@@ -32,10 +33,17 @@ class AnnotationsCacheWarmer extends AbstractPhpFileCacheWarmer
     private $debug;
 
     /**
-     * @param string $phpArrayFile The PHP file where annotations are cached
+     * @param string $phpArrayFile  The PHP file where annotations are cached
+     * @param string $excludeRegexp
+     * @param bool   $debug
      */
-    public function __construct(Reader $annotationReader, string $phpArrayFile, string $excludeRegexp = null, bool $debug = false)
+    public function __construct(Reader $annotationReader, string $phpArrayFile, $excludeRegexp = null, $debug = false)
     {
+        if ($excludeRegexp instanceof CacheItemPoolInterface) {
+            @trigger_error(sprintf('The CacheItemPoolInterface $fallbackPool argument of "%s()" is deprecated since Symfony 4.2, you should not pass it anymore.', __METHOD__), \E_USER_DEPRECATED);
+            $excludeRegexp = $debug;
+            $debug = 4 < \func_num_args() && func_get_arg(4);
+        }
         parent::__construct($phpArrayFile);
         $this->annotationReader = $annotationReader;
         $this->excludeRegexp = $excludeRegexp;
@@ -45,7 +53,7 @@ class AnnotationsCacheWarmer extends AbstractPhpFileCacheWarmer
     /**
      * {@inheritdoc}
      */
-    protected function doWarmUp(string $cacheDir, ArrayAdapter $arrayAdapter)
+    protected function doWarmUp($cacheDir, ArrayAdapter $arrayAdapter)
     {
         $annotatedClassPatterns = $cacheDir.'/annotations.map';
 
@@ -73,15 +81,12 @@ class AnnotationsCacheWarmer extends AbstractPhpFileCacheWarmer
         return true;
     }
 
-    /**
-     * @return string[] A list of classes to preload on PHP 7.4+
-     */
     protected function warmUpPhpArrayAdapter(PhpArrayAdapter $phpArrayAdapter, array $values)
     {
         // make sure we don't cache null values
         $values = array_filter($values, function ($val) { return null !== $val; });
 
-        return parent::warmUpPhpArrayAdapter($phpArrayAdapter, $values);
+        parent::warmUpPhpArrayAdapter($phpArrayAdapter, $values);
     }
 
     private function readAllComponents(Reader $reader, string $class)

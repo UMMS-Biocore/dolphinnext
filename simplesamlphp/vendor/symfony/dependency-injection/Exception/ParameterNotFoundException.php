@@ -84,14 +84,14 @@ class ParameterNotFoundException extends InvalidArgumentException implements Not
         return $this->sourceKey;
     }
 
-    public function setSourceId(?string $sourceId)
+    public function setSourceId($sourceId)
     {
         $this->sourceId = $sourceId;
 
         $this->updateRepr();
     }
 
-    public function setSourceKey(?string $sourceKey)
+    public function setSourceKey($sourceKey)
     {
         $this->sourceKey = $sourceKey;
 

@@ -32,7 +32,7 @@ class AnnotationDirectoryLoader extends AnnotationFileLoader
      *
      * @throws \InvalidArgumentException When the directory does not exist or its routes cannot be parsed
      */
-    public function load($path, string $type = null)
+    public function load($path, $type = null)
     {
         if (!is_dir($dir = $this->locator->locate($path))) {
             return parent::supports($path, $type) ? parent::load($path, $type) : new RouteCollection();
@@ -54,7 +54,7 @@ class AnnotationDirectoryLoader extends AnnotationFileLoader
         });
 
         foreach ($files as $file) {
-            if (!$file->isFile() ||  !str_ends_with($file->getFilename(), '.php')) {
+            if (!$file->isFile() || !str_ends_with($file->getFilename(), '.php')) {
                 continue;
             }
 
@@ -74,7 +74,7 @@ class AnnotationDirectoryLoader extends AnnotationFileLoader
     /**
      * {@inheritdoc}
      */
-    public function supports($resource, string $type = null)
+    public function supports($resource, $type = null)
     {
         if ('annotation' === $type) {
             return true;

@@ -24,7 +24,6 @@ use Symfony\Component\Yaml\Command\LintCommand as BaseLintCommand;
 class YamlLintCommand extends BaseLintCommand
 {
     protected static $defaultName = 'lint:yaml';
-    protected static $defaultDescription = 'Lint a YAML file and outputs encountered errors';
 
     public function __construct()
     {

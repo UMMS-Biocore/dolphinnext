@@ -46,20 +46,24 @@ interface SessionStorageInterface
 
     /**
      * Sets the session ID.
+     *
+     * @param string $id
      */
-    public function setId(string $id);
+    public function setId($id);
 
     /**
      * Returns the session name.
      *
-     * @return string The session name
+     * @return mixed The session name
      */
     public function getName();
 
     /**
      * Sets the session name.
+     *
+     * @param string $name
      */
-    public function setName(string $name);
+    public function setName($name);
 
     /**
      * Regenerates id that represents this storage.
@@ -90,7 +94,7 @@ interface SessionStorageInterface
      *
      * @throws \RuntimeException If an error occurs while regenerating this storage
      */
-    public function regenerate(bool $destroy = false, int $lifetime = null);
+    public function regenerate($destroy = false, $lifetime = null);
 
     /**
      * Force the session to be saved and closed.
@@ -113,11 +117,13 @@ interface SessionStorageInterface
     /**
      * Gets a SessionBagInterface by name.
      *
+     * @param string $name
+     *
      * @return SessionBagInterface
      *
      * @throws \InvalidArgumentException If the bag does not exist
      */
-    public function getBag(string $name);
+    public function getBag($name);
 
     /**
      * Registers a SessionBagInterface for use.

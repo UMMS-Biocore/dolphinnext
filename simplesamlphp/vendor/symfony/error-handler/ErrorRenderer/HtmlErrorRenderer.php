@@ -40,8 +40,6 @@ class HtmlErrorRenderer implements ErrorRendererInterface
     private $outputBuffer;
     private $logger;
 
-    private static $template = 'views/error.html.php';
-
     /**
      * @param bool|callable                 $debug          The debugging mode as a boolean or a callable that should return it
      * @param string|FileLinkFormatter|null $fileLinkFormat
@@ -50,11 +48,11 @@ class HtmlErrorRenderer implements ErrorRendererInterface
     public function __construct($debug = false, string $charset = null, $fileLinkFormat = null, string $projectDir = null, $outputBuffer = '', LoggerInterface $logger = null)
     {
         if (!\is_bool($debug) && !\is_callable($debug)) {
-            throw new \TypeError(sprintf('Argument 1 passed to "%s()" must be a boolean or a callable, "%s" given.', __METHOD__, \gettype($debug)));
+            throw new \TypeError(sprintf('Argument 1 passed to "%s()" must be a boolean or a callable, "%s" given.', __METHOD__, \is_object($debug) ? \get_class($debug) : \gettype($debug)));
         }
 
         if (!\is_string($outputBuffer) && !\is_callable($outputBuffer)) {
-            throw new \TypeError(sprintf('Argument 5 passed to "%s()" must be a string or a callable, "%s" given.', __METHOD__, \gettype($outputBuffer)));
+            throw new \TypeError(sprintf('Argument 5 passed to "%s()" must be a string or a callable, "%s" given.', __METHOD__, \is_object($outputBuffer) ? \get_class($outputBuffer) : \gettype($outputBuffer)));
         }
 
         $this->debug = $debug;
@@ -70,13 +68,9 @@ class HtmlErrorRenderer implements ErrorRendererInterface
      */
     public function render(\Throwable $exception): FlattenException
     {
-        $headers = ['Content-Type' => 'text/html; charset='.$this->charset];
-        if (\is_bool($this->debug) ? $this->debug : ($this->debug)($exception)) {
-            $headers['X-Debug-Exception'] = rawurlencode($exception->getMessage());
-            $headers['X-Debug-Exception-File'] = rawurlencode($exception->getFile()).':'.$exception->getLine();
-        }
-
-        $exception = FlattenException::createFromThrowable($exception, null, $headers);
+        $exception = FlattenException::createFromThrowable($exception, null, [
+            'Content-Type' => 'text/html; charset='.$this->charset,
+        ]);
 
         return $exception->setAsString($this->renderException($exception));
     }
@@ -138,7 +132,7 @@ class HtmlErrorRenderer implements ErrorRendererInterface
         $statusCode = $this->escape($exception->getStatusCode());
 
         if (!$debug) {
-            return $this->include(self::$template, [
+            return $this->include('views/error.html.php', [
                 'statusText' => $statusText,
                 'statusCode' => $statusCode,
             ]);
@@ -285,7 +279,7 @@ class HtmlErrorRenderer implements ErrorRendererInterface
             }
 
             for ($i = max($line - $srcContext, 1), $max = min($line + $srcContext, \count($content)); $i <= $max; ++$i) {
-                $lines[] = '<li'.($i == $line ? ' class="selected"' : '').'><code>'.$this->fixCodeMarkup($content[$i - 1]).'</code></li>';
+                $lines[] = '<li'.($i == $line ? ' class="selected"' : '').'><a class="anchor" name="line'.$i.'"></a><code>'.$this->fixCodeMarkup($content[$i - 1]).'</code></li>';
             }
 
             return '<ol start="'.max($line - $srcContext, 1).'">'.implode("\n", $lines).'</ol>';
@@ -304,9 +298,9 @@ class HtmlErrorRenderer implements ErrorRendererInterface
         }
 
         // missing </span> tag at the end of line
-        $opening = strrpos($line, '<span');
-        $closing = strrpos($line, '</span>');
-        if (false !== $opening && (false === $closing || $closing < $opening)) {
+        $opening = strpos($line, '<span');
+        $closing = strpos($line, '</span>');
+        if (false !== $opening && (false === $closing || $closing > $opening)) {
             $line .= '</span>';
         }
 
@@ -351,19 +345,8 @@ class HtmlErrorRenderer implements ErrorRendererInterface
     {
         extract($context, \EXTR_SKIP);
         ob_start();
-
-        include is_file(\dirname(__DIR__).'/Resources/'.$name) ? \dirname(__DIR__).'/Resources/'.$name : $name;
+        include __DIR__.'/../Resources/'.$name;
 
         return trim(ob_get_clean());
-    }
-
-    /**
-     * Allows overriding the default non-debug template.
-     *
-     * @param string $template path to the custom template file to render
-     */
-    public static function setTemplate(string $template): void
-    {
-        self::$template = $template;
     }
 }

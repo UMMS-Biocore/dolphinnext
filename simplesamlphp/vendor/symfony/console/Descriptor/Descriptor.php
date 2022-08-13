@@ -34,7 +34,7 @@ abstract class Descriptor implements DescriptorInterface
     /**
      * {@inheritdoc}
      */
-    public function describe(OutputInterface $output, object $object, array $options = [])
+    public function describe(OutputInterface $output, $object, array $options = [])
     {
         $this->output = $output;
 
@@ -55,14 +55,17 @@ abstract class Descriptor implements DescriptorInterface
                 $this->describeApplication($object, $options);
                 break;
             default:
-                throw new InvalidArgumentException(sprintf('Object of type "%s" is not describable.', get_debug_type($object)));
+                throw new InvalidArgumentException(sprintf('Object of type "%s" is not describable.', \get_class($object)));
         }
     }
 
     /**
      * Writes content to output.
+     *
+     * @param string $content
+     * @param bool   $decorated
      */
-    protected function write(string $content, bool $decorated = false)
+    protected function write($content, $decorated = false)
     {
         $this->output->write($content, false, $decorated ? OutputInterface::OUTPUT_NORMAL : OutputInterface::OUTPUT_RAW);
     }

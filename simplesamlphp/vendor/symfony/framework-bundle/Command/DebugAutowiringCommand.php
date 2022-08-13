@@ -30,8 +30,6 @@ use Symfony\Component\HttpKernel\Debug\FileLinkFormatter;
 class DebugAutowiringCommand extends ContainerDebugCommand
 {
     protected static $defaultName = 'debug:autowiring';
-    protected static $defaultDescription = 'List classes/interfaces you can use for autowiring';
-
     private $supportsHref;
     private $fileLinkFormatter;
 
@@ -52,7 +50,7 @@ class DebugAutowiringCommand extends ContainerDebugCommand
                 new InputArgument('search', InputArgument::OPTIONAL, 'A search filter'),
                 new InputOption('all', null, InputOption::VALUE_NONE, 'Show also services that are not aliased'),
             ])
-            ->setDescription(self::$defaultDescription)
+            ->setDescription('List classes/interfaces you can use for autowiring')
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> command displays the classes and interfaces that
 you can use as type-hints for autowiring:
@@ -76,14 +74,13 @@ EOF
         $io = new SymfonyStyle($input, $output);
         $errorIo = $io->getErrorStyle();
 
-        $builder = $this->getContainerBuilder($this->getApplication()->getKernel());
+        $builder = $this->getContainerBuilder();
         $serviceIds = $builder->getServiceIds();
         $serviceIds = array_filter($serviceIds, [$this, 'filterToServiceTypes']);
 
         if ($search = $input->getArgument('search')) {
-            $searchNormalized = preg_replace('/[^a-zA-Z0-9\x7f-\xff]++/', '', $search);
-            $serviceIds = array_filter($serviceIds, function ($serviceId) use ($searchNormalized) {
-                return false !== stripos(str_replace('\\', '', $serviceId), $searchNormalized) && !str_starts_with($serviceId, '.');
+            $serviceIds = array_filter($serviceIds, function ($serviceId) use ($search) {
+                return false !== stripos(str_replace('\\', '', $serviceId), $search) && !str_starts_with($serviceId, '.');
             });
 
             if (empty($serviceIds)) {
@@ -156,7 +153,7 @@ EOF
     private function getFileLink(string $class): string
     {
         if (null === $this->fileLinkFormatter
-            || (null === $r = $this->getContainerBuilder($this->getApplication()->getKernel())->getReflectionClass($class, false))) {
+            || (null === $r = $this->getContainerBuilder()->getReflectionClass($class, false))) {
             return '';
         }
 

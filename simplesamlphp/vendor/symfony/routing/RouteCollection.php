@@ -35,11 +35,6 @@ class RouteCollection implements \IteratorAggregate, \Countable
      */
     private $resources = [];
 
-    /**
-     * @var int[]
-     */
-    private $priorities = [];
-
     public function __clone()
     {
         foreach ($this->routes as $name => $route) {
@@ -59,7 +54,7 @@ class RouteCollection implements \IteratorAggregate, \Countable
     #[\ReturnTypeWillChange]
     public function getIterator()
     {
-        return new \ArrayIterator($this->all());
+        return new \ArrayIterator($this->routes);
     }
 
     /**
@@ -74,21 +69,15 @@ class RouteCollection implements \IteratorAggregate, \Countable
     }
 
     /**
-     * @param int $priority
+     * Adds a route.
+     *
+     * @param string $name The route name
      */
-    public function add(string $name, Route $route/*, int $priority = 0*/)
+    public function add($name, Route $route)
     {
-        if (\func_num_args() < 3 && __CLASS__ !== static::class && __CLASS__ !== (new \ReflectionMethod($this, __FUNCTION__))->getDeclaringClass()->getName() && !$this instanceof \PHPUnit\Framework\MockObject\MockObject && !$this instanceof \Prophecy\Prophecy\ProphecySubjectInterface && !$this instanceof \Mockery\MockInterface) {
-            trigger_deprecation('symfony/routing', '5.1', 'The "%s()" method will have a new "int $priority = 0" argument in version 6.0, not defining it is deprecated.', __METHOD__);
-        }
-
-        unset($this->routes[$name], $this->priorities[$name]);
+        unset($this->routes[$name]);
 
         $this->routes[$name] = $route;
-
-        if ($priority = 3 <= \func_num_args() ? func_get_arg(2) : 0) {
-            $this->priorities[$name] = $priority;
-        }
     }
 
     /**
@@ -98,23 +87,17 @@ class RouteCollection implements \IteratorAggregate, \Countable
      */
     public function all()
     {
-        if ($this->priorities) {
-            $priorities = $this->priorities;
-            $keysOrder = array_flip(array_keys($this->routes));
-            uksort($this->routes, static function ($n1, $n2) use ($priorities, $keysOrder) {
-                return (($priorities[$n2] ?? 0) <=> ($priorities[$n1] ?? 0)) ?: ($keysOrder[$n1] <=> $keysOrder[$n2]);
-            });
-        }
-
         return $this->routes;
     }
 
     /**
      * Gets a route by name.
      *
+     * @param string $name The route name
+     *
      * @return Route|null A Route instance or null when not found
      */
-    public function get(string $name)
+    public function get($name)
     {
         return $this->routes[$name] ?? null;
     }
@@ -127,7 +110,7 @@ class RouteCollection implements \IteratorAggregate, \Countable
     public function remove($name)
     {
         foreach ((array) $name as $n) {
-            unset($this->routes[$n], $this->priorities[$n]);
+            unset($this->routes[$n]);
         }
     }
 
@@ -140,12 +123,8 @@ class RouteCollection implements \IteratorAggregate, \Countable
         // we need to remove all routes with the same names first because just replacing them
         // would not place the new route at the end of the merged array
         foreach ($collection->all() as $name => $route) {
-            unset($this->routes[$name], $this->priorities[$name]);
+            unset($this->routes[$name]);
             $this->routes[$name] = $route;
-
-            if (isset($collection->priorities[$name])) {
-                $this->priorities[$name] = $collection->priorities[$name];
-            }
         }
 
         foreach ($collection->getResources() as $resource) {
@@ -155,9 +134,17 @@ class RouteCollection implements \IteratorAggregate, \Countable
 
     /**
      * Adds a prefix to the path of all child routes.
+     *
+     * @param string $prefix       An optional prefix to add before each pattern of the route collection
+     * @param array  $defaults     An array of default values
+     * @param array  $requirements An array of requirements
      */
-    public function addPrefix(string $prefix, array $defaults = [], array $requirements = [])
+    public function addPrefix($prefix, array $defaults = [], array $requirements = [])
     {
+        if (null === $prefix) {
+            @trigger_error(sprintf('Passing null as $prefix to %s is deprecated in Symfony 4.4 and will trigger a TypeError in 5.0.', __METHOD__), \E_USER_DEPRECATED);
+        }
+
         $prefix = trim(trim($prefix), '/');
 
         if ('' === $prefix) {
@@ -177,26 +164,25 @@ class RouteCollection implements \IteratorAggregate, \Countable
     public function addNamePrefix(string $prefix)
     {
         $prefixedRoutes = [];
-        $prefixedPriorities = [];
 
         foreach ($this->routes as $name => $route) {
             $prefixedRoutes[$prefix.$name] = $route;
-            if (null !== $canonicalName = $route->getDefault('_canonical_route')) {
-                $route->setDefault('_canonical_route', $prefix.$canonicalName);
-            }
-            if (isset($this->priorities[$name])) {
-                $prefixedPriorities[$prefix.$name] = $this->priorities[$name];
+            if (null !== $name = $route->getDefault('_canonical_route')) {
+                $route->setDefault('_canonical_route', $prefix.$name);
             }
         }
 
         $this->routes = $prefixedRoutes;
-        $this->priorities = $prefixedPriorities;
     }
 
     /**
      * Sets the host pattern on all routes.
+     *
+     * @param string $pattern      The pattern
+     * @param array  $defaults     An array of default values
+     * @param array  $requirements An array of requirements
      */
-    public function setHost(?string $pattern, array $defaults = [], array $requirements = [])
+    public function setHost($pattern, array $defaults = [], array $requirements = [])
     {
         foreach ($this->routes as $route) {
             $route->setHost($pattern);
@@ -209,8 +195,10 @@ class RouteCollection implements \IteratorAggregate, \Countable
      * Sets a condition on all routes.
      *
      * Existing conditions will be overridden.
+     *
+     * @param string $condition The condition
      */
-    public function setCondition(?string $condition)
+    public function setCondition($condition)
     {
         foreach ($this->routes as $route) {
             $route->setCondition($condition);
@@ -221,6 +209,8 @@ class RouteCollection implements \IteratorAggregate, \Countable
      * Adds defaults to all routes.
      *
      * An existing default value under the same name in a route will be overridden.
+     *
+     * @param array $defaults An array of default values
      */
     public function addDefaults(array $defaults)
     {
@@ -235,6 +225,8 @@ class RouteCollection implements \IteratorAggregate, \Countable
      * Adds requirements to all routes.
      *
      * An existing requirement under the same name in a route will be overridden.
+     *
+     * @param array $requirements An array of requirements
      */
     public function addRequirements(array $requirements)
     {

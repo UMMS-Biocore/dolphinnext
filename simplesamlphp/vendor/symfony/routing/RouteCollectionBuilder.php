@@ -14,16 +14,11 @@ namespace Symfony\Component\Routing;
 use Symfony\Component\Config\Exception\LoaderLoadException;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Resource\ResourceInterface;
-use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
-
-trigger_deprecation('symfony/routing', '5.1', 'The "%s" class is deprecated, use "%s" instead.', RouteCollectionBuilder::class, RoutingConfigurator::class);
 
 /**
  * Helps add and import routes into a RouteCollection.
  *
  * @author Ryan Weaver <ryan@knpuniversity.com>
- *
- * @deprecated since Symfony 5.1, use RoutingConfigurator instead
  */
 class RouteCollectionBuilder
 {
@@ -53,13 +48,15 @@ class RouteCollectionBuilder
      *
      *     $routes->import('blog.yml', '/blog');
      *
-     * @param mixed $resource
+     * @param mixed       $resource
+     * @param string|null $prefix
+     * @param string      $type
      *
      * @return self
      *
      * @throws LoaderLoadException
      */
-    public function import($resource, string $prefix = '/', string $type = null)
+    public function import($resource, $prefix = '/', $type = null)
     {
         /** @var RouteCollection[] $collections */
         $collections = $this->load($resource, $type);
@@ -90,9 +87,13 @@ class RouteCollectionBuilder
     /**
      * Adds a route and returns it for future modification.
      *
+     * @param string      $path       The route path
+     * @param string      $controller The route's controller
+     * @param string|null $name       The name to give this route
+     *
      * @return Route
      */
-    public function add(string $path, string $controller, string $name = null)
+    public function add($path, $controller, $name = null)
     {
         $route = new Route($path);
         $route->setDefault('_controller', $controller);
@@ -113,8 +114,10 @@ class RouteCollectionBuilder
 
     /**
      * Add a RouteCollectionBuilder.
+     *
+     * @param string $prefix
      */
-    public function mount(string $prefix, self $builder)
+    public function mount($prefix, self $builder)
     {
         $builder->prefix = trim(trim($prefix), '/');
         $this->routes[] = $builder;
@@ -123,9 +126,11 @@ class RouteCollectionBuilder
     /**
      * Adds a Route object to the builder.
      *
+     * @param string|null $name
+     *
      * @return $this
      */
-    public function addRoute(Route $route, string $name = null)
+    public function addRoute(Route $route, $name = null)
     {
         if (null === $name) {
             // used as a flag to know which routes will need a name later
@@ -140,9 +145,11 @@ class RouteCollectionBuilder
     /**
      * Sets the host on all embedded routes (unless already set).
      *
+     * @param string $pattern
+     *
      * @return $this
      */
-    public function setHost(?string $pattern)
+    public function setHost($pattern)
     {
         $this->host = $pattern;
 
@@ -152,9 +159,11 @@ class RouteCollectionBuilder
     /**
      * Sets a condition on all embedded routes (unless already set).
      *
+     * @param string $condition
+     *
      * @return $this
      */
-    public function setCondition(?string $condition)
+    public function setCondition($condition)
     {
         $this->condition = $condition;
 
@@ -165,11 +174,12 @@ class RouteCollectionBuilder
      * Sets a default value that will be added to all embedded routes (unless that
      * default value is already set).
      *
-     * @param mixed $value
+     * @param string $key
+     * @param mixed  $value
      *
      * @return $this
      */
-    public function setDefault(string $key, $value)
+    public function setDefault($key, $value)
     {
         $this->defaults[$key] = $value;
 
@@ -180,11 +190,12 @@ class RouteCollectionBuilder
      * Sets a requirement that will be added to all embedded routes (unless that
      * requirement is already set).
      *
-     * @param mixed $regex
+     * @param string $key
+     * @param mixed  $regex
      *
      * @return $this
      */
-    public function setRequirement(string $key, $regex)
+    public function setRequirement($key, $regex)
     {
         $this->requirements[$key] = $regex;
 
@@ -195,11 +206,12 @@ class RouteCollectionBuilder
      * Sets an option that will be added to all embedded routes (unless that
      * option is already set).
      *
-     * @param mixed $value
+     * @param string $key
+     * @param mixed  $value
      *
      * @return $this
      */
-    public function setOption(string $key, $value)
+    public function setOption($key, $value)
     {
         $this->options[$key] = $value;
 

@@ -26,7 +26,6 @@ use Symfony\Component\HttpKernel\CacheClearer\Psr6CacheClearer;
 final class CachePoolDeleteCommand extends Command
 {
     protected static $defaultName = 'cache:pool:delete';
-    protected static $defaultDescription = 'Delete an item from a cache pool';
 
     private $poolClearer;
 
@@ -47,7 +46,7 @@ final class CachePoolDeleteCommand extends Command
                 new InputArgument('pool', InputArgument::REQUIRED, 'The cache pool from which to delete an item'),
                 new InputArgument('key', InputArgument::REQUIRED, 'The cache key to delete from the pool'),
             ])
-            ->setDescription(self::$defaultDescription)
+            ->setDescription('Delete an item from a cache pool')
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> deletes an item from a given cache pool.
 

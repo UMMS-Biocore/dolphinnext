@@ -20,15 +20,19 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  *
- * @final
+ * @final since Symfony 4.4
  */
 class ExceptionDataCollector extends DataCollector
 {
     /**
      * {@inheritdoc}
+     *
+     * @param \Throwable|null $exception
      */
-    public function collect(Request $request, Response $response, \Throwable $exception = null)
+    public function collect(Request $request, Response $response/*, \Throwable $exception = null*/)
     {
+        $exception = 2 < \func_num_args() ? func_get_arg(2) : null;
+
         if (null !== $exception) {
             $this->data = [
                 'exception' => FlattenException::createFromThrowable($exception),

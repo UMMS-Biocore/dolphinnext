@@ -59,8 +59,10 @@ class ParameterBag implements ParameterBagInterface
     /**
      * {@inheritdoc}
      */
-    public function get(string $name)
+    public function get($name)
     {
+        $name = (string) $name;
+
         if (!\array_key_exists($name, $this->parameters)) {
             if (!$name) {
                 throw new ParameterNotFoundException($name);
@@ -99,15 +101,15 @@ class ParameterBag implements ParameterBagInterface
     /**
      * {@inheritdoc}
      */
-    public function set(string $name, $value)
+    public function set($name, $value)
     {
-        $this->parameters[$name] = $value;
+        $this->parameters[(string) $name] = $value;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function has(string $name)
+    public function has($name)
     {
         return \array_key_exists((string) $name, $this->parameters);
     }
@@ -115,9 +117,9 @@ class ParameterBag implements ParameterBagInterface
     /**
      * {@inheritdoc}
      */
-    public function remove(string $name)
+    public function remove($name)
     {
-        unset($this->parameters[$name]);
+        unset($this->parameters[(string) $name]);
     }
 
     /**
@@ -178,7 +180,8 @@ class ParameterBag implements ParameterBagInterface
     /**
      * Resolves parameters inside a string.
      *
-     * @param array $resolving An array of keys that are being resolved (used internally to detect circular references)
+     * @param string $value     The string to resolve
+     * @param array  $resolving An array of keys that are being resolved (used internally to detect circular references)
      *
      * @return mixed The resolved string
      *
@@ -186,7 +189,7 @@ class ParameterBag implements ParameterBagInterface
      * @throws ParameterCircularReferenceException if a circular reference if detected
      * @throws RuntimeException                    when a given parameter has a type problem
      */
-    public function resolveString(string $value, array $resolving = [])
+    public function resolveString($value, array $resolving = [])
     {
         // we do this to deal with non string values (Boolean, integer, ...)
         // as the preg_replace_callback throw an exception when trying
@@ -217,7 +220,7 @@ class ParameterBag implements ParameterBagInterface
             $resolved = $this->get($key);
 
             if (!\is_string($resolved) && !is_numeric($resolved)) {
-                throw new RuntimeException(sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type "%s" inside string value "%s".', $key, get_debug_type($resolved), $value));
+                throw new RuntimeException(sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type "%s" inside string value "%s".', $key, \gettype($resolved), $value));
             }
 
             $resolved = (string) $resolved;

@@ -25,10 +25,6 @@ class RemoveEmptyControllerArgumentLocatorsPass implements CompilerPassInterface
 
     public function __construct(string $controllerLocator = 'argument_resolver.controller_locator')
     {
-        if (0 < \func_num_args()) {
-            trigger_deprecation('symfony/http-kernel', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
-        }
-
         $this->controllerLocator = $controllerLocator;
     }
 
@@ -47,11 +43,6 @@ class RemoveEmptyControllerArgumentLocatorsPass implements CompilerPassInterface
                 // any methods listed for call-at-instantiation cannot be actions
                 $reason = false;
                 [$id, $action] = explode('::', $controller);
-
-                if ($container->hasAlias($id)) {
-                    continue;
-                }
-
                 $controllerDef = $container->getDefinition($id);
                 foreach ($controllerDef->getMethodCalls() as [$method]) {
                     if (0 === strcasecmp($action, $method)) {
@@ -60,7 +51,7 @@ class RemoveEmptyControllerArgumentLocatorsPass implements CompilerPassInterface
                     }
                 }
                 if (!$reason) {
-                    // see Symfony\Component\HttpKernel\Controller\ContainerControllerResolver
+                    // Deprecated since Symfony 4.1. See Symfony\Component\HttpKernel\Controller\ContainerControllerResolver
                     $controllers[$id.':'.$action] = $argumentRef;
 
                     if ('__invoke' === $action) {

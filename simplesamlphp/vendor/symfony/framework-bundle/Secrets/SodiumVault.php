@@ -35,7 +35,7 @@ class SodiumVault extends AbstractVault implements EnvVarLoaderInterface
     public function __construct(string $secretsDir, $decryptionKey = null)
     {
         if (null !== $decryptionKey && !\is_string($decryptionKey) && !(\is_object($decryptionKey) && method_exists($decryptionKey, '__toString'))) {
-            throw new \TypeError(sprintf('Decryption key should be a string or an object that implements the __toString() method, "%s" given.', get_debug_type($decryptionKey)));
+            throw new \TypeError(sprintf('Decryption key should be a string or an object that implements the __toString() method, "%s" given.', \gettype($decryptionKey)));
         }
 
         $this->pathPrefix = rtrim(strtr($secretsDir, '/', \DIRECTORY_SEPARATOR), \DIRECTORY_SEPARATOR).\DIRECTORY_SEPARATOR.basename($secretsDir).'.';
@@ -59,7 +59,7 @@ class SodiumVault extends AbstractVault implements EnvVarLoaderInterface
             // ignore failures to load keys
         }
 
-        if ('' !== $this->decryptionKey && !is_file($this->pathPrefix.'encrypt.public.php')) {
+        if ('' !== $this->decryptionKey && !file_exists($this->pathPrefix.'encrypt.public.php')) {
             $this->export('encrypt.public', $this->encryptionKey);
         }
 
@@ -100,7 +100,7 @@ class SodiumVault extends AbstractVault implements EnvVarLoaderInterface
         $this->lastMessage = null;
         $this->validateName($name);
 
-        if (!is_file($file = $this->pathPrefix.$name.'.'.substr_replace(md5($name), '.php', -26))) {
+        if (!file_exists($file = $this->pathPrefix.$name.'.'.substr_replace(md5($name), '.php', -26))) {
             $this->lastMessage = sprintf('Secret "%s" not found in "%s".', $name, $this->getPrettyPath(\dirname($this->pathPrefix).\DIRECTORY_SEPARATOR));
 
             return null;
@@ -134,7 +134,7 @@ class SodiumVault extends AbstractVault implements EnvVarLoaderInterface
         $this->lastMessage = null;
         $this->validateName($name);
 
-        if (!is_file($file = $this->pathPrefix.$name.'.'.substr_replace(md5($name), '.php', -26))) {
+        if (!file_exists($file = $this->pathPrefix.$name.'.'.substr_replace(md5($name), '.php', -26))) {
             $this->lastMessage = sprintf('Secret "%s" not found in "%s".', $name, $this->getPrettyPath(\dirname($this->pathPrefix).\DIRECTORY_SEPARATOR));
 
             return false;
@@ -153,7 +153,7 @@ class SodiumVault extends AbstractVault implements EnvVarLoaderInterface
     {
         $this->lastMessage = null;
 
-        if (!is_file($file = $this->pathPrefix.'list.php')) {
+        if (!file_exists($file = $this->pathPrefix.'list.php')) {
             return [];
         }
 
@@ -185,11 +185,11 @@ class SodiumVault extends AbstractVault implements EnvVarLoaderInterface
             return;
         }
 
-        if (is_file($this->pathPrefix.'decrypt.private.php')) {
+        if (file_exists($this->pathPrefix.'decrypt.private.php')) {
             $this->decryptionKey = (string) include $this->pathPrefix.'decrypt.private.php';
         }
 
-        if (is_file($this->pathPrefix.'encrypt.public.php')) {
+        if (file_exists($this->pathPrefix.'encrypt.public.php')) {
             $this->encryptionKey = (string) include $this->pathPrefix.'encrypt.public.php';
         } elseif ('' !== $this->decryptionKey) {
             $this->encryptionKey = sodium_crypto_box_publickey($this->decryptionKey);

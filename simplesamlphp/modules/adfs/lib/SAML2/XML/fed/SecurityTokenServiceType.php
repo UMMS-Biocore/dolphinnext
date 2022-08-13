@@ -2,9 +2,7 @@
 
 namespace SimpleSAML\Module\adfs\SAML2\XML\fed;
 
-use DOMElement;
-use Exception;
-use SAML2\XML\md\RoleDescriptor;
+use Webmozart\Assert\Assert;
 
 /**
  * Class representing SecurityTokenServiceType RoleDescriptor.
@@ -12,7 +10,7 @@ use SAML2\XML\md\RoleDescriptor;
  * @package SimpleSAMLphp
  */
 
-class SecurityTokenServiceType extends RoleDescriptor
+class SecurityTokenServiceType extends \SAML2\XML\md\RoleDescriptor
 {
     /**
      * List of supported protocols.
@@ -34,9 +32,11 @@ class SecurityTokenServiceType extends RoleDescriptor
      *
      * @param \DOMElement|null $xml  The XML element we should load.
      */
-    public function __construct(DOMElement $xml = null)
+    public function __construct(\DOMElement $xml = null)
     {
         parent::__construct('RoleDescriptor', $xml);
+        parent::setProtocolSupportEnumeration($this->protocolSupportEnumeration);
+
         if ($xml === null) {
             return;
         }
@@ -48,13 +48,13 @@ class SecurityTokenServiceType extends RoleDescriptor
      * @param \DOMElement $parent  The element we should add this contact to.
      * @return \DOMElement  The new ContactPerson-element.
      */
-    public function toXML(DOMElement $parent): DOMElement
+    public function toXML(\DOMElement $parent): \DOMElement
     {
-        if (is_null($this->Location)) {
-            throw new Exception('Location not set');
-        }
+        Assert::string($this->Location);
 
-        assert(is_string($this->Location));
+        if (is_null($this->Location)) {
+            throw new \Exception('Location not set');
+        }
 
         $e = parent::toXML($parent);
         $e->setAttributeNS('http://www.w3.org/2000/xmlns/', 'xmlns:fed', Constants::NS_FED);

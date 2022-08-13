@@ -14,10 +14,16 @@ namespace Symfony\Contracts\HttpClient\Test;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 
+/**
+ * @experimental in 1.1
+ */
 class TestHttpServer
 {
     private static $process = [];
 
+    /**
+     * @return Process
+     */
     public static function start(int $port = 8057)
     {
         if (isset(self::$process[$port])) {

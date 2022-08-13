@@ -48,7 +48,12 @@ class Profile
         $this->token = $token;
     }
 
-    public function setToken(string $token)
+    /**
+     * Sets the token.
+     *
+     * @param string $token The token
+     */
+    public function setToken($token)
     {
         $this->token = $token;
     }
@@ -101,7 +106,12 @@ class Profile
         return $this->ip;
     }
 
-    public function setIp(?string $ip)
+    /**
+     * Sets the IP.
+     *
+     * @param string $ip
+     */
+    public function setIp($ip)
     {
         $this->ip = $ip;
     }
@@ -116,7 +126,7 @@ class Profile
         return $this->method;
     }
 
-    public function setMethod(string $method)
+    public function setMethod($method)
     {
         $this->method = $method;
     }
@@ -131,12 +141,17 @@ class Profile
         return $this->url;
     }
 
-    public function setUrl(?string $url)
+    /**
+     * @param string $url
+     */
+    public function setUrl($url)
     {
         $this->url = $url;
     }
 
     /**
+     * Returns the time.
+     *
      * @return int The time
      */
     public function getTime()
@@ -144,12 +159,18 @@ class Profile
         return $this->time ?? 0;
     }
 
-    public function setTime(int $time)
+    /**
+     * @param int $time The time
+     */
+    public function setTime($time)
     {
         $this->time = $time;
     }
 
-    public function setStatusCode(int $statusCode)
+    /**
+     * @param int $statusCode
+     */
+    public function setStatusCode($statusCode)
     {
         $this->statusCode = $statusCode;
     }
@@ -208,11 +229,13 @@ class Profile
     /**
      * Gets a Collector by name.
      *
+     * @param string $name A collector name
+     *
      * @return DataCollectorInterface A DataCollectorInterface instance
      *
      * @throws \InvalidArgumentException if the collector does not exist
      */
-    public function getCollector(string $name)
+    public function getCollector($name)
     {
         if (!isset($this->collectors[$name])) {
             throw new \InvalidArgumentException(sprintf('Collector "%s" does not exist.', $name));
@@ -253,9 +276,13 @@ class Profile
     }
 
     /**
+     * Returns true if a Collector for the given name exists.
+     *
+     * @param string $name A collector name
+     *
      * @return bool
      */
-    public function hasCollector(string $name)
+    public function hasCollector($name)
     {
         return isset($this->collectors[$name]);
     }

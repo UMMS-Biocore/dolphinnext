@@ -16,7 +16,7 @@ namespace Symfony\Component\Config\Resource;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  *
- * @final
+ * @final since Symfony 4.3
  */
 class DirectoryResource implements SelfCheckingResourceInterface
 {
@@ -39,7 +39,7 @@ class DirectoryResource implements SelfCheckingResourceInterface
         }
     }
 
-    public function __toString(): string
+    public function __toString()
     {
         return md5(serialize([$this->resource, $this->pattern]));
     }
@@ -47,15 +47,17 @@ class DirectoryResource implements SelfCheckingResourceInterface
     /**
      * @return string The file path to the resource
      */
-    public function getResource(): string
+    public function getResource()
     {
         return $this->resource;
     }
 
     /**
      * Returns the pattern to restrict monitored files.
+     *
+     * @return string|null
      */
-    public function getPattern(): ?string
+    public function getPattern()
     {
         return $this->pattern;
     }
@@ -63,7 +65,7 @@ class DirectoryResource implements SelfCheckingResourceInterface
     /**
      * {@inheritdoc}
      */
-    public function isFresh(int $timestamp): bool
+    public function isFresh($timestamp)
     {
         if (!is_dir($this->resource)) {
             return false;

@@ -16,7 +16,6 @@ use Prophecy\Prophecy\ObjectProphecy;
 use Prophecy\Prophecy\MethodProphecy;
 use Prophecy\Exception\InvalidArgumentException;
 use Closure;
-use ReflectionFunction;
 
 /**
  * Callback prediction.
@@ -57,7 +56,7 @@ class CallbackPrediction implements PredictionInterface
     {
         $callback = $this->callback;
 
-        if ($callback instanceof Closure && method_exists('Closure', 'bind') && (new ReflectionFunction($callback))->getClosureThis() !== null) {
+        if ($callback instanceof Closure && method_exists('Closure', 'bind')) {
             $callback = Closure::bind($callback, $object);
         }
 

@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\EventDispatcher;
 
-use Symfony\Contracts\EventDispatcher\Event;
-
 /**
  * Event encapsulation class.
  *
@@ -50,11 +48,13 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
     /**
      * Get argument by key.
      *
+     * @param string $key Key
+     *
      * @return mixed Contents of array key
      *
      * @throws \InvalidArgumentException if key is not found
      */
-    public function getArgument(string $key)
+    public function getArgument($key)
     {
         if ($this->hasArgument($key)) {
             return $this->arguments[$key];
@@ -66,11 +66,12 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
     /**
      * Add argument to event.
      *
-     * @param mixed $value Value
+     * @param string $key   Argument name
+     * @param mixed  $value Value
      *
      * @return $this
      */
-    public function setArgument(string $key, $value)
+    public function setArgument($key, $value)
     {
         $this->arguments[$key] = $value;
 
@@ -90,6 +91,8 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
     /**
      * Set args property.
      *
+     * @param array $args Arguments
+     *
      * @return $this
      */
     public function setArguments(array $args = [])
@@ -102,9 +105,11 @@ class GenericEvent extends Event implements \ArrayAccess, \IteratorAggregate
     /**
      * Has argument.
      *
+     * @param string $key Key of arguments array
+     *
      * @return bool
      */
-    public function hasArgument(string $key)
+    public function hasArgument($key)
     {
         return \array_key_exists($key, $this->arguments);
     }

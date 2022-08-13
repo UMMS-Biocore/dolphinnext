@@ -15,17 +15,12 @@ namespace phpDocumentor\Reflection\Types;
 
 use phpDocumentor\Reflection\Type;
 
-/**
- * Value object representing Integer type
- *
- * @psalm-immutable
- */
-class Integer implements Type
+final class Integer implements Type
 {
     /**
      * Returns a rendered output of the Type as it would be used in a DocBlock.
      */
-    public function __toString(): string
+    public function __toString() : string
     {
         return 'int';
     }

@@ -24,7 +24,7 @@ class IniFileLoader extends FileLoader
     /**
      * {@inheritdoc}
      */
-    public function load($resource, string $type = null)
+    public function load($resource, $type = null)
     {
         $path = $this->locator->locate($resource);
 
@@ -44,18 +44,12 @@ class IniFileLoader extends FileLoader
                 $this->container->setParameter($key, $this->phpize($value));
             }
         }
-
-        if ($this->env && \is_array($result['parameters@'.$this->env] ?? null)) {
-            foreach ($result['parameters@'.$this->env] as $key => $value) {
-                $this->container->setParameter($key, $this->phpize($value));
-            }
-        }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function supports($resource, string $type = null)
+    public function supports($resource, $type = null)
     {
         if (!\is_string($resource)) {
             return false;

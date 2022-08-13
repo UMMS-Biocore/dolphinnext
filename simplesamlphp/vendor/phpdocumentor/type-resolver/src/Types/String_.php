@@ -17,15 +17,13 @@ use phpDocumentor\Reflection\Type;
 
 /**
  * Value Object representing the type 'string'.
- *
- * @psalm-immutable
  */
-class String_ implements Type
+final class String_ implements Type
 {
     /**
      * Returns a rendered output of the Type as it would be used in a DocBlock.
      */
-    public function __toString(): string
+    public function __toString() : string
     {
         return 'string';
     }

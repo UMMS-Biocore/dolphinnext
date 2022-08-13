@@ -6,6 +6,7 @@ use RobRichards\XMLSecLibs\XMLSecurityDSig;
 use RobRichards\XMLSecLibs\XMLSecurityKey;
 use SAML2\Constants;
 
+use SimpleSAML\Module;
 use SimpleSAML\Utils\Config\Metadata;
 use SimpleSAML\Utils\Crypto;
 use SimpleSAML\Utils\HTTP;
@@ -138,7 +139,6 @@ MSG;
      * @param string $key
      * @param string $cert
      * @param string $algo
-     * @param string|null $passphrase
      * @return string
      */
     private static function signResponse($response, $key, $cert, $algo, $passphrase)
@@ -186,14 +186,17 @@ MSG;
      */
     private static function postResponse($url, $wresult, $wctx)
     {
-        $config = \SimpleSAML\Configuration::getInstance();
-        $usenewui = $config->getBoolean('usenewui', false);
-        if ($usenewui === false) {
-            $wresult = htmlspecialchars($wresult);
-            $wctx = htmlspecialchars($wctx);
+        $wresult = htmlspecialchars($wresult);
+        $wctx = htmlspecialchars($wctx);
+        $javaScript = Module::getModuleURL('adfs/assets/js/postResponse.js');
 
-            $post = <<<MSG
-    <body onload="document.forms[0].submit()">
+        $post = <<<MSG
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="$javaScript"></script>
+    </head>
+    <body>
         <form method="post" action="$url">
             <input type="hidden" name="wa" value="wsignin1.0">
             <input type="hidden" name="wresult" value="$wresult">
@@ -203,16 +206,11 @@ MSG;
             </noscript>
         </form>
     </body>
+</html>
 MSG;
-            echo $post;
-        } else {
-            $t = new \SimpleSAML\XHTML\Template($config, 'adfs:postResponse.twig');
-            $t->data['baseurlpath'] = \SimpleSAML\Module::getModuleURL('adfs');
-            $t->data['url'] = $url;
-            $t->data['wresult'] = $wresult;
-            $t->data['wctx'] = $wctx;
-            $t->show();
-        }
+
+        echo $post;
+        exit;
     }
 
 

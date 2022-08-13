@@ -153,6 +153,16 @@ class Constants
     const EPTI_URN_OID = 'urn:oid:1.3.6.1.4.1.5923.1.1.1.10';
 
     /**
+     * LogoutRequest Reason - user wishes to terminate the session
+     */
+    public const LOGOUT_REASON_USER = 'urn:oasis:names:tc:SAML:2.0:logout:user';
+
+    /**
+     * LogoutRequest Reason - admin wishes to terminate the session
+     */
+    public const LOGOUT_REASON_ADMIN = 'urn:oasis:names:tc:SAML:2.0:logout:admin';
+
+    /**
      * The interpretation of the attribute name is left to individual implementations.
      */
     const NAMEFORMAT_UNSPECIFIED = 'urn:oasis:names:tc:SAML:2.0:attrname-format:unspecified';
@@ -432,4 +442,14 @@ class Constants
      * Second-level status code.
      */
     const STATUS_UNSUPPORTED_BINDING = 'urn:oasis:names:tc:SAML:2.0:status:UnsupportedBinding';
+
+    /**
+     * The maximum size for any entityid as per specification
+     */
+    public const ENTITYID_MAX_LENGTH = 1024;
+
+    /**
+     * The maximum size for any entityid as per SAML2INT-specification
+     */
+    public const SAML2INT_ENTITYID_MAX_LENGTH = 256;
 }

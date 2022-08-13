@@ -12,6 +12,7 @@
 namespace Symfony\Bundle\FrameworkBundle\CacheWarmer;
 
 use Doctrine\Common\Annotations\AnnotationException;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\PhpArrayAdapter;
 use Symfony\Component\Validator\Mapping\Factory\LazyLoadingMetadataFactory;
@@ -20,6 +21,7 @@ use Symfony\Component\Validator\Mapping\Loader\LoaderInterface;
 use Symfony\Component\Validator\Mapping\Loader\XmlFileLoader;
 use Symfony\Component\Validator\Mapping\Loader\YamlFileLoader;
 use Symfony\Component\Validator\ValidatorBuilder;
+use Symfony\Component\Validator\ValidatorBuilderInterface;
 
 /**
  * Warms up XML and YAML validator metadata.
@@ -31,10 +33,17 @@ class ValidatorCacheWarmer extends AbstractPhpFileCacheWarmer
     private $validatorBuilder;
 
     /**
-     * @param string $phpArrayFile The PHP file where metadata are cached
+     * @param ValidatorBuilder $validatorBuilder
+     * @param string           $phpArrayFile     The PHP file where metadata are cached
      */
-    public function __construct(ValidatorBuilder $validatorBuilder, string $phpArrayFile)
+    public function __construct($validatorBuilder, string $phpArrayFile)
     {
+        if (!$validatorBuilder instanceof ValidatorBuilder && !$validatorBuilder instanceof ValidatorBuilderInterface) {
+            throw new \TypeError(sprintf('Argument 1 passed to "%s()" must be an instance of "%s", "%s" given.', __METHOD__, ValidatorBuilder::class, \is_object($validatorBuilder) ? \get_class($validatorBuilder) : \gettype($validatorBuilder)));
+        }
+        if (2 < \func_num_args() && func_get_arg(2) instanceof CacheItemPoolInterface) {
+            @trigger_error(sprintf('The CacheItemPoolInterface $fallbackPool argument of "%s()" is deprecated since Symfony 4.2, you should not pass it anymore.', __METHOD__), \E_USER_DEPRECATED);
+        }
         parent::__construct($phpArrayFile);
         $this->validatorBuilder = $validatorBuilder;
     }
@@ -42,7 +51,7 @@ class ValidatorCacheWarmer extends AbstractPhpFileCacheWarmer
     /**
      * {@inheritdoc}
      */
-    protected function doWarmUp(string $cacheDir, ArrayAdapter $arrayAdapter)
+    protected function doWarmUp($cacheDir, ArrayAdapter $arrayAdapter)
     {
         if (!method_exists($this->validatorBuilder, 'getLoaders')) {
             return false;
@@ -68,15 +77,12 @@ class ValidatorCacheWarmer extends AbstractPhpFileCacheWarmer
         return true;
     }
 
-    /**
-     * @return string[] A list of classes to preload on PHP 7.4+
-     */
     protected function warmUpPhpArrayAdapter(PhpArrayAdapter $phpArrayAdapter, array $values)
     {
         // make sure we don't cache null values
         $values = array_filter($values, function ($val) { return null !== $val; });
 
-        return parent::warmUpPhpArrayAdapter($phpArrayAdapter, $values);
+        parent::warmUpPhpArrayAdapter($phpArrayAdapter, $values);
     }
 
     /**

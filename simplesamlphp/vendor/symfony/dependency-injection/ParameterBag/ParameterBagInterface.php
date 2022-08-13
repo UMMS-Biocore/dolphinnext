@@ -45,32 +45,39 @@ interface ParameterBagInterface
     /**
      * Gets a service container parameter.
      *
-     * @return array|bool|string|int|float|null
+     * @param string $name The parameter name
+     *
+     * @return array|bool|string|int|float|\UnitEnum|null
      *
      * @throws ParameterNotFoundException if the parameter is not defined
      */
-    public function get(string $name);
+    public function get($name);
 
     /**
      * Removes a parameter.
+     *
+     * @param string $name The parameter name
      */
-    public function remove(string $name);
+    public function remove($name);
 
     /**
      * Sets a service container parameter.
      *
-     * @param array|bool|string|int|float|null $value The parameter value
+     * @param string                                     $name  The parameter name
+     * @param array|bool|string|int|float|\UnitEnum|null $value The parameter value
      *
      * @throws LogicException if the parameter can not be set
      */
-    public function set(string $name, $value);
+    public function set($name, $value);
 
     /**
      * Returns true if a parameter name is defined.
      *
+     * @param string $name The parameter name
+     *
      * @return bool true if the parameter name is defined, false otherwise
      */
-    public function has(string $name);
+    public function has($name);
 
     /**
      * Replaces parameter placeholders (%name%) by their values for all parameters.

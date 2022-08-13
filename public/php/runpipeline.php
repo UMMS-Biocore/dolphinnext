@@ -32,15 +32,6 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
     #fileContent .multiselect-item.multiselect-filter>.input-group>.input-group-btn {
         width: 40px;
     }
-
-    .indesc {
-        font-style: italic;
-        color: darkslategray;
-        font-weight: 300;
-        font-size: 13px;
-        display: block;
-        padding-top: 5px;
-    }
 </style>
 
 

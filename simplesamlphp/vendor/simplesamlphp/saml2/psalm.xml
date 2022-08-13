@@ -22,7 +22,6 @@
     <MissingReturnType errorLevel="info" />
     <MissingPropertyType errorLevel="info" />
     <InvalidDocblock errorLevel="info" />
-    <MisplacedRequiredParam errorLevel="info" />
 
     <PropertyNotSetInConstructor errorLevel="info" />
     <MissingConstructor errorLevel="info" />
@@ -33,4 +32,10 @@
     <PropertyNotSetInConstructor errorLevel="suppress" />
     <MissingClosureReturnType errorLevel="suppress" />
   </issueHandlers>
+
+<!--
+  <stubs>
+    <file name="tests/resources/stubs/soap.php" />
+  </stubs>
+-->
 </psalm>

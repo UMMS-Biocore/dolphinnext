@@ -22,8 +22,6 @@ use Symfony\Component\Routing\RouteCollection;
  * The file must return a RouteCollection instance.
  *
  * @author Fabien Potencier <fabien@symfony.com>
- * @author Nicolas grekas <p@tchwork.com>
- * @author Jules Pietri <jules@heahprod.com>
  */
 class PhpFileLoader extends FileLoader
 {
@@ -35,7 +33,7 @@ class PhpFileLoader extends FileLoader
      *
      * @return RouteCollection A RouteCollection instance
      */
-    public function load($file, string $type = null)
+    public function load($file, $type = null)
     {
         $path = $this->locator->locate($file);
         $this->setCurrentDir(\dirname($path));
@@ -49,7 +47,8 @@ class PhpFileLoader extends FileLoader
         $result = $load($path);
 
         if (\is_object($result) && \is_callable($result)) {
-            $collection = $this->callConfigurator($result, $path, $file);
+            $collection = new RouteCollection();
+            $result(new RoutingConfigurator($collection, $this, $path, $file));
         } else {
             $collection = $result;
         }
@@ -62,18 +61,9 @@ class PhpFileLoader extends FileLoader
     /**
      * {@inheritdoc}
      */
-    public function supports($resource, string $type = null)
+    public function supports($resource, $type = null)
     {
         return \is_string($resource) && 'php' === pathinfo($resource, \PATHINFO_EXTENSION) && (!$type || 'php' === $type);
-    }
-
-    protected function callConfigurator(callable $result, string $path, string $file): RouteCollection
-    {
-        $collection = new RouteCollection();
-
-        $result(new RoutingConfigurator($collection, $this, $path, $file, $this->env));
-
-        return $collection;
     }
 }
 

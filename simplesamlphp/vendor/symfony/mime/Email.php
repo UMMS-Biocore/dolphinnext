@@ -272,12 +272,16 @@ class Email extends Message
     }
 
     /**
-     * @param resource|string $body
+     * @param resource|string|null $body
      *
      * @return $this
      */
     public function text($body, string $charset = 'utf-8')
     {
+        if (null !== $body && !\is_string($body) && !\is_resource($body)) {
+            throw new \TypeError(sprintf('The body must be a string, a resource or null (got "%s").', get_debug_type($body)));
+        }
+
         $this->text = $body;
         $this->textCharset = $charset;
 
@@ -304,6 +308,10 @@ class Email extends Message
      */
     public function html($body, string $charset = 'utf-8')
     {
+        if (null !== $body && !\is_string($body) && !\is_resource($body)) {
+            throw new \TypeError(sprintf('The body must be a string, a resource or null (got "%s").', get_debug_type($body)));
+        }
+
         $this->html = $body;
         $this->htmlCharset = $charset;
 
@@ -330,6 +338,10 @@ class Email extends Message
      */
     public function attach($body, string $name = null, string $contentType = null)
     {
+        if (!\is_string($body) && !\is_resource($body)) {
+            throw new \TypeError(sprintf('The body must be a string or a resource (got "%s").', get_debug_type($body)));
+        }
+
         $this->attachments[] = ['body' => $body, 'name' => $name, 'content-type' => $contentType, 'inline' => false];
 
         return $this;
@@ -352,6 +364,10 @@ class Email extends Message
      */
     public function embed($body, string $name = null, string $contentType = null)
     {
+        if (!\is_string($body) && !\is_resource($body)) {
+            throw new \TypeError(sprintf('The body must be a string or a resource (got "%s").', get_debug_type($body)));
+        }
+
         $this->attachments[] = ['body' => $body, 'name' => $name, 'content-type' => $contentType, 'inline' => true];
 
         return $this;
@@ -378,7 +394,7 @@ class Email extends Message
     }
 
     /**
-     * @return array|DataPart[]
+     * @return DataPart[]
      */
     public function getAttachments(): array
     {
@@ -463,9 +479,15 @@ class Email extends Message
         $names = [];
         $htmlPart = null;
         $html = $this->html;
-        if (null !== $this->html) {
+        if (null !== $html) {
+            if (\is_resource($html)) {
+                if (stream_get_meta_data($html)['seekable'] ?? false) {
+                    rewind($html);
+                }
+
+                $html = stream_get_contents($html);
+            }
             $htmlPart = new TextPart($html, $this->htmlCharset, 'html');
-            $html = $htmlPart->getBody();
             preg_match_all('(<img\s+[^>]*src\s*=\s*(?:([\'"])cid:([^"]+)\\1|cid:([^>\s]+)))i', $html, $names);
             $names = array_filter(array_unique(array_merge($names[2], $names[3])));
         }
@@ -518,7 +540,7 @@ class Email extends Message
     /**
      * @return $this
      */
-    private function setHeaderBody(string $type, string $name, $body): object
+    private function setHeaderBody(string $type, string $name, $body)
     {
         $this->getHeaders()->setHeaderBody($type, $name, $body);
 
@@ -554,16 +576,28 @@ class Email extends Message
     public function __serialize(): array
     {
         if (\is_resource($this->text)) {
-            $this->text = (new TextPart($this->text))->getBody();
+            if (stream_get_meta_data($this->text)['seekable'] ?? false) {
+                rewind($this->text);
+            }
+
+            $this->text = stream_get_contents($this->text);
         }
 
         if (\is_resource($this->html)) {
-            $this->html = (new TextPart($this->html))->getBody();
+            if (stream_get_meta_data($this->html)['seekable'] ?? false) {
+                rewind($this->html);
+            }
+
+            $this->html = stream_get_contents($this->html);
         }
 
         foreach ($this->attachments as $i => $attachment) {
             if (isset($attachment['body']) && \is_resource($attachment['body'])) {
-                $this->attachments[$i]['body'] = (new TextPart($attachment['body']))->getBody();
+                if (stream_get_meta_data($attachment['body'])['seekable'] ?? false) {
+                    rewind($attachment['body']);
+                }
+
+                $this->attachments[$i]['body'] = stream_get_contents($attachment['body']);
             }
         }
 

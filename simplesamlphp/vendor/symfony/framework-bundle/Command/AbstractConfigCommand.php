@@ -16,7 +16,6 @@ use Symfony\Component\Console\Exception\LogicException;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\StyleInterface;
-use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
 /**
@@ -60,26 +59,10 @@ abstract class AbstractConfigCommand extends ContainerDebugCommand
     /**
      * @return ExtensionInterface
      */
-    protected function findExtension(string $name)
+    protected function findExtension($name)
     {
         $bundles = $this->initializeBundles();
         $minScore = \INF;
-
-        $kernel = $this->getApplication()->getKernel();
-        if ($kernel instanceof ExtensionInterface && ($kernel instanceof ConfigurationInterface || $kernel instanceof ConfigurationExtensionInterface)) {
-            if ($name === $kernel->getAlias()) {
-                return $kernel;
-            }
-
-            if ($kernel->getAlias()) {
-                $distance = levenshtein($name, $kernel->getAlias());
-
-                if ($distance < $minScore) {
-                    $guess = $kernel->getAlias();
-                    $minScore = $distance;
-                }
-            }
-        }
 
         foreach ($bundles as $bundle) {
             if ($name === $bundle->getName()) {
@@ -96,20 +79,20 @@ abstract class AbstractConfigCommand extends ContainerDebugCommand
                 $guess = $bundle->getName();
                 $minScore = $distance;
             }
+        }
 
-            $extension = $bundle->getContainerExtension();
+        $container = $this->getContainerBuilder();
 
-            if ($extension) {
-                if ($name === $extension->getAlias()) {
-                    return $extension;
-                }
+        if ($container->hasExtension($name)) {
+            return $container->getExtension($name);
+        }
 
-                $distance = levenshtein($name, $extension->getAlias());
+        foreach ($container->getExtensions() as $extension) {
+            $distance = levenshtein($name, $extension->getAlias());
 
-                if ($distance < $minScore) {
-                    $guess = $extension->getAlias();
-                    $minScore = $distance;
-                }
+            if ($distance < $minScore) {
+                $guess = $extension->getAlias();
+                $minScore = $distance;
             }
         }
 
@@ -133,7 +116,7 @@ abstract class AbstractConfigCommand extends ContainerDebugCommand
         }
 
         if (!$configuration instanceof ConfigurationInterface) {
-            throw new \LogicException(sprintf('Configuration class "%s" should implement ConfigurationInterface in order to be dumpable.', get_debug_type($configuration)));
+            throw new \LogicException(sprintf('Configuration class "%s" should implement ConfigurationInterface in order to be dumpable.', \get_class($configuration)));
         }
     }
 
@@ -141,9 +124,8 @@ abstract class AbstractConfigCommand extends ContainerDebugCommand
     {
         // Re-build bundle manually to initialize DI extensions that can be extended by other bundles in their build() method
         // as this method is not called when the container is loaded from the cache.
-        $kernel = $this->getApplication()->getKernel();
-        $container = $this->getContainerBuilder($kernel);
-        $bundles = $kernel->getBundles();
+        $container = $this->getContainerBuilder();
+        $bundles = $this->getApplication()->getKernel()->getBundles();
         foreach ($bundles as $bundle) {
             if ($extension = $bundle->getContainerExtension()) {
                 $container->registerExtension($extension);

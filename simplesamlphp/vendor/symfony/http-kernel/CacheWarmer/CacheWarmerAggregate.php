@@ -46,9 +46,9 @@ class CacheWarmerAggregate implements CacheWarmerInterface
     /**
      * Warms up the cache.
      *
-     * @return string[] A list of classes or files to preload on PHP 7.4+
+     * @param string $cacheDir The cache directory
      */
-    public function warmUp(string $cacheDir)
+    public function warmUp($cacheDir)
     {
         if ($collectDeprecations = $this->debug && !\defined('PHPUNIT_COMPOSER_INSTALL')) {
             $collectedLogs = [];
@@ -85,7 +85,6 @@ class CacheWarmerAggregate implements CacheWarmerInterface
             });
         }
 
-        $preload = [];
         try {
             foreach ($this->warmers as $warmer) {
                 if (!$this->optionalsEnabled && $warmer->isOptional()) {
@@ -95,22 +94,22 @@ class CacheWarmerAggregate implements CacheWarmerInterface
                     continue;
                 }
 
-                $preload[] = array_values((array) $warmer->warmUp($cacheDir));
+                $warmer->warmUp($cacheDir);
             }
         } finally {
             if ($collectDeprecations) {
                 restore_error_handler();
 
-                if (is_file($this->deprecationLogsFilepath)) {
+                if (file_exists($this->deprecationLogsFilepath)) {
                     $previousLogs = unserialize(file_get_contents($this->deprecationLogsFilepath));
-                    $collectedLogs = array_merge($previousLogs, $collectedLogs);
+                    if (\is_array($previousLogs)) {
+                        $collectedLogs = array_merge($previousLogs, $collectedLogs);
+                    }
                 }
 
                 file_put_contents($this->deprecationLogsFilepath, serialize(array_values($collectedLogs)));
             }
         }
-
-        return array_values(array_unique(array_merge([], ...$preload)));
     }
 
     /**

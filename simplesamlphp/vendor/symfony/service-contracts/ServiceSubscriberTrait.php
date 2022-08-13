@@ -29,22 +29,26 @@ trait ServiceSubscriberTrait
      */
     public static function getSubscribedServices(): array
     {
-        static $services;
-
-        if (null !== $services) {
-            return $services;
-        }
-
-        $services = \is_callable(['parent', __FUNCTION__]) ? parent::getSubscribedServices() : [];
+        $services = method_exists(get_parent_class(self::class) ?: '', __FUNCTION__) ? parent::getSubscribedServices() : [];
 
         foreach ((new \ReflectionClass(self::class))->getMethods() as $method) {
             if ($method->isStatic() || $method->isAbstract() || $method->isGenerator() || $method->isInternal() || $method->getNumberOfRequiredParameters()) {
                 continue;
             }
 
-            if (self::class === $method->getDeclaringClass()->name && ($returnType = $method->getReturnType()) && !$returnType->isBuiltin()) {
-                $services[self::class.'::'.$method->name] = '?'.($returnType instanceof \ReflectionNamedType ? $returnType->getName() : $returnType);
+            if (self::class !== $method->getDeclaringClass()->name) {
+                continue;
             }
+
+            if (!($returnType = $method->getReturnType()) instanceof \ReflectionNamedType) {
+                continue;
+            }
+
+            if ($returnType->isBuiltin()) {
+                continue;
+            }
+
+            $services[self::class.'::'.$method->name] = '?'.$returnType->getName();
         }
 
         return $services;
@@ -52,12 +56,14 @@ trait ServiceSubscriberTrait
 
     /**
      * @required
+     *
+     * @return ContainerInterface|null
      */
     public function setContainer(ContainerInterface $container)
     {
         $this->container = $container;
 
-        if (\is_callable(['parent', __FUNCTION__])) {
+        if (method_exists(get_parent_class(self::class) ?: '', __FUNCTION__)) {
             return parent::setContainer($container);
         }
 

@@ -12,7 +12,6 @@
 namespace Symfony\Component\DependencyInjection\Dumper;
 
 use Symfony\Component\DependencyInjection\Alias;
-use Symfony\Component\DependencyInjection\Argument\AbstractArgument;
 use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
@@ -108,8 +107,8 @@ class XmlDumper extends Dumper
         if (!$definition->isShared()) {
             $service->setAttribute('shared', 'false');
         }
-        if ($definition->isPublic()) {
-            $service->setAttribute('public', 'true');
+        if (!$definition->isPrivate()) {
+            $service->setAttribute('public', $definition->isPublic() ? 'true' : 'false');
         }
         if ($definition->isSynthetic()) {
             $service->setAttribute('synthetic', 'true');
@@ -137,13 +136,9 @@ class XmlDumper extends Dumper
         foreach ($definition->getTags() as $name => $tags) {
             foreach ($tags as $attributes) {
                 $tag = $this->document->createElement('tag');
-                if (!\array_key_exists('name', $attributes)) {
-                    $tag->setAttribute('name', $name);
-                } else {
-                    $tag->appendChild($this->document->createTextNode($name));
-                }
+                $tag->setAttribute('name', $name);
                 foreach ($attributes as $key => $value) {
-                    $tag->setAttribute($key, $value);
+                    $tag->setAttribute($key, $value ?? '');
                 }
                 $service->appendChild($tag);
             }
@@ -183,11 +178,8 @@ class XmlDumper extends Dumper
         }
 
         if ($definition->isDeprecated()) {
-            $deprecation = $definition->getDeprecation('%service_id%');
             $deprecated = $this->document->createElement('deprecated');
-            $deprecated->appendChild($this->document->createTextNode($definition->getDeprecation('%service_id%')['message']));
-            $deprecated->setAttribute('package', $deprecation['package']);
-            $deprecated->setAttribute('version', $deprecation['version']);
+            $deprecated->appendChild($this->document->createTextNode($definition->getDeprecationMessage('%service_id%')));
 
             $service->appendChild($deprecated);
         }
@@ -227,16 +219,13 @@ class XmlDumper extends Dumper
         $service = $this->document->createElement('service');
         $service->setAttribute('id', $alias);
         $service->setAttribute('alias', $id);
-        if ($id->isPublic()) {
-            $service->setAttribute('public', 'true');
+        if (!$id->isPrivate()) {
+            $service->setAttribute('public', $id->isPublic() ? 'true' : 'false');
         }
 
         if ($id->isDeprecated()) {
-            $deprecation = $id->getDeprecation('%alias_id%');
             $deprecated = $this->document->createElement('deprecated');
-            $deprecated->appendChild($this->document->createTextNode($deprecation['message']));
-            $deprecated->setAttribute('package', $deprecation['package']);
-            $deprecated->setAttribute('version', $deprecation['version']);
+            $deprecated->appendChild($this->document->createTextNode($id->getDeprecationMessage('%alias_id%')));
 
             $service->appendChild($deprecated);
         }
@@ -327,10 +316,6 @@ class XmlDumper extends Dumper
             } elseif ($value instanceof \UnitEnum) {
                 $element->setAttribute('type', 'constant');
                 $element->appendChild($this->document->createTextNode(self::phpToXml($value)));
-            } elseif ($value instanceof AbstractArgument) {
-                $element->setAttribute('type', 'abstract');
-                $text = $this->document->createTextNode(self::phpToXml($value->getText()));
-                $element->appendChild($text);
             } else {
                 if (\in_array($value, ['null', 'true', 'false'], true)) {
                     $element->setAttribute('type', 'string');

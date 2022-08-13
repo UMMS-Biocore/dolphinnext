@@ -17,15 +17,13 @@ use phpDocumentor\Reflection\Type;
 
 /**
  * Value Object representing the 'scalar' pseudo-type, which is either a string, integer, float or boolean.
- *
- * @psalm-immutable
  */
 final class Scalar implements Type
 {
     /**
      * Returns a rendered output of the Type as it would be used in a DocBlock.
      */
-    public function __toString(): string
+    public function __toString() : string
     {
         return 'scalar';
     }

@@ -64,9 +64,12 @@ class CompiledRoute implements \Serializable
     }
 
     /**
-     * @internal
+     * @return string
+     *
+     * @internal since Symfony 4.3
+     * @final since Symfony 4.3
      */
-    final public function serialize(): string
+    public function serialize()
     {
         return serialize($this->__serialize());
     }
@@ -84,9 +87,10 @@ class CompiledRoute implements \Serializable
     }
 
     /**
-     * @internal
+     * @internal since Symfony 4.3
+     * @final since Symfony 4.3
      */
-    final public function unserialize($serialized)
+    public function unserialize($serialized)
     {
         $this->__unserialize(unserialize($serialized, ['allowed_classes' => false]));
     }

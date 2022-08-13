@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\DependencyInjection;
 
+use Symfony\Component\DependencyInjection\Exception\BadMethodCallException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\OutOfBoundsException;
 
@@ -29,6 +30,7 @@ class ChildDefinition extends Definition
     public function __construct(string $parent)
     {
         $this->parent = $parent;
+        $this->setPrivate(false);
     }
 
     /**
@@ -44,9 +46,11 @@ class ChildDefinition extends Definition
     /**
      * Sets the Definition to inherit from.
      *
+     * @param string $parent
+     *
      * @return $this
      */
-    public function setParent(string $parent)
+    public function setParent($parent)
     {
         $this->parent = $parent;
 
@@ -100,5 +104,21 @@ class ChildDefinition extends Definition
         }
 
         return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public function setAutoconfigured($autoconfigured): self
+    {
+        throw new BadMethodCallException('A ChildDefinition cannot be autoconfigured.');
+    }
+
+    /**
+     * @internal
+     */
+    public function setInstanceofConditionals(array $instanceof): self
+    {
+        throw new BadMethodCallException('A ChildDefinition cannot have instanceof conditionals set on it.');
     }
 }
