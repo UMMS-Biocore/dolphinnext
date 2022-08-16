@@ -17,7 +17,8 @@ class dbfuncs
     private $dbpass = DBPASS;
     private $dbport = DBPORT;
     private $run_path = RUNPATH;
-    private $tmp_path = TEMPPATH;
+    private $tmp_path = TEMPPATH; // ../tmp
+    private $pri_tmp_path = "../../tmp"; // ../../tmp
     private $ssh_path = SSHPATH;
     private $base_path = BASE_PATH;
     private $pubweb_url = PUBWEB_URL;
@@ -901,6 +902,7 @@ class dbfuncs
     }
     function cleanName($name, $limit)
     {
+        $name = str_replace(":", "_", $name);
         $name = str_replace("/", "_", $name);
         $name = str_replace(" ", "", $name);
         $name = str_replace("(", "_", $name);
@@ -1711,8 +1713,109 @@ class dbfuncs
         }
         return json_encode($ret);
     }
+    function encodeURIComponent($str)
+    {
+        $revert = array('%21' => '!', '%2A' => '*', '%27' => "'", '%28' => '(', '%29' => ')');
+        return strtr(rawurlencode($str), $revert);
+    }
 
+    function importRepo($type, $import_repo, $import_branch, $ownerID)
+    {
+        $ret = array();
+        if (empty($import_repo)) return $ret;
+        $cleanRepo = $this->cleanName($import_repo, 100);
+        $cleanBranch = $this->cleanName($import_branch, 100);
+        $dir_name = "{$cleanRepo}_{$cleanBranch}";
+        //create repo folder
+        $repoDir = "{$this->pri_tmp_path}/upload/$ownerID/$dir_name";
+        if (file_exists($repoDir)) {
+            system("rm -rf " . escapeshellarg($repoDir));
+        }
+        if ($type == "git") {
+            $branchText = "";
+            if (!empty($import_branch)) {
+                $branchText = " -b $import_branch ";
+            }
+            //repo found, git clone 
+            $init_cmd = "git clone $branchText $import_repo $repoDir 2>&1";
+            $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
+            $fileList = array_values((array)json_decode($this->getFileList("", "", "onlyfile", $repoDir)));
 
+            // 1. check dn file
+            // 2. if dn not exist then import files
+            $script_pipe_config = "";
+            $sep = "\n//~@:~\n";
+            $label = "@~:";
+            for ($i = 0; $i < count($fileList); $i++) {
+                $filename = trim($fileList[$i]);
+                // check if file is binary . If it is binary then skip that file 
+                // return mime type ala mimetype extension
+                $finfo = finfo_open(FILEINFO_MIME);
+                //check to see if the mime-type starts with 'text'
+                // alternative values: image, application
+                if (substr(finfo_file($finfo, "$repoDir/$filename"), 0, 4) != 'text') {
+                    continue;
+                }
+
+                $script =  file_get_contents("$repoDir/$filename");
+                $script_pipe_config .= $sep . $label . '"' . $filename . '"' . $sep . $script . $sep;
+            }
+            $script_pipe_config =  $this->encodeURIComponent($script_pipe_config);
+
+            $pipeline_name = substr($import_repo, strrpos($import_repo, '/') + 1);
+            // remove the part after last dot
+            $path_parts = pathinfo($pipeline_name);
+            $pipeline_name = $path_parts['filename'];
+            $obj = array();
+            $obj[] = (object) array('name' => $pipeline_name);
+            $obj[] = (object) array('id' => "");
+            $obj[] = (object) array('nodes' => (object)[]);
+            $obj[] = (object) array('mainG' => array(0, 0, 1));
+            $obj[] = (object) array('edges' => array());
+            $obj[] = (object) array('summary' => "");
+            $obj[] = (object) array('group_id' => "");
+            $obj[] = (object) array('write_group_id' => "");
+            $obj[] = (object) array('perms' => "3");
+            $obj[] = (object) array('pin' => "false");
+            $obj[] = (object) array('pin_order' => "");
+            $obj[] = (object) array('release_date' => "");
+            $obj[] = (object) array('script_pipe_header' => "");
+            $obj[] = (object) array('script_pipe_config' => $script_pipe_config);
+            $obj[] = (object) array('script_pipe_footer' => "");
+            $obj[] = (object) array('script_mode_header' => "");
+            $obj[] = (object) array('script_mode_footer' => "");
+            $obj[] = (object) array('pipeline_group_id' => "1");
+            $obj[] = (object) array('process_list' => "");
+            $obj[] = (object) array('pipeline_list' => "");
+            $obj[] = (object) array('app_list' => "");
+            $obj[] = (object) array('publish_web_dir' => "");
+            $obj[] = (object) array('publish_dmeta_dir' => "");
+            $obj[] = (object) array('pipeline_gid' => null);
+            $obj[] = (object) array('rev_comment' => "");
+            $obj[] = (object) array('rev_id' => 0);
+            $obj[] = (object) array('pipeline_uuid' => "");
+
+            $newObj = new stdClass();
+            foreach ($obj as $item) :
+                foreach ($item as $k => $v) $newObj->$k = $v;
+            endforeach;
+
+            $userRole = $this->getUserRoleVal($ownerID);
+            $data = $this->saveAllPipeline($newObj, $userRole, $ownerID);
+            $idArray = json_decode($data, true);
+            $new_pipe_id = $idArray["id"];
+            if (!empty($new_pipe_id)) {
+                $pipeline_uuid = isset($newObj->{"pipeline_uuid"}) ? $newObj->{"pipeline_uuid"} : "";
+                $pipeline_rev_uuid = isset($newObj->{"pipeline_rev_uuid"}) ? $newObj->{"pipeline_rev_uuid"} : "";
+                if (empty($pipeline_uuid)) {
+                    $this->getUUIDAPI($data, "pipeline", $new_pipe_id);
+                } else if (empty($pipeline_rev_uuid)) {
+                    $this->getUUIDAPI($data, "pipeline_rev", $new_pipe_id);
+                }
+            }
+        }
+        return $ret;
+    }
 
     //$type: "downPack" or "pushGithub"
     function initGitRepo($description, $pipeline_id, $pipeline_name, $username_id, $github_repo, $github_branch, $configText, $nfData, $dnData, $type, $ownerID)
@@ -3438,8 +3541,8 @@ class dbfuncs
     {
         // get all existing files with their directories in array
         // e.g. ["rsem_summary/expected_count.tsv", "star/Log.progress.out"]
-        $fileListPubweb = array_values((array)json_decode($this->getFileList($uuid, "pubweb", "onlyfile")));
-        $fileListPubDmeta = array_values((array)json_decode($this->getFileList($uuid, "pubdmeta", "onlyfile")));
+        $fileListPubweb = array_values((array)json_decode($this->getFileList($uuid, "pubweb", "onlyfile", "")));
+        $fileListPubDmeta = array_values((array)json_decode($this->getFileList($uuid, "pubdmeta", "onlyfile", "")));
         $fileList = array_merge($fileListPubweb, $fileListPubDmeta);
         // removes empty values
         $fileList = array_filter($fileList);
@@ -6587,9 +6690,9 @@ class dbfuncs
 
     //$last_server_dir is last directory in $uuid folder: eg. run, pubweb, pubDmeta
     //$opt = "onlyfile", "filedir"
-    function getFileList($uuid, $last_server_dir, $opt)
+    function getFileList($uuid, $last_server_dir, $opt, $path)
     {
-        $path = "{$this->run_path}/$uuid/$last_server_dir";
+        if (empty($path)) $path = "{$this->run_path}/$uuid/$last_server_dir";
         $scanned_directory = array();
         if (file_exists($path)) {
             if ($opt == "filedir") {
@@ -6611,7 +6714,7 @@ class dbfuncs
         $name = "_Description"; //folder name
         $module = "run_description";
         $id = $module;
-        $fileList = array_values((array)json_decode($this->getFileList($uuid, "$path/$name", "onlyfile")));
+        $fileList = array_values((array)json_decode($this->getFileList($uuid, "$path/$name", "onlyfile", "")));
         $fileList = array_filter($fileList);
         $targetDir = "{$this->run_path}/$uuid/pubweb/_Description";
         //if _Description exist then send new data
@@ -6935,12 +7038,45 @@ class dbfuncs
         return self::runSQL($sql);
     }
 
-    function updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first,  $ownerID)
+    //$type ->"manual", or "auto"
+    function updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first,  $type, $ownerID)
     {
         $php_set_date = strtotime("now");
         $cron_set_date = date("Y-m-d H:i:s", $php_set_date);
 
         $php_target_date = strtotime("+{$cron_min} minutes {$cron_hour} hours {$cron_day} days {$cron_week} weeks {$cron_month} months");
+        // automatic execution submitted. Refresh date based on last target date.
+        if ($type == "auto") {
+            $userRole = $this->getUserRoleVal($ownerID);
+            $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id, "", $ownerID, $userRole));
+
+            if (empty($proPipeAll[0])) error_log("ProjectPipeline $project_pipeline_id is not found.");
+            if (!empty($proPipeAll[0])) {
+                $old_target_date_text = "";
+                $old_target_date = $proPipeAll[0]->{'cron_target_date'};
+                if (!empty($old_target_date)) {
+                    error_log($old_target_date);
+                    error_log(strtotime($old_target_date));
+                    $old_target_date_text = date("Y-m-d H:i:s", strtotime($old_target_date));
+                    error_log("old_target_date_text");
+                    error_log($old_target_date_text);
+                }
+                $new_target_date = strtotime("$old_target_date_text +{$cron_min} minutes {$cron_hour} hours {$cron_day} days {$cron_week} weeks {$cron_month} months");
+                $new_target_date_check = date("Y-m-d H:i:s", $new_target_date);
+                error_log("new_target_date_check");
+                error_log($new_target_date_check);
+                error_log("cron_set_date");
+                error_log($cron_set_date);
+
+                // if new_target_date is before the current date then don't use $new_target_date
+                if ($new_target_date_check > $cron_set_date) {
+                    error_log("yes");
+                    $php_target_date = $new_target_date;
+                }
+            }
+        }
+        error_log("php_target_date");
+        error_log($php_target_date);
         $cron_target_date = date("Y-m-d H:i:s", $php_target_date);
         error_log($cron_target_date);
         if (!empty($cron_first)) $cron_target_date = $cron_first;

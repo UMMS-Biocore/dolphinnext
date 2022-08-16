@@ -236,8 +236,9 @@ class updates
                         $dbfun->resetProjectPipelineCron($project_pipeline_id);
                         $new_cron_target_date = "";
                     } else {
+                        $type = "auto";
                         $cron_first = NULL;
-                        $new_cron_target_date = json_decode($dbfun->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first, $ownerID));
+                        $new_cron_target_date = json_decode($dbfun->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first, $type, $ownerID));
                     }
 
                     $ret .= "$time Next CronJob date: $new_cron_target_date\n";

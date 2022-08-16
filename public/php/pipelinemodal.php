@@ -1066,7 +1066,7 @@
                     <!-- Nav tabs -->
                     <ul id="importNav" class="nav nav-tabs" role="tablist">
                         <li id="manualImportBut" class="active"><a class="nav-item" data-toggle="tab" href="#manualImportTab">Manually</a></li>
-                        <li id="publicImportBut" class="nav-item"><a class="nav-item" data-toggle="tab" href="#publicImportTab">Public</a></li>
+                        <!-- <li id="publicImportBut" class="nav-item"><a class="nav-item" data-toggle="tab" href="#publicImportTab">Public</a></li> -->
                     </ul>
                     <!-- Tab panes -->
                     <div class="tab-content">

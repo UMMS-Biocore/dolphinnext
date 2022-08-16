@@ -109,7 +109,7 @@ if ($p == "saveRun") {
     $uuid  = $_REQUEST['uuid'];
     $path = $_REQUEST['path'];
     $type = $_REQUEST['type'];
-    $data = $db->getFileList($uuid, $path, $type);
+    $data = $db->getFileList($uuid, $path, $type, "");
 } else if ($p == "getRsyncStatus") {
     $filename  = $_REQUEST['filename'];
     $data = $db->getRsyncStatus($filename, $ownerID);
@@ -199,7 +199,7 @@ if ($p == "saveRun") {
                     $out[$key] = $feature;
                 endforeach;
                 if ($push == true) {
-                    $fileList = array_values((array)json_decode($db->getFileList($uuid, "$path/$name", "onlyfile")));
+                    $fileList = array_values((array)json_decode($db->getFileList($uuid, "$path/$name", "onlyfile", "")));
                     //If no callback is supplied to array_filter, all empty entries of array will be removed
                     $fileList = array_filter($fileList);
 
@@ -1261,6 +1261,8 @@ else if ($p == "saveToken") {
     $data = json_encode("");
     $import_repo = isset($_REQUEST['import_repo']) ? $_REQUEST['import_repo'] : "";
     $import_branch = isset($_REQUEST['import_branch']) ? $_REQUEST['import_branch'] : "";
+    $type = "git";
+    $initGitRepo = $db->importRepo($type, $import_repo, $import_branch, $ownerID);
 } else if ($p == "publishGithub") {
     $data = json_encode("");
     $username_id = isset($_REQUEST['username']) ? $_REQUEST['username'] : "";
@@ -2094,7 +2096,8 @@ else if ($p == "saveToken") {
         $curr_ownerID = $db->queryAVal("SELECT owner_id FROM $db->db.project_pipeline WHERE id='$project_pipeline_id'");
         $permCheck = $db->checkUserOwnPerm($curr_ownerID, $ownerID);
         if (!empty($permCheck)) {
-            $data = $db->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first, $ownerID);
+            $type = "manual";
+            $data = $db->updateProjectPipelineCron($project_pipeline_id, $cron_min, $cron_hour, $cron_day, $cron_week, $cron_month, $cron_prefix, $cron_first, $type, $ownerID);
         }
     }
 } else if ($p == "saveProjectPipeline") {

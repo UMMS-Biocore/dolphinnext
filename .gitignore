@@ -1,4 +1,5 @@
 scripts/log.txt
+tmp/upload/*
 public/tmp/*
 !public/tmp/index.html
 !public/tmp/pub/index.html
