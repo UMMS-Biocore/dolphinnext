@@ -1071,7 +1071,7 @@ class dbfuncs
                 $replaceInitialRunCode = "cp $dolphin_path_real/initialrun.nf $dolphin_path_real/initialrun/nextflow.nf &&";
             }
 
-            $initialRunCmd = "$replaceInitialRunCode cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $nxf_work_init $igniteCmd $runType $reportOptions > $dolphin_path_real/initialrun/initial.log && ";
+            $initialRunCmd = "$replaceInitialRunCode cd $dolphin_path_real/initialrun && $next_path_real $dolphin_path_real/initialrun/nextflow.nf $nxf_work_init $igniteCmd $runType $reportOptions >> $dolphin_path_real/initialrun/initial.log && ";
         }
         $mainNextCmd = "$preCmd $cleanReportCmd $initialRunCmd cd $dolphin_path_real && $next_path_real $dolphin_path_real/nextflow.nf $nxf_work $igniteCmd $runType $reportOptions >> $dolphin_path_real/$logName $postCmd";
 
