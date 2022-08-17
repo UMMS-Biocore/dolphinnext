@@ -854,7 +854,7 @@ class dbfuncs
         }
         $beforeRun = '';
         if (file_exists($run_path_real . "/beforerun.sh")) {
-            $beforeRun = "bash $dolphin_path_real/beforerun.sh >> $dolphin_path_real/log.txt";
+            $beforeRun = "cd $dolphin_path_real && bash beforerun.sh >> $dolphin_path_real/log.txt";
         }
 
 
@@ -7049,36 +7049,23 @@ class dbfuncs
         if ($type == "auto") {
             $userRole = $this->getUserRoleVal($ownerID);
             $proPipeAll = json_decode($this->getProjectPipelines($project_pipeline_id, "", $ownerID, $userRole));
-
             if (empty($proPipeAll[0])) error_log("ProjectPipeline $project_pipeline_id is not found.");
             if (!empty($proPipeAll[0])) {
                 $old_target_date_text = "";
                 $old_target_date = $proPipeAll[0]->{'cron_target_date'};
                 if (!empty($old_target_date)) {
-                    error_log($old_target_date);
-                    error_log(strtotime($old_target_date));
                     $old_target_date_text = date("Y-m-d H:i:s", strtotime($old_target_date));
-                    error_log("old_target_date_text");
-                    error_log($old_target_date_text);
                 }
                 $new_target_date = strtotime("$old_target_date_text +{$cron_min} minutes {$cron_hour} hours {$cron_day} days {$cron_week} weeks {$cron_month} months");
                 $new_target_date_check = date("Y-m-d H:i:s", $new_target_date);
-                error_log("new_target_date_check");
-                error_log($new_target_date_check);
-                error_log("cron_set_date");
-                error_log($cron_set_date);
 
                 // if new_target_date is before the current date then don't use $new_target_date
                 if ($new_target_date_check > $cron_set_date) {
-                    error_log("yes");
                     $php_target_date = $new_target_date;
                 }
             }
         }
-        error_log("php_target_date");
-        error_log($php_target_date);
         $cron_target_date = date("Y-m-d H:i:s", $php_target_date);
-        error_log($cron_target_date);
         if (!empty($cron_first)) $cron_target_date = $cron_first;
         $cron_date_first_text = "";
         if (is_null($cron_first)) {
