@@ -854,7 +854,7 @@ class dbfuncs
         }
         $beforeRun = '';
         if (file_exists($run_path_real . "/beforerun.sh")) {
-            $beforeRun = "cd $dolphin_path_real && bash beforerun.sh >> $dolphin_path_real/log.txt";
+            $beforeRun = "mkdir -p $dolphin_path_real/initialrun && cd $dolphin_path_real && bash beforerun.sh >> $dolphin_path_real/initialrun/initial.log";
         }
 
 
