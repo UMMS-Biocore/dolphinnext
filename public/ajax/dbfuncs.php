@@ -4617,6 +4617,33 @@ class dbfuncs
         $sql = "SELECT * FROM $this->db.profile_cluster WHERE (public != '1' OR public IS NULL) AND owner_id = '$ownerID'";
         return self::queryTable($sql);
     }
+
+    function getAllProfileBashVariables($ownerID)
+    {
+        $userRole = $this->getUserRoleVal($ownerID);
+        if ($userRole == "admin") {
+            $sql = "SELECT p.bash_variable, u.name
+                    FROM $this->db.profile_cluster p
+                    INNER JOIN $this->db.users u ON p.owner_id = u.id
+                    WHERE (public != '1' OR public IS NULL) ";
+            $cluData = self::queryTable($sql);
+
+            $cluDataArr = json_decode($cluData, true);
+
+            $new_obj = array();
+            for ($i = 0; $i < count($cluDataArr); $i++) {
+                $bash_variable = isset($cluDataArr[$i]["bash_variable"]) ? $cluDataArr[$i]["bash_variable"] : "";
+                $bash_variable = trim($this->amazonDecode($bash_variable));
+                $name = $cluDataArr[$i]["name"];
+                $tmpObj = array();
+                $tmpObj["variable"] = $bash_variable;
+                $tmpObj["name"] = $name;
+                $new_obj[] = $tmpObj; //push $out object into array
+            }
+        }
+        return json_encode($new_obj);
+    }
+
     function getRunProfileCluster($ownerID)
     {
         $sql = "SELECT DISTINCT p.* FROM $this->db.profile_cluster p 

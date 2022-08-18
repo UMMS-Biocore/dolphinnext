@@ -1030,6 +1030,10 @@ else if ($p == "saveToken") {
     $data = $db->removeGoogle($id, $ownerID);
 } else if ($p == "generateKeys") {
     $data = $db->generateKeys($ownerID);
+} else if ($p == "getAllProfileBashVariables") {
+    if ($userRole == "admin") {
+        $data = $db->getAllProfileBashVariables($ownerID);
+    }
 } else if ($p == "getProfileVariables") {
     $proType = isset($_REQUEST['proType']) ? $_REQUEST['proType'] : "";
     if (!empty($id) && !empty($proType)) {
