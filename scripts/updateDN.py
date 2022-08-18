@@ -127,6 +127,10 @@ As of August 8th, 2022 no updates will be made to this container. We prepared ne
 * Step 1. Backup your database and rename your database folder with the following commands: 
   mysqldump -u docker -pdocker dolphinnext > /export/dolphinnext_db_backup.sql
   mv /export/mysql /export/mysql.bak 
+  # If your're using Dmeta/Dportal/Dsso:
+  mongodump -u docker -p docker --authenticationDatabase admin  -o /export/mongo_backup
+  mv /export/mongodb /export/mongodb.bak 
+  
 
 * Step 2. Exit/Kill the container
 * Step 3. Start new container with the new images:
@@ -140,6 +144,9 @@ As of August 8th, 2022 no updates will be made to this container. We prepared ne
   startup
 * Step 5. Import database with the command below:
   mysql -u docker -pdocker dolphinnext < /export/dolphinnext_db_backup.sql
+  # If your're using Dmeta/Dportal/Dsso:
+  mongorestore -u docker -p docker --authenticationDatabase admin /export/mongo_backup
+
 * Step 6. Execute the updateDN script:
   python /export/dolphinnext/scripts/updateDN.py
 
