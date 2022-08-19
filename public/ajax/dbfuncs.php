@@ -7446,7 +7446,7 @@ class dbfuncs
     {
         //check if input exist?
         $input_id = 0;
-        if (!empty($inputName)) {
+        if (isset($inputName) && !is_null($inputName)) {
             $checkIn = $this->checkInput($inputName, $inputType);
             $checkInData = json_decode($checkIn, true);
             if (isset($checkInData[0])) {
