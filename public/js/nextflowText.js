@@ -889,8 +889,16 @@ function getPipelineScript(pipeline_id) {
 function getWhenCond(script) {
     var whenCond = null;
     if (script.match(/when:/)) {
-        if (script.match(/when:(.*)\n(.*)\n/)) {
-            var whenCond = script.match(/when:(.*)\n(.*)\n/)[2];
+        var test1 = script.match(/when:(.*)\n/)
+
+        if (test1[1]) {
+            var test1Val = test1[1];
+            // clean new line and space
+            test1Val = test1Val.replace(/(\r\n|\n|\r| )/gm, "");
+            if (test1Val) whenCond = test1[1]
+        }
+        if (!whenCond && script.match(/when:(.*)\n(.*)\n/)) {
+            whenCond = script.match(/when:(.*)\n(.*)\n/)[2];
             if (whenCond == undefined) {
                 whenCond = null;
             }
