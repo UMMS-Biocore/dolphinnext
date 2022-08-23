@@ -123,7 +123,7 @@ def main():
     conf = getConf()
 
     pull_cmd = "cd "+scriptDir + \
-        "/.. && git fetch && git checkout 2.0 && git pull origin " + \
+        "/.. && git fetch && git checkout origin/2.0 && git pull origin " + \
         args.version + " 2>&1"
     print("INFO: Pulling"+"\nRUN : " + pull_cmd)
     pull_cmd_log = os.popen(pull_cmd).read()
