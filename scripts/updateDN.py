@@ -145,6 +145,7 @@ As of August 8th, 2022 no updates will be made to this container. We prepared ne
 * Step 5. Import database with the command below:
   mysql -u docker -pdocker dolphinnext < /export/dolphinnext_db_backup.sql
   # If your're using Dmeta/Dportal/Dsso:
+  mongo admin -u docker -p docker --eval 'db.grantRolesToUser ( "docker", [ { role: "__system", db: "admin" } ] )' --authenticationDatabase admin
   mongorestore -u docker -p docker --authenticationDatabase admin /export/mongo_backup
 
 * Step 6. Execute the updateDN script:
