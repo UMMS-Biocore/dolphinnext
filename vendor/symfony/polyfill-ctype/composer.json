@@ -1,14 +1,14 @@
 {
-    "name": "symfony/polyfill-php73",
+    "name": "symfony/polyfill-ctype",
     "type": "library",
-    "description": "Symfony polyfill backporting some PHP 7.3+ features to lower PHP versions",
-    "keywords": ["polyfill", "shim", "compatibility", "portable"],
+    "description": "Symfony polyfill for ctype functions",
+    "keywords": ["polyfill", "compatibility", "portable", "ctype"],
     "homepage": "https://symfony.com",
     "license": "MIT",
     "authors": [
         {
-            "name": "Nicolas Grekas",
-            "email": "p@tchwork.com"
+            "name": "Gert de Pagter",
+            "email": "BackEndTea@gmail.com"
         },
         {
             "name": "Symfony Community",
@@ -18,15 +18,20 @@
     "require": {
         "php": ">=7.1"
     },
+    "provide": {
+        "ext-ctype": "*"
+    },
     "autoload": {
-        "psr-4": { "Symfony\\Polyfill\\Php73\\": "" },
-        "files": [ "bootstrap.php" ],
-        "classmap": [ "Resources/stubs" ]
+        "psr-4": { "Symfony\\Polyfill\\Ctype\\": "" },
+        "files": [ "bootstrap.php" ]
+    },
+    "suggest": {
+        "ext-ctype": "For best performance"
     },
     "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
-            "dev-main": "1.23-dev"
+            "dev-main": "1.26-dev"
         },
         "thanks": {
             "name": "symfony/polyfill",

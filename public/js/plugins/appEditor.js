@@ -701,18 +701,28 @@
                 cache: false,
                 success: function(res) {
                     console.log(res)
-                    if (res && res.app_id) {
-                        getAppStatus(settings, callback)
-                    } else if (res && res.message) {
-                        //The app is already running. 
-                        updateLogText(res.message)
-                        progress(100)
+                    if (res.app_url) {
+                        clearInterval(window[elemsID + appType]);
+                        window[elemsID + appType] = null;
+                        progress(100);
                         showAppIcon("stop");
-                    } else {
-                        updateLogText("Error occurred.")
-                        progress(100)
-                        showAppIcon("start");
+                        updateLogText("Running..");
+                        if (callback && typeof callback === 'function') return callback(res.app_url, "");
                     }
+
+
+                    // if (res && res.app_id) {
+                    //     getAppStatus(settings, callback)
+                    // } else if (res && res.message) {
+                    //     //The app is already running. 
+                    //     updateLogText(res.message)
+                    //     progress(100)
+                    //     showAppIcon("stop");
+                    // } else {
+                    //     updateLogText("Error occurred.")
+                    //     progress(100)
+                    //     showAppIcon("start");
+                    // }
                 },
                 error: function(jqXHR, exception) {
                     showAppIcon("start");

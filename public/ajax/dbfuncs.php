@@ -1,6 +1,7 @@
 <?php
 
 use Gettext\Extractors\Po;
+use Symfony\Component\Yaml\Yaml;
 
 require_once(__DIR__ . "/../api/funcs.php");
 require_once(__DIR__ . "/../../config/config.php");
@@ -42,6 +43,8 @@ class dbfuncs
     private $EMAIL_HEADER_VALUE = EMAIL_HEADER_VALUE;
     private $AWS_CONFIG_PATH = "/data/.aws/config";
     private $AWS_CREDENTIALS_PATH = "/data/.aws/credentials";
+    private $APPLICATION_YML_PATH = APPLICATION_YML_PATH;
+    private $APP_URL = APP_URL;
 
     function __construct()
     {
@@ -3787,46 +3790,17 @@ class dbfuncs
         $app_uid = $appData[0]["app_uid"];
         $filename = $appData[0]["filename"];
         $oldStatus = $appData[0]["status"];
+        $container_id = $appData[0]["container_id"];
         $newStatus = "";
         $ret["status"] = $oldStatus;
         $dir = $appData[0]["dir"];
-        $appLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.app/{$filename}.log{$app_uid}", $ownerID));
-        $jupyterServerLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/.app/{$app_uid}_jupyter_server.log", $ownerID));
-        $startupLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/.app/{$app_uid}_startup_stderr.txt", $ownerID));
-        $startupScript = "{$this->run_path}/{$run_log_uuid}/pubweb/.app/{$app_uid}_startup.ipynb";
-        $startupScriptExists = false;
-        // startupLog:
-        if (file_exists($startupScript)) {
-            $startupScriptExists = true;
-        }
-        $ret["log"] = $appLog . "\n" . $jupyterServerLog . "\n" . $startupLog;
+        // $appLog = json_decode($this->getFileContent($run_log_uuid, "pubweb/{$dir}/.app/{$filename}.log{$app_uid}", $ownerID));
+        // $ret["log"] = $appLog;
 
-        if (preg_match("/No such container/i", $appLog) || preg_match("/App successfully terminated/i", $appLog)) {
-            $newStatus = "terminated";
-        } else if (!$startupScriptExists && !empty($appLog) && preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog)) {
-            preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog, $match);
-            $ret["server_url"] = $match[1];
-            $newStatus = "running";
-        } else if ($startupScriptExists && !empty($startupLog) && preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $startupLog) && !empty($appLog) && preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog)) {
-            // first get the jupyter port
-            preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $jupyterServerLog, $match);
-            $jupyterServer  = trim($match[1]);
-            $ret["server_url"] = $match[1];
-            error_log($jupyterServer);
-            // $ret["server_url"] = $jupyterServer;
-            $jupyterServerPort = parse_url($jupyterServer, PHP_URL_PORT);
-            error_log($jupyterServerPort);
-
-            // then get startup app port
-            preg_match("/(http?:\/\/127\.0\.0\.1[^ ]*)[\n]/", $startupLog, $match_startup);
-            $startupServer  = trim($match_startup[1]);
-            error_log($startupServer);
-
-            $startupServerPort = parse_url($startupServer, PHP_URL_PORT);
-            $ret["startup_server_url"] = "http://127.0.0.1:{$jupyterServerPort}/proxy/{$startupServerPort}/";
-            $newStatus = "running";
-        } else if (preg_match("/[\n\r\s]error[\n\r\s:=]/i", $appLog) || preg_match("/command not found/i", $appLog) || preg_match("/Got permission denied while trying to connect/i", $appLog)) {
-            $newStatus = "error";
+        if ($oldStatus == "running") {
+            $spec_id = "{$ownerID}_{$container_id}_{$app_id}";
+            $app_url = $this->APP_URL;
+            $ret["server_url"] = "{$app_url}/app_direct/{$spec_id}";
         }
 
 
@@ -5573,7 +5547,8 @@ class dbfuncs
                 $where = " where u.deleted=0 AND p.deleted=0 AND p.id = '$id' AND (p.owner_id = '$ownerID' OR p.perms = 63 OR (ug.u_id ='$ownerID' and p.perms = 15))";
             }
         }
-        $sql = "SELECT DISTINCT p.owner_id, p.perms, p.group_id, p.id, p.name, p.summary, p.type, p.status, p.image_name, p.date_created, u.username, p.date_modified, IF(p.owner_id='$ownerID',1,0) as own, u.deleted
+
+        $sql = "SELECT DISTINCT p.owner_id, p.perms, p.group_id, p.id, p.name, p.summary, p.type, p.status, p.image_name, p.date_created, u.username, p.date_modified, IF(p.owner_id='$ownerID',1,0) as own, u.deleted, p.container_cmd, p.container_port, p.container_volume, p.target_path, p.websocket_reconnection_mode
                   FROM $this->db.container p
                   INNER JOIN $this->db.users u ON p.owner_id = u.id
                   LEFT JOIN $this->db.user_group ug ON p.group_id=ug.g_id
@@ -5668,6 +5643,14 @@ class dbfuncs
         $sql = "UPDATE $this->db.container SET name= '$name', summary= '$summary', type= '$type',image_name= '$image_name', perms= '$perms', group_id= '$group_id', status= '$status', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
+    function updateContainerDetails($container_cmd, $container_port, $container_volume, $target_path, $websocket_reconnection_mode, $id, $ownerID)
+    {
+        $sql = "UPDATE $this->db.container SET container_cmd= '$container_cmd', container_port= '$container_port', container_volume= '$container_volume',target_path= '$target_path', websocket_reconnection_mode= '$websocket_reconnection_mode', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
+        return self::runSQL($sql);
+    }
+
+
+
     //    ----------- Runs     ---------
     function insertRun($project_pipeline_id, $status, $attempt, $ownerID)
     {
@@ -6100,6 +6083,70 @@ class dbfuncs
             }
             fclose($fp);
         }
+    }
+
+    function updateApplicationYML($runDirParentMachine, $container_id, $app_id, $pUUID, $ownerID)
+    {
+        $spec_id = "";
+        if (!empty($container_id)) {
+            $appData = $this->getContainers($container_id, "", $ownerID);
+            $appData = json_decode($appData, true);
+            // error_log(print_r($appData, TRUE));
+            $spec_id = "{$ownerID}_{$container_id}_{$app_id}";
+            $app_name = $appData[0]["name"];
+            $description = htmlspecialchars_decode($appData[0]["summary"], ENT_QUOTES);
+            $container_volume = trim(htmlspecialchars_decode($appData[0]["container_volume"], ENT_QUOTES));
+            $container_cmd = trim(htmlspecialchars_decode($appData[0]["container_cmd"], ENT_QUOTES));
+            $target_path = trim(htmlspecialchars_decode($appData[0]["target_path"], ENT_QUOTES));
+            $websocket_reconnection_mode = $appData[0]["websocket_reconnection_mode"];
+            $image_name = $appData[0]["image_name"];
+            $container_port = $appData[0]["container_port"];
+            settype($container_port, 'integer');
+            $newSpec = array();
+            $newSpec["id"] = $spec_id;
+            $newSpec["display-name"] = $app_name;
+            $newSpec["description"] = $description;
+            if (!empty($container_volume)) {
+                $newSpec["container-volumes"] = array("{$runDirParentMachine}:$container_volume");
+            }
+            if (!empty($container_volume)) {
+                $newSpec["container-volumes"] = array("{$runDirParentMachine}:$container_volume");
+            }
+            if (!empty($target_path)) $newSpec["target-path"] = $target_path;
+            if (!empty($container_port)) $newSpec["port"] = $container_port;
+            if (!empty($websocket_reconnection_mode)) $newSpec["websocket-reconnection-mode"] = $websocket_reconnection_mode;
+            $newSpec["container-image"] = $image_name;
+        }
+
+        // 1. read config file APPLICATION_YML_PATH
+        //https://www.shinyproxy.io/documentation/configuration/
+        $confPath = $this->APPLICATION_YML_PATH;
+        error_log(print_r($confPath, TRUE));
+
+        if (!file_exists("$confPath")) {
+            $file = fopen("$confPath", 'w') or die("can't open file");
+            fclose($file);
+        }
+
+        $confArr = Yaml::parseFile($confPath);
+        // error_log(print_r($confArr["proxy"]["specs"], TRUE));
+        $specs = $confArr["proxy"]["specs"];
+        $updateCheck = false;
+        for ($i = 0; $i < count($specs); $i++) {
+            $spec = $specs[$i];
+            error_log(print_r($specs[$i], TRUE));
+            error_log(print_r($specs[$i]["id"], TRUE));
+            if ($spec["id"] == $spec_id) {
+                $specs[$i] = $newSpec;
+                $updateCheck = true;
+            }
+        }
+        if (empty($updateCheck)) $specs[] = $newSpec;
+        $confArr["proxy"]["specs"] = $specs;
+
+        $yaml = Yaml::dump($confArr, 10);
+        file_put_contents('/export/dnext_app/shinyproxy-application/application.yml', $yaml);
+        return $spec_id;
     }
 
     function updateAWSCliConfig($amazon_cre_id, $ownerID)
@@ -9274,39 +9321,22 @@ class dbfuncs
         if (!file_exists("$runDir/.app")) {
             mkdir("$runDir/.app", 0777, true);
         }
+        $spec_id = $this->updateApplicationYML($runDirParentMachine, $container_id, $app_id, $pUUID, $ownerID);
+        // TODO: get status from tunnel app
+        $newStatus = "running";
+        $this->updateAppStatus($app_id, $newStatus, $ownerID);
 
-        // Startup command
-        // if filename ends with ipynb then copy file to $runDir/.${pUUID}_startup.ipynb
-        $extension = substr(strrchr($filename, '.'), 1);
-        if ($extension == "ipynb" && $filename == "startup.ipynb") {
 
-            $startup_file = "{$runDir}/.app/${pUUID}_startup.ipynb";
-            $this->writeFile($startup_file, $text, "w");
-        }
-
-        // docker command
         $log = "{$targetDir}/{$filename}.log{$pUUID}";
-        $cmd = "";
         settype($time, 'integer');
         $time_in_sec = $time * 60;
-        if ($container_type == "docker" && !empty($image_name)) {
-            $container_name = "{$pUUID}_{$ownerID}";
-            //docker run -d --privileged --rm -p 8888:8888  -v /Users/onuryukselen/projects/biocore/DolphinNext/github/dolphinnext/public/tmp/pub/1N1WP05kAZdaNrEGNtRs6xAXnCoJg5/pubweb:/home/jovyan/work  -u root jupyter:1.0 
-            $cmd = "docker run --name {$container_name} -d --privileged -e DNEXT_APP_ID='{$pUUID}' -e DNEXT_RUN_TIME='{$time_in_sec}' --rm -p 8888:8888  -v {$runDirParentMachine}:/home/jovyan/work  -u root {$image_name}  >> {$log} 2>&1 & echo $! &";
-        }
-        $this->writeFile($log, $cmd, "w");
-        $pid = shell_exec($cmd);
-        $pid = trim($pid);
-        error_log($pid);
-        $this->writeFile($log, $pid, "a");
-        if (!empty($pid)) {
-            $this->updateAppPid($app_id, $pid, $ownerID);
-        } else {
-            $ret["message"] = "App PID not found.";
-        }
+        $app_url = $this->APP_URL;
         $ret["uid"] = $pUUID;
+        $ret["app_url"] = "{$app_url}/app_direct/{$spec_id}";
         return $ret;
     }
+
+
 
 
     function getUUIDAPI($data, $type, $id)

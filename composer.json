@@ -2,10 +2,11 @@
     "name": "umms/dolphinnext",
     "type": "project",
     "require": {
-        "okta/jwt-verifier": "^1.1",
-        "firebase/php-jwt": "^5.4",
-        "guzzlehttp/psr7": "^2.0",
-        "phpmailer/phpmailer": "^6.5"
+        "okta/jwt-verifier": "1.1",
+        "firebase/php-jwt": "5.4",
+        "guzzlehttp/psr7": "2.0",
+        "phpmailer/phpmailer": "6.5",
+        "symfony/yaml": "^6.1"
     },
     "license": "MIT",
     "autoload": {

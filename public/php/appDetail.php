@@ -59,21 +59,78 @@ session_write_close();
     <div class="form-group">
         <label class="col-sm-2 control-label">Container Type
         </label>
-        <div class="col-sm-4">
+        <div class="col-sm-10">
             <select class="fbtn btn-default form-control" name="type">
                 <option value="docker">Docker</option>
                 <option value="singularity">Singularity</option>
             </select>
         </div>
+    </div>
+    <div class="form-group">
         <label class="col-sm-2 control-label">Status
         </label>
-        <div class="col-sm-4">
+        <div class="col-sm-10">
             <select class="fbtn btn-default form-control" name="status">
                 <option value="active" selected>Active</option>
                 <option value="inactive">Inactive</option>
             </select>
         </div>
     </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Container Command (optional)
+        </label>
+        <div class="col-sm-10">
+            <input type="text" class="form-control" name="container_cmd"></input>
+            <span class="small">
+                The command that will be run when the Docker container is launched; typically this command will be the R command ("R") as well as the command that will launch the Shiny app <code>("-e", "shinyproxy::run_01_hello()");</code>
+            </span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Container Port (optional)
+        </label>
+        <div class="col-sm-10">
+            <input type="text" class="form-control" name="container_port"></input>
+            <span class="small">
+                The port on which the app is listening in the container; this setting will override the default port (3838)
+            </span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Container Volume (optional)
+        </label>
+        <div class="col-sm-10">
+            <input type="text" class="form-control" name="container_volume"></input>
+            <span class="small">
+                Docker volume to mount into the container.
+            </span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Target Path (optional)
+        </label>
+        <div class="col-sm-10">
+            <input type="text" class="form-control" name="target_path"></input>
+            <span class="small">
+                The (context) path on which the app is available. By default this is the root path (/) which suffices for most apps (especially Shiny apps).
+            </span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Websocket-reconnection-mode (optional)
+        </label>
+        <div class="col-sm-10">
+            <select class="fbtn btn-default form-control" name="websocket_reconnection_mode">
+                <option selected value="None" selected>None (default)</option>
+                <option value="Confirm">Confirm</option>
+                <option value="Auto">Auto</option>
+            </select>
+            <span class="small">
+                ShinyProxy contains a mechanism for restoring disturbed connections. The mode can be set to one of None, Confirm or Auto. In the first case, the mechanism is disabled and ShinyProxy will not try to restore the connection with the app. Using Confirm, ShinyProxy will first ask the user for confirmation before trying to restore the connection. Using Auto, ShinyProxy will automatically try to reconnect to the app without asking the user for confirmation.
+            </span>
+        </div>
+    </div>
+
 
     <div class="form-group">
         <div class="col-sm-6">

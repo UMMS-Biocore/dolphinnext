@@ -1917,15 +1917,24 @@ else if ($p == "saveToken") {
     $perms = $_REQUEST['perms'];
     $group_id = $_REQUEST['group_id'];
     settype($group_id, 'integer');
-    if (!empty($files) && !empty($id)) {
-        $savedFiles = $db->saveAppFiles($files, $id, $ownerID);
-        if (empty($savedFiles)) die(json_encode("Files couldn't be saved!"));
-    }
-
     if (!empty($id)) {
         $data = $db->updateContainer($id, $name, $summary, $type, $image_name, $status, $group_id, $perms, $ownerID);
     } else {
         $data = $db->insertContainer($name, $summary, $type, $image_name, $status, $group_id, $perms, $ownerID);
+    }
+
+    $container_volume = isset($_REQUEST['container_volume']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['container_volume']), ENT_QUOTES)) : "";
+    $container_cmd = isset($_REQUEST['container_cmd']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['container_cmd']), ENT_QUOTES)) : "";
+    $target_path = isset($_REQUEST['target_path']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['target_path']), ENT_QUOTES)) : "";
+    $container_port = isset($_REQUEST['container_port']) ? $_REQUEST['container_port'] : "";
+    $websocket_reconnection_mode = isset($_REQUEST['websocket_reconnection_mode']) ? $_REQUEST['websocket_reconnection_mode'] : "";
+    if (!empty($id) && isset($_REQUEST['container_cmd'])) {
+        $db->updateContainerDetails($container_cmd, $container_port, $container_volume, $target_path, $websocket_reconnection_mode, $id, $ownerID);
+    }
+
+    if (!empty($files) && !empty($id)) {
+        $savedFiles = $db->saveAppFiles($files, $id, $ownerID);
+        if (empty($savedFiles)) die(json_encode("Files couldn't be saved!"));
     }
 } else if ($p == "savePublicInput") {
     $name = $_REQUEST['name'];
@@ -1967,7 +1976,10 @@ else if ($p == "saveToken") {
     $checkApp = json_decode($db->checkApp($type, $uuid, $location, $ownerID), true);
     if (!empty($checkApp[0])) {
         $app_id = $checkApp[0]["id"];
-        $data = $db->terminateApp($app_id, $ownerID);
+        // $data = $db->terminateApp($app_id, $ownerID);
+        // TODO: get status from tunnel app
+        $newStatus = "terminated";
+        $db->updateAppStatus($app_id, $newStatus, $ownerID);
     }
 } else if ($p == "saveUserGroup") {
     $u_id = $_REQUEST['u_id'];

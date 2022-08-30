@@ -25,7 +25,7 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 class TranslationDataCollector extends DataCollector implements LateDataCollectorInterface
 {
-    private $translator;
+    private DataCollectorTranslator $translator;
 
     public function __construct(DataCollectorTranslator $translator)
     {
@@ -62,34 +62,22 @@ class TranslationDataCollector extends DataCollector implements LateDataCollecto
         $this->data = [];
     }
 
-    /**
-     * @return array|Data
-     */
-    public function getMessages()
+    public function getMessages(): array|Data
     {
         return $this->data['messages'] ?? [];
     }
 
-    /**
-     * @return int
-     */
-    public function getCountMissings()
+    public function getCountMissings(): int
     {
         return $this->data[DataCollectorTranslator::MESSAGE_MISSING] ?? 0;
     }
 
-    /**
-     * @return int
-     */
-    public function getCountFallbacks()
+    public function getCountFallbacks(): int
     {
         return $this->data[DataCollectorTranslator::MESSAGE_EQUALS_FALLBACK] ?? 0;
     }
 
-    /**
-     * @return int
-     */
-    public function getCountDefines()
+    public function getCountDefines(): int
     {
         return $this->data[DataCollectorTranslator::MESSAGE_DEFINED] ?? 0;
     }
@@ -110,7 +98,7 @@ class TranslationDataCollector extends DataCollector implements LateDataCollecto
     /**
      * {@inheritdoc}
      */
-    public function getName()
+    public function getName(): string
     {
         return 'translation';
     }

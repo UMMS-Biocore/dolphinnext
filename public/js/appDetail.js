@@ -28,9 +28,13 @@ function loadAppDetails(app_id) {
             $('#app-title').val(decodeHtml(s[0].name));
             $('#ownUserName').text(s[0].username);
             $('#projectSum').val(decodeHtml(s[0].summary));
-
             $('#datecreatedPj').text(s[0].date_created);
             $('#lasteditedPj').text(s[0].date_modified);
+            console.log(s[0])
+            s[0].container_cmd = decodeHtml(s[0].container_cmd)
+            s[0].container_volume = decodeHtml(s[0].container_volume)
+            s[0].target_path = decodeHtml(s[0].target_path)
+
             fillFormByName('#appForm', 'input, select, textarea', s[0]);
 
             resizeForText.call($inputText, decodeHtml(s[0].name));
@@ -54,7 +58,7 @@ function saveAppIcon() {
     formObj.summary = projectSummary
     formObj.p = "saveContainer"
     formObj.files = combineTextEditor('containerfiles')
-    console.log(formObj.files)
+    console.log(formObj)
 
     $.ajax({
         type: "POST",

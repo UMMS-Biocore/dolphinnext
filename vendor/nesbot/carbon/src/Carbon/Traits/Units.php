@@ -8,6 +8,7 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace Carbon\Traits;
 
 use Carbon\CarbonConverterInterface;
@@ -58,8 +59,6 @@ trait Units
             // @call addRealUnit
             case 'millisecond':
                 return $this->addRealUnit('microsecond', $value * static::MICROSECONDS_PER_MILLISECOND);
-
-                break;
 
             // @call addRealUnit
             case 'second':
@@ -166,7 +165,7 @@ trait Units
             'weekday',
         ];
 
-        return \in_array($unit, $modifiableUnits) || \in_array($unit, static::$units);
+        return \in_array($unit, $modifiableUnits, true) || \in_array($unit, static::$units, true);
     }
 
     /**
@@ -200,21 +199,6 @@ trait Units
         if (\is_string($unit) && \func_num_args() === 1) {
             $unit = CarbonInterval::make($unit);
         }
-
-        // Can be removed if https://bugs.php.net/bug.php?id=81106
-        // is fixed
-        // @codeCoverageIgnoreStart
-        if (
-            $unit instanceof DateInterval &&
-            version_compare(PHP_VERSION, '8.1.0-dev', '>=') &&
-            ($unit->f < 0 || $unit->f >= 1)
-        ) {
-            $unit = clone $unit;
-            $seconds = floor($unit->f);
-            $unit->f -= $seconds;
-            $unit->s += (int) $seconds;
-        }
-        // @codeCoverageIgnoreEnd
 
         if ($unit instanceof CarbonConverterInterface) {
             return $this->resolveCarbon($unit->convertDate($this, false));
@@ -278,7 +262,7 @@ trait Units
                     /** @var static $date */
                     $date = $date->addDays($sign);
 
-                    while (\in_array($date->dayOfWeek, $weekendDays)) {
+                    while (\in_array($date->dayOfWeek, $weekendDays, true)) {
                         $date = $date->addDays($sign);
                     }
                 }
@@ -288,14 +272,14 @@ trait Units
             }
 
             $timeString = $date->toTimeString();
-        } elseif ($canOverflow = \in_array($unit, [
+        } elseif ($canOverflow = (\in_array($unit, [
                 'month',
                 'year',
             ]) && ($overflow === false || (
                 $overflow === null &&
                 ($ucUnit = ucfirst($unit).'s') &&
                 !($this->{'local'.$ucUnit.'Overflow'} ?? static::{'shouldOverflow'.$ucUnit}())
-            ))) {
+            )))) {
             $day = $date->day;
         }
 
@@ -321,11 +305,13 @@ trait Units
         $date = $date->modify("$value $unit");
 
         if (isset($timeString)) {
-            return $date->setTimeFromTimeString($timeString);
+            $date = $date->setTimeFromTimeString($timeString);
+        } elseif (isset($canOverflow, $day) && $canOverflow && $day !== $date->day) {
+            $date = $date->modify('last day of previous month');
         }
 
-        if (isset($canOverflow, $day) && $canOverflow && $day !== $date->day) {
-            $date = $date->modify('last day of previous month');
+        if (!$date) {
+            throw new UnitException('Unable to add unit '.var_export(\func_get_args(), true));
         }
 
         return $date;

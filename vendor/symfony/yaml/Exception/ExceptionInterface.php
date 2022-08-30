@@ -9,6 +9,13 @@
  * file that was distributed with this source code.
  */
 
-class JsonException extends Exception
+namespace Symfony\Component\Yaml\Exception;
+
+/**
+ * Exception interface for all exceptions thrown by the component.
+ *
+ * @author Fabien Potencier <fabien@symfony.com>
+ */
+interface ExceptionInterface extends \Throwable
 {
 }
