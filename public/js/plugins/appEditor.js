@@ -642,7 +642,7 @@
                     progress(100);
                     showAppIcon("stop");
                     updateLogText("Running..");
-                    if (callback && typeof callback === 'function') return callback(statusData.server_url, statusData.startup_server_url);
+                    if (callback && typeof callback === 'function') return callback(statusData.server_url, "");
                     // app is not started yet
                 } else if (statusData.status == "initiated") {
                     showAppIcon("stop");
