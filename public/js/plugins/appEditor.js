@@ -361,11 +361,11 @@
                         }, 5000);
 
                     }
-                    // if (iframe && iframe.attr("src")) {
-                    //     iframe[0].contentWindow.location.reload(true)
-                    // } else {
-                    //     iframe.attr("src", orgPath)
-                    // }
+                    if (iframe && iframe.attr("src")) {
+                        iframe[0].contentWindow.location.reload(true)
+                    } else {
+                        iframe.attr("src", orgPath)
+                    }
                 }
             } else {
                 updateLogText("Error Occured.")
