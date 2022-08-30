@@ -6106,8 +6106,8 @@ class dbfuncs
             $newSpec["id"] = $spec_id;
             $newSpec["display-name"] = $app_name;
             $newSpec["description"] = $description;
-            if (!empty($container_volume)) {
-                $newSpec["container-volumes"] = array("{$runDirParentMachine}:$container_volume");
+            if (!empty($container_cmd)) {
+                $newSpec["container-cmd"] = array_values(array_filter(explode(" ", $container_cmd), fn ($value) => !is_null($value) && $value !== ''));
             }
             if (!empty($container_volume)) {
                 $newSpec["container-volumes"] = array("{$runDirParentMachine}:$container_volume");
