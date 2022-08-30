@@ -1862,7 +1862,7 @@ else if ($p == "saveToken") {
     $status = "initiated";
     // 1. check if app exists
     $checkApp = json_decode($db->checkApp($type, $uuid, $location, $ownerID), true);
-    //insert into file_project table
+    //insert into app table
     if (!isset($checkApp[0])) {
         $insertApp = $db->insertApp($status, $type, $uuid, $location, $dir, $filename, $container_id, $memory, $cpu, $time, $pUUID, $ownerID);
         $app_id = json_decode($insertApp, true)["id"];
@@ -1926,10 +1926,11 @@ else if ($p == "saveToken") {
     $container_volume = isset($_REQUEST['container_volume']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['container_volume']), ENT_QUOTES)) : "";
     $container_cmd = isset($_REQUEST['container_cmd']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['container_cmd']), ENT_QUOTES)) : "";
     $target_path = isset($_REQUEST['target_path']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['target_path']), ENT_QUOTES)) : "";
+    $container_env = isset($_REQUEST['container_env']) ? addslashes(htmlspecialchars(urldecode($_REQUEST['container_env']), ENT_QUOTES)) : "";
     $container_port = isset($_REQUEST['container_port']) ? $_REQUEST['container_port'] : "";
     $websocket_reconnection_mode = isset($_REQUEST['websocket_reconnection_mode']) ? $_REQUEST['websocket_reconnection_mode'] : "";
     if (!empty($id) && isset($_REQUEST['container_cmd'])) {
-        $db->updateContainerDetails($container_cmd, $container_port, $container_volume, $target_path, $websocket_reconnection_mode, $id, $ownerID);
+        $db->updateContainerDetails($container_cmd, $container_port, $container_volume, $target_path, $websocket_reconnection_mode, $id, $container_env, $ownerID);
     }
 
     if (!empty($files) && !empty($id)) {

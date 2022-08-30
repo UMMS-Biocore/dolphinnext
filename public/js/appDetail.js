@@ -34,6 +34,7 @@ function loadAppDetails(app_id) {
             s[0].container_cmd = decodeHtml(s[0].container_cmd)
             s[0].container_volume = decodeHtml(s[0].container_volume)
             s[0].target_path = decodeHtml(s[0].target_path)
+            s[0].container_env = decodeHtml(s[0].container_env)
 
             fillFormByName('#appForm', 'input, select, textarea', s[0]);
 
@@ -56,6 +57,11 @@ function saveAppIcon() {
     formObj.name = app_name
     formObj.id = app_id
     formObj.summary = projectSummary
+    formObj.container_volume = encodeURIComponent(formObj.container_volume)
+    formObj.target_path = encodeURIComponent(formObj.target_path)
+    formObj.container_cmd = encodeURIComponent(formObj.container_cmd)
+    formObj.container_env = encodeURIComponent(formObj.container_env)
+
     formObj.p = "saveContainer"
     formObj.files = combineTextEditor('containerfiles')
     console.log(formObj)

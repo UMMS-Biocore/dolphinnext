@@ -130,6 +130,18 @@ session_write_close();
             </span>
         </div>
     </div>
+    <div class="form-group">
+        <label class="col-sm-2 control-label">Container Environment (optional)
+        </label>
+        <div class="col-sm-10">
+            <textarea type="text" class="form-control" name="container_env"></textarea>
+            <span class="small">
+                One or more environment variables specified as the following example:</br>
+                VAR1: VALUE1</br>
+                VAR2: VALUE2
+            </span>
+        </div>
+    </div>
 
 
     <div class="form-group">

@@ -5548,7 +5548,7 @@ class dbfuncs
             }
         }
 
-        $sql = "SELECT DISTINCT p.owner_id, p.perms, p.group_id, p.id, p.name, p.summary, p.type, p.status, p.image_name, p.date_created, u.username, p.date_modified, IF(p.owner_id='$ownerID',1,0) as own, u.deleted, p.container_cmd, p.container_port, p.container_volume, p.target_path, p.websocket_reconnection_mode
+        $sql = "SELECT DISTINCT p.owner_id, p.perms, p.group_id, p.id, p.name, p.summary, p.type, p.status, p.image_name, p.date_created, u.username, p.date_modified, IF(p.owner_id='$ownerID',1,0) as own, u.deleted, p.container_cmd, p.container_port, p.container_volume, p.target_path, p.websocket_reconnection_mode, p.container_env
                   FROM $this->db.container p
                   INNER JOIN $this->db.users u ON p.owner_id = u.id
                   LEFT JOIN $this->db.user_group ug ON p.group_id=ug.g_id
@@ -5643,9 +5643,9 @@ class dbfuncs
         $sql = "UPDATE $this->db.container SET name= '$name', summary= '$summary', type= '$type',image_name= '$image_name', perms= '$perms', group_id= '$group_id', status= '$status', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    function updateContainerDetails($container_cmd, $container_port, $container_volume, $target_path, $websocket_reconnection_mode, $id, $ownerID)
+    function updateContainerDetails($container_cmd, $container_port, $container_volume, $target_path, $websocket_reconnection_mode, $id, $container_env, $ownerID)
     {
-        $sql = "UPDATE $this->db.container SET container_cmd= '$container_cmd', container_port= '$container_port', container_volume= '$container_volume',target_path= '$target_path', websocket_reconnection_mode= '$websocket_reconnection_mode', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
+        $sql = "UPDATE $this->db.container SET container_cmd= '$container_cmd', container_port= '$container_port', container_volume= '$container_volume',target_path= '$target_path', websocket_reconnection_mode= '$websocket_reconnection_mode', container_env= '$container_env', last_modified_user = '$ownerID', date_modified = now() WHERE id = '$id' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
 
@@ -6099,6 +6099,7 @@ class dbfuncs
             $container_cmd = trim(htmlspecialchars_decode($appData[0]["container_cmd"], ENT_QUOTES));
             $target_path = trim(htmlspecialchars_decode($appData[0]["target_path"], ENT_QUOTES));
             $websocket_reconnection_mode = $appData[0]["websocket_reconnection_mode"];
+            $container_env = $appData[0]["container_env"];
             $image_name = $appData[0]["image_name"];
             $container_port = $appData[0]["container_port"];
             settype($container_port, 'integer');
@@ -6111,6 +6112,10 @@ class dbfuncs
             }
             if (!empty($container_volume)) {
                 $newSpec["container-volumes"] = array("{$runDirParentMachine}:$container_volume");
+            }
+            if (!empty($container_env)) {
+                $value = Yaml::parse($container_env);
+                $newSpec["container-env"] = $value;
             }
             if (!empty($target_path)) $newSpec["target-path"] = $target_path;
             if (!empty($container_port)) $newSpec["port"] = $container_port;
@@ -6127,7 +6132,7 @@ class dbfuncs
             $file = fopen("$confPath", 'w') or die("can't open file");
             fclose($file);
         }
-
+        //https://symfony.com/doc/current/components/yaml.html
         $confArr = Yaml::parseFile($confPath);
         // error_log(print_r($confArr["proxy"]["specs"], TRUE));
         $specs = $confArr["proxy"]["specs"];
