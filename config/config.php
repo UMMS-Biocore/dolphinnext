@@ -191,10 +191,11 @@ define('SHOW_DMETA', $SHOW_DMETA);
 define('DMETA_URL', $DMETA_URL);
 define('DMETA_LABEL', $DMETA_LABEL);
 
-$appsConf = $secRaw['APPS'];
 $APPLICATION_YML_PATH = "";
 $APP_URL = "";
-if (!empty($appsConf)) {
+
+if (!empty($secRaw['APPS'])) {
+    $appsConf = $secRaw['APPS'];
     if (isset($appsConf['APPLICATION_YML_PATH'])) $APPLICATION_YML_PATH = $appsConf['APPLICATION_YML_PATH'];
     if (isset($appsConf['APP_URL'])) $APP_URL = $appsConf['APP_URL'];
 }

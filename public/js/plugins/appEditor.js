@@ -354,13 +354,13 @@
                 } else {
                     var w = window.open();
                     w.location = orgPath;
-                    if (startup_server_url) {
-                        setTimeout(function() {
-                            var w = window.open();
-                            w.location = startup_server_url;
-                        }, 5000);
+                    // if (startup_server_url) {
+                    //     setTimeout(function() {
+                    //         var w = window.open();
+                    //         w.location = startup_server_url;
+                    //     }, 5000);
 
-                    }
+                    // }
                     if (iframe && iframe.attr("src")) {
                         iframe[0].contentWindow.location.reload(true)
                     } else {
