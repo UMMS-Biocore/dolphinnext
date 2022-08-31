@@ -24,7 +24,6 @@ if (!empty($sec)) {
 $secConf = $secRaw['CONFIG'];
 if (!empty($secConf)) {
     $CENTRAL_API_URL = "https://www.dolphinnext.com";
-    $MOUNTED_VOLUME = isset($secConf['MOUNTED_VOLUME']) ? $secConf['MOUNTED_VOLUME'] : "";
     $DEBROWSER_URL = isset($secConf['DEBROWSER_URL']) ? $secConf['DEBROWSER_URL'] : "";
     $OCPU_URL = isset($secConf['OCPU_URL']) ? $secConf['OCPU_URL'] : "";
     $OCPU_PUBWEB_URL = isset($secConf['OCPU_PUBWEB_URL']) ? $secConf['OCPU_PUBWEB_URL'] : "";
@@ -54,7 +53,6 @@ if (!empty($secConf)) {
     $EMAIL_PORT = isset($secConf['EMAIL_PORT']) ? $secConf['EMAIL_PORT'] : "";
 
     define('TIMEZONE', $TIMEZONE);
-    define('MOUNTED_VOLUME', $MOUNTED_VOLUME);
     define('RUNPATH', $secConf['RUNPATH']);
     define('TEMPPATH', $secConf['TEMPPATH']);
     define('API_URL', $secConf['API_URL']);
@@ -191,16 +189,23 @@ define('SHOW_DMETA', $SHOW_DMETA);
 define('DMETA_URL', $DMETA_URL);
 define('DMETA_LABEL', $DMETA_LABEL);
 
+
+/////////// APPS SECTION  /////////////////
+
 $APPLICATION_YML_PATH = "";
 $APP_URL = "";
-
+$MOUNTED_VOLUME = "";
 if (!empty($secRaw['APPS'])) {
     $appsConf = $secRaw['APPS'];
     if (isset($appsConf['APPLICATION_YML_PATH'])) $APPLICATION_YML_PATH = $appsConf['APPLICATION_YML_PATH'];
     if (isset($appsConf['APP_URL'])) $APP_URL = $appsConf['APP_URL'];
+    if (isset($appsConf['MOUNTED_VOLUME'])) $APP_URL = $appsConf['MOUNTED_VOLUME'];
 }
 define('APPLICATION_YML_PATH', $APPLICATION_YML_PATH);
 define('APP_URL', $APP_URL);
+define('MOUNTED_VOLUME', $MOUNTED_VOLUME);
+
+////////////////////////////////////////////
 
 
 $line = fgets(fopen(__DIR__ . "/../NEWS", 'r'));

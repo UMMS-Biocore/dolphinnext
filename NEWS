@@ -1,5 +1,6 @@
 30.08.2021 Version 1.4.5
 Container Environment field added to apps.
+MOUNTED_VOLUME parameter moved to APPS section in .sec file.
 
 30.08.2021 Version 1.4.4
 Kubernetes app support initiated.
