@@ -349,7 +349,8 @@ if ($p == "saveRun") {
     $duration = isset($_REQUEST['duration']) ? $_REQUEST['duration'] : "";
     if (!empty($ownerID)) {
         $db->updateRunLog($project_pipeline_id, $run_status, $duration, $ownerID);
-        $data = $db->updateRunStatus($project_pipeline_id, $run_status, $ownerID);
+        $errorIgnored = false;
+        $data = $db->updateRunStatus($project_pipeline_id, $run_status, $errorIgnored, $ownerID);
         // cloud check triggerShutdown
         $runDataJS = $db->getLastRunData($project_pipeline_id);
         if (!empty(json_decode($runDataJS, true))) {
@@ -905,7 +906,8 @@ else if ($p == "saveToken") {
         }
     }
     $db->updateProPipeLastRunUUID($project_pipeline_id, $last_run_uuid);
-    $db->updateRunStatus($project_pipeline_id, $run_status, $ownerID);
+    $errorIgnored = false;
+    $db->updateRunStatus($project_pipeline_id, $run_status, $errorIgnored, $ownerID);
 } else if ($p == "removeProjectInput") {
     $data = $db->removeProjectInput($id);
 } else if ($p == "removeInput") {

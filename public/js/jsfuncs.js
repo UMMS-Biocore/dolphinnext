@@ -882,6 +882,26 @@ if ($('#signinbtn').length && $('#basepathinfo').attr('sso_login') === "1") {
     });
 }
 
+const updatePermsView = (perms_dropdown) => {
+    // permsPipe-> groupSelPipeDiv
+    // permsRun-> groupsDiv
+    // permsPro-> groupSelProDiv
+    var curr_perms = $(`#${perms_dropdown}`).val();
+    var changeDiv = ""
+    if (perms_dropdown == "permsPipe") {
+        changeDiv = "groupSelPipeDiv"
+    } else if (perms_dropdown == "permsRun") {
+        changeDiv = "groupsDiv"
+    } else if (perms_dropdown == "permsPro") {
+        changeDiv = "groupSelProDiv"
+    }
+    if (curr_perms && curr_perms == "15") {
+        $(`#${changeDiv}`).css("display", "block")
+    } else {
+        $(`#${changeDiv}`).css("display", "none")
+    }
+}
+
 
 // open child window for SSO if user clicks on sign-in button
 //if ($('#ssosigninbtn').length && $('#basepathinfo').attr('sso_login') === "1") {
@@ -1069,12 +1089,13 @@ $(document).ready(function() {
             return [warnUser, infoText];
         }
 
+
+
         $(document).on('focus', '.permscheck', function() {
             previousOpt = $(this).children("option:selected");
         }).on('change', '.permscheck', async function(event) {
             var dropdownID = this.id;
             var idObj = {};
-            console.log(dropdownID)
             if (dropdownID == "permsPipe" || dropdownID == "groupSelPipe") {
                 var selGroup = $("#groupSelPipe").val();
                 var selPerm = $("#permsPipe").val();
@@ -1138,7 +1159,8 @@ $(document).ready(function() {
                     }
                 }
             }
-            //reasign previousOpt value after change
+            updatePermsView(dropdownID)
+                //reasign previousOpt value after change
             previousOpt = $(this).children("option:selected");
         });
     });

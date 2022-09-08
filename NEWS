@@ -1,3 +1,8 @@
+02.08.2021 Version 1.4.6
+Group permission dropdown is not displayed when only me or everyone permission is selected for run, process, and pipeline. 
+Ignored jobs notified with e-mail.
+Bug fixed for MOUNTED_VOLUME config parameter.
+
 30.08.2021 Version 1.4.5
 Container Environment field added to apps.
 MOUNTED_VOLUME parameter moved to APPS section in .sec file.

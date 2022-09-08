@@ -463,6 +463,7 @@ function loadSelectedProcess(selProcessId) {
     $(formValues[3]).val(showProcess.name);
     $(formValues[5]).val(decodeHtml(showProcess.summary));
     $('#permsPro').val(showProcess.perms);
+    updatePermsView("permsPro");
     if (showProcess.test_work_dir) $('#test_work_dir').val(showProcess.test_work_dir);
     if (showProcess.docker_check !== null) updateCheckBox("#docker_check", showProcess.docker_check)
     if (showProcess.singu_check !== null) updateCheckBox("#singu_check", showProcess.singu_check)
@@ -1524,6 +1525,8 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     $('#importPipeline').css('display', 'inline');
                     $('#exportPipeline').css('display', 'inline');
                     $('#pipeMenuGroupBottom').css('display', 'inline');
+                    updatePermsView("permsPipe")
+
                     editorPipeFooter.setReadOnly(false);
                     editorPipeHeader.setReadOnly(false);
                 }
@@ -1582,6 +1585,8 @@ function loadPipelineDetails(pipeline_id, usRole) {
                 }
                 // permissions
                 $('#permsPipe').val(pData[0].perms);
+                updatePermsView("permsPipe")
+
                 if (pData[0].pin === 'true') {
                     $('#pin').attr('checked', true);
                 } else if (pData[0].pin === "false") {

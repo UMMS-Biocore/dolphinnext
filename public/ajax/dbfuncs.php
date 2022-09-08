@@ -2071,7 +2071,8 @@ class dbfuncs
         $this->writeLog($uuid, $message, 'a', 'serverlog.txt');
         if (!empty($project_pipeline_id)) {
             $this->updateRunLog($project_pipeline_id, "Error", "", $ownerID);
-            $this->updateRunStatus($project_pipeline_id, "Error", $ownerID);
+            $errorIgnored = false;
+            $this->updateRunStatus($project_pipeline_id, "Error", $errorIgnored, $ownerID);
         }
         die(json_encode($message));
     }
@@ -2386,7 +2387,8 @@ class dbfuncs
         }
         $ret['next_submit_pid'] = $next_submit_pid;
         $this->updateRunLog($project_pipeline_id, "Waiting", "", $ownerID);
-        $this->updateRunStatus($project_pipeline_id, "Waiting", $ownerID);
+        $errorIgnored = false;
+        $this->updateRunStatus($project_pipeline_id, "Waiting", $errorIgnored, $ownerID);
         return json_encode($ret);
     }
 
@@ -2819,7 +2821,8 @@ class dbfuncs
         $attempt += 1;
         if (isset($checkarray[0])) {
             $this->updateRunAttempt($project_pipeline_id, $attempt, $ownerID);
-            $this->updateRunStatus($project_pipeline_id, $status, $ownerID);
+            $errorIgnored = false;
+            $this->updateRunStatus($project_pipeline_id, $status, $errorIgnored, $ownerID);
             $this->updateLastRunDate($project_pipeline_id, $ownerID);
             $this->updateRunPid($project_pipeline_id, "0", $ownerID);
             $this->updateRunSessionUUID("", "", $project_pipeline_id, $ownerID);
@@ -4068,13 +4071,21 @@ class dbfuncs
                     }
                 }
                 if (!empty($newRunStatus)) {
-                    // send email for scheduled jobs
+                    // send email for recently started scheduled jobs
                     if ($newRunStatus == "NextRun" && $runStatus !== "NextRun" && $run_type == "auto") {
-                        $this->sendRunStatusEmail($newRunStatus, $project_pipeline_id, $curr_ownerID);
+                        $errorIgnored = false;
+                        if (preg_match("/-- Error is ignored/i", $nextflowLog)) {
+                            $errorIgnored = true;
+                        }
+                        $this->sendRunStatusEmail($newRunStatus, $project_pipeline_id, $errorIgnored, $curr_ownerID);
                     }
 
                     if (!empty($project_pipeline_id)) {
-                        $setStatus = $this->updateRunStatus($project_pipeline_id, $newRunStatus, $ownerID);
+                        $errorIgnored = false;
+                        if (preg_match("/-- Error is ignored/i", $nextflowLog)) {
+                            $errorIgnored = true;
+                        }
+                        $setStatus = $this->updateRunStatus($project_pipeline_id, $newRunStatus, $errorIgnored, $ownerID);
                         $setLog = $this->updateRunLog($project_pipeline_id, $newRunStatus, $duration, $ownerID);
                     } else if (!empty($process_id)) {
                         $setStatus = $this->updateProcessRunStatus($process_id, $newRunStatus, $ownerID);
@@ -5750,7 +5761,7 @@ class dbfuncs
         $sql = "UPDATE $this->db.app SET status='$status', date_modified= now(), last_modified_user ='$ownerID'  WHERE id = '$app_id' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
     }
-    function updateRunStatus($project_pipeline_id, $status, $ownerID)
+    function updateRunStatus($project_pipeline_id, $status, $errorIgnored, $ownerID)
     {
         $curr_ownerID = $this->queryAVal("SELECT owner_id FROM $this->db.project_pipeline WHERE id='$project_pipeline_id'");
         $permCheck = $this->checkUserOwnPerm($curr_ownerID, $ownerID);
@@ -5763,7 +5774,7 @@ class dbfuncs
             if (!empty($runStat)) {
                 $oldStatus = $runStat[0]->{"run_status"};
                 if ($oldStatus != $status) {
-                    $this->sendRunStatusEmail($status, $project_pipeline_id, $curr_ownerID);
+                    $this->sendRunStatusEmail($status, $project_pipeline_id, $errorIgnored, $curr_ownerID);
                 }
             }
         }
@@ -7736,7 +7747,7 @@ class dbfuncs
     }
 
     //Send Email to user if status is NextErr,NextSuc or Error
-    function sendRunStatusEmail($status, $project_pipeline_id, $ownerID)
+    function sendRunStatusEmail($status, $project_pipeline_id, $errorIgnored, $ownerID)
     {
         $userData = json_decode($this->getUserById($ownerID));
         $userRole = $this->getUserRoleVal($ownerID);
@@ -7781,12 +7792,18 @@ class dbfuncs
                 if ($status == "NextSuc") {
                     $subject = "RUN $project_pipeline_id in DolphinNext Completed";
                     $initialText = "Your DolphinNext run $project_pipeline_id successfully completed!";
+                    if ($errorIgnored == true) {
+                        $initialText .= " However, one or more submitted jobs have silently failed.";
+                    }
                 } else if ($status == "NextErr" || $status == "Error") {
                     $subject = "RUN $project_pipeline_id in DolphinNext Exited";
                     $initialText = "Your DolphinNext run $project_pipeline_id has failed.";
                 } else if ($status == "NextRun") {
                     $subject = "RUN $project_pipeline_id in DolphinNext initiated.";
                     $initialText = "Your DolphinNext run $project_pipeline_id has started.";
+                    if ($errorIgnored == true) {
+                        $initialText .= " However, one or more submitted jobs have silently failed.";
+                    }
                 }
 
                 $message = "Dear $name,<br><br>$initialText<br>$runText<br>$endText<br><br>Best Regards,<br><br>" . COMPANY_NAME . " DolphinNext Team<br>$footerText";
@@ -8504,7 +8521,7 @@ class dbfuncs
             $userRole = $this->getUserRoleVal($ownerID);
             list($permCheck, $warnName) = $this->getWritePerm($ownerID, $id, $userRole, $table, $getUserGroupsIDs);
             list($checkUsed, $warn) = $this->checkUsed($table, $warnName, $id, $ownerID);
-            error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
+            // error_log("$warnName permCheck:$permCheck checkUsed:$checkUsed perms:$perms>$curr_perms ownCheck:$ownCheck");
             if ((!empty($permCheck) || $userRole == "admin") && (empty($checkUsed) || $perms > $curr_perms || ($perms == $curr_perms && $curr_perms > 15) || ($perms == $curr_perms && empty($curr_group_id) && !empty($group_id))) && (!preg_match("/greaterOrEqual/i", $type) || (preg_match("/greaterOrEqual/i", $type) && $perms >= $curr_perms))) {
                 // error_log("passed");
                 if (!preg_match("/dry-run/i", $type)) {

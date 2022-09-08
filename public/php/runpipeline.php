@@ -495,7 +495,7 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
                         </select>
                     </div>
                 </div>
-                <div class="col-sm-12">
+                <div id="permsDivInfo" class="col-sm-12">
                     <span class="small">You can share your run with a specific group (created in profile-> groups tab) by choosing "Only my group" and selecting the group name. The group members will see the run on their run status page. Alternatively, you can set the Permissions to View to "Everyone". This way, only users that know the run link will see it. The selected run will not show up on their run status page. Please click the save icon at the top after changing your permissions.
                     </span>
                 </div>

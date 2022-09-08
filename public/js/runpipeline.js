@@ -5811,7 +5811,9 @@ async function loadProjectPipeline(pipeData) {
     $("#creatorInfoPip").css("display", "block");
 
     disableRunSum();
-    $("#permsRun").val(pipeData[0].perms);
+    $("#permsRun").val(pipeData[0].perms)
+    updatePermsView("permsRun")
+
     $("#ownUserNamePip").text(pipeData[0].username);
     $("#datecreatedPip").text(pipeData[0].date_created);
     $(".lasteditedPip").text(pipeData[0].date_modified);
@@ -8219,6 +8221,7 @@ async function saveRun(sucFunc, showToastr) {
             //if project belong to other user's project than change its value
             $("#groupSelRun").val(target_group_id);
             $("#permsRun").val(target_perms);
+            updatePermsView("permsRun")
 
             old_project_pipeline_id = project_pipeline_id;
             project_pipeline_id = "";
@@ -9100,9 +9103,12 @@ function tooglePermsGroupsDiv(mode) {
     if (mode == "show") {
         $("#groupsDiv").css("display", "block");
         $("#permsDiv").css("display", "block");
+        $("#permsDivInfo").css("display", "block");
         $("#releaseDivParent").css("display", "block");
+        updatePermsView("permsRun")
     } else if (mode == "hide") {
         $("#groupsDiv").css("display", "none");
+        $("#permsDivInfo").css("display", "none");
         $("#permsDiv").css("display", "none");
         $("#releaseDivParent").css("display", "none");
     }
@@ -10505,6 +10511,10 @@ $(document).ready(async function() {
     } else {
         $("#statusProPipe").css("display", "inline");
     }
+
+
+
+
 
     $("#pipeline-title").attr("pipeline_id", pipeline_id);
     if (project_pipeline_id !== "" && pipeline_id !== "") {

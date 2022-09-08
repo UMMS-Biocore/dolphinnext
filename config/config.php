@@ -199,7 +199,7 @@ if (!empty($secRaw['APPS'])) {
     $appsConf = $secRaw['APPS'];
     if (isset($appsConf['APPLICATION_YML_PATH'])) $APPLICATION_YML_PATH = $appsConf['APPLICATION_YML_PATH'];
     if (isset($appsConf['APP_URL'])) $APP_URL = $appsConf['APP_URL'];
-    if (isset($appsConf['MOUNTED_VOLUME'])) $APP_URL = $appsConf['MOUNTED_VOLUME'];
+    if (isset($appsConf['MOUNTED_VOLUME'])) $MOUNTED_VOLUME = $appsConf['MOUNTED_VOLUME'];
 }
 define('APPLICATION_YML_PATH', $APPLICATION_YML_PATH);
 define('APP_URL', $APP_URL);

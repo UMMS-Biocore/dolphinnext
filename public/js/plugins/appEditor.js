@@ -339,34 +339,43 @@
                 var reportId = elemsID + "-report";
                 var iframe = $("#" + reportId + "> iframe")
 
-                if (orgPath.includes("localhost") || orgPath.includes("127.0.0.1")) {
-                    // iframe.attr("src", orgPath)
-                    // window.open(orgPath, "myWindow", 'width=1000,height=800')
-                    var w = window.open();
-                    w.location = orgPath;
-                    if (startup_server_url) {
-                        setTimeout(function() {
-                            var w = window.open();
-                            w.location = startup_server_url;
-                        }, 5000);
 
-                    }
+                if (iframe && iframe.attr("src")) {
+                    iframe.attr("src", orgPath)
+                    iframe[0].contentWindow.location.reload(true)
                 } else {
-                    var w = window.open();
-                    w.location = orgPath;
-                    // if (startup_server_url) {
-                    //     setTimeout(function() {
-                    //         var w = window.open();
-                    //         w.location = startup_server_url;
-                    //     }, 5000);
-
-                    // }
-                    if (iframe && iframe.attr("src")) {
-                        iframe[0].contentWindow.location.reload(true)
-                    } else {
-                        iframe.attr("src", orgPath)
-                    }
+                    iframe.attr("src", orgPath)
                 }
+
+                // if (orgPath.includes("localhost") || orgPath.includes("127.0.0.1")) {
+                //     // iframe.attr("src", orgPath)
+                //     // window.open(orgPath, "myWindow", 'width=1000,height=800')
+                //     var w = window.open();
+                //     w.location = orgPath;
+                //     if (startup_server_url) {
+                //         setTimeout(function() {
+                //             var w = window.open();
+                //             w.location = startup_server_url;
+                //         }, 5000);
+
+                //     }
+                // } else {
+                //     var w = window.open();
+                //     w.location = orgPath;
+                //     // if (startup_server_url) {
+                //     //     setTimeout(function() {
+                //     //         var w = window.open();
+                //     //         w.location = startup_server_url;
+                //     //     }, 5000);
+
+                //     // }
+
+                //     if (iframe && iframe.attr("src")) {
+                //         iframe[0].contentWindow.location.reload(true)
+                //     } else {
+                //         iframe.attr("src", orgPath)
+                //     }
+                // }
             } else {
                 updateLogText("Error Occured.")
                 progress(100)
