@@ -1,3 +1,10 @@
+<div>
+    <section style="max-width: 1500px;  ">
+        <div class="callout callout-info" style="padding-top:5px; padding-bottom:5px; margin-bottom:10px; color:black !important; background-color:#def0f4 !important;" bis_skin_checked="1">
+            <p>You can use the mouse wheel to zoom in or out on a plot.</p>
+        </div>
+    </section>
+</div>
 <div class="row">
     <div class="col-md-6" bis_skin_checked="1">
         <div class="box box-primary" bis_skin_checked="1" style="border-top-width:7px;">
