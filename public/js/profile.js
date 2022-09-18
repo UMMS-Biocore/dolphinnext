@@ -24,8 +24,8 @@ function generateKeys() {
     var genKeys = getValues({ p: "generateKeys" });
     if (genKeys) {
         if (genKeys.$keyPri && genKeys.$keyPub) {
-            $('#mOurPriKey').val($.trim(genKeys.$keyPri));
-            $('#mOurPubKey').val($.trim(genKeys.$keyPub));
+            $('#mOurPriKey').val(genKeys.$keyPri);
+            $('#mOurPubKey').val(genKeys.$keyPub);
             $('#mOurPriKeyDiv').css('display', 'inline');
             $('#mOurPubKeyDiv').css('display', 'inline');
         } else {

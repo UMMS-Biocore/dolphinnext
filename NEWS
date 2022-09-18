@@ -1,85 +1,88 @@
-02.08.2021 Version 1.4.6
+17.09.2022 Version 1.4.7
+SSH key pair generation bug fixed.
+
+02.08.2022 Version 1.4.6
 Group permission dropdown is not displayed when only me or everyone permission is selected for run, process, and pipeline. 
 Ignored jobs notified with e-mail.
 Bug fixed for MOUNTED_VOLUME config parameter.
 
-30.08.2021 Version 1.4.5
+30.08.2022 Version 1.4.5
 Container Environment field added to apps.
 MOUNTED_VOLUME parameter moved to APPS section in .sec file.
 
-30.08.2021 Version 1.4.4
+30.08.2022 Version 1.4.4
 Kubernetes app support initiated.
 
-19.08.2021 Version 1.4.3
+19.08.2022 Version 1.4.3
 Zero input insertion bug fixed.
 Single line when: tag usage fixed in script section.
 
-16.08.2021 Version 1.4.2
+16.08.2022 Version 1.4.2
 Minor bug fixed for scheduled run submission date.
 
-13.08.2021 Version 1.4.1
+13.08.2022 Version 1.4.1
 simplesamlphp version updated for php 8.1.
 
-11.08.2021 Version 1.4.0
+11.08.2022 Version 1.4.0
 Scripts updated for new container.
 
-11.08.2021 Version 1.3.35
+11.08.2022 Version 1.3.35
 Notification added for old container users. 
 
-09.08.2021 Version 1.3.34
+09.08.2022 Version 1.3.34
 Minor bug fixed initialrun.nf file.
 
-02.08.2021 Version 1.3.33
+02.08.2022 Version 1.3.33
 s3cmd replaced with aws cli.
 
-02.08.2021 Version 1.3.32
+02.08.2022 Version 1.3.32
 Homepage pipeline number increased to 60 for scrolling.
 Email Recipients option added to run page.
 EMAIL_BODY_ADMIN parameter added to .sec file.
 
-01.08.2021 Version 1.3.31
+01.08.2022 Version 1.3.31
 The Run Notes section is optionally created on the run status page.
 Download button added for uploaded files.
 
-27.07.2021 Version 1.3.30
+27.07.2022 Version 1.3.30
 Write permission to group feature added to process and pipelines. 
 
-22.07.2021 Version 1.3.29
+22.07.2022 Version 1.3.29
 Minor admin dashboard bug fixed. 
 Major bug fixed in cronjob submission.
 
-19.07.2021 Version 1.3.28
+19.07.2022 Version 1.3.28
 Major bug fixed in defparams feature. 
 SQL query of active users improved for admin dashboard.
 Minor bug fixed in pipeline import function.
 
-18.07.2021 Version 1.3.27
+18.07.2022 Version 1.3.27
 Minor bug fixed in the label creation of the run page.
 Processed Samples by Pipeline and Active Users data added to Admin Dashboard.
 
-17.07.2021 Version 1.3.26
+17.07.2022 Version 1.3.26
 {{DNEXT_RUN_URL}} global variable added for scripts.
 Nextflow script creation improved for advanced node connections.
 
-11.07.2021 Version 1.3.25
+11.07.2022 Version 1.3.25
 Minor bug fixed in Run Status filter resets.
 CUSTOM_FILE_LOCATION_MESSAGE and CUSTOM_HELP_MESSAGE parameters added to .sec file under [UICONFIG] section.
 Github link delete icon added to pipeline page.
 
-11.07.2021 Version 1.3.24
+11.07.2022 Version 1.3.24
 AWS s3 rm command updated to effectively use the beforerun script.
 Beforeschedule script added for cron jobs.
 
-09.07.2021 Version 1.3.23
+09.07.2022 Version 1.3.23
 Collection duplication support added for run duplication.
 
-08.07.2021 Version 1.3.22
+08.07.2022 Version 1.3.22
 Minor bug fixed in process modal.
 Data dropdown added for Admin Dashboard to differentiate run and run attempts.
 Minor bug fixed for Admin Dashboard.
 Left sidebar removed if feature_metadata.tsv is not published in UCSC Genome Browser report.
 
-02.07.2021 Version 1.3.21
+02.07.2022 Version 1.3.21
 Warning added for automated execution.
 Automated execution is allowed for single run submission when frequency is not set.
 Run word replaced with Attempt in run page dropdown.
@@ -88,169 +91,168 @@ Lab filter added to Total Runs by Pipeline graph.
 Error vs success run counts added to Admin Dashboard.
 Average Run Time plot added to Admin Dashboard.
 
-01.07.2021 Version 1.3.20
+01.07.2022 Version 1.3.20
 Size of the add/edit process modal increased. Height control handles were added to the editor. 
 
-30.06.2021 Version 1.3.19
+30.06.2022 Version 1.3.19
 Admin Dashboard added.
 
-29.06.2021 Version 1.3.18
+29.06.2022 Version 1.3.18
 Pipeline permission update module updated for admin.
 Run status page filtering improved.
 
-28.06.2021 Version 1.3.17
+28.06.2022 Version 1.3.17
 UCSC Genome Browser module added to reports.
 
-21.06.2021 Version 1.3.16
+21.06.2022 Version 1.3.16
 First Submission Date option added to scheduled run settings.
 Regex support added to s3 file searches.
 
-13.06.2021 Version 1.3.15
+13.06.2022 Version 1.3.15
 Minor bug fixed in the e-mail notification.
 Minor bug fixed in the scheduled run checking function.
 File upload bug fixed in the run report page.
 
-03.06.2021 Version 1.3.14
+03.06.2022 Version 1.3.14
 Google login method upgraded. GOOGLE_CLIENT_ID (https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid) is required for ALLOW_SIGNUPGOOGLE in .sec file.
 
-02.06.2021 Version 1.3.13
+02.06.2022 Version 1.3.13
 EMAIL_TYPE feature added to .sec file. Available options: DEFAULT (for sendMail), SMTP or HTTP
 Email notification feature added.
 File addition error fixed for high amounts.
 
-02.06.2021 Version 1.3.12
+02.06.2022 Version 1.3.12
 Run status page filtering improved.
 Automatic run execution feature added to run page.
 
-20.05.2021 Version 1.3.11
+20.05.2022 Version 1.3.11
 Label feature added for pipeline inputs and @label flag added for process settings.
 NXF_DEFAULT_DSL value set to 1 by default.
 {{DNEXT_WEB_RUN_DIR}} {{DNEXT_WEB_REPORT_DIR}} global variables added.
 
-19.05.2021 Version 1.3.10
+19.05.2022 Version 1.3.10
 Minor bug fixed in autofilling executor settings.
 Auto-merging feature added while creating collections.
 
-04.05.2021 Version 1.3.09
+04.05.2022 Version 1.3.09
 Minor bug fixed in Executor Settings configuration in nextflow.config file.
 
-04.05.2021 Version 1.3.08
+04.05.2022 Version 1.3.08
 Minor update for Spreadsheet view.
 
-03.05.2021 Version 1.3.07
+03.05.2022 Version 1.3.07
 When condition bug fixed for Val qualifiers.
 Spreadsheet support was added to process options on the run page.
 
-29.04.2021 Version 1.3.06
+29.04.2022 Version 1.3.06
 When condition upgraded for val qualifiers.
 Session refresh calls replaced with web workers.
 
-29.04.2021 Version 1.3.05
+29.04.2022 Version 1.3.05
 Process test upgraded for test parameters.
 
-27.04.2021 Version 1.3.04
+27.04.2022 Version 1.3.04
 Run settings modal upgraded to support multiple nested modules.
 @hidden tag added for process settings.
 
-26.04.2021 Version 1.3.03
+26.04.2022 Version 1.3.03
 ProjectID and description support added for DMeta submissions.
 
-21.04.2021 Version 1.3.02
+21.04.2022 Version 1.3.02
 Dmeta input support upgraded for larger datasets.
 
-20.04.2021 Version 1.3.01
+20.04.2022 Version 1.3.01
 Input declarations belonging to headers/configs of modules will not be parsed.
 New DNEXT variables (DNEXT_PUBLISH_DIR, DNEXT_LAB, DNEXT_USERNAME, DNEXT_EMAIL) added for replacement. 
 New pipeline files (beforerun.sh and afterrun.sh) are supported.
 
-29.03.2021 Version 1.3.00
+29.03.2022 Version 1.3.00
 Single file upload error fixed for filenames that have spaces. 
 Duplicate channel error fixed in nextflow.nf file.
 
-29.03.2021 Version 1.2.99
+29.03.2022 Version 1.2.99
 Process test button removed if user not the owner of the process.
 Process saving removed from process test button.
 Process test improved for qualifier set. Multiple values are supported within an array.
 
-28.03.2021 Version 1.2.98
+28.03.2022 Version 1.2.98
 Minor bug fixed for nextflow.config file creation in the process test.
 
-28.03.2021 Version 1.2.97
+28.03.2022 Version 1.2.97
 Channel creation method fixed for multiple optional inputs.
 Rmarkdown module updated to prevent writing on original pipeline file. 
 Process test bug fixed for initial execution.
 Process test run triggers saving process. 
 Paired channel creation error fixed for process tests.
 
-
-23.03.2021 Version 1.2.96
+23.03.2022 Version 1.2.96
 Bug fixed in the shared projects table.
 
-21.03.2021 Version 1.2.95
+21.03.2022 Version 1.2.95
 Pipeline defaults feature added (defparams) to overwrite default values of the processes.
 
-17.03.2021 Version 1.2.94
+17.03.2022 Version 1.2.94
 Minor fix for debrowser report loading.
 App support improved for startup scripts. 
 
-16.03.2021 Version 1.2.93
+16.03.2022 Version 1.2.93
 Report page rendering improved for various file types.
 DEBrowser metadata support upgraded.
 Channel creation method upgraded for optional inputs.
 
-23.02.2021 Version 1.2.92
+23.02.2022 Version 1.2.92
 Profile Variables removed from nf file and added to initial run config.
 Rmarkdown rendering bug fixed.
 
-23.02.2021 Version 1.2.91
+23.02.2022 Version 1.2.91
 project_pipeline and run_log tables updated to store bigger data.
 
-18.02.2021 Version 1.2.90
+18.02.2022 Version 1.2.90
 Executor settings for nextflow options fixed for LSF. 
 
-09.02.2021 Version 1.2.89
+09.02.2022 Version 1.2.89
 Minor bug fixed in fillFormByName function.
 
-08.02.2021 Version 1.2.88
+08.02.2022 Version 1.2.88
 Save button added to test window.
 Secure flag added to wget command for initial run: --secure-protocol=TLSv1.
 Bug fixed for SSO login.
 
-03.02.2021 Version 1.2.87
+03.02.2022 Version 1.2.87
 Trailing and leading spaces trimmed from pipeline, run and profile pages. 
 
-01.02.2021 Version 1.2.86
+01.02.2022 Version 1.2.86
 Test process bug fixed for $HOSTNAME variable.
 INITIAL_RUN_DOCKER, INITIAL_RUN_SINGULARITY parameters added to .sec file under CONFIG section.
 
-31.01.2021 Version 1.2.85
+31.01.2022 Version 1.2.85
 Collection creation table updated to prevent pagination change.
 
-30.01.2021 Version 1.2.84
+30.01.2022 Version 1.2.84
 Ajax warning added for ended user session.
 Markdown headerID's removed for container error.
 
-28.01.2021 Version 1.2.83
+28.01.2022 Version 1.2.83
 Single file modal added to run page. 
 
-25.01.2021 Version 1.2.82
+25.01.2022 Version 1.2.82
 Run status loading bug fixed in process testing tab.
 
-17.01.2021 Version 1.2.81
+17.01.2022 Version 1.2.81
 chooseDefaultRunEnv feature disabled.
 
-17.01.2021 Version 1.2.80
+17.01.2022 Version 1.2.80
 Special character control added to upload file section.
 Reset of upload added on hide of upload modal.
 
-14.01.2021 Version 1.2.79
+14.01.2022 Version 1.2.79
 Minor bug fixed in channel creation function.
 
-11.01.2021 Version 1.2.78
+11.01.2022 Version 1.2.78
 Test script feature added to process window.
 Default Run Environment feauture added.
 
-03.01.2021 Version 1.2.77
+03.01.2022 Version 1.2.77
 Fix for pipeline editing for admin.
 
 29.12.2021 Version 1.2.76
