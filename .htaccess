@@ -19,3 +19,5 @@
  order allow,deny
  deny from all
 </Files>
+
+php_value post_max_size 12M 

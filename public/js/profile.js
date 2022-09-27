@@ -300,6 +300,17 @@ $(document).ready(function() {
     }
 
     $(function() {
+
+        $(document).on('change', '#mGitType', function() {
+            let sel = $('#mGitType').val()
+            if (sel == "github") {
+                $('#gitSSHDiv').css("display", "none");
+                $('#gitTokenDiv').css("display", "block");
+            } else if (sel == "bitbucket") {
+                $('#gitTokenDiv').css("display", "none");
+                $('#gitSSHDiv').css("display", "block");
+            }
+        });
         $(document).on('change', '#mEnvName', function() {
             var valueID = $('#mEnvName')[0].selectize.getValue();
             var options = $('#mEnvName')[0].selectize.options
@@ -2003,15 +2014,17 @@ $(document).ready(function() {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
         if (button.attr('id') === 'addGithub') {
-            $('#githubmodaltitle').html('Add GitHub Account');
+            $('#githubmodaltitle').html('Add Account');
+            $('#mGitType').trigger("change")
         } else {
-            $('#githubmodaltitle').html('Edit GitHub Account');
+            $('#githubmodaltitle').html('Edit Account');
             var clickedRow = button.closest('tr');
             var rowData = githubTable.row(clickedRow).data();
             var data = getValues({ p: "getGithub", id: rowData.id })[0];
 
             $('#saveGithub').data('clickedrow', clickedRow);
             fillFormByName('#githubModal', 'input, select', data);
+            $('#mGitType').trigger("change")
         }
     });
 

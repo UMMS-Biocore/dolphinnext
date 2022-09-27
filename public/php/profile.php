@@ -51,7 +51,7 @@ $GOOGPATH = GOOGPATH;
                         echo '<li class=""><a href="#googleKeys" data-toggle="tab" aria-expanded="false">Google Keys</a></li>';
                     }
                     if ($login == 1 && ($SHOW_GIT != false || !empty($admin_id) || $role == "admin")) {
-                        echo '<li class=""><a href="#github" data-toggle="tab" aria-expanded="false">GitHub</a></li>';
+                        echo '<li class=""><a href="#github" data-toggle="tab" aria-expanded="false">Repositories</a></li>';
                     }
                     echo '<li class=""><a href="#changePass" data-toggle="tab" aria-expanded="false">Change Password</a></li>';
                     echo '<li class=""><a href="#changeNotifTab" data-toggle="tab" aria-expanded="false">Notification</a></li>';
@@ -222,18 +222,18 @@ $GOOGPATH = GOOGPATH;
                         <div class="panel panel-default">
                             <div class="panel-heading clearfix">
                                 <div class="pull-right">
-                                    <button type="button" class="btn btn-primary btn-sm" id="addGithub" data-toggle="modal" data-target="#githubModal">Add GitHub Account</button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="addGithub" data-toggle="modal" data-target="#githubModal">Add Account</button>
                                 </div>
                                 <div class="pull-left">
-                                    <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> GitHub Accounts</h5>
+                                    <h5><i class="fa fa-group " style="margin-left:0px; margin-right:0px;"></i> GitHub/Bitbucket Accounts</h5>
                                 </div>
                             </div>
                             <div class="panel-body">
                                 <table id="githubTable" class="table table-striped table-bordered" cellspacing="0" width="100%">
                                     <thead>
                                         <tr>
-                                            <th>GitHub Username</th>
-                                            <th>GitHub E-Mail</th>
+                                            <th>Username</th>
+                                            <th>E-Mail</th>
                                             <th>Modified on</th>
                                             <th>Options</th>
                                         </tr>
@@ -928,22 +928,39 @@ $GOOGPATH = GOOGPATH;
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="mGitName" class="col-sm-3 control-label">GitHub Username</label>
+                        <label class="col-sm-3 control-label">Account Type</label>
+                        <div class="col-sm-9">
+                            <select id="mGitType" class="form-control" name="type">
+                                <option value="github" selected> GitHub </option>
+                                <option value="bitbucket"> Bitbucket </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="mGitName" class="col-sm-3 control-label">Account Username</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="mGitUsername" name="username">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="mGitEmail" class="col-sm-3 control-label">GitHub E-mail</label>
+                        <label for="mGitEmail" class="col-sm-3 control-label">Account E-mail</label>
                         <div class="col-sm-9">
                             <input type="email" required class="form-control" id="mGitEmail" name="email">
                         </div>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="gitTokenDiv">
                         <label class="col-sm-3 control-label">Access Token</label>
                         <div class="col-sm-9">
                             <input type="password" class="form-control" name="token">
                             <p style="font-size:13px;">GitHub access token will be used for creating and updating GitHub repositories. Please follow <a style="color:blue;" target="_blank" href="https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token"> this guide in GitHub to create a token.</a> While creating token, please enable <b>repo</b> and <b>write:packages</b> in the scope section.</p>
+                        </div>
+                    </div>
+                    <div class="form-group" id="gitSSHDiv">
+                        <label for="mGitSSH" class="col-sm-3 control-label">SSH Keys</label>
+                        <div class="col-sm-9">
+                            <select id="mGitSSH" class="form-control" name="ssh">
+                                <option value="" disabled selected> Select SSH Key </option>
+                            </select>
                         </div>
                     </div>
                 </form>
