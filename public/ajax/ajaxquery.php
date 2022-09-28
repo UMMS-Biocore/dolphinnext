@@ -1300,14 +1300,17 @@ else if ($p == "saveToken") {
         }
     }
 } else if ($p == "saveGithub") {
+    $type = $_REQUEST['type'];
     $username = $_REQUEST['username'];
     $email = $_REQUEST['email'];
     $tokenRaw = $_REQUEST['token'];
+    $ssh_id = $_REQUEST['ssh_id'];
+    settype($ssh_id, 'integer');
     $token = $db->amazonEncode($tokenRaw);
     if (!empty($id)) {
-        $data = $db->updateGithub($id, $username, $email, $token, $ownerID);
+        $data = $db->updateGithub($id, $username, $email, $token, $type, $ssh_id, $ownerID);
     } else {
-        $data = $db->insertGithub($username, $email, $token, $ownerID);
+        $data = $db->insertGithub($username, $email, $token, $type, $ssh_id, $ownerID);
     }
 } else if ($p == "checkNewRelease") {
     $version = $_REQUEST['version'];

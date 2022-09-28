@@ -180,12 +180,16 @@ $(document).ready(function() {
     }
 
     function loadOptions(type) {
-        if (type === "ssh") {
+        if (type === "ssh" || type === "ssh_git") {
             var data = getValues({ p: "getSSH", type: "hidden" });
             for (var i = 0; i < data.length; i++) {
                 var param = data[i];
                 var optionGroup = new Option(param.name, param.id);
-                $("#mEnvSSHKey").append(optionGroup);
+                if (type === "ssh") {
+                    $("#mEnvSSHKey").append(optionGroup);
+                } else if (type === "ssh_git") {
+                    $("#mGitSSH").append(optionGroup);
+                }
             }
         } else if (type === "amz") {
             var data = getValues({ p: "getAmz" });
@@ -2013,6 +2017,7 @@ $(document).ready(function() {
     $('#githubModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         $(this).find('form').trigger('reset');
+        loadOptions("ssh_git");
         if (button.attr('id') === 'addGithub') {
             $('#githubmodaltitle').html('Add Account');
             $('#mGitType').trigger("change")
@@ -2030,12 +2035,14 @@ $(document).ready(function() {
 
     $('#githubModal').on('hide.bs.modal', function(event) {
         cleanHasErrorClass("#githubModal")
+        $('#mGitSSH').find('option').not(':eq(0)').remove()
+
     });
 
     $('#githubModal').on('click', '#saveGithub', function(event) {
         event.preventDefault();
         var formValues = $('#githubModal').find('input, select');
-        var requiredFields = ["username", "email", "token"];
+        var requiredFields = ["username", "email"];
         var clickedRow = $('#saveGithub').data('clickedrow')
         var formObj = {};
         var stop = "";

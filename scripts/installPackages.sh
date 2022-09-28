@@ -8,3 +8,9 @@ if ! [ -x "$(command -v aws)" ]; then
   unzip awscliv2.zip
   sudo ./aws/install
 fi
+
+
+pip show bitbucket-cli 1>/dev/null 
+if [ $? != 0 ]; then
+   pip install bitbucket-cli
+fi

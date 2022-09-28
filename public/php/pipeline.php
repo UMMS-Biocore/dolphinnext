@@ -45,7 +45,7 @@ session_write_close();
                 // }
                 ?>
                 <button type="button" id="gitConsoleBtn" class="btn" name="button" data-backdrop="false" style="background:none; margin:0px; padding:0px; padding-bottom:2px;" data-toggle="modal" data-target="#gitConsoleModal">
-                    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Git Console"><span><i class="fa fa-git"></i></span></a>
+                    <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Repository Management"><span><i class="fa fa-cloud-upload"></i></span></a>
                 </button>
                 <button type="button" id="delPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;">
                     <a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Pipeline">
@@ -99,7 +99,7 @@ session_write_close();
     <div class="tab-content">
         <div id="descriptionTab" class="tab-pane fade in active">
             <div class="col-md-12" id="pipGitTitleDiv" style="display:none;">
-                <h5><b>GitHub </b> <span id="pipGitTitle"></span></h5>
+                <h5><b id="pipRepoType">GitHub </b> <span id="pipGitTitle"></span></h5>
             </div>
             <div class="col-md-12" id="desTitlePip">
                 <h5>

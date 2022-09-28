@@ -1279,12 +1279,26 @@ function disableProModal(selProcessId) {
 
 
 
-function updateGitTitle(github_username, github_repo, commit_id) {
+function updateGitTitle(github_username, github_repo, commit_id, repo_type) {
     if (commit_id && github_username && github_repo) {
         $("#pipGitTitleDiv").css("display", "inline-block");
-        var username = '<a target="_blank" href="https://github.com/' + github_username + '">' + github_username + '</a>';
-        var repo = '<a target="_blank" href="https://github.com/' + github_username + '/' + github_repo + '">' + github_repo + '</a>';
-        var commit = '<a target="_blank" href="https://github.com/' + github_username + '/' + github_repo + '/tree/' + commit_id + '"><i style="font-size:12px;" class="fa fa-external-link"></i></a>';
+        console.log(repo_type)
+        let username = ""
+        let repo = ""
+        let commit = ""
+        if (repo_type == "bitbucket") {
+            $("#pipRepoType").text("Bitbucket");
+            username = '<a target="_blank" href="https://bitbucket.org/' + github_username + '">' + github_username + '</a>';
+            repo = '<a target="_blank" href="https://bitbucket.org/' + github_username + '/' + github_repo + '">' + github_repo + '</a>';
+            commit = '<a target="_blank" href="https://bitbucket.org/' + github_username + '/' + github_repo + '/src/' + commit_id + '"><i style="font-size:12px;" class="fa fa-external-link"></i></a>';
+        } else if (repo_type == "github") {
+            $("#pipRepoType").text("GitHub");
+            username = '<a target="_blank" href="https://github.com/' + github_username + '">' + github_username + '</a>';
+            repo = '<a target="_blank" href="https://github.com/' + github_username + '/' + github_repo + '">' + github_repo + '</a>';
+            commit = '<a target="_blank" href="https://github.com/' + github_username + '/' + github_repo + '/tree/' + commit_id + '"><i style="font-size:12px;" class="fa fa-external-link"></i></a>';
+        }
+
+
         var deleteIcon = `<a id="removePipelineGit" href="#"><i style="font-size:13px; position: absolute; top: 14px;margin-left:5px;" class="fa fa-trash-o"></i></a>`
         $("#pipGitTitle").html(username + " / " + repo + " / " + commit + deleteIcon);
     }
@@ -1468,7 +1482,7 @@ function loadPipelineDetails(pipeline_id, usRole) {
                     if (IsJsonString(pData[0].github)) {
                         var git_json = JSON.parse(pData[0].github)
                         if (git_json) {
-                            updateGitTitle(git_json.username, git_json.repository, git_json.commit)
+                            updateGitTitle(git_json.username, git_json.repository, git_json.commit, git_json.repo_type)
                         }
                     }
                 }
@@ -2314,11 +2328,12 @@ $(document).ready(function() {
                 success: function(s) {
                     //fill the dropdown
                     $("#mGitUsername").empty();
-                    var firstOptionGroup = new Option("Select Github Account...", '');
+                    var firstOptionGroup = new Option("Select Account...", '');
                     $("#mGitUsername").append(firstOptionGroup);
                     for (var i = 0; i < s.length; i++) {
                         var param = s[i];
-                        var optionGroup = new Option(param.username, param.id);
+                        // var optionGroup = new Option(`${param.username} (${param.type})`, param.id);
+                        var optionGroup = `<option username="${param.username}" type="${param.type}" value="${param.id}">${param.username} (${param.type})</option>`
                         $("#mGitUsername").append(optionGroup);
                     }
                     //fill the form
@@ -2332,7 +2347,8 @@ $(document).ready(function() {
                                     if (git_json.username) {
                                         var el = document.getElementById("mGitUsername");
                                         for (var i = 0; i < el.options.length; i++) {
-                                            if (el.options[i].text == git_json.username) {
+                                            console.log(git_json)
+                                            if ((git_json.git_id && $(el.options[i]).attr("value") == git_json.git_id) || (!git_json.git_id && $(el.options[i]).attr("username") == git_json.username)) {
                                                 el.selectedIndex = i;
                                                 $("#github_repo").val(git_json.repository)
                                                 $("#github_branch").val(git_json.branch)
@@ -2362,7 +2378,8 @@ $(document).ready(function() {
         });
         $('#gitConsoleModal').on('click', '#pushGit', function(event) {
             event.preventDefault();
-            var github_username = $("#mGitUsername option:selected").text();
+            var repo_type = $("#mGitUsername option:selected").attr('type');
+
             var formValues = $('#gitConsoleModal').find('input, select');
             var requiredFields = ["username", "github_repo", "github_branch"];
             var formObj = {};
@@ -2436,11 +2453,15 @@ $(document).ready(function() {
                                     }
                                     //successfully completed.
                                     if (json.commit_id) {
-                                        $("#mGitSuccess").html('Pipeline successfully pushed to GitHub: <a style="word-wrap: break-word;" target="_blank" href="https://github.com/' + github_username + '/' + formObj.github_repo + '/tree/' + json.commit_id + '"> https://github.com/' + github_username + '/' + formObj.github_repo + '/tree/' + json.commit_id + '</a><br/>Commit id: ' + json.commit_id);
+                                        let html = `Pipeline successfully pushed to GitHub: <a style="word-wrap: break-word;" target="_blank" href="https://github.com/` + json.username + '/' + json.repo + '/tree/' + json.commit_id + '"> https://github.com/' + json.username + '/' + json.repo + '/tree/' + json.commit_id + '</a><br/>Commit id: ' + json.commit_id
+                                        if (repo_type == "bitbucket") {
+                                            html = `Pipeline successfully pushed to Bitbucket: <a style="word-wrap: break-word;" target="_blank" href="https://bitbucket.org/` + json.username + '/' + json.repo + '/src/' + json.commit_id + '"> https://bitbucket.org/' + json.username + '/' + json.repo + '/src/' + json.commit_id + '</a><br/>Commit id: ' + json.commit_id
+                                        }
+                                        $("#mGitSuccess").html(html);
                                         //update pipeline info
-                                        updateGitTitle(github_username, formObj.github_repo, json.commit_id)
+                                        updateGitTitle(json.username, json.repo, json.commit_id, repo_type)
                                     } else {
-                                        $("#mGitSuccess").html("Failed to push GitHub. Please check the logs to for the reason.")
+                                        $("#mGitSuccess").html("Failed to push pipeline. Please check the logs.")
                                     }
                                 }
                             }

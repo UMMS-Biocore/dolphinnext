@@ -958,9 +958,10 @@ $GOOGPATH = GOOGPATH;
                     <div class="form-group" id="gitSSHDiv">
                         <label for="mGitSSH" class="col-sm-3 control-label">SSH Keys</label>
                         <div class="col-sm-9">
-                            <select id="mGitSSH" class="form-control" name="ssh">
+                            <select id="mGitSSH" class="form-control" name="ssh_id">
                                 <option value="" disabled selected> Select SSH Key </option>
                             </select>
+                            <p style="font-size:13px;">SSH Key pairs will be used for creating and updating Bitbucket repositories. Please create new key pair in <b>Dolphinnext-> Profile-> SSH Keys</b> tab. Then from Bitbucket, choose <b>Personal settings</b> from your avatar. Click <b>SSH keys</b>-> <b>Add key</b> button. Copy the generated public key from DolphinNext and paste it into the <b>SSH Key</b> field. Finally, please select the used SSH key in this window.</p>
                         </div>
                     </div>
                 </form>

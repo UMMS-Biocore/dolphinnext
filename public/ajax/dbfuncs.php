@@ -1664,13 +1664,15 @@ class dbfuncs
         $sql = "UPDATE $this->db.biocorepipe_save SET github=NULL,last_modified_user ='$ownerID', date_modified = now() WHERE id = '$id'";
         return self::runSQL($sql);
     }
-    function updatePipelineGithub($pipeline_id, $username, $repo, $branch, $commit, $ownerID)
+    function updatePipelineGithub($pipeline_id, $username, $repo, $branch, $commit, $repo_type, $git_id, $ownerID)
     {
         $obj = array();
         $obj["username"] = $username;
         $obj["repository"] = $repo;
         $obj["branch"] = $branch;
         $obj["commit"] = $commit;
+        $obj["repo_type"] = $repo_type;
+        $obj["git_id"] = $git_id;
         $github = json_encode($obj);
         $sql = "UPDATE $this->db.biocorepipe_save SET github='$github', last_modified_user ='$ownerID', date_modified=now() WHERE deleted = 0 AND id = '$pipeline_id' AND owner_id = '$ownerID'";
         return self::runSQL($sql);
@@ -1825,6 +1827,7 @@ class dbfuncs
     {
         $ret = array();
         $dir_name = !empty($username_id) ? "{$github_repo}_{$github_branch}" : $pipeline_name;
+        $dir_name = $this->cleanName($dir_name, 100);
         //create git folder
         $gitDir = "{$this->tmp_path}/git/$ownerID";
         $repoDir = "{$this->tmp_path}/git/$ownerID/$dir_name";
@@ -1852,29 +1855,66 @@ class dbfuncs
             $git_data = json_decode($this->getGithubbyID($username_id, $ownerID));
             $token = trim($this->amazonDecode($git_data[0]->token));
             $username = $git_data[0]->username;
+            $repo_type = $git_data[0]->type;
+            error_log($repo_type);
+            $ssh_id = $git_data[0]->ssh_id;
+            if (preg_match("/\//", $github_repo)) {
+                $github_repo_arr = explode("/", $github_repo);
+                $username = $github_repo_arr[0];
+                $github_repo = $github_repo_arr[1];
+            }
+            $ret["repo"] = $github_repo;
+            $ret["username"] = $username;
+            error_log("username $username");
+            error_log("github_repo $github_repo");
             $email = $git_data[0]->email;
-            $check_repo_cmd = "curl https://api.github.com/repos/$username/$github_repo 2>&1";
-            $ret = $this->execute_cmd($check_repo_cmd, $ret, "check_repo_cmd_log", "check_repo_cmd");
-            $repo_found = "";
-            if (preg_match('/"message": "Not Found"/', $ret["check_repo_cmd_log"])) {
-                $repo_found = "false";
-            }
-            $git_init_cmd = "";
+            if ($repo_type == "github") {
+                $check_repo_cmd = "curl https://api.github.com/repos/$username/$github_repo 2>&1";
+                $ret = $this->execute_cmd($check_repo_cmd, $ret, "check_repo_cmd_log", "check_repo_cmd");
+                $repo_found = "";
+                if (preg_match('/"message": "Not Found"/', $ret["check_repo_cmd_log"])) {
+                    $repo_found = "false";
+                }
 
-            if ($repo_found == "false") {
-                //repo not found, create with curl
-                $init_cmd = "curl -H 'Authorization: token $token' https://api.github.com/user/repos -d '{\"name\":\"$github_repo\"}' && cd $repoDir && git init 2>&1";
-                $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
-            } else {
-                //repo found, git clone 
-                $init_cmd = "git clone https://github.com/$username/{$github_repo}.git $repoDir 2>&1";
-                $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
+                if ($repo_found == "false") {
+                    //repo not found, create with curl
+                    $init_cmd = "curl -H 'Authorization: token $token' https://api.github.com/user/repos -d '{\"name\":\"$github_repo\"}' && cd $repoDir && git init 2>&1";
+                    $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
+                } else {
+                    //repo found, git clone 
+                    $init_cmd = "git clone https://github.com/$username/{$github_repo}.git $repoDir 2>&1";
+                    $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
+                }
+                //change branch if required 
+                $branch_cmd = "cd $repoDir && git checkout $github_branch || git checkout -b $github_branch 2>&1";
+                $ret = $this->execute_cmd($branch_cmd, $ret, "branch_cmd_log", "branch_cmd");
+                //Erase all the files in the repo instead of .git directory
+                //$clean_cmd = "cd $repoDir && find . -maxdepth 1 -mindepth 1 -not -name '.git' -exec rm -r {} + 2>&1";
+            } else if ($repo_type == "bitbucket") {
+                $userpky = "{$this->ssh_path}/{$ownerID}_{$ssh_id}_ssh_pri.pky";
+                $check_repo_cmd = "git clone -c \"core.sshCommand=ssh {$this->ssh_settings} -i $userpky -F /dev/null\"  git@bitbucket.org:$username/$github_repo.git $repoDir 2>&1 && rm -rf $repoDir";
+                error_log($repoDir);
+                error_log($check_repo_cmd);
+                $ret = $this->execute_cmd($check_repo_cmd, $ret, "check_repo_cmd_log", "check_repo_cmd");
+                $repo_found = "";
+                if (preg_match('/does not exist/', $ret["check_repo_cmd_log"])) {
+                    $repo_found = "false";
+                }
+                error_log("repo_found  $repo_found ");
+                if ($repo_found == "false") {
+                    //repo not found, create with curl
+                    // $init_cmd = "curl -H 'Authorization: token $token' https://api.github.com/user/repos -d '{\"name\":\"$github_repo\"}' && cd $repoDir && git init 2>&1";
+                    // $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
+                } else {
+                    //repo found, git clone 
+                    $init_cmd = "git clone -c \"core.sshCommand=ssh {$this->ssh_settings} -i $userpky -F /dev/null\"  git@bitbucket.org:$username/$github_repo.git $repoDir 2>&1";
+                    $ret = $this->execute_cmd($init_cmd, $ret, "init_cmd_log", "init_cmd");
+                }
+                //change branch if required 
+                $branch_cmd = "cd $repoDir && git checkout $github_branch || git checkout -b $github_branch 2>&1";
+                $ret = $this->execute_cmd($branch_cmd, $ret, "branch_cmd_log", "branch_cmd");
             }
-            //change branch if required 
-            $branch_cmd = "cd $repoDir && git checkout $github_branch || git checkout -b $github_branch 2>&1";
-            $ret = $this->execute_cmd($branch_cmd, $ret, "branch_cmd_log", "branch_cmd");
-            //Erase all the files in the repo instead of .git directory
-            //$clean_cmd = "cd $repoDir && find . -maxdepth 1 -mindepth 1 -not -name '.git' -exec rm -r {} + 2>&1";
+
 
             //save files into new repo
             $this->createMultiConfig($repoDir, $configText);
@@ -1883,8 +1923,13 @@ class dbfuncs
             $this->createDirFile($repoDir, "README.md", 'w', $description);
             $date = date("d-m-Y H:i:s", time());
 
-            //push to github
-            $push_cmd = "cd $repoDir && git config --local user.name \"$username\" && git config --local user.email \"$email\" && git add . && git commit -m \"$date\" && git  push --porcelain https://{$username}:{$token}@github.com/$username/{$github_repo}.git $github_branch 2>&1";
+            if ($repo_type == "github") {
+                //push to github
+                $push_cmd = "cd $repoDir && git config --local user.name \"$username\" && git config --local user.email \"$email\" && git add . && git commit -m \"$date\" && git  push --porcelain https://{$username}:{$token}@github.com/$username/{$github_repo}.git $github_branch 2>&1";
+            } else if ($repo_type == "bitbucket") {
+                $push_cmd = "cd $repoDir && git config --local user.name \"$username\" && git config --local user.email \"$email\" && git add . && git commit -m \"$date\" && git  push --porcelain git@bitbucket.org:$username/$github_repo.git $github_branch 2>&1";
+            }
+
             $ret = $this->execute_cmd($push_cmd, $ret, "push_cmd_log", "push_cmd");
             //parse commit_id
             //[master 407d677] 01-08-2019 21:08:45
@@ -1900,7 +1945,7 @@ class dbfuncs
                         if (!empty($commit_log[1])) {
                             $commit_id = $commit_log[1];
                             $ret["commit_id"] = trim($commit_id);
-                            $this->updatePipelineGithub($pipeline_id, $username, $github_repo, $github_branch, trim($commit_id), $ownerID);
+                            $this->updatePipelineGithub($pipeline_id, $username, $github_repo, $github_branch, trim($commit_id), $repo_type, $username_id, $ownerID);
                         }
                     }
                 }
@@ -4497,15 +4542,15 @@ class dbfuncs
         $sql = "INSERT INTO $this->db.refresh_tokens(refreshToken, sso_user_id, client_id, scope, user_id) VALUES ('$refreshToken', '$sso_user_id', '$client_id', '$scope' , '$user_id')";
         return self::insTable($sql);
     }
-    function insertGithub($username, $email, $token, $ownerID)
+    function insertGithub($username, $email, $token, $type, $ssh_id, $ownerID)
     {
-        $sql = "INSERT INTO $this->db.github (username, email, token, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
-              ('$username', '$email', '$token', now() , now(), '$ownerID', '3', '$ownerID')";
+        $sql = "INSERT INTO $this->db.github (username, type, ssh_id, email, token, date_created, date_modified, last_modified_user, perms, owner_id) VALUES
+              ('$username', '$type', '$ssh_id','$email', '$token', now() , now(), '$ownerID', '3', '$ownerID')";
         return self::insTable($sql);
     }
-    function updateGithub($id, $username, $email, $token, $ownerID)
+    function updateGithub($id, $username, $email, $token, $type, $ssh_id, $ownerID)
     {
-        $sql = "UPDATE $this->db.github SET username='$username', email='$email', token='$token', date_modified = now(), last_modified_user ='$ownerID'  WHERE id = '$id'";
+        $sql = "UPDATE $this->db.github SET username='$username', email='$email', token='$token', date_modified = now(), last_modified_user ='$ownerID', type='$type', ssh_id='$ssh_id'  WHERE id = '$id'";
         return self::runSQL($sql);
     }
 
@@ -4521,7 +4566,7 @@ class dbfuncs
     }
     function getGithub($ownerID)
     {
-        $sql = "SELECT id, username, email, owner_id, group_id, perms, date_created, date_modified, last_modified_user FROM $this->db.github WHERE owner_id = '$ownerID' AND deleted=0";
+        $sql = "SELECT id, username, email, ssh_id, type, owner_id, group_id, perms, date_created, date_modified, last_modified_user FROM $this->db.github WHERE owner_id = '$ownerID' AND deleted=0";
         return self::queryTable($sql);
     }
     function getGithubbyID($id, $ownerID)

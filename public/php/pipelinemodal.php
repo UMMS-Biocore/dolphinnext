@@ -784,12 +784,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">Git Console</h4>
+                <h4 class="modal-title">Repository Management Console</h4>
             </div>
             <div class="modal-body">
                 <form class="form-horizontal" id="gitConsoleDiv">
                     <div class="form-group">
-                        <label for="mGitUsername" class="col-sm-3 control-label">pushGit Account</label>
+                        <label for="mGitUsername" class="col-sm-3 control-label">Account</label>
                         <div class="col-sm-9">
                             <select id="mGitUsername" class="fbtn btn-default form-control" name="username"></select>
                         </div>
@@ -798,7 +798,9 @@
                         <label for="github_repo" class="col-sm-3 control-label"> Repository</label>
                         <div class="col-sm-9">
                             <input type="text" class="form-control" id="github_repo" name="github_repo">
+                            <span style="font-size:13px;">e.g. rnaseq or dolphinnext/rnaseq</span>
                         </div>
+
                     </div>
                     <div class="form-group">
                         <label for="github_branch" class="col-sm-3 control-label"> Branch</label>
@@ -809,7 +811,7 @@
                     <div class="form-group">
                         <div class="col-sm-12">
                             <div class="pull-right">
-                                <button type="button" class="btn btn-default" id="pushGit" data-clickedrow="">Push to GitHub</button>
+                                <button type="button" class="btn btn-default" id="pushGit" data-clickedrow="">Push Pipeline</button>
                             </div>
                         </div>
                     </div>
