@@ -10,7 +10,4 @@ if ! [ -x "$(command -v aws)" ]; then
 fi
 
 
-pip show bitbucket-cli 1>/dev/null 
-if [ $? != 0 ]; then
-   pip install bitbucket-cli
-fi
+
