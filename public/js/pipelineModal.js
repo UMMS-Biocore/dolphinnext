@@ -2363,7 +2363,7 @@ $(document).ready(function() {
                                             console.log(git_json)
                                             if ((git_json.git_id && $(el.options[i]).attr("value") == git_json.git_id) || (!git_json.git_id && $(el.options[i]).attr("username") == git_json.username)) {
                                                 el.selectedIndex = i;
-                                                $("#github_repo").val(git_json.repository)
+                                                $("#github_repo").val(`${git_json.username}/${git_json.repository}`)
                                                 $("#github_branch").val(git_json.branch)
                                                 break;
                                             }
