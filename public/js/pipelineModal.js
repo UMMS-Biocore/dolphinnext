@@ -8,7 +8,7 @@ templatepython = '#python example: \n\n#!/usr/bin/env python \nx = \'Hello\'  \n
 templatesh = '#shell example: \n\n#!/bin/sh \nmy_variable="Hello World" \necho \\$my_variable';
 templater = '#R example: \n\n#!/usr/bin/env Rscript \nprint("Hello World!")';
 
-createAceEditors("editor", "#script_mode"); //ace process main editor
+createAceEditors("editor", "#script_mode", "#showInvisibles"); //ace process main editor
 createAceEditors("editorProHeader", "#script_mode_header") //ace process header editor
 createAceEditors("editorProFooter", "#script_mode_footer") //ace process header editor
 createAceEditors("editorPipeHeader", "#script_mode_pipe_header") //ace pipeline header editor
@@ -66,12 +66,13 @@ function makeAceEditorResizable(editor) {
     });
 }
 
-function createAceEditors(editorId, script_modeId) {
+function createAceEditors(editorId, script_modeId, showInvisiblesId) {
     //ace process editor
     if (document.getElementById(editorId)) {
         window[editorId] = ace.edit(editorId);
         window[editorId].setTheme("ace/theme/tomorrow");
         window[editorId].getSession().setMode("ace/mode/sh");
+        // window[editorId].setOptions({  "showInvisibles": true });
         window[editorId].setOptions({ useSoftTabs: false });
         window[editorId].$blockScrolling = Infinity;
         console.log(editorId)
@@ -108,6 +109,18 @@ function createAceEditors(editorId, script_modeId) {
                         window[editorId].setValue(window[newTempText]);
                     }
                 })
+                if (showInvisiblesId) {
+                    $(document).on('change', showInvisiblesId, function() {
+                        var newMode = $(showInvisiblesId).is(":checked")
+                        if (newMode === true) {
+                            window[editorId].setOptions({ "showInvisibles": true });
+                        } else {
+                            window[editorId].setOptions({ "showInvisibles": false });
+                        }
+
+                    })
+                }
+
             });
         }
     }

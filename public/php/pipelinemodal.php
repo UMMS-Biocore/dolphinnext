@@ -357,22 +357,20 @@
                             </ul>
                             <div class="tab-content">
                                 <div class="tab-pane active" id="pro_editor_tab">
-
-
                                     <div id="editordiv" class="col-sm-12" style="padding-left:0px;">
                                         <div id="editor" style="height: 300px;"></div>
                                         <div id="editor_draghandle" class="ui-icon ui-icon-gripsmall-diagonal-se" style="float:right;"></div>
-                                        <div class="row">
-                                            <p class="col-sm-3" style="padding-top:6px; padding-right:0;">Language Mode:</p>
-                                            <div class="col-sm-3" style="padding-left:0;">
-                                                <select id="script_mode" name="script_mode" class="form-control">
-                                                    <option value="sh">shell</option>
-                                                    <option value="groovy">groovy</option>
-                                                    <option value="perl">perl</option>
-                                                    <option value="python">python</option>
-                                                    <option value="r">R</option>
-                                                </select>
-                                            </div>
+                                        <div class="row ">
+                                            <p class="col-sm-1" style="padding-top:6px; padding-right:0;">Language Mode:</p>
+                                            <select id="script_mode" name="script_mode" class="col-sm-2 form-control" style="width:15%;">
+                                                <option value="sh">shell</option>
+                                                <option value="groovy">groovy</option>
+                                                <option value="perl">perl</option>
+                                                <option value="python">python</option>
+                                                <option value="r">R</option>
+                                            </select>
+                                            <div style="padding-top:6px; margin-left:10px;" class="col-sm-3"><input type="checkbox" id="showInvisibles" name="showInvisibles"> Show White Spaces</div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -805,7 +803,7 @@
                     <div class="form-group">
                         <label for="github_branch" class="col-sm-3 control-label"> Branch</label>
                         <div class="col-sm-9">
-                            <input type="text" value="master" class="form-control" id="github_branch" name="github_branch">
+                            <input type="text" value="main" class="form-control" id="github_branch" name="github_branch">
                         </div>
                     </div>
                     <div class="form-group">

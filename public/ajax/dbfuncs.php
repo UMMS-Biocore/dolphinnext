@@ -2423,7 +2423,9 @@ class dbfuncs
             $this->triggerRunErr('ERROR: Run directory cannot be transfered.\nLOG: ' . $ret["package_exist_cmd_log"], $uuid, $project_pipeline_id, $ownerID);
         }
         // 4. extract and execute 
-        $exec_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"source /etc/profile && tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real && rm $dolphin_path_real/run.tar.gz && bash $dolphin_path_real/.dolphinnext.init\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
+        // don't overwrite NO_FILE's, it will change modify date of the file and break resume functionality
+        // first skip .empty directory then use skip-old-files
+        $exec_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"source /etc/profile && tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real --exclude='.emptyfiles' &&  tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real --skip-old-files && rm $dolphin_path_real/run.tar.gz && bash $dolphin_path_real/.dolphinnext.init\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
         $this->writeLog($uuid, $exec_cmd, 'a', 'serverlog.txt');
         $this->writeLog($uuid, $runCmdAll, 'a', 'serverlog.txt');
         $next_submit_pid = shell_exec($exec_cmd); //"Job <203477> is submitted to queue <long>.\n"

@@ -226,6 +226,7 @@ session_write_close();
                                     <select id="script_mode_pipe_header" name="script_mode_header" class="form-control">
                                         <option value="groovy">groovy</option>
                                     </select>
+
                                 </div>
                             </div>
                         </div>
