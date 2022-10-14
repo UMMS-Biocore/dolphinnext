@@ -6966,7 +6966,7 @@ class dbfuncs
         $name_update = is_null($name) ? "" : "name='$name',";
         $file_dir_update = is_null($file_dir) ? "" : "file_dir='$file_dir',";
         $file_type_update = is_null($file_type) ? "" : "file_type='$file_type',";
-        $files_used_update = is_null($files_used) ? "" : "files_used='$files_used',";
+        $files_used_update = is_null($files_used) || empty($files_used) ? "" : "files_used='$files_used',";
         $collection_type_update = is_null($collection_type) ? "" : "collection_type='$collection_type',";
         $archive_dir_update = is_null($archive_dir) ? "" : "archive_dir='$archive_dir',";
         $s3_archive_dir_update = is_null($s3_archive_dir) ? "" : "s3_archive_dir='$s3_archive_dir',";

@@ -2000,8 +2000,9 @@ function createFormObj(formValues, requiredFields, settings) {
     var stop = false;
     for (var i = 0; i < formValues.length; i++) {
         const isSelectized = $(formValues[i]).hasClass('selectized');
+        // skip selectize input element
         if (!isSelectized && onlyVisible && ($(formValues[i]).css('display') == 'none' ||
-                $(formValues[i]).closest('.row').css('display') == 'none')) {
+                $(formValues[i]).closest('.row').css('display') == 'none') || $(formValues[i]).parent().parent().hasClass("selectize-control") === true) {
             continue;
         }
         var name = $(formValues[i]).attr("name");
@@ -2069,6 +2070,8 @@ function fillForm(formId, find, data) {
     }
 }
 
+
+
 //use name attr to fill form
 function fillFormByName(formId, find, data) {
     var formValues = $(formId).find(find)
@@ -2076,16 +2079,30 @@ function fillFormByName(formId, find, data) {
         var nameAttr = $(formValues[k]).attr("name");
         var radioCheck = $(formValues[k]).is(':radio');
         var checkboxCheck = $(formValues[k]).is(':checkbox');
-        var keys = Object.keys(data);
+        let isSelectized = $(formValues[k]).hasClass('selectized');
         if (data[nameAttr] || data[nameAttr] === "") {
             if (radioCheck) {
                 if (data[nameAttr] == $(formValues[k]).val()) {
                     $(formValues[k]).attr("checked", true);
                 }
             } else {
-                console.log(data[nameAttr])
                 if (data[nameAttr] === "on") {
                     $(formValues[k]).attr('checked', true);
+                } else if (isSelectized) {
+                    // check if data[nameAttr] is an option in the dropdown
+                    let allOpts = $(formValues[k])[0].selectize.options
+                    let optExist = false
+                    Object.keys(allOpts).forEach((k, i) => {
+                        if (k && k == data[nameAttr]) {
+                            optExist = true;
+                        }
+                    });
+                    // if option doesn't exist insert:
+                    if (!optExist) {
+                        let opt = { value: data[nameAttr], text: data[nameAttr] };
+                        $(formValues[k])[0].selectize.addOption([opt]);
+                    }
+                    $(formValues[k])[0].selectize.setValue(data[nameAttr], false);
                 } else {
                     $(formValues[k]).val(data[nameAttr]);
                 }
@@ -2202,7 +2219,7 @@ var removeMultiUpdateModal = (formId) => {
     $(formId).find(".multi-value-text").remove();
     $(formId).find(".multi-value").remove();
     $(formId).find(".multi-restore").remove();
-    $(formId).find(".form-control").css('display', 'block');
+    $(formId).find(".form-control:not(.selectized)").css('display', 'block');
 }
 const prepareMultiUpdateModal = (formId, find) => {
     const formValues = $(formId).find(find);

@@ -1393,7 +1393,7 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label text-left" style="padding-left:30px;">2. File Type <span><a data-toggle="tooltip" data-placement="bottom" title="Please choose your file type"><i class='glyphicon glyphicon-info-sign'></i></a></span> </label>
                                     <div class="col-sm-8">
-                                        <select id="file_type" class="fbtn btn-default form-control" name="file_type">
+                                        <select id="add_file_file_type" class="fbtn btn-default form-control" name="file_type">
                                             <option value="fastq" selected>FASTQ</option>
                                             <option value="bam">BAM</option>
                                             <option value="bai">BAI</option>
@@ -1402,6 +1402,7 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
                                             <option value="tab">TAB</option>
                                             <option value="tsv">TSV</option>
                                             <option value="txt">TXT</option>
+                                            <option value="vcf">VCF</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1947,7 +1948,7 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
                     <div class="form-group">
                         <label class="col-sm-3 control-label">File Type</label>
                         <div class="col-sm-9">
-                            <select id="file_type" class="fbtn btn-default form-control" name="file_type">
+                            <select id="edit_sample_file_type" class="fbtn btn-default form-control" name="file_type">
                                 <option value="fastq" selected>FASTQ</option>
                                 <option value="bam">BAM</option>
                                 <option value="bai">BAI</option>
@@ -1956,6 +1957,7 @@ $CUSTOM_FILE_LOCATION_MESSAGE = CUSTOM_FILE_LOCATION_MESSAGE;
                                 <option value="tab">TAB</option>
                                 <option value="tsv">TSV</option>
                                 <option value="txt">TXT</option>
+                                <option value="vcf">VCF</option>
                             </select>
                         </div>
                     </div>

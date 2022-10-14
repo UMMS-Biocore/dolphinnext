@@ -1,3 +1,5 @@
+// datatables scope
+var $d = {};
 var $runscope = {};
 $runscope = {
     //-------- Store data:
@@ -7008,6 +7010,17 @@ function selectCloudKey() {
     }
 }
 
+
+const calcDataTableHeight = (tableID) => {
+    let height = $(`${tableID}`).closest("div[dynamicrowstabs]").height()
+    console.log(tableID)
+    console.log(height)
+    console.log($d[tableID])
+        // var oSettings = $d[tableID].fnSettings();
+        // oSettings.oScroll.sY = calcDataTableHeight();
+        // $d[tableID].fnDraw();
+}
+
 //type="" or "Opt"
 function displayStatButton(idButton, type) {
     var buttonList = [
@@ -9002,6 +9015,23 @@ function fillFileSearchBox(item, targetDiv) {
         if (val) {
             $("#" + targetDiv).val(val);
             $("#" + targetDiv).keyup();
+        }
+    }
+}
+
+var selectizeFileType = function(idArr) {
+    for (var i = 0; i < idArr.length; i++) {
+        var id = idArr[i]
+        if ($(id)[0] && !$(id)[0].selectize) {
+            $(id).selectize({
+                maxItems: 1,
+                valueField: "value",
+                searchField: ["value"],
+                createOnBlur: true,
+                create: function(input) {
+                    return { value: input, text: input };
+                }
+            });
         }
     }
 }
@@ -11223,6 +11253,7 @@ $(document).ready(async function() {
             $("#mArchAmzKeyS3Div").css("display", "none");
             $("#file_dir_div").css("display", "block");
             $("#viewDirInfo").css("display", "block");
+            selectizeFileType(["#edit_sample_file_type", "#add_file_file_type"]);
             selectizeCollection(["#collection_id", "#collection_id_geo"], "", false);
             //#uploadFiles tab:
             $("#target_dir").val($runscope.getUploadDir("new"));
@@ -15177,16 +15208,17 @@ $(document).ready(async function() {
                     }
                     //speed up the table loading
                     dataTableObj.deferRender = true;
-                    dataTableObj.scroller = true;
+                    // dataTableObj.scroller = true;
                     dataTableObj.scrollCollapse = true;
                     dataTableObj.scrollY = 395;
                     dataTableObj.scrollX = true;
                     dataTableObj.sScrollX = true;
+                    // dataTableObj.sScrollY = calcDataTableHeight(`#${fileid}`);
                     //hides undefined error
                     dataTableObj.columnDefs = [
                         { defaultContent: "-", targets: "_all" },
                     ];
-                    $("#" + fileid).DataTable(dataTableObj);
+                    $d[`#${fileid}`] = $("#" + fileid).DataTable(dataTableObj);
                     hideLoadingDiv(href.substr(1));
                     bindEveHandlerIcon(fileid, visType, pubWebPath, uuid);
                 },

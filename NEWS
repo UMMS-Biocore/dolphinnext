@@ -1,3 +1,8 @@
+14.10.2022 Version 1.4.11
+Datatables scroller issue fixed in report tab.
+Multiple file editing error fixed.
+New file type creation allowed in collection creation window. 
+
 29.09.2022 Version 1.4.10
 BitBucket default branch set to main.
 Show white spaces option added to process editor.
