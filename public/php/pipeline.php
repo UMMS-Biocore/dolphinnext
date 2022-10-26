@@ -48,7 +48,7 @@ session_write_close();
                     <a data-toggle="tooltip" data-placement="bottom" title="" data-original-title="Repository Management"><span><i class="fa fa-cloud-upload"></i></span></a>
                 </button>
                 <button type="button" id="delPipeline" class="btn" name="button" data-toggle="modal" data-backdrop="false" data-target="#confirmModal" style="background:none; margin:0px; padding:0px;">
-                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Pipeline">
+                    <a data-toggle="tooltip" data-placement="bottom" data-original-title="Delete Pipeline Revision">
                         <i class="glyphicon glyphicon-trash"></i></a>
                 </button>
                 <span id="autosaveDiv">

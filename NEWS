@@ -1,3 +1,6 @@
+26.10.2022 Version 1.4.12
+Job name fix for slurm executor.
+
 14.10.2022 Version 1.4.11
 Datatables scroller issue fixed in report tab.
 Multiple file editing error fixed.

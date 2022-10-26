@@ -203,7 +203,7 @@ var fillEditSampleModal = function(data, type, cb) {
     selectizeFileType(["#edit_sample_file_type", "#add_file_file_type"]);
 
     if (type == "single") {
-        // $("#editSampleModal").find("[name=name]").closest(".form-group").css("display", "block");
+        $("#editSampleModal").find("[name=name]").closest(".form-group").css("display", "block");
         //geo files:
         if (!data.file_dir) {
             newObj.geo_used = files_used.replace(/ \| /g, "\n")

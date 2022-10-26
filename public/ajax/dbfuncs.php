@@ -951,7 +951,7 @@ class dbfuncs
     }
     function getJobName($jobname, $executor)
     {
-        $jobname = $this->cleanName($jobname, 9);
+        $jobname = "j_" . $this->cleanName($jobname, 9);
         $jobNameText = "";
         if (!empty($jobname)) {
             if ($executor == "lsf") {
@@ -2424,8 +2424,8 @@ class dbfuncs
         }
         // 4. extract and execute 
         // don't overwrite NO_FILE's, it will change modify date of the file and break resume functionality
-        // first skip .empty directory then use skip-old-files
-        $exec_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"source /etc/profile && tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real --exclude='.emptyfiles' &&  tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real --skip-old-files && rm $dolphin_path_real/run.tar.gz && bash $dolphin_path_real/.dolphinnext.init\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
+        // first skip .empty directory then use skip-old-files (-k 2>/dev/null || true)
+        $exec_cmd = "ssh {$this->ssh_settings} $ssh_port -i $userpky $connect \"source /etc/profile && tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real --exclude='.emptyfiles' &&  tar xf $dolphin_path_real/run.tar.gz -C $dolphin_path_real -k 2>/dev/null || true && rm $dolphin_path_real/run.tar.gz && bash $dolphin_path_real/.dolphinnext.init\" >> $run_path_real/serverlog.txt 2>&1 & echo $! &";
         $this->writeLog($uuid, $exec_cmd, 'a', 'serverlog.txt');
         $this->writeLog($uuid, $runCmdAll, 'a', 'serverlog.txt');
         $next_submit_pid = shell_exec($exec_cmd); //"Job <203477> is submitted to queue <long>.\n"
