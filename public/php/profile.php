@@ -1097,6 +1097,36 @@ $GOOGPATH = GOOGPATH;
 </div>
 <!-- user modal ends-->
 
+<div id="setPasswordModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Set Password</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">New Password</label>
+                        <div class="col-sm-8">
+                            <input type="password" maxlength="45" required class="form-control" id="newPass1" name="pass1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">Repeat New Password</label>
+                        <div class="col-sm-8">
+                            <input type="password" maxlength="45" required class="form-control" id="newPass2" name="pass2">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="setPassword">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- admin Add Group Modal starts-->
 <div id="adminAddGroupModal" class="modal fade" tabindex="-1" role="dialog">

@@ -509,6 +509,23 @@ if ($p == "saveRun") {
     $user_id = $_REQUEST['user_id'];
     $type = $_REQUEST['type'];
     $data = $db->changeRoleUser($user_id, $type, $ownerID);
+} else if ($p == "setPassword") {
+    $error = array();
+    $userId = $_REQUEST['userid'];
+    $password1 = $_REQUEST['pass1'];
+    $password2 = $_REQUEST['pass2'];
+    $userRole = $db->getUserRoleVal($ownerID);
+
+    $pass_hash1 = "";
+    if ($userRole == "admin" && $password1 == $password2 && !empty($password1) && !empty($userId)) {
+        $pass_hash1 = hash('md5', $password1 . SALT) . hash('sha256', $password1 . PEPPER);
+        error_log($password1);
+        error_log($pass_hash1);
+        $data =  $db->updateUserPassword($userId, $pass_hash1, $ownerID);
+    } else {
+        $error['error'] = "New passwords are not match";
+        $data  = json_encode($error);
+    }
 } else if ($p == "changePassword") {
     $error = array();
     $password0 = $_REQUEST['password0'];

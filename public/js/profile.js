@@ -1657,9 +1657,10 @@ $(document).ready(function() {
         } else {
             var roleItem = '<li><a name="admin" class="changeRoleUser">Assign admin role</a></li>';
         }
+        var setPass = '<li><a class="setPassword">Set Password</a></li>';
         var groupBut = '<li><a href="#adminAddGroupModal" data-toggle="modal">Assign to group</a></li>';
         var calculateUserUsage = '<li><a class="calculateUserUsage">Calculate User Usage</a></li>';
-        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + groupBut + calculateUserUsage + '<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
+        var button = '<div class="btn-group"><button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Options <span class="fa fa-caret-down"></span></button><ul class="dropdown-menu dropdown-menu-right" role="menu"><li><a class="impersonUser">Impersonate User</a></li><li><a class="editUser" href="#userModal" data-toggle="modal">Edit User</a></li>' + activeItem + roleItem + groupBut + setPass + calculateUserUsage + '<li><a class="delUser" href="#confirmDelModal" data-toggle="modal">Delete User</a></li></ul></div>';
         return button;
 
     }
@@ -1700,10 +1701,12 @@ $(document).ready(function() {
         }
     });
 
+
+
     $('#passwordForm').on('click', '#changePassBtn', function(event) {
         event.preventDefault();
         var formValues = $('#passwordForm').find('input');
-        var requiredFields = ["password0", "password1", "password2"];
+        var requiredFields = ["password1", "password2"];
         var formObj = {};
         var stop = "";
         [formObj, stop] = createFormObj(formValues, requiredFields)
@@ -1844,6 +1847,54 @@ $(document).ready(function() {
                         alert("Error: " + errorThrown);
                     }
                 });
+            }
+        });
+
+
+        $(document).on('click', '.setPassword', function(e) {
+            e.preventDefault()
+            var clickedRow = $(this).closest('tr');
+            var rowData = AdmUserTable.row(clickedRow).data();
+            var userId = rowData.id;
+            console.log(userId)
+            if (userId) {
+                $("#setPassword").data("userId", userId);
+                $("#setPasswordModal").find('form').trigger('reset');
+                $("#setPasswordModal").modal("show");
+            }
+        });
+        $(document).on('click', '#setPassword', function(event) {
+            let userId = $("#setPassword").data("userId");
+            if (userId) {
+                var formValues = $('#setPasswordModal').find('input');
+                var requiredFields = ["pass1", "pass2"];
+                var formObj = {};
+                var stop = "";
+                [formObj, stop] = createFormObj(formValues, requiredFields)
+                if (stop === false) {
+                    if ($("#newPass1").val() == $("#newPass2").val()) {
+                        formObj.p = "setPassword";
+                        formObj.userid = userId;
+                        $.ajax({
+                            type: "POST",
+                            data: formObj,
+                            url: "ajax/ajaxquery.php",
+                            success: function(s) {
+                                if (s.error) {
+                                    toastr.error(s.error)
+                                } else {
+                                    toastr.success("Password Updated.")
+                                    $("#setPasswordModal").modal("hide");
+                                }
+                            },
+                            error: function(errorThrown) {
+                                toastr.info("Error Occured.")
+                            }
+                        });
+                    } else {
+                        toastr.error("Passwords don't match.")
+                    }
+                }
             }
         });
 
