@@ -1295,7 +1295,6 @@ function disableProModal(selProcessId) {
 function updateGitTitle(github_username, github_repo, commit_id, repo_type) {
     if (commit_id && github_username && github_repo) {
         $("#pipGitTitleDiv").css("display", "inline-block");
-        console.log(repo_type)
         let username = ""
         let repo = ""
         let commit = ""
@@ -1304,7 +1303,7 @@ function updateGitTitle(github_username, github_repo, commit_id, repo_type) {
             username = '<a target="_blank" href="https://bitbucket.org/' + github_username + '">' + github_username + '</a>';
             repo = '<a target="_blank" href="https://bitbucket.org/' + github_username + '/' + github_repo + '">' + github_repo + '</a>';
             commit = '<a target="_blank" href="https://bitbucket.org/' + github_username + '/' + github_repo + '/src/' + commit_id + '"><i style="font-size:12px;" class="fa fa-external-link"></i></a>';
-        } else if (repo_type == "github") {
+        } else if (repo_type == "github" || !repo_type) {
             $("#pipRepoType").text("GitHub");
             username = '<a target="_blank" href="https://github.com/' + github_username + '">' + github_username + '</a>';
             repo = '<a target="_blank" href="https://github.com/' + github_username + '/' + github_repo + '">' + github_repo + '</a>';
