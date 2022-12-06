@@ -322,6 +322,7 @@ $(document).ready(function() {
             if (cpOptions[valueID]) {
                 if (cpOptions[valueID].executor != undefined) {
                     delete cpOptions[valueID]["id"]; //to prevent profile update
+                    delete cpOptions[valueID]["name"]; //to dropdown error
                     if (cpOptions[valueID].hostname != undefined) {
                         $('#chooseEnv').val('cluster').trigger('change');
                     } else if (cpOptions[valueID].shared_storage_mnt != undefined) {
