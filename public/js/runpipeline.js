@@ -7440,7 +7440,7 @@ async function runProjectPipe(runProPipeCall, checkType) {
                 var hostname = $("#chooseEnv").find("option:selected").attr("host");
                 pathArray = getPathArray();
                 //autofill for ghpcc06 cluster to mount all directories before run executed.
-                if (hostname === "ghpcc06.umassrc.org") {
+                if (hostname === "ghpcc06.umassrc.org" || hostname === "hpc.umassmed.edu") {
                     execOtherOpt = autofillMountPath(pathArray);
                 }
                 pathArrayL1 = getPathArrayL1(pathArray);
