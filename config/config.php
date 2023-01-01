@@ -119,6 +119,7 @@ if (!empty($secUiconfig)) {
     $SHOW_HOMEPAGE = isset($secUiconfig['SHOW_HOMEPAGE']) ? $secUiconfig['SHOW_HOMEPAGE'] : "1";
     $CUSTOM_HELP_MESSAGE = isset($secUiconfig['CUSTOM_HELP_MESSAGE']) ? $secUiconfig['CUSTOM_HELP_MESSAGE'] : "";
     $CUSTOM_FILE_LOCATION_MESSAGE = isset($secUiconfig['CUSTOM_FILE_LOCATION_MESSAGE']) ? $secUiconfig['CUSTOM_FILE_LOCATION_MESSAGE'] : "";
+    $FOUNDRY_BANNER = isset($secUiconfig['FOUNDRY_BANNER']) ? $secUiconfig['FOUNDRY_BANNER'] : "";
     define('SHOW_RUN_LOG', $SHOW_RUN_LOG);
     define('SHOW_RUN_TIMELINE', $SHOW_RUN_TIMELINE);
     define('SHOW_RUN_REPORT', $SHOW_RUN_REPORT);
@@ -130,6 +131,7 @@ if (!empty($secUiconfig)) {
     define('SHOW_HOMEPAGE', $SHOW_HOMEPAGE);
     define('CUSTOM_FILE_LOCATION_MESSAGE', $CUSTOM_FILE_LOCATION_MESSAGE);
     define('CUSTOM_HELP_MESSAGE', $CUSTOM_HELP_MESSAGE);
+    define('FOUNDRY_BANNER', $FOUNDRY_BANNER);
 
     //  WIZARD CONFIG
     $SHOW_WIZARD = isset($secUiconfig['SHOW_WIZARD']) ? $secUiconfig['SHOW_WIZARD'] : false;

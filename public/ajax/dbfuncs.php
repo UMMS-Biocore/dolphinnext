@@ -23,7 +23,7 @@ class dbfuncs
     private $ssh_path = SSHPATH;
     private $base_path = BASE_PATH;
     private $pubweb_url = PUBWEB_URL;
-    private $ssh_settings = "-oStrictHostKeyChecking=no -q -oChallengeResponseAuthentication=no -oBatchMode=yes -oPasswordAuthentication=no -oConnectTimeout=3";
+    private $ssh_settings = "-oStrictHostKeyChecking=no -q -oChallengeResponseAuthentication=no -oBatchMode=yes -oPasswordAuthentication=no -oConnectTimeout=5";
     private $amz_path = AMZPATH;
     private $goog_path = GOOGPATH;
     private $amazon = AMAZON;

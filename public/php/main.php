@@ -17,6 +17,10 @@ $SHOW_WIZARD = SHOW_WIZARD;
 $SHOW_APPS = SHOW_APPS;
 $CUSTOM_HELP_MESSAGE = CUSTOM_HELP_MESSAGE;
 
+$FOUNDRY_BANNER = FOUNDRY_BANNER;
+$FOUNDRY_BANNER_EXIST = false;
+if (!empty($FOUNDRY_BANNER)) $FOUNDRY_BANNER_EXIST = true;
+
 require_once("php/funcs.php");
 $np = isset($_REQUEST["np"]) ? $_REQUEST["np"] : "";
 $id = isset($_REQUEST["id"]) ? $_REQUEST["id"] : "";
@@ -574,6 +578,12 @@ folder instead of downloading all of them to reduce the load. -->
         <span id="basepathinfo" basepath="<?php echo BASE_PATH ?>" pubweb="<?php echo PUBWEB_URL ?>" debrowser="<?php echo DEBROWSER_URL ?>" ocpupubweb="<?php echo OCPU_PUBWEB_URL ?>" sso_login="<?php echo SSO_LOGIN ?>" sso_url="<?php echo SSO_URL ?>" client_id="<?php echo CLIENT_ID ?>"></span>
         <header class="main-header">
             <!-- Logo -->
+            <?php
+            if (!empty($FOUNDRY_BANNER_EXIST)) {
+                echo '<div style="margin:0px; padding-top: 2px; padding-bottom: 2px;" class="alert alert-info">
+                <h5><i class="icon fa fa-info"></i>' . $FOUNDRY_BANNER . '</h5></div>';
+            }
+            ?>
             <a href="index.php" class="logo">
                 <!-- mini logo for sidebar mini 50x50 pixels -->
                 <span class="logo-mini"><b>U</b>Bio</span>
@@ -726,7 +736,8 @@ folder instead of downloading all of them to reduce the load. -->
 
 
         <!-- Left side column. contains the logo and sidebar -->
-        <aside class="main-sidebar">
+
+        <aside class="main-sidebar" <?php if (!empty($FOUNDRY_BANNER_EXIST)) echo 'style="padding-top: 100px;"'; ?>>
             <!-- sidebar: style can be found in sidebar.less -->
             <section class="sidebar">
                 <!-- Sidebar user panel -->
@@ -782,7 +793,7 @@ folder instead of downloading all of them to reduce the load. -->
                 ?>
         </aside>
         <!-- Content Wrapper. Contains page content -->
-        <div class="content-wrapper">
+        <div class="content-wrapper" <?php if (!empty($FOUNDRY_BANNER_EXIST)) echo 'style="padding-top: 100px;"'; ?>>
             <!-- Content Header (Page header) -->
             <section class="content-header">
                 <h1>
